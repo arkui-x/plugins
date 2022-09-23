@@ -33,12 +33,12 @@ template("plugin_test_plugin_static") {
     }
 
     subsystem_name = "plugins"
-    part_name = "testplugin"
+    part_name = "test_plugin"
   }
 }
 
 foreach(item, ace_platforms) {
-  plugin_test_plugin_static("testplugin_static_" + item.name) {
+  plugin_test_plugin_static("test_plugin_static_" + item.name) {
     platform = item.name
 
     defines = []

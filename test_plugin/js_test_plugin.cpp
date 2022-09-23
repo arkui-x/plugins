@@ -18,10 +18,10 @@
 #include "log.h"
 #include "plugin_c_utils.h"
 
-#include "plugins/testplugin/test_plugin.h"
+#include "plugins/test_plugin/test_plugin.h"
 
 #ifdef ANDROID_PLATFORM
-#include "plugins/testplugin/android/java/jni/test_plugin_jni.h"
+#include "plugins/test_plugin/android/java/jni/test_plugin_jni.h"
 #endif
 
 namespace OHOS::Plugin {
@@ -51,7 +51,7 @@ static napi_module testPluginModule = {
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_register_func = TestPluginExport,
-    .nm_modname = "testplugin",
+    .nm_modname = "testPlugin",
     .nm_priv = ((void*)0),
     .reserved = { 0 },
 };

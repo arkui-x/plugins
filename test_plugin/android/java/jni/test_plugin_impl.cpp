@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include "plugins/testplugin/android/java/jni/test_plugin_impl.h"
+#include "plugins/test_plugin/android/java/jni/test_plugin_impl.h"
 
 #include <memory>
 
 #include "log.h"
 #include "plugin_utils.h"
 
-#include "plugins/testplugin/android/java/jni/test_plugin_jni.h"
+#include "plugins/test_plugin/android/java/jni/test_plugin_jni.h"
 
 namespace OHOS::Plugin {
 

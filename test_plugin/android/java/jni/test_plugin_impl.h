@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "plugins/testplugin/test_plugin.h"
+#include "plugins/test_plugin/test_plugin.h"
 
 namespace OHOS::Plugin {
 
