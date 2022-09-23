@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "plugins/testplugin/android/java/jni/test_plugin_jni.h"
+#include "plugins/test_plugin/android/java/jni/test_plugin_jni.h"
 
 #include <jni.h>
 
