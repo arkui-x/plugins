@@ -12,33 +12,31 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
 
-java_library("test_plugin_android_java") {
-  java_files = [ "src/TestPlugin.java" ]
-  subsystem_name = "plugins"
-  part_name = "test_plugin"
-}
-
-ohos_combine_jars("test_plugin_java") {
-  deps = [ ":test_plugin_android_java" ]
-
-  subsystem_name = "plugins"
-  part_name = "test_plugin"
-  jar_path = "${root_out_dir}/plugins/test_plugin/ace_test_plugin_android.jar"
-}
-
-ohos_source_set("test_plugin_android_jni") {
+ohos_source_set("test_plugin_ios") {
   sources = [
-    "jni/test_plugin_impl.cpp",
-    "jni/test_plugin_jni.cpp",
+    "ios_test_plugin.m",
+    "test_plugin_impl.mm",
   ]
 
-  defines = [ "ANDROID_PLATFORM" ]
+  defines = [ "IOS_PLATFORM" ]
 
-  deps = [
-    ":test_plugin_java",
-    "//plugins/interfaces/native:ace_plugin_util_android",
+  if (target_cpu == "arm64") {
+    defines += [ "_ARM64_" ]
+  }
+
+  configs = [ "$ace_root:ace_config" ]
+
+  cflags_objc = [
+    "-fvisibility=default",
+    "-fobjc-arc",
+    "-fobjc-weak",
   ]
+
+  cflags_objcc = cflags_objc
+
+  deps = [ "//plugins/interfaces/native:ace_plugin_util_ios" ]
 
   subsystem_name = "plugins"
   part_name = "test_plugin"

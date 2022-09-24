@@ -40,4 +40,26 @@ LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
     __android_log_vprint(LOG_LEVEL[static_cast<int>(level)], PLUGIN_LOG_TAG, newFmt.c_str(), args);
     va_end(args);
 }
+
+#elif defined(IOS_PLATFORM)
+#include <securec.h>
+
+constexpr uint32_t MAX_BUFFER_SIZE = 4096;
+
+LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
+{
+    std::string newFmt(fmt);
+    StripFormatString("{public}", newFmt);
+    StripFormatString("{private}", newFmt);
+    va_list args;
+    va_start(args, fmt);
+    char buf[MAX_BUFFER_SIZE] = { '\0' };
+    int ret = vsnprintf_s(buf, sizeof(buf), sizeof(buf) - 1, newFmt.c_str(), args);
+    if (ret < 0) {
+        return;
+    }
+    va_end(args);
+    printf("%s\r\n", buf);
+    fflush(stdout);
+}
 #endif

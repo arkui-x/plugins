@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,20 +13,28 @@
  * limitations under the License.
  */
 
-package ohos.ace.plugin.testplugin;
+#include "plugins/test_plugin/ios/test_plugin_impl.h"
 
-import android.content.Context;
-import android.util.Log;
+#include <memory>
 
-public class TestPlugin {
-    private static final String LOG_TAG = "TestPlugin";
-    public TestPlugin(Context context) {
-        nativeInit();
-    }
+#include "log.h"
+#include "plugin_utils.h"
 
-    public void hello() {
-        Log.i(LOG_TAG, "TestPlugin: hello from java");
-    }
+#import "ios_test_plugin.h"
 
-    protected native void nativeInit();
+namespace OHOS::Plugin {
+
+std::unique_ptr<TestPlugin> TestPlugin::Create()
+{
+    return std::make_unique<TestPluginImpl>();
 }
+
+void TestPluginImpl::Hello()
+{
+    LOGI("TestPluginImpl Hello called");
+    PluginUtils::RunTaskOnPlatform([]() {
+        [[iOSTestPlugin shareintance] hello];
+    });
+}
+
+} // namespace OHOS::Plugin
