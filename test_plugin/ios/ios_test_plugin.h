@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,20 +13,15 @@
  * limitations under the License.
  */
 
-package ohos.ace.plugin.testplugin;
+#import <Foundation/Foundation.h>
 
-import android.content.Context;
-import android.util.Log;
+NS_ASSUME_NONNULL_BEGIN
 
-public class TestPlugin {
-    private static final String LOG_TAG = "TestPlugin";
-    public TestPlugin(Context context) {
-        nativeInit();
-    }
+@interface iOSTestPlugin : NSObject
 
-    public void hello() {
-        Log.i(LOG_TAG, "TestPlugin: hello from java");
-    }
++(instancetype)shareintance;
+-(void)hello;
 
-    protected native void nativeInit();
-}
+@end
+
+NS_ASSUME_NONNULL_END
