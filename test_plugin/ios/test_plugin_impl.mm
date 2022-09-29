@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include "plugins/testplugin/android/java/jni/test_plugin_impl.h"
+#include "plugins/test_plugin/ios/test_plugin_impl.h"
 
 #include <memory>
 
 #include "log.h"
 #include "plugin_utils.h"
 
-#include "plugins/testplugin/android/java/jni/test_plugin_jni.h"
+#import "ios_test_plugin.h"
 
 namespace OHOS::Plugin {
 
@@ -32,7 +32,9 @@ std::unique_ptr<TestPlugin> TestPlugin::Create()
 void TestPluginImpl::Hello()
 {
     LOGI("TestPluginImpl Hello called");
-    PluginUtils::RunTaskOnPlatform([]() { TestPluginJni::Hello(); });
+    PluginUtils::RunTaskOnPlatform([]() {
+        [[iOSTestPlugin shareintance] hello];
+    });
 }
 
 } // namespace OHOS::Plugin

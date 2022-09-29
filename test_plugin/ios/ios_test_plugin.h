@@ -13,23 +13,15 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_TEST_PLUGIN_ANDROID_JAVA_JNI_TEST_PLUGIN_IMPL_H
-#define PLUGINS_TEST_PLUGIN_ANDROID_JAVA_JNI_TEST_PLUGIN_IMPL_H
+#import <Foundation/Foundation.h>
 
-#include <memory>
+NS_ASSUME_NONNULL_BEGIN
 
-#include "plugins/testplugin/test_plugin.h"
+@interface iOSTestPlugin : NSObject
 
-namespace OHOS::Plugin {
++(instancetype)shareintance;
+-(void)hello;
 
-class TestPluginImpl final : public TestPlugin {
-public:
-    TestPluginImpl() = default;
-    ~TestPluginImpl() override = default;
+@end
 
-    void Hello() override;
-};
-
-} // namespace OHOS::Plugin
-
-#endif // PLUGINS_TEST_PLUGIN_ANDROID_JAVA_JNI_TEST_PLUGINS_TEST_PLUGIN_ANDROID_JAVA_JNI_TEST_PLUGIN_IMPL_HPLUGIN_JNI_H
+NS_ASSUME_NONNULL_END

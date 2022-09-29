@@ -13,16 +13,26 @@
 
 import("//build/ohos.gni")
 
-common_plugin_libs = [ "testplugin" ]
+common_plugin_libs = [ "test_plugin" ]
 
 template("plugin_lib") {
   forward_variables_from(invoker, "*")
 
-  ohos_shared_library(target_name) {
-    deps = [ "//plugins/$target_name:${target_name}_static_${platform}" ]
+  plugin_name = target_name
+  if (platform == "ios") {
+    ohos_source_set(string_replace(target_name, "_", "")) {
+      deps = [ "//plugins/$plugin_name:${plugin_name}_static_${platform}" ]
 
-    relative_install_dir = "module"
-    part_name = target_name
-    subsystem_name = "plugins"
+      part_name = plugin_name
+      subsystem_name = "plugins"
+    }
+  } else {
+    ohos_shared_library(string_replace(target_name, "_", "")) {
+      deps = [ "//plugins/$plugin_name:${plugin_name}_static_${platform}" ]
+
+      relative_install_dir = "module"
+      part_name = plugin_name
+      subsystem_name = "plugins"
+    }
   }
 }

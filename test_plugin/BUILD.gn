@@ -29,16 +29,18 @@ template("plugin_test_plugin_static") {
     ]
 
     if (platform == "android") {
-      deps += [ "android/java:test_plugin_anroid_jni" ]
+      deps += [ "android/java:test_plugin_android_jni" ]
+    } else if (platform == "ios") {
+      deps += [ "ios:test_plugin_ios" ]
     }
 
     subsystem_name = "plugins"
-    part_name = "testplugin"
+    part_name = "test_plugin"
   }
 }
 
 foreach(item, ace_platforms) {
-  plugin_test_plugin_static("testplugin_static_" + item.name) {
+  plugin_test_plugin_static("test_plugin_static_" + item.name) {
     platform = item.name
 
     defines = []
