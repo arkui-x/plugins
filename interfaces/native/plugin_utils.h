@@ -51,6 +51,8 @@ class PLUGIN_EXPORT PluginUtils {
 public:
     static void RegisterPlugin(RegisterCallback callback, const std::string& packageName);
     static void RunTaskOnPlatform(const Task& task);
+    static void RunTaskOnJS(const Task& task);
+    static void RunSyncTaskOnJS(const Task& task);
 };
 
 } // namespace OHOS::Plugin

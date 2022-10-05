@@ -37,4 +37,19 @@ void PluginUtils::RunTaskOnPlatform(const Task& task)
     }
 }
 
-} // namespace OHOS::Plugin
+void PluginUtils::RunTaskOnJS(const Task& task)
+{
+    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
+    if (taskExecutor) {
+        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
+    }
+}
+
+void PluginUtils::RunSyncTaskOnJS(const Task& task)
+{
+    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
+    if (taskExecutor) {
+        taskExecutor->PostSyncTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
+    }
+}
+}  // namespace OHOS::Plugin
