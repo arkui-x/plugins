@@ -12,10 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugins/interfaces/native/log.h"
 
-#include <cstdint>
-#include <string>
+#include "plugins/interfaces/native/log.h"
 
 [[maybe_unused]] static void StripFormatString(const std::string& prefix, std::string& str)
 {
@@ -24,21 +22,26 @@
     }
 }
 
+LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    LogPrint(level, fmt, args);
+    va_end(args);
+}
+
 #if defined(ANDROID_PLATFORM)
 #include <android/log.h>
 
 constexpr int32_t LOG_LEVEL[] = { ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR,
     ANDROID_LOG_FATAL };
 
-LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
+LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args)
 {
     std::string newFmt(fmt);
     StripFormatString("{public}", newFmt);
     StripFormatString("{private}", newFmt);
-    va_list args;
-    va_start(args, fmt);
     __android_log_vprint(LOG_LEVEL[static_cast<int>(level)], PLUGIN_LOG_TAG, newFmt.c_str(), args);
-    va_end(args);
 }
 
 #elif defined(IOS_PLATFORM)
@@ -46,20 +49,19 @@ LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
 
 constexpr uint32_t MAX_BUFFER_SIZE = 4096;
 
-LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
+LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args)
 {
     std::string newFmt(fmt);
     StripFormatString("{public}", newFmt);
     StripFormatString("{private}", newFmt);
-    va_list args;
-    va_start(args, fmt);
     char buf[MAX_BUFFER_SIZE] = { '\0' };
     int ret = vsnprintf_s(buf, sizeof(buf), sizeof(buf) - 1, newFmt.c_str(), args);
     if (ret < 0) {
         return;
     }
-    va_end(args);
     printf("%s\r\n", buf);
     fflush(stdout);
 }
+#else
+LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args) {}
 #endif
