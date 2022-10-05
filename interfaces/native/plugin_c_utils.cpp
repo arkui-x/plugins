@@ -91,6 +91,7 @@ int64_t OH_Plugin_GetCInt64(napi_value value, napi_env env)
 
 void OH_Plugin_EmitAsyncCallbackWork(OH_Plugin_AsyncCallbackInfo* asyncCallbackInfo)
 {
+    constexpr int ARGCOUNT = 2;
     if (asyncCallbackInfo == nullptr) {
         return;
     }
@@ -102,18 +103,27 @@ void OH_Plugin_EmitAsyncCallbackWork(OH_Plugin_AsyncCallbackInfo* asyncCallbackI
             OH_Plugin_AsyncCallbackInfo* asyncCallbackInfo = (OH_Plugin_AsyncCallbackInfo*)data;
             napi_value callback;
             napi_get_reference_value(env, asyncCallbackInfo->callback[0], &callback);
-            napi_value result = nullptr;
+            napi_value result[ARGCOUNT] = {nullptr};
             napi_value callResult = nullptr;
             if (asyncCallbackInfo->status < 0) {
                 napi_value code = nullptr;
                 napi_value message = nullptr;
                 napi_create_string_utf8(env, "-1", NAPI_AUTO_LENGTH, &code);
                 napi_create_string_utf8(env, "failed", NAPI_AUTO_LENGTH, &message);
-                napi_create_error(env, code, message, &result);
+                napi_value result_err = nullptr;
+                napi_create_error(env, code, message, &result_err);
+                result[0] = result_err;
             } else {
-                napi_get_undefined(env, &result);
+                napi_value code = nullptr;
+                napi_value message = nullptr;
+                napi_create_string_utf8(env, "0", NAPI_AUTO_LENGTH, &code);
+                napi_create_string_utf8(env, "success", NAPI_AUTO_LENGTH, &message);
+                napi_value result_err = nullptr;
+                napi_create_error(env, code, message, &result_err);
+                result[0] = result_err;
+                result[1] = asyncCallbackInfo->jsdata;
             }
-            napi_call_function(env, nullptr, callback, 2, &result, &callResult);
+            napi_call_function(env, nullptr, callback, ARGCOUNT, &result[0], &callResult);
             napi_delete_reference(env, asyncCallbackInfo->callback[0]);
             napi_delete_async_work(env, asyncCallbackInfo->asyncWork);
             delete asyncCallbackInfo;
@@ -136,7 +146,7 @@ void OH_Plugin_EmitPromiseWork(OH_Plugin_AsyncCallbackInfo* asyncCallbackInfo)
             napi_value result = nullptr;
             napi_get_undefined(env, &result);
             if (asyncCallbackInfo->status == 0) {
-                napi_resolve_deferred(env, asyncCallbackInfo->deferred, result);
+                napi_resolve_deferred(env, asyncCallbackInfo->deferred, asyncCallbackInfo->jsdata);
             } else {
                 napi_value code = nullptr;
                 napi_value message = nullptr;
