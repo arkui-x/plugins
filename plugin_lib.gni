@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 
 common_plugin_libs = [
   "fileio",
+  "hitrace_meter",
   "test_plugin",
 ]
 
