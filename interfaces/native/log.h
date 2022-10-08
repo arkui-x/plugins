@@ -17,6 +17,7 @@
 #define PLUGIN_INTERFACE_NATIVE_LOG_H
 
 #include <cstdint>
+#include <string>
 
 #define __FILENAME__ strrchr(__FILE__, '/') + 1
 
@@ -37,9 +38,10 @@ enum class LogLevel : uint32_t {
 };
 
 LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...);
+LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args);
 
 #define LOG_PRINT(Level, fmt, ...) \
-    LogPrint(LogLevel::Level, "[%-20s(%s)] " fmt, __FILENAME__, __FUNCTION__, ##__VA_ARGS__);
+    LogPrint(LogLevel::Level, "[%-20s(%s)] " fmt, __FILENAME__, __FUNCTION__, ##__VA_ARGS__)
 
 #define LOGF(fmt, ...) LOG_PRINT(Fatal, fmt, ##__VA_ARGS__)
 #define LOGE(fmt, ...) LOG_PRINT(Error, fmt, ##__VA_ARGS__)
