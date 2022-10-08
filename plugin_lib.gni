@@ -13,7 +13,10 @@
 
 import("//build/ohos.gni")
 
-common_plugin_libs = [ "test_plugin" ]
+common_plugin_libs = [
+  "hitrace_meter",
+  "test_plugin",
+]
 
 template("plugin_lib") {
   forward_variables_from(invoker, "*")
