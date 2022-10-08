@@ -1,0 +1,92 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+fileio_dirs =
+    "//foundation/distributeddatamgr/distributedfile/interfaces/kits/js"
+
+file_common_src = [
+  "$fileio_dirs/src/common/napi/n_async/n_async_work_callback.cpp",
+  "$fileio_dirs/src/common/napi/n_async/n_async_work_promise.cpp",
+  "$fileio_dirs/src/common/napi/n_async/n_ref.cpp",
+  "$fileio_dirs/src/common/napi/n_class.cpp",
+  "$fileio_dirs/src/common/napi/n_func_arg.cpp",
+  "$fileio_dirs/src/common/napi/n_val.cpp",
+  "class_file/uni_error.cpp",
+]
+
+template("napi_fileio_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    include_dirs = [
+      "$fileio_dirs/src",
+      "$fileio_dirs/src/common/napi",
+      "$fileio_dirs/src/common",
+      "$fileio_dirs/src/common/napi/n_async",
+      "$fileio_dirs/src/common/file_helper",
+      "$fileio_dirs/src/mod_fileio/properties",
+      "$root_out_dir/arkui/framework",
+      "//plugins/fileio",
+      "//plugins/fileio/class_stat",
+      "//plugins/interfaces",
+      "//plugins/hilog/include",
+    ]
+
+    sources = file_common_src
+    sources += [
+      "$fileio_dirs/src/mod_fileio/common_func.cpp",
+      "$fileio_dirs/src/mod_fileio/properties/close.cpp",
+      "$fileio_dirs/src/mod_fileio/properties/fstat.cpp",
+      "class_file/open.cpp",
+      "class_file/prop_n_exporter.cpp",
+      "class_stat/stat_n_exporter.cpp",
+      "module.cpp",
+    ]
+
+    deps = [
+      "//foundation/arkui/napi:ace_napi",
+      "//plugins/interfaces/native:plugin_log",
+      "//third_party/bounds_checking_function:libsec_static",
+    ]
+
+    subsystem_name = "plugins"
+    part_name = "fileio"
+  }
+}
+
+foreach(item, ace_platforms) {
+  napi_fileio_static("fileio_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
