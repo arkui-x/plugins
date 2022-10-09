@@ -16,8 +16,8 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 
 ohos_source_set("i18n_plugin_ios") {
   sources = [
-    "i18n_plugin_impl.mm",
     "i18n_plugin.m",
+    "i18n_plugin_impl.mm",
   ]
 
   defines = [ "IOS_PLATFORM" ]
