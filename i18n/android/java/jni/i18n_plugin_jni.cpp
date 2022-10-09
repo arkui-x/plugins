@@ -37,7 +37,6 @@ struct {
     jmethodID is24HourClock;
     jobject globalRef;
 } g_pluginClass;
-
 } // namespace
 
 bool I18NPluginJni::Register(void* env)

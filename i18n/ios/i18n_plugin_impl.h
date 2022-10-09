@@ -18,7 +18,6 @@
 #include "plugins/i18n/i18n.h"
 
 namespace OHOS::Plugin {
-
 class I18NPluginImpl final : public I18N {
 public:
     I18NPluginImpl() = default;
@@ -26,7 +25,5 @@ public:
 
     bool Is24HourClock() override;
 };
-
 } // namespace OHOS::Plugin
-
 #endif // PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H
