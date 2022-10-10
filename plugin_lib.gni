@@ -18,6 +18,7 @@ common_plugin_libs = [
   "fileio",
   "hitrace_meter",
   "i18n",
+  "request",
   "test_plugin",
 ]
 
