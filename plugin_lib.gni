@@ -14,11 +14,13 @@
 import("//build/ohos.gni")
 
 common_plugin_libs = [
+  "common_event",
   "display",
   "fileio",
   "hitrace_meter",
   "i18n",
   "net/http",
+  "request",
   "test_plugin",
 ]
 
