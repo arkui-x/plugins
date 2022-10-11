@@ -21,6 +21,7 @@ common_plugin_libs = [
   "i18n",
   "request",
   "test_plugin",
+  "resource_manager",
 ]
 
 template("plugin_lib") {
