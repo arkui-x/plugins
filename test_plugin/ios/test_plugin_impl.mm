@@ -37,4 +37,10 @@ void TestPluginImpl::Hello()
     });
 }
 
+std::string TestPluginImpl::GetFilesDir()
+{
+    NSString *filesDir = [[iOSTestPlugin shareintance] getFilesDir];
+    return std::string([filesDir UTF8String]);
+}
+
 } // namespace OHOS::Plugin
