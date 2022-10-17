@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 +(instancetype)shareintance;
 -(void)hello;
+-(NSString*)getFilesDir;
 
 @end
 

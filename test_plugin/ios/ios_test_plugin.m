@@ -30,4 +30,8 @@
     NSLog(@"TestPlugin: Hello from ios");
 }
 
+-(NSString*)getFilesDir{
+    return NSTemporaryDirectory();
+}
+
 @end

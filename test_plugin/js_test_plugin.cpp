@@ -37,10 +37,33 @@ static napi_value JSTestPluginHello(napi_env env, napi_callback_info info)
     return nullptr;
 }
 
+#ifdef IOS_PLATFORM
+static napi_value JSTestPluginGetFilesDir(napi_env env, napi_callback_info info)
+{
+    auto plugin = TestPlugin::Create();
+    if (!plugin) {
+        LOGW("JSTestPluginGetFilesDir: testPlugin null return");
+        return nullptr;
+    }
+    std::string filesPath = plugin->GetFilesDir();
+    const char *filesPathStr = filesPath.c_str();
+    napi_value result = nullptr;
+    napi_status status = napi_create_string_utf8(env, filesPathStr, strlen(filesPathStr), &result);
+    if (status != napi_ok) {
+        LOGE("JSTestPluginGetFilesDir: failed to create string item");
+        return nullptr;
+    }
+    return result;
+}
+#endif
+
 static napi_value TestPluginExport(napi_env env, napi_value exports)
 {
     static napi_property_descriptor desc[] = {
         DECLARE_NAPI_FUNCTION("hello", JSTestPluginHello),
+#ifdef IOS_PLATFORM
+        DECLARE_NAPI_FUNCTION("getFilesDir", JSTestPluginGetFilesDir),
+#endif
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     return exports;
