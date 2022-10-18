@@ -20,6 +20,7 @@ common_plugin_libs = [
   "hitrace_meter",
   "i18n",
   "multimedia_image",
+  "ndk_raw_file",
   "net/http",
   "request",
   "test_plugin",
