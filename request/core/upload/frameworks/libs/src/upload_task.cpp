@@ -246,7 +246,7 @@ void UploadTask::ReportTaskFault(uint32_t ret) const
 
 std::time_t UploadTask::GetCurTimestamp()
 {
-    auto tp = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+    auto tp = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
     return tp.time_since_epoch().count();
 }
 
