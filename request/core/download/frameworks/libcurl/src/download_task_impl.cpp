@@ -425,7 +425,6 @@ int DownloadTaskImpl::ProgressCallback(void *pParam, double dltotal, double dlno
         if (task->prevSize_ != task->downloadSize_) {
             std::lock_guard<std::recursive_mutex> autoLock(task->mutex_);
             if (task->status_ != SESSION_PAUSED) {
-                task->eventCb_("progress", task->GetId(), task->downloadSize_, task->totalSize_);
                 task->PublishNotification(task->config_.IsBackground(), task->prevSize_,
                                           task->downloadSize_, task->totalSize_);
                 task->prevSize_ = task->downloadSize_;
@@ -813,6 +812,8 @@ void DownloadTaskImpl::PublishNotification(bool background, uint32_t percent)
 
     DOWNLOAD_HILOGI("publish download notification: task:%d, pid:%d, filepath:%s percent:%d",
         GetId(), pid, filePath.data(), percent);
+    
+    eventCb_("progress", GetId(), downloadSize_, totalSize_);
 }
 
 void DownloadTaskImpl::PublishNotification(bool background, uint32_t prevSize,

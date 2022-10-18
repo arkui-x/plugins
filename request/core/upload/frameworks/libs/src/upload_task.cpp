@@ -157,6 +157,7 @@ uint32_t UploadTask::InitFileArray()
         fileArray_.push_back(data);
         totalSize_ += fileSize;
     }
+    lastTimestamp_ = GetCurTimestamp();
 
     return initResult;
 }
@@ -243,6 +244,12 @@ void UploadTask::ReportTaskFault(uint32_t ret) const
     }
 }
 
+std::time_t UploadTask::GetCurTimestamp()
+{
+    auto tp = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
+    return tp.time_since_epoch().count();
+}
+
 void UploadTask::OnProgress(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnProgress. In.");
@@ -255,8 +262,13 @@ void UploadTask::OnProgress(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ult
     if (uploadedSize_ == totalSize_) {
         state_ = STATE_SUCCESS;
     }
-    if (progressCallback_) {
-        progressCallback_->Progress(uploadedSize_, totalSize_);
+
+    std::time_t curTimestamp = GetCurTimestamp();
+    if ((curTimestamp - lastTimestamp_) >= NOTIFICATION_FREQUENCY || uploadedSize_ == totalSize_) {
+        if (progressCallback_) {
+            progressCallback_->Progress(uploadedSize_, totalSize_);
+        }
+        lastTimestamp_ = GetCurTimestamp();
     }
 }
 

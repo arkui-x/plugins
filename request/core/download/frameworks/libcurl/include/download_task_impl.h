@@ -106,7 +106,7 @@ private:
     uint32_t prevSize_;
     static constexpr uint32_t HUNDRED_PERCENT = 100;
     static constexpr uint32_t TEN_PERCENT_THRESHOLD = 10;
-    static constexpr uint32_t NOTIFICATION_FREQUENCY = 2000;
+    static constexpr uint32_t NOTIFICATION_FREQUENCY = 200;
     std::time_t lastTimestamp_ = 0;
 
     std::unique_ptr<std::thread> thread_ = {};

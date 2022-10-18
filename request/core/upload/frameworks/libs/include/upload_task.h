@@ -57,6 +57,7 @@ public:
     virtual void OnFail();
     virtual void OnComplete();
     std::vector<std::string> StringSplit(const std::string &str, char delim);
+    std::time_t GetCurTimestamp();
 
 protected:
     uint32_t InitFileArray();
@@ -93,6 +94,8 @@ private:
     std::mutex mutex_;
     std::thread::native_handle_type thread_handle_;
     static constexpr int USLEEP_INTERVEL_BEFOR_RUN = 50 * 1000;
+    std::time_t lastTimestamp_ = 0;
+    static constexpr uint32_t NOTIFICATION_FREQUENCY = 200;
 };
 } // end of  OHOS::Plugin::Request::Upload
 #endif
