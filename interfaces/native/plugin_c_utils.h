@@ -26,7 +26,7 @@
 #include "jni.h"
 
 // Android plugin utils
-JNIEnv* OH_Plugin_GetJniEnv();
+JNIEnv* OH_Plugin_GetJniEnv(bool isDetach = true);
 
 void OH_Plugin_RegisterPlugin(bool (*func)(void*), const char* name);
 #endif

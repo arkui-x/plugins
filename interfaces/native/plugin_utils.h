@@ -16,6 +16,7 @@
 #ifndef PLUGIN_INTERFACE_NATIVE_PLUGIN_UTILS_H
 #define PLUGIN_INTERFACE_NATIVE_PLUGIN_UTILS_H
 
+#include <chrono>
 #include <string>
 
 #ifndef PLUGIN_EXPORT
@@ -51,6 +52,7 @@ class PLUGIN_EXPORT PluginUtils {
 public:
     static void RegisterPlugin(RegisterCallback callback, const std::string& packageName);
     static void RunTaskOnPlatform(const Task& task);
+    static void RunSyncTaskOnLocal(const Task& task, std::chrono::milliseconds timeout);
     static void RunTaskOnJS(const Task& task);
     static void RunSyncTaskOnJS(const Task& task);
 };

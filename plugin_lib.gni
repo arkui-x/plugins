@@ -22,6 +22,7 @@ common_plugin_libs = [
   "multimedia_image",
   "net/http",
   "request",
+  "running_lock",
   "test_plugin",
   "resource_manager",
 ]
