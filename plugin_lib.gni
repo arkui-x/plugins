@@ -23,6 +23,7 @@ common_plugin_libs = [
   "ndk_raw_file",
   "net/http",
   "request",
+  "running_lock",
   "test_plugin",
   "resource_manager",
 ]

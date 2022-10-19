@@ -24,9 +24,9 @@
 #ifdef ANDROID_PLATFORM
 #include "adapter/android/entrance/java/jni/jni_environment.h"
 
-JNIEnv* OH_Plugin_GetJniEnv()
+JNIEnv* OH_Plugin_GetJniEnv(bool isDetach)
 {
-    return OHOS::Ace::Platform::JniEnvironment::GetInstance().GetJniEnv().get();
+    return OHOS::Ace::Platform::JniEnvironment::GetInstance().GetJniEnv(nullptr, isDetach).get();
 }
 
 void OH_Plugin_RegisterPlugin(bool (*func)(void*), const char* name)
