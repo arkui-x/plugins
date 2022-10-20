@@ -117,7 +117,7 @@ void RunningLockJni::Init(const std::string &name, RunningLockType type, Running
 bool RunningLockJni::IsUsed()
 {
     LOGI("RunningLockJni JNI: IsUsed");
-    auto env = OH_Plugin_GetJniEnv(false);
+    auto env = OH_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, false);
     CHECK_NULL_RETURN(g_pluginClass.globalRef, false);
     CHECK_NULL_RETURN(g_pluginClass.isUsed, false);
