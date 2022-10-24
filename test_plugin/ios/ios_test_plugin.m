@@ -17,7 +17,7 @@
 
 @implementation iOSTestPlugin
 
-+ (instancetype)shareintance{
++ (instancetype)shareinstance{
     static dispatch_once_t onceToken;
     static iOSTestPlugin *instance = nil;
     dispatch_once(&onceToken, ^{

@@ -24,6 +24,6 @@ std::unique_ptr<I18N> I18N::Create()
 
 bool I18NPluginImpl::Is24HourClock()
 {
-    return [[iOSI18NPlugin shareintance] is24HourClock];
+    return [[iOSI18NPlugin shareinstance] is24HourClock];
 }
 } // namespace OHOS::Plugin

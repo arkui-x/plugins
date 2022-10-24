@@ -17,7 +17,7 @@
 
 @implementation iOSI18NPlugin
 
-+(instancetype)shareintance{
++(instancetype)shareinstance{
     static dispatch_once_t onceToken;
     static iOSI18NPlugin *instance = nil;
     dispatch_once(&onceToken, ^{

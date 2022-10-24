@@ -20,7 +20,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iOSI18NPlugin : NSObject
-+(instancetype)shareintance;
++(instancetype)shareinstance;
 -(bool)is24HourClock;
 @end
 
