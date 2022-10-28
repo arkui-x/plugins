@@ -43,11 +43,11 @@ http_include = [
   "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/include",
   "$NETSTACK_NAPI_ROOT/http/cache/md5/include",
   "$NETSTACK_NAPI_ROOT/http/constant/include",
-  "$NETSTACK_NAPI_ROOT/http/http_exec/include",
   "$NETSTACK_NAPI_ROOT/http/http_module/include",
   "$NETSTACK_NAPI_ROOT/http/options/include",
   "//plugins/hilog/include",
   "//plugins/interfaces",
+  "//plugins/net/http",
   "//third_party/curl/include",
   "//third_party/glib/glib",
   "//third_party/glib",
@@ -69,10 +69,10 @@ http_sources = [
   "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache_disk_handler.cpp",
   "$NETSTACK_NAPI_ROOT/http/cache/md5/src/calculate_md5.cpp",
   "$NETSTACK_NAPI_ROOT/http/constant/src/constant.cpp",
-  "$NETSTACK_NAPI_ROOT/http/http_exec/src/http_exec.cpp",
   "$NETSTACK_NAPI_ROOT/http/http_module/src/http_module.cpp",
   "$NETSTACK_NAPI_ROOT/http/options/src/http_request_options.cpp",
   "$NETSTACK_NAPI_ROOT/http/options/src/http_response.cpp",
+  "http_exec.cpp",
 ]
 
 template("plugin_net_http_static") {
