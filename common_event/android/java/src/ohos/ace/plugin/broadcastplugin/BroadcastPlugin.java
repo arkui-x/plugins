@@ -56,6 +56,25 @@ public class BroadcastPlugin {
         nativeInit();
     }
 
+    /**
+     * BroadcastPlugin
+     *
+     * @param context context of the application
+     * @param isNativeInit call nativeInit or not
+     */
+    public BroadcastPlugin(Context context, boolean isNativeInit) {
+        if (context != null) {
+            this.context = context;
+        } else {
+            Log.e(LOG_TAG, "context is null");
+        }
+        this.broadcastReceiverMap = new HashMap<>();
+        if (isNativeInit) {
+            nativeInit();
+        }
+    }
+
+
     public boolean sendBroadcast(String action, String json) {
         if (context == null) {
             return false;
