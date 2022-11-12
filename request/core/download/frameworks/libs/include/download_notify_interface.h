@@ -22,7 +22,7 @@ public:
     DownloadNotifyInterface() = default;
     virtual ~DownloadNotifyInterface() = default;
 
-    virtual void OnCallBack(uint32_t firstArgv, uint32_t secondArgv) = 0;
+    virtual void OnCallBack(const std::vector<uint32_t> &params) = 0;
 };
 } // namespace OHOS::Plugin::Request::Download
 #endif // PLUGINS_REQUEST_DOWNLOAD_NOTIFY_INTERFACE_H

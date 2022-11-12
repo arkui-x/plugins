@@ -36,8 +36,6 @@ ohos_source_set("downloadsingle") {
     "src/async_call.cpp",
     "src/download_base_notify.cpp",
     "src/download_event.cpp",
-    "src/download_fail_notify.cpp",
-    "src/download_progress_notify.cpp",
     "src/download_remove.cpp",
     "src/download_task_napi.cpp",
     "src/napi_utils.cpp",

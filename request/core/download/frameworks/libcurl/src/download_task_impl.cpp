@@ -34,6 +34,7 @@
 namespace OHOS::Plugin::Request::Download {
 static const std::string URL_HTTPS = "https";
 static constexpr uint32_t MAX_RETRY_TIMES = 3;
+static std::string TLS_VERSION_DEFAULT = "CURL_SSLVERSION_TLSv1_2";
 DownloadTaskImpl::DownloadTaskImpl(uint32_t taskId, const DownloadConfig &config)
     : DownloadTask(taskId), config_(config), status_(SESSION_UNKNOWN), code_(ERROR_UNKNOWN),
       reason_(PAUSED_UNKNOWN), mimeType_(""), totalSize_(0), downloadSize_(0), isPartialMode_(false),
@@ -48,6 +49,8 @@ DownloadTaskImpl::~DownloadTaskImpl(void)
         close(config_.GetFD());
         config_.SetFD(-1);
     }
+
+    eventCb_ = nullptr;
 }
 
 void DownloadTaskImpl::ExecuteTask()
@@ -79,7 +82,7 @@ bool DownloadTaskImpl::Run()
         if (!IsSatisfiedConfiguration()) {
             DOWNLOAD_HILOGI("networktype not Satisfied Configuration");
             ForceStopRunning();
-            SetStatus(SESSION_FAILED, ERROR_UNKNOWN, PAUSED_WAITING_FOR_NETWORK);
+            SetStatus(SESSION_FAILED, ERROR_UNSUPPORTED_NETWORK_TYPE, PAUSED_UNKNOWN);
             break;
         }
         enableTimeout = false;
@@ -87,7 +90,7 @@ bool DownloadTaskImpl::Run()
             break;
         }
         if (!GetFileSize(totalSize_)) {
-            SetStatus(SESSION_FAILED, ERROR_UNKNOWN, PAUSED_UNKNOWN);
+            SetStatus(SESSION_FAILED, ERROR_HTTP_DATA_ERROR, PAUSED_UNKNOWN);
             break;
         }
 
@@ -101,14 +104,13 @@ bool DownloadTaskImpl::Run()
             enableTimeout = true;
             retryTime++;
         }
-    } while (!result && enableTimeout && retryTime < retryTime_ && !isRemoved_);
-
-    if (isRemoved_) {
-        SetStatus(SESSION_SUCCESS);
-    }
-
+    } while (!result && enableTimeout && retryTime < retryTime_);
     if (retryTime >= retryTime_) {
         SetStatus(SESSION_PAUSED, ERROR_UNKNOWN, PAUSED_WAITING_TO_RETRY);
+    }
+
+    if (status_ == SESSION_RUNNING) {
+        SetStatus(SESSION_PAUSED, ERROR_UNKNOWN, PAUSED_UNKNOWN);
     }
 
     DOWNLOAD_HILOGI("Task[%{public}d] end, result:%{public}d", GetId(), result);
@@ -208,6 +210,11 @@ void DownloadTaskImpl::SetStatus(DownloadStatus status, ErrorCode code, PausedRe
                 break;
         }
     }
+}
+
+bool DownloadTaskImpl::IsRunning()
+{
+    return (status_ == SESSION_RUNNING);
 }
 
 void DownloadTaskImpl::SetStatus(DownloadStatus status)
@@ -413,7 +420,7 @@ int DownloadTaskImpl::ProgressCallback(void *pParam, double dltotal, double dlno
     if (task != nullptr) {
         if (task->isRemoved_) {
             DOWNLOAD_HILOGI("download task has been removed");
-            return  0;
+            return HTTP_FORCE_STOP;
         }
         if (task->forceStop_) {
             DOWNLOAD_HILOGI("Pause issued by user");
@@ -774,11 +781,17 @@ bool DownloadTaskImpl::SetHttpsCertificationOption(CURL *curl)
         return false;
     }
     struct curl_blob blob;
-    blob.data = const_cast<char*>(certInfo.c_str());
+    blob.data = const_cast<char *>(certInfo.c_str());
     blob.len = certInfo.size();
     blob.flags = CURL_BLOB_COPY;
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
+    std::string version = TLS_VERSION_DEFAULT;
+    std::map<std::string, std::string>::const_iterator iter = config_.GetHeader().find(tlsVersion);
+    if (iter != config_.GetHeader().end()) {
+        version = iter->second;
+        DOWNLOAD_HILOGI("version changes: %{public}s", version.c_str());
+    }
+    curl_easy_setopt(curl, CURLOPT_SSLVERSION, version.c_str());
+    DOWNLOAD_HILOGI("security version is: %{public}s", version.c_str());
     CURLcode code = curl_easy_setopt(curl, CURLOPT_CAINFO_BLOB, &blob);
     if (code != CURLE_OK) {
         return false;
@@ -791,7 +804,7 @@ std::string DownloadTaskImpl::ReadCertification()
 {
     std::ifstream inFile(std::string(HTTP_DEFAULT_CA_PATH), std::ios::in | std::ios::binary);
     if (!inFile.is_open()) {
-        DOWNLOAD_HILOGE("open cacert.pem faild");
+        DOWNLOAD_HILOGE("open cacert.pem failed");
         return "";
     }
     std::stringstream buf;
@@ -812,8 +825,9 @@ void DownloadTaskImpl::PublishNotification(bool background, uint32_t percent)
 
     DOWNLOAD_HILOGI("publish download notification: task:%d, pid:%d, filepath:%s percent:%d",
         GetId(), pid, filePath.data(), percent);
-    
-    eventCb_("progress", GetId(), downloadSize_, totalSize_);
+    if (eventCb_ != nullptr) {
+        eventCb_("progress", GetId(), downloadSize_, totalSize_);
+    }
 }
 
 void DownloadTaskImpl::PublishNotification(bool background, uint32_t prevSize,
@@ -824,7 +838,7 @@ void DownloadTaskImpl::PublishNotification(bool background, uint32_t prevSize,
     }
     if (prevSize == 0) {
         PublishNotification(background, 0);
-        lastTimestamp_ =  GetCurTimestamp();
+        lastTimestamp_ = GetCurTimestamp();
     } else {
         uint32_t percent = ProgressNotification(prevSize, downloadSize, totalSize);
         if (percent > 0) {

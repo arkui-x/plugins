@@ -15,6 +15,7 @@
 
 #include "download_task.h"
 
+#include <vector>
 #include "log.h"
 
 namespace OHOS::Plugin::Request::Download {
@@ -29,6 +30,8 @@ DownloadTask::DownloadTask(uint32_t taskId) : taskId_(taskId)
 
 DownloadTask::~DownloadTask()
 {
+    DOWNLOAD_HILOGD("Destructed download task [%{public}d]", GetId());
+    std::lock_guard<std::mutex> autoLock(mutex_);
     listenerMap_.clear();
     supportEvents_.clear();
 }
@@ -79,7 +82,10 @@ void DownloadTask::OnCallBack(const std::string &type, uint32_t argv1, uint32_t 
         DOWNLOAD_HILOGE("no event listener");
         return;
     }
-    it->second->OnCallBack(argv1, argv2);
+    std::vector<uint32_t> params;
+    params.push_back(argv1);
+    params.push_back(argv2);
+    it->second->OnCallBack(params);
 }
 
 bool DownloadTask::IsSupportType(const std::string &type)

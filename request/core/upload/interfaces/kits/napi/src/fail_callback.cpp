@@ -30,7 +30,9 @@ FailCallback::FailCallback(ICallbackAbleJudger *judger, napi_env env, napi_value
 
 FailCallback::~FailCallback()
 {
-    napi_delete_reference(env_, callback_);
+    if (callback_ != nullptr) {
+        napi_delete_reference(env_, callback_);
+    }
 }
 
 napi_ref FailCallback::GetCallback()
@@ -62,8 +64,11 @@ void FailCallback::Fail(const std::vector<TaskState> &taskStates)
                     delete data;
                     delete work;
             });
-            if (failWorker == nullptr) {
-                UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Fail. uv_queue_work callback removed!!");
+            if (!failWorker || !failWorker->callback) {
+                return;
+            }
+            if (!failWorker->judger->JudgeFail(failWorker->callback)) {
+                UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Notify. uv_queue_work callback removed!!");
                 return;
             }
             napi_value callback = nullptr;

@@ -20,10 +20,10 @@
 #include <pthread.h>
 #include <thread>
 #include <vector>
+#include <curl/curl.h>
+#include <curl/easy.h>
 
 #include "curl_adp.h"
-#include "curl/curl.h"
-#include "curl/easy.h"
 #include "i_complete_callback.h"
 #include "i_fail_callback.h"
 #include "i_progress_callback.h"
@@ -54,17 +54,27 @@ public:
 
     UPLOAD_API virtual void SetCallback(Type type, void *callback);
     virtual void OnProgress(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+
     virtual void OnFail();
     virtual void OnComplete();
     std::vector<std::string> StringSplit(const std::string &str, char delim);
     std::time_t GetCurTimestamp();
-
+    bool IsRunning();
+    void SetUploadTaskRelease(IUploadTaskRelease *task, void *arg)
+    {
+        uploadTaskRelease_ = task;
+        uploadTaskData_ = arg;
+    }
+    void UploadTaskRelease();
 protected:
     uint32_t InitFileArray();
     void ClearFileArray();
     uint32_t CheckConfig();
     std::string GetCodeMessage(uint32_t code);
     std::vector<TaskState> GetTaskStates();
+    IUploadTaskRelease *uploadTaskRelease_ = nullptr;
+    void *uploadTaskData_ = nullptr;
+
 private:
     void ReportTaskFault(uint32_t ret) const;
     uint32_t StartUploadFile();
@@ -79,19 +89,19 @@ private:
     static constexpr const char *SUCCESS_FILE_NUM = "SUCCESS_FILE_NUM";
     static constexpr const char *ERROR_INFO = "ERROR_INFO";
 
-    IProgressCallback *progressCallback_;
-    IFailCallback *failCallback_;
-    ICompleteCallback *completeCallback_;
+    IProgressCallback *progressCallback_ = nullptr;
+    IFailCallback *failCallback_ = nullptr;
+    ICompleteCallback *completeCallback_ = nullptr;
 
     std::shared_ptr<CUrlAdp> curlAdp_;
     int64_t uploadedSize_;
     int64_t totalSize_;
     std::vector<std::string> headerArray_;
     std::string header_;
-    std::vector<FileData> fileArray_;
+    std::vector<FileData> fileDatas_;
     std::vector<TaskState> taskStates_;
     UploadTaskState state_;
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
     std::thread::native_handle_type thread_handle_;
     static constexpr int USLEEP_INTERVEL_BEFOR_RUN = 50 * 1000;
     std::time_t lastTimestamp_ = 0;

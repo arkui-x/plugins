@@ -18,9 +18,11 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "napi/native_api.h"
 #include "napi/native_common.h"
+#include "constant.h"
 
 namespace OHOS::Plugin::Request::Download::NapiUtils {
 static constexpr int32_t MAX_ARGC = 6;
@@ -36,14 +38,22 @@ static constexpr int32_t THIRD_ARGV = 2;
 static constexpr int32_t MAX_NUMBER_BYTES = 8;
 static constexpr int32_t MAX_LEN = 4096;
 
+static const std::map<ExceptionErrorCode, std::string> ErrorCodeToMsg {
+    {EXCEPTION_PERMISSION, EXCEPTION_PERMISSION_INFO },
+    {EXCEPTION_PARAMETER_CHECK, EXCEPTION_PARAMETER_CHECK_INFO },
+    {EXCEPTION_UNSUPPORTED, EXCEPTION_UNSUPPORTED_INFO },
+    {EXCEPTION_FILE_IO, EXCEPTION_FILE_IO_INFO },
+    {EXCEPTION_FILE_PATH, EXCEPTION_FILE_PATH_INFO },
+    {EXCEPTION_SERVICE_ERROR, EXCEPTION_SERVICE_ERROR_INFO },
+    {EXCEPTION_OTHER, EXCEPTION_OTHER_INFO },
+};
+
 napi_valuetype GetValueType(napi_env env, napi_value value);
 
 /* named property */
 bool HasNamedProperty(napi_env env, napi_value object, const std::string &propertyName);
 
 napi_value GetNamedProperty(napi_env env, napi_value object, const std::string &propertyName);
-
-void SetNamedProperty(napi_env env, napi_value object, const std::string &name, napi_value value);
 
 std::vector<std::string> GetPropertyNames(napi_env env, napi_value object);
 
@@ -61,10 +71,6 @@ napi_value CreateInt32(napi_env env, int32_t code);
 
 int32_t GetInt32FromValue(napi_env env, napi_value value);
 
-int32_t GetInt32Property(napi_env env, napi_value object, const std::string &propertyName);
-
-void SetInt32Property(napi_env env, napi_value object, const std::string &name, int32_t value);
-
 /* String UTF8 */
 napi_value CreateStringUtf8(napi_env env, const std::string &str);
 
@@ -73,13 +79,6 @@ std::string GetStringFromValueUtf8(napi_env env, napi_value value);
 std::string GetStringPropertyUtf8(napi_env env, napi_value object, const std::string &propertyName);
 
 void SetStringPropertyUtf8(napi_env env, napi_value object, const std::string &name, const std::string &value);
-
-/* array buffer */
-bool ValueIsArrayBuffer(napi_env env, napi_value value);
-
-void *GetInfoFromArrayBufferValue(napi_env env, napi_value value, size_t *length);
-
-napi_value CreateArrayBuffer(napi_env env, size_t length, void **data);
 
 /* object */
 napi_value CreateObject(napi_env env);
@@ -90,25 +89,18 @@ napi_value GetUndefined(napi_env env);
 /* function */
 napi_value CallFunction(napi_env env, napi_value recv, napi_value func, size_t argc, const napi_value *argv);
 
-napi_value CreateFunction(napi_env env, const std::string &name, napi_callback func, void *arg);
-
-/* reference */
-napi_ref CreateReference(napi_env env, napi_value callback);
-
-napi_value GetReference(napi_env env, napi_ref callbackRef);
-
-void DeleteReference(napi_env env, napi_ref callbackRef);
-
 /* boolean */
 bool GetBooleanProperty(napi_env env, napi_value object, const std::string &propertyName);
 
-void SetBooleanProperty(napi_env env, napi_value object, const std::string &name, bool value);
-
-/* define properties */
-void DefineProperties(
-    napi_env env, napi_value object, const std::initializer_list<napi_property_descriptor> &properties);
-
 std::string ToLower(const std::string &s);
+
+int32_t GetParameterNumber(napi_env env, napi_callback_info info, napi_value *argv, napi_value *this_arg);
+
+void ThrowError(napi_env env, const ExceptionErrorCode &code, const std::string &msg);
+
+napi_value CreateBusinessError(napi_env env, const ExceptionErrorCode &errorCode, const std::string &msg);
+
+bool CheckParameterCorrect(napi_env env, napi_callback_info info, const std::string &type, ExceptionError &err);
 } // namespace OHOS::Plugin::Request::Download::NapiUtils
 
 #endif /* PLUGINS_REQUEST_DOWNLOAD_NAPI_UTILS_H */

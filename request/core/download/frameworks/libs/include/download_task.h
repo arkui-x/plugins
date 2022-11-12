@@ -32,7 +32,11 @@ static constexpr const char *EVENT_FAIL = "fail";
 
 namespace OHOS::Plugin::Request::Download {
     using DownloadTaskCallback = void(*)(const std::string& type, uint32_t taskId, uint32_t argv1, uint32_t argv2);
-
+enum ParamNumber {
+    NO_PARAMETER,
+    ONE_PARAMETER,
+    TWO_PARAMETER,
+};
 class DownloadTask : public NoCopyable {
 public:
     explicit DownloadTask(uint32_t taskId);
@@ -43,6 +47,7 @@ public:
     virtual void ExecuteTask() = 0;
     virtual bool Remove() = 0;
     virtual void InstallCallback(DownloadTaskCallback cb) = 0;
+    virtual bool IsRunning() = 0;
 
     uint32_t GetId() const;
 

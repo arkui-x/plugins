@@ -28,30 +28,25 @@ namespace OHOS::Plugin::Request::Download {
 struct NotifyData {
     napi_env env;
     napi_ref ref;
-    std::string type;
-    DownloadTask *task;
-    uint32_t firstArgv;
-    uint32_t secondArgv;
+    uint32_t paramNumber;
+    std::mutex mutex;
+    std::vector<uint32_t> params;
 };
-
+struct NotifyDataPtr {
+    std::shared_ptr<NotifyData> notifyData;
+};
 class DownloadBaseNotify : public DownloadNotifyInterface {
 public:
     ACE_DISALLOW_COPY_AND_MOVE(DownloadBaseNotify);
 
-    explicit DownloadBaseNotify(napi_env env, const std::string &type, const DownloadTask *task, napi_ref ref);
+    explicit DownloadBaseNotify(napi_env env, uint32_t paramNumber, napi_ref ref);
     virtual ~DownloadBaseNotify();
 
-    void OnCallBack(uint32_t firstArgv, uint32_t secondArgv) override;
+    void OnCallBack(const std::vector<uint32_t> &params) override;
+    NotifyDataPtr *GetNotifyDataPtr();
 
-protected:
-	NotifyData *GetNotifyData();
-
-protected:
-    napi_env env_;
-    std::string type_;
-    DownloadTask *task_;
-    napi_ref ref_;
+private:
+    std::shared_ptr<NotifyData> notifyData_;
 };
 } // namespace OHOS::Plugin::Request::Download
-
 #endif // PLUGINS_REQUEST_DOWNLOAD_BASE_NOTIFY_H

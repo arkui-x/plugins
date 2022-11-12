@@ -38,11 +38,11 @@ public:
 
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
-    static int32_t GetEventType(const std::string &type);
-	
+    static uint32_t GetParamNumber(const std::string &type);
+
 private:
-    static std::shared_ptr<DownloadNotifyInterface> CreateNotify(napi_env env,
-            const DownloadTask *task, const std::string &type, napi_ref callbackRef);
+	static std::shared_ptr<DownloadNotifyInterface> CreateNotify(napi_env env,
+        const std::string &type, napi_ref callbackRef);
 
 private:
     struct EventOffContext : public AsyncCall::Context {

@@ -37,6 +37,7 @@ public:
 
     void ExecuteTask() override;
     bool Remove() override;
+    bool IsRunning() override;
 
     bool Run();
 

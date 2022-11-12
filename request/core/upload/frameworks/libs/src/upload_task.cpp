@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
+#include "upload_task.h"
+
+#include <curl/curl.h>
+#include <curl/easy.h>
 #include <unistd.h>
 #include <thread>
-
-#include "curl/curl.h"
-#include "curl/easy.h"
-#include "upload_task.h"
 
 namespace OHOS::Plugin::Request::Upload {
 UploadTask::UploadTask(std::shared_ptr<UploadConfig> &uploadConfig)
@@ -37,11 +37,10 @@ UploadTask::UploadTask(std::shared_ptr<UploadConfig> &uploadConfig)
 UploadTask::~UploadTask()
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "~UploadTask. In.");
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
     SetCallback(TYPE_PROGRESS_CALLBACK, nullptr);
     SetCallback(TYPE_FAIL_CALLBACK, nullptr);
     SetCallback(TYPE_COMPLETE_CALLBACK, nullptr);
-    Remove();
 }
 
 bool UploadTask::Remove()
@@ -50,14 +49,13 @@ bool UploadTask::Remove()
     if (curlAdp_ != nullptr) {
         return curlAdp_->Remove();
     }
-    ClearFileArray();
     return true;
 }
 
 void UploadTask::On(Type type, void *callback)
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "On. In.");
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
     SetCallback(type, callback);
 }
 
@@ -65,7 +63,7 @@ void UploadTask::Off(Type type, void *callback)
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "Off. In.");
 
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
     if (callback == nullptr) {
         return;
     }
@@ -110,18 +108,30 @@ void UploadTask::Run(void *arg)
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "Run. In.");
     usleep(USLEEP_INTERVEL_BEFOR_RUN);
     ((UploadTask*)arg)->OnRun();
+    if (((UploadTask*)arg)->uploadConfig_ == nullptr) {
+        return;
+    }
     if (((UploadTask*)arg)->uploadConfig_->protocolVersion == "L5") {
         if (((UploadTask*)arg)->uploadConfig_->fcomplete) {
             ((UploadTask*)arg)->uploadConfig_->fcomplete();
             UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "Complete.");
         }
     }
+
+    ((UploadTask*)arg)->UploadTaskRelease();
+}
+
+void UploadTask::UploadTaskRelease()
+{
+    if (uploadTaskRelease_) {
+        uploadTaskRelease_->OnUploadTaskRelease(uploadTaskData_);
+    }
 }
 
 uint32_t UploadTask::InitFileArray()
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "InitFileArray. In.");
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
     unsigned int fileSize = 0;
     FileData data;
     FILE *file;
@@ -149,13 +159,13 @@ uint32_t UploadTask::InitFileArray()
         data.fileIndex = index++;
         data.adp = nullptr;
         data.upsize = 0;
-        data.totalsize = 0;
+        data.totalsize = fileSize;
         data.list = nullptr;
         data.headSendFlag = 0;
         data.httpCode = 0;
-        
-        fileArray_.push_back(data);
-        totalSize_ += fileSize;
+
+        fileDatas_.push_back(data);
+        totalSize_ += static_cast<int64_t>(fileSize);
     }
     lastTimestamp_ = GetCurTimestamp();
 
@@ -190,7 +200,7 @@ uint32_t UploadTask::StartUploadFile()
         return ret;
     }
 
-    curlAdp_ = std::make_shared<CUrlAdp>(fileArray_, uploadConfig_);
+    curlAdp_ = std::make_shared<CUrlAdp>(fileDatas_, uploadConfig_);
     return curlAdp_->DoUpload(this);
 }
 
@@ -217,7 +227,6 @@ std::string UploadTask::GetCodeMessage(uint32_t code)
 void UploadTask::OnRun()
 {
     std::string traceParam = "url:" + uploadConfig_->url + "file num:" + std::to_string(uploadConfig_->files.size());
-    UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnRun. In.");
     state_ = STATE_RUNNING;
     uint32_t ret = StartUploadFile();
     if (ret != UPLOAD_OK) {
@@ -226,7 +235,12 @@ void UploadTask::OnRun()
     } else {
         OnComplete();
     }
-
+    {
+        std::lock_guard<std::recursive_mutex> guard(mutex_);
+        if (state_ == STATE_RUNNING) {
+            state_ = STATE_FAILURE;
+        }
+    }
     ClearFileArray();
     totalSize_ = 0;
 }
@@ -235,7 +249,7 @@ void UploadTask::ReportTaskFault(uint32_t ret) const
 {
     uint32_t successCount = 0;
     uint32_t failCount = 0;
-    for (auto &vmem : fileArray_) {
+    for (auto &vmem : fileDatas_) {
         if (vmem.result == UPLOAD_OK) {
             successCount++;
         } else {
@@ -252,16 +266,12 @@ std::time_t UploadTask::GetCurTimestamp()
 
 void UploadTask::OnProgress(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
-    UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnProgress. In.");
     if (ulnow == uploadedSize_) {
         return;
     }
 
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
     uploadedSize_ = ulnow;
-    if (uploadedSize_ == totalSize_) {
-        state_ = STATE_SUCCESS;
-    }
 
     std::time_t curTimestamp = GetCurTimestamp();
     if ((curTimestamp - lastTimestamp_) >= NOTIFICATION_FREQUENCY || uploadedSize_ == totalSize_) {
@@ -270,25 +280,35 @@ void UploadTask::OnProgress(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ult
         }
         lastTimestamp_ = GetCurTimestamp();
     }
+
+    if (uploadedSize_ == totalSize_) {
+        state_ = STATE_SUCCESS;
+    }
 }
 
 std::vector<TaskState> UploadTask::GetTaskStates()
 {
     std::vector<TaskState> taskStates;
     TaskState taskState;
-    for (auto &vmem : fileArray_) {
-        taskState = {vmem.filename, vmem.result, GetCodeMessage(vmem.result)};
+    for (auto &vmem : fileDatas_) {
+        taskState = { vmem.filename, vmem.result, GetCodeMessage(vmem.result) };
         taskStates.push_back(taskState);
     }
     return taskStates;
 }
+
+bool UploadTask::IsRunning()
+{
+    return (state_ == STATE_RUNNING);
+}
+
 void UploadTask::OnFail()
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnFail. In.");
-    if (uploadConfig_->protocolVersion == "L5") {
+    if (uploadConfig_ && uploadConfig_->protocolVersion == "L5") {
         return;
     }
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
     std::vector<TaskState> taskStates = GetTaskStates();
     taskStates_ = taskStates;
     state_ = STATE_FAILURE;
@@ -300,7 +320,7 @@ void UploadTask::OnFail()
 void UploadTask::OnComplete()
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnComplete. In.");
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
     std::vector<TaskState> taskStates = GetTaskStates();
     taskStates_ = taskStates;
     state_ = STATE_SUCCESS;
@@ -319,14 +339,14 @@ void UploadTask::ExecuteTask()
 
 void UploadTask::ClearFileArray()
 {
-    std::lock_guard<std::mutex> guard(mutex_);
-    for (auto &file : fileArray_) {
+    std::lock_guard<std::recursive_mutex> guard(mutex_);
+    for (auto &file : fileDatas_) {
         if (file.fp != NULL) {
             fclose(file.fp);
         }
         file.name = "";
     }
-    fileArray_.clear();
+    fileDatas_.clear();
 }
 
 std::vector<std::string> UploadTask::StringSplit(const std::string &str, char delim)
