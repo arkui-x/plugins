@@ -16,10 +16,9 @@
 #ifndef PLUGINS_REQUEST_UPLOAD_UPLOAD_CONFIG
 #define PLUGINS_REQUEST_UPLOAD_UPLOAD_CONFIG
 
+#include <curl/curl.h>
 #include <string>
 #include <vector>
-
-#include "curl/curl.h"
 
 namespace  OHOS::Plugin::Request::Upload {
 struct File {

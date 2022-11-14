@@ -17,15 +17,18 @@
 
 #include <fcntl.h>
 #include <mutex>
+#include <regex>
 #include <uv.h>
 #include <unistd.h>
 
 #include "async_call.h"
+#include "constant.h"
 #include "download_event.h"
 #include "download_manager.h"
 #include "download_remove.h"
 #include "log.h"
 #include "napi_utils.h"
+
 
 static constexpr const char *FUNCTION_ON = "on";
 static constexpr const char *FUNCTION_OFF = "off";
@@ -121,8 +124,13 @@ napi_value DownloadTaskNapi::Initialize(napi_env env, napi_callback_info info)
         DownloadTask *task = reinterpret_cast<DownloadTask *>(data);
         if (task) {
             auto ret = DownloadManager::GetInstance().Remove(task->GetId());
-            DOWNLOAD_HILOGD("destructed download task, ret: %d", ret);
+            do {
+                DOWNLOAD_HILOGE("DownloadTask. delete.wait==%d", task->GetId());
+                usleep(500 * 1000);
+            } while (task->IsRunning());
+            DOWNLOAD_HILOGD("destructed download task, ret: %d wait end =%d", ret, task->GetId());
             delete task;
+            task = nullptr;
         }
         DOWNLOAD_HILOGD("destructed download task end.");
     };
@@ -139,7 +147,10 @@ bool DownloadTaskNapi::ParseConfig(napi_env env, napi_value configValue, Downloa
     if (!ParseHeader(env, configValue, config)) {
         return false;
     }
-    config.SetUrl(NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_URI));
+    if (!ParseUrl(env, configValue, config)) {
+        DOWNLOAD_HILOGE("Input url error");
+        return false;
+    }
     config.SetMetered(NapiUtils::GetBooleanProperty(env, configValue, PARAM_KEY_METERED));
     config.SetRoaming(NapiUtils::GetBooleanProperty(env, configValue, PARAM_KEY_ROAMING));
     config.SetDescription(NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_DESCRIPTION));
@@ -172,6 +183,16 @@ bool DownloadTaskNapi::ParseConfig(napi_env env, napi_value configValue, Downloa
     return true;
 }
 
+bool DownloadTaskNapi::ParseUrl(napi_env env, napi_value configValue, DownloadConfig &config)
+{
+    std::string url = NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_URI);
+    if (!regex_match(url, std::regex("^http(s)?:\\/\\/.+"))) {
+        return false;
+    }
+    config.SetUrl(url);
+    return true;
+}
+
 bool DownloadTaskNapi::IsPathValid(const std::string &filePath)
 {
     auto path = filePath.substr(0, filePath.rfind('/'));
@@ -187,7 +208,9 @@ bool DownloadTaskNapi::IsPathValid(const std::string &filePath)
 bool DownloadTaskNapi::ParseHeader(napi_env env, napi_value configValue, DownloadConfig &config)
 {
     if (!NapiUtils::HasNamedProperty(env, configValue, PARAM_KEY_HEADER)) {
-        DOWNLOAD_HILOGD("No header present, ignore it");
+        DOWNLOAD_HILOGD("No header present, Reassign value");
+        config.SetHeader(tlsVersion, TLS_VERSION);
+        config.SetHeader(cipherList, TLS_CIPHER);
         return true;
     }
     napi_value header = NapiUtils::GetNamedProperty(env, configValue, PARAM_KEY_HEADER);
@@ -197,6 +220,11 @@ bool DownloadTaskNapi::ParseHeader(napi_env env, napi_value configValue, Downloa
     auto names = NapiUtils::GetPropertyNames(env, header);
     std::vector<std::string>::iterator iter;
     DOWNLOAD_HILOGD("current name list size = %{public}zu", names.size());
+    iter = find(names.begin(), names.end(), cipherList);
+    if (iter == names.end()) {
+        config.SetHeader(cipherList, TLS_CIPHER);
+        names = NapiUtils::GetPropertyNames(env, header);
+    }
     for (iter = names.begin(); iter != names.end(); ++iter) {
         auto value = NapiUtils::GetStringPropertyUtf8(env, header, *iter);
         if (!value.empty()) {

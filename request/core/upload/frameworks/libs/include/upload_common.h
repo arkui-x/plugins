@@ -21,6 +21,7 @@
 namespace OHOS::Plugin::Request::Upload {
 enum Type {
     TYPE_PROGRESS_CALLBACK,
+    TYPE_HEADER_RECEIVE_CALLBACK,
     TYPE_FAIL_CALLBACK,
     TYPE_COMPLETE_CALLBACK,
 };
@@ -40,6 +41,11 @@ struct TaskState {
     int32_t responseCode {UPLOAD_OK};
     std::string message;
 };
+
+static constexpr const char *POST = "POST";
+static constexpr const char *PUT = "PUT";
+static constexpr int32_t ONE_ARG = 1;
+static constexpr int32_t TWO_ARG = 2;
 
 #ifndef UPLOAD_API
 #define UPLOAD_API __attribute__ ((visibility ("default")))

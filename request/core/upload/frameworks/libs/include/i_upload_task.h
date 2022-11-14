@@ -24,6 +24,12 @@ public:
     virtual void OnProgress(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) = 0;
     virtual void OnFail() = 0;
     virtual void OnComplete() = 0;
+    int taskId_;
 };
-} // end of  OHOS::Plugin::Request::Upload
+
+class IUploadTaskRelease {
+public:
+    virtual void OnUploadTaskRelease(void *arg) = 0;
+};
+} // end of OHOS::Plugin::Request::Upload
 #endif

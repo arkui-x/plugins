@@ -33,6 +33,7 @@ private:
     static bool ParseConfig(napi_env env, napi_value configValue, DownloadConfig &config);
     static bool ParseHeader(napi_env env, napi_value configValue, DownloadConfig &config);
     static bool IsPathValid(const std::string &filePath);
+    static bool ParseUrl(napi_env env, napi_value configValue, DownloadConfig &config);
 
 private:
     static __thread napi_ref globalCtor;

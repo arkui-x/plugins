@@ -19,6 +19,8 @@
 #include <initializer_list>
 #include <memory>
 
+#include "download_manager.h"
+#include "log.h"
 #include "securec.h"
 
 namespace OHOS::Plugin::Request::Download::NapiUtils {
@@ -53,11 +55,6 @@ napi_value GetNamedProperty(napi_env env, napi_value object, const std::string &
     }
     NAPI_CALL(env, napi_get_named_property(env, object, propertyName.c_str(), &value));
     return value;
-}
-
-void SetNamedProperty(napi_env env, napi_value object, const std::string &name, napi_value value)
-{
-    (void)napi_set_named_property(env, object, name.c_str(), value);
 }
 
 std::vector<std::string> GetPropertyNames(napi_env env, napi_value object)
@@ -133,25 +130,6 @@ int32_t GetInt32FromValue(napi_env env, napi_value value)
     return ret;
 }
 
-int32_t GetInt32Property(napi_env env, napi_value object, const std::string &propertyName)
-{
-    if (!HasNamedProperty(env, object, propertyName)) {
-        return 0;
-    }
-    napi_value value = GetNamedProperty(env, object, propertyName);
-    return GetInt32FromValue(env, value);
-}
-
-void SetInt32Property(napi_env env, napi_value object, const std::string &name, int32_t value)
-{
-    napi_value jsValue = CreateInt32(env, value);
-    if (GetValueType(env, jsValue) != napi_number) {
-        return;
-    }
-
-    napi_set_named_property(env, object, name.c_str(), jsValue);
-}
-
 /* String UTF8 */
 napi_value CreateStringUtf8(napi_env env, const std::string &str)
 {
@@ -192,25 +170,6 @@ void SetStringPropertyUtf8(napi_env env, napi_value object, const std::string &n
     napi_set_named_property(env, object, name.c_str(), jsValue);
 }
 
-/* array buffer */
-bool ValueIsArrayBuffer(napi_env env, napi_value value)
-{
-    bool isArrayBuffer = false;
-    NAPI_CALL_BASE(env, napi_is_arraybuffer(env, value, &isArrayBuffer), false);
-    return isArrayBuffer;
-}
-
-void *GetInfoFromArrayBufferValue(napi_env env, napi_value value, size_t *length)
-{
-    if (length == nullptr) {
-        return nullptr;
-    }
-
-    void *data = nullptr;
-    NAPI_CALL(env, napi_get_arraybuffer_info(env, value, &data, length));
-    return data;
-}
-
 /* object */
 napi_value CreateObject(napi_env env)
 {
@@ -235,26 +194,6 @@ napi_value CallFunction(napi_env env, napi_value recv, napi_value func, size_t a
     return res;
 }
 
-/* reference */
-napi_ref CreateReference(napi_env env, napi_value callback)
-{
-    napi_ref callbackRef = nullptr;
-    NAPI_CALL(env, napi_create_reference(env, callback, 1, &callbackRef));
-    return callbackRef;
-}
-
-napi_value GetReference(napi_env env, napi_ref callbackRef)
-{
-    napi_value callback = nullptr;
-    NAPI_CALL(env, napi_get_reference_value(env, callbackRef, &callback));
-    return callback;
-}
-
-void DeleteReference(napi_env env, napi_ref callbackRef)
-{
-    (void)napi_delete_reference(env, callbackRef);
-}
-
 /* boolean */
 bool GetBooleanProperty(napi_env env, napi_value object, const std::string &propertyName)
 {
@@ -267,31 +206,66 @@ bool GetBooleanProperty(napi_env env, napi_value object, const std::string &prop
     return ret;
 }
 
-void SetBooleanProperty(napi_env env, napi_value object, const std::string &name, bool value)
-{
-    napi_value jsValue = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, value, &jsValue));
-    if (GetValueType(env, jsValue) != napi_boolean) {
-        return;
-    }
-
-    napi_set_named_property(env, object, name.c_str(), jsValue);
-}
-
-/* define properties */
-void DefineProperties(
-    napi_env env, napi_value object, const std::initializer_list<napi_property_descriptor> &properties)
-{
-    napi_property_descriptor descriptors[properties.size()];
-    std::copy(properties.begin(), properties.end(), descriptors);
-
-    (void)napi_define_properties(env, object, properties.size(), descriptors);
-}
-
 std::string ToLower(const std::string &s)
 {
     std::string res = s;
     std::transform(res.begin(), res.end(), res.begin(), tolower);
     return res;
+}
+
+int32_t GetParameterNumber(napi_env env, napi_callback_info info, napi_value *argv, napi_value *this_arg)
+{
+    size_t argc = NapiUtils::MAX_ARGC;
+    void *data = nullptr;
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, this_arg, &data);
+    if (status != napi_ok) {
+        return -1;
+    }
+    return static_cast<int32_t>(argc);
+}
+
+void ThrowError(napi_env env, const ExceptionErrorCode &code, const std::string &msg)
+{
+    std::string errorCode = std::to_string(code);
+    auto iter = ErrorCodeToMsg.find(code);
+    std::string strMsg = (iter != ErrorCodeToMsg.end() ? iter->second : "") + ": " + msg;
+    napi_status status = napi_throw_error(env, errorCode.c_str(), strMsg.c_str());
+    if (status != napi_ok) {
+        DOWNLOAD_HILOGE("Failed to napi_throw_error");
+    }
+}
+
+napi_value CreateBusinessError(napi_env env, const ExceptionErrorCode &errorCode, const std::string &msg)
+{
+    napi_value result = nullptr;
+    napi_value codeValue = nullptr;
+    napi_value message = nullptr;
+    auto iter = ErrorCodeToMsg.find(errorCode);
+    std::string errCode = std::to_string(errorCode);
+    std::string strMsg = (iter != ErrorCodeToMsg.end() ? iter->second : "") + msg;
+    NAPI_CALL(env, napi_create_string_utf8(env, strMsg.c_str(), strMsg.length(), &message));
+    NAPI_CALL(env, napi_create_string_utf8(env, errCode.c_str(), errCode.length(), &codeValue));
+    NAPI_CALL(env, napi_create_error(env, codeValue, message, &result));
+    return result;
+}
+
+bool CheckParameterCorrect(napi_env env, napi_callback_info info, const std::string &type, ExceptionError &err)
+{
+    std::string errInfo;
+    napi_value argv[NapiUtils::MAX_ARGC] = { nullptr };
+    int32_t num = NapiUtils::GetParameterNumber(env, info, argv, nullptr);
+    if (num < 0) {
+        err.code = EXCEPTION_PARAMETER_CHECK;
+        err.errInfo = "function ${" + type + "} Wrong number of arguments";
+        return false;
+    }
+    if (num == NapiUtils::ONE_ARG) {
+        if (NapiUtils::GetValueType(env, argv[NapiUtils::FIRST_ARGV]) != napi_function) {
+            err.code = EXCEPTION_PARAMETER_CHECK;
+            err.errInfo = "function ${" + type + "} the first parameter must be function";
+            return false;
+        }
+    }
+    return true;
 }
 } // namespace OHOS::Plugin::Request::Download::NapiUtils

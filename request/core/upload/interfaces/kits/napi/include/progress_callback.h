@@ -32,19 +32,16 @@ public:
     ProgressCallback(ICallbackAbleJudger *judger, napi_env env, napi_value callback);
     virtual ~ProgressCallback();
     void Progress(const int64_t uploadedSize, const int64_t totalSize) override;
+    napi_ref GetCallback() override;
 private:
     struct ProgressWorker {
-        ICallbackAbleJudger *judger_;
+        ICallbackAbleJudger *judger;
         const ProgressCallback *callback = nullptr;
-        napi_env env_;
         const int64_t uploadedSize;
         const int64_t totalSize;
-        ProgressWorker(ICallbackAbleJudger *judger, const ProgressCallback *callbackIn,
+        ProgressWorker(ICallbackAbleJudger *judgerIn, const ProgressCallback *callbackIn,
             int64_t uploadedSizeIn, int64_t totalSizeIn)
-            : judger_(judger),
-              callback(callbackIn),
-              uploadedSize(uploadedSizeIn),
-              totalSize(totalSizeIn) {}
+            : judger(judgerIn), callback(callbackIn), uploadedSize(uploadedSizeIn), totalSize(totalSizeIn) {}
     };
 
     ICallbackAbleJudger *judger_ = nullptr;

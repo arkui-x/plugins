@@ -21,21 +21,33 @@
 #include "napi_utils.h"
 
 namespace OHOS::Plugin::Request::Download {
-DownloadBaseNotify::DownloadBaseNotify(napi_env env, const std::string &type, const DownloadTask *task, napi_ref ref)
-    :  env_(env), type_(type), task_(const_cast<DownloadTask *>(task)), ref_(ref)
+DownloadBaseNotify::DownloadBaseNotify(napi_env env, uint32_t paramNumber, napi_ref ref)
 {
+    notifyData_ = std::make_shared<NotifyData>();
+    notifyData_->env = env;
+    notifyData_->paramNumber = paramNumber;
+    notifyData_->ref = ref;
 }
 
 DownloadBaseNotify::~DownloadBaseNotify()
 {
+    if (notifyData_->ref != nullptr) {
+        napi_delete_reference(notifyData_->env, notifyData_->ref);
+    }
     DOWNLOAD_HILOGD("");
 }
 
-void DownloadBaseNotify::OnCallBack(uint32_t firstArgv, uint32_t secondArgv)
+void DownloadBaseNotify::OnCallBack(const std::vector<uint32_t> &params)
 {
-    DOWNLOAD_HILOGD("Pause callback in");
+    DOWNLOAD_HILOGD("on callback in");
+    NotifyDataPtr *notifyDataPtr = GetNotifyDataPtr();
+    if (notifyDataPtr == nullptr) {
+        DOWNLOAD_HILOGE("Failed to get ptr");
+        return;
+    }
+
     uv_loop_s *loop = nullptr;
-    napi_get_uv_event_loop(env_, &loop);
+    napi_get_uv_event_loop(notifyData_->env, &loop);
     if (loop == nullptr) {
         DOWNLOAD_HILOGE("Failed to get uv event loop");
         return;
@@ -43,46 +55,45 @@ void DownloadBaseNotify::OnCallBack(uint32_t firstArgv, uint32_t secondArgv)
     uv_work_t *work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
         DOWNLOAD_HILOGE("Failed to create uv work");
+        delete notifyDataPtr;
         return;
     }
-
-    NotifyData *notifyData = GetNotifyData();
-    if (notifyData == nullptr) {
-        DOWNLOAD_HILOGE("Failed to create notifyData");
-        return;
-    }
-    notifyData->env = env_;
-    notifyData->ref = ref_;
-    notifyData->type = type_;
-    notifyData->task = task_;
-    work->data = notifyData;
-
-    uv_queue_work(
+    
+    notifyData_->params = params;
+    notifyDataPtr->notifyData = notifyData_;
+    work->data = notifyDataPtr;
+    int ret = uv_queue_work(
         loop, work, [](uv_work_t *work) {},
         [](uv_work_t *work, int statusInt) {
-            NotifyData *notifyData = static_cast<NotifyData*>(work->data);
-            if (notifyData != nullptr) {
+            NotifyDataPtr *notifyDataPtr = static_cast<NotifyDataPtr *>(work->data);
+            if (notifyDataPtr != nullptr) {
                 napi_value undefined = 0;
-                napi_get_undefined(notifyData->env, &undefined);
-                napi_value callbackFunc = nullptr;
-                napi_get_reference_value(notifyData->env, notifyData->ref, &callbackFunc);
-                napi_value callbackResult = nullptr;
-                napi_value callbackValues[NapiUtils::ONE_ARG] = {0};
-                napi_get_undefined(notifyData->env, &callbackValues[NapiUtils::FIRST_ARGV]);
-                napi_call_function(notifyData->env, nullptr, callbackFunc,
-                                   NapiUtils::ONE_ARG, callbackValues, &callbackResult);
-                if (work != nullptr) {
-                    delete work;
-                    work = nullptr;
+                if (notifyDataPtr->notifyData != nullptr) {
+                    napi_get_undefined(notifyDataPtr->notifyData->env, &undefined);
+                    napi_value callbackFunc = nullptr;
+                    napi_get_reference_value(notifyDataPtr->notifyData->env,
+                        notifyDataPtr->notifyData->ref, &callbackFunc);
+                    napi_value callbackResult = nullptr;
+                    napi_value callbackValues[Download::TWO_PARAMETER] = { 0 };
+                    for (uint32_t i = 0; i < notifyDataPtr->notifyData->paramNumber; i++) {
+                        napi_create_uint32(notifyDataPtr->notifyData->env, notifyDataPtr->notifyData->params[i],
+                            &callbackValues[i]);
+                    }
+                    napi_call_function(notifyDataPtr->notifyData->env, nullptr, callbackFunc,
+                        notifyDataPtr->notifyData->paramNumber, callbackValues, &callbackResult);
                 }
-                delete notifyData;
-                notifyData = nullptr;
+                delete notifyDataPtr;
             }
+            delete work;
         });
+    if (ret != 0) {
+        delete notifyDataPtr;
+        delete work;
+    }
 }
 
-NotifyData *DownloadBaseNotify::GetNotifyData()
+NotifyDataPtr *DownloadBaseNotify::GetNotifyDataPtr()
 {
-    return new (std::nothrow) NotifyData;
+    return new (std::nothrow) NotifyDataPtr;
 }
 } // namespace OHOS::Plugin::Request::Download

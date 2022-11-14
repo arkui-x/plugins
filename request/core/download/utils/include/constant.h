@@ -16,6 +16,8 @@
 #ifndef PLUGINS_REQUEST_CONSTANT_H
 #define PLUGINS_REQUEST_CONSTANT_H
 
+#include <string>
+
 namespace OHOS::Plugin::Request::Download {
 enum NetworkType {
     NETWORK_INVALID = 0x00000000,
@@ -34,7 +36,8 @@ enum ErrorCode {
     ERROR_TOO_MANY_REDIRECTS,
     ERROR_UNHANDLED_HTTP_CODE,
     ERROR_UNKNOWN,
-    ERROR_NETWORK_FAIL,
+    ERROR_OFFLINE,
+    ERROR_UNSUPPORTED_NETWORK_TYPE,
 };
 
 enum PausedReason {
@@ -58,6 +61,21 @@ enum HttpErrorCode {
     HTTP_OK = 200,
     HTTP_PARIAL_FILE = 206,
 };
+enum ExceptionErrorCode : uint32_t {
+    EXCEPTION_OK = 0,
+    EXCEPTION_PERMISSION = 201,
+    EXCEPTION_PARAMETER_CHECK = 401,
+    EXCEPTION_UNSUPPORTED = 801,
+    EXCEPTION_FILE_IO = 13400001,
+    EXCEPTION_FILE_PATH = 13400002,
+    EXCEPTION_SERVICE_ERROR = 13400003,
+    EXCEPTION_OTHER = 13499999,
+};
+
+struct ExceptionError {
+    ExceptionErrorCode code;
+    std::string errInfo;
+};
 
 const uint32_t DEFAULT_READ_TIMEOUT = 60;
 const uint32_t DEFAULT_CONNECT_TIMEOUT = 60;
@@ -78,6 +96,44 @@ static constexpr const char *HTTP_CONTENT_TYPE = "content-type";
 static constexpr const char *HTTP_CONTENT_TYPE_TEXT = "text/plain";
 static constexpr const char *HTTP_CONTENT_TYPE_URL_ENCODE = "application/x-www-form-urlencoded";
 static constexpr const char *HTTP_CONTENT_TYPE_JSON = "application/json";
+
+static constexpr const char *EXCEPTION_OK_INFO = "check succeeded";
+static constexpr const char *EXCEPTION_PERMISSION_INFO = "the permissions check fails";
+static constexpr const char *EXCEPTION_PARAMETER_CHECK_INFO = "the parameters check fails";
+static constexpr const char *EXCEPTION_UNSUPPORTED_INFO = "call unsupported api";
+static constexpr const char *EXCEPTION_FILE_IO_INFO = " file operation error";
+static constexpr const char *EXCEPTION_FILE_PATH_INFO = "bad file path";
+static constexpr const char *EXCEPTION_SERVICE_ERROR_INFO = "task service ability error";
+static constexpr const char *EXCEPTION_OTHER_INFO = "other error";
+
+static constexpr const char *FUNCTION_SUSPEND = "suspend";
+static constexpr const char *FUNCTION_GET_TASK_INFO = "getTaskInfo";
+static constexpr const char *FUNCTION_GET_TASK_MIME_TYPE = "getTaskMimeType";
+static constexpr const char *FUNCTION_DELETE = "delete";
+static constexpr const char *FUNCTION_RESTORE = "restore";
+
+static const std::string tlsVersion = "X-TLS-Version";
+static const std::string cipherList = "X-Cipher-List";
+static const std::string TLS_VERSION = "CURL_SSLVERSION_TLSv1_2";
+static const std::string TLS_CIPHER = "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,"
+                                      "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256,TLS_DSS_RSA_WITH_AES_256_GCM_SHA384,"
+                                      "TLS_PSK_WITH_AES_256_GCM_SHA384,TLS_DHE_PSK_WITH_AES_128_GCM_SHA256,"
+                                      "TLS_DHE_PSK_WITH_AES_256_GCM_SHA384,"
+                                      "TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256,"
+                                      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,"
+                                      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,"
+                                      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,"
+                                      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,"
+                                      "TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256,"
+                                      "TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256,TLS_ECDHE_PSK_WITH_AES_256_GCM_SHA384,"
+                                      "TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256,"
+                                      "TLS_DHE_RSA_WITH_AES_128_CCM,TLS_DHE_RSA_WITH_AES_256_CCM,"
+                                      "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_PSK_WITH_AES_256_CCM,"
+                                      "TLS_DHE_PSK_WITH_AES_128_CCM,TLS_DHE_PSK_WITH_AES_256_CCM,"
+                                      "TLS_ECDHE_ECDSA_WITH_AES_128_CCM,TLS_ECDHE_ECDSA_WITH_AES_256_CCM,"
+                                      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_AES_128_GCM_SHA256,"
+                                      "TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_AES_128_CCM_SHA256,"
+                                      "TLS_SM4_GCM_SM3,TLS_SM4_CCM_SM3";
 
 static constexpr int RDB_EXECUTE_OK = 0;
 static constexpr int RDB_EXECUTE_FAIL = -1;

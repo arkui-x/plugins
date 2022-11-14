@@ -16,11 +16,11 @@
 #ifndef PLUGINS_REQUEST_CURLADP_H
 #define PLUGINS_REQUEST_CURLADP_H
 
+#include <curl/curl.h>
+#include <curl/easy.h>
 #include <vector>
 #include <mutex>
 
-#include "curl/curl.h"
-#include "curl/easy.h"
 #include "i_upload_task.h"
 #include "upload_common.h"
 #include "upload_config.h"
@@ -50,8 +50,15 @@ private:
     int CheckUploadStatus(CURLM *curlMulti);
     bool MultiAddHandle(CURLM *curlMulti, std::vector<CURL*> &curlArray);
     int32_t UploadOneFile();
-    void SetHeadData(CURL *curl);
     void SetCurlOpt(CURL *curl);
+    void SetHeadData(CURL *curl);
+    void SetHttpPut(CURL *curl);
+    void SetMimePost(CURL *curl);
+    void SetSslOpt(CURL *curl);
+    void SetConnectionOpt(CURL *curl);
+    void SetNetworkOpt(CURL *curl);
+    void SetCallbackOpt(CURL *curl);
+    void SetBehaviorOpt(CURL *curl);
     void CurlGlobalInit();
     void CurlGlobalCleanup();
     void InitTimerInfo();
@@ -61,8 +68,8 @@ private:
 private:
     uint64_t timerId_;
     IUploadTask *uploadTask_;
-    std::vector<FileData> &fileArray_;
-    FileData  mfileData_;
+    std::vector<FileData> &fileDatas_;
+    FileData mfileData_;
     std::shared_ptr<UploadConfig> config_;
     static constexpr int32_t HTTP_SUCCESS = 200;
     std::mutex mutex_;
@@ -71,10 +78,11 @@ private:
     std::mutex readMutex_;
     bool isCurlGlobalInit_;
     bool isReadAbort_;
-    CURLM *curlMulti_;
+    CURLM *curlMulti_ = nullptr;
+    curl_mime *mime_ = nullptr;
     std::vector<CURL*> curlArray_;
 
-    static constexpr int TRANS_TIMEOUT_MS = 300 * 1000;
+    static constexpr int TRANS_TIMEOUT_MS = 30 * 1000;
     static constexpr int READFILE_TIMEOUT_MS = 30 * 1000;
     static constexpr int TIMEOUTTYPE = 1;
     static constexpr int FILE_UPLOAD_INTERVEL = 1000;

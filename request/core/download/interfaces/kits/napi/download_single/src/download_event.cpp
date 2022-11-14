@@ -16,9 +16,7 @@
 #include "download_event.h"
 
 #include "download_base_notify.h"
-#include "download_fail_notify.h"
 #include "download_manager.h"
-#include "download_progress_notify.h"
 #include "download_task.h"
 #include "log.h"
 #include "napi_utils.h"
@@ -28,7 +26,7 @@ napi_value DownloadEvent::On(napi_env env, napi_callback_info info)
 {
     napi_value result = nullptr;
     size_t argc = NapiUtils::MAX_ARGC;
-    napi_value argv[NapiUtils::MAX_ARGC] = {nullptr};
+    napi_value argv[NapiUtils::MAX_ARGC] = { nullptr };
     napi_value thisVal = nullptr;
     void *data = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, &data));
@@ -40,7 +38,7 @@ napi_value DownloadEvent::On(napi_env env, napi_callback_info info)
     napi_valuetype valuetype;
     NAPI_CALL(env, napi_typeof(env, argv[NapiUtils::FIRST_ARGV], &valuetype));
     NAPI_ASSERT(env, valuetype == napi_string, "type is not a string");
-    char event[NapiUtils::MAX_LEN] = {0};
+    char event[NapiUtils::MAX_LEN] = { 0 };
     size_t len = 0;
     napi_get_value_string_utf8(env, argv[NapiUtils::FIRST_ARGV], event, NapiUtils::MAX_LEN, &len);
     std::string type = event;
@@ -59,7 +57,7 @@ napi_value DownloadEvent::On(napi_env env, napi_callback_info info)
     napi_ref callbackRef = nullptr;
     napi_create_reference(env, argv[argc - 1], 1, &callbackRef);
 
-    auto listener = CreateNotify(env, task, type, callbackRef);
+    auto listener = CreateNotify(env, type, callbackRef);
     if (listener == nullptr) {
         DOWNLOAD_HILOGD("DownloadPause create callback object fail");
         return result;
@@ -74,7 +72,7 @@ napi_value DownloadEvent::Off(napi_env env, napi_callback_info info)
     auto context = std::make_shared<EventOffContext>();
     napi_value result = nullptr;
     size_t argc = NapiUtils::MAX_ARGC;
-    napi_value argv[NapiUtils::MAX_ARGC] = {nullptr};
+    napi_value argv[NapiUtils::MAX_ARGC] = { nullptr };
     napi_value thisVal = nullptr;
     void *data = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, &data));
@@ -86,12 +84,12 @@ napi_value DownloadEvent::Off(napi_env env, napi_callback_info info)
     napi_valuetype valuetype;
     NAPI_CALL(env, napi_typeof(env, argv[NapiUtils::FIRST_ARGV], &valuetype));
     NAPI_ASSERT(env, valuetype == napi_string, "type is not a string");
-    char event[NapiUtils::MAX_LEN] = {0};
+    char event[NapiUtils::MAX_LEN] = { 0 };
     size_t len = 0;
     napi_get_value_string_utf8(env, argv[NapiUtils::FIRST_ARGV], event, NapiUtils::MAX_LEN, &len);
     context->type_ = event;
     DOWNLOAD_HILOGD("type : %{public}s", context->type_.c_str());
-    
+
     auto input = [context](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
         return napi_ok;
     };
@@ -115,38 +113,20 @@ napi_value DownloadEvent::Off(napi_env env, napi_callback_info info)
     return asyncCall.Call(env, exec);
 }
 
-int32_t DownloadEvent::GetEventType(const std::string &type)
+uint32_t DownloadEvent::GetParamNumber(const std::string &type)
 {
     if (type == EVENT_PROGRESS) {
-        return TWO_ARG_EVENT;
+        return TWO_PARAMETER;
     } else if (type == EVENT_FAIL) {
-        return ONE_ARG_EVENT;
+        return ONE_PARAMETER;
     }
-    return NO_ARG_EVENT;
+    return NO_PARAMETER;
 }
 
 std::shared_ptr<DownloadNotifyInterface> DownloadEvent::CreateNotify(napi_env env,
-    const DownloadTask *task, const std::string &type, napi_ref callbackRef)
+    const std::string &type, napi_ref callbackRef)
 {
-    std::shared_ptr<DownloadNotifyInterface> listener = nullptr;
-    int32_t eventType = GetEventType(type);
-    switch (eventType) {
-        case NO_ARG_EVENT:
-            listener = std::make_shared<DownloadBaseNotify>(env, type, task, callbackRef);
-            break;
-
-        case ONE_ARG_EVENT:
-            listener = std::make_shared<DownloadFailNotify>(env, type, task, callbackRef);
-            break;
-
-        case TWO_ARG_EVENT:
-            listener = std::make_shared<DownloadProgressNotify>(env, type, task, callbackRef);
-            break;
-
-        default:
-            DOWNLOAD_HILOGE("not support event type");
-            break;
-    }
-    return listener;
+    uint32_t paramNumber = GetParamNumber(type);
+    return std::make_shared<DownloadBaseNotify>(env, paramNumber, callbackRef);
 }
 } // namespace OHOS::Plugin::Request::Download

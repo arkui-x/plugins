@@ -30,7 +30,9 @@ CompleteCallback::CompleteCallback(ICallbackAbleJudger *judger, napi_env env, na
 
 CompleteCallback::~CompleteCallback()
 {
-    napi_delete_reference(env_, callback_);
+    if (callback_ != nullptr) {
+        napi_delete_reference(env_, callback_);
+    }
 }
 
 napi_ref CompleteCallback::GetCallback()
@@ -40,8 +42,6 @@ napi_ref CompleteCallback::GetCallback()
 
 void CompleteCallback::Complete(const std::vector<TaskState> &taskStates)
 {
-    std::mutex mutex_;
-    std::lock_guard<std::mutex> guard(mutex_);
     UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "CompleteCallback::Complete in");
     CompleteWorker *completeWorker = new (std::nothrow)CompleteWorker(judger_, this, taskStates);
     if (completeWorker == nullptr) {
@@ -64,7 +64,7 @@ void CompleteCallback::Complete(const std::vector<TaskState> &taskStates)
                     delete data;
                     delete work;
             });
-            if (completeWorker == nullptr) {
+            if (!completeWorker || !completeWorker->callback) {
                 UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Complete. uv_queue_work callback removed!!");
                 return;
             }
