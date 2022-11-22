@@ -44,6 +44,7 @@ public:
     static void RegisterUploadTask(UploadTaskNapi *task);
     static void UnRegisterUploadTask(UploadTaskNapi *task);
     static size_t UploadTaskSize(void);
+    static bool CheckUploadTask(UploadTaskNapi *task);
 
     bool JudgeFail(const IFailCallback *target);
     bool JudgeComplete(const ICompleteCallback *target);
