@@ -247,7 +247,7 @@ napi_value ResourceManagerAddon::New(napi_env env, napi_callback_info info)
 
 bool isLoadHap(ResMgrAsyncContext *asyncContext)
 {
-    RState state = asyncContext->addon_->GetResMgr()->isLoadHap();
+    RState state = asyncContext->addon_->GetResMgr()->IsLoadHap();
     if (state != RState::SUCCESS) {
         return false;
     }
