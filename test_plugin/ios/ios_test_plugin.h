@@ -19,8 +19,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iOSTestPlugin : NSObject
 
-+(instancetype)shareintance;
++(instancetype)shareinstance;
 -(void)hello;
+-(NSString*)getFilesDir;
 
 @end
 

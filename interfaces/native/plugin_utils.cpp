@@ -15,6 +15,8 @@
 
 #include "plugins/interfaces/native/plugin_utils.h"
 
+#include <future>
+
 #include "frameworks/core/common/container.h"
 #ifdef ANDROID_PLATFORM
 #include "adapter/android/capability/java/jni/plugin/plugin_manager_jni.h"
@@ -37,4 +39,28 @@ void PluginUtils::RunTaskOnPlatform(const Task& task)
     }
 }
 
-} // namespace OHOS::Plugin
+void PluginUtils::RunSyncTaskOnLocal(const Task& task, std::chrono::milliseconds timeout)
+{
+    std::future<void> future = std::async(std::launch::async, task);
+    while (future.wait_for(timeout) == std::future_status::timeout) {
+        LOGE("RunSyncTaskOnLocal timeout ...");
+        return;
+    }
+}
+
+void PluginUtils::RunTaskOnJS(const Task& task)
+{
+    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
+    if (taskExecutor) {
+        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
+    }
+}
+
+void PluginUtils::RunSyncTaskOnJS(const Task& task)
+{
+    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
+    if (taskExecutor) {
+        taskExecutor->PostSyncTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
+    }
+}
+}  // namespace OHOS::Plugin

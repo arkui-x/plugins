@@ -1,0 +1,136 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+SUBSYSTEM_DIR = "//foundation/communication"
+NETSTACK_NAPI_ROOT = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/"
+
+utils_include = [
+  "$SUBSYSTEM_DIR/netstack/utils/log/include",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
+  "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+  "//commonlibrary/c_utils/base/include",
+]
+
+utils_source = [
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/base_context.cpp",
+  "$SUBSYSTEM_DIR/netstack/utils/common_utils/src/netstack_common_utils.cpp",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_listener.cpp",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_manager.cpp",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/module_template.cpp",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/napi_utils.cpp",
+]
+
+http_include = [
+  "$NETSTACK_NAPI_ROOT/http/async_context/include",
+  "$NETSTACK_NAPI_ROOT/http/async_work/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/base64/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_constant/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_proxy/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/md5/include",
+  "$NETSTACK_NAPI_ROOT/http/constant/include",
+  "$NETSTACK_NAPI_ROOT/http/http_module/include",
+  "$NETSTACK_NAPI_ROOT/http/options/include",
+  "//plugins/hilog/include",
+  "//plugins/interfaces",
+  "//plugins/net/http",
+  "//third_party/curl/include",
+  "//third_party/glib/glib",
+  "//third_party/glib",
+  "//third_party/jsoncpp/include",
+  "//third_party/openssl/include",
+]
+
+http_sources = [
+  "$NETSTACK_NAPI_ROOT/http/async_context/src/request_context.cpp",
+  "$NETSTACK_NAPI_ROOT/http/async_work/src/http_async_work.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/base64/src/base64_utils.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_proxy/src/cache_proxy.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_cache_request.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_cache_response.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_cache_strategy.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_time.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/disk_handler.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache_disk_handler.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/md5/src/calculate_md5.cpp",
+  "$NETSTACK_NAPI_ROOT/http/constant/src/constant.cpp",
+  "$NETSTACK_NAPI_ROOT/http/http_module/src/http_module.cpp",
+  "$NETSTACK_NAPI_ROOT/http/options/src/http_request_options.cpp",
+  "$NETSTACK_NAPI_ROOT/http/options/src/http_response.cpp",
+  "http_exec.cpp",
+]
+
+template("plugin_net_http_static") {
+  forward_variables_from(invoker, "*")
+  target_name_ext = target_name
+  if (target_os == "ios") {
+    target_name_ext = string_replace(target_name, "net_http", "net/http")
+  }
+
+  ohos_source_set(target_name_ext) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    if (target_os == "android") {
+      include_dirs = http_include
+      include_dirs += utils_include
+
+      sources = http_sources
+      sources += utils_source
+
+      deps = [
+        "//foundation/arkui/napi/:ace_napi",
+        "//plugins/interfaces/native:plugin_log",
+        "//third_party/curl:curl",
+        "//third_party/glib:glib_packages",
+        "//third_party/jsoncpp:jsoncpp",
+        "//third_party/openssl:libcrypto_shared",
+      ]
+
+      aosp_deps = [ "shared_library:liblog" ]
+    } else if (target_os == "ios") {
+      include_dirs = []
+      sources = []
+      deps = []
+    }
+
+    subsystem_name = "plugins"
+    part_name = "net"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_net_http_static("net_http_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

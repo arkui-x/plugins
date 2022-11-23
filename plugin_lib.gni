@@ -13,7 +13,20 @@
 
 import("//build/ohos.gni")
 
-common_plugin_libs = [ "test_plugin" ]
+common_plugin_libs = [
+  "common_event",
+  "display",
+  "fileio",
+  "hitrace_meter",
+  "i18n",
+  "multimedia_image",
+  "ndk_raw_file",
+  "net/http",
+  "request",
+  "running_lock",
+  "test_plugin",
+  "resource_manager",
+]
 
 template("plugin_lib") {
   forward_variables_from(invoker, "*")
@@ -27,11 +40,15 @@ template("plugin_lib") {
       subsystem_name = "plugins"
     }
   } else {
-    ohos_shared_library(string_replace(target_name, "_", "")) {
-      deps = [ "//plugins/$plugin_name:${plugin_name}_static_${platform}" ]
+    target_name_tmp = string_replace(target_name, "_", "")
+    target_name_ext = string_replace(target_name_tmp, "/", "_")
+    plugin_name_ext = string_replace(plugin_name, "/", "_")
+    ohos_shared_library(target_name_ext) {
+      deps = [ "//plugins/$plugin_name:${plugin_name_ext}_static_${platform}" ]
 
       relative_install_dir = "module"
-      part_name = plugin_name
+      part_names = string_split(plugin_name, "/")
+      part_name = part_names[0]
       subsystem_name = "plugins"
     }
   }

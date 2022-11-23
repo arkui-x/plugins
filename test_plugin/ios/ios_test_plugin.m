@@ -17,7 +17,7 @@
 
 @implementation iOSTestPlugin
 
-+ (instancetype)shareintance{
++ (instancetype)shareinstance{
     static dispatch_once_t onceToken;
     static iOSTestPlugin *instance = nil;
     dispatch_once(&onceToken, ^{
@@ -28,6 +28,10 @@
 
 -(void)hello{
     NSLog(@"TestPlugin: Hello from ios");
+}
+
+-(NSString*)getFilesDir{
+    return NSTemporaryDirectory();
 }
 
 @end

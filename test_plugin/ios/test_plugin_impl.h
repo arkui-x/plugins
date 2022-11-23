@@ -28,6 +28,7 @@ public:
     ~TestPluginImpl() override = default;
 
     void Hello() override;
+    std::string GetFilesDir() override;
 };
 
 } // namespace OHOS::Plugin

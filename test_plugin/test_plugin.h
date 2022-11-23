@@ -28,6 +28,10 @@ public:
     static std::unique_ptr<TestPlugin> Create();
 
     virtual void Hello() = 0;
+
+#ifdef IOS_PLATFORM
+    virtual std::string GetFilesDir() = 0;
+#endif
 };
 
 } // namespace OHOS::Plugin

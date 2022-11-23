@@ -33,8 +33,14 @@ void TestPluginImpl::Hello()
 {
     LOGI("TestPluginImpl Hello called");
     PluginUtils::RunTaskOnPlatform([]() {
-        [[iOSTestPlugin shareintance] hello];
+        [[iOSTestPlugin shareinstance] hello];
     });
+}
+
+std::string TestPluginImpl::GetFilesDir()
+{
+    NSString *filesDir = [[iOSTestPlugin shareinstance] getFilesDir];
+    return std::string([filesDir UTF8String]);
 }
 
 } // namespace OHOS::Plugin

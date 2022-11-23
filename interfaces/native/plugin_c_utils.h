@@ -44,6 +44,7 @@ struct OH_Plugin_AsyncCallbackInfo {
     napi_async_work asyncWork;
     napi_deferred deferred;
     napi_ref callback[1] = { 0 };
+    napi_value jsdata;
     int32_t status;
 };
 
