@@ -169,7 +169,7 @@ bool HttpExec::ExecRequest(RequestContext *context)
 {
     context->options.SetRequestTime(HttpTime::GetNowTimeGMT());
     CacheProxy proxy(context->options);
-    if (context->IsUsingCache() && proxy.ReadResponseFromCache(context->response)) {
+    if (context->IsUsingCache() && proxy.ReadResponseFromCache(context)) {
         return true;
     }
 
