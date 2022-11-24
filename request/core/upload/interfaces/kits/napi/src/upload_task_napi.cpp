@@ -153,7 +153,10 @@ napi_status UploadTaskNapi::OnProgress(napi_env env, napi_value callback, napi_v
     UploadTaskNapi *proxy = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
     NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
-
+    if (!UploadTaskNapi::CheckUploadTask(proxy)) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "task is finished.");
+        return napi_generic_failure;
+    }
     std::shared_ptr<IProgressCallback> progressCallback = std::make_shared<ProgressCallback>(proxy, env, callback);
     if (!progressCallback) {
         UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "create failed!");
@@ -163,9 +166,9 @@ napi_status UploadTaskNapi::OnProgress(napi_env env, napi_value callback, napi_v
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "OnProgress callback already register!");
         return napi_generic_failure;
     }
-    proxy->offProgress_ = std::move(proxy->onProgress_);
+    proxy->offProgress_ = proxy->onProgress_;
     proxy->napiUploadTask_->On(TYPE_PROGRESS_CALLBACK, (void *)(progressCallback.get()));
-    proxy->onProgress_ = std::move(progressCallback);
+    proxy->onProgress_ = progressCallback;
     return napi_ok;
 }
 
@@ -175,7 +178,10 @@ napi_status UploadTaskNapi::OnFail(napi_env env, napi_value callback, napi_value
     UploadTaskNapi *proxy = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
     NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
-
+    if (!UploadTaskNapi::CheckUploadTask(proxy)) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "task is finished.");
+        return napi_generic_failure;
+    }
     std::shared_ptr<IFailCallback> failCallback = std::make_shared<FailCallback>(proxy, env, callback);
     if (!failCallback) {
         UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "create failed!");
@@ -185,9 +191,9 @@ napi_status UploadTaskNapi::OnFail(napi_env env, napi_value callback, napi_value
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "OnFail callback already register!");
         return napi_generic_failure;
     }
-    proxy->offFail_ = std::move(proxy->onFail_);
+    proxy->offFail_ = proxy->onFail_;
     proxy->napiUploadTask_->On(TYPE_FAIL_CALLBACK, (void *)(failCallback.get()));
-    proxy->onFail_ = std::move(failCallback);
+    proxy->onFail_ = failCallback;
     return napi_ok;
 }
 
@@ -197,7 +203,10 @@ napi_status UploadTaskNapi::OnComplete(napi_env env, napi_value callback, napi_v
     UploadTaskNapi *proxy = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
     NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
-
+    if (!UploadTaskNapi::CheckUploadTask(proxy)) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "task is finished.");
+        return napi_generic_failure;
+    }
     std::shared_ptr<ICompleteCallback> completeCallback = std::make_shared<CompleteCallback>(proxy, env, callback);
     if (!completeCallback) {
         UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "create failed!");
@@ -207,9 +216,9 @@ napi_status UploadTaskNapi::OnComplete(napi_env env, napi_value callback, napi_v
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "OnComplete callback already register!");
         return napi_generic_failure;
     }
-    proxy->offComplete_ = std::move(proxy->onComplete_);
+    proxy->offComplete_ = proxy->onComplete_;
     proxy->napiUploadTask_->On(TYPE_COMPLETE_CALLBACK, (void *)(completeCallback.get()));
-    proxy->onComplete_ = std::move(completeCallback);
+    proxy->onComplete_ = completeCallback;
     return napi_ok;
 }
 
@@ -219,13 +228,18 @@ napi_status UploadTaskNapi::OffProgress(napi_env env, napi_value callback, napi_
     UploadTaskNapi *proxy = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
     NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
-
+    if (!UploadTaskNapi::CheckUploadTask(proxy)) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "task is finished.");
+        return napi_generic_failure;
+    }
     if (proxy->onProgress_ == nullptr) {
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Progress. proxy->onProgress_ == nullptr.");
         return napi_generic_failure;
     } else {
         std::shared_ptr<IProgressCallback> progressCallback = std::make_shared<ProgressCallback>(proxy, env, callback);
-        proxy->napiUploadTask_->Off(TYPE_PROGRESS_CALLBACK, (void *)(progressCallback.get()));
+        if (proxy->napiUploadTask_) {
+            proxy->napiUploadTask_->Off(TYPE_PROGRESS_CALLBACK, (void *)(progressCallback.get()));
+        }
         proxy->onProgress_ = nullptr;
     }
     return napi_ok;
@@ -237,15 +251,20 @@ napi_status UploadTaskNapi::OffFail(napi_env env, napi_value callback, napi_valu
     UploadTaskNapi *proxy = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
     NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
-
+    if (!UploadTaskNapi::CheckUploadTask(proxy)) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "task is finished.");
+        return napi_generic_failure;
+    }
     if (proxy->onFail_ == nullptr) {
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Fail. proxy->onFail_ == nullptr.");
         return napi_generic_failure;
     } else {
         std::shared_ptr<IFailCallback> failCallback = std::make_shared<FailCallback>(proxy, env, callback);
-        proxy->napiUploadTask_->Off(TYPE_FAIL_CALLBACK, failCallback.get());
+        if (proxy->napiUploadTask_) {
+            proxy->napiUploadTask_->Off(TYPE_FAIL_CALLBACK, failCallback.get());
+        }
         proxy->onFail_ = nullptr;
-        proxy->offFail_ = std::move(failCallback);
+        proxy->offFail_ = failCallback;
     }
     return napi_ok;
 }
@@ -257,12 +276,18 @@ napi_status UploadTaskNapi::OffComplete(napi_env env, napi_value callback, napi_
     UploadTaskNapi *proxy = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
     NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
+    if (!UploadTaskNapi::CheckUploadTask(proxy)) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "task is finished.");
+        return napi_generic_failure;
+    }
     if (proxy->onComplete_ == nullptr) {
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "CompleteCallback. proxy->OffComplete_ == nullptr.");
         return napi_generic_failure;
     } else {
         std::shared_ptr<ICompleteCallback> completeCallback = std::make_shared<CompleteCallback>(proxy, env, callback);
-        proxy->napiUploadTask_->Off(TYPE_COMPLETE_CALLBACK, completeCallback.get());
+        if (proxy->napiUploadTask_) {
+            proxy->napiUploadTask_->Off(TYPE_COMPLETE_CALLBACK, completeCallback.get());
+        }
         proxy->onComplete_ = nullptr;
     }
     return napi_ok;
@@ -563,6 +588,19 @@ void UploadTaskNapi::UnRegisterUploadTask(UploadTaskNapi *task)
             }
         }
     }
+}
+
+bool UploadTaskNapi::CheckUploadTask(UploadTaskNapi *task)
+{
+    if (task) {
+        std::lock_guard<std::mutex> lock(uploadTaskListLock_);
+        for (size_t i = 0; i<uploadTaskList_.size(); i++) {
+            if (uploadTaskList_[i] == task) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 size_t UploadTaskNapi::UploadTaskSize(void)

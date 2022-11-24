@@ -24,7 +24,7 @@ public:
     virtual void OnProgress(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) = 0;
     virtual void OnFail() = 0;
     virtual void OnComplete() = 0;
-    int taskId_;
+    uint64_t taskId_;
 };
 
 class IUploadTaskRelease {

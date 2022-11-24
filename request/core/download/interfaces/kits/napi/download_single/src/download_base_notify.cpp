@@ -50,6 +50,7 @@ void DownloadBaseNotify::OnCallBack(const std::vector<uint32_t> &params)
     napi_get_uv_event_loop(notifyData_->env, &loop);
     if (loop == nullptr) {
         DOWNLOAD_HILOGE("Failed to get uv event loop");
+        delete notifyDataPtr;
         return;
     }
     uv_work_t *work = new (std::nothrow) uv_work_t;
