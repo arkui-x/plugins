@@ -236,6 +236,11 @@ napi_value HttpExec::RequestCallback(RequestContext *context)
     return object;
 }
 
+napi_value HttpExec::Request2Callback(OHOS::NetStack::RequestContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
 std::string HttpExec::MakeUrl(const std::string &url, std::string param, const std::string &extraParam)
 {
     if (param.empty()) {
