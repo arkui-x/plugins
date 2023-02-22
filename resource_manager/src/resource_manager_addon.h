@@ -171,13 +171,14 @@ struct ResMgrAsyncContext {
     std::vector<std::string> arrayValue_;
 
     std::unique_ptr<uint8_t[]> mediaData;
-    int len_;
+    size_t len_;
 
     napi_deferred deferred_;
     napi_ref callbackRef_;
 
     std::string errMsg_;
     int success_;
+    int32_t errCode_;
 
     std::shared_ptr<ResourceManagerAddon> addon_;
     std::shared_ptr<ResourceManager> resMgr_;
@@ -186,7 +187,7 @@ struct ResMgrAsyncContext {
     ResMgrAsyncContext() : work_(nullptr), resId_(0), param_(0),  iValue_(0), fValue_(0.0f), bValue_(false),
         createValueFunc_(nullptr), len_(0), deferred_(nullptr), callbackRef_(nullptr), success_(true) {}
 
-    void SetErrorMsg(const std::string &msg, bool withResId = false);
+    void SetErrorMsg(const std::string &msg, bool withResId = false, int32_t errCode = 0);
 
     static void Complete(napi_env env, napi_status status, void* data);
 

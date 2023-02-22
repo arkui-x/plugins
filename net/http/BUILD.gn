@@ -41,7 +41,6 @@ http_include = [
   "$NETSTACK_NAPI_ROOT/http/cache/cache_proxy/include",
   "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/include",
   "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/include",
-  "$NETSTACK_NAPI_ROOT/http/cache/md5/include",
   "$NETSTACK_NAPI_ROOT/http/constant/include",
   "$NETSTACK_NAPI_ROOT/http/http_module/include",
   "$NETSTACK_NAPI_ROOT/http/options/include",
@@ -49,10 +48,7 @@ http_include = [
   "//plugins/interfaces",
   "//plugins/net/http",
   "//third_party/curl/include",
-  "//third_party/glib/glib",
-  "//third_party/glib",
   "//third_party/jsoncpp/include",
-  "//third_party/openssl/include",
 ]
 
 http_sources = [
@@ -67,7 +63,6 @@ http_sources = [
   "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/disk_handler.cpp",
   "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache.cpp",
   "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache_disk_handler.cpp",
-  "$NETSTACK_NAPI_ROOT/http/cache/md5/src/calculate_md5.cpp",
   "$NETSTACK_NAPI_ROOT/http/constant/src/constant.cpp",
   "$NETSTACK_NAPI_ROOT/http/http_module/src/http_module.cpp",
   "$NETSTACK_NAPI_ROOT/http/options/src/http_request_options.cpp",
@@ -97,9 +92,7 @@ template("plugin_net_http_static") {
         "//foundation/arkui/napi/:ace_napi",
         "//plugins/interfaces/native:plugin_log",
         "//third_party/curl:curl",
-        "//third_party/glib:glib_packages",
         "//third_party/jsoncpp:jsoncpp",
-        "//third_party/openssl:libcrypto_shared",
       ]
 
       aosp_deps = [ "shared_library:liblog" ]
