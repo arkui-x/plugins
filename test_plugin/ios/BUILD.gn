@@ -30,7 +30,6 @@ ohos_source_set("test_plugin_ios") {
 
   cflags_objc = [
     "-fvisibility=default",
-    "-fobjc-arc",
     "-fobjc-weak",
   ]
 
