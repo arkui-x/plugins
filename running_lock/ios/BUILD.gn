@@ -21,7 +21,6 @@ ohos_source_set("runninglock_ios") {
 
   cflags_objc = [
     "-fvisibility=default",
-    "-fobjc-arc",
     "-fobjc-weak",
   ]
 
