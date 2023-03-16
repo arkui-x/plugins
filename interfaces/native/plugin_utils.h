@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <string>
+#include <vector>
 
 #ifndef PLUGIN_EXPORT
 #ifdef WINDOWS_PLATFORM
@@ -47,6 +48,8 @@ namespace OHOS::Plugin {
 
 using RegisterCallback = bool (*)(void*);
 using Task = std::function<void()>;
+using GrantResult =
+    std::function<void(const std::vector<std::string>& permissions, const std::vector<int>& grantResults)>;
 
 class PLUGIN_EXPORT PluginUtils {
 public:
@@ -55,6 +58,7 @@ public:
     static void RunSyncTaskOnLocal(const Task& task, std::chrono::milliseconds timeout);
     static void RunTaskOnJS(const Task& task);
     static void RunSyncTaskOnJS(const Task& task);
+    static void JSRegisterGrantResult(GrantResult grantResult);
 };
 
 } // namespace OHOS::Plugin
