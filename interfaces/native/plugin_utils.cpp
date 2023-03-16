@@ -19,6 +19,7 @@
 
 #include "frameworks/core/common/container.h"
 #ifdef ANDROID_PLATFORM
+#include "adapter/android/capability/java/jni/grantresult/grant_result_manager.h"
 #include "adapter/android/capability/java/jni/plugin/plugin_manager_jni.h"
 #endif
 
@@ -63,4 +64,11 @@ void PluginUtils::RunSyncTaskOnJS(const Task& task)
         taskExecutor->PostSyncTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
     }
 }
-}  // namespace OHOS::Plugin
+
+void PluginUtils::JSRegisterGrantResult(GrantResult grantResult)
+{
+#ifdef ANDROID_PLATFORM
+    OHOS::Ace::Platform::GrantResultManager::JSRegisterGrantResult(grantResult);
+#endif
+}
+} // namespace OHOS::Plugin
