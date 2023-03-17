@@ -16,6 +16,7 @@ import("//build/ohos.gni")
 common_plugin_libs = [
   "common_event",
   "display",
+  "convertxml",
   "fileio",
   "hitrace_meter",
   "i18n",
