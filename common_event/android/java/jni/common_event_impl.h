@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,9 +24,9 @@ class CommonEventImpl final : public CommonEventInterface {
 public:
     CommonEventImpl() = default;
     ~CommonEventImpl() override = default;
-    void PublishCommonEvent(const std::string &event, OH_Plugin_AsyncCallbackInfo* ptr) override;
+    void PublishCommonEvent(const std::string &event, AsyncCallbackInfo* ptr) override;
     void SubscribeCommonEvent(const std::string &key, const std::vector<std::string> events) override;
-    void UnSubscribeCommonEvent(const std::string &key, OH_Plugin_AsyncCallbackInfo* ptr) override;
+    void UnSubscribeCommonEvent(const std::string &key, AsyncCallbackInfo* ptr) override;
 };
 }  // namespace Plugin
 }  // namespace OHOS

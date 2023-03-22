@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,18 +18,19 @@
 
 #include <memory>
 
-#include "plugin_c_utils.h"
 #include "common_event_subscriber.h"
+#include "inner_utils/plugin_inner_napi_utils.h"
+#include "plugin_c_utils.h"
 
 namespace OHOS {
 namespace Plugin {
 class CommonEventManager {
 public:
-    static void PublishCommonEvent(const std::string &event, OH_Plugin_AsyncCallbackInfo* ptr);
+    static void PublishCommonEvent(const std::string &event, AsyncCallbackInfo* ptr);
     static void SubscribeCommonEvent(
         const std::shared_ptr<CommonEventSubscriber> &subscriber);
     static void UnSubscribeCommonEvent(
-        const std::shared_ptr<CommonEventSubscriber> &subscriber, OH_Plugin_AsyncCallbackInfo* ptr);
+        const std::shared_ptr<CommonEventSubscriber> &subscriber, AsyncCallbackInfo* ptr);
 };
 }  // namespace Plugin
 }  // namespace OHOS
