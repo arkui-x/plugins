@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,12 +21,12 @@ std::unique_ptr<CommonEventInterface> CommonEventInterface::Create()
     return std::make_unique<CommonEventImpl>();
 }
 
-void CommonEventImpl::PublishCommonEvent(const std::string &event, OH_Plugin_AsyncCallbackInfo* ptr)
+void CommonEventImpl::PublishCommonEvent(const std::string &event, AsyncCallbackInfo* ptr)
 {}
 
 void CommonEventImpl::SubscribeCommonEvent(const std::string &key, const std::vector<std::string> events)
 {}
 
-void CommonEventImpl::UnSubscribeCommonEvent(const std::string &key, OH_Plugin_AsyncCallbackInfo* ptr)
+void CommonEventImpl::UnSubscribeCommonEvent(const std::string &key, AsyncCallbackInfo* ptr)
 {}
 }  // namespace OHOS::Plugin

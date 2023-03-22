@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -653,8 +653,8 @@ napi_value PublishCommonEvent(napi_env env, napi_callback_info info)
     napi_ref callback;
     napi_create_reference(env, argv[1], 1, &callback);
 
-    OH_Plugin_AsyncCallbackInfo* asyncCallbackInfo =
-        new (std::nothrow) OH_Plugin_AsyncCallbackInfo {.env = env, .asyncWork = nullptr};
+    AsyncCallbackInfo* asyncCallbackInfo =
+        new (std::nothrow) AsyncCallbackInfo {.env = env, .asyncWork = nullptr};
     asyncCallbackInfo->callback[0] = callback;
     CommonEventManager::PublishCommonEvent(event, asyncCallbackInfo);
     return NapiGetNull(env);
@@ -674,8 +674,8 @@ napi_value SubscribeCommonEvent(napi_env env, napi_callback_info info)
         return NapiGetNull(env);
     }
 
-    OH_Plugin_AsyncCallbackInfo* asyncCallbackInfo =
-        new (std::nothrow) OH_Plugin_AsyncCallbackInfo {.env = env, .asyncWork = nullptr};
+    AsyncCallbackInfo* asyncCallbackInfo =
+        new (std::nothrow) AsyncCallbackInfo {.env = env, .asyncWork = nullptr};
     if (asyncCallbackInfo == nullptr) {
         LOGE("asyncCallbackInfo is null");
         return NapiGetNull(env);
@@ -716,7 +716,7 @@ napi_value UnSubscribeCommonEvent(napi_env env, napi_callback_info info)
         return NapiGetNull(env);
     }
 
-    OH_Plugin_AsyncCallbackInfo* asynccallback = new (std::nothrow) OH_Plugin_AsyncCallbackInfo();
+    AsyncCallbackInfo* asynccallback = new (std::nothrow) AsyncCallbackInfo();
     asynccallback->env = env;
     if (asynccallback == nullptr) {
         LOGE("asynccallback is null");

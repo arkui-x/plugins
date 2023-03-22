@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include "constant.h"
 #include "download_task_napi.h"
 #include "js_util.h"
+#include "inner_utils/plugin_inner_napi_utils.h"
 #include "plugin_c_utils.h"
 #include "upload_task_napi.h"
 
