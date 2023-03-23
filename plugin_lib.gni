@@ -18,6 +18,7 @@ common_plugin_libs = [
   "common_event",
   "display",
   "fileio",
+  "hilog",
   "hitrace_meter",
   "i18n",
   "multimedia_image",
