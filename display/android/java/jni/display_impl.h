@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,7 +26,7 @@ public:
     DisplayImpl() = default;
     ~DisplayImpl() override = default;
 
-    void GetDefaultDisplay(OH_Plugin_AsyncCallbackInfo *ptr) override;
+    void GetDefaultDisplay(AsyncCallbackInfo *ptr) override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_DISPLAY_ANDROID_JAVA_JNI_DISPLAY_IMPL_H

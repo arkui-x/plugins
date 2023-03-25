@@ -16,6 +16,7 @@
 #include "plugins/ability_access_ctrl/android/java/jni/ability_access_ctrl_jni.h"
 
 #include <codecvt>
+#include <locale>
 #include <jni.h>
 
 #include "log.h"
@@ -118,7 +119,7 @@ bool AbilityAccessCtrlJni::CheckPermission(const std::string& permission)
     return isGranted;
 }
 
-void AbilityAccessCtrlJni::RequestPermissions(const std::vector<std::string> permissions)
+void AbilityAccessCtrlJni::RequestPermissions(const std::vector<std::string>& permissions)
 {
     LOGI("AbilityAccessCtrl JNI: Request");
     auto env = OH_Plugin_GetJniEnv();
@@ -126,13 +127,12 @@ void AbilityAccessCtrlJni::RequestPermissions(const std::vector<std::string> per
         LOGW("AbilityAccessCtrl JNI get none ptr error");
         return;
     }
-    jstring jpermissions[permissions.size()];
     jobjectArray array;
     jclass jcl = env->FindClass("java/lang/String");
     array = env->NewObjectArray(permissions.size(), jcl, NULL);
     for (size_t i = 0; i < permissions.size(); i++) {
-        jpermissions[i] = StringToJavaString(env, OhPermissionToJava(permissions[i]));
-        env->SetObjectArrayElement(array, i, jpermissions[i]);
+        jstring jpermission = StringToJavaString(env, OhPermissionToJava(permissions[i]));
+        env->SetObjectArrayElement(array, i, jpermission);
     }
     env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.requestPermissions, array);
     if (env->ExceptionCheck()) {

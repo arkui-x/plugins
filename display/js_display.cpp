@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #include <cstddef>
 
 #include "log.h"
+#include "inner_utils/plugin_inner_napi_utils.h"
 #include "plugin_c_utils.h"
 
 #include "plugins/display/display.h"
@@ -47,13 +48,13 @@ static napi_value JSDisplayGetDefaultDisplay(napi_env env, napi_callback_info in
             return nullptr;
         }
     }
-    OH_Plugin_AsyncCallbackInfo* ptr =
-        new (std::nothrow) OH_Plugin_AsyncCallbackInfo { .env = env, .asyncWork = nullptr };
+    AsyncCallbackInfo* ptr =
+        new (std::nothrow) AsyncCallbackInfo { .env = env, .asyncWork = nullptr };
     if (ptr == nullptr) {
-        LOGE("OH_Plugin_AsyncCallbackInfo create failed!");
+        LOGE("AsyncCallbackInfo create failed!");
         return nullptr;
     } else {
-        LOGI("JSDisplayGetDefaultDisplay new OH_Plugin_AsyncCallbackInfo = %{private}p.", ptr);
+        LOGI("JSDisplayGetDefaultDisplay new AsyncCallbackInfo = %{private}p.", ptr);
     }
     napi_value result = nullptr;
     if (argcAsync > argcPromise) {

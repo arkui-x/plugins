@@ -16,6 +16,7 @@
 #ifndef PLUGINS_ABILITY_ACCESS_CONTROL_PLUGIN_H
 #define PLUGINS_ABILITY_ACCESS_CONTROL_PLUGIN_H
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,7 +35,7 @@ typedef enum TypePermissionState {
 } PermissionState;
 
 using RequestPermissionCallback =
-    std::function<void(void*, const std::vector<std::string> permissions, const std::vector<int> grantResults)>;
+    std::function<void(void*, const std::vector<std::string>& permissions, const std::vector<int> grantResults)>;
 class AbilityAccessCtrl {
 public:
     AbilityAccessCtrl() = default;
@@ -43,7 +44,7 @@ public:
     static std::unique_ptr<AbilityAccessCtrl> Create();
     virtual bool CheckPermission(const std::string& permission) = 0;
     virtual void RequestPermissions(
-        const std::vector<std::string> permissions, RequestPermissionCallback callback, void* data) = 0;
+        const std::vector<std::string>& permissions, RequestPermissionCallback callback, void* data) = 0;
 };
 } // namespace OHOS::Plugin
 

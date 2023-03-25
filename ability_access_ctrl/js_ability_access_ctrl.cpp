@@ -157,6 +157,9 @@ static bool ParseInputCheckPermission(
             napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
+    if (!IsTokenIDValid(asyncContext.tokenId) || !IsPermissionNameValid(asyncContext.permission)) {
+        asyncContext.jsCode = JS_ERROR_PARAM_INVALID; // -1: faile
+    }
     return true;
 }
 
@@ -237,6 +240,12 @@ static napi_value JSCheckAccessTokenSync(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
+    if (asyncContext->jsCode != JS_OK) {
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env,
+            asyncContext->jsCode, GetErrorMessage(asyncContext->jsCode))));
+        return nullptr;
+    }
+
     bool isGranted = g_acPlugin->CheckPermission(asyncContext->permission);
     asyncContext->status = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
     napi_value result = nullptr;
@@ -268,8 +277,8 @@ void CheckAccessTokenComplete(napi_env env, napi_status status, void *data)
         return;
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    if (!IsTokenIDValid(asyncContext->tokenId) || !IsPermissionNameValid(asyncContext->permission)) {
-        napi_value error = GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, GetErrorMessage(JS_ERROR_PARAM_INVALID));
+    if (asyncContext->jsCode != JS_OK) {
+        napi_value error = GenerateBusinessError(env, asyncContext->jsCode, GetErrorMessage(asyncContext->jsCode));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred, error));
     } else {
         napi_value result = nullptr;
@@ -328,7 +337,6 @@ static napi_value WrapRequestResult(const napi_env& env,
         NAPI_CALL(env, napi_set_element(env, objGrantResults, i, nGrantResult));
     }
     NAPI_CALL(env, napi_set_named_property(env, result, "authResults", objGrantResults));
-
     return result;
 }
 
@@ -373,7 +381,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
 }
 
 void OnRequestPermission(
-    void* data, const std::vector<std::string> permissions, const std::vector<int> grantResults)
+    void* data, const std::vector<std::string>& permissions, const std::vector<int> grantResults)
 {
     LOGI("AbilityAccessCtrlImpl OnRequest called");
     auto* retCB = new (std::nothrow) ResultCallback();

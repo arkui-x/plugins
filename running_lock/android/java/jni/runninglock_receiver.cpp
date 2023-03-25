@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #include "plugins/running_lock/android/java/jni/runninglock_receiver.h"
 
 #include "log.h"
+#include "inner_utils/plugin_inner_napi_utils.h"
 #include "plugin_c_utils.h"
 #include "plugin_utils.h"
 #include "plugins/running_lock/js_runninglock.h"
@@ -26,8 +27,8 @@ void RunningLockReceiver::ReceiveCallBack(RunningLockAsyncCallbackInfo *ptr)
 {
     LOGI("RunningLockReceiver::ReceiveCallBack ptr->env[%p] ptr->callbackRef[%p] ", ptr->env, ptr->callbackRef);
     PluginUtils::RunTaskOnJS([ptr]() {
-        OH_Plugin_AsyncCallbackInfo *pptr =
-            new (std::nothrow) OH_Plugin_AsyncCallbackInfo {.env = ptr->env, .asyncWork = nullptr};
+        AsyncCallbackInfo *pptr =
+            new (std::nothrow) AsyncCallbackInfo {.env = ptr->env, .asyncWork = nullptr};
         pptr->callback[0] = ptr->callbackRef;
         pptr->deferred = ptr->deferred;
         pptr->jsdata = CreateInstanceForRunningLock(ptr->env, ptr);
@@ -37,11 +38,11 @@ void RunningLockReceiver::ReceiveCallBack(RunningLockAsyncCallbackInfo *ptr)
             pptr->status = -1;
         }
         if (pptr->callback[0] == nullptr) {
-            LOGI("OH_Plugin_EmitPromiseWork called.");
-            OH_Plugin_EmitPromiseWork(pptr);
+            LOGI("PluginInnerNApiUtils::EmitPromiseWork called.");
+            PluginInnerNApiUtils::EmitPromiseWork(pptr);
         } else {
-            LOGI("OH_Plugin_EmitAsyncCallbackWork called.");
-            OH_Plugin_EmitAsyncCallbackWork(pptr);
+            LOGI("PluginInnerNApiUtils::EmitAsyncCallbackWork called.");
+            PluginInnerNApiUtils::EmitAsyncCallbackWork(pptr);
         }
     });
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,5 +23,5 @@ std::unique_ptr<Display> Display::Create()
     return std::make_unique<DisplayImpl>();
 }
 
-void DisplayImpl::GetDefaultDisplay(OH_Plugin_AsyncCallbackInfo* ptr) {}
+void DisplayImpl::GetDefaultDisplay(AsyncCallbackInfo* ptr) {}
 } // namespace OHOS::Plugin

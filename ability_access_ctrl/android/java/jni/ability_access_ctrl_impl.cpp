@@ -31,7 +31,7 @@ bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
 }
 
 void AbilityAccessCtrlImpl::RequestPermissions(
-    const std::vector<std::string> permissions, RequestPermissionCallback callback, void* data)
+    const std::vector<std::string>& permissions, RequestPermissionCallback callback, void* data)
 {
     LOGI("AbilityAccessCtrlImpl Request called");
     PluginUtils::RunTaskOnPlatform([permissions, callback, data]() {

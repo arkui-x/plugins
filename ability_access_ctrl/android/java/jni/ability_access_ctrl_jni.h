@@ -32,7 +32,7 @@ public:
     static void NativeInit(JNIEnv* env, jobject jobj);
     // Called by C++
     static bool CheckPermission(const std::string& permission);
-    static void RequestPermissions(const std::vector<std::string> permissions);
+    static void RequestPermissions(const std::vector<std::string>& permissions);
 };
 } // namespace OHOS::Plugin
 

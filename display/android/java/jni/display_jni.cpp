@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -70,7 +70,7 @@ void DisplayJni::NativeInit(JNIEnv* env, jobject jobj)
     env->DeleteLocalRef(cls);
 }
 
-void DisplayJni::GetDefaultDisplay(OH_Plugin_AsyncCallbackInfo* ptr)
+void DisplayJni::GetDefaultDisplay(AsyncCallbackInfo* ptr)
 {
     LOGI("Display JNI: GetDefaultDisplay");
     DisplayInfo info;

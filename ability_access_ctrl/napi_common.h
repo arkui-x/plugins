@@ -15,6 +15,10 @@
 
 #ifndef PLUGINS_ABILITY_ACCESS_CONTROL_NAPI_COMMON_H
 #define PLUGINS_ABILITY_ACCESS_CONTROL_NAPI_COMMON_H
+#include <string>
+#include <vector>
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
 namespace OHOS::Plugin {
 struct AtManagerAsyncWorkData {
     explicit AtManagerAsyncWorkData(napi_env envValue);
@@ -31,6 +35,7 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     uint32_t tokenId = 0;
     std::string permission;
     int32_t status;
+    int32_t jsCode = 0;
 };
 
 struct ResultCallback {

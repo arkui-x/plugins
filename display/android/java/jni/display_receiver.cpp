@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -63,14 +63,14 @@ static napi_value WrapDisplayInfo(napi_env env, const DisplayInfo& displayInfo)
 
     return result;
 }
-void DisplayReceiver::ReceiveFun(DisplayInfo displayInfo, OH_Plugin_AsyncCallbackInfo* ptr)
+void DisplayReceiver::ReceiveFun(DisplayInfo displayInfo, AsyncCallbackInfo* ptr)
 {
     PluginUtils::RunTaskOnJS([displayInfo, ptr]() {
         ptr->jsdata = WrapDisplayInfo(ptr->env, displayInfo);
         if (ptr->callback[0] == nullptr) {
-            OH_Plugin_EmitPromiseWork(ptr);
+            PluginInnerNApiUtils::EmitPromiseWork(ptr);
         } else {
-            OH_Plugin_EmitAsyncCallbackWork(ptr);
+            PluginInnerNApiUtils::EmitAsyncCallbackWork(ptr);
         }
     });
 }

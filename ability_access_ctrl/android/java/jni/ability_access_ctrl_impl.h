@@ -27,7 +27,7 @@ public:
 
     bool CheckPermission(const std::string& permission) override;
     void RequestPermissions(
-        const std::vector<std::string> permissions, RequestPermissionCallback callback, void* data) override;
+        const std::vector<std::string>& permissions, RequestPermissionCallback callback, void* data) override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_ABILIT_ACCESS_CONTROL_ANDROID_JAVA_JNI_IMPL_H
