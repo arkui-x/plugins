@@ -14,6 +14,7 @@
 import("//build/ohos.gni")
 
 common_plugin_libs = [
+  "ability_access_ctrl",
   "bridge",
   "common_event",
   "display",
