@@ -18,6 +18,7 @@ common_plugin_libs = [
   "bridge",
   "common_event",
   "display",
+  "convertxml",
   "fileio",
   "hilog",
   "hitrace_meter",
