@@ -30,6 +30,8 @@ common_plugin_libs = [
   "running_lock",
   "test_plugin",
   "resource_manager",
+  "uri",
+  "url",
 ]
 
 template("plugin_lib") {
