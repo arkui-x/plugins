@@ -44,9 +44,6 @@ Bridge::~Bridge()
 
 bool Bridge::BridgeNameExists(const std::string& bridgeName)
 {
-    if (bridgeName.empty()) {
-        return true;
-    }
     return BridgeManager::JSBridgeExists(bridgeName);
 }
 
