@@ -83,7 +83,7 @@ void AbilityAccessCtrlImpl::RequestPermission(
         [[abilityAccessCtrlIOS shareinstance] RequestMicrophonePermission:func :cbInfo :isLast];
         return;
     }
-    IosCallback(cbInfo, isLast, GrantResultType::INVALID_OPER);
+    IosCallback(cbInfo, isLast, GrantResultType::DENIED_BY_USER);
     return;
 }
 
