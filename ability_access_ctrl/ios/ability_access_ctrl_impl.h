@@ -21,7 +21,7 @@
 #include "plugins/ability_access_ctrl/ability_access_ctrl.h"
 
 namespace OHOS::Plugin {
-typedef void (*FuncType)(CallbackInfo* info, bool isLast, bool granted);
+typedef void (*FuncType)(CallbackInfo* info, bool isLast, int granted);
 
 class AbilityAccessCtrlImpl final : public AbilityAccessCtrl {
 public:

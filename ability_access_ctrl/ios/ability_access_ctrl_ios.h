@@ -32,9 +32,20 @@ typedef struct {
     size_t index;
 } CallbackInfo;
 
+typedef enum GrantResultType {
+    /** permission has been denied by user. */
+    DENIED_BY_USER = -1,
+    /** permission is granted. */
+    GRANTED = 0,
+    /** permission need dynamic pop-up windows to grant it. */
+    NOT_DETERMINED = 1,
+    /** invalid operation, something is wrong or the app is not permmited to use the permission. */
+    INVALID_OPER = 2,
+} GrantResultType;
+
 @interface abilityAccessCtrlIOS : NSObject
 
-typedef void (*IosCb)(CallbackInfo* info, bool isLast, bool granted);
+typedef void (*IosCb)(CallbackInfo* info, bool isLast, int result);
 
 +(instancetype)shareinstance;
 
