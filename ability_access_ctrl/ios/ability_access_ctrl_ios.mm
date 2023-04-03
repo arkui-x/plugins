@@ -69,24 +69,25 @@
         case AVAuthorizationStatusNotDetermined: {
             [AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio completionHandler:^(BOOL granted) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    callback(data, isLast, granted);
+                    int result = granted ? GrantResultType::GRANTED : GrantResultType::DENIED_BY_USER;
+                    callback(data, isLast, result);
                 });
             }];
             return;
         }
         case AVAuthorizationStatusAuthorized: {
-            callback(data, isLast, 1);
+            callback(data, isLast, GrantResultType::GRANTED);
             return;
         }
-        case AVAuthorizationStatusDenied:
-        case AVAuthorizationStatusRestricted: {
-            callback(data, isLast, 0);
+        case AVAuthorizationStatusDenied: {
+            callback(data, isLast, GrantResultType::DENIED_BY_USER);
             return;
         }
+        case AVAuthorizationStatusRestricted:
         default:
             break;
     }
-    callback(data, isLast, 0);
+    callback(data, isLast, GrantResultType::INVALID_OPER);
     return;
 }
 
@@ -96,24 +97,25 @@
         case AVAuthorizationStatusNotDetermined: {
             [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    callback(data, isLast, granted);
+                    int result = granted ? GrantResultType::GRANTED : GrantResultType::DENIED_BY_USER;
+                    callback(data, isLast, result);
                 });
             }];
             return;
         }
         case AVAuthorizationStatusAuthorized: {
-            callback(data, isLast, 1);
+            callback(data, isLast, GrantResultType::GRANTED);
+            return;
+        }
+        case AVAuthorizationStatusDenied: {
+            callback(data, isLast, GrantResultType::DENIED_BY_USER);
             return;
         }
         case AVAuthorizationStatusRestricted:
-        case AVAuthorizationStatusDenied: {
-            callback(data, isLast, 0);
-            return;
-        }
         default:
             break;
     }
-    callback(data, isLast, 0);
+    callback(data, isLast, GrantResultType::INVALID_OPER);
     return;
 }
 @end

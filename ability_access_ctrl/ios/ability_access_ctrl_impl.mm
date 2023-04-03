@@ -44,14 +44,14 @@ bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
     return false;
 }
 
-static void IosCallback(CallbackInfo* info, bool isLast, bool granted)
+static void IosCallback(CallbackInfo* info, bool isLast, int result)
 {
-    LOGI("IosCallback: permissions, grantResults %{public}d. %{public}d", info->index, granted);
+    LOGI("IosCallback: permissions, grantResults %{public}d. %{public}d", info->index, result);
     if (info == nullptr) {
         LOGE("info is null.");
         return;
     }
-    int result = granted ? 0 : -1;
+
     info->grantResults.emplace_back(result);
     if (isLast) {
         std::vector<std::string> permissions;
@@ -83,9 +83,7 @@ void AbilityAccessCtrlImpl::RequestPermission(
         [[abilityAccessCtrlIOS shareinstance] RequestMicrophonePermission:func :cbInfo :isLast];
         return;
     }
-    if (isLast) {
-        IosCallback(cbInfo, isLast, false);
-    }
+    IosCallback(cbInfo, isLast, GrantResultType::INVALID_OPER);
     return;
 }
 
