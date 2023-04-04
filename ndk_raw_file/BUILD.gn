@@ -44,6 +44,9 @@ template("plugin_ndk_raw_file_static") {
     }
 
     defines += [ "__ARKUI_CROSS__" ]
+    if (defined(config.libace_target)) {
+      deps = [ config.libace_target ]
+    }
 
     subsystem_name = "plugins"
     part_name = "ndk_raw_file"
