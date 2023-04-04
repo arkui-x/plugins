@@ -14,35 +14,74 @@
  */
 
 #include "ability_access_ctrl_impl.h"
+#include <map>
 #include "ability_access_ctrl_jni.h"
 #include "log.h"
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
+static bool isInited = false;
+static std::map<std::string, std::string> g_permissionMap;
+static void InitPermissionMap()
+{
+    // add permission map
+    g_permissionMap["ohos.permission.CAMERA"] = "android.permission.CAMERA";
+    g_permissionMap["ohos.permission.MICROPHONE"] = "android.permission.RECORD_AUDIO";
+}
+
+static std::string OhPermissionToJava(const std::string& permission)
+{
+    auto it = g_permissionMap.find(permission);
+    if (it != g_permissionMap.end()) {
+        return it->second;
+    }
+    return "";
+}
+
 std::unique_ptr<AbilityAccessCtrl> AbilityAccessCtrl::Create()
 {
+    if (!isInited) {
+        InitPermissionMap();
+        isInited = true;
+    }
+    
     return std::make_unique<AbilityAccessCtrlImpl>();
 }
 
 bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
 {
     LOGI("AbilityAccessCtrlImpl Check called");
-    return AbilityAccessCtrlJni::CheckPermission(permission);
+    std::string javaPermission = OhPermissionToJava(permission);
+    if (javaPermission.empty()) {
+        return false;
+    }
+    return AbilityAccessCtrlJni::CheckPermission(javaPermission);
 }
 
 void AbilityAccessCtrlImpl::RequestPermissions(
     const std::vector<std::string>& permissions, RequestPermissionCallback callback, void* data)
 {
     LOGI("AbilityAccessCtrlImpl Request called");
+    std::vector<std::string> javaStrings;
+    for (size_t i = 0; i < permissions.size(); i++) {
+        javaStrings.emplace_back(OhPermissionToJava(permissions[i]));
+    }
     PluginUtils::RunTaskOnPlatform([permissions, callback, data]() {
         auto task = [permissions, callback, data](const std::vector<std::string> perms, const std::vector<int> result) {
-            callback(data, permissions, result);
+            std::vector<int> grantResult = result;
+            for (size_t i = 0; i < permissions.size(); i++) {
+                if (OhPermissionToJava(permissions[i]).empty()) {
+                    // 2: invalid operation, something is wrong or the app is not permmited to use the permission.
+                    grantResult[i] = 2;
+                }
+            }
+            callback(data, permissions, grantResult);
         };
         PluginUtils::JSRegisterGrantResult(task);
         LOGI("AbilityAccessCtrlImpl JSRegisterGrantResult end");
     });
-    PluginUtils::RunTaskOnPlatform([permissions]() {
-        AbilityAccessCtrlJni::RequestPermissions(permissions);
+    PluginUtils::RunTaskOnPlatform([javaStrings]() {
+        AbilityAccessCtrlJni::RequestPermissions(javaStrings);
     });
 }
 } // namespace OHOS::Plugin

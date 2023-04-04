@@ -25,7 +25,6 @@
 
 namespace OHOS::Plugin {
 namespace {
-static std::map<std::string, std::string> g_permissionMap;
 const char CLASS_NAME[] = "ohos/ace/plugin/abilityaccessctrl/AbilityAccessCtrl";
 
 static const JNINativeMethod METHODS[] = {
@@ -45,32 +44,15 @@ struct {
 } g_pluginClass;
 } // namespace
 
-static void InitPermissionMap()
-{
-    // add permission map
-    g_permissionMap["ohos.permission.CAMERA"] = "android.permission.CAMERA";
-    g_permissionMap["ohos.permission.MICROPHONE"] = "android.permission.RECORD_AUDIO";
-}
-
 static jstring StringToJavaString(JNIEnv* env, const std::string &string)
 {
     std::u16string str = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> {}.from_bytes(string);
     return env->NewString(reinterpret_cast<const jchar *>(str.data()), str.length());
 }
 
-static std::string OhPermissionToJava(const std::string& permission)
-{
-    auto it = g_permissionMap.find(permission);
-    if (it != g_permissionMap.end()) {
-        return it->second;
-    }
-    return "invalid permission";
-}
-
 bool AbilityAccessCtrlJni::Register(void* env)
 {
     LOGI("AbilityAccessCtrl JNI: Register");
-    InitPermissionMap();
     auto* jniEnv = static_cast<JNIEnv*>(env);
     CHECK_NULL_RETURN(jniEnv, false);
     jclass cls = jniEnv->FindClass(CLASS_NAME);
@@ -108,7 +90,7 @@ bool AbilityAccessCtrlJni::CheckPermission(const std::string& permission)
         return false;
     }
 
-    jstring jPermission = StringToJavaString(env, OhPermissionToJava(permission));
+    jstring jPermission = StringToJavaString(env, permission);
     bool isGranted = static_cast<bool>(env->CallBooleanMethod(
         g_pluginClass.globalRef, g_pluginClass.checkPermission, jPermission));
     if (env->ExceptionCheck()) {
@@ -131,7 +113,7 @@ void AbilityAccessCtrlJni::RequestPermissions(const std::vector<std::string>& pe
     jclass jcl = env->FindClass("java/lang/String");
     array = env->NewObjectArray(permissions.size(), jcl, NULL);
     for (size_t i = 0; i < permissions.size(); i++) {
-        jstring jpermission = StringToJavaString(env, OhPermissionToJava(permissions[i]));
+        jstring jpermission = StringToJavaString(env, permissions[i]);
         env->SetObjectArrayElement(array, i, jpermission);
     }
     env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.requestPermissions, array);

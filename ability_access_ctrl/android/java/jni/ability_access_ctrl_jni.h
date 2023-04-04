@@ -17,7 +17,6 @@
 #define PLUGINS_ABILITY_ACCESS_CONTROL_ANDROID_JAVA_JNI_H
 
 #include <jni.h>
-#include <map>
 #include <memory>
 #include <vector>
 #include "plugin_c_utils.h"

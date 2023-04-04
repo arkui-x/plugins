@@ -366,6 +366,8 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
         LOGE("grantResults empty");
         result = JsErrorCode::JS_ERROR_INNER;
     }
+    napi_handle_scope scope = nullptr;
+    NAPI_CALL_RETURN_VOID(context->env, napi_open_handle_scope(context->env, &scope));
     napi_value requestResult = WrapRequestResult(context->env, retCB->permissions, retCB->grantResults);
     if (requestResult == nullptr) {
         LOGE("wrap requestResult failed");
@@ -377,6 +379,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     } else {
         ReturnCallbackResult(context->env, result, context->callbackRef, requestResult);
     }
+    NAPI_CALL_RETURN_VOID(context->env, napi_close_handle_scope(context->env, scope));
     LOGI("OnRequestPermissionsFromUser async callback is called end");
 }
 
