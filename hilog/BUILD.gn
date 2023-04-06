@@ -38,8 +38,8 @@ template("plugin_hilog_static") {
 
     deps = [
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${platform}",
-      "//foundation/arkui/napi:ace_napi",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     subsystem_name = "plugins"
