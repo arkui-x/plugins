@@ -40,19 +40,20 @@ template("ace_plugin_util_static") {
     include_dirs = [
       "$ace_root",
       "$ace_root/frameworks",
+      "//third_party/bounds_checking_function/include",
     ]
 
     public_configs = [ ":plugin_util_config" ]
 
     sources = [
+      "inner_utils/plugin_inner_napi_utils.cpp",
       "plugin_c_utils.cpp",
       "plugin_utils.cpp",
-      "inner_utils/plugin_inner_napi_utils.cpp",
     ]
 
     deps = [
       ":plugin_log",
-      "//foundation/arkui/napi:ace_napi",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     if (defined(config.libace_target)) {
@@ -89,7 +90,7 @@ foreach(item, ace_platforms) {
       platform = item.name
       public_configs = [ ":plugin_util_config" ]
       deps = [ ":ace_plugin_util_static_${platform}" ]
-      public_deps = [ "//foundation/arkui/napi:ace_napi" ]
+      public_deps = [ "//plugins/libs/napi:napi_${target_os}" ]
 
       subsystem_name = "plugins"
       part_name = "plugin_utils"
@@ -99,7 +100,7 @@ foreach(item, ace_platforms) {
       platform = item.name
       public_configs = [ ":plugin_util_config" ]
       deps = [ ":ace_plugin_util_static_${platform}" ]
-      public_deps = [ "//foundation/arkui/napi:ace_napi" ]
+      public_deps = [ "//plugins/libs/napi:napi_${target_os}" ]
 
       subsystem_name = "plugins"
       part_name = "plugin_utils"

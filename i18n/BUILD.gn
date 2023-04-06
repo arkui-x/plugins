@@ -24,8 +24,8 @@ template("plugin_i18n_static") {
     sources = [ "js_i18n.cpp" ]
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     if (platform == "android") {
