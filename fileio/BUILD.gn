@@ -60,8 +60,8 @@ template("napi_fileio_static") {
     ]
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
       "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
       "//third_party/bounds_checking_function:libsec_static",
     ]
 

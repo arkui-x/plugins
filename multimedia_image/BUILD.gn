@@ -22,9 +22,9 @@ template("plugin_multimedia_image_static") {
     cflags_cc += invoker.cflags_cc
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
       "//foundation/multimedia/image_framework:image_framework",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     subsystem_name = "plugins"

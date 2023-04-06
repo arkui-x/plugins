@@ -24,8 +24,8 @@ template("plugin_hitrace_meter_static") {
     sources = [ "js_hitrace_meter.cpp" ]
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
     if (platform == "android") {
       deps += [ "android:trace_anroid" ]
