@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,20 +14,29 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-ohos_source_set("trace_anroid") {
-  sources = [ "trace_impl.cpp" ]
-
-  defines = [ "ANDROID_PLATFORM" ]
-
-  include_dirs = [ "//plugins/hitrace_meter" ]
-
-  deps = [
-    "$ace_root/adapter/android/build:libace_android",
-    "//plugins/interfaces/native:ace_plugin_util_android",
+ohos_source_set("ability_access_ctrl_ios") {
+  sources = [
+    "ability_access_ctrl_impl.mm",
+    "ability_access_ctrl_ios.mm",
   ]
 
-  libs = [ "android" ]
+  defines = [ "IOS_PLATFORM" ]
+
+  if (target_cpu == "arm64") {
+    defines += [ "_ARM64_" ]
+  }
+
+  configs = [ "$ace_root:ace_config" ]
+
+  cflags_objc = [
+    "-fvisibility=default",
+    "-fobjc-weak",
+  ]
+
+  cflags_objcc = cflags_objc
+
+  deps = [ "//plugins/interfaces/native:ace_plugin_util_ios" ]
 
   subsystem_name = "plugins"
-  part_name = "hitrace_meter"
+  part_name = "common_event"
 }

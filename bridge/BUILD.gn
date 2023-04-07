@@ -38,6 +38,7 @@ template("plugin_bridge_static") {
     sources = [
       "//plugins/bridge/interfaces/kits/napi/bridge_module/src/bridge.cpp",
       "//plugins/bridge/interfaces/kits/napi/bridge_module/src/bridge_module.cpp",
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/src/bridge_wrap.cpp",
       "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_data.cpp",
       "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_result.cpp",
       "//plugins/bridge/utils/src/napi_async_event.cpp",
@@ -45,8 +46,8 @@ template("plugin_bridge_static") {
     ]
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     if (platform == "android") {

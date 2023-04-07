@@ -44,9 +44,6 @@ Bridge::~Bridge()
 
 bool Bridge::BridgeNameExists(const std::string& bridgeName)
 {
-    if (bridgeName.empty()) {
-        return true;
-    }
     return BridgeManager::JSBridgeExists(bridgeName);
 }
 
@@ -81,9 +78,9 @@ ErrorCode Bridge::RegisterBridge(const std::string& bridgeName)
         std::bind(&Bridge::OnPlatformSendMessageResponse, this, std::placeholders::_1);
 
     if (BridgeManager::JSRegisterBridge(bridgeName, receiver)) {
-        LOGE("RegisterBridge: The bridge registration failure.");
         return ErrorCode::BRIDGE_ERROR_NO;
     }
+    LOGE("RegisterBridge: The bridge registration failure.");
     return ErrorCode::BRIDGE_CREATE_ERROR;
 }
 

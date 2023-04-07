@@ -26,6 +26,7 @@ template("plugin_hilog_static") {
       "//base/hiviewdfx/hilog/frameworks/libhilog/include",
       "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+      "//third_party/bounds_checking_function/include",
     ]
     sources = [
       "${HILOG_NAPI_ROOT_DIR}/src/common/napi/n_class.cpp",
@@ -38,8 +39,8 @@ template("plugin_hilog_static") {
 
     deps = [
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${platform}",
-      "//foundation/arkui/napi:ace_napi",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     subsystem_name = "plugins"

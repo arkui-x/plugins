@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,35 +14,24 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-template("plugin_i18n_static") {
+template("plugin_url_static") {
   forward_variables_from(invoker, "*")
 
   ohos_source_set(target_name) {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
-    sources = [ "js_i18n.cpp" ]
-
     deps = [
-      "//plugins/interfaces/native:ace_plugin_util_${platform}",
-      "//plugins/libs/napi:napi_${target_os}",
+      "//commonlibrary/ets_utils/js_api_module/url:url_static",
     ]
 
-    if (platform == "android") {
-      deps += [ "android/java:i18n_plugin_android_jni" ]
-    } else if (platform == "ios") {
-      deps += [ "ios:i18n_plugin_ios" ]
-    }
-
     subsystem_name = "plugins"
-    part_name = "i18n"
+    part_name = "ets_utils"
   }
 }
 
 foreach(item, ace_platforms) {
-  plugin_i18n_static("i18n_static_" + item.name) {
-    platform = item.name
-
+  plugin_url_static("url_static_" + item.name) {
     defines = []
     cflags_cc = []
     config = {

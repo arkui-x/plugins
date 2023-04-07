@@ -17,7 +17,7 @@
 #define PLUGINS_BRIDGE_BRIDGE_MODULE_H
 
 #include "napi/native_api.h"
-#include "bridge.h"
+#include "bridge_wrap.h"
 
 namespace OHOS::Plugin::Bridge {
 class BridgeModule {

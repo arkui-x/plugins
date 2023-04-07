@@ -48,8 +48,8 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
         return PluginInnerNApiUtils::CreateUndefined(env);
     }
 
-    if (Bridge::BridgeNameExists(
-        PluginInnerNApiUtils::GetStringFromValueUtf8(env, argv[PluginInnerNApiUtils::ARG_NUM_0]))) {
+    std::string bridgeName = PluginInnerNApiUtils::GetStringFromValueUtf8(env, argv[PluginInnerNApiUtils::ARG_NUM_0]);
+    if (bridgeName.empty()) {
         return PluginInnerNApiUtils::CreateUndefined(env);
     }
     napi_ref bridgeNameRef = PluginInnerNApiUtils::CreateReference(env, argv[PluginInnerNApiUtils::ARG_NUM_0]);
@@ -61,16 +61,15 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
         return PluginInnerNApiUtils::CreateUndefined(env);
     }
 
-    std::string bridgeName = PluginInnerNApiUtils::GetStringFromValueUtf8(env, argv[PluginInnerNApiUtils::ARG_NUM_0]);
-    auto bridge = new (std::nothrow) Bridge(bridgeName);
+    auto bridge = BridgeWrap::CreateBridge(bridgeName);
+    if (bridge == nullptr) {
+        return PluginInnerNApiUtils::CreateUndefined(env);
+    }
     napi_wrap(
         env, thisVar, reinterpret_cast<void*>(bridge),
         [](napi_env env, void* data, void* argv) {
             auto bridge = reinterpret_cast<Bridge*>(data);
-            if (bridge != nullptr) {
-                bridge->UnRegisterBridge();
-                delete bridge;
-            }
+            BridgeWrap::DeleteBridge(bridge->GetBridgeName());
         },
         nullptr, nullptr);
     return thisVar;
