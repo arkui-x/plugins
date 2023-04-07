@@ -31,7 +31,7 @@ template("plugin_request_static") {
     sources = [ "$rq_module_path/request_module.cpp" ]
 
     deps = [
-      "$arkui_path/napi:ace_napi",
+      "//plugins/libs/napi:napi_${target_os}",
       "$plugin_interfaces_path/native:ace_plugin_util_${platform}",
       "$plugin_interfaces_path/native:plugin_log",
       "$rq_download_path/interfaces/kits/napi/download_single:downloadsingle",

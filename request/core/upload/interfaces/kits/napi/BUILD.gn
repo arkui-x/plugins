@@ -46,7 +46,7 @@ ohos_source_set("upload") {
   configs = [ ":upload_native_config" ]
 
   deps = [
-    "$arkui_path/napi:ace_napi",
+    "//plugins/libs/napi:napi_${target_os}",
     "$plugin_interfaces_path/native:plugin_log",
     "$rq_upload_path/frameworks/libs:upload_lib",
     "$third_party_path/libuv:uv_static",
