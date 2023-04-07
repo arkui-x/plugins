@@ -24,6 +24,7 @@ config("download_native_public_config") {
   visibility = []
   include_dirs = [
     "$third_party_path/node/src",
+    "//third_party/bounds_checking_function/include",
     "$rq_download_path/frameworks/libs/include",
     "$rq_download_path/interfaces/kits/napi/download_single/include",
     "$rq_download_path/utils/include",
@@ -46,7 +47,7 @@ ohos_source_set("downloadsingle") {
   public_configs = [ ":download_native_public_config" ]
 
   deps = [
-    "$arkui_path/napi:ace_napi",
+    "//plugins/libs/napi:napi_${target_os}",
     "$plugin_interfaces_path/native:plugin_log",
     "$rq_download_path/frameworks/libs:download_lib",
   ]
