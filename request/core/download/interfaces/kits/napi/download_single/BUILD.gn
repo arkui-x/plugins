@@ -24,6 +24,7 @@ config("download_native_public_config") {
   visibility = []
   include_dirs = [
     "$third_party_path/node/src",
+    "//third_party/bounds_checking_function/include",
     "$rq_download_path/frameworks/libs/include",
     "$rq_download_path/interfaces/kits/napi/download_single/include",
     "$rq_download_path/utils/include",
