@@ -89,10 +89,10 @@ template("plugin_net_http_static") {
       sources += utils_source
 
       deps = [
-        "//foundation/arkui/napi/:ace_napi",
         "//plugins/interfaces/native:plugin_log",
+        "//plugins/libs/jsoncpp:jsoncpp_${target_os}",
+        "//plugins/libs/napi:napi_${target_os}",
         "//third_party/curl:curl",
-        "//third_party/jsoncpp:jsoncpp",
       ]
 
       aosp_deps = [ "shared_library:liblog" ]
