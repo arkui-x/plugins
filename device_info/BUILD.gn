@@ -56,7 +56,10 @@ template("plugin_device_info_static") {
     }
 
     deps += [ "etc:ohos_parameter_to" ]
-    include_dirs = [ "${target_gen_dir}" ]
+    include_dirs = [
+      "//third_party/bounds_checking_function/include",
+      "${target_gen_dir}",
+    ]
 
     subsystem_name = "plugins"
     part_name = "device_info"
