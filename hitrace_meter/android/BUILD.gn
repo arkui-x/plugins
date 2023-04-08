@@ -22,7 +22,7 @@ ohos_source_set("trace_anroid") {
   include_dirs = [ "//plugins/hitrace_meter" ]
 
   deps = [
-    "$ace_root/adapter/android/build:libace_android",
+    "$ace_root/adapter/android/build:libarkui_android",
     "//plugins/interfaces/native:ace_plugin_util_android",
   ]
 
