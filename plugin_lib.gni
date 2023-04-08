@@ -38,21 +38,24 @@ common_plugin_libs = [
   "xml",
 ]
 
+
 template("plugin_lib") {
   forward_variables_from(invoker, "*")
 
   plugin_name = target_name
-  if (platform == "ios") {
-    ohos_source_set(string_replace(target_name, "_", "")) {
-      deps = [ "//plugins/$plugin_name:${plugin_name}_static_${platform}" ]
+  target_name_tmp = string_replace(target_name, "_", "")
+  target_name_ext = string_replace(target_name_tmp, "/", "_")
+  plugin_name_ext = string_replace(plugin_name, "/", "_")
 
-      part_name = plugin_name
+  if (platform == "ios") {
+    ohos_source_set(target_name_ext) {
+      deps = [ "//plugins/$plugin_name:${plugin_name_ext}_static_${platform}" ]
+
+      part_names = string_split(plugin_name, "/")
+      part_name = part_names[0]
       subsystem_name = "plugins"
     }
   } else {
-    target_name_tmp = string_replace(target_name, "_", "")
-    target_name_ext = string_replace(target_name_tmp, "/", "_")
-    plugin_name_ext = string_replace(plugin_name, "/", "_")
     ohos_shared_library(target_name_ext) {
       deps = [ "//plugins/$plugin_name:${plugin_name_ext}_static_${platform}" ]
 
@@ -63,3 +66,4 @@ template("plugin_lib") {
     }
   }
 }
+

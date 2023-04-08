@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,37 +25,39 @@
 #include "constant.h"
 #include "event_list.h"
 #include "http_async_work.h"
+#include "http_jni.h"
 #include "http_time.h"
 #include "napi_utils.h"
 #include "netstack_common_utils.h"
 #include "netstack_log.h"
+#include "plugin_c_utils.h"
 #include "securec.h"
 
 #define NETSTACK_CURL_EASY_SET_OPTION(handle, opt, data, asyncContext)                                   \
     do {                                                                                                 \
         CURLcode result = curl_easy_setopt(handle, opt, data);                                           \
         if (result != CURLE_OK) {                                                                        \
-            const char *err = curl_easy_strerror(result);                                                \
+            const char* err = curl_easy_strerror(result);                                                \
             NETSTACK_LOGE("Failed to set option: %{public}s, %{public}s %{public}d", #opt, err, result); \
             (asyncContext)->SetErrorCode(result);                                                        \
             return false;                                                                                \
         }                                                                                                \
     } while (0)
 
-#define NETSTACK_CURL_EASY_PERFORM(handle, asyncContext)                                                 \
-    do {                                                                                                 \
-        CURLcode result = curl_easy_perform(handle);                                                     \
-        if (result != CURLE_OK) {                                                                        \
-            (asyncContext)->SetErrorCode(result);                                                        \
-            return false;                                                                                \
-        }                                                                                                \
+#define NETSTACK_CURL_EASY_PERFORM(handle, asyncContext) \
+    do {                                                 \
+        CURLcode result = curl_easy_perform(handle);     \
+        if (result != CURLE_OK) {                        \
+            (asyncContext)->SetErrorCode(result);        \
+            return false;                                \
+        }                                                \
     } while (0)
 
 #define NETSTACK_CURL_EASY_GET_INFO(handle, opt, data, asyncContext)                                   \
     do {                                                                                               \
         CURLcode result = curl_easy_getinfo(handle, opt, data);                                        \
         if (result != CURLE_OK) {                                                                      \
-            const char *err = curl_easy_strerror(result);                                              \
+            const char* err = curl_easy_strerror(result);                                              \
             NETSTACK_LOGE("Failed to get info: %{public}s, %{public}s %{public}d", #opt, err, result); \
             (asyncContext)->SetErrorCode(result);                                                      \
             return false;                                                                              \
@@ -65,14 +67,14 @@
 namespace OHOS::NetStack {
 namespace {
 constexpr size_t MAX_LIMIT = 65536;
-const char *const HTTP_SYSTEM_CA_PATH = "/system/etc/security/cacerts/";
+const char * const HTTP_SYSTEM_CA_PATH = "/system/etc/security/cacerts/";
 } // namespace
 
 std::mutex HttpExec::mutex_;
 #ifndef MAC_PLATFORM
 ThreadPool<HttpExec::Task, DEFAULT_THREAD_NUM, MAX_THREAD_NUM> HttpExec::threadPool_(DEFAULT_TIMEOUT);
 
-HttpExec::Task::Task(RequestContext *context) : context_(context) {}
+HttpExec::Task::Task(RequestContext* context) : context_(context) {}
 
 void HttpExec::Task::Execute()
 {
@@ -80,7 +82,7 @@ void HttpExec::Task::Execute()
     NapiUtils::CreateUvQueueWorkEnhanced(context_->GetEnv(), context_, HttpAsyncWork::RequestCallback);
 }
 
-bool HttpExec::Task::operator<(const Task &e) const
+bool HttpExec::Task::operator<(const Task& e) const
 {
     return context_->options.GetPriority() < e.context_->options.GetPriority();
 }
@@ -90,7 +92,7 @@ std::atomic_bool HttpExec::initialized_(false);
 bool HttpExec::initialized_ = false;
 #endif
 
-bool HttpExec::RequestWithoutCache(RequestContext *context, const std::string &cacert)
+bool HttpExec::RequestWithoutCache(RequestContext* context, const std::string& cacert)
 {
     if (!initialized_) {
         NETSTACK_LOGE("curl not init");
@@ -108,9 +110,9 @@ bool HttpExec::RequestWithoutCache(RequestContext *context, const std::string &c
 
     std::vector<std::string> vec;
     std::for_each(context->options.GetHeader().begin(), context->options.GetHeader().end(),
-                  [&vec](const std::pair<std::string, std::string> &p) {
-                      vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second);
-                  });
+        [&vec](const std::pair<std::string, std::string>& p) {
+            vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second);
+        });
     std::unique_ptr<struct curl_slist, decltype(&curl_slist_free_all)> header(MakeHeaders(vec), curl_slist_free_all);
 
     if (!SetOption(handle.get(), context, header.get(), cacert)) {
@@ -126,14 +128,14 @@ bool HttpExec::RequestWithoutCache(RequestContext *context, const std::string &c
     NETSTACK_CURL_EASY_GET_INFO(handle.get(), CURLINFO_RESPONSE_CODE, &responseCode, context);
     NETSTACK_LOGI("responseCode is %{public}d", responseCode);
 
-    struct curl_slist *cookies = nullptr;
+    struct curl_slist* cookies = nullptr;
     NETSTACK_CURL_EASY_GET_INFO(handle.get(), CURLINFO_COOKIELIST, &cookies, context);
     std::unique_ptr<struct curl_slist, decltype(&curl_slist_free_all)> cookiesHandle(cookies, curl_slist_free_all);
     while (cookies) {
         context->response.AppendCookies(cookies->data, strlen(cookies->data));
         if (cookies->next != nullptr) {
-            context->response.AppendCookies(HttpConstant::HTTP_LINE_SEPARATOR,
-                                            strlen(HttpConstant::HTTP_LINE_SEPARATOR));
+            context->response.AppendCookies(
+                HttpConstant::HTTP_LINE_SEPARATOR, strlen(HttpConstant::HTTP_LINE_SEPARATOR));
         }
         cookies = cookies->next;
     }
@@ -144,10 +146,10 @@ bool HttpExec::RequestWithoutCache(RequestContext *context, const std::string &c
     return true;
 }
 
-void HttpExec::GetCacertListFromSystem(std::vector<std::string> &cacertList)
+void HttpExec::GetCacertListFromSystem(std::vector<std::string>& cacertList)
 {
-    DIR* dir;
-    struct dirent* ptr;
+    DIR* dir = nullptr;
+    struct dirent* ptr = nullptr;
     std::vector<std::string> file_list;
 
     dir = opendir(HTTP_SYSTEM_CA_PATH);
@@ -165,7 +167,7 @@ void HttpExec::GetCacertListFromSystem(std::vector<std::string> &cacertList)
     NETSTACK_LOGI("cacertlist size: %{public}ld", cacertList.size());
 }
 
-bool HttpExec::ExecRequest(RequestContext *context)
+bool HttpExec::ExecRequest(RequestContext* context)
 {
     context->options.SetRequestTime(HttpTime::GetNowTimeGMT());
     CacheProxy proxy(context->options);
@@ -190,17 +192,17 @@ bool HttpExec::ExecRequest(RequestContext *context)
     return isFind;
 }
 
-napi_value HttpExec::RequestCallback(RequestContext *context)
+napi_value HttpExec::RequestCallback(RequestContext* context)
 {
     napi_value object = NapiUtils::CreateObject(context->GetEnv());
     if (NapiUtils::GetValueType(context->GetEnv(), object) != napi_object) {
         return nullptr;
     }
 
-    NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESPONSE_CODE,
-                                 context->response.GetResponseCode());
-    NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_COOKIES,
-                                     context->response.GetCookies());
+    NapiUtils::SetUint32Property(
+        context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESPONSE_CODE, context->response.GetResponseCode());
+    NapiUtils::SetStringPropertyUtf8(
+        context->GetEnv(), object, HttpConstant::RESPONSE_KEY_COOKIES, context->response.GetCookies());
 
     napi_value header = MakeResponseHeader(context);
     if (NapiUtils::GetValueType(context->GetEnv(), header) == napi_object) {
@@ -212,11 +214,11 @@ napi_value HttpExec::RequestCallback(RequestContext *context)
         return object;
     }
 
-    auto contentType = CommonUtils::ToLower(const_cast<std::map<std::string, std::string> &>(
+    auto contentType = CommonUtils::ToLower(const_cast<std::map<std::string, std::string>&>(
         context->response.GetHeader())[HttpConstant::HTTP_CONTENT_TYPE]);
     if (contentType.find(HttpConstant::HTTP_CONTENT_TYPE_OCTET_STREAM) != std::string::npos ||
         contentType.find(HttpConstant::HTTP_CONTENT_TYPE_IMAGE) != std::string::npos) {
-        void *data = nullptr;
+        void* data = nullptr;
         auto body = context->response.GetResult();
         napi_value arrayBuffer = NapiUtils::CreateArrayBuffer(context->GetEnv(), body.size(), &data);
         if (data != nullptr && arrayBuffer != nullptr) {
@@ -224,24 +226,24 @@ napi_value HttpExec::RequestCallback(RequestContext *context)
             NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, arrayBuffer);
         }
         NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                     static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
+            static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
         return object;
     }
 
     /* now just support utf8 */
-    NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT,
-                                     context->response.GetResult());
+    NapiUtils::SetStringPropertyUtf8(
+        context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, context->response.GetResult());
     NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                 static_cast<uint32_t>(HttpDataType::STRING));
+        static_cast<uint32_t>(HttpDataType::STRING));
     return object;
 }
 
-napi_value HttpExec::Request2Callback(OHOS::NetStack::RequestContext *context)
+napi_value HttpExec::Request2Callback(OHOS::NetStack::RequestContext* context)
 {
     return NapiUtils::GetUndefined(context->GetEnv());
 }
 
-std::string HttpExec::MakeUrl(const std::string &url, std::string param, const std::string &extraParam)
+std::string HttpExec::MakeUrl(const std::string& url, std::string param, const std::string& extraParam)
 {
     if (param.empty()) {
         param += extraParam;
@@ -257,19 +259,19 @@ std::string HttpExec::MakeUrl(const std::string &url, std::string param, const s
     return url + HttpConstant::HTTP_URL_PARAM_START + param;
 }
 
-bool HttpExec::MethodForGet(const std::string &method)
+bool HttpExec::MethodForGet(const std::string& method)
 {
     return (method == HttpConstant::HTTP_METHOD_HEAD || method == HttpConstant::HTTP_METHOD_OPTIONS ||
             method == HttpConstant::HTTP_METHOD_DELETE || method == HttpConstant::HTTP_METHOD_TRACE ||
             method == HttpConstant::HTTP_METHOD_GET || method == HttpConstant::HTTP_METHOD_CONNECT);
 }
 
-bool HttpExec::MethodForPost(const std::string &method)
+bool HttpExec::MethodForPost(const std::string& method)
 {
     return (method == HttpConstant::HTTP_METHOD_POST || method == HttpConstant::HTTP_METHOD_PUT);
 }
 
-bool HttpExec::EncodeUrlParam(std::string &str)
+bool HttpExec::EncodeUrlParam(std::string& str)
 {
     char encoded[4];
     std::string encodeOut;
@@ -308,7 +310,7 @@ bool HttpExec::Initialize()
     return initialized_;
 }
 
-bool HttpExec::SetCertification(CURL *curl, RequestContext *context, const std::string &cacert)
+bool HttpExec::SetCertification(CURL* curl, RequestContext* context, const std::string& cacert)
 {
 #if NO_SSL_CERTIFICATION
     // in real life, you should buy a ssl certification and rename it to /etc/ssl/cert.pem
@@ -327,8 +329,8 @@ bool HttpExec::SetCertification(CURL *curl, RequestContext *context, const std::
     return true;
 }
 
-bool HttpExec::SetOptionParam(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
-    const std::string &method)
+bool HttpExec::SetOptionParam(
+    CURL* curl, RequestContext* context, struct curl_slist* requestHeader, const std::string& method)
 {
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_TIMEOUT_MS, context->options.GetReadTimeout(), context);
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CONNECTTIMEOUT_MS, context->options.GetConnectTimeout(), context);
@@ -345,10 +347,10 @@ bool HttpExec::SetOptionParam(CURL *curl, RequestContext *context, struct curl_s
     return true;
 }
 
-bool HttpExec::SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
-    const std::string &cacert)
+bool HttpExec::SetOption(
+    CURL* curl, RequestContext* context, struct curl_slist* requestHeader, const std::string& cacert)
 {
-    const std::string &method = context->options.GetMethod();
+    const std::string& method = context->options.GetMethod();
     if (!MethodForGet(method) && !MethodForPost(method)) {
         NETSTACK_LOGE("method %{public}s not supported", method.c_str());
         return false;
@@ -396,16 +398,16 @@ bool HttpExec::SetOption(CURL *curl, RequestContext *context, struct curl_slist 
     return SetOptionParam(curl, context, requestHeader, method);
 }
 
-size_t HttpExec::OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData)
+size_t HttpExec::OnWritingMemoryBody(const void* data, size_t size, size_t memBytes, void* userData)
 {
-    auto context = static_cast<RequestContext *>(userData);
+    auto context = static_cast<RequestContext*>(userData);
     context->response.AppendResult(data, size * memBytes);
     return size * memBytes;
 }
 
-size_t HttpExec::OnWritingMemoryHeader(const void *data, size_t size, size_t memBytes, void *userData)
+size_t HttpExec::OnWritingMemoryHeader(const void* data, size_t size, size_t memBytes, void* userData)
 {
-    auto context = static_cast<RequestContext *>(userData);
+    auto context = static_cast<RequestContext*>(userData);
     if (context->response.GetResult().size() > MAX_LIMIT) {
         return 0;
     }
@@ -413,10 +415,10 @@ size_t HttpExec::OnWritingMemoryHeader(const void *data, size_t size, size_t mem
     return size * memBytes;
 }
 
-struct curl_slist *HttpExec::MakeHeaders(const std::vector<std::string> &vec)
+struct curl_slist* HttpExec::MakeHeaders(const std::vector<std::string>& vec)
 {
-    struct curl_slist *header = nullptr;
-    std::for_each(vec.begin(), vec.end(), [&header](const std::string &s) {
+    struct curl_slist* header = nullptr;
+    std::for_each(vec.begin(), vec.end(), [&header](const std::string& s) {
         if (!s.empty()) {
             header = curl_slist_append(header, s.c_str());
         }
@@ -424,21 +426,21 @@ struct curl_slist *HttpExec::MakeHeaders(const std::vector<std::string> &vec)
     return header;
 }
 
-napi_value HttpExec::MakeResponseHeader(RequestContext *context)
+napi_value HttpExec::MakeResponseHeader(RequestContext* context)
 {
     napi_value header = NapiUtils::CreateObject(context->GetEnv());
     if (NapiUtils::GetValueType(context->GetEnv(), header) == napi_object) {
         std::for_each(context->response.GetHeader().begin(), context->response.GetHeader().end(),
-                      [context, header](const std::pair<std::string, std::string> &p) {
-                          if (!p.first.empty() && !p.second.empty()) {
-                              NapiUtils::SetStringPropertyUtf8(context->GetEnv(), header, p.first, p.second);
-                          }
-                      });
+            [context, header](const std::pair<std::string, std::string>& p) {
+                if (!p.first.empty() && !p.second.empty()) {
+                    NapiUtils::SetStringPropertyUtf8(context->GetEnv(), header, p.first, p.second);
+                }
+            });
     }
     return header;
 }
 
-void HttpExec::OnHeaderReceive(RequestContext *context, napi_value header)
+void HttpExec::OnHeaderReceive(RequestContext* context, napi_value header)
 {
     napi_value undefined = NapiUtils::GetUndefined(context->GetEnv());
     context->Emit(ON_HEADER_RECEIVE, std::make_pair(undefined, header));
@@ -462,14 +464,14 @@ bool HttpExec::IsUnReserved(unsigned char in)
     return false;
 }
 
-bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
+bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext* context)
 {
     switch (context->options.GetHttpDataType()) {
         case HttpDataType::STRING: {
-            NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT,
-                                             context->response.GetResult());
+            NapiUtils::SetStringPropertyUtf8(
+                context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, context->response.GetResult());
             NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                         static_cast<uint32_t>(HttpDataType::STRING));
+                static_cast<uint32_t>(HttpDataType::STRING));
             return true;
         }
         case HttpDataType::OBJECT: {
@@ -482,7 +484,7 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
             if (obj) {
                 NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, obj);
                 NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                             static_cast<uint32_t>(HttpDataType::OBJECT));
+                    static_cast<uint32_t>(HttpDataType::OBJECT));
                 return true;
             }
 
@@ -490,7 +492,7 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
             return false;
         }
         case HttpDataType::ARRAY_BUFFER: {
-            void *data = nullptr;
+            void* data = nullptr;
             auto body = context->response.GetResult();
             napi_value arrayBuffer = NapiUtils::CreateArrayBuffer(context->GetEnv(), body.size(), &data);
             if (data != nullptr && arrayBuffer != nullptr) {
@@ -500,7 +502,7 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
                 }
                 NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, arrayBuffer);
                 NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                             static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
+                    static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
             }
             return true;
         }
@@ -510,33 +512,39 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
     return false;
 }
 
+std::string HttpExec::GetCacheFileName()
+{
+    NETSTACK_LOGE("### HttpExec::GetCacheFileName %{public}s", HttpJni::GetCacheDirJni().c_str());
+    return HttpJni::GetCacheDirJni();
+}
+
 #ifndef MAC_PLATFORM
-void HttpExec::AsyncRunRequest(RequestContext *context)
+void HttpExec::AsyncRunRequest(RequestContext* context)
 {
     threadPool_.Push(Task(context));
 }
 #endif
 
-bool HttpResponseCacheExec::ExecFlush(BaseContext *context)
+bool HttpResponseCacheExec::ExecFlush(BaseContext* context)
 {
     (void)context;
     CacheProxy::FlushCache();
     return true;
 }
 
-napi_value HttpResponseCacheExec::FlushCallback(BaseContext *context)
+napi_value HttpResponseCacheExec::FlushCallback(BaseContext* context)
 {
     return NapiUtils::GetUndefined(context->GetEnv());
 }
 
-bool HttpResponseCacheExec::ExecDelete(BaseContext *context)
+bool HttpResponseCacheExec::ExecDelete(BaseContext* context)
 {
     (void)context;
     CacheProxy::StopCacheAndDelete();
     return true;
 }
 
-napi_value HttpResponseCacheExec::DeleteCallback(BaseContext *context)
+napi_value HttpResponseCacheExec::DeleteCallback(BaseContext* context)
 {
     return NapiUtils::GetUndefined(context->GetEnv());
 }
