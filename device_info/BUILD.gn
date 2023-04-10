@@ -39,8 +39,10 @@ template("plugin_device_info_static") {
     if (defined(ohos_version)) {
       defines += [ "INCREMENTAL_VERSION=\"${ohos_version}\"" ]
     }
-    if (defined(ohos_build_type)) {
-      defines += [ "BUILD_TYPE=\"${ohos_build_type}\"" ]
+    if (defined(is_debug) && is_debug) {
+      defines += [ "BUILD_TYPE=\"debug\"" ]
+    } else {
+      defines += [ "BUILD_TYPE=\"release\"" ]
     }
     if (defined(ohos_build_user)) {
       defines += [ "BUILD_USER=\"${ohos_build_user}\"" ]
@@ -48,8 +50,8 @@ template("plugin_device_info_static") {
     if (defined(ohos_build_time)) {
       defines += [ "BUILD_TIME=\"${ohos_build_time}\"" ]
     }
-    if (defined(ohos_build_host)) {
-      defines += [ "BUILD_HOST=\"${ohos_build_host}\"" ]
+    if (defined(host_os)) {
+      defines += [ "BUILD_HOST=\"${host_os}\"" ]
     }
     if (defined(ohos_build_roothash)) {
       defines += [ "BUILD_ROOTHASH=\"${ohos_build_roothash}\"" ]
