@@ -15,13 +15,10 @@ import("//build/ohos.gni")
 import("//plugins/device_info/etc/script/parameter_fixer.gni")
 
 ohos_parameter_to_h("ohos_parameter_to") {
-  sources = [
-    "//plugins/device_info/etc/build.para"
-  ]
+  sources = [ "//plugins/device_info/etc/build.para" ]
 
   # add extra parameter "aa.aaa.aaa=elf",
-  extra_parameter_cfgs = [
-  ]
+  extra_parameter_cfgs = []
 
   print("target_gen_dir ", target_gen_dir)
   output = "parameter_map.h"

@@ -38,10 +38,10 @@ private:
     const std::string GetSoftwareModel(void);
     const std::string GetHardwareModel(void);
     const std::string GetBootLoaderVersion(void);
-    const std::string GetAbiList(void);
+    const std::string GetAbiList(const std::string &def);
     const std::string GetDisplayVersion(void);
     const std::string GetIncrementalVersion(void);
-    const std::string GetHardwareProfile(void);
+    const std::string GetHardwareProfile(const std::string &def);
     int GetFirstApiVersion(int def);
 };
 } // namespace OHOS::Plugin

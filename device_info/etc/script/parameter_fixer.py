@@ -16,8 +16,7 @@
 import optparse
 import os
 import sys
-import json
-import stat
+import getpass
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir, "build"))
 from scripts.util import build_utils  # noqa: E402
@@ -152,6 +151,9 @@ def fix_parameter_config_file(options):
             print("extra parameter {%s %s}" % (name, value))
 
     dst_dict = add_to_code_dict(dst_dict, extra_dict, True)
+    #add time for
+    dst_dict["const.product.build.date"] = str(get_current_time('timestamp'))
+    dst_dict["const.product.build.user"] = getpass.getuser()
     write_map_to_code(out_file, dst_dict)
 
 def parse_args(args):
@@ -175,6 +177,14 @@ def main(args):
     depfile_deps = (options.source_files)
     fix_parameter_config_file(options)
     build_utils.write_depfile(options.depfile, options.output, depfile_deps, add_pydeps=False)
+
+def get_current_time(time_type='default'):
+    from datetime import datetime
+    if time_type == 'timestamp':
+        return int(datetime.utcnow().timestamp() * 1000)
+    if time_type == 'datetime':
+        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.now().replace(microsecond=0)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

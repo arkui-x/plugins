@@ -15,7 +15,8 @@ import("//build/config/python.gni")
 import("//build/templates/common/copy.gni")
 
 template("ohos_parameter_to_h") {
-  assert(defined(invoker.sources), "sources must be defined for ${target_name}.")
+  assert(defined(invoker.sources),
+         "sources must be defined for ${target_name}.")
   assert(defined(invoker.output), "output must be defined for ${target_name}.")
 
   _fixed_parameter_file = target_gen_dir + "/" + invoker.output
@@ -40,7 +41,8 @@ template("ohos_parameter_to_h") {
     if (defined(invoker.extra_parameter_cfgs)) {
       foreach(extra, invoker.extra_parameter_cfgs) {
         args += [
-          "--extra_parameter_cfg", extra,
+          "--extra_parameter_cfg",
+          extra,
         ]
       }
     }

@@ -161,7 +161,10 @@ public class DeviceInfoPlugin {
      * @return AbiList
      */
     public String getAbiList(String defValue) {
-        return String.join(",", Build.SUPPORTED_ABIS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return String.join(",", Build.SUPPORTED_ABIS);
+        }
+        return Build.CPU_ABI;
     }
 
     /**
@@ -194,7 +197,7 @@ public class DeviceInfoPlugin {
         int value = getProperty("persist.product.firstapiversion", -1);
         if (value == -1) {
             setProperty("persist.product.firstapiversion", Integer.toString(def));
-            return getProperty("persist.product.firstapiversion", def);
+            return def;
         }
         return value;
     }

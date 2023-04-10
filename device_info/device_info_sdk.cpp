@@ -129,8 +129,8 @@ const std::string SdkVersionInfo::GetOSFullName(void)
 
 const std::string SdkVersionInfo::GetBuildRootHash(void)
 {
-#ifdef BUILD_TYPE
-    return BUILD_TYPE;
+#ifdef BUILD_ROOTHASH
+    return BUILD_ROOTHASH;
 #else
     return GetParameter("const.ohos.buildroothash", "default");
 #endif
@@ -154,7 +154,7 @@ const std::string SdkVersionInfo::GetBuildUser(void)
 #ifdef BUILD_USER
     return BUILD_USER;
 #else
-    return g_defaultValue;
+    return GetParameter("const.product.build.user", g_defaultValue.c_str());
 #endif
 }
 const std::string SdkVersionInfo::GetBuildHost(void)
@@ -170,7 +170,7 @@ const std::string SdkVersionInfo::GetBuildTime(void)
 #ifdef BUILD_TIME
     return BUILD_TIME;
 #else
-    return g_defaultValue;
+    return GetParameter("const.product.build.date", g_defaultValue.c_str());
 #endif
 }
 int SdkVersionInfo::GetFirstApiVersion(void)

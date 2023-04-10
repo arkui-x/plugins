@@ -19,6 +19,8 @@
 #include "plugin_utils.h"
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+#import <mach/mach.h>
+#import <mach-o/arch.h>
 #import <UIKit/UIKit.h>
 
 namespace OHOS::Plugin {
@@ -26,6 +28,13 @@ std::unique_ptr<DeviceInfo> DeviceInfo::Create()
 {
     return std::make_unique<DeviceInfoImpl>();
 }
+
+//    [[UIDevice currentDevice] systemName]; // 系统名
+//    [[UIDevice currentDevice] systemVersion]; //版本号
+//    [[UIDevice currentDevice] model]; //类型，模拟器，真机
+//    [[UIDevice currentDevice] uniqueIdentifier]; //唯一识别码
+//    [[UIDevice currentDevice] name]; //设备名称
+//    [[UIDevice currentDevice] localizedModel]; // 本地模式
 
 const std::string DeviceInfoImpl::GetDeviceType(void)
 {
@@ -36,18 +45,15 @@ const std::string DeviceInfoImpl::GetDeviceType(void)
     NSLog(@"localizedModel: %@", device.localizedModel);
     NSLog(@"systemName: %@", device.systemName);
     NSLog(@"systemVersion: %@", device.systemVersion);
+    NSLog(@"identifierForVendor: %@", device.identifierForVendor);
 
-    NSString *value = @"iMac";
+    NSString *value = @"Unknown";
     if (device.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
-        value = @"iPhone";
+        value = @"Handset";
     } else if (device.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
-        value = @"iPad";
+        value = @"Tablet";
     } else if (device.userInterfaceIdiom == UIUserInterfaceIdiomTV) {
-        value = @"iTv";
-    } else if (device.userInterfaceIdiom == UIUserInterfaceIdiomCarPlay) {
-        value = @"iCarPlay";
-    } else if (device.userInterfaceIdiom == UIUserInterfaceIdiomTV) {
-        value = @"iTv";
+        value = @"Tv";
     }
     NSLog(@"GetDeviceType: %@", value);
     LOGE("GetDeviceTyped.", value);
@@ -56,14 +62,13 @@ const std::string DeviceInfoImpl::GetDeviceType(void)
 
 const std::string DeviceInfoImpl::GetManufacture(void)
 {
-    NSString *value = @"apple";
+    NSString *value = @"Apple";
     return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
 const std::string DeviceInfoImpl::GetBrand(void)
 {
-    // name: iPod touch (7th generation)
-    NSString* value = [[UIDevice currentDevice] name];
+    NSString *value = @"Apple";
     return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
@@ -106,21 +111,21 @@ const std::string DeviceInfoImpl::GetBootLoaderVersion(void)
     return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
-const std::string DeviceInfoImpl::GetAbiList(void)
+const std::string DeviceInfoImpl::GetAbiList(const std::string &def)
 {
-    struct utsname systemInfo;
-    uname(&systemInfo);
-    // x86_64
-    NSString *value = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
-    return [value cStringUsingEncoding : NSUTF8StringEncoding];
+    const NXArchInfo *info = NXGetLocalArchInfo();
+    if (info) {
+        NSString *typeOfCpu = [NSString stringWithUTF8String:info->description];
+        return [typeOfCpu cStringUsingEncoding : NSUTF8StringEncoding];
+    } else {
+        return def;
+    }
 }
 
 const std::string DeviceInfoImpl::GetDisplayVersion(void)
 {
-    struct utsname systemInfo;
-    uname(&systemInfo);
-    // Darwin Kernel Version 20.1.0: Sat Oct 31 00:07:11 PDT 2020
-    return systemInfo.version;
+    NSString* value = [[UIDevice currentDevice] systemVersion];
+    return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
 const std::string DeviceInfoImpl::GetIncrementalVersion(void)
@@ -129,10 +134,9 @@ const std::string DeviceInfoImpl::GetIncrementalVersion(void)
     return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
-const std::string DeviceInfoImpl::GetHardwareProfile(void)
+const std::string DeviceInfoImpl::GetHardwareProfile(const std::string &def)
 {
-    NSString* value = [[UIDevice currentDevice] systemName];
-    return [value cStringUsingEncoding : NSUTF8StringEncoding];
+    return def;
 }
 
 int DeviceInfoImpl::GetFirstApiVersion(int def)
@@ -160,11 +164,11 @@ const std::string DeviceInfoImpl::GetDeviceInfo(int id, const std::string &defVa
         case METHOD_ID_getHardwareModel:
             return GetHardwareModel();
         case METHOD_ID_getHardwareProfile:
-            return GetHardwareProfile();
+            return GetHardwareProfile(defValue);
         case METHOD_ID_getBootLoaderVersion:
             return GetBootLoaderVersion();
         case METHOD_ID_getAbiList:
-            return GetAbiList();
+            return GetAbiList(defValue);
         case METHOD_ID_getDisplayVersion:
             return GetDisplayVersion();
         case METHOD_ID_getIncrementalVersion:
