@@ -19,7 +19,7 @@ ohos_source_set("plugin_log") {
   sources = [ "log.cpp" ]
   if (target_os == "android") {
     defines += [ "ANDROID_PLATFORM" ]
-    aosp_deps = [ "shared_library:liblog" ]
+    libs = [ "log" ]
   } else if (target_os == "ios") {
     include_dirs = [ "//third_party/bounds_checking_function/include" ]
     defines += [ "IOS_PLATFORM" ]
