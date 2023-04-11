@@ -52,7 +52,7 @@ template("plugin_bridge_static") {
 
     if (platform == "android") {
       deps += [
-        "//foundation/arkui/ace_engine/adapter/android/build:libace_android",
+        "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
       ]
       defines += [ "ANDROID_PLATFORM" ]
       aosp_deps = [ "shared_library:liblog" ]

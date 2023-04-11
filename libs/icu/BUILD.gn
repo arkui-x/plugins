@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,20 +14,29 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-ohos_source_set("trace_anroid") {
-  sources = [ "trace_impl.cpp" ]
+template("icu_deps") {
+  forward_variables_from(invoker, "*")
 
-  defines = [ "ANDROID_PLATFORM" ]
+  ohos_source_set(target_name) {
+    public_configs = [ "$ace_flutter_engine_root/icu:icu_config_$platform" ]
 
-  include_dirs = [ "//plugins/hitrace_meter" ]
+    if (defined(config.libace_target)) {
+      deps = [ config.libace_target ]
+    }
 
-  deps = [
-    "$ace_root/adapter/android/build:libarkui_android",
-    "//plugins/interfaces/native:ace_plugin_util_android",
-  ]
+    subsystem_name = "plugins"
+    part_name = "libs_icu"
+  }
+}
 
-  libs = [ "android" ]
+foreach(item, ace_platforms) {
+  icu_deps("icu_" + item.name) {
+    platform = item.name
+    config = {
+    }
 
-  subsystem_name = "plugins"
-  part_name = "hitrace_meter"
+    if (defined(item.config)) {
+      config = item.config
+    }
+  }
 }
