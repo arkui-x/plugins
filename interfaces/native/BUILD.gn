@@ -54,6 +54,7 @@ template("ace_plugin_util_static") {
     deps = [
       ":plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/securec:sec_${target_os}",
     ]
 
     if (defined(config.libace_target)) {
