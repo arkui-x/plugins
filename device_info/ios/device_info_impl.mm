@@ -29,12 +29,12 @@ std::unique_ptr<DeviceInfo> DeviceInfo::Create()
     return std::make_unique<DeviceInfoImpl>();
 }
 
-//    [[UIDevice currentDevice] systemName]; // ÏµÍ³Ãû
-//    [[UIDevice currentDevice] systemVersion]; //°æ±¾ºÅ
-//    [[UIDevice currentDevice] model]; //ÀàĞÍ£¬Ä£ÄâÆ÷£¬Õæ»ú
-//    [[UIDevice currentDevice] uniqueIdentifier]; //Î¨Ò»Ê¶±ğÂë
-//    [[UIDevice currentDevice] name]; //Éè±¸Ãû³Æ
-//    [[UIDevice currentDevice] localizedModel]; // ±¾µØÄ£Ê½
+//    [[UIDevice currentDevice] systemName]; // ç³»ç»Ÿå
+//    [[UIDevice currentDevice] systemVersion]; //ç‰ˆæœ¬å·
+//    [[UIDevice currentDevice] model]; //ç±»å‹ï¼Œæ¨¡æ‹Ÿå™¨ï¼ŒçœŸæœº
+//    [[UIDevice currentDevice] uniqueIdentifier]; //å”¯ä¸€è¯†åˆ«ç 
+//    [[UIDevice currentDevice] name]; //è®¾å¤‡åç§°
+//    [[UIDevice currentDevice] localizedModel]; // æœ¬åœ°æ¨¡å¼
 
 const std::string DeviceInfoImpl::GetDeviceType(void)
 {
@@ -105,10 +105,9 @@ const std::string DeviceInfoImpl::GetHardwareModel(void)
     return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
-const std::string DeviceInfoImpl::GetBootLoaderVersion(void)
+const std::string DeviceInfoImpl::GetBootLoaderVersion(const std::string &def)
 {
-    NSString* value = [[UIDevice currentDevice] systemName];
-    return [value cStringUsingEncoding : NSUTF8StringEncoding];
+    return def;
 }
 
 const std::string DeviceInfoImpl::GetAbiList(const std::string &def)
@@ -128,10 +127,9 @@ const std::string DeviceInfoImpl::GetDisplayVersion(void)
     return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
-const std::string DeviceInfoImpl::GetIncrementalVersion(void)
+const std::string DeviceInfoImpl::GetIncrementalVersion(const std::string &def)
 {
-    NSString* value = [[UIDevice currentDevice] systemName];
-    return [value cStringUsingEncoding : NSUTF8StringEncoding];
+    return def;
 }
 
 const std::string DeviceInfoImpl::GetHardwareProfile(const std::string &def)
@@ -166,13 +164,13 @@ const std::string DeviceInfoImpl::GetDeviceInfo(int id, const std::string &defVa
         case METHOD_ID_getHardwareProfile:
             return GetHardwareProfile(defValue);
         case METHOD_ID_getBootLoaderVersion:
-            return GetBootLoaderVersion();
+            return GetBootLoaderVersion(defValue);
         case METHOD_ID_getAbiList:
             return GetAbiList(defValue);
         case METHOD_ID_getDisplayVersion:
             return GetDisplayVersion();
         case METHOD_ID_getIncrementalVersion:
-            return GetIncrementalVersion();
+            return GetIncrementalVersion(defValue);
         default:
             return defValue;
     }

@@ -37,10 +37,10 @@ private:
     const std::string GetProductModel(void);
     const std::string GetSoftwareModel(void);
     const std::string GetHardwareModel(void);
-    const std::string GetBootLoaderVersion(void);
+    const std::string GetBootLoaderVersion(const std::string &def);
     const std::string GetAbiList(const std::string &def);
     const std::string GetDisplayVersion(void);
-    const std::string GetIncrementalVersion(void);
+    const std::string GetIncrementalVersion(const std::string &def);
     const std::string GetHardwareProfile(const std::string &def);
     int GetFirstApiVersion(int def);
 };
