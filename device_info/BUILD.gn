@@ -28,6 +28,7 @@ template("plugin_device_info_static") {
     deps = [
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/securec:sec_${target_os}",
     ]
 
     if (platform == "android") {
