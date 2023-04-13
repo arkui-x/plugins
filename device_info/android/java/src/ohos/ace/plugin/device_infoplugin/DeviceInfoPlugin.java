@@ -15,8 +15,12 @@
 
 package ohos.ace.plugin.device_infoplugin;
 
+import android.app.UiModeManager;
+import android.view.WindowManager;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.util.Log;
+import android.util.DisplayMetrics;
 import android.os.Build;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,6 +36,8 @@ public class DeviceInfoPlugin {
 
     private static final String LOG_TAG = "DeviceInfoPlugin";
 
+    private Context context;
+
     /**
      * DeviceInfoPlugin
      *
@@ -39,6 +45,7 @@ public class DeviceInfoPlugin {
      */
     public DeviceInfoPlugin(Context context) {
         new DeviceInfoPlugin(context, true);
+        this.context = context;
     }
 
     /**
@@ -51,6 +58,7 @@ public class DeviceInfoPlugin {
         if (isNativeInit) {
             nativeInit();
         }
+        this.context = context;
     }
 
     /**
@@ -63,15 +71,29 @@ public class DeviceInfoPlugin {
         return Build.MANUFACTURER;
     }
 
-
     /**
      * getDeviceType
      *
      * @param defValue default value
      * @return device type
      */
+
     public String getDeviceType(String defValue) {
-        return getProperty("ro.build.characteristics", defValue);
+        if (context.getPackageManager().hasSystemFeature("amazon.hardware.fire_tv")) {
+            return "Tv";
+        }
+
+        UiModeManager uiManager = (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+        if (uiManager != null && uiManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            return "Tv";
+        }
+
+        String deviceType = getDeviceTypeByResourceConfiguration();
+        if (deviceType != null && deviceType != "Unknown") {
+            return deviceType;
+        }
+
+        return getDeviceTypeByPhysicalSize();
     }
 
     /**
@@ -250,6 +272,46 @@ public class DeviceInfoPlugin {
         return value;
     }
 
+    private String getDeviceTypeByResourceConfiguration() {
+        int minScreenWidth = context.getResources().getConfiguration().smallestScreenWidthDp;
+
+        if (minScreenWidth == Configuration.SMALLEST_SCREEN_WIDTH_DP_UNDEFINED) {
+            return "Unknown";
+        }
+
+        return minScreenWidth >= 600 ? "Tablet" : "Handset";
+    }
+
+    private String getDeviceTypeByPhysicalSize() {
+        String deviceType = "Unknown";
+        // Find the current window manager, if none is found we can't measure the device physical size.
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (windowManager == null) {
+            return deviceType;
+        }
+
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            windowManager.getDefaultDisplay().getRealMetrics(metrics);
+        } else {
+            windowManager.getDefaultDisplay().getMetrics(metrics);
+        }
+
+        double width = metrics.widthPixels / (double) metrics.xdpi;
+        double height = metrics.heightPixels / (double) metrics.ydpi;
+        double diagonalSize = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
+
+        if (diagonalSize >= 3.0 && diagonalSize <= 6.9) {
+            deviceType = "Handset";
+        } else if (diagonalSize > 6.9 && diagonalSize <= 18.0) {
+            deviceType = "Tablet";
+        } else {
+            deviceType = "Unknown";
+        }
+
+        return deviceType;
+    }
+
     /**
      * nativeInit
      * Register the initialization method of the plugin for the plugin construction to call.
@@ -257,4 +319,3 @@ public class DeviceInfoPlugin {
      */
     protected native void nativeInit();
 }
-
