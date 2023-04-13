@@ -87,7 +87,7 @@
         default:
             break;
     }
-    callback(data, isLast, GrantResultType::DENIED_BY_USER);
+    callback(data, isLast, GrantResultType::INVALID_OPER);
     return;
 }
 
@@ -115,7 +115,7 @@
         default:
             break;
     }
-    callback(data, isLast, GrantResultType::DENIED_BY_USER);
+    callback(data, isLast, GrantResultType::INVALID_OPER);
     return;
 }
 @end
