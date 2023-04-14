@@ -31,16 +31,16 @@ template("plugin_request_static") {
     sources = [ "$rq_module_path/request_module.cpp" ]
 
     deps = [
-      "//plugins/libs/napi:napi_${target_os}",
       "$plugin_interfaces_path/native:ace_plugin_util_${platform}",
       "$plugin_interfaces_path/native:plugin_log",
       "$rq_download_path/interfaces/kits/napi/download_single:downloadsingle",
       "$rq_upload_path/interfaces/kits/napi:upload",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     if (platform == "android") {
       defines += [ "ANDROID_PLATFORM" ]
-      aosp_deps = [ "shared_library:liblog" ]
+      libs = [ "log" ]
     }
 
     subsystem_name = "plugins"

@@ -55,7 +55,7 @@ template("plugin_bridge_static") {
         "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
       ]
       defines += [ "ANDROID_PLATFORM" ]
-      aosp_deps = [ "shared_library:liblog" ]
+      libs = [ "log" ]
     } else {
       deps += [ "//foundation/arkui/ace_engine/adapter/ios/capability:ace_capability_ios" ]
       defines += [ "IOS_PLATFORM" ]
