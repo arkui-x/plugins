@@ -36,20 +36,17 @@ template("plugin_resource_manager_static") {
     ]
 
     public_deps = [
-      "//foundation/arkui/napi/:ace_napi",
       "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/resmgr:resmgr_${target_os}",
     ]
 
     if (target_os == "android") {
       defines += [ "ANDROID_PLATFORM" ]
-      public_deps +=
-          [ "$ace_root/adapter/android/dependence/resmgr:global_resmgr" ]
     }
 
     if (target_os == "ios") {
       defines += [ "IOS_PLATFORM" ]
-      public_deps +=
-          [ "$ace_root/adapter/ios/dependence/resmgr:global_resmgr_source_set" ]
     }
 
     if (defined(config.libace_target)) {
