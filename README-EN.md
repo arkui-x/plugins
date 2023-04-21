@@ -25,10 +25,13 @@ The Plugin repository provides a series of plug-ins to help you build ArkUI-X ap
   - @ohos.runningLock
 - [Common Event and Notification](./introduction-to-plugin-related-libraries-en.md#common-event-and-notification)
   - @ohos.common_event
+- [Ability Access Control](./introduction-to-plugin-related-libraries-en.md#ability-access-control)
+  - @ohos.abilityAccessCtrl
 
 ## Directory Structure
 ```
 plugins
+|---ability_access_ctrl  # Ability Access Control
 |---common_event         # Common event and notification
 |---display              # Display
 |---fileio               # File management

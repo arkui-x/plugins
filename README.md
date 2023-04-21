@@ -25,10 +25,13 @@
   - @ohos.runningLock(Runninglock锁)
 - [公共事件与通知](./introduction-to-plugin-related-libraries.md#公共事件与通知)
   - @ohos.common_event(公共事件与通知)
+- [程序访问控制](./introduction-to-plugin-related-libraries.md#程序访问控制)
+  - @ohos.abilityAccessCtrl(程序访问控制)
 
 ## 目录
 ```
 plugins
+|---ability_access_ctrl  # 程序访问控制
 |---common_event         # 公共事件与通知
 |---display              # 屏幕属性
 |---fileio               # 文件管理

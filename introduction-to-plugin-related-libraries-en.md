@@ -37,23 +37,23 @@
   | Description File (d.ts)            | Plug-in Library               | Dependency Library                                                     |
   | -------------------------- | --------------------- | ----------------------------------------------------------- |
   | @ohos.resourceManager.d.ts | libresourcemanager.so | libglobal_resmgr.so<br>libhmicui18n.so<br>libhmicuuc.so |
-  
-    
+
+
 ## Network Management
 - @ohos.net.http
 
   | Description File (d.ts)     | Plug-in Library       | Dependency Library                                                      |
   | ------------------- | ------------- | ------------------------------------------------------------ |
   | @ohos.net.http.d.ts | libnet_http.so | libace_plugin_util_android.so<br>libgettext.so<br>libgio.so<br>libglib.so<br>libglibpcre.so<br>libgmodule.so<br>libgobject.so<br>libjsoncpp.so<br>libffi.so |
-  
+
 
 - @ohos.request
 
   | Description File (d.ts)    | Plug-in Library       | Dependency Library                       |
   | ------------------ | ------------- | ----------------------------- |
   | @ohos.request.d.ts | librequest.so | libace_plugin_util_android.so |
-  
-    
+
+
 ## Basic System Capabilities
   
 - @ohos.hiTraceMeter
@@ -61,8 +61,8 @@
   | Description File (d.ts)         | Plug-in Library            | Dependency Library|
   | ----------------------- | ------------------ | ------ |
   | @ohos.hiTraceMeter.d.ts | libhitracemeter.so |        |
-  
-    
+
+
 ## Device Management
   
 - @ohos.runningLock
@@ -73,9 +73,17 @@
 
 
 ## Common Event and Notification
-  
+
 - @ohos.common_event
 
   | Description File (d.ts)        | Plug-in Library                                             | Dependency Library                       |
   | ---------------------- | --------------------------------------------------- | ----------------------------- |
   | @ohos.commonEvent.d.ts | libcommonevent.so<br>ace_common_event_android.jar | libace_plugin_util_android.so |
+
+## Ability Access Control
+
+- @ohos.abilityAccessCtrl
+
+  | Description File (d.ts)        | Plug-in Library                                             | Dependency Library                       |
+  | ---------------------- | --------------------------------------------------- | ----------------------------- |
+  | @ohos.abilityAccessCtrl.d.ts | libabilityaccessctrl.so<br>ace_ability_access_ctrl_android.jar | libace_plugin_util_android.so |
