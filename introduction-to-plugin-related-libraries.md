@@ -79,3 +79,11 @@
   | 描述文件(d.ts)         | 插件库                                              | 依赖库                        |
   | ---------------------- | --------------------------------------------------- | ----------------------------- |
   | @ohos.commonEvent.d.ts | libcommonevent.so<br />ace_common_event_android.jar | libace_plugin_util_android.so |
+
+## 程序访问控制
+  
+- @ohos.abilityAccessCtrl(程序访问控制)
+
+  | 描述文件(d.ts)         | 插件库                                              | 依赖库                        |
+  | ---------------------- | --------------------------------------------------- | ----------------------------- |
+  | @ohos.abilityAccessCtrl.d.ts | libabilityaccessctrl.so<br />ace_ability_access_ctrl_android.jar | libace_plugin_util_android.so |
