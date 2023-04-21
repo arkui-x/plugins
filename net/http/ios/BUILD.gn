@@ -18,7 +18,6 @@ ohos_source_set("net_http_ios") {
   include_dirs += utils_include
 
   sources = http_sources
-  sources += utils_source
   sources += [
     "http_exec.cpp",
     "http_exec_ios_iml.mm",
@@ -27,10 +26,9 @@ ohos_source_set("net_http_ios") {
   ]
 
   deps = [
+    "//plugins/interfaces/native:ace_plugin_util_ios",
     "//plugins/interfaces/native:plugin_log",
-    "//plugins/libs/jsoncpp:jsoncpp_ios",
-    "//plugins/libs/napi:napi_ios",
-    "//third_party/curl:curl",
+    "//plugins/net/utils:netstack_utils",
   ]
 
   defines = [ "IOS_PLATFORM" ]

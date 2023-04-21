@@ -18,15 +18,12 @@ ohos_source_set("net_http_android") {
   include_dirs += utils_include
 
   sources = http_sources
-  sources += utils_source
   sources += [ "http_exec.cpp" ]
 
   deps = [
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//plugins/interfaces/native:plugin_log",
-    "//plugins/libs/jsoncpp:jsoncpp_android",
-    "//plugins/libs/napi:napi_android",
-    "//third_party/curl:curl",
+    "//plugins/net/utils:netstack_utils",
   ]
 
   defines = [ "ANDROID_PLATFORM" ]

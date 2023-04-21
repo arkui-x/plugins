@@ -21,17 +21,6 @@ utils_include = [
   "$SUBSYSTEM_DIR/netstack/utils/log/include",
   "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
   "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
-  "//commonlibrary/c_utils/base/include",
-  "//plugins/net/http",
-]
-
-utils_source = [
-  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/base_context.cpp",
-  "$SUBSYSTEM_DIR/netstack/utils/common_utils/src/netstack_common_utils.cpp",
-  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_listener.cpp",
-  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_manager.cpp",
-  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/module_template.cpp",
-  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/napi_utils.cpp",
 ]
 
 http_include = [
@@ -47,6 +36,7 @@ http_include = [
   "$NETSTACK_NAPI_ROOT/http/options/include",
   "//plugins/hilog/include",
   "//plugins/interfaces",
+  "//plugins/net/http",
   "//plugins/net/http/android",
   "//plugins/net/http/android/java/jni",
   "//third_party/curl/include",
