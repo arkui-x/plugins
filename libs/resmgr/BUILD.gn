@@ -18,7 +18,10 @@ template("resmgr_deps") {
   forward_variables_from(invoker, "*")
 
   ohos_source_set(target_name) {
-    public_configs = [ "//foundation/appframework/resource_management:resmgr_public_config" ]
+    public_configs = [
+      "//foundation/appframework/resource_management:resmgr_public_config",
+      "//foundation/appframework/resource_management/interfaces/js/innerkits/core:resmgr_napi_core_public_config",
+    ]
 
     if (defined(config.libace_target)) {
       deps = [ config.libace_target ]
