@@ -25,6 +25,7 @@ common_plugin_libs = [
   "hilog",
   "hitrace_meter",
   "i18n",
+  "intl",
   "multimedia_image",
   "ndk_raw_file",
   "net/http",
