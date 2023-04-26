@@ -25,7 +25,6 @@ common_plugin_libs = [
   "hilog",
   "hitrace_meter",
   "i18n",
-  "multimedia_image",
   "ndk_raw_file",
   "net/http",
   "process",
@@ -37,7 +36,6 @@ common_plugin_libs = [
   "url",
   "xml",
 ]
-
 
 template("plugin_lib") {
   forward_variables_from(invoker, "*")
@@ -66,4 +64,3 @@ template("plugin_lib") {
     }
   }
 }
-
