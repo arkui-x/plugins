@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include "plugins/intl/intl.h"
+#include "plugins/intl/INTL.h"
 
 namespace OHOS {
 namespace Global {

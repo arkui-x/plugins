@@ -13,24 +13,20 @@
  * limitations under the License.
  */
 
-#include "plugins/intl/android/java/jni/intl_plugin_impl.h"
-#include "plugins/intl/android/java/jni/intl_plugin_jni.h"
+#ifndef PLUGINS_INTL_PLUGIN_INTL_PLUGIN_H
+#define PLUGINS_INTL_PLUGIN_INTL_PLUGIN_H
 
-#include <string>
+#include <memory>
 
 namespace OHOS::Plugin {
-std::unique_ptr<INTL> INTL::Create()
-{
-    return std::make_unique<INTLPluginImpl>();
-}
-
-bool INTLPluginImpl::Is24HourClock()
-{
-    return INTLPluginJni::Is24HourClock();
-}
-
-std::string INTLPluginImpl::GetSystemLocale()
-{
-    return INTLPluginJni::GetSystemLocale();
-}
+class INTL {
+public:
+    INTL() = default;
+    virtual ~INTL() = default;
+    static std::unique_ptr<INTL> Create();
+    virtual bool Is24HourClock() = 0;
+    virtual std::string GetSystemLocale();
+    virtual std::string GetSystemTimezone();
+};
 } // namespace OHOS::Plugin
+#endif // PLUGINS_INTL_PLUGIN_INTL_PLUGIN_H

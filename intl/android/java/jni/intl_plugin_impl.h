@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "plugins/intl/intl.h"
+#include "plugins/intl/INTL.h"
 
 namespace OHOS::Plugin {
 class INTLPluginImpl final : public INTL {

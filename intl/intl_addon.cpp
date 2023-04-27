@@ -102,7 +102,6 @@ napi_value IntlAddon::InitLocale(napi_env env, napi_value exports)
 
 napi_value IntlAddon::InitDateTimeFormat(napi_env env, napi_value exports)
 {
-	HiLog::Error(LABEL, "Start registe DateTimeFormat");
     napi_status status = napi_ok;
     napi_property_descriptor properties[] = {
         DECLARE_NAPI_FUNCTION("format", FormatDateTime),
@@ -123,7 +122,6 @@ napi_value IntlAddon::InitDateTimeFormat(napi_env env, napi_value exports)
         HiLog::Error(LABEL, "Set property failed when InitDateTimeFormat");
         return nullptr;
     }
-	HiLog::Error(LABEL, "Finish registe DateTimeFormat");
     return exports;
 }
 
@@ -1826,13 +1824,11 @@ napi_value IntlAddon::Select(napi_env env, napi_callback_info info)
 
 napi_value Init(napi_env env, napi_value exports)
 {
-	HiLog::Error(LABEL, "Start registe plugins");
     napi_value val = IntlAddon::InitLocale(env, exports);
     val = IntlAddon::InitDateTimeFormat(env, val);
     val = IntlAddon::InitNumberFormat(env, val);
     val = IntlAddon::InitCollator(env, val);
     val = IntlAddon::InitRelativeTimeFormat(env, val);
-	HiLog::Error(LABEL, "Finish registe plugins");
     return IntlAddon::InitPluralRules(env, val);
 }
 

@@ -19,18 +19,34 @@ import android.content.Context;
 import android.os.LocaleList;
 import android.text.format.DateFormat;
 import android.util.Log;
+
 import java.util.Locale;
 import java.util.TimeZone;
 
+/**
+ * INTL android plugin module
+ *
+ * @since 2023-04
+ */
 public class INTLPlugin {
     private static final String LOG_TAG = "INTLPlugin";
     private Context mContext;
 
+    /**
+     * INTLPlugin
+     *
+     * @param context context of the application
+     */
     public INTLPlugin(Context context) {
         mContext = context;
         nativeInit();
     }
 
+    /**
+     * is24HourClock
+     *
+     * @return System use 24 hour clock or not
+     */
     public boolean is24HourClock() {
         if (mContext == null) {
             Log.w(LOG_TAG, "INTLPlugin: context not registered");
@@ -39,8 +55,13 @@ public class INTLPlugin {
         return DateFormat.is24HourFormat(mContext);
     }
 
+    /**
+     * getSystemLocale
+     *
+     * @return System locale
+     */
     public String getSystemLocale() {
-        Locale systemLocale =  LocaleList.getDefault().get(0);
+        Locale systemLocale = LocaleList.getDefault().get(0);
         String localeTag = "";
         if (systemLocale != null) {
             localeTag += systemLocale.getLanguage();
@@ -54,9 +75,17 @@ public class INTLPlugin {
         return localeTag;
     }
 
+    /**
+     * getSystemTimezone
+     *
+     * @return System time zone
+     */
     public String getSystemTimezone() {
         return TimeZone.getDefault().getID();
     }
 
+    /**
+     * nativeInit
+     */
     protected native void nativeInit();
 }

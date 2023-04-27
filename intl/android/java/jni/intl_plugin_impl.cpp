@@ -16,8 +16,6 @@
 #include "plugins/intl/android/java/jni/intl_plugin_impl.h"
 #include "plugins/intl/android/java/jni/intl_plugin_jni.h"
 
-#include <string>
-
 namespace OHOS::Plugin {
 std::unique_ptr<INTL> INTL::Create()
 {
