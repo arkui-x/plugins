@@ -21,7 +21,7 @@ common_plugin_libs = [
   "device_info",
   "display",
   "convertxml",
-  "fileio",
+  "file/fs",
   "hilog",
   "hitrace_meter",
   "i18n",
