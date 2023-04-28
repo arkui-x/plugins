@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
-#define PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
+#ifndef OHOS_GLOBAL_I18N_I18N_NORMALIZER_H
+#define OHOS_GLOBAL_I18N_I18N_NORMALIZER_H
 
-#include <memory>
+#include "i18n_types.h"
+#include "normalizer2.h"
 
-namespace OHOS::Plugin {
-class I18N {
+namespace OHOS {
+namespace Global {
+namespace I18n {
+class I18nNormalizer {
 public:
-    I18N() = default;
-    virtual ~I18N() = default;
-    static std::unique_ptr<I18N> Create();
-    virtual bool Is24HourClock() = 0;
-    virtual std::string GetSystemLocale();
-    virtual std::string GetSystemLanguage();
-    virtual std::string GetSystemRegion();
-    virtual std::string GetSystemTimezone();
+    I18nNormalizer(I18nNormalizerMode mode, I18nErrorCode &errorCode);
+    ~I18nNormalizer();
+    std::string Normalize(const char *text, int32_t length, I18nErrorCode &errorCode);
+
+private:
+    const icu::Normalizer2 *normalizer = nullptr;
 };
-} // namespace OHOS::Plugin
-#endif // PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
+} // namespace I18n
+} // namespace Global
+} // namespace OHOS
+#endif

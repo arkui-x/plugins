@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "plugins/i18n/i18n.h"
+#include "plugins/i18n/I18N.h"
 
 namespace OHOS::Plugin {
 class I18NPluginImpl final : public I18N {
@@ -26,6 +26,10 @@ public:
     I18NPluginImpl() = default;
     ~I18NPluginImpl() override = default;
     bool Is24HourClock() override;
+    std::string GetSystemLocale() override;
+    std::string GetSystemLanguage() override;
+    std::string GetSystemRegion() override;
+    std::string GetSystemTimezone() override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_ANDROID_JAVA_JNI_I18N_PLUGIN_IMPL_H

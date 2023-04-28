@@ -29,6 +29,10 @@ public:
     static void NativeInit(JNIEnv* env, jobject jobj);
     // Called by C++
     static bool Is24HourClock();
+    static std::string GetSystemLocale();
+    static std::string GetSystemLanguage();
+    static std::string GetSystemRegion();
+    static std::string GetSystemTimezone();
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_ANDROID_JAVA_JNI_I18N_PLUGIN_JNI_H
