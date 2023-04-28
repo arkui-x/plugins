@@ -27,6 +27,7 @@ common_plugin_libs = [
   "i18n",
   "ndk_raw_file",
   "net/http",
+  "net/websocket",
   "process",
   "request",
   "running_lock",
