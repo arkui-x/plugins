@@ -42,7 +42,7 @@
     return localeString
 }
 
--(NSString)getSystemLocale{
+-(NSString)getSystemTimezone{
     return TimeZone.current.identifier
 }
 
