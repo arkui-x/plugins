@@ -137,7 +137,6 @@ bool LocaleConfig::IsValidRegion(const string &region)
     }
     return true;
 }
-
 } // namespace I18n
 } // namespace Global
 } // namespace OHOS

@@ -48,17 +48,17 @@ bool I18nTimeZone::useDeviceCityDispName = false;
 
 I18nTimeZone::I18nTimeZone(std::string &id, bool isZoneID)
 {
-	if (id.empty()) {
-		std::string systemTimezone = LocaleConfig::GetSystemTimezone();
-		if (systemTimezone.length() == 0) {
-			systemTimezone = DEFAULT_TIMEZONE;
-		}
-		icu::UnicodeString unicodeZoneID(systemTimezone.data(), systemTimezone.length());
-		timezone = icu::TimeZone::createTimeZone(unicodeZoneID);
-	} else {
-		icu::UnicodeString unicodeZoneID(id.data(), id.length());
-		timezone = icu::TimeZone::createTimeZone(unicodeZoneID);
-	}
+    if (id.empty()) {
+        std::string systemTimezone = LocaleConfig::GetSystemTimezone();
+        if (systemTimezone.length() == 0) {
+            systemTimezone = DEFAULT_TIMEZONE;
+        }
+        icu::UnicodeString unicodeZoneID(systemTimezone.data(), systemTimezone.length());
+        timezone = icu::TimeZone::createTimeZone(unicodeZoneID);
+    } else {
+        icu::UnicodeString unicodeZoneID(id.data(), id.length());
+        timezone = icu::TimeZone::createTimeZone(unicodeZoneID);
+    }
 }
 
 I18nTimeZone::~I18nTimeZone()
@@ -152,7 +152,7 @@ std::string I18nTimeZone::GetDisplayName(std::string localeStr, bool isDST)
 
 std::set<std::string> I18nTimeZone::GetAvailableIDs(I18nErrorCode &errorCode)
 {
-	//cross modify
+    // cross modify
     return availableIDs;
 }
 }

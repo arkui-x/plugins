@@ -15,7 +15,7 @@
 #ifndef PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H
 #define PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H
 
-#include "plugins/i18n/i18n.h"
+#include "plugins/i18n/I18N.h"
 
 namespace OHOS::Plugin {
 class I18NPluginImpl final : public I18N {

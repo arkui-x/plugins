@@ -17,17 +17,17 @@
 #include <vector>
 
 #include "character.h"
+#include "error_util.h"
 #include "hilog/log.h"
 #include "i18n_calendar.h"
+#include "node_api.h"
+#include "plugin_c_utils.h"
 #include "unicode/locid.h"
 #include "unicode/datefmt.h"
 #include "unicode/smpdtfmt.h"
 #include "unicode/translit.h"
-#include "node_api.h"
 
-#include "error_util.h"
 #include "i18n_addon.h"
-#include "plugin_c_utils.h"
 
 #ifdef ANDROID_PLATFORM
 #include "plugins/i18n/android/java/jni/i18n_plugin_jni.h"
@@ -250,7 +250,8 @@ napi_value I18nAddon::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("Normalizer", CreateI18nNormalizerObject(env, initStatus)),
         DECLARE_NAPI_PROPERTY("NormalizerMode", CreateI18NNormalizerModeEnum(env, initStatus))
     };
-    initStatus = napi_define_properties(env, exports, sizeof(properties) / sizeof(napi_property_descriptor), properties);
+    initStatus = napi_define_properties(env, exports, sizeof(properties) \
+        / sizeof(napi_property_descriptor), properties);
     if (initStatus != napi_ok) {
         HiLog::Error(LABEL, "Failed to set properties at init");
         return nullptr;

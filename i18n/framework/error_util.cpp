@@ -44,7 +44,6 @@ void ErrorUtil::NapiThrow(napi_env env, int32_t errCode, bool throwError)
     napi_create_error(env, code, message, &error);
     napi_throw(env, error);
 }
-
 } // namespace I18n
 } // namespace Global
 } // namespace OHOS
