@@ -22,6 +22,10 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iOSI18NPlugin : NSObject
 +(instancetype)shareinstance;
 -(bool)is24HourClock;
+-(NSString)getSystemLocale;
+-(NSString)getSystemLanguage;
+-(NSString)getSystemRegion;
+-(NSString)getSystemTimezone;
 @end
 
 NS_ASSUME_NONNULL_END

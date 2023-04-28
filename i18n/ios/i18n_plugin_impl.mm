@@ -26,4 +26,32 @@ bool I18NPluginImpl::Is24HourClock()
 {
     return [[iOSI18NPlugin shareinstance] is24HourClock];
 }
+
+std::string INTLPluginImpl::GetSystemLocale()
+{
+    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemLocale]
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
+
+std::string INTLPluginImpl::GetSystemLanguage()
+{
+    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemLanguage]
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
+
+std::string INTLPluginImpl::GetSystemRegion()
+{
+    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemRegion]
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
+
+std::string INTLPluginImpl::GetSystemTimezone()
+{
+    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemTimezone]
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
 } // namespace OHOS::Plugin

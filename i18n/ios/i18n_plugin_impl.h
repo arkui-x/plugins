@@ -24,6 +24,10 @@ public:
     ~I18NPluginImpl() override = default;
 
     bool Is24HourClock() override;
+    std::string GetSystemLocale() override;
+    std::string GetSystemLanguage() override;
+    std::string GetSystemRegion() override;
+    std::string GetSystemTimezone() override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H
