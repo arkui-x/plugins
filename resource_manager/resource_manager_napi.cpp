@@ -12,46 +12,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "resource_manager_addon.h"
 
 #include <fstream>
 #include <memory>
 #include <vector>
 
-#if defined(__ARKUI_CROSS__)
-#include "plugins/interfaces/native/log.h"
-#else
 #include "hilog/log.h"
+#include "node_api.h"
+#include "napi/native_api.h"
+#include "napi/native_common.h"
+#include "res_common.h"
+#if !defined(__ARKUI_CROSS__)
 #include "ability.h"
 #include "foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/context/context.h"
-#include "hitrace_meter.h"
 #include "js_runtime_utils.h"
 #include "hisysevent_adapter.h"
+#include "hitrace_meter.h"
 #endif
-#ifdef ANDROID_PLATFORM
-#include "foundation/arkui/ace_engine/adapter/android/entrance/java/jni/ace_application_info_impl.h"
-#endif
-#ifdef IOS_PLATFORM
-#include "foundation/arkui/ace_engine/adapter/ios/entrance/ace_application_info_impl.h"
-#endif
-#include "node_api.h"
 
 namespace OHOS {
 namespace Plugin {
 namespace Resource {
+using namespace OHOS::Global::Resource;
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, 0xD001E00, "ResourceManagerJs" };
+using namespace OHOS::HiviewDFX;
+
+#if !defined(__ARKUI_CROSS__)
 #define GET_PARAMS(env, info, num)    \
     size_t argc = num;                \
     napi_value argv[num] = {nullptr}; \
     napi_value thisVar = nullptr;     \
     void *data = nullptr;             \
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data)
-
-#if !defined(__ARKUI_CROSS__)
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, 0xD001E00, "ResourceManagerJs" };
-using namespace OHOS::HiviewDFX;
 using namespace OHOS::AppExecFwk;
-#endif
 
 static void ExecuteGetResMgr(napi_env env, void* data)
 {
@@ -59,40 +53,34 @@ static void ExecuteGetResMgr(napi_env env, void* data)
         return;
     }
     ResMgrAsyncContext *asyncContext = static_cast<ResMgrAsyncContext*>(data);
+
     asyncContext->createValueFunc_ = [](napi_env env, ResMgrAsyncContext &context) -> napi_value {
-#if defined(__ARKUI_CROSS__)
-        napi_value result = ResourceManagerAddon::Create(env, context.bundleName_, context.resMgr_);
-#else
         std::string traceVal = "Create ResourceManager";
         StartTrace(HITRACE_TAG_GLOBAL_RESMGR, traceVal);
         napi_value result = ResourceManagerAddon::Create(env, context.bundleName_, context.resMgr_, nullptr);
         FinishTrace(HITRACE_TAG_GLOBAL_RESMGR);
-#endif
         if (result == nullptr) {
             context.SetErrorMsg("Failed to get ResourceManagerAddon");
-#if !defined(__ARKUI_CROSS__)
             ReportInitResourceManagerFail(context.bundleName_, "failed to get ResourceManagerAddon");
-#endif
             return nullptr;
         }
         return result;
     };
 }
 
-#if !defined(__ARKUI_CROSS__)
 Ability* GetGlobalAbility(napi_env env)
 {
     napi_value global;
     napi_status status = napi_get_global(env, &global);
     if (status != napi_ok) {
-        LOGE("Failed to get global");
+        HiLog::Error(LABEL, "Failed to get global");
         return nullptr;
     }
 
     napi_value abilityObj;
     status = napi_get_named_property(env, global, "ability", &abilityObj);
     if (status != napi_ok || abilityObj == nullptr) {
-        HILOG_WARM("Failed to get ability property");
+        HiLog::Warn(LABEL, "Failed to get ability property");
         return nullptr;
     }
 
@@ -104,26 +92,7 @@ Ability* GetGlobalAbility(napi_env env)
 
     return nullptr;
 }
-#endif
 
-#if defined(__ARKUI_CROSS__)
-static bool InitAsyncContext(napi_env env, const std::string &bundleName, ResMgrAsyncContext &asyncContext)
-{
-    std::shared_ptr<ResourceManager> resMgr;
-    if (bundleName.empty()) {
-        resMgr = OHOS::Ace::Platform::AceApplicationInfoImpl::GetInstance().GetResourceManager();
-        if (resMgr == nullptr) {
-            LOGE("getResourceManager failed, resmgr is nullptr.");
-        }
-    } else {
-        LOGE("getResourceManager by target bundle name, will support in the future.");
-    }
-
-    asyncContext.resMgr_ = resMgr;
-    asyncContext.bundleName_ = bundleName;
-    return resMgr != nullptr;
-}
-#else
 static bool InitAsyncContext(napi_env env, const std::string &bundleName, Ability* ability,
     const std::shared_ptr<AbilityRuntime::Context>& context, ResMgrAsyncContext &asyncContext)
 {
@@ -151,15 +120,9 @@ static bool InitAsyncContext(napi_env env, const std::string &bundleName, Abilit
     asyncContext.bundleName_ = bundleName;
     return resMgr != nullptr;
 }
-#endif
 
-#if defined(__ARKUI_CROSS__)
-static napi_value getResult(napi_env env, std::unique_ptr<ResMgrAsyncContext> &asyncContext,
-    std::string &bundleName)
-#else
 static napi_value getResult(napi_env env, std::unique_ptr<ResMgrAsyncContext> &asyncContext,
     std::string &bundleName, const std::shared_ptr<AbilityRuntime::Context> &abilityRuntimeContext)
-#endif
 {
     napi_value result = nullptr;
     if (asyncContext->callbackRef_ == nullptr) {
@@ -167,29 +130,24 @@ static napi_value getResult(napi_env env, std::unique_ptr<ResMgrAsyncContext> &a
     } else {
         napi_get_undefined(env, &result);
     }
-#if defined(__ARKUI_CROSS__)
-    if (!InitAsyncContext(env, bundleName, *asyncContext)) {
-        LOGE("init async context failed");
-        return nullptr;
-    }
-#else
+
     if (!InitAsyncContext(env, bundleName, GetGlobalAbility(env), abilityRuntimeContext, *asyncContext)) {
-        LOGE("init async context failed");
+        HiLog::Error(LABEL, "init async context failed");
         ReportInitResourceManagerFail(bundleName, "failed to init async context");
         return nullptr;
     }
-#endif
+
     napi_value resource = nullptr;
     napi_create_string_utf8(env, "getResourceManager", NAPI_AUTO_LENGTH, &resource);
     napi_status status = napi_create_async_work(env, nullptr, resource, ExecuteGetResMgr,
         ResMgrAsyncContext::Complete, static_cast<void*>(asyncContext.get()), &asyncContext->work_);
     if (status != napi_ok) {
-        LOGE("Failed to create async work for getResourceManager %{public}d", status);
+        HiLog::Error(LABEL, "Failed to create async work for getResourceManager %{public}d", status);
         return result;
     }
     status = napi_queue_async_work(env, asyncContext->work_);
     if (status != napi_ok) {
-        LOGE("Failed to queue async work for getResourceManager %{public}d", status);
+        HiLog::Error(LABEL, "Failed to queue async work for getResourceManager %{public}d", status);
         return result;
     }
     asyncContext.release();
@@ -201,33 +159,22 @@ static napi_value GetResourceManager(napi_env env, napi_callback_info info)
     GET_PARAMS(env, info, 3);
 
     std::unique_ptr<ResMgrAsyncContext> asyncContext = std::make_unique<ResMgrAsyncContext>();
-    
-#if !defined(__ARKUI_CROSS__)
     std::shared_ptr<AbilityRuntime::Context> abilityRuntimeContext;
-#endif
     std::string bundleName;
     for (size_t i = 0; i < argc; i++) {
         napi_valuetype valueType;
         napi_typeof(env, argv[i], &valueType);
-#if defined(__ARKUI_CROSS__)
-        if (i == 0 && valueType == napi_object) {
-            LOGE("getResourceManager by context currently not supported.");
-            return nullptr;
-        } else if ((i == 0 || i == 1) && valueType == napi_string) {
-            LOGE("getResourceManager by target bundle name, will support in the future.");
-            return nullptr;
-#else
         if (i == 0 && valueType == napi_object) {
             using WeakContextPtr = std::weak_ptr<AbilityRuntime::Context> *;
             WeakContextPtr objContext;
             napi_status status = napi_unwrap(env, argv[0], reinterpret_cast<void **>(&objContext));
             if (status != napi_ok || objContext == nullptr) {
-                LOGE("Failed to get objContext");
+                HiLog::Error(LABEL, "Failed to get objContext");
                 return nullptr;
             }
             auto context = objContext->lock();
             if (context == nullptr) {
-                LOGE("Failed to get context");
+                HiLog::Error(LABEL, "Failed to get context");
                 return nullptr;
             }
             abilityRuntimeContext = context;
@@ -235,17 +182,16 @@ static napi_value GetResourceManager(napi_env env, napi_callback_info info)
             size_t len = 0;
             napi_status status = napi_get_value_string_utf8(env, argv[i], nullptr, 0, &len);
             if (status != napi_ok) {
-                LOGE("Failed to get bundle name length");
+                HiLog::Error(LABEL, "Failed to get bundle name length");
                 return nullptr;
             }
             std::vector<char> buf(len + 1);
             status = napi_get_value_string_utf8(env, argv[i], buf.data(), len + 1, &len);
             if (status != napi_ok) {
-                LOGE("Failed to get bundle name");
+                HiLog::Error(LABEL, "Failed to get bundle name");
                 return nullptr;
             }
             bundleName = buf.data();
-#endif
         } else if ((i == 0 || i == 1 || i == 2) && valueType == napi_function) { // 2 means the third parameter
             napi_create_reference(env, argv[i], 1, &asyncContext->callbackRef_);
             break;
@@ -253,22 +199,68 @@ static napi_value GetResourceManager(napi_env env, napi_callback_info info)
             // self resourcemanager with promise
         }
     }
-#if defined(__ARKUI_CROSS__)
-    napi_value result = getResult(env, asyncContext, bundleName);
-#else
+
     napi_value result = getResult(env, asyncContext, bundleName, abilityRuntimeContext);
-#endif
     return result;
+}
+#endif
+
+static napi_status SetEnumItem(napi_env env, napi_value object, const char* name, int32_t value)
+{
+    napi_status status;
+    napi_value itemName;
+    napi_value itemValue;
+
+    NAPI_CALL_BASE(env, status = napi_create_string_utf8(env, name, NAPI_AUTO_LENGTH, &itemName), status);
+    NAPI_CALL_BASE(env, status = napi_create_int32(env, value, &itemValue), status);
+
+    NAPI_CALL_BASE(env, status = napi_set_property(env, object, itemName, itemValue), status);
+    NAPI_CALL_BASE(env, status = napi_set_property(env, object, itemValue, itemName), status);
+
+    return napi_ok;
+}
+
+static napi_value InitDirectionObject(napi_env env)
+{
+    napi_value object;
+    NAPI_CALL(env, napi_create_object(env, &object));
+
+    NAPI_CALL(env, SetEnumItem(env, object, "DIRECTION_VERTICAL", DIRECTION_VERTICAL));
+    NAPI_CALL(env, SetEnumItem(env, object, "DIRECTION_HORIZONTAL", DIRECTION_HORIZONTAL));
+    return object;
+}
+
+static napi_value InitDeviceTypeObject(napi_env env)
+{
+    napi_value object;
+    NAPI_CALL(env, napi_create_object(env, &object));
+
+    NAPI_CALL(env, SetEnumItem(env, object, "DEVICE_TYPE_PHONE", DEVICE_PHONE));
+    NAPI_CALL(env, SetEnumItem(env, object, "DEVICE_TYPE_TABLET", DEVICE_TABLET));
+    NAPI_CALL(env, SetEnumItem(env, object, "DEVICE_TYPE_CAR", DEVICE_CAR));
+    NAPI_CALL(env, SetEnumItem(env, object, "DEVICE_TYPE_PC", DEVICE_PAD));
+    NAPI_CALL(env, SetEnumItem(env, object, "DEVICE_TYPE_TV", DEVICE_TV));
+    NAPI_CALL(env, SetEnumItem(env, object, "DEVICE_TYPE_WEARABLE", DEVICE_WEARABLE));
+    return object;
+}
+
+static napi_value InitScreenDensityObject(napi_env env)
+{
+    napi_value object;
+    NAPI_CALL(env, napi_create_object(env, &object));
+
+    NAPI_CALL(env, SetEnumItem(env, object, "SCREEN_SDPI", SCREEN_DENSITY_SDPI));
+    NAPI_CALL(env, SetEnumItem(env, object, "SCREEN_MDPI", SCREEN_DENSITY_MDPI));
+    NAPI_CALL(env, SetEnumItem(env, object, "SCREEN_LDPI", SCREEN_DENSITY_LDPI));
+    NAPI_CALL(env, SetEnumItem(env, object, "SCREEN_XLDPI", SCREEN_DENSITY_XLDPI));
+    NAPI_CALL(env, SetEnumItem(env, object, "SCREEN_XXLDPI", SCREEN_DENSITY_XXLDPI));
+    NAPI_CALL(env, SetEnumItem(env, object, "SCREEN_XXXLDPI", SCREEN_DENSITY_XXXLDPI));
+    return object;
 }
 
 static napi_value ResMgrInit(napi_env env, napi_value exports)
 {
-#if defined(__ARKUI_CROSS__)
-    napi_property_descriptor creatorProp[] = {
-        DECLARE_NAPI_FUNCTION("getResourceManager", GetResourceManager),
-    };
-    napi_status status = napi_define_properties(env, exports, 1, creatorProp);
-#else
+#if !defined(__ARKUI_CROSS__)
     std::string traceVal = "GetResourceManager";
     StartTrace(HITRACE_TAG_GLOBAL_RESMGR, traceVal);
     napi_property_descriptor creatorProp[] = {
@@ -276,11 +268,24 @@ static napi_value ResMgrInit(napi_env env, napi_value exports)
     };
     napi_status status = napi_define_properties(env, exports, 1, creatorProp);
     FinishTrace(HITRACE_TAG_GLOBAL_RESMGR);
-#endif
     if (status != napi_ok) {
-        LOGE("Failed to set getResourceManager at init");
+        HiLog::Error(LABEL, "Failed to set getResourceManager at init");
         return nullptr;
     }
+#endif
+
+    napi_property_descriptor static_prop[] = {
+        DECLARE_NAPI_PROPERTY("Direction", InitDirectionObject(env)),
+        DECLARE_NAPI_PROPERTY("DeviceType", InitDeviceTypeObject(env)),
+        DECLARE_NAPI_PROPERTY("ScreenDensity", InitScreenDensityObject(env))
+    };
+
+    napi_status status = napi_define_properties(env, exports, sizeof(static_prop) / sizeof(static_prop[0]), static_prop);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "failed to define properties for exports");
+        return nullptr;
+    }
+
     return exports;
 }
 
