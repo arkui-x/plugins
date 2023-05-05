@@ -18,6 +18,7 @@ common_plugin_libs = [
   "bridge",
   "buffer",
   "common_event",
+  "data/relationalstore",
   "device_info",
   "display",
   "data/preferences",
