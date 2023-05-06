@@ -48,9 +48,9 @@ template("plugin_intl_static") {
     ]
 
     deps = [
-      "//foundation/arkui/napi:ace_napi",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
       "//third_party/icu/icu4c:shared_icui18n",
       "//third_party/icu/icu4c:shared_icuuc", 
     ]
