@@ -37,6 +37,20 @@ common_plugin_libs = [
   "uri",
   "url",
   "xml",
+  "util",
+  "util/arraylist",
+  "util/deque",
+  "util/hashmap",
+  "util/hashset",
+  "util/lightweightmap",
+  "util/lightweightset",
+  "util/linkedlist",
+  "util/list",
+  "util/plainarray",
+  "util/queue",
+  "util/stack",
+  "util/treemap",
+  "util/treeset",
 ]
 
 template("plugin_lib") {

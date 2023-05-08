@@ -14,14 +14,16 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-template("plugin_xml_static") {
+template("plugin_util_linkedlist_static") {
   forward_variables_from(invoker, "*")
 
   ohos_source_set(target_name) {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
-    deps = [ "//commonlibrary/ets_utils/js_api_module/xml:xml_static" ]
+    deps = [
+      "//commonlibrary/ets_utils/js_util_module/container:linkedlist_packages",
+    ]
 
     subsystem_name = "plugins"
     part_name = "ets_utils"
@@ -29,7 +31,7 @@ template("plugin_xml_static") {
 }
 
 foreach(item, ace_platforms) {
-  plugin_xml_static("xml_static_" + item.name) {
+  plugin_util_linkedlist_static("util_linkedlist_static_" + item.name) {
     defines = []
     cflags_cc = []
     config = {
