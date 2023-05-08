@@ -23,7 +23,7 @@ common_plugin_libs = [
   "display",
   "data/preferences",
   "convertxml",
-  "fileio",
+  "file/fs",
   "hilog",
   "hitrace_meter",
   "i18n",

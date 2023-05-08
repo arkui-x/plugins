@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,18 +13,35 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_KITS_JS_SRC_MOD_FILEIO_CLASS_STAT_STAT_ENTITY_H
-#define INTERFACES_KITS_JS_SRC_MOD_FILEIO_CLASS_STAT_STAT_ENTITY_H
-
-#include <sys/stat.h>
+#ifndef FD_GUARD_H
+#define FD_GUARD_H
 
 namespace OHOS {
 namespace DistributedFS {
-namespace ModuleFileIO {
-struct StatEntity {
-    struct stat stat_;
+class FDGuard final {
+public:
+    FDGuard() = default;
+    explicit FDGuard(int fd);
+    FDGuard(int fd, bool autoClose);
+
+    FDGuard(const FDGuard &fdg) = delete;
+    FDGuard &operator=(const FDGuard &fdg) = delete;
+
+    FDGuard(FDGuard &&fdg);
+    FDGuard &operator=(FDGuard &&fdg);
+
+    operator bool() const;
+
+    ~FDGuard();
+
+    int GetFD() const;
+    void SetFD(int fd, bool autoClose = true);
+    void ClearFD();
+
+private:
+    int fd_ = -1;
+    bool autoClose_ = true;
 };
-} // namespace ModuleFileIO
 } // namespace DistributedFS
 } // namespace OHOS
 #endif
