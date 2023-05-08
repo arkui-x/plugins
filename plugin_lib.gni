@@ -40,7 +40,6 @@ common_plugin_libs = [
   "xml",
 ]
 
-
 template("plugin_lib") {
   forward_variables_from(invoker, "*")
 
@@ -68,4 +67,3 @@ template("plugin_lib") {
     }
   }
 }
-
