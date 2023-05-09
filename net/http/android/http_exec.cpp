@@ -64,7 +64,7 @@
         }                                                                                              \
     } while (0)
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 namespace {
 constexpr size_t MAX_LIMIT = 65536;
 const char * const HTTP_SYSTEM_CA_PATH = "/system/etc/security/cacerts/";
@@ -238,7 +238,7 @@ napi_value HttpExec::RequestCallback(RequestContext* context)
     return object;
 }
 
-napi_value HttpExec::Request2Callback(OHOS::NetStack::RequestContext* context)
+napi_value HttpExec::Request2Callback(RequestContext* context)
 {
     return NapiUtils::GetUndefined(context->GetEnv());
 }
@@ -548,4 +548,4 @@ napi_value HttpResponseCacheExec::DeleteCallback(BaseContext* context)
 {
     return NapiUtils::GetUndefined(context->GetEnv());
 }
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http

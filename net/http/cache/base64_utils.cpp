@@ -174,4 +174,4 @@ std::string Decode(const std::string &encoded)
     }
     return ret;
 }
-} // namespace OHOS::NetStack::Base64
+} // namespace OHOS::NetStack::Http::Base64

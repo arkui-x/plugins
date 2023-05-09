@@ -26,7 +26,7 @@
 #include "thread_pool.h"
 #endif
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 #ifndef MAC_PLATFORM
 static constexpr const size_t DEFAULT_THREAD_NUM = 5;
 static constexpr const size_t MAX_THREAD_NUM = 100;
@@ -127,5 +127,5 @@ private:
     static bool initialized_;
 #endif
 };
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http
 #endif /* PLUGINS_NET_HTTP_REQUEST_EXEC_H */

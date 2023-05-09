@@ -19,7 +19,7 @@
 #include "http_request_options.h"
 #include "http_response.h"
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 using WritingBodyCallback = std::function<size_t(const void* data, size_t size, void* userData)>;
 
 using WritingHeaderCallback = std::function<size_t(const void* data, size_t size, void* userData)>;
@@ -50,5 +50,5 @@ public:
 
     virtual std::string GetCacheFileName() = 0;
 };
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http
 #endif /* PLUGINS_NET_HTTP_HTTP_EXEC_INTERFACE_H */

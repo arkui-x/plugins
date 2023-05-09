@@ -19,7 +19,7 @@
 #include <jni.h>
 #include <string>
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 class HttpJni {
 public:
     HttpJni() = default;
@@ -29,5 +29,5 @@ public:
     static void NativeInit(JNIEnv* env, jobject jobj);
     static std::string GetCacheDirJni();
 };
-} // OHOS::NetStack
+} // OHOS::NetStack::Http
 #endif

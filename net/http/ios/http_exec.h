@@ -27,7 +27,7 @@
 #include "napi/native_api.h"
 #include "request_context.h"
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 class HttpResponseCacheExec final {
 public:
     HttpResponseCacheExec() = default;
@@ -147,5 +147,5 @@ private:
 
     static StaticVariable staticVariable_;
 };
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http
 #endif /* PLUGINS_NET_HTTP_REQUEST_EXEC_H */
