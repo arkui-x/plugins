@@ -14,6 +14,8 @@
  */
 #include "plugins/i18n/ios/i18n_plugin_impl.h"
 
+#include <string>
+
 #import "i18n_plugin.h"
 
 namespace OHOS::Plugin {
@@ -27,30 +29,30 @@ bool I18NPluginImpl::Is24HourClock()
     return [[iOSI18NPlugin shareinstance] is24HourClock];
 }
 
-std::string INTLPluginImpl::GetSystemLocale()
+std::string I18NPluginImpl::GetSystemLocale()
 {
-    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemLocale]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemLocale]
     std::string result = std::string([origin UTF8String]);
     return result;
 }
 
-std::string INTLPluginImpl::GetSystemLanguage()
+std::string I18NPluginImpl::GetSystemLanguage()
 {
-    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemLanguage]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemLanguage]
     std::string result = std::string([origin UTF8String]);
     return result;
 }
 
-std::string INTLPluginImpl::GetSystemRegion()
+std::string I18NPluginImpl::GetSystemRegion()
 {
-    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemRegion]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemRegion]
     std::string result = std::string([origin UTF8String]);
     return result;
 }
 
-std::string INTLPluginImpl::GetSystemTimezone()
+std::string I18NPluginImpl::GetSystemTimezone()
 {
-    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemTimezone]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemTimezone]
     std::string result = std::string([origin UTF8String]);
     return result;
 }
