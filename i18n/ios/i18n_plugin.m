@@ -43,7 +43,7 @@
 }
 
 -(NSString*)getSystemLanguage{
-    NSString *language = [[NSLocale preferredLanguage] firstObject];
+    NSString *language = [[NSLocale preferredLanguages] firstObject];
     return language;
 }
 
@@ -53,7 +53,7 @@
 }
 
 -(NSString*)getSystemTimezone{
-    return TimeZone.current.identifier;
+    return [[NSTimeZone systemTimeZone] name];
 }
 
 @end
