@@ -31,28 +31,28 @@ bool I18NPluginImpl::Is24HourClock()
 
 std::string I18NPluginImpl::GetSystemLocale()
 {
-    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemLocale]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemLocale];
     std::string result = std::string([origin UTF8String]);
     return result;
 }
 
 std::string I18NPluginImpl::GetSystemLanguage()
 {
-    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemLanguage]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemLanguage];
     std::string result = std::string([origin UTF8String]);
     return result;
 }
 
 std::string I18NPluginImpl::GetSystemRegion()
 {
-    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemRegion]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemRegion];
     std::string result = std::string([origin UTF8String]);
     return result;
 }
 
 std::string I18NPluginImpl::GetSystemTimezone()
 {
-    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemTimezone]
+    NSString *origin = [[iOSI18NPlugin shareinstance] getSystemTimezone];
     std::string result = std::string([origin UTF8String]);
     return result;
 }
