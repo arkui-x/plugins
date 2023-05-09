@@ -1,0 +1,74 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//plugins/net/connection/connection.gni")
+
+template("plugin_net_connection_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    defines += [ "LOG_DOMAIN = 0xD0015B0" ]
+
+    include_dirs = connection_include
+    include_dirs += utils_include
+
+    sources = connection_sources
+    sources += utils_source
+
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
+    ]
+
+    if (platform == "android") {
+      sources += [
+        "$PLATFORM_ROOT/ipc_core/ipc_object_stub.cpp",
+        "$PLATFORM_ROOT/ipc_core/iremote_object.cpp",
+        "$PLATFORM_ROOT/ipc_core/message_parcel.cpp",
+      ]
+      deps += [ "android/java:netconnclient_anroid_jni" ]
+    } else if (platform == "ios") {
+      deps += [ "ios:net_connection_ios" ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "net"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_net_connection_static("net_connection_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
