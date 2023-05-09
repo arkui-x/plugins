@@ -39,11 +39,11 @@
 
 -(NSString)getSystemLocale{
     NSString *localeString = [[NSLocale currentLocale] localeIdentifier];
-    return localeString
+    return localeString;
 }
 
 -(NSString)getSystemTimezone{
-    return TimeZone.current.identifier
+    return [[NSTimeZone systemTimeZone] name];
 }
 
 @end

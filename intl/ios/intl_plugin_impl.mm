@@ -31,14 +31,14 @@ bool INTLPluginImpl::Is24HourClock()
 
 std::string INTLPluginImpl::GetSystemLocale()
 {
-    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemLocale]
+    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemLocale];
     std::string result = std::string([origin UTF8String]);
     return result;
 }
 
 std::string INTLPluginImpl::GetSystemTimezone()
 {
-    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemTimezone]
+    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemTimezone];
     std::string result = std::string([origin UTF8String]);
     return result;
 }
