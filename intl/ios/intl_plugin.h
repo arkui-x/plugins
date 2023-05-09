@@ -22,8 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iOSINTLPlugin : NSObject
 +(instancetype)shareinstance;
 -(bool)is24HourClock;
--(NSString)getSystemLocale;
--(NSString)getSystemTimezone;
+-(NSString*)getSystemLocale;
+-(NSString*)getSystemTimezone;
 @end
 
 NS_ASSUME_NONNULL_END
