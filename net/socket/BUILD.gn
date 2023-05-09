@@ -1,0 +1,167 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+SUBSYSTEM_DIR = "//foundation/communication"
+NETSTACK_NAPI_ROOT = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/"
+NETSTACK_INNERKITS_DIR = "$SUBSYSTEM_DIR/netstack/interfaces/innerkits"
+TLS = "$SUBSYSTEM_DIR/netstack/frameworks/native/tls_socket"
+TLS_NAPI = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/tls"
+
+tls_include = [
+  "$TLS/include",
+  "$TLS_NAPI/include",
+  "$TLS_NAPI/include/context",
+  "$SUBSYSTEM_DIR/netstack/interfaces/innerkits/tls_socket/include",
+]
+
+tls_sources = [
+  "$TLS/src/secure_data.cpp",
+  "$TLS/src/socket_error.cpp",
+  "$TLS/src/tls_certificate.cpp",
+  "$TLS/src/tls_configuration.cpp",
+  "$TLS/src/tls_context.cpp",
+  "$TLS/src/tls_key.cpp",
+  "$TLS/src/tls_socket.cpp",
+  "$TLS/src/tls_utils.cpp",
+]
+
+tls_napi_sources = [
+  "$TLS_NAPI/src/context/tls_bind_context.cpp",
+  "$TLS_NAPI/src/context/tls_connect_context.cpp",
+  "$TLS_NAPI/src/context/tls_extra_context.cpp",
+  "$TLS_NAPI/src/context/tls_napi_context.cpp",
+  "$TLS_NAPI/src/context/tls_send_context.cpp",
+  "$TLS_NAPI/src/monitor.cpp",
+  "$TLS_NAPI/src/tlssocket_async_work.cpp",
+  "$TLS_NAPI/src/tlssocket_exec.cpp",
+  "$TLS_NAPI/src/tlssocket_module.cpp",
+]
+
+socket_include = [
+  "$NETSTACK_NAPI_ROOT/socket/async_context/include",
+  "$NETSTACK_NAPI_ROOT/socket/async_work/include",
+  "$NETSTACK_NAPI_ROOT/socket/constant/include",
+  "$NETSTACK_NAPI_ROOT/socket/options/include",
+  "$NETSTACK_NAPI_ROOT/socket/socket_exec/include",
+  "$NETSTACK_NAPI_ROOT/socket/socket_module/include",
+  "$NETSTACK_NAPI_ROOT/socket/task_queue/include",
+  "//plugins/hilog/include",
+  "//plugins/interfaces",
+  "//plugins/net/socket",
+  "//third_party/bounds_checking_function/include",
+  "//third_party/openssl/include",
+]
+
+socket_sources = [
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/bind_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/common_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/connect_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_extra_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_extra_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_work/src/socket_async_work.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/extra_options_base.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/net_address.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/socket_remote_info.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/socket_state_base.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/tcp_connect_options.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/tcp_extra_options.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/tcp_send_options.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/udp_extra_options.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/udp_send_options.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/socket_exec/src/socket_exec.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/socket_module/src/socket_module.cpp",
+]
+
+utils_include = [
+  "$SUBSYSTEM_DIR/netstack/utils/log/include",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
+  "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+  "//commonlibrary/c_utils/base/include",
+  "//third_party/curl/include",
+]
+
+template("plugin_net_socket_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    if (target_os == "android") {
+      include_dirs = socket_include
+      include_dirs += tls_include
+
+      sources = socket_sources
+      sources += tls_sources
+      sources += tls_napi_sources
+
+      deps = [
+        "//plugins/interfaces/native:ace_plugin_util_${platform}",
+        "//plugins/libs/napi:napi_${platform}",
+        "//plugins/net/utils:netstack_util_${platform}",
+        "//third_party/curl:curl_shared",
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
+      ]
+    } else if (target_os == "ios") {
+      include_dirs = socket_include
+      include_dirs += tls_include
+      include_dirs += utils_include
+
+      sources = socket_sources
+      sources += tls_sources
+      sources += tls_napi_sources
+
+      deps = [
+        "//plugins/interfaces/native:ace_plugin_util_${platform}",
+        "//plugins/net/utils:netstack_util_${platform}",
+        "//third_party/curl:curl",
+        "//third_party/openssl:libcrypto_static",
+        "//third_party/openssl:ssl_source",
+        "//third_party/zlib:libz",
+      ]
+
+    }
+
+    subsystem_name = "plugins"
+    part_name = "net_socket"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_net_socket_static("net_socket_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

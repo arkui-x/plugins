@@ -73,7 +73,7 @@ template("netstack_util_static") {
     }
 
     subsystem_name = "plugins"
-    part_name = "plugin_utils"
+    part_name = "net_utils"
   }
 }
 
@@ -108,7 +108,7 @@ foreach(item, ace_platforms) {
       ]
 
       subsystem_name = "plugins"
-      part_name = "plugin_utils"
+      part_name = "net_utils"
     }
   } else {
     ohos_source_set("netstack_util_" + item.name) {
@@ -121,7 +121,7 @@ foreach(item, ace_platforms) {
       ]
 
       subsystem_name = "plugins"
-      part_name = "plugin_utils"
+      part_name = "net_utils"
     }
   }
 }
