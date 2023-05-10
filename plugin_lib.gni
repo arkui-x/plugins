@@ -56,7 +56,7 @@ common_plugin_libs = [
   "util/treeset",
 ]
 
-if (target_os == 'android') {
+if (target_os == "android") {
   common_plugin_libs += [ "intl" ]
 }
 
