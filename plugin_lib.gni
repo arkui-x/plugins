@@ -27,7 +27,6 @@ common_plugin_libs = [
   "hilog",
   "hitrace_meter",
   "i18n",
-  "intl",
   "ndk_raw_file",
   "net/http",
   "net/connection",
@@ -56,6 +55,10 @@ common_plugin_libs = [
   "util/treemap",
   "util/treeset",
 ]
+
+if (target_os == 'android') {
+  common_plugin_libs += [ "intl" ]
+}
 
 template("plugin_lib") {
   forward_variables_from(invoker, "*")

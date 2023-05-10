@@ -20,7 +20,7 @@ template("plugin_intl_static") {
   ohos_source_set(target_name) {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
-
+    use_exceptions = true
     include_dirs = [
       "include",
       "$ace_root",

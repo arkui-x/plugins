@@ -41,7 +41,15 @@ void Split(const string &src, const string &sep, vector<string> &dest)
 
 int32_t ConvertString2Int(const string &numberStr, int32_t& status)
 {
-    return std::stoi(numberStr);
+    try {
+        return std::stoi(numberStr);
+    } catch(const std::invalid_argument& except) {
+        status = -1;
+        return -1;
+    } catch (const std::out_of_range& except) {
+        status = -1;
+        return -1;
+    }
 }
 } // namespace I18n
 } // namespace Global
