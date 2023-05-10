@@ -33,7 +33,7 @@
 #include "netstack_log.h"
 #include "securec.h"
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 static constexpr size_t MAX_LIMIT = 5 * 1024 * 1024;
 static constexpr int CURL_TIMEOUT_MS = 50;
 static constexpr int CONDITION_TIMEOUT_S = 3600;
@@ -135,7 +135,7 @@ napi_value HttpExec::RequestCallback(RequestContext* context)
     return object;
 }
 
-napi_value HttpExec::Request2Callback(OHOS::NetStack::RequestContext* context)
+napi_value HttpExec::Request2Callback(RequestContext* context)
 {
     return nullptr;
 }
@@ -582,4 +582,4 @@ napi_value HttpResponseCacheExec::DeleteCallback(BaseContext* context)
 {
     return NapiUtils::GetUndefined(context->GetEnv());
 }
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http

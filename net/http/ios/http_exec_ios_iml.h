@@ -18,7 +18,7 @@
 
 #include "http_exec_interface.h"
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 class HttpExecIosIml : public HttpExecInterface {
 public:
     HttpExecIosIml() = default;
@@ -47,5 +47,5 @@ private:
     static WritingBodyCallback writingBodyCallback_;
     static WritingHeaderCallback writingHeaderCallback_;
 };
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http
 #endif /* PLUGINS_NET_HTTP_HTTP_EXEC_IOS_IML_H */

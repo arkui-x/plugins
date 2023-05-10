@@ -25,7 +25,7 @@ static constexpr const int DECIMAL_BASE = 10;
 static constexpr const int MAX_SIZE = 1024 * 1024;
 static constexpr const size_t INVALID_SIZE = SIZE_MAX;
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 static size_t GetMapValueSize(const std::unordered_map<std::string, std::string>& m)
 {
     size_t size = 0;
@@ -205,4 +205,4 @@ void LRUCache::Clear()
     cache_.clear();
     nodeList_.clear();
 }
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http

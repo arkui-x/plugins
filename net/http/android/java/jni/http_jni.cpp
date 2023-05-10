@@ -19,7 +19,7 @@
 #include "plugin_c_utils.h"
 #include "plugin_utils.h"
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 namespace {
 const char HTTP_CLASS_NAME[] = "ohos/ace/plugin/httpplugin/HttpPlugin";
 const char ERROR[] = "jni error";
@@ -83,4 +83,4 @@ std::string HttpJni::GetCacheDirJni()
     }
     return cacheDir;
 }
-} // OHOS::NetStack
+} // OHOS::NetStack::Http

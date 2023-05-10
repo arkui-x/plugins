@@ -30,7 +30,7 @@
 
 static constexpr int32_t WRITE_INTERVAL = 60;
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 std::mutex g_diskCacheMutex;
 std::mutex g_cacheNeedRunMutex;
 std::atomic_bool g_cacheNeedRun(false);
@@ -47,7 +47,7 @@ CacheProxy::CacheProxy(HttpRequestOptions &requestOptions) : strategy_(requestOp
         str += p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second + HttpConstant::HTTP_LINE_SEPARATOR;
     }
     str += std::to_string(requestOptions.GetHttpVersion());
-    key_ = Base64::Encode(str);
+    key_ = OHOS::NetStack::Base64::Encode(str);
 }
 
 bool CacheProxy::ReadResponseFromCache(RequestContext* context)
@@ -71,11 +71,11 @@ bool CacheProxy::ReadResponseFromCache(RequestContext* context)
         return false;
     }
     HttpResponse cachedResponse;
-    cachedResponse.SetRawHeader(Base64::Decode(responseFromCache[HttpConstant::RESPONSE_KEY_HEADER]));
-    cachedResponse.SetResult(Base64::Decode(responseFromCache[HttpConstant::RESPONSE_KEY_RESULT]));
-    cachedResponse.SetCookies(Base64::Decode(responseFromCache[HttpConstant::RESPONSE_KEY_COOKIES]));
-    cachedResponse.SetResponseTime(Base64::Decode(responseFromCache[HttpConstant::RESPONSE_TIME]));
-    cachedResponse.SetRequestTime(Base64::Decode(responseFromCache[HttpConstant::REQUEST_TIME]));
+    cachedResponse.SetRawHeader(OHOS::NetStack::Base64::Decode(responseFromCache[HttpConstant::RESPONSE_KEY_HEADER]));
+    cachedResponse.SetResult(OHOS::NetStack::Base64::Decode(responseFromCache[HttpConstant::RESPONSE_KEY_RESULT]));
+    cachedResponse.SetCookies(OHOS::NetStack::Base64::Decode(responseFromCache[HttpConstant::RESPONSE_KEY_COOKIES]));
+    cachedResponse.SetResponseTime(OHOS::NetStack::Base64::Decode(responseFromCache[HttpConstant::RESPONSE_TIME]));
+    cachedResponse.SetRequestTime(OHOS::NetStack::Base64::Decode(responseFromCache[HttpConstant::REQUEST_TIME]));
     cachedResponse.SetResponseCode(static_cast<uint32_t>(ResponseCode::OK));
     cachedResponse.ParseHeaders();
 
@@ -104,11 +104,11 @@ void CacheProxy::WriteResponseToCache(const HttpResponse &response)
         return;
     }
     std::unordered_map<std::string, std::string> cacheResponse;
-    cacheResponse[HttpConstant::RESPONSE_KEY_HEADER] = Base64::Encode(response.GetRawHeader());
-    cacheResponse[HttpConstant::RESPONSE_KEY_RESULT] = Base64::Encode(response.GetResult());
-    cacheResponse[HttpConstant::RESPONSE_KEY_COOKIES] = Base64::Encode(response.GetCookies());
-    cacheResponse[HttpConstant::RESPONSE_TIME] = Base64::Encode(response.GetResponseTime());
-    cacheResponse[HttpConstant::REQUEST_TIME] = Base64::Encode(response.GetRequestTime());
+    cacheResponse[HttpConstant::RESPONSE_KEY_HEADER] = OHOS::NetStack::Base64::Encode(response.GetRawHeader());
+    cacheResponse[HttpConstant::RESPONSE_KEY_RESULT] = OHOS::NetStack::Base64::Encode(response.GetResult());
+    cacheResponse[HttpConstant::RESPONSE_KEY_COOKIES] = OHOS::NetStack::Base64::Encode(response.GetCookies());
+    cacheResponse[HttpConstant::RESPONSE_TIME] = OHOS::NetStack::Base64::Encode(response.GetResponseTime());
+    cacheResponse[HttpConstant::REQUEST_TIME] = OHOS::NetStack::Base64::Encode(response.GetRequestTime());
 
     if (DISK_LRU_CACHE == nullptr) {
         DISK_LRU_CACHE = std::make_shared<LRUCacheDiskHandler>(HttpExec::GetCacheFileName(), 0);
@@ -179,4 +179,4 @@ void CacheProxy::StopCacheAndDelete()
     }
     DISK_LRU_CACHE->Delete();
 }
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http

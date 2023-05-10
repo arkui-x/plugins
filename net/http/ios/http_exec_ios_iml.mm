@@ -16,7 +16,7 @@
 #include "http_exec_ios_iml.h"
 #import "http_ios_request.h"
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 SuccessCallback HttpExecIosIml::successResponseCallback_ = nullptr;
 FailedCallback HttpExecIosIml::failedResponseCallback_ = nullptr;
 ProgressCallback HttpExecIosIml::progressCallback_ = nullptr;
@@ -190,4 +190,4 @@ void HttpExecIosIml::SetWritingHeaderCallback(WritingHeaderCallback writingHeade
         writingHeaderCallback_ = writingHeaderCallback;
     }
 }
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http

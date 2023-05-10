@@ -39,7 +39,7 @@
     DECLARE_NAPI_STATIC_PROPERTY(#protocol, \
         NapiUtils::CreateUint32(env, static_cast<uint32_t>(HttpProtocol::protocol)))
 
-namespace OHOS::NetStack {
+namespace OHOS::NetStack::Http {
 static constexpr const char *FLUSH_ASYNC_WORK_NAME = "ExecFlush";
 
 static constexpr const char *DELETE_ASYNC_WORK_NAME = "ExecDelete";
@@ -303,4 +303,4 @@ extern "C" __attribute__((constructor)) void RegisterHttpModule(void)
 #endif
     napi_module_register(&g_httpModule);
 }
-} // namespace OHOS::NetStack
+} // namespace OHOS::NetStack::Http
