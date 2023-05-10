@@ -69,6 +69,12 @@ string LocaleConfig::GetSystemRegion()
     return plugin->GetSystemRegion();
 }
 
+bool LocaleConfig::IsRTL(const string &locale)
+{
+    icu::Locale curLocale(locale.c_str());
+    return curLocale.isRightToLeft();
+}
+
 string LocaleConfig::GetDisplayLanguage(const string &language, const string &displayLocale, bool sentenceCase)
 {
     UErrorCode status = U_ZERO_ERROR;

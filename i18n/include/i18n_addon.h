@@ -52,6 +52,7 @@ public:
     static napi_value IsDigitAddon(napi_env env, napi_callback_info info);
     static napi_value IsSpaceCharAddon(napi_env env, napi_callback_info info);
     static napi_value IsWhiteSpaceAddon(napi_env env, napi_callback_info info);
+    static napi_value IsRTL(napi_env env, napi_callback_info info);
     static napi_value IsRTLCharacterAddon(napi_env env, napi_callback_info info);
     static napi_value IsIdeoGraphicAddon(napi_env env, napi_callback_info info);
     static napi_value IsLetterAddon(napi_env env, napi_callback_info info);

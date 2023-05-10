@@ -244,6 +244,8 @@ napi_value I18nAddon::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("Unicode", CreateUnicodeObject(env, initStatus)),
         DECLARE_NAPI_FUNCTION("is24HourClock", Is24HourClock),
         DECLARE_NAPI_FUNCTION("getTimeZone", GetI18nTimeZone),
+        DECLARE_NAPI_FUNCTION("getCalendar", GetCalendar),
+        DECLARE_NAPI_FUNCTION("isRTL", IsRTL),
         DECLARE_NAPI_PROPERTY("Transliterator", CreateTransliteratorObject(env, initStatus)),
         DECLARE_NAPI_PROPERTY("TimeZone", CreateTimeZoneObject(env, initStatus)),
         DECLARE_NAPI_PROPERTY("System", CreateSystemObject(env, initStatus)),
@@ -1070,6 +1072,35 @@ napi_value I18nAddon::GetDisplayCountryImpl(napi_env env, napi_callback_info inf
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
         HiLog::Error(LABEL, "Failed to create string item");
+        return nullptr;
+    }
+    return result;
+}
+
+
+napi_value I18nAddon::IsRTL(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = { 0 };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    size_t len = 0;
+    napi_get_value_string_utf8(env, argv[0], nullptr, 0, &len);
+    std::vector<char> localeBuf(len + 1);
+    status = napi_get_value_string_utf8(env, argv[0], localeBuf.data(), len + 1, &len);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Failed to get string item");
+        return nullptr;
+    }
+    bool isRTL = LocaleConfig::IsRTL(localeBuf.data());
+    napi_value result = nullptr;
+    status = napi_get_boolean(env, isRTL, &result);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "IsRTL failed");
         return nullptr;
     }
     return result;

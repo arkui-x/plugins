@@ -31,6 +31,7 @@ public:
     static std::string GetSystemRegion();
     static std::string GetSystemTimezone();
     static bool Is24HourClock();
+    static bool IsRTL(const std::string &locale);
     static std::string GetDisplayLanguage(const std::string &language, const std::string &displayLocale,
         bool sentenceCase);
     static std::string GetDisplayRegion(const std::string &region, const std::string &displayLocale,
