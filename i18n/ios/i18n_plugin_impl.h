@@ -15,7 +15,7 @@
 #ifndef PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H
 #define PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H
 
-#include "plugins/i18n/i18n.h"
+#include "plugins/i18n/I18N.h"
 
 namespace OHOS::Plugin {
 class I18NPluginImpl final : public I18N {
@@ -24,6 +24,10 @@ public:
     ~I18NPluginImpl() override = default;
 
     bool Is24HourClock() override;
+    std::string GetSystemLocale() override;
+    std::string GetSystemLanguage() override;
+    std::string GetSystemRegion() override;
+    std::string GetSystemTimezone() override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H

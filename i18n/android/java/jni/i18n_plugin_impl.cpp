@@ -16,6 +16,8 @@
 #include "plugins/i18n/android/java/jni/i18n_plugin_impl.h"
 #include "plugins/i18n/android/java/jni/i18n_plugin_jni.h"
 
+#include <string>
+
 namespace OHOS::Plugin {
 std::unique_ptr<I18N> I18N::Create()
 {
@@ -25,5 +27,25 @@ std::unique_ptr<I18N> I18N::Create()
 bool I18NPluginImpl::Is24HourClock()
 {
     return I18NPluginJni::Is24HourClock();
+}
+
+std::string I18NPluginImpl::GetSystemLocale()
+{
+    return I18NPluginJni::GetSystemLocale();
+}
+
+std::string I18NPluginImpl::GetSystemLanguage()
+{
+    return I18NPluginJni::GetSystemLanguage();
+}
+
+std::string I18NPluginImpl::GetSystemRegion()
+{
+    return I18NPluginJni::GetSystemRegion();
+}
+
+std::string I18NPluginImpl::GetSystemTimezone()
+{
+    return I18NPluginJni::GetSystemTimezone();
 }
 } // namespace OHOS::Plugin

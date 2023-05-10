@@ -13,26 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_I18N_PLUGIN_ANDROID_JAVA_JNI_I18N_PLUGIN_JNI_H
-#define PLUGINS_I18N_PLUGIN_ANDROID_JAVA_JNI_I18N_PLUGIN_JNI_H
+#ifndef PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
+#define PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
 
-#include <jni.h>
 #include <memory>
 
 namespace OHOS::Plugin {
-class I18NPluginJni final {
+class I18N {
 public:
-    I18NPluginJni() = delete;
-    ~I18NPluginJni() = delete;
-    static bool Register(void* env);
-    // Called by Java
-    static void NativeInit(JNIEnv* env, jobject jobj);
-    // Called by C++
-    static bool Is24HourClock();
-    static std::string GetSystemLocale();
-    static std::string GetSystemLanguage();
-    static std::string GetSystemRegion();
-    static std::string GetSystemTimezone();
+    I18N() = default;
+    virtual ~I18N() = default;
+    static std::unique_ptr<I18N> Create();
+    virtual bool Is24HourClock() = 0;
+    virtual std::string GetSystemLocale();
+    virtual std::string GetSystemLanguage();
+    virtual std::string GetSystemRegion();
+    virtual std::string GetSystemTimezone();
 };
 } // namespace OHOS::Plugin
-#endif // PLUGINS_I18N_PLUGIN_ANDROID_JAVA_JNI_I18N_PLUGIN_JNI_H
+#endif // PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H

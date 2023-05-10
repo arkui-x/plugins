@@ -37,4 +37,23 @@
     }
 }
 
+-(NSString*)getSystemLocale{
+    NSString *localeString = [[NSLocale currentLocale] localeIdentifier];
+    return localeString;
+}
+
+-(NSString*)getSystemLanguage{
+    NSString *language = [[NSLocale preferredLanguages] firstObject];
+    return language;
+}
+
+-(NSString*)getSystemRegion{
+    NSString *region = [[NSLocale currentLocale] objectForKey: NSLocaleCountryCode];
+    return region;
+}
+
+-(NSString*)getSystemTimezone{
+    return [[NSTimeZone systemTimeZone] name];
+}
+
 @end
