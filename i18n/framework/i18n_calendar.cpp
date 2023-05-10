@@ -185,7 +185,7 @@ std::string I18nCalendar::GetTimeZone(void)
     std::string ret;
     if (calendar_) {
         icu::UnicodeString unistr;
-        calendar_->getTimeZone().getDisplayName(unistr);
+        calendar_->getTimeZone().getID(unistr);
         unistr.toUTF8String<std::string>(ret);
     }
     return ret;
