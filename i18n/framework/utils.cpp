@@ -45,11 +45,9 @@ int32_t ConvertString2Int(const string &numberStr, int32_t& status)
         return std::stoi(numberStr);
     } catch(const std::invalid_argument& except) {
         status = -1;
-        HiLog::Error(LABEL, "ConvertString2Int: invalid argument");
         return -1;
     } catch (const std::out_of_range& except) {
         status = -1;
-        HiLog::Error(LABEL, "ConvertString2Int: invalid argument out of range");
         return -1;
     }
 }
