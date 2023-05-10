@@ -121,7 +121,6 @@ napi_value MethodData::GetMessageResponse(const std::string& data)
 bool MethodData::GetParamsByRecord(size_t argc, napi_value* arg)
 {
     bool ret = NAPIUtils::NapiValuesToJsonString(env_, argc, arg, parameter_);
-    LOGE("GetParamsByRecord=%{public}s", parameter_.c_str());
     return ret;
 }
 
@@ -249,8 +248,6 @@ void MethodData::InitEventSuccessForMessage(void)
         std::string data = json.dump();
 
         auto task = [data, bridgeName]() {
-            LOGE("InitEventSuccessForMessage data=%{public}s, bridgeName=%{public}s",
-                data.c_str(), bridgeName.c_str());
             Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
         };
         PluginUtils::RunTaskOnPlatform(task);

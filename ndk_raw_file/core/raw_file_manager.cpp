@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include "plugins/interfaces/native/log.h"
-#include "plugins/resource_manager/src/resource_manager_addon.h"
+#include "resource_manager_addon.h"
 #include "raw_dir.h"
 #include "raw_file.h"
 #include "resource_manager.h"

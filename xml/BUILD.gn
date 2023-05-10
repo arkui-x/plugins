@@ -21,9 +21,7 @@ template("plugin_xml_static") {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
-    deps = [
-      "//commonlibrary/ets_utils/js_api_module/xml:xml_static",
-    ]
+    deps = [ "//commonlibrary/ets_utils/js_api_module/xml:xml_static" ]
 
     subsystem_name = "plugins"
     part_name = "ets_utils"

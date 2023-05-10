@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//foundation/appframework/ability/ability_runtime/ability_runtime.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
 template("plugin_ndk_raw_file_static") {
@@ -20,6 +21,8 @@ template("plugin_ndk_raw_file_static") {
   ohos_source_set(target_name) {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
+
+    configs = [ "${ability_runtime_cross_platform_path}/interfaces/kits/native/appkit:appkit_native_config" ]
 
     include_dirs = [
       "//base/global/resource_management/frameworks/resmgr/include",

@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//foundation/appframework/ability/ability_runtime/ability_runtime.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
 template("plugin_resource_manager_static") {
@@ -21,42 +22,15 @@ template("plugin_resource_manager_static") {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
-    include_dirs = [
-      "//foundation/arkui",
-      "$ace_root",
-      "$ace_root/frameworks",
-      "$root_out_dir/arkui/framework",
-      "//plugins/interfaces/native",
-      "//base/global/resource_management/frameworks/resmgr/include",
-    ]
+    sources = [ "resource_manager_napi.cpp" ]
 
-    sources = [
-      "src/resource_manager_addon.cpp",
-      "src/resource_manager_napi.cpp",
-    ]
-
-    public_deps = [
-      "//plugins/interfaces/native:plugin_log",
+    deps = [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
       "//plugins/libs/napi:napi_${target_os}",
       "//plugins/libs/resmgr:resmgr_${target_os}",
     ]
 
-    if (target_os == "android") {
-      defines += [ "ANDROID_PLATFORM" ]
-    }
-
-    if (target_os == "ios") {
-      defines += [ "IOS_PLATFORM" ]
-    }
-
-    if (defined(config.libace_target)) {
-      deps = [ config.libace_target ]
-    }
-
-    defines += [
-      "SUPPORT_GRAPHICS",
-      "__ARKUI_CROSS__",
-    ]
+    defines += [ "__ARKUI_CROSS__" ]
 
     subsystem_name = "plugins"
     part_name = "resource_manager"
