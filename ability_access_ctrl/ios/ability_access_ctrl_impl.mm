@@ -92,6 +92,10 @@ void AbilityAccessCtrlImpl::RequestPermissions(
 {
     LOGI("AbilityAccessCtrlImpl Request called");
     CallbackInfo *info = new (std::nothrow) CallbackInfo;
+    if (info == nullptr) {
+        LOGE("Info malloc failed.");
+        return;
+    }
     info->data = data;
     info->index = 0;
     info->napiCb = callback;
