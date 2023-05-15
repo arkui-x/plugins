@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,14 +14,14 @@
  */
 
 #include "upload_task_napi.h"
-
-#include <mutex>
 #include <unistd.h>
 #include <uv.h>
-
+#include <mutex>
 #include "async_call.h"
 #include "js_util.h"
-#include "upload_task.h"
+#include "i_upload_task.h"
+#include "header_receive_callback.h"
+#include "napi_utils.h"
 
 using namespace OHOS::Plugin::Request::Upload;
 namespace OHOS::Plugin::Request::UploadNapi {
@@ -33,16 +33,25 @@ std::mutex mutex_;
 int taskId_ = 0;
 std::map<std::string, UploadTaskNapi::Exec> UploadTaskNapi::onTypeHandlers_ = {
     {"progress", UploadTaskNapi::OnProgress},
+    {"headerReceive", UploadTaskNapi::OnHeaderReceive},
     {"fail", UploadTaskNapi::OnFail},
     {"complete", UploadTaskNapi::OnComplete},
 };
 std::map<std::string, UploadTaskNapi::Exec> UploadTaskNapi::offTypeHandlers_ = {
     {"progress", UploadTaskNapi::OffProgress},
+    {"headerReceive", UploadTaskNapi::OffHeaderReceive},
     {"fail", UploadTaskNapi::OffFail},
     {"complete", UploadTaskNapi::OffComplete},
 };
 
-napi_value UploadTaskNapi::JsUpload(napi_env env, napi_callback_info info)
+UploadTaskNapi::~UploadTaskNapi()
+{
+    UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Enter ~UploadTaskNapi.");
+    napiUploadTask_ = nullptr;
+    napiUploadConfig_ = nullptr;
+}
+
+napi_value UploadTaskNapi::JsUploadFile(napi_env env, napi_callback_info info)
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Enter JsUpload.");
     struct ContextInfo {
@@ -51,7 +60,11 @@ napi_value UploadTaskNapi::JsUpload(napi_env env, napi_callback_info info)
     auto ctxInfo = std::make_shared<ContextInfo>();
     auto input = [ctxInfo](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Upload parser to native params %{public}d!", static_cast<int>(argc));
-        NAPI_ASSERT_BASE(env, (argc > 0) && (argc <= 2), " need 1 or 2 parameters!", napi_invalid_arg);
+        if (argc < 2) {
+            JSUtil::ThrowError(env, Download::EXCEPTION_PARAMETER_CHECK, "need 2 parameters!");
+            return napi_invalid_arg;
+        }
+
         napi_value uploadProxy = nullptr;
         napi_status status = napi_new_instance(env, GetCtor(env), argc, argv, &uploadProxy);
         if ((uploadProxy == nullptr) || (status != napi_ok)) {
@@ -125,12 +138,16 @@ napi_value UploadTaskNapi::JsOff(napi_env env, napi_callback_info info)
     return nullptr;
 }
 
-napi_value UploadTaskNapi::JsRemove(napi_env env, napi_callback_info info)
+napi_value UploadTaskNapi::JsDelete(napi_env env, napi_callback_info info)
 {
-    UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Enter JsRemove.");
+    UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Enter JsDelete.");
     auto context = std::make_shared<RemoveContextInfo>();
     auto input = [context](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
-        NAPI_ASSERT_BASE(env, argc == 0, " should 0 parameter!", napi_invalid_arg);
+        if (argc != 0) {
+            UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "delete method should has 0 parameter.");
+            JSUtil::ThrowError(env, Download::EXCEPTION_PARAMETER_CHECK, "delete method should has 0 parameter.");
+            return napi_invalid_arg;
+        }
         return napi_ok;
     };
     auto output = [context](napi_env env, napi_value *result) -> napi_status {
@@ -162,13 +179,52 @@ napi_status UploadTaskNapi::OnProgress(napi_env env, napi_value callback, napi_v
         UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "create failed!");
         return napi_generic_failure;
     }
-    if (JSUtil::Equals(env, callback, progressCallback->GetCallback()) && proxy->onFail_ != nullptr) {
+    if (JSUtil::Equals(env, callback, progressCallback->GetCallback()) && proxy->onProgress_ != nullptr) {
         UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "OnProgress callback already register!");
         return napi_generic_failure;
     }
     proxy->offProgress_ = proxy->onProgress_;
     proxy->napiUploadTask_->On(TYPE_PROGRESS_CALLBACK, (void *)(progressCallback.get()));
-    proxy->onProgress_ = progressCallback;
+    proxy->onProgress_ = std::move(progressCallback);
+    return napi_ok;
+}
+
+napi_status UploadTaskNapi::OnHeaderReceive(napi_env env, napi_value callback, napi_value self)
+{
+    UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Enter OnHeaderReceive.");
+    UploadTaskNapi *proxy = nullptr;
+    NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
+    NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
+
+    std::shared_ptr<IHeaderReceiveCallback> headerReceiveCallback =
+        std::make_shared<HeaderReceiveCallback>(env, callback);
+    if (JSUtil::Equals(env, callback, headerReceiveCallback->GetCallback()) && proxy->onHeaderReceive_ != nullptr) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "OnHeaderReceive callback already register!");
+        return napi_generic_failure;
+    }
+
+    proxy->napiUploadTask_->On(TYPE_HEADER_RECEIVE_CALLBACK, (void *)(headerReceiveCallback.get()));
+    proxy->onHeaderReceive_ = std::move(headerReceiveCallback);
+    return napi_ok;
+}
+
+napi_status UploadTaskNapi::OffHeaderReceive(napi_env env, napi_value callback, napi_value self)
+{
+    UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "Enter OffHeaderReceive.");
+    UploadTaskNapi *proxy = nullptr;
+    NAPI_CALL_BASE(env, napi_unwrap(env, self, reinterpret_cast<void **>(&proxy)), napi_invalid_arg);
+    NAPI_ASSERT_BASE(env, proxy != nullptr, "there is no native upload task", napi_invalid_arg);
+
+    if (proxy->onHeaderReceive_ == nullptr) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "HeaderReceive. proxy->onHeaderReceive_ == nullptr.");
+        return napi_generic_failure;
+    } else {
+        std::shared_ptr<IHeaderReceiveCallback> headerReceiveCallback =
+            std::make_shared<HeaderReceiveCallback>(env, callback);
+        proxy->napiUploadTask_->Off(TYPE_HEADER_RECEIVE_CALLBACK, (void *)(headerReceiveCallback.get()));
+        proxy->offHeaderReceive_ = std::move(headerReceiveCallback);
+        proxy->onHeaderReceive_ = nullptr;
+    }
     return napi_ok;
 }
 
@@ -193,7 +249,7 @@ napi_status UploadTaskNapi::OnFail(napi_env env, napi_value callback, napi_value
     }
     proxy->offFail_ = proxy->onFail_;
     proxy->napiUploadTask_->On(TYPE_FAIL_CALLBACK, (void *)(failCallback.get()));
-    proxy->onFail_ = failCallback;
+    proxy->onFail_ = std::move(failCallback);
     return napi_ok;
 }
 
@@ -218,7 +274,7 @@ napi_status UploadTaskNapi::OnComplete(napi_env env, napi_value callback, napi_v
     }
     proxy->offComplete_ = proxy->onComplete_;
     proxy->napiUploadTask_->On(TYPE_COMPLETE_CALLBACK, (void *)(completeCallback.get()));
-    proxy->onComplete_ = completeCallback;
+    proxy->onComplete_ = std::move(completeCallback);
     return napi_ok;
 }
 
@@ -240,6 +296,7 @@ napi_status UploadTaskNapi::OffProgress(napi_env env, napi_value callback, napi_
         if (proxy->napiUploadTask_) {
             proxy->napiUploadTask_->Off(TYPE_PROGRESS_CALLBACK, (void *)(progressCallback.get()));
         }
+        proxy->offProgress_ = std::move(progressCallback);
         proxy->onProgress_ = nullptr;
     }
     return napi_ok;
@@ -263,12 +320,11 @@ napi_status UploadTaskNapi::OffFail(napi_env env, napi_value callback, napi_valu
         if (proxy->napiUploadTask_) {
             proxy->napiUploadTask_->Off(TYPE_FAIL_CALLBACK, failCallback.get());
         }
+        proxy->offFail_ = std::move(failCallback);
         proxy->onFail_ = nullptr;
-        proxy->offFail_ = failCallback;
     }
     return napi_ok;
 }
-
 
 napi_status UploadTaskNapi::OffComplete(napi_env env, napi_value callback, napi_value self)
 {
@@ -288,6 +344,7 @@ napi_status UploadTaskNapi::OffComplete(napi_env env, napi_value callback, napi_
         if (proxy->napiUploadTask_) {
             proxy->napiUploadTask_->Off(TYPE_COMPLETE_CALLBACK, completeCallback.get());
         }
+        proxy->offComplete_ = std::move(completeCallback);
         proxy->onComplete_ = nullptr;
     }
     return napi_ok;
@@ -313,14 +370,14 @@ napi_value UploadTaskNapi::GetCtor(napi_env env)
     napi_property_descriptor clzDes[] = {
         {"on", 0, JsOn, 0, 0, 0, napi_default, 0 },
         {"off", 0, JsOff, 0, 0, 0, napi_default, 0 },
-        {"remove", 0, JsRemove, 0, 0, 0, napi_default, 0 },
+        {"delete", 0, JsDelete, 0, 0, 0, napi_default, 0 },
     };
     NAPI_CALL(env, napi_define_class(env, "UploadTaskNapi", NAPI_AUTO_LENGTH, Initialize, nullptr,
                                     sizeof(clzDes) / sizeof(napi_property_descriptor), clzDes, &cons));
     return cons;
 }
 
-std::shared_ptr<Upload::UploadTask> UploadTaskNapi::GetTaskPtr()
+std::shared_ptr<Upload::IUploadTask> UploadTaskNapi::GetTaskPtr()
 {
     return napiUploadTask_;
 }
@@ -329,13 +386,8 @@ napi_value UploadTaskNapi::Initialize(napi_env env, napi_callback_info info)
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "constructor upload task!");
     napi_value self = nullptr;
-    if (UploadTaskNapi::UploadTaskSize() >= UploadTaskLimitSize) {
-        napi_get_undefined(env, &self);
-        return self;
-    }
-
     size_t argc = JSUtil::MAX_ARGC;
-    int parametersPosition = 0;
+    int parametersPosition = 1; // 0 for BaseContext, 1 for UploadConfig
     napi_value argv[JSUtil::MAX_ARGC] = {nullptr};
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &self, nullptr));
     auto *proxy = new (std::nothrow) UploadTaskNapi();
@@ -347,13 +399,20 @@ napi_value UploadTaskNapi::Initialize(napi_env env, napi_callback_info info)
     proxy->napiUploadConfig_ = JSUtil::ParseUploadConfig(env, argv[parametersPosition]);
     if (proxy->napiUploadConfig_ == nullptr) {
         UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "Initialize. ParseUploadConfig fail.");
+        JSUtil::ThrowError(env, Download::EXCEPTION_PARAMETER_CHECK, "UploadConfig has wrong type.");
+        delete proxy;
+        return nullptr;
+    }
+    if (!IUploadTask::CheckFilesValid(proxy->napiUploadConfig_->files)) {
+        UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "UploadConfig has wrong file path.");
+        JSUtil::ThrowError(env, Download::EXCEPTION_FILE_PATH, "UploadConfig has wrong file path");
         delete proxy;
         return nullptr;
     }
     if (proxy->napiUploadConfig_->protocolVersion == "L5") {
         AddCallbackToConfig(proxy->napiUploadConfig_, env, argv[parametersPosition], proxy);
     }
-    proxy->napiUploadTask_ = std::make_shared<Upload::UploadTask>(proxy->napiUploadConfig_);
+    proxy->napiUploadTask_ = IUploadTask::CreateUploadTask(proxy->napiUploadConfig_);
     {
         std::lock_guard<std::mutex> autoLock(mutex_);
         proxy->napiUploadTask_->taskId_ = taskId_++;
@@ -363,9 +422,18 @@ napi_value UploadTaskNapi::Initialize(napi_env env, napi_callback_info info)
     proxy->napiUploadTask_->ExecuteTask();
 
     auto finalize = [](napi_env env, void *data, void *hint) {
+        UploadTaskNapi *uploadTaskNapi = (UploadTaskNapi *)data;
+        if (uploadTaskNapi != nullptr) {
+            UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "UploadTaskNapi delete taskId: %{public}d",
+                uploadTaskNapi->napiUploadTask_->taskId_);
+            UnRegisterUploadTask(uploadTaskNapi);
+            delete uploadTaskNapi;
+        }
         UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "UploadTask. delete");
     };
     if (napi_wrap(env, self, proxy, finalize, nullptr, nullptr) != napi_ok) {
+        finalize(env, proxy, nullptr);
+        UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "UploadTaskNapi. napi_wrap fail.");
         return nullptr;
     }
     return self;
@@ -566,7 +634,7 @@ void UploadTaskNapi::RegisterUploadTask(UploadTaskNapi *task)
 {
     if (task) {
         std::lock_guard<std::mutex> lock(uploadTaskListLock_);
-        for (size_t i = 0; i<uploadTaskList_.size(); i++) {
+        for (size_t i = 0; i < uploadTaskList_.size(); i++) {
             if (uploadTaskList_[i] == task) {
                 return;
             }
@@ -579,10 +647,8 @@ void UploadTaskNapi::UnRegisterUploadTask(UploadTaskNapi *task)
 {
     if (task) {
         std::lock_guard<std::mutex> lock(uploadTaskListLock_);
-        for (size_t i = 0; i<uploadTaskList_.size(); i++) {
+        for (size_t i = 0; i < uploadTaskList_.size(); i++) {
             if (uploadTaskList_[i] == task && uploadTaskList_[i]) {
-                delete uploadTaskList_[i];
-                uploadTaskList_[i] = nullptr;
                 uploadTaskList_.erase(uploadTaskList_.begin() + i);
                 return;
             }
@@ -594,7 +660,7 @@ bool UploadTaskNapi::CheckUploadTask(UploadTaskNapi *task)
 {
     if (task) {
         std::lock_guard<std::mutex> lock(uploadTaskListLock_);
-        for (size_t i = 0; i<uploadTaskList_.size(); i++) {
+        for (size_t i = 0; i < uploadTaskList_.size(); i++) {
             if (uploadTaskList_[i] == task) {
                 return true;
             }

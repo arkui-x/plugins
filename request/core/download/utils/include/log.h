@@ -16,6 +16,13 @@
 #ifndef DOWNLOAD_LOG
 #define DOWNLOAD_LOG
 
+#ifdef IOS_PLATFORM
+    #include "plugins/interfaces/native/log.h"
+#endif
+
+#define DOWNLOAD_LOG_TAG "Downloadkit"
+#define DOWNLOAD_TAG 5
+
 #ifdef ANDROID_PLATFORM
 #define CONFIG_DOWNLOAD_LOG
 #endif
@@ -43,39 +50,39 @@
 #undef DOWNLOAD_HILOGI
 #endif
 
-#define DOWNLOAD_LOG_TAG "Downloadkit"
+
 #define DOWNLOAD_LOG_DOMAIN 0xD001C00
 static constexpr OHOS::HiviewDFX::HiLogLabel DOWNLOAD_LOG_LABEL = {LOG_CORE, DOWNLOAD_LOG_DOMAIN, DOWNLOAD_LOG_TAG};
 
 #define MAKE_FILE_NAME (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define DOWNLOAD_HILOGF(fmt, ...)                                        								\
-    (void)OHOS::HiviewDFX::HiLog::Fatal(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,	\
+#define DOWNLOAD_HILOGF(fmt, ...)                                                                       \
+    (void)OHOS::HiviewDFX::HiLog::Fatal(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,  \
     MAKE_FILE_NAME, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-#define DOWNLOAD_HILOGE(fmt, ...)                                      									\
-    (void)OHOS::HiviewDFX::HiLog::Error(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,	\
+#define DOWNLOAD_HILOGE(fmt, ...)                                                                       \
+    (void)OHOS::HiviewDFX::HiLog::Error(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,  \
     MAKE_FILE_NAME, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-#define DOWNLOAD_HILOGW(fmt, ...)                                                        				\
-    (void)OHOS::HiviewDFX::HiLog::Warn(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,	\
+#define DOWNLOAD_HILOGW(fmt, ...)                                                                       \
+    (void)OHOS::HiviewDFX::HiLog::Warn(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,   \
     MAKE_FILE_NAME, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-#define DOWNLOAD_HILOGD(fmt, ...)                                                            			\
-    (void)OHOS::HiviewDFX::HiLog::Debug(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,	\
+#define DOWNLOAD_HILOGD(fmt, ...)                                                                       \
+    (void)OHOS::HiviewDFX::HiLog::Debug(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,  \
     MAKE_FILE_NAME, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-#define DOWNLOAD_HILOGI(fmt, ...)                                                     					\
-    (void)OHOS::HiviewDFX::HiLog::Info(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,	\
+#define DOWNLOAD_HILOGI(fmt, ...)                                                                       \
+    (void)OHOS::HiviewDFX::HiLog::Info(DOWNLOAD_LOG_LABEL, "[%{public}s %{public}s %{public}d] " fmt,   \
     MAKE_FILE_NAME, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 #else
 
-#define DOWNLOAD_HILOGF(fmt, ...)
-#define DOWNLOAD_HILOGE(fmt, ...)
-#define DOWNLOAD_HILOGW(fmt, ...)
-#define DOWNLOAD_HILOGD(fmt, ...)
-#define DOWNLOAD_HILOGI(fmt, ...)
+#define DOWNLOAD_HILOGF(fmt, ...) LOGF(fmt, ##__VA_ARGS__)
+#define DOWNLOAD_HILOGE(fmt, ...) LOGE(fmt, ##__VA_ARGS__)
+#define DOWNLOAD_HILOGW(fmt, ...) LOGW(fmt, ##__VA_ARGS__)
+#define DOWNLOAD_HILOGD(fmt, ...) LOGD(fmt, ##__VA_ARGS__)
+#define DOWNLOAD_HILOGI(fmt, ...) LOGI(fmt, ##__VA_ARGS__)
 #endif // CONFIG_DOWNLOAD_LOG
 
 #endif /* DOWNLOAD_LOG */

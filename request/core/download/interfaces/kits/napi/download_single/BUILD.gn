@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -38,8 +38,12 @@ ohos_source_set("downloadsingle") {
     "src/download_base_notify.cpp",
     "src/download_event.cpp",
     "src/download_remove.cpp",
+    "src/download_pause.cpp",
+    "src/download_resume.cpp",
     "src/download_task_napi.cpp",
     "src/napi_utils.cpp",
+    "src/download_query.cpp",
+    "src/download_query_mimetype.cpp",
   ]
 
   configs = [ ":download_interfaces_kits_napi_config" ]
@@ -54,6 +58,8 @@ ohos_source_set("downloadsingle") {
 
   if (target_os == "android") {
     defines = [ "ANDROID_PLATFORM" ]
+  } else if (target_os == "ios") {
+    defines = [ "IOS_PLATFORM" ]
   }
 
   subsystem_name = "plugins"

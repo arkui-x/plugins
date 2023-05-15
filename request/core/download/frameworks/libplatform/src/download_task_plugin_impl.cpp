@@ -19,7 +19,7 @@
 
 namespace OHOS::Plugin::Request::Download {
 DownloadTaskPluginImpl::DownloadTaskPluginImpl(uint32_t taskId, const DownloadConfig &config)
-    : DownloadTask(taskId), config_(config) {
+    : IDownloadTask(taskId, config) {
 }
 
 DownloadTaskPluginImpl::~DownloadTaskPluginImpl(void)
@@ -42,12 +42,7 @@ bool DownloadTaskPluginImpl::Remove()
     return true;
 }
 
-void DownloadTaskPluginImpl::InstallCallback(DownloadTaskCallback cb)
-{
-    eventCb_ = cb;
-}
-
-DownloadTask* DownloadTask::CreateDownLoadTask(uint32_t taskId, const DownloadConfig &config)
+IDownloadTask* IDownloadTask::CreateDownloadTask(uint32_t taskId, const DownloadConfig &config)
 {
     return new (std::nothrow) DownloadTaskPluginImpl(taskId, config);
 }

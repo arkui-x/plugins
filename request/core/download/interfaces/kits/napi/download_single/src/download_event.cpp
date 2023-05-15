@@ -17,7 +17,7 @@
 
 #include "download_base_notify.h"
 #include "download_manager.h"
-#include "download_task.h"
+#include "i_download_task.h"
 #include "log.h"
 #include "napi_utils.h"
 
@@ -48,7 +48,7 @@ napi_value DownloadEvent::On(napi_env env, napi_callback_info info)
     napi_typeof(env, argv[NapiUtils::SECOND_ARGV], &valuetype);
     NAPI_ASSERT(env, valuetype == napi_function, "callback is not a function");
 
-    DownloadTask *task;
+    IDownloadTask *task;
     NAPI_CALL(env, napi_unwrap(env, thisVal, reinterpret_cast<void **>(&task)));
     if (task == nullptr || !task->IsSupportType(type)) {
         DOWNLOAD_HILOGD("Event On type : %{public}s not support", type.c_str());
@@ -109,7 +109,8 @@ napi_value DownloadEvent::Off(napi_env env, napi_callback_info info)
         }
     };
     context->SetAction(std::move(input), std::move(output));
-    AsyncCall asyncCall(env, info, std::dynamic_pointer_cast<AsyncCall::Context>(context), NapiUtils::SECOND_ARGV);
+    AsyncCall asyncCall(env, info, std::dynamic_pointer_cast<AsyncCall::Context>(context),
+        context->type_, NapiUtils::SECOND_ARGV);
     return asyncCall.Call(env, exec);
 }
 

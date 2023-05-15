@@ -21,17 +21,16 @@
 
 #include "constant.h"
 #include "download_config.h"
-#include "download_task.h"
+#include "i_download_task.h"
 
 namespace OHOS::Plugin::Request::Download {
-class DownloadTaskPluginImpl : public DownloadTask {
+class DownloadTaskPluginImpl : public IDownloadTask {
 public:
     DownloadTaskPluginImpl(uint32_t taskId, const DownloadConfig &config);
     virtual ~DownloadTaskPluginImpl(void);
 
     void ExecuteTask() override;
     bool Remove() override;
-    void InstallCallback(DownloadTaskCallback cb) override;
 
 private:
     DownloadConfig config_;

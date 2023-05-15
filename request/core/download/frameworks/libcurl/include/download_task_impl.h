@@ -16,63 +16,45 @@
 #ifndef PLUGINS_REQUEST_LIBCURL_DOWNLOAD_TASK_IMPL_H
 #define PLUGINS_REQUEST_LIBCURL_DOWNLOAD_TASK_IMPL_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include <mutex>
 #include <string>
 #include <vector>
-#include <stddef.h>
-#include <stdint.h>
 #include <iosfwd>
 #include <thread>
-
-#include "constant.h"
 #include "curl/curl.h"
 #include "download_config.h"
-#include "download_task.h"
+#include "i_download_task.h"
+
 
 namespace OHOS::Plugin::Request::Download {
-class DownloadTaskImpl : public DownloadTask {
+
+class DownloadTaskImpl : public IDownloadTask {
 public:
     DownloadTaskImpl(uint32_t taskId, const DownloadConfig &config);
     virtual ~DownloadTaskImpl(void);
-
     void ExecuteTask() override;
     bool Remove() override;
-    bool IsRunning() override;
-
     bool Run();
-
-    void InstallCallback(DownloadTaskCallback cb) override;
     void GetRunResult(DownloadStatus &status, ErrorCode &code, PausedReason &reason);
-
     void SetRetryTime(uint32_t retryTime);
     void SetNetworkStatus(bool isOnline);
     bool IsSatisfiedConfiguration();
 
 private:
-    void SetStatus(DownloadStatus status, ErrorCode code, PausedReason reason);
-    void SetStatus(DownloadStatus status);
-    void SetError(ErrorCode code);
-    void SetReason(PausedReason reason);
-
-    void DumpStatus();
-    void DumpErrorCode();
-    void DumpPausedReason();
-
     bool ExecHttp();
     CURLcode CurlPerformFileTransfer(CURL *handle) const;
     bool SetFileSizeOption(CURL *curl, struct curl_slist *requestHeader);
     bool SetOption(CURL *curl, struct curl_slist *requestHeader);
     struct curl_slist *MakeHeaders(const std::vector<std::string> &vec);
-
     void SetResumeFromLarge(CURL *curl, long long pos);
-
     bool GetFileSize(uint32_t &result);
     void HandleResponseCode(CURLcode code, int32_t httpCode);
     void HandleCleanup(DownloadStatus status);
     static size_t WriteCallback(void *buffer, size_t size, size_t num, void *param);
     static size_t HeaderCallback(void *buffer, size_t size, size_t num, void *param);
     static int ProgressCallback(void *param, double dltotal, double dlnow, double ultotal, double ulnow);
-
     void ForceStopRunning();
     bool HandleFileError();
     bool SetCertificationOption(CURL *curl);
@@ -80,36 +62,25 @@ private:
     bool SetHttpCertificationOption(CURL *curl);
     bool SetHttpsCertificationOption(CURL *curl);
     std::string ReadCertification();
-
     void PublishNotification(bool background, uint32_t percent);
     void PublishNotification(bool background, uint32_t prevSize, uint32_t downloadSize, uint32_t totalSize);
     std::time_t GetCurTimestamp();
     uint32_t ProgressNotification(uint32_t prevSize, uint32_t downloadSize, uint32_t totalSize);
 
 private:
-    DownloadConfig config_;
-    DownloadStatus status_;
-    ErrorCode code_;
-    PausedReason reason_;
     std::string mimeType_;
     uint32_t totalSize_;
     uint32_t downloadSize_;
     bool isPartialMode_;
-
     bool forceStop_;
     bool isRemoved_;
     uint32_t retryTime_;
-
-    DownloadTaskCallback eventCb_;
-    std::recursive_mutex mutex_;
     bool hasFileSize_;
-    bool isOnline_;
     uint32_t prevSize_;
     static constexpr uint32_t HUNDRED_PERCENT = 100;
     static constexpr uint32_t TEN_PERCENT_THRESHOLD = 10;
     static constexpr uint32_t NOTIFICATION_FREQUENCY = 200;
     std::time_t lastTimestamp_ = 0;
-
     std::unique_ptr<std::thread> thread_ = {};
     std::thread::native_handle_type thread_handle_ = {};
 };

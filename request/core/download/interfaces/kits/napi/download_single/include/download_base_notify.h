@@ -19,7 +19,7 @@
 #include <string>
 
 #include "async_call.h"
-#include "download_task.h"
+#include "i_download_task.h"
 #include "download_notify_interface.h"
 #include "napi/native_api.h"
 #include "noncopyable.h"

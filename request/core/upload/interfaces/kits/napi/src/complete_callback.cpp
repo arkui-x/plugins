@@ -90,4 +90,4 @@ void CompleteCallback::Complete(const std::vector<TaskState> &taskStates)
         delete work;
     }
 }
-} // end of  OHOS::Plugin::Request::Upload
+} // namespace OHOS::Plugin::Request::Upload

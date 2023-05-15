@@ -16,6 +16,7 @@
 #include <regex>
 #include <string>
 #include "js_util.h"
+#include "napi_utils.h"
 
 using namespace  OHOS::Plugin::Request::Upload;
 namespace  OHOS::Plugin::Request::UploadNapi {
@@ -315,21 +316,6 @@ bool JSUtil::SetFiles(napi_env env, napi_value jsConfig, Upload::UploadConfig &c
     return true;
 }
 
-bool JSUtil::SetHeader(napi_env env, napi_value jsConfig, Upload::UploadConfig &config)
-{
-    if (!HasNamedProperty(env, jsConfig, "header")) {
-        return true;
-    }
-    napi_value header = nullptr;
-    napi_get_named_property(env, jsConfig, "header", &header);
-    if (header == nullptr) {
-        UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "GetNamedProperty SetHeader failed");
-        return false;
-    }
-    config.header = Convert2Header(env, header);
-    return true;
-}
-
 bool JSUtil::SetMethod(napi_env env, napi_value jsConfig, Upload::UploadConfig &config)
 {
     if (!HasNamedProperty(env, jsConfig, "method")) {
@@ -357,11 +343,37 @@ bool JSUtil::Convert2UploadRequestOptions(napi_env env, napi_value jsConfig, Upl
     if (!SetFiles(env, jsConfig, config)) {
         return false;
     }
-    if (!SetHeader(env, jsConfig, config)) {
+    if (!ParseHeader(env, jsConfig, config.header)) {
         return false;
     }
     if (!SetMethod(env, jsConfig, config)) {
         return false;
+    }
+    return true;
+}
+
+bool JSUtil::ParseHeader(napi_env env, napi_value configValue, std::map<std::string, std::string> &header)
+{
+    if (!Download::NapiUtils::HasNamedProperty(env, configValue, "header")) {
+        UPLOAD_HILOGE(UPLOAD_MODULE_JS_NAPI, "No header present, Reassign value");
+        header[Download::tlsVersion] = Download::TLS_VERSION;
+        header[Download::cipherList] = Download::TLS_CIPHER;
+        return true;
+    }
+    napi_value jsHeader = Download::NapiUtils::GetNamedProperty(env, configValue, "header");
+    if (Download::NapiUtils::GetValueType(env, jsHeader) != napi_object) {
+        return false;
+    }
+    auto names = Download::NapiUtils::GetPropertyNames(env, jsHeader);
+    auto iter = find(names.begin(), names.end(), Download::cipherList);
+    if (iter == names.end()) {
+        header[Download::cipherList] = Download::TLS_CIPHER;
+    }
+    for (iter = names.begin(); iter != names.end(); ++iter) {
+        auto value = Download::NapiUtils::GetStringPropertyUtf8(env, jsHeader, *iter);
+        if (!value.empty()) {
+            header[Download::NapiUtils::ToLower(*iter)] = value;
+        }
     }
     return true;
 }
@@ -374,11 +386,9 @@ bool JSUtil::Convert2UploadConfig(napi_env env, napi_value jsConfig, Upload::Upl
     }
     config.url = Convert2String(env, url);
 
-    napi_value header = GetNamedProperty(env, jsConfig, "header");
-    if (header == nullptr) {
+    if (!ParseHeader(env, jsConfig, config.header)) {
         return false;
     }
-    config.header = Convert2Header(env, header);
 
     napi_value method = GetNamedProperty(env, jsConfig, "method");
     if (method == nullptr) {
@@ -399,18 +409,6 @@ bool JSUtil::Convert2UploadConfig(napi_env env, napi_value jsConfig, Upload::Upl
     }
     config.data = Convert2RequestDataVector(env, data);
     return true;
-}
-
-napi_value JSUtil::Convert2JSUploadConfig(napi_env env, const Upload::UploadConfig &config)
-{
-    napi_value jsConfig = nullptr;
-    napi_create_object(env, &jsConfig);
-    napi_set_named_property(env, jsConfig, "url", Convert2JSString(env, config.url));
-    napi_set_named_property(env, jsConfig, "header", Convert2JSStringVector(env, config.header));
-    napi_set_named_property(env, jsConfig, "method", Convert2JSString(env, config.method));
-    napi_set_named_property(env, jsConfig, "files", Convert2JSFileVector(env, config.files));
-    napi_set_named_property(env, jsConfig, "data", Convert2JSRequestDataVector(env, config.data));
-    return jsConfig;
 }
 
 bool JSUtil::Convert2File(napi_env env, napi_value jsFile, Upload::File &file)
@@ -675,4 +673,4 @@ void JSUtil::GetMessage(const std::vector<Upload::TaskState> &taskStates, std::s
         msg += strMsg;
     }
 }
-} // namespace OHOS::Request::UploadNapi
+} // namespace OHOS::Plugin::Request::UploadNapi

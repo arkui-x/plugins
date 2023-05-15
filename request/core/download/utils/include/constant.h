@@ -148,6 +148,12 @@ static constexpr int TRANSACTION_COUNT = 100;
 constexpr int DOWNLOAD_INFO = 10000;
 
 constexpr int REQUEST_PARAMS_NUM = 2;
+constexpr size_t MIN_HEADER_LENGTH = sizeof(std::string) * 2;
+
+static constexpr const char *EVENT_PROGRESS = "progress";
+static constexpr const char *EVENT_COMPLETE = "complete";
+static constexpr const char *EVENT_FAIL = "fail";
+static constexpr size_t ASYNC_DEFAULT_POS = -1;
 } // namespace OHOS::Plugin::Request::Download
 
 #endif // PLUGINS_REQUEST_CONSTANT_H

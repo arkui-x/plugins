@@ -16,8 +16,8 @@
 #ifndef PLUGINS_REQUEST_DOWNLOAD_INFO_H
 #define PLUGINS_REQUEST_DOWNLOAD_INFO_H
 
-#include <string>
 #include <stdint.h>
+#include <string>
 #include <iosfwd>
 #include "constant.h"
 
@@ -82,29 +82,17 @@ public:
 
 private:
     std::string description_;
-	
     uint32_t downloadedBytes_;
-	
     uint32_t downloadId_;
-	
     ErrorCode failedReason_;
-
     std::string fileName_;
-	
     std::string filePath_;
-
     PausedReason pausedReason_;
-	
     DownloadStatus status_;
-
     std::string targetURI_;
-	
     std::string downloadTitle_;
-    
     std::string taskType_;
-
     uint32_t downloadTotalBytes_;
-
     bool enableMetered_ {false};
     bool enableRoaming_ {false};
     uint32_t networkType_ {0};

@@ -27,10 +27,21 @@ AsyncCall::AsyncCall(napi_env env, napi_callback_info info, std::shared_ptr<Cont
     napi_value argv[JSUtil::MAX_ARGC] = {nullptr};
     NAPI_CALL_RETURN_VOID(env, napi_get_cb_info(env, info, &argc, argv, &self, nullptr));
     napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, argv[argc - 1], &valueType);
+    size_t pos = argc;
+    if (argc > 0) {
+        pos = argc - 1;
+    } else {
+        pos = 0;
+    }
+    // napi_typeof(env, argv[argc - 1], &valueType);
+    napi_typeof(env, argv[pos], &valueType);
     if (valueType == napi_function) {
-        napi_create_reference(env, argv[argc - 1], 1, &context_->callback);
-        argc = argc - 1;
+        // napi_create_reference(env, argv[argc - 1], 1, &context_->callback);
+        napi_create_reference(env, argv[pos], 1, &context_->callback);
+        // argc = argc - 1;
+        if (argc > 0) {
+            argc = argc - 1;
+        }
     }
     napi_status status = (*context)(env, argc, argv, self);
     if (status == napi_ok) {
@@ -143,4 +154,4 @@ void AsyncCall::DeleteContext(napi_env env, AsyncContext *context)
     }
     delete context;
 }
-}
+} // namespace OHOS::Plugin::Request::UploadNapi
