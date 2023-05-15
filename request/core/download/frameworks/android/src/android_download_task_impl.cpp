@@ -175,5 +175,4 @@ void AndroidDownloadTaskImpl::SetNetworkType(NetworkType networkType)
     std::lock_guard<std::mutex> guard(queryMutex_);
     networkType_ = networkType;
 }
-
 } // namespace OHOS::Plugin::Request::Download

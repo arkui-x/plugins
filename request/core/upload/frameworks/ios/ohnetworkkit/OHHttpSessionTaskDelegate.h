@@ -22,7 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class OHHttpSessionController;
 
-typedef NSURL * (^OHURLSessionDownloadTaskDidFinishDownloadingBlock)(NSURLSession *session, NSURLSessionDownloadTask *downloadTask, NSURL *location);
+typedef NSURL * (^OHURLSessionDownloadTaskDidFinishDownloadingBlock)(NSURLSession *session,
+    NSURLSessionDownloadTask *downloadTask, NSURL *location);
 typedef void (^OHURLSessionTaskProgressBlock)(NSProgress *);
 typedef void (^OHURLSessionTaskCompletionHandler)(NSURLResponse *response, id responseObject, NSError *error);
 FOUNDATION_EXPORT const void * const AuthenticationChallengeErrorKey;

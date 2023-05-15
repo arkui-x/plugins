@@ -90,6 +90,5 @@ private:
     static constexpr int COLLECT_DO_FLAG = 1;
     static constexpr int COLLECT_END_FLAG = 2;
 };
-
 } // namespace OHOS::Plugin::Request::Upload
 #endif // PLUGINS_REQUEST_CURLADP_H

@@ -20,7 +20,6 @@
 #include "napi_utils.h"
 
 namespace OHOS::Plugin::Request::Download {
-
 napi_value DownloadResume::Restore(napi_env env, napi_callback_info info)
 {
     DOWNLOAD_HILOGD("Enter ---->");

@@ -16,9 +16,7 @@
 #include "log.h"
 #include "ios_download_task_impl.h"
 
-
 namespace OHOS::Plugin::Request::Download {
-
 IDownloadTask* IDownloadTask::CreateDownloadTask(uint32_t taskId, const DownloadConfig &config)
 {
     return new (std::nothrow) IosDownloadTaskImpl(taskId, config);
@@ -48,7 +46,7 @@ IosDownloadTaskImpl::~IosDownloadTaskImpl()
     }
     downloadAdp_->Remove();
     while (!downloadAdp_->IsCompleted()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 100: 100ms
     }
     downloadAdp_ = nullptr;
 }
@@ -241,5 +239,4 @@ void IosDownloadTaskImpl::NotReachable()
         SetStatus(SESSION_PAUSED, ERROR_OFFLINE, PAUSED_WAITING_TO_RETRY);
     }
 }
-
 } // namespace OHOS::Plugin::Request::Download

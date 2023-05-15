@@ -30,7 +30,6 @@ public:
 
     ~DownloadResume() = default;
 
-    // static napi_value Resume(napi_env env, napi_callback_info info);
     static napi_value Restore(napi_env env, napi_callback_info info);
 
 private:

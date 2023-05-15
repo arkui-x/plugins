@@ -71,10 +71,8 @@ private:
     std::mutex queryMutex_;
     NetworkType networkType_ = NETWORK_INVALID;
     bool isSuspendByNetwork_ = false;
-    std::unique_ptr<std::thread> thread_{};
+    std::unique_ptr<std::thread> thread_ {};
     bool isRemoved_ = false;
 };
-
 } // namespace OHOS::Plugin::Request::Download
-
 #endif // PLUGINS_REQUEST_DOWNLOAD_IOS_DOWNLOAD_TASK_IMPL_H

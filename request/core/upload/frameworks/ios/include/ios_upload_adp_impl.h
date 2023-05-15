@@ -16,13 +16,11 @@
 #ifndef PLUGINS_REQUEST_UPLOAD_IOS_UPLOAD_ADP_IMPL_H
 #define PLUGINS_REQUEST_UPLOAD_IOS_UPLOAD_ADP_IMPL_H
 
+#include <mutex>
 #include "ios_upload_adp.h"
 #import "OHNetworkKit.h"
-#include <mutex>
-
 
 namespace OHOS::Plugin::Request::Upload {
-
 class IosUploadAdpImpl final : public IosUploadAdp {
 public:
     IosUploadAdpImpl();
@@ -52,7 +50,6 @@ private:
     int putFileCount_ = 0;
     std::mutex mutex_;
 };
-
 } // namespace OHOS::Plugin::Request::Upload
 
 #endif // PLUGINS_REQUEST_UPLOAD_IOS_UPLOAD_ADP_IMPL_H

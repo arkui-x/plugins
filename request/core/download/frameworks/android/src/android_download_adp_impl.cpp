@@ -110,5 +110,3 @@ void AndroidDownloadAdpImpl::GetNetworkType(void *network)
     PluginUtils::RunSyncTaskOnLocal([network]() { DownloadManagerJni::GetNetworkType(network); }, span);
 }
 } // namespace OHOS::Plugin::Request::Download
-
-

@@ -20,7 +20,6 @@
 
 
 namespace OHOS::Plugin::Request::Download {
-
 napi_value DownloadPause::Suspend(napi_env env, napi_callback_info info)
 {
     DOWNLOAD_HILOGD("Enter ---->");

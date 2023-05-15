@@ -22,8 +22,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-FOUNDATION_EXPORT NSString * OHPercentEscapedStringFromString(NSString *string);
-FOUNDATION_EXPORT NSString * OHQueryStringFromParameters(NSDictionary *parameters);
+FOUNDATION_EXPORT NSString* OHPercentEscapedStringFromString(NSString *string);
+FOUNDATION_EXPORT NSString* OHQueryStringFromParameters(NSDictionary *parameters);
 
 typedef NS_ENUM(NSUInteger, OHHTTPRequestQueryStringSerializationStyle) {
     OHHTTPRequestQueryStringDefaultStyle = 0,
@@ -56,7 +56,8 @@ typedef NS_ENUM(NSUInteger, OHHTTPRequestQueryStringSerializationStyle) {
 
 - (void)setQueryStringSerializationWithStyle:(OHHTTPRequestQueryStringSerializationStyle)style;
 
-- (void)setQueryStringSerializationWithBlock:(nullable NSString * _Nullable (^)(NSURLRequest *request, id parameters, NSError * __autoreleasing *error))block;
+- (void)setQueryStringSerializationWithBlock:(nullable NSString * _Nullable (^)(NSURLRequest *request,
+    id parameters, NSError * __autoreleasing *error))block;
 
 - (nullable NSMutableURLRequest *)requestWithMethod:(NSString *)method
                                           URLString:(NSString *)URLString

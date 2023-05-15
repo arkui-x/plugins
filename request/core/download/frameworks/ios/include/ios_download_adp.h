@@ -20,9 +20,7 @@
 #include "download_config.h"
 #include "constant.h"
 
-
 namespace OHOS::Plugin::Request::Download {
-
 class IosDownloadAdpCallback;
 class IosDownloadAdp {
 public:
@@ -46,7 +44,5 @@ public:
     virtual void OnFail(ErrorCode errorCode) = 0;
     virtual void SetMimeType(const std::string &mimeType) = 0;
 };
-
 } // namespace OHOS::Plugin::Request::Download
-
 #endif // PLUGINS_REQUEST_DOWNLOAD_IOS_DOWNLOAD_ADP_H

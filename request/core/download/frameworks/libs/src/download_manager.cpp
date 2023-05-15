@@ -143,5 +143,4 @@ void DownloadManager::ReleaseTask(uint32_t taskId)
         taskMap_.erase(it);
     }
 }
-
 } // namespace OHOS::Plugin::Request::Download

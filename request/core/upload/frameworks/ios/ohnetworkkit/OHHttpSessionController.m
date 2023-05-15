@@ -40,7 +40,8 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 @property (readwrite, nonatomic, strong) NSMutableDictionary *mutableTaskDelegatesKeyedByTaskIdentifier;
 @property (readonly, nonatomic, copy) NSString *taskDescriptionForSessionTasks;
 @property (readwrite, nonatomic, strong) NSLock *lock;
-@property (readwrite, nonatomic, copy) OHURLSessionDidFinishEventsForBackgroundURLSessionBlock didFinishEventsForBackgroundURLSession;
+@property (readwrite, nonatomic, copy) OHURLSessionDidFinishEventsForBackgroundURLSessionBlock
+    didFinishEventsForBackgroundURLSession;
 
 @end
 
@@ -93,7 +94,8 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
             case OHSSLPinningModeCertificate: pinningMode = @"OHSSLPinningModeCertificate"; break;
             case OHSSLPinningModePublicKey:   pinningMode = @"OHSSLPinningModePublicKey"; break;
         }
-        NSString *reason = [NSString stringWithFormat:@"A pinning mode configured with `%@` can only be applied on a ctrl with a secure base URL (i.e. https)", pinningMode];
+        NSString *reason = [NSString stringWithFormat:@"A pinning mode configured with `%@`
+            can only be applied on a ctrl with a secure base URL (i.e. https)", pinningMode];
         @throw [NSException exceptionWithName:@"Invalid pinning mode" reason:reason userInfo:nil];
     }
     _sslHandler = sslHandler;
@@ -106,7 +108,8 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 - (NSURLSession *)session {
     @synchronized (self) {
         if (!_session) {
-            _session = [NSURLSession sessionWithConfiguration:self.sessionConfiguration delegate:self delegateQueue:self.operationQueue];
+            _session = [NSURLSession sessionWithConfiguration:self.sessionConfiguration delegate:self
+                delegateQueue:self.operationQueue];
         }
     }
     return _session;
@@ -134,8 +137,8 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 }
 
 - (void)addDelegateForUploadTask:(NSURLSessionUploadTask *)uploadTask
-                        progress:(void (^)(NSProgress *uploadProgress)) uploadProgressBlock
-               completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler {
+    progress:(void (^)(NSProgress *uploadProgress)) uploadProgressBlock
+    completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler {
     OHHttpSessionTaskDelegate *delegate = [[OHHttpSessionTaskDelegate alloc] initWithTask:uploadTask];
     delegate.sessionCtrl_ = self;
     delegate.completionHandler = completionHandler;
@@ -145,14 +148,15 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 }
 
 - (void)addDelegateForDownloadTask:(NSURLSessionDownloadTask *)downloadTask
-                          progress:(void (^)(NSProgress *downloadProgress)) downloadProgressBlock
-                       destination:(NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
-                 completionHandler:(void (^)(NSURLResponse *response, NSURL *filePath, NSError *error))completionHandler {
+    progress:(void (^)(NSProgress *downloadProgress)) downloadProgressBlock
+    destination:(NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
+    completionHandler:(void (^)(NSURLResponse *response, NSURL *filePath, NSError *error))completionHandler {
     OHHttpSessionTaskDelegate *delegate = [[OHHttpSessionTaskDelegate alloc] initWithTask:downloadTask];
     delegate.sessionCtrl_ = self;
     delegate.completionHandler = completionHandler;
     if (destination) {
-        delegate.downloadTaskDidFinishDownloading = ^NSURL * (NSURLSession * __unused session, NSURLSessionDownloadTask *task, NSURL *location) {
+        delegate.downloadTaskDidFinishDownloading = ^NSURL * (NSURLSession * __unused session,
+            NSURLSessionDownloadTask *task, NSURL *location) {
             return destination(location, task.response);
         };
     }
@@ -182,9 +186,9 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 
 #pragma mark - Methods
 - (NSURLSessionUploadTask *)uploadTaskWithRequest:(NSURLRequest *)request
-                                         fromFile:(NSURL *)fileURL
-                                         progress:(void (^)(NSProgress *uploadProgress)) uploadProgressBlock
-                                completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler {
+    fromFile:(NSURL *)fileURL
+    progress:(void (^)(NSProgress *uploadProgress)) uploadProgressBlock
+    completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler {
     NSURLSessionUploadTask *uploadTask = [self.session uploadTaskWithRequest:request fromFile:fileURL];
     if (uploadTask) {
         [self addDelegateForUploadTask:uploadTask
@@ -195,28 +199,30 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 }
 
 - (NSURLSessionUploadTask *)uploadTaskWithStreamedRequest:(NSURLRequest *)request
-                                                 progress:(void (^)(NSProgress *uploadProgress)) uploadProgressBlock
-                                        completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler {
+    progress:(void (^)(NSProgress *uploadProgress)) uploadProgressBlock
+    completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler {
     NSURLSessionUploadTask *uploadTask = [self.session uploadTaskWithStreamedRequest:request];
     [self addDelegateForUploadTask:uploadTask progress:uploadProgressBlock completionHandler:completionHandler];
     return uploadTask;
 }
 
 - (NSURLSessionDownloadTask *)downloadTaskWithRequest:(NSURLRequest *)request
-                                             progress:(void (^)(NSProgress *downloadProgress)) downloadProgressBlock
-                                          destination:(NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
-                                    completionHandler:(void (^)(NSURLResponse *response, NSURL *filePath, NSError *error))completionHandler {
+    progress:(void (^)(NSProgress *downloadProgress)) downloadProgressBlock
+    destination:(NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
+    completionHandler:(void (^)(NSURLResponse *response, NSURL *filePath, NSError *error))completionHandler {
     NSURLSessionDownloadTask *downloadTask = [self.session downloadTaskWithRequest:request];
-    [self addDelegateForDownloadTask:downloadTask progress:downloadProgressBlock destination:destination completionHandler:completionHandler];
+    [self addDelegateForDownloadTask:downloadTask progress:downloadProgressBlock destination:destination
+        completionHandler:completionHandler];
     return downloadTask;
 }
 
 - (NSURLSessionDownloadTask *)downloadTaskWithResumeData:(NSData *)resumeData
-                                                progress:(void (^)(NSProgress *downloadProgress)) downloadProgressBlock
-                                             destination:(NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
-                                       completionHandler:(void (^)(NSURLResponse *response, NSURL *filePath, NSError *error))completionHandler {
+    progress:(void (^)(NSProgress *downloadProgress)) downloadProgressBlock
+    destination:(NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
+    completionHandler:(void (^)(NSURLResponse *response, NSURL *filePath, NSError *error))completionHandler {
     NSURLSessionDownloadTask *downloadTask = [self.session downloadTaskWithResumeData:resumeData];
-    [self addDelegateForDownloadTask:downloadTask progress:downloadProgressBlock destination:destination completionHandler:completionHandler];
+    [self addDelegateForDownloadTask:downloadTask progress:downloadProgressBlock destination:destination
+        completionHandler:completionHandler];
     return downloadTask;
 }
 
@@ -238,20 +244,24 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
-didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
- completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler {
+    didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
+    completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition,
+    NSURLCredential *credential))completionHandler {
     BOOL evaluateServerTrust = NO;
     NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;
     NSURLCredential *credential = nil;
-    evaluateServerTrust = [challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust];
+    evaluateServerTrust = [challenge.protectionSpace.authenticationMethod
+        isEqualToString:NSURLAuthenticationMethodServerTrust];
     if (evaluateServerTrust) {
-        if ([self.sslHandler evaluateServerTrust:challenge.protectionSpace.serverTrust forDomain:challenge.protectionSpace.host]) {
+        if ([self.sslHandler evaluateServerTrust:challenge.protectionSpace.serverTrust
+            forDomain:challenge.protectionSpace.host]) {
             disposition = NSURLSessionAuthChallengeUseCredential;
             credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
         } else {
             objc_setAssociatedObject(task, AuthenticationChallengeErrorKey,
-                                     [self serverTrustErrorForServerTrust:challenge.protectionSpace.serverTrust url:task.currentRequest.URL],
-                                     OBJC_ASSOCIATION_RETAIN);
+                [self serverTrustErrorForServerTrust:challenge.protectionSpace.serverTrust
+                url:task.currentRequest.URL],
+                OBJC_ASSOCIATION_RETAIN);
             disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;
         }
     }
@@ -262,9 +272,12 @@ didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
 
 - (nonnull NSError *)serverTrustErrorForServerTrust:(nullable SecTrustRef)serverTrust url:(nullable NSURL *)url {
     NSBundle *CFNetworkBundle = [NSBundle bundleWithIdentifier:@"com.apple.CFNetwork"];
-    NSString *defaultValue = @"The certificate for this server is invalid. You might be connecting to a server that is pretending to be “%@” which could put your confidential information at risk.";
-    NSString *descriptionFormat = NSLocalizedStringWithDefaultValue(@"Err-1202.w", nil, CFNetworkBundle, defaultValue, @"") ?: defaultValue;
-    NSString *localizedDescription = [descriptionFormat componentsSeparatedByString:@"%@"].count <= 2 ? [NSString localizedStringWithFormat:descriptionFormat, url.host] : descriptionFormat;
+    NSString *defaultValue = @"The certificate for this server is invalid. You might be connecting to a server
+        that is pretending to be “%@” which could put your confidential information at risk.";
+    NSString *descriptionFormat = NSLocalizedStringWithDefaultValue(@"Err-1202.w", nil,
+        CFNetworkBundle, defaultValue, @"") ?: defaultValue;
+    NSString *localizedDescription = [descriptionFormat componentsSeparatedByString:@"%@"].count <= 2 ?
+        [NSString localizedStringWithFormat:descriptionFormat, url.host] : descriptionFormat;
     NSMutableDictionary *userInfo = [@{
         NSLocalizedDescriptionKey: localizedDescription
     } mutableCopy];
@@ -284,7 +297,8 @@ didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
               task:(NSURLSessionTask *)task
  needNewBodyStream:(void (^)(NSInputStream *bodyStream))completionHandler {
     NSInputStream *inputStream = nil;
-    if (task.originalRequest.HTTPBodyStream && [task.originalRequest.HTTPBodyStream conformsToProtocol:@protocol(NSCopying)]) {
+    if (task.originalRequest.HTTPBodyStream && [task.originalRequest.HTTPBodyStream
+        conformsToProtocol:@protocol(NSCopying)]) {
         inputStream = [task.originalRequest.HTTPBodyStream copy];
     }
     if (completionHandler) {
@@ -306,7 +320,8 @@ totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend {
     }
     OHHttpSessionTaskDelegate *delegate = [self delegateForTask:task];
     if (delegate) {
-        [delegate URLSession:session task:task didSendBodyData:bytesSent totalBytesSent:totalBytesSent totalBytesExpectedToSend:totalBytesExpectedToSend];
+        [delegate URLSession:session task:task didSendBodyData:bytesSent
+            totalBytesSent:totalBytesSent totalBytesExpectedToSend:totalBytesExpectedToSend];
     }
 }
 
@@ -345,7 +360,8 @@ didFinishDownloadingToURL:(NSURL *)location {
 totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
     OHHttpSessionTaskDelegate *delegate = [self delegateForTask:downloadTask];
     if (delegate) {
-        [delegate URLSession:session downloadTask:downloadTask didWriteData:bytesWritten totalBytesWritten:totalBytesWritten totalBytesExpectedToWrite:totalBytesExpectedToWrite];
+        [delegate URLSession:session downloadTask:downloadTask didWriteData:bytesWritten
+            totalBytesWritten:totalBytesWritten totalBytesExpectedToWrite:totalBytesExpectedToWrite];
     }
 }
 
@@ -355,7 +371,8 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
 expectedTotalBytes:(int64_t)expectedTotalBytes {
     OHHttpSessionTaskDelegate *delegate = [self delegateForTask:downloadTask];
     if (delegate) {
-        [delegate URLSession:session downloadTask:downloadTask didResumeAtOffset:fileOffset expectedTotalBytes:expectedTotalBytes];
+        [delegate URLSession:session downloadTask:downloadTask
+        didResumeAtOffset:fileOffset expectedTotalBytes:expectedTotalBytes];
     }
 }
 

@@ -30,7 +30,6 @@
 #include "upload_hilog_wrapper.h"
 
 namespace OHOS::Plugin::Request::Upload {
-
 class UploadTask : public IUploadTask, public CurlAdpCallback {
 public:
     UPLOAD_API UploadTask(std::shared_ptr<UploadConfig> &uploadConfig);

@@ -19,9 +19,7 @@
 #include "i_upload_task.h"
 #include "ios_upload_adp.h"
 
-
 namespace OHOS::Plugin::Request::Upload {
-
 class IosUploadTaskImpl final : public IUploadTask, public IosUploadAdpCallback {
 public:
     explicit IosUploadTaskImpl(std::shared_ptr<UploadConfig> &uploadConfig);
@@ -43,7 +41,5 @@ private:
     std::shared_ptr<IosUploadAdp> uploadAdp_ = nullptr;
     bool isRemoved_ = false;
 };
-
 } // namespace OHOS::Plugin::Request::Upload
-
 #endif // PLUGINS_REQUEST_UPLOAD_IOS_UPLOAD_TASK_IMPL

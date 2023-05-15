@@ -34,7 +34,6 @@ static constexpr const char *EVENT_PROGRESS = "progress";
 static constexpr const char *EVENT_FAIL = "fail";
 
 namespace OHOS::Plugin::Request::Download {
-
 using DownloadTaskCallback = void(*)(const std::string& type, uint32_t taskId, uint32_t argv1, uint32_t argv2);
 
 enum ParamNumber {
@@ -89,7 +88,5 @@ protected:
     bool isOnline_ = true;
     std::map<std::string, std::tuple<uint32_t, uint32_t>> eventBufMap_;
 };
-
 } // namespace OHOS::Plugin::Request::Download
-
 #endif // PLUGINS_REQUEST_DOWNLOAD_TASK_H

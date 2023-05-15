@@ -35,7 +35,6 @@ class UploadTaskNapi : public ICallbackAbleJudger, IUploadTaskRelease {
 public:
     UploadTaskNapi() = default;
     ~UploadTaskNapi();
-    // static napi_value JsUpload(napi_env env, napi_callback_info info);
     static napi_value JsUploadFile(napi_env env, napi_callback_info info);
 
     static napi_value JsOn(napi_env env, napi_callback_info info);

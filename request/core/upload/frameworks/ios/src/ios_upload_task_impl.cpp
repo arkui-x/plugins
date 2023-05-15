@@ -18,7 +18,6 @@
 
 
 namespace OHOS::Plugin::Request::Upload {
-
 std::shared_ptr<IUploadTask> IUploadTask::CreateUploadTask(std::shared_ptr<UploadConfig> &uploadConfig)
 {
     return std::make_shared<IosUploadTaskImpl>(uploadConfig);
@@ -118,5 +117,4 @@ void IosUploadTaskImpl::SetRespHeader(const std::string &header)
         headerArray_.push_back(header);
     }
 }
-
 } // namespace OHOS::Plugin::Request::Upload

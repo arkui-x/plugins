@@ -12,10 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "js_util.h"
 #include <regex>
 #include <string>
-#include "js_util.h"
 #include "napi_utils.h"
 
 using namespace  OHOS::Plugin::Request::Upload;

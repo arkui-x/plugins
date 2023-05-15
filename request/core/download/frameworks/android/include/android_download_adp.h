@@ -21,7 +21,6 @@
 #include "constant.h"
 
 namespace OHOS::Plugin::Request::Download {
-
 class AndroidDownloadAdp {
 public:
     AndroidDownloadAdp() = default;

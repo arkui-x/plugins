@@ -24,7 +24,8 @@ NSString * OHPercentEscapedStringFromString(NSString *string) {
     static NSString * const kOHCharactersGeneralDelimitersToEncode = @":#[]@";
     static NSString * const kOHCharactersSubDelimitersToEncode = @"!$&'()*+,;=";
     NSMutableCharacterSet * allowedCharacterSet = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
-    [allowedCharacterSet removeCharactersInString:[kOHCharactersGeneralDelimitersToEncode stringByAppendingString:kOHCharactersSubDelimitersToEncode]];
+    [allowedCharacterSet removeCharactersInString:
+        [kOHCharactersGeneralDelimitersToEncode stringByAppendingString:kOHCharactersSubDelimitersToEncode]];
 
     static NSUInteger const batchSize = 50;
     NSUInteger index = 0;
@@ -60,8 +61,10 @@ static inline NSString * OHMultipartFormFinalBoundary(NSString *boundary) {
 }
 
 static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
-    NSString *UTI = (__bridge_transfer NSString *)UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)extension, NULL);
-    NSString *contentType = (__bridge_transfer NSString *)UTTypeCopyPreferredTagWithClass((__bridge CFStringRef)UTI, kUTTagClassMIMEType);
+    NSString *UTI = (__bridge_transfer NSString *)UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,
+        (__bridge CFStringRef)extension, NULL);
+    NSString *contentType = (__bridge_transfer NSString *)UTTypeCopyPreferredTagWithClass((__bridge CFStringRef)UTI,
+        kUTTagClassMIMEType);
     if (!contentType) {
         return @"application/octet-stream";
     } else {
@@ -87,7 +90,8 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     if (!self.value || [self.value isEqual:[NSNull null]]) {
         return OHPercentEscapedStringFromString([self.field description]);
     } else {
-        return [NSString stringWithFormat:@"%@=%@", OHPercentEscapedStringFromString([self.field description]), OHPercentEscapedStringFromString([self.value description])];
+        return [NSString stringWithFormat:@"%@=%@", OHPercentEscapedStringFromString([self.field description]),
+            OHPercentEscapedStringFromString([self.value description])];
     }
 }
 
@@ -172,26 +176,32 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     NSParameterAssert(mimeType);
 
     if (![fileURL isFileURL]) {
-        NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey: NSLocalizedStringFromTable(@"Expected URL to be a file URL", @"OHNetworkKit", nil)};
+        NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey:
+            NSLocalizedStringFromTable(@"Expected URL to be a file URL", @"OHNetworkKit", nil)};
         if (error) {
-            *error = [[NSError alloc] initWithDomain:OHURLRequestSerializationErrorDomain code:NSURLErrorBadURL userInfo:userInfo];
+            *error = [[NSError alloc] initWithDomain:OHURLRequestSerializationErrorDomain
+                code:NSURLErrorBadURL userInfo:userInfo];
         }
         return NO;
     } else if ([fileURL checkResourceIsReachableAndReturnError:error] == NO) {
-        NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey: NSLocalizedStringFromTable(@"File URL not reachable.", @"OHNetworkKit", nil)};
+        NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey:
+            NSLocalizedStringFromTable(@"File URL not reachable.", @"OHNetworkKit", nil)};
         if (error) {
-            *error = [[NSError alloc] initWithDomain:OHURLRequestSerializationErrorDomain code:NSURLErrorBadURL userInfo:userInfo];
+            *error = [[NSError alloc] initWithDomain:OHURLRequestSerializationErrorDomain
+                code:NSURLErrorBadURL userInfo:userInfo];
         }
         return NO;
     }
 
-    NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:[fileURL path] error:error];
+    NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:
+        [fileURL path] error:error];
     if (!fileAttributes) {
         return NO;
     }
 
     NSMutableDictionary *mutableHeaders = [NSMutableDictionary dictionary];
-    [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"; filename=\"%@\"", name, fileName] forKey:@"Content-Disposition"];
+    [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"; filename=\"%@\"", name, fileName]
+        forKey:@"Content-Disposition"];
     [mutableHeaders setValue:mimeType forKey:@"Content-Type"];
     OHHttpBodyPart *bodyPart = [[OHHttpBodyPart alloc] init];
     bodyPart.stringEncoding = self.stringEncoding;
@@ -207,7 +217,8 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
                           name:(NSString *)name {
     NSParameterAssert(name);
     NSMutableDictionary *mutableHeaders = [NSMutableDictionary dictionary];
-    [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"", name] forKey:@"Content-Disposition"];
+    [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"", name]
+        forKey:@"Content-Disposition"];
     [self appendPartWithHeaders:mutableHeaders body:data];
 }
 
@@ -231,8 +242,10 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     // Reset the initial and final boundaries to ensure correct Content-Length
     [self.bodyStream setInitialAndFinalBoundaries];
     [self.request setHTTPBodyStream:self.bodyStream];
-    [self.request setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@", self.boundary] forHTTPHeaderField:@"Content-Type"];
-    [self.request setValue:[NSString stringWithFormat:@"%llu", [self.bodyStream contentLength]] forHTTPHeaderField:@"Content-Length"];
+    [self.request setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@", self.boundary]
+        forHTTPHeaderField:@"Content-Type"];
+    [self.request setValue:[NSString stringWithFormat:@"%llu", [self.bodyStream contentLength]]
+        forHTTPHeaderField:@"Content-Length"];
     return self.request;
 }
 
@@ -314,7 +327,8 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
             }
         } else {
             NSUInteger maxLength = MIN(length, self.numberOfBytesInPacket) - (NSUInteger)totalNumberOfBytesRead;
-            NSInteger numberOfBytesRead = [self.currentHTTPBodyPart read:&buffer[totalNumberOfBytesRead] maxLength:maxLength];
+            NSInteger numberOfBytesRead = [self.currentHTTPBodyPart read:&buffer[totalNumberOfBytesRead]
+                maxLength:maxLength];
             if (numberOfBytesRead == -1) {
                 self.streamError = self.currentHTTPBodyPart.inputStream.streamError;
                 break;
@@ -394,7 +408,8 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
 
 #pragma mark - NSCopying
 - (instancetype)copyWithZone:(NSZone *)zone {
-    OHMulpartBodyStream *bodyStreamCopy = [[[self class] allocWithZone:zone] initWithStringEncoding:self.stringEncoding];
+    OHMulpartBodyStream *bodyStreamCopy = [[[self class] allocWithZone:zone]
+        initWithStringEncoding:self.stringEncoding];
     for (OHHttpBodyPart *bodyPart in self.HTTPBodyParts) {
         [bodyStreamCopy appendHTTPBodyPart:[bodyPart copy]];
     }
@@ -462,7 +477,8 @@ typedef enum {
 - (NSString *)stringForHeaders {
     NSMutableString *headerString = [NSMutableString string];
     for (NSString *field in [self.headers allKeys]) {
-        [headerString appendString:[NSString stringWithFormat:@"%@: %@%@", field, [self.headers valueForKey:field], kOHMultipartFormCRLF]];
+        [headerString appendString:[NSString stringWithFormat:@"%@: %@%@", field,
+            [self.headers valueForKey:field], kOHMultipartFormCRLF]];
     }
     [headerString appendString:kOHMultipartFormCRLF];
     return [NSString stringWithString:headerString];
@@ -470,14 +486,16 @@ typedef enum {
 
 - (unsigned long long)contentLength {
     unsigned long long length = 0;
-    NSData *encapsulationBoundaryData = [([self hasInitialBoundary] ? OHMultipartFormInitialBoundary(self.boundary) : OHMultipartFormEncapsulationBoundary(self.boundary)) dataUsingEncoding:self.stringEncoding];
+    NSData *encapsulationBoundaryData = [([self hasInitialBoundary] ? OHMultipartFormInitialBoundary(self.boundary) :
+        OHMultipartFormEncapsulationBoundary(self.boundary)) dataUsingEncoding:self.stringEncoding];
     length += [encapsulationBoundaryData length];
 
     NSData *headersData = [[self stringForHeaders] dataUsingEncoding:self.stringEncoding];
     length += [headersData length];
     length += _bodyContentLength;
 
-    NSData *closingBoundaryData = ([self hasFinalBoundary] ? [OHMultipartFormFinalBoundary(self.boundary) dataUsingEncoding:self.stringEncoding] : [NSData data]);
+    NSData *closingBoundaryData = ([self hasFinalBoundary] ?
+        [OHMultipartFormFinalBoundary(self.boundary) dataUsingEncoding:self.stringEncoding] : [NSData data]);
     length += [closingBoundaryData length];
     return length;
 }
@@ -507,18 +525,23 @@ typedef enum {
         maxLength:(NSUInteger)length {
     NSInteger totalNumberOfBytesRead = 0;
     if (_phase == OHEncapsulationBoundaryPhase) {
-        NSData *encapsulationBoundaryData = [([self hasInitialBoundary] ? OHMultipartFormInitialBoundary(self.boundary) : OHMultipartFormEncapsulationBoundary(self.boundary)) dataUsingEncoding:self.stringEncoding];
-        totalNumberOfBytesRead += [self readData:encapsulationBoundaryData intoBuffer:&buffer[totalNumberOfBytesRead] maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
+        NSData *encapsulationBoundaryData = [([self hasInitialBoundary] ?
+            OHMultipartFormInitialBoundary(self.boundary) :
+            OHMultipartFormEncapsulationBoundary(self.boundary)) dataUsingEncoding:self.stringEncoding];
+        totalNumberOfBytesRead += [self readData:encapsulationBoundaryData
+            intoBuffer:&buffer[totalNumberOfBytesRead] maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
     }
 
     if (_phase == OHHeaderPhase) {
         NSData *headersData = [[self stringForHeaders] dataUsingEncoding:self.stringEncoding];
-        totalNumberOfBytesRead += [self readData:headersData intoBuffer:&buffer[totalNumberOfBytesRead] maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
+        totalNumberOfBytesRead += [self readData:headersData
+            intoBuffer:&buffer[totalNumberOfBytesRead] maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
     }
 
     if (_phase == OHBodyPhase) {
         NSInteger numberOfBytesRead = 0;
-        numberOfBytesRead = [self.inputStream read:&buffer[totalNumberOfBytesRead] maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
+        numberOfBytesRead = [self.inputStream read:&buffer[totalNumberOfBytesRead]
+            maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
         if (numberOfBytesRead == -1) {
             return -1;
         } else {
@@ -531,8 +554,10 @@ typedef enum {
     }
 
     if (_phase == OHFinalBoundaryPhase) {
-        NSData *closingBoundaryData = ([self hasFinalBoundary] ? [OHMultipartFormFinalBoundary(self.boundary) dataUsingEncoding:self.stringEncoding] : [NSData data]);
-        totalNumberOfBytesRead += [self readData:closingBoundaryData intoBuffer:&buffer[totalNumberOfBytesRead] maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
+        NSData *closingBoundaryData = ([self hasFinalBoundary] ?
+            [OHMultipartFormFinalBoundary(self.boundary) dataUsingEncoding:self.stringEncoding] : [NSData data]);
+        totalNumberOfBytesRead += [self readData:closingBoundaryData intoBuffer:&buffer[totalNumberOfBytesRead]
+            maxLength:(length - (NSUInteger)totalNumberOfBytesRead)];
     }
 
     return totalNumberOfBytesRead;
@@ -541,7 +566,8 @@ typedef enum {
 - (NSInteger)readData:(NSData *)data
            intoBuffer:(uint8_t *)buffer
             maxLength:(NSUInteger)length {
-    NSRange range = NSMakeRange((NSUInteger)_phaseReadOffset, MIN([data length] - ((NSUInteger)_phaseReadOffset), length));
+    NSRange range = NSMakeRange((NSUInteger)_phaseReadOffset,
+        MIN([data length] - ((NSUInteger)_phaseReadOffset), length));
     [data getBytes:buffer range:range];
 
     _phaseReadOffset += range.length;

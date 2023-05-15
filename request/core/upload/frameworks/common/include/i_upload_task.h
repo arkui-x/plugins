@@ -62,8 +62,6 @@ public:
     virtual bool Remove() = 0;
     virtual void ExecuteTask() = 0;
     static std::string GetCodeMessage(uint32_t code);
-
-protected:
     void SetCallback(Type type, void *callback);
     void UploadTaskRelease();
 

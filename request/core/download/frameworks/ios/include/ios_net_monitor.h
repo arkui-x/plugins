@@ -20,9 +20,7 @@
 #include <vector>
 #include "constant.h"
 
-
 namespace OHOS::Plugin::Request::Download {
-
 class IosNetMonitorObserver {
 public:
     IosNetMonitorObserver() = default;
@@ -48,6 +46,5 @@ private:
     NetworkType networkType_ = NETWORK_INVALID;
     std::mutex mutex_;
 };
-
 } // namespace OHOS::Plugin::Request::Download
 #endif // PLUGINS_REQUEST_DOWNLOAD_IOS_NET_MONITOR_H

@@ -31,7 +31,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface OHHttpSessionController : NSObject <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDownloadDelegate>
+@interface OHHttpSessionController : NSObject <NSURLSessionDelegate,
+    NSURLSessionTaskDelegate, NSURLSessionDownloadDelegate>
 
 @property (readonly, nonatomic, strong) NSURLSession *session;
 @property (readonly, nonatomic, strong) NSOperationQueue *operationQueue;
@@ -43,23 +44,27 @@ NS_ASSUME_NONNULL_BEGIN
            sessionConfiguration:(nullable NSURLSessionConfiguration *)configuration NS_DESIGNATED_INITIALIZER;
 
 - (NSURLSessionUploadTask *)uploadTaskWithRequest:(NSURLRequest *)request
-                                         fromFile:(NSURL *)fileURL
-                                         progress:(nullable void (^)(NSProgress *uploadProgress))uploadProgressBlock
-                                completionHandler:(nullable void (^)(NSURLResponse *response, id _Nullable responseObject, NSError  * _Nullable error))completionHandler;
+    fromFile:(NSURL *)fileURL
+    progress:(nullable void (^)(NSProgress *uploadProgress))uploadProgressBlock
+    completionHandler:(nullable void (^)(NSURLResponse *response, id _Nullable responseObject,
+    NSError  * _Nullable error))completionHandler;
 
 - (NSURLSessionUploadTask *)uploadTaskWithStreamedRequest:(NSURLRequest *)request
-                                                 progress:(nullable void (^)(NSProgress *uploadProgress))uploadProgressBlock
-                                        completionHandler:(nullable void (^)(NSURLResponse *response, id _Nullable responseObject, NSError * _Nullable error))completionHandler;
+    progress:(nullable void (^)(NSProgress *uploadProgress))uploadProgressBlock
+    completionHandler:(nullable void (^)(NSURLResponse *response, id _Nullable responseObject,
+    NSError * _Nullable error))completionHandler;
 
 - (NSURLSessionDownloadTask *)downloadTaskWithRequest:(NSURLRequest *)request
-                                             progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgressBlock
-                                          destination:(nullable NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
-                                    completionHandler:(nullable void (^)(NSURLResponse *response, NSURL * _Nullable filePath, NSError * _Nullable error))completionHandler;
+    progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgressBlock
+    destination:(nullable NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
+    completionHandler:(nullable void (^)(NSURLResponse *response, NSURL * _Nullable filePath,
+    NSError * _Nullable error))completionHandler;
 
 - (NSURLSessionDownloadTask *)downloadTaskWithResumeData:(NSData *)resumeData
-                                                progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgressBlock
-                                             destination:(nullable NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
-                                       completionHandler:(nullable void (^)(NSURLResponse *response, NSURL * _Nullable filePath, NSError * _Nullable error))completionHandler;
+    progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgressBlock
+    destination:(nullable NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
+    completionHandler:(nullable void (^)(NSURLResponse *response, NSURL * _Nullable filePath,
+    NSError * _Nullable error))completionHandler;
 
 - (void)setDidFinishEventsForBackgroundURLSessionBlock:(nullable void (^)(NSURLSession *session))block;
 

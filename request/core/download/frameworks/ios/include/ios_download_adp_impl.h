@@ -16,13 +16,11 @@
 #ifndef PLUGINS_REQUEST_DOWNLOAD_IOS_DOWNLOAD_ADP_IMPL_H
 #define PLUGINS_REQUEST_DOWNLOAD_IOS_DOWNLOAD_ADP_IMPL_H
 
-#include "ios_download_adp.h"
 #include <mutex>
+#include "ios_download_adp.h"
 #import "OHNetworkKit.h"
 
-
 namespace OHOS::Plugin::Request::Download {
-
 class IosDownloadAdpImpl final : public IosDownloadAdp {
 public:
     IosDownloadAdpImpl();
@@ -50,7 +48,5 @@ private:
     bool isCompleted_ = false;
     std::mutex mutex_;
 };
-
 } // namespace OHOS::Plugin::Request::Download
-
 #endif // PLUGINS_REQUEST_DOWNLOAD_IOS_DOWNLOAD_ADP_IMPL_H

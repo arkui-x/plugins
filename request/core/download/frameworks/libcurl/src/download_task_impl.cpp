@@ -29,9 +29,7 @@
 #include "log.h"
 #include "download_task_impl.h"
 
-
 namespace OHOS::Plugin::Request::Download {
-
 static const std::string URL_HTTPS = "https";
 static constexpr uint32_t MAX_RETRY_TIMES = 3;
 static std::string TLS_VERSION_DEFAULT = "CURL_SSLVERSION_TLSv1_2";
@@ -642,5 +640,4 @@ uint32_t DownloadTaskImpl::ProgressNotification(uint32_t prevSize, uint32_t down
     }
     return ret;
 }
-
 } // namespace OHOS::Plugin::Request::Download

@@ -20,7 +20,6 @@
 #include "i_download_task.h"
 
 namespace OHOS::Plugin::Request::Download {
-
 class AndroidDownloadAdpImpl final : public AndroidDownloadAdp {
 public:
     AndroidDownloadAdpImpl();

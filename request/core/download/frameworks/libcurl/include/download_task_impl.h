@@ -27,9 +27,7 @@
 #include "download_config.h"
 #include "i_download_task.h"
 
-
 namespace OHOS::Plugin::Request::Download {
-
 class DownloadTaskImpl : public IDownloadTask {
 public:
     DownloadTaskImpl(uint32_t taskId, const DownloadConfig &config);

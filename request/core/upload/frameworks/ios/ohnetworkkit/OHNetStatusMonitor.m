@@ -41,8 +41,10 @@ NSString * OHStringFromNetworkReachabilityStatus(OHNetStatus status) {
 static OHNetStatus OHNetStatusForFlags(SCNetworkReachabilityFlags flags) {
     BOOL isReachable = ((flags & kSCNetworkReachabilityFlagsReachable) != 0);
     BOOL needsConnection = ((flags & kSCNetworkReachabilityFlagsConnectionRequired) != 0);
-    BOOL canConnectionAutomatically = (((flags & kSCNetworkReachabilityFlagsConnectionOnDemand ) != 0) || ((flags & kSCNetworkReachabilityFlagsConnectionOnTraffic) != 0));
-    BOOL canConnectWithoutUserInteraction = (canConnectionAutomatically && (flags & kSCNetworkReachabilityFlagsInterventionRequired) == 0);
+    BOOL canConnectionAutomatically = (((flags & kSCNetworkReachabilityFlagsConnectionOnDemand ) != 0) ||
+        ((flags & kSCNetworkReachabilityFlagsConnectionOnTraffic) != 0));
+    BOOL canConnectWithoutUserInteraction = (canConnectionAutomatically &&
+        (flags & kSCNetworkReachabilityFlagsInterventionRequired) == 0);
     BOOL isNetworkReachable = (isReachable && (!needsConnection || canConnectWithoutUserInteraction));
 
     OHNetStatus status = OHNetStatusUnknown;
@@ -69,7 +71,8 @@ static void OHPostReachabilityStatusChange(SCNetworkReachabilityFlags flags, OHN
     });
 }
 
-static void OHNetworkReachabilityCallback(SCNetworkReachabilityRef __unused target, SCNetworkReachabilityFlags flags, void *info) {
+static void OHNetworkReachabilityCallback(SCNetworkReachabilityRef __unused target,
+    SCNetworkReachabilityFlags flags, void *info) {
     OHPostReachabilityStatusChange(flags, (__bridge OHNetStatusCallback)info);
 }
 
@@ -107,14 +110,16 @@ static void OHNetworkReachabilityReleaseCallback(const void *info) {
 }
 
 + (instancetype)monitorForDomain:(NSString *)domain {
-    SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, [domain UTF8String]);
+    SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault,
+        [domain UTF8String]);
     OHNetStatusMonitor *monitor = [[self alloc] initWithReachability:reachability];
     CFRelease(reachability);
     return monitor;
 }
 
 + (instancetype)monitorForAddress:(const void *)address {
-    SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault, (const struct sockaddr *)address);
+    SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault,
+        (const struct sockaddr *)address);
     OHNetStatusMonitor *monitor = [[self alloc] initWithReachability:reachability];
     CFRelease(reachability);
     return monitor;
@@ -190,7 +195,8 @@ static void OHNetworkReachabilityReleaseCallback(const void *info) {
         return strongSelf;
     };
 
-    SCNetworkReachabilityContext context = {0, (__bridge void *)callback, OHNetworkReachabilityRetainCallback, OHNetworkReachabilityReleaseCallback, NULL};
+    SCNetworkReachabilityContext context = {0, (__bridge void *)callback,
+        OHNetworkReachabilityRetainCallback, OHNetworkReachabilityReleaseCallback, NULL};
     SCNetworkReachabilitySetCallback(self.networkReachability, OHNetworkReachabilityCallback, &context);
     SCNetworkReachabilityScheduleWithRunLoop(self.networkReachability, CFRunLoopGetMain(), kCFRunLoopCommonModes);
 
@@ -215,7 +221,8 @@ static void OHNetworkReachabilityReleaseCallback(const void *info) {
 
 #pragma mark - NSKeyValueObserving
 + (NSSet *)keyPathsForValuesAffectingValueForKey:(NSString *)key {
-    if ([key isEqualToString:@"reachable"] || [key isEqualToString:@"reachableViaWWAN"] || [key isEqualToString:@"reachableViaWiFi"]) {
+    if ([key isEqualToString:@"reachable"] || [key isEqualToString:@"reachableViaWWAN"] ||
+        [key isEqualToString:@"reachableViaWiFi"]) {
         return [NSSet setWithObject:@"networkReachabilityStatus"];
     }
     return [super keyPathsForValuesAffectingValueForKey:key];

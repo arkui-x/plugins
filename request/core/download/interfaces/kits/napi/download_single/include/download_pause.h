@@ -29,7 +29,6 @@ public:
     DownloadPause() = default;
     ~DownloadPause() = default;
 
-    // static napi_value Pause(napi_env env, napi_callback_info info);
     static napi_value Suspend(napi_env env, napi_callback_info info);
 
 private:

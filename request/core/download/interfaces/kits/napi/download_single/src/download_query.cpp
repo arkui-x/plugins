@@ -12,10 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <cinttypes>
-
 #include "download_query.h"
+#include <cinttypes>
 #include "download_manager.h"
 #include "log.h"
 #include "napi_utils.h"

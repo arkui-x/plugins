@@ -25,7 +25,7 @@ typedef NS_ENUM(NSInteger, OHNetStatus) {
     OHNetStatusReachableViaWiFi = 2,
 };
 
-FOUNDATION_EXPORT NSString * OHStringFromNetworkReachabilityStatus(OHNetStatus status);
+FOUNDATION_EXPORT NSString* OHStringFromNetworkReachabilityStatus(OHNetStatus status);
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -24,7 +24,8 @@ static dispatch_queue_t url_session_ctrl_processing_queue() {
     static dispatch_queue_t oh_session_ctrl_processing_queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        oh_session_ctrl_processing_queue = dispatch_queue_create("com.oh.networkkit.session.processing", DISPATCH_QUEUE_CONCURRENT);
+        oh_session_ctrl_processing_queue = dispatch_queue_create("com.oh.networkkit.session.processing",
+            DISPATCH_QUEUE_CONCURRENT);
     });
     return oh_session_ctrl_processing_queue;
 }
@@ -84,7 +85,8 @@ static dispatch_group_t url_session_completion_group() {
 }
 
 #pragma mark - NSProgress Tracking
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context {
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change
+    context:(void *)context {
    if ([object isEqual:self.downloadProgress]) {
         if (self.downloadProgressBlock) {
             self.downloadProgressBlock(object);
@@ -163,7 +165,8 @@ didFinishDownloadingToURL:(NSURL *)location {
         self.downloadFileURL = self.downloadTaskDidFinishDownloading(session, downloadTask, location);
         if (self.downloadFileURL) {
             NSError *fileManagerError = nil;
-            [[NSFileManager defaultManager] moveItemAtURL:location toURL:self.downloadFileURL error:&fileManagerError];
+            [[NSFileManager defaultManager] moveItemAtURL:location toURL:self.downloadFileURL
+                error:&fileManagerError];
         }
     }
 }

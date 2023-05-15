@@ -45,7 +45,6 @@ enum UploadDomainId {
 #include "hilog/log.h"
 
 namespace  OHOS::Plugin::Request::Upload {
-
 #define FILENAME            (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 #define FORMATED(fmt, ...)    "[%{public}s] %{public}s# " fmt, FILENAME, __FUNCTION__, ##__VA_ARGS__
 static constexpr OHOS::HiviewDFX::HiLogLabel UPLOAD_MODULE_LABEL[UPLOAD_MODULE_BUTT] = {

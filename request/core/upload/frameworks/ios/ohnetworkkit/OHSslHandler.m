@@ -138,7 +138,8 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
     return [self handlerWithPinningMode:pinningMode withPinnedCertificates:defaultPinnedCertificates];
 }
 
-+ (instancetype)handlerWithPinningMode:(OHSSLPinningMode)pinningMode withPinnedCertificates:(NSSet *)pinnedCertificates {
++ (instancetype)handlerWithPinningMode:(OHSSLPinningMode)pinningMode
+    withPinnedCertificates:(NSSet *)pinnedCertificates {
     OHSslHandler *handler = [[self alloc] init];
     handler.SSLPinningMode = pinningMode;
     [handler setPinnedCertificates:pinnedCertificates];
@@ -175,7 +176,8 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
 #pragma mark -
 - (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust
                   forDomain:(NSString *)domain {
-    if (domain && self.allowInvalidCertificates && self.validatesDomainName && (self.SSLPinningMode == OHSSLPinningModeNone || [self.pinnedCertificates count] == 0)) {
+    if (domain && self.allowInvalidCertificates && self.validatesDomainName &&
+        (self.SSLPinningMode == OHSSLPinningModeNone || [self.pinnedCertificates count] == 0)) {
         NSLog(@"In order to validate a domain name for self signed certificates, you MUST use pinning.");
         return NO;
     }
@@ -197,13 +199,15 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
         case OHSSLPinningModeCertificate: {
             NSMutableArray *pinnedCertificates = [NSMutableArray array];
             for (NSData *certificateData in self.pinnedCertificates) {
-                [pinnedCertificates addObject:(__bridge_transfer id)SecCertificateCreateWithData(NULL, (__bridge CFDataRef)certificateData)];
+                [pinnedCertificates addObject:(__bridge_transfer id)SecCertificateCreateWithData(NULL,
+                    (__bridge CFDataRef)certificateData)];
             }
             SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)pinnedCertificates);
             if (!OHServerTrustIsValid(serverTrust)) {
                 return NO;
             }
-            // obtain the chain after being validated, which *should* contain the pinned certificate in the last position (if it's the Root CA)
+            // obtain the chain after being validated, which *should* contain the pinned certificate
+            // in the last position (if it's the Root CA)
             NSArray *serverCertificates = OHCertificateTrustChainForServerTrust(serverTrust);
             for (NSData *trustChainCertificate in [serverCertificates reverseObjectEnumerator]) {
                 if ([self.pinnedCertificates containsObject:trustChainCertificate]) {
@@ -217,7 +221,8 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
             NSArray *publicKeys = OHPublicKeyTrustChainForServerTrust(serverTrust);
             for (id trustChainPublicKey in publicKeys) {
                 for (id pinnedPublicKey in self.pinnedPublicKeys) {
-                    if (OHSecKeyIsEqualToKey((__bridge SecKeyRef)trustChainPublicKey, (__bridge SecKeyRef)pinnedPublicKey)) {
+                    if (OHSecKeyIsEqualToKey((__bridge SecKeyRef)trustChainPublicKey,
+                        (__bridge SecKeyRef)pinnedPublicKey)) {
                         trustedPublicKeyCount += 1;
                     }
                 }

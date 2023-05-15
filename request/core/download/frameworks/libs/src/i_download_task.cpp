@@ -18,7 +18,6 @@
 #include "log.h"
 
 namespace OHOS::Plugin::Request::Download {
-
 IDownloadTask::IDownloadTask(uint32_t taskId, const DownloadConfig &config) : taskId_(taskId), config_(config)
 {
     DOWNLOAD_HILOGD("alloc download task [%{public}d]", GetId());
@@ -335,5 +334,4 @@ bool IDownloadTask::IsRunning()
 {
     return (status_ == SESSION_RUNNING);
 }
-
 } // namespace OHOS::Plugin::Request::Download

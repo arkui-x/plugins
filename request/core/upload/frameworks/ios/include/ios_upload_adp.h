@@ -20,9 +20,7 @@
 #include "upload_config.h"
 #include "upload_common.h"
 
-
 namespace OHOS::Plugin::Request::Upload {
-
 class IosUploadAdpCallback;
 class IosUploadAdp {
 public:
@@ -34,7 +32,6 @@ public:
     virtual bool Remove() = 0;
 };
 
-
 class IosUploadAdpCallback {
 public:
     IosUploadAdpCallback() = default;
@@ -44,7 +41,6 @@ public:
     virtual void OnComplete(const std::vector<TaskState>& taskStateList) = 0;
     virtual void SetRespHeader(const std::string &header) = 0;
 };
-
 } // namespace OHOS::Plugin::Request::Upload
 
 #endif // PLUGINS_REQUEST_UPLOAD_IOS_UPLOAD_ADP_H
