@@ -46,7 +46,6 @@ public:
     static std::vector<std::string> Convert2Header(napi_env env, napi_value value);
     static std::shared_ptr<Upload::UploadConfig> ParseUploadConfig(napi_env env, napi_value jsConfig);
     static bool Convert2UploadConfig(napi_env env, napi_value jsConfig, Upload::UploadConfig &config);
-    static napi_value Convert2JSUploadConfig(napi_env env, const Upload::UploadConfig &config);
 
     static bool Convert2File(napi_env env, napi_value jsFile, Upload::File &file);
     static napi_value Convert2JSFile(napi_env env, const Upload::File &file);
@@ -79,13 +78,13 @@ public:
     static bool SetUrl(napi_env env, napi_value jsConfig, Upload::UploadConfig &config);
     static bool SetData(napi_env env, napi_value jsConfig, Upload::UploadConfig &config);
     static bool SetFiles(napi_env env, napi_value jsConfig, Upload::UploadConfig &config);
-    static bool SetHeader(napi_env env, napi_value jsConfig, Upload::UploadConfig &config);
     static bool SetMethod(napi_env env, napi_value jsConfig, Upload::UploadConfig &config);
     static bool Convert2FileL5(napi_env env, napi_value jsFile, Upload::File &file);
     static bool SetFilename(napi_env env, napi_value jsFile, Upload::File &file);
     static bool SetName(napi_env env, napi_value jsFile, Upload::File &file);
     static bool SetUri(napi_env env, napi_value jsFile, Upload::File &file);
     static bool SetType(napi_env env, napi_value jsFile, Upload::File &file);
+    static bool ParseHeader(napi_env env, napi_value configValue, std::map<std::string, std::string> &header);
 };
-}
+} // namespace OHOS::Plugin::Request::UploadNapi
 #endif // REQUEST_JS_UTIL_H

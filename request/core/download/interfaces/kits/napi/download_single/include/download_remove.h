@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +17,7 @@
 #define PLUGINS_REQUEST_DOWNLOAD_REMOVE_H
 
 #include "async_call.h"
-#include "download_task.h"
+#include "i_download_task.h"
 #include "napi/native_api.h"
 #include "noncopyable.h"
 
@@ -34,12 +34,12 @@ public:
 
 private:
     struct RemoveContext : public AsyncCall::Context {
-        DownloadTask *task_ = nullptr;
+        IDownloadTask *task_ = nullptr;
         bool result = false;
         napi_status status = napi_generic_failure;
-        RemoveContext() : Context(nullptr, nullptr) {};
-        RemoveContext(InputAction input, OutputAction output) : Context(std::move(input), std::move(output)) {};
-        virtual ~RemoveContext() {};
+        RemoveContext() : Context(nullptr, nullptr) {}
+        RemoveContext(InputAction input, OutputAction output) : Context(std::move(input), std::move(output)) {}
+        virtual ~RemoveContext() {}
 
         napi_status operator()(napi_env env, size_t argc, napi_value *argv, napi_value self) override
         {

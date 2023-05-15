@@ -21,24 +21,26 @@
 #include <condition_variable>
 
 #include "download_config.h"
-#include "download_task.h"
+#include "i_download_task.h"
 #include "download_notify_interface.h"
 
 namespace OHOS::Plugin::Request::Download {
 class DownloadManager {
 public:
     static DownloadManager& GetInstance();
-
-    DownloadTask *Download(const DownloadConfig &config);
-
+    IDownloadTask *Download(const DownloadConfig &config);
     bool Remove(uint32_t taskId);
+    bool Suspend(uint32_t taskId);
+    bool Restore(uint32_t taskId);
     bool On(uint32_t taskId, const std::string &type, const std::shared_ptr<DownloadNotifyInterface> &listener);
     bool Off(uint32_t taskId, const std::string &type);
+    bool GetTaskInfo(uint32_t taskId, DownloadInfo &info);
+    bool GetTaskMimeType(uint32_t taskId, std::string &mimeType);
+    void ReleaseTask(uint32_t taskId);
 
 private:
     uint32_t GetCurrentTaskId();
     static void NotifyHandler(const std::string& type, uint32_t taskId, uint32_t argv1, uint32_t argv2);
-
     DownloadManager() = default;
     ~DownloadManager() = default;
     DownloadManager(const DownloadManager&) = delete;
@@ -50,9 +52,9 @@ private:
     std::recursive_mutex mutex_;
     uint32_t taskId_ = 0;
 
-#ifdef SUPPORT_DOWNLOAD_CURL
-    std::map<uint32_t, DownloadTask*> taskMap_;
-#endif
+// #ifdef SUPPORT_DOWNLOAD_CURL
+    std::map<uint32_t, IDownloadTask*> taskMap_;
+// #endif
 };
 } // namespace OHOS::Plugin::Request::Download
 #endif // PLUGINS_REQUEST_DOWNLOAD_MANAGER_H

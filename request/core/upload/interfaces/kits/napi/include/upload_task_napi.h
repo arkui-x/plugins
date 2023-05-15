@@ -24,6 +24,7 @@
 #include "fail_callback.h"
 #include "i_callbackable_judger.h"
 #include "progress_callback.h"
+#include "i_header_receive_callback.h"
 #include "upload_common.h"
 #include "upload_config.h"
 #include "upload_task.h"
@@ -32,11 +33,14 @@ namespace OHOS::Plugin::Request::UploadNapi {
 using namespace OHOS::Plugin::Request::Upload;
 class UploadTaskNapi : public ICallbackAbleJudger, IUploadTaskRelease {
 public:
-    static napi_value JsUpload(napi_env env, napi_callback_info info);
+    UploadTaskNapi() = default;
+    ~UploadTaskNapi();
+    // static napi_value JsUpload(napi_env env, napi_callback_info info);
+    static napi_value JsUploadFile(napi_env env, napi_callback_info info);
 
     static napi_value JsOn(napi_env env, napi_callback_info info);
     static napi_value JsOff(napi_env env, napi_callback_info info);
-    static napi_value JsRemove(napi_env env, napi_callback_info info);
+    static napi_value JsDelete(napi_env env, napi_callback_info info);
 
     static void OnSystemSuccess(napi_env env, napi_ref ref, Upload::UploadResponse &response);
     static void OnSystemFail(napi_env env, napi_ref ref, std::string &response, int32_t &code);
@@ -50,7 +54,7 @@ public:
     bool JudgeComplete(const ICompleteCallback *target);
     bool JudgeProgress(const IProgressCallback *target);
     void OnUploadTaskRelease(void *arg);
-    std::shared_ptr<Upload::UploadTask> GetTaskPtr();
+    std::shared_ptr<Upload::IUploadTask> GetTaskPtr();
 
     napi_ref success_;
     napi_ref fail_;
@@ -61,16 +65,16 @@ private:
     static napi_value GetCtor(napi_env env);
     static napi_value Initialize(napi_env env, napi_callback_info info);
 
-    std::shared_ptr<Upload::UploadTask> napiUploadTask_ = nullptr;
+    std::shared_ptr<Upload::IUploadTask> napiUploadTask_ = nullptr;
     std::shared_ptr<Upload::UploadConfig> napiUploadConfig_ = nullptr;
 
     struct RemoveContextInfo : public AsyncCall::Context {
         UploadTaskNapi *proxy = nullptr;
         bool removeStatus = false;
         napi_status status = napi_generic_failure;
-        RemoveContextInfo() : Context(nullptr, nullptr) {};
-        RemoveContextInfo(InputAction input, OutputAction output) : Context(std::move(input), std::move(output)) {};
-        virtual ~RemoveContextInfo() {};
+        RemoveContextInfo() : Context(nullptr, nullptr) {}
+        RemoveContextInfo(InputAction input, OutputAction output) : Context(std::move(input), std::move(output)) {}
+        virtual ~RemoveContextInfo() {}
 
         napi_status operator()(napi_env env, size_t argc, napi_value *argv, napi_value self) override
         {
@@ -105,7 +109,7 @@ private:
         napi_env env;
         napi_ref ref;
     };
-    
+
     struct JsParam {
         std::string type;
         napi_value callback;
@@ -131,9 +135,10 @@ private:
     std::shared_ptr<Upload::IProgressCallback> offProgress_ = nullptr;
     std::shared_ptr<Upload::IFailCallback> offFail_ = nullptr;
     std::shared_ptr<Upload::ICompleteCallback> offComplete_ = nullptr;
-
+    std::shared_ptr<Upload::IHeaderReceiveCallback> onHeaderReceive_ = nullptr;
+    std::shared_ptr<Upload::IHeaderReceiveCallback> offHeaderReceive_ = nullptr;
     static std::vector<UploadTaskNapi *> uploadTaskList_;
     static std::mutex uploadTaskListLock_;
 };
-} // namespace  OHOS::Plugin::Request::UploadNapi
+} // namespace OHOS::Plugin::Request::UploadNapi
 #endif // REQUEST_NAPI_H

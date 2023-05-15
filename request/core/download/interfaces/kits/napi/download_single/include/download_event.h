@@ -19,7 +19,7 @@
 #include <string>
 
 #include "async_call.h"
-#include "download_task.h"
+#include "i_download_task.h"
 #include "napi/native_api.h"
 #include "noncopyable.h"
 
@@ -41,18 +41,18 @@ public:
     static uint32_t GetParamNumber(const std::string &type);
 
 private:
-	static std::shared_ptr<DownloadNotifyInterface> CreateNotify(napi_env env,
+    static std::shared_ptr<DownloadNotifyInterface> CreateNotify(napi_env env,
         const std::string &type, napi_ref callbackRef);
 
 private:
     struct EventOffContext : public AsyncCall::Context {
-        DownloadTask *task_ = nullptr;
+        IDownloadTask *task_ = nullptr;
         std::string type_ = "";
         bool result = false;
         napi_status status = napi_generic_failure;
-        EventOffContext() : Context(nullptr, nullptr) {};
-        EventOffContext(InputAction input, OutputAction output) : Context(std::move(input), std::move(output)) {};
-        virtual ~EventOffContext() {};
+        EventOffContext() : Context(nullptr, nullptr) {}
+        EventOffContext(InputAction input, OutputAction output) : Context(std::move(input), std::move(output)) {}
+        virtual ~EventOffContext() {}
 
         napi_status operator()(napi_env env, size_t argc, napi_value *argv, napi_value self) override
         {
