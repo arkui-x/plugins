@@ -41,16 +41,6 @@ ohos_source_set("download_lib") {
     "src/i_download_task.cpp",
   ]
 
-  if (support_download_libcurl) {
-    defines = [ "SUPPORT_DOWNLOAD_CURL" ]
-    include_dirs = [ "$rq_download_path/frameworks/libcurl/include" ]
-    sources +=
-        [ "$rq_download_path/frameworks/libcurl/src/download_task_impl.cpp" ]
-  } else {
-    include_dirs = [ "$rq_download_path/frameworks/libplatform/include" ]
-    sources += [ "$rq_download_path/frameworks/libplatform/src/download_task_plugin_impl.cpp" ]
-  }
-
   configs = [ ":download_lib_config" ]
 
   public_configs = [ ":download_lib_public_config" ]
