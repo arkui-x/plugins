@@ -48,6 +48,10 @@ static constexpr uint32_t DOWNLOADMANAGER_ERROR_INSUFFICIENT_SPACE = 1006;
 static constexpr uint32_t DOWNLOADMANAGER_ERROR_DEVICE_NOT_FOUND = 1007;
 static constexpr uint32_t DOWNLOADMANAGER_ERROR_CANNOT_RESUME = 1008;
 static constexpr uint32_t DOWNLOADMANAGER_ERROR_FILE_ALREADY_EXISTS = 1009;
+// network type from java
+static constexpr uint32_t JAVA_NETWORK_INVALID = 0;
+static constexpr uint32_t JAVA_NETWORK_WIFI = 1;
+static constexpr uint32_t JAVA_NETWORK_MOBILE = 2;
 
 const char DOWNLOADMANAGER_PLUGIN_CLASS_NAME[] = "ohos/ace/plugin/downloadmanagerplugin/DownloadManagerPlugin";
 
@@ -271,13 +275,13 @@ static NetworkType TranslateNetworkType(int networkType)
     DOWNLOAD_HILOGI("get networkType from java, networkType: %{private}d", networkType);
     NetworkType type = NETWORK_INVALID;
     switch (networkType) {
-        case 0:
+        case JAVA_NETWORK_INVALID:
             type = NETWORK_INVALID;
             break;
-        case 1:
+        case JAVA_NETWORK_WIFI:
             type = NETWORK_WIFI;
             break;
-        case 2:
+        case JAVA_NETWORK_MOBILE:
             type = NETWORK_MOBILE;
             break;
         default :

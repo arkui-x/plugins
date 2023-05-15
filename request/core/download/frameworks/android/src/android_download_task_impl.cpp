@@ -15,7 +15,6 @@
 
 #include "android_download_task_impl.h"
 
-#include <unistd.h>
 #include <jni.h>
 
 #include "log.h"

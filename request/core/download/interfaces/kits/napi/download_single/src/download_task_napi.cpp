@@ -178,37 +178,6 @@ bool DownloadTaskNapi::ParseConfig(napi_env env, napi_value configValue, Downloa
     config.SetFilePath(NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_FILE_PATH));
     config.SetTitle(NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_TITLE));
     config.SetBackground(NapiUtils::GetBooleanProperty(env, configValue, PARAM_KEY_BACKGROUND));
-
-#ifdef IOS_PLATFORM
-    return true;
-#endif
-
-#ifdef ANDROID_PLATFORM
-    return true;
-#endif
-
-    if (!IsPathValid(config.GetFilePath())) {
-        return false;
-    }
-
-    int32_t fd = -1;
-    int32_t err = 0;
-    fd = open(config.GetFilePath().c_str(), O_RDWR);
-    if (fd > 0) {
-        DOWNLOAD_HILOGD("Download File already exists");
-        close(fd);
-        fd = -1;
-    } else {
-        fd = open(config.GetFilePath().c_str(), O_CREAT | O_RDWR, FILE_PERMISSION);
-        if (fd < 0) {
-            DOWNLOAD_HILOGE("Failed to open file errno [%{public}d]", errno);
-        }
-        err = errno;
-    }
-    config.SetFD(fd);
-    config.SetFDError(err);
-    config.SetApplicationInfoUid(static_cast<int32_t>(getuid()));
-
     return true;
 }
 
@@ -219,21 +188,6 @@ bool DownloadTaskNapi::ParseUrl(napi_env env, napi_value configValue, DownloadCo
         return false;
     }
     config.SetUrl(url);
-    return true;
-}
-
-bool DownloadTaskNapi::IsPathValid(const std::string &filePath)
-{
-#ifdef ANDROID_PLATFORM
-    return true;
-#endif
-    auto path = filePath.substr(0, filePath.rfind('/'));
-    char resolvedPath[PATH_MAX + 1] = { 0 };
-    if (path.length() > PATH_MAX || realpath(path.c_str(), resolvedPath) == nullptr
-        || strncmp(resolvedPath, path.c_str(), path.length()) != 0) {
-        DOWNLOAD_HILOGE("invalid file path!");
-        return false;
-    }
     return true;
 }
 
