@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#import "OHMultipartFormData.h"
+#import "OHMultiFormData.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 
 
@@ -134,8 +134,8 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
 @end
 
 
-#pragma mark - OHStreamingMultipartFormData
-@interface OHStreamingMultipartFormData ()
+#pragma mark - OHStreamingMultiFormData
+@interface OHStreamingMultiFormData ()
 
 @property (readwrite, nonatomic, copy) NSMutableURLRequest *request;
 @property (readwrite, nonatomic, assign) NSStringEncoding stringEncoding;
@@ -145,10 +145,10 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
 @end
 
 
-@implementation OHStreamingMultipartFormData
+@implementation OHStreamingMultiFormData
 
-- (instancetype)initWithURLRequest:(NSMutableURLRequest *)urlRequest
-                    stringEncoding:(NSStringEncoding)encoding {
+- (instancetype)initWithUrlReq:(NSMutableURLRequest *)urlRequest
+                    encoding:(NSStringEncoding)encoding {
     self = [super init];
     if (!self) {
         return nil;
@@ -165,17 +165,17 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     _request = [request mutableCopy];
 }
 
-- (BOOL)appendPartWithFileURL:(NSURL *)fileURL
+- (BOOL)addPartWithFile:(NSURL *)url
                          name:(NSString *)name
                      fileName:(NSString *)fileName
-                     mimeType:(NSString *)mimeType
+                     mime:(NSString *)mime
                         error:(NSError * __autoreleasing *)error {
-    NSParameterAssert(fileURL);
+    NSParameterAssert(url);
     NSParameterAssert(name);
     NSParameterAssert(fileName);
-    NSParameterAssert(mimeType);
+    NSParameterAssert(mime);
 
-    if (![fileURL isFileURL]) {
+    if (![url isFileURL]) {
         NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey:
             NSLocalizedStringFromTable(@"Expected URL to be a file URL", @"OHNetworkKit", nil)};
         if (error) {
@@ -183,7 +183,7 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
                 code:NSURLErrorBadURL userInfo:userInfo];
         }
         return NO;
-    } else if ([fileURL checkResourceIsReachableAndReturnError:error] == NO) {
+    } else if ([url checkResourceIsReachableAndReturnError:error] == NO) {
         NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey:
             NSLocalizedStringFromTable(@"File URL not reachable.", @"OHNetworkKit", nil)};
         if (error) {
@@ -194,7 +194,7 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     }
 
     NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:
-        [fileURL path] error:error];
+        [url path] error:error];
     if (!fileAttributes) {
         return NO;
     }
@@ -202,27 +202,27 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     NSMutableDictionary *mutableHeaders = [NSMutableDictionary dictionary];
     [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"; filename=\"%@\"", name, fileName]
         forKey:@"Content-Disposition"];
-    [mutableHeaders setValue:mimeType forKey:@"Content-Type"];
+    [mutableHeaders setValue:mime forKey:@"Content-Type"];
     OHHttpBodyPart *bodyPart = [[OHHttpBodyPart alloc] init];
     bodyPart.stringEncoding = self.stringEncoding;
     bodyPart.headers = mutableHeaders;
     bodyPart.boundary = self.boundary;
-    bodyPart.body = fileURL;
+    bodyPart.body = url;
     bodyPart.bodyContentLength = [fileAttributes[NSFileSize] unsignedLongLongValue];
     [self.bodyStream appendHTTPBodyPart:bodyPart];
     return YES;
 }
 
-- (void)appendPartWithFormData:(NSData *)data
+- (void)addPartWithFormData:(NSData *)data
                           name:(NSString *)name {
     NSParameterAssert(name);
     NSMutableDictionary *mutableHeaders = [NSMutableDictionary dictionary];
     [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"", name]
         forKey:@"Content-Disposition"];
-    [self appendPartWithHeaders:mutableHeaders body:data];
+    [self addPartWithHeaders:mutableHeaders body:data];
 }
 
-- (void)appendPartWithHeaders:(NSDictionary *)headers
+- (void)addPartWithHeaders:(NSDictionary *)headers
                          body:(NSData *)body {
     NSParameterAssert(body);
     OHHttpBodyPart *bodyPart = [[OHHttpBodyPart alloc] init];
@@ -234,7 +234,7 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     [self.bodyStream appendHTTPBodyPart:bodyPart];
 }
 
-- (NSMutableURLRequest *)requestByFinalizingMultipartFormData {
+- (NSMutableURLRequest *)requestByFinMultiFormData {
     if ([self.bodyStream isEmpty]) {
         return self.request;
     }

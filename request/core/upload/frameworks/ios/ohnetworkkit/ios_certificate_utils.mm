@@ -22,7 +22,7 @@ namespace OHOS::Plugin::Request::CertificateUtils {
 
 void GetCerList(NSMutableArray *derList)
 {
-    NSSet *cerSet = [OHSslHandler certificatesInBundle:[NSBundle mainBundle]]; // *.cer
+    NSSet *cerSet = [OHSslHandler certsInBundle:[NSBundle mainBundle]]; // *.cer
     if ([cerSet count] == 0) {
         UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "no .cer files");
         return;
@@ -86,9 +86,9 @@ void InstallCertificateChain(OHHttpSessionController *sessionCtrl_)
 
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "Certificate chain count:%{public}d", certSet.count);
     if ([certSet count] == 0) {
-        return; // use default: OHSSLPinningModeNone
+        return; // use default: OHSSLModeNone
     }
-    OHSslHandler *sslHandler = [OHSslHandler handlerWithPinningMode:OHSSLPinningModeCertificate];
+    OHSslHandler *sslHandler = [OHSslHandler handlerWithPinningMode:OHSSLModeCert];
     [sslHandler setAllowInvalidCertificates:YES];
     [sslHandler setValidatesDomainName:NO];
     [sslHandler setPinnedCertificates:certSet];

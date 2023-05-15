@@ -18,10 +18,10 @@
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
 
-typedef NS_ENUM(NSUInteger, OHSSLPinningMode) {
-    OHSSLPinningModeNone,
-    OHSSLPinningModePublicKey,
-    OHSSLPinningModeCertificate,
+typedef NS_ENUM(NSUInteger, OHSSLMode) {
+    OHSSLModeNone,
+    OHSSLModePubKey,
+    OHSSLModeCert,
 };
 
 
@@ -29,15 +29,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface OHSslHandler : NSObject <NSSecureCoding, NSCopying>
 
-@property (readonly, nonatomic, assign) OHSSLPinningMode SSLPinningMode;
-@property (nonatomic, strong, nullable) NSSet <NSData *> *pinnedCertificates;
-@property (nonatomic, assign) BOOL allowInvalidCertificates;
-@property (nonatomic, assign) BOOL validatesDomainName;
+@property (readonly, nonatomic, assign) OHSSLMode sslMode;
+@property (nonatomic, strong, nullable) NSSet <NSData *> *pinCerts;
+@property (nonatomic, assign) BOOL passInvalidCerts;
+@property (nonatomic, assign) BOOL allowValidatesDomain;
 
 
-+ (NSSet <NSData *> *)certificatesInBundle:(NSBundle *)bundle;
++ (NSSet <NSData *> *)certsInBundle:(NSBundle *)bundle;
 + (instancetype)defaultHandler;
-+ (instancetype)handlerWithPinningMode:(OHSSLPinningMode)pinningMode;
++ (instancetype)handlerWithPinningMode:(OHSSLMode)pinningMode;
 - (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust
                   forDomain:(nullable NSString *)domain;
 

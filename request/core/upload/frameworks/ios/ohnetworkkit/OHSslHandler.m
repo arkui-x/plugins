@@ -109,7 +109,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
 #pragma mark -
 @interface OHSslHandler()
 
-@property (readwrite, nonatomic, assign) OHSSLPinningMode SSLPinningMode;
+@property (readwrite, nonatomic, assign) OHSSLMode sslMode;
 @property (readwrite, nonatomic, strong) NSSet *pinnedPublicKeys;
 
 @end
@@ -117,7 +117,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
 
 @implementation OHSslHandler
 
-+ (NSSet *)certificatesInBundle:(NSBundle *)bundle {
++ (NSSet *)certsInBundle:(NSBundle *)bundle {
     NSArray *paths = [bundle pathsForResourcesOfType:@"cer" inDirectory:@"."];
     NSMutableSet *certificates = [NSMutableSet setWithCapacity:[paths count]];
     for (NSString *path in paths) {
@@ -129,20 +129,20 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
 
 + (instancetype)defaultHandler {
     OHSslHandler *handler = [[self alloc] init];
-    handler.SSLPinningMode = OHSSLPinningModeNone;
+    handler.sslMode = OHSSLModeNone;
     return handler;
 }
 
-+ (instancetype)handlerWithPinningMode:(OHSSLPinningMode)pinningMode {
-    NSSet <NSData *> *defaultPinnedCertificates = [self certificatesInBundle:[NSBundle mainBundle]];
++ (instancetype)handlerWithPinningMode:(OHSSLMode)pinningMode {
+    NSSet <NSData *> *defaultPinnedCertificates = [self certsInBundle:[NSBundle mainBundle]];
     return [self handlerWithPinningMode:pinningMode withPinnedCertificates:defaultPinnedCertificates];
 }
 
-+ (instancetype)handlerWithPinningMode:(OHSSLPinningMode)pinningMode
-    withPinnedCertificates:(NSSet *)pinnedCertificates {
++ (instancetype)handlerWithPinningMode:(OHSSLMode)pinningMode
+    withPinnedCertificates:(NSSet *)pinCerts {
     OHSslHandler *handler = [[self alloc] init];
-    handler.SSLPinningMode = pinningMode;
-    [handler setPinnedCertificates:pinnedCertificates];
+    handler.sslMode = pinningMode;
+    [handler setPinnedCertificates:pinCerts];
     return handler;
 }
 
@@ -151,16 +151,16 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
     if (!self) {
         return nil;
     }
-    self.validatesDomainName = YES;
+    self.allowValidatesDomain = YES;
     return self;
 }
 
-- (void)setPinnedCertificates:(NSSet *)pinnedCertificates {
-    _pinnedCertificates = pinnedCertificates;
+- (void)setPinnedCertificates:(NSSet *)pinCerts {
+    _pinCerts = pinCerts;
 
-    if (self.pinnedCertificates) {
-        NSMutableSet *mutablePinnedPublicKeys = [NSMutableSet setWithCapacity:[self.pinnedCertificates count]];
-        for (NSData *certificate in self.pinnedCertificates) {
+    if (self.pinCerts) {
+        NSMutableSet *mutablePinnedPublicKeys = [NSMutableSet setWithCapacity:[self.pinCerts count]];
+        for (NSData *certificate in self.pinCerts) {
             id publicKey = OHPublicKeyForCertificate(certificate);
             if (!publicKey) {
                 continue;
@@ -176,33 +176,33 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
 #pragma mark -
 - (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust
                   forDomain:(NSString *)domain {
-    if (domain && self.allowInvalidCertificates && self.validatesDomainName &&
-        (self.SSLPinningMode == OHSSLPinningModeNone || [self.pinnedCertificates count] == 0)) {
+    if (domain && self.passInvalidCerts && self.allowValidatesDomain &&
+        (self.sslMode == OHSSLModeNone || [self.pinCerts count] == 0)) {
         NSLog(@"In order to validate a domain name for self signed certificates, you MUST use pinning.");
         return NO;
     }
 
     NSMutableArray *policies = [NSMutableArray array];
-    if (self.validatesDomainName) {
+    if (self.allowValidatesDomain) {
         [policies addObject:(__bridge_transfer id)SecPolicyCreateSSL(true, (__bridge CFStringRef)domain)];
     } else {
         [policies addObject:(__bridge_transfer id)SecPolicyCreateBasicX509()];
     }
     SecTrustSetPolicies(serverTrust, (__bridge CFArrayRef)policies);
-    if (self.SSLPinningMode == OHSSLPinningModeNone) {
-        return self.allowInvalidCertificates || OHServerTrustIsValid(serverTrust);
-    } else if (!self.allowInvalidCertificates && !OHServerTrustIsValid(serverTrust)) {
+    if (self.sslMode == OHSSLModeNone) {
+        return self.passInvalidCerts || OHServerTrustIsValid(serverTrust);
+    } else if (!self.passInvalidCerts && !OHServerTrustIsValid(serverTrust)) {
         return NO;
     }
 
-    switch (self.SSLPinningMode) {
-        case OHSSLPinningModeCertificate: {
-            NSMutableArray *pinnedCertificates = [NSMutableArray array];
-            for (NSData *certificateData in self.pinnedCertificates) {
-                [pinnedCertificates addObject:(__bridge_transfer id)SecCertificateCreateWithData(NULL,
+    switch (self.sslMode) {
+        case OHSSLModeCert: {
+            NSMutableArray *pinCerts = [NSMutableArray array];
+            for (NSData *certificateData in self.pinCerts) {
+                [pinCerts addObject:(__bridge_transfer id)SecCertificateCreateWithData(NULL,
                     (__bridge CFDataRef)certificateData)];
             }
-            SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)pinnedCertificates);
+            SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)pinCerts);
             if (!OHServerTrustIsValid(serverTrust)) {
                 return NO;
             }
@@ -210,13 +210,13 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
             // in the last position (if it's the Root CA)
             NSArray *serverCertificates = OHCertificateTrustChainForServerTrust(serverTrust);
             for (NSData *trustChainCertificate in [serverCertificates reverseObjectEnumerator]) {
-                if ([self.pinnedCertificates containsObject:trustChainCertificate]) {
+                if ([self.pinCerts containsObject:trustChainCertificate]) {
                     return YES;
                 }
             }
             return NO;
         }
-        case OHSSLPinningModePublicKey: {
+        case OHSSLModePubKey: {
             NSUInteger trustedPublicKeyCount = 0;
             NSArray *publicKeys = OHPublicKeyTrustChainForServerTrust(serverTrust);
             for (id trustChainPublicKey in publicKeys) {

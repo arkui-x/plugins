@@ -22,6 +22,6 @@
 #import "OHSslHandler.h"
 #import "OHNetStatusMonitor.h"
 #import "OHHttpSessionController.h"
-#import "OHMultipartFormData.h"
+#import "OHMultiFormData.h"
 
 #endif // PLUGINS_REQUEST_IOS_OHNETWORKKIT_H

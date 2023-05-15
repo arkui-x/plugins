@@ -14,7 +14,7 @@
  */
 
 #import "OHHttpRequestHandler.h"
-#import "OHMultipartFormData.h"
+#import "OHMultiFormData.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 
 
@@ -71,8 +71,8 @@ static NSArray * OHHTTPRequestSerializerObservedKeyPaths() {
     static NSArray *_OHHTTPRequestSerializerObservedKeyPaths = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _OHHTTPRequestSerializerObservedKeyPaths = @[NSStringFromSelector(@selector(allowsCellularAccess)),
-            NSStringFromSelector(@selector(cachePolicy)), NSStringFromSelector(@selector(HTTPShouldHandleCookies)),
+        _OHHTTPRequestSerializerObservedKeyPaths = @[
+            NSStringFromSelector(@selector(HTTPShouldHandleCookies)),
             NSStringFromSelector(@selector(HTTPShouldUsePipelining)),
             NSStringFromSelector(@selector(networkServiceType)), NSStringFromSelector(@selector(timeoutInterval))];
     });
@@ -104,7 +104,7 @@ static void *OHHTTPRequestSerializerObserverContext = &OHHTTPRequestSerializerOb
         return nil;
     }
 
-    self.stringEncoding = NSUTF8StringEncoding;
+    self.encoding = NSUTF8StringEncoding;
     self.mutableHTTPRequestHeaders = [NSMutableDictionary dictionary];
     self.requestHeaderModificationQueue = dispatch_queue_create("requestHeaderModificationQueue",
         DISPATCH_QUEUE_CONCURRENT);
@@ -115,7 +115,7 @@ static void *OHHTTPRequestSerializerObserverContext = &OHHTTPRequestSerializerOb
         [acceptLanguagesComponents addObject:[NSString stringWithFormat:@"%@;q=%0.1g", obj, q]];
         *stop = q <= 0.5f;
     }];
-    [self setValue:[acceptLanguagesComponents componentsJoinedByString:@", "] forHTTPHeaderField:@"Accept-Language"];
+    [self setValue:[acceptLanguagesComponents componentsJoinedByString:@", "] forHeaderField:@"Accept-Language"];
 
     NSString *userAgent = nil;
     userAgent = [NSString stringWithFormat:@"%@/%@ (%@; iOS %@; Scale/%0.2f)",
@@ -133,10 +133,10 @@ static void *OHHTTPRequestSerializerObserverContext = &OHHTTPRequestSerializerOb
                 userAgent = mutableUserAgent;
             }
         }
-        [self setValue:userAgent forHTTPHeaderField:@"User-Agent"];
+        [self setValue:userAgent forHeaderField:@"User-Agent"];
     }
 
-    self.HTTPMethodsEncodingParametersInURI = [NSSet setWithObjects:@"GET", @"HEAD", @"DELETE", nil];
+    self.httpMethodEncodeParamInUri = [NSSet setWithObjects:@"GET", @"HEAD", @"DELETE", nil];
     self.mutableObservedChangedKeyPaths = [NSMutableSet set];
     for (NSString *keyPath in OHHTTPRequestSerializerObservedKeyPaths()) {
         if ([self respondsToSelector:NSSelectorFromString(keyPath)]) {
@@ -157,44 +157,7 @@ static void *OHHTTPRequestSerializerObserverContext = &OHHTTPRequestSerializerOb
 }
 
 #pragma mark -
-- (void)setAllowsCellularAccess:(BOOL)allowsCellularAccess {
-    [self willChangeValueForKey:NSStringFromSelector(@selector(allowsCellularAccess))];
-    _allowsCellularAccess = allowsCellularAccess;
-    [self didChangeValueForKey:NSStringFromSelector(@selector(allowsCellularAccess))];
-}
-
-- (void)setCachePolicy:(NSURLRequestCachePolicy)cachePolicy {
-    [self willChangeValueForKey:NSStringFromSelector(@selector(cachePolicy))];
-    _cachePolicy = cachePolicy;
-    [self didChangeValueForKey:NSStringFromSelector(@selector(cachePolicy))];
-}
-
-- (void)setHTTPShouldHandleCookies:(BOOL)HTTPShouldHandleCookies {
-    [self willChangeValueForKey:NSStringFromSelector(@selector(HTTPShouldHandleCookies))];
-    _HTTPShouldHandleCookies = HTTPShouldHandleCookies;
-    [self didChangeValueForKey:NSStringFromSelector(@selector(HTTPShouldHandleCookies))];
-}
-
-- (void)setHTTPShouldUsePipelining:(BOOL)HTTPShouldUsePipelining {
-    [self willChangeValueForKey:NSStringFromSelector(@selector(HTTPShouldUsePipelining))];
-    _HTTPShouldUsePipelining = HTTPShouldUsePipelining;
-    [self didChangeValueForKey:NSStringFromSelector(@selector(HTTPShouldUsePipelining))];
-}
-
-- (void)setNetworkServiceType:(NSURLRequestNetworkServiceType)networkServiceType {
-    [self willChangeValueForKey:NSStringFromSelector(@selector(networkServiceType))];
-    _networkServiceType = networkServiceType;
-    [self didChangeValueForKey:NSStringFromSelector(@selector(networkServiceType))];
-}
-
-- (void)setTimeoutInterval:(NSTimeInterval)timeoutInterval {
-    [self willChangeValueForKey:NSStringFromSelector(@selector(timeoutInterval))];
-    _timeoutInterval = timeoutInterval;
-    [self didChangeValueForKey:NSStringFromSelector(@selector(timeoutInterval))];
-}
-
-#pragma mark -
-- (NSDictionary *)HTTPRequestHeaders {
+- (NSDictionary *)requestHeaders {
     NSDictionary __block *value;
     dispatch_sync(self.requestHeaderModificationQueue, ^{
         value = [NSDictionary dictionaryWithDictionary:self.mutableHTTPRequestHeaders];
@@ -203,13 +166,13 @@ static void *OHHTTPRequestSerializerObserverContext = &OHHTTPRequestSerializerOb
 }
 
 - (void)setValue:(NSString *)value
-forHTTPHeaderField:(NSString *)field {
+forHeaderField:(NSString *)field {
     dispatch_barrier_sync(self.requestHeaderModificationQueue, ^{
         [self.mutableHTTPRequestHeaders setValue:value forKey:field];
     });
 }
 
-- (NSString *)valueForHTTPHeaderField:(NSString *)field {
+- (NSString *)valueForHeaderField:(NSString *)field {
     NSString __block *value;
     dispatch_sync(self.requestHeaderModificationQueue, ^{
         value = [self.mutableHTTPRequestHeaders valueForKey:field];
@@ -217,40 +180,30 @@ forHTTPHeaderField:(NSString *)field {
     return value;
 }
 
-- (void)setAuthorizationHeaderFieldWithUsername:(NSString *)username
-                                       password:(NSString *)password {
-    NSData *basicAuthCredentials = [[NSString stringWithFormat:@"%@:%@", username, password]
-        dataUsingEncoding:NSUTF8StringEncoding];
-    NSString *base64AuthCredentials = [basicAuthCredentials base64EncodedStringWithOptions:
-        (NSDataBase64EncodingOptions)0];
-    [self setValue:[NSString stringWithFormat:@"Basic %@", base64AuthCredentials]
-        forHTTPHeaderField:@"Authorization"];
-}
-
-- (void)clearAuthorizationHeader {
+- (void)clearAuthHeader {
     dispatch_barrier_sync(self.requestHeaderModificationQueue, ^{
         [self.mutableHTTPRequestHeaders removeObjectForKey:@"Authorization"];
     });
 }
 
 #pragma mark -
-- (void)setQueryStringSerializationWithStyle:(OHHTTPRequestQueryStringSerializationStyle)style {
+- (void)setQryStrSeriWithStyle:(OHHTTPRequestQueryStringSerializationStyle)style {
     self.queryStringSerializationStyle = style;
     self.queryStringSerialization = nil;
 }
 
-- (void)setQueryStringSerializationWithBlock:(NSString *(^)(NSURLRequest *, id, NSError *__autoreleasing *))block {
+- (void)setQryStrSeriWithBlock:(NSString *(^)(NSURLRequest *, id, NSError *__autoreleasing *))block {
     self.queryStringSerialization = block;
 }
 
 #pragma mark -
 - (NSMutableURLRequest *)requestWithMethod:(NSString *)method
-                                 URLString:(NSString *)URLString
+                                 urlString:(NSString *)urlString
                                 parameters:(id)parameters
                                      error:(NSError *__autoreleasing *)error {
     NSParameterAssert(method);
-    NSParameterAssert(URLString);
-    NSURL *url = [NSURL URLWithString:URLString];
+    NSParameterAssert(urlString);
+    NSURL *url = [NSURL URLWithString:urlString];
     NSParameterAssert(url);
     NSMutableURLRequest *mutableRequest = [[NSMutableURLRequest alloc] initWithURL:url];
     mutableRequest.HTTPMethod = method;
@@ -258,22 +211,22 @@ forHTTPHeaderField:(NSString *)field {
     for (NSString *keyPath in self.mutableObservedChangedKeyPaths) {
         [mutableRequest setValue:[self valueForKeyPath:keyPath] forKey:keyPath];
     }
-    mutableRequest = [[self requestBySerializingRequest:mutableRequest withParameters:parameters error:error]
+    mutableRequest = [[self requestBySeriReq:mutableRequest withParameters:parameters error:error]
         mutableCopy];
 	return mutableRequest;
 }
 
 - (NSMutableURLRequest *)multipartFormRequestWithMethod:(NSString *)method
-                                              URLString:(NSString *)URLString
+                                              urlString:(NSString *)urlString
                                              parameters:(NSDictionary *)parameters
-                              constructingBodyWithBlock:(void (^)(id <OHMultipartFormData> formData))block
+                              constructingBodyWithBlock:(void (^)(id <OHMultiFormData> formData))block
                                                   error:(NSError *__autoreleasing *)error {
     NSParameterAssert(method);
     NSParameterAssert(![method isEqualToString:@"GET"] && ![method isEqualToString:@"HEAD"]);
-    NSMutableURLRequest *mutableRequest = [self requestWithMethod:method URLString:URLString parameters:nil
+    NSMutableURLRequest *mutableRequest = [self requestWithMethod:method urlString:urlString parameters:nil
         error:error];
-    __block OHStreamingMultipartFormData *formData = [[OHStreamingMultipartFormData alloc]
-        initWithURLRequest:mutableRequest stringEncoding:NSUTF8StringEncoding];
+    __block OHStreamingMultiFormData *formData = [[OHStreamingMultiFormData alloc]
+        initWithUrlReq:mutableRequest encoding:NSUTF8StringEncoding];
 
     if (parameters) {
         for (OHQueryStringPair *pair in OHQueryStringPairsFromDictionary(parameters)) {
@@ -283,11 +236,11 @@ forHTTPHeaderField:(NSString *)field {
             } else if ([pair.value isEqual:[NSNull null]]) {
                 data = [NSData data];
             } else {
-                data = [[pair.value description] dataUsingEncoding:self.stringEncoding];
+                data = [[pair.value description] dataUsingEncoding:self.encoding];
             }
 
             if (data) {
-                [formData appendPartWithFormData:data name:[pair.field description]];
+                [formData addPartWithFormData:data name:[pair.field description]];
             }
         }
     }
@@ -296,17 +249,17 @@ forHTTPHeaderField:(NSString *)field {
         block(formData);
     }
 
-    return [formData requestByFinalizingMultipartFormData];
+    return [formData requestByFinMultiFormData];
 }
 
-- (NSURLRequest *)requestBySerializingRequest:(NSURLRequest *)request
+- (NSURLRequest *)requestBySeriReq:(NSURLRequest *)request
                                withParameters:(id)parameters
                                         error:(NSError *__autoreleasing *)error {
     NSParameterAssert(request);
     NSMutableURLRequest *mutableRequest = [request mutableCopy];
-    [self.HTTPRequestHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id value, BOOL * __unused stop) {
-        if (![request valueForHTTPHeaderField:field]) {
-            [mutableRequest setValue:value forHTTPHeaderField:field];
+    [self.requestHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id value, BOOL * __unused stop) {
+        if (![request valueForHeaderField:field]) {
+            [mutableRequest setValue:value forHeaderField:field];
         }
     }];
 
@@ -330,7 +283,7 @@ forHTTPHeaderField:(NSString *)field {
         }
     }
 
-    if ([self.HTTPMethodsEncodingParametersInURI containsObject:[[request HTTPMethod] uppercaseString]]) {
+    if ([self.httpMethodEncodeParamInUri containsObject:[[request HTTPMethod] uppercaseString]]) {
         if (query && query.length > 0) {
             mutableRequest.URL = [NSURL URLWithString:[[mutableRequest.URL absoluteString]
                 stringByAppendingFormat:mutableRequest.URL.query ? @"&%@" : @"?%@", query]];
@@ -339,10 +292,10 @@ forHTTPHeaderField:(NSString *)field {
         if (!query) {
             query = @"";
         }
-        if (![mutableRequest valueForHTTPHeaderField:@"Content-Type"]) {
-            [mutableRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+        if (![mutableRequest valueForHeaderField:@"Content-Type"]) {
+            [mutableRequest setValue:@"application/x-www-form-urlencoded" forHeaderField:@"Content-Type"];
         }
-        [mutableRequest setHTTPBody:[query dataUsingEncoding:self.stringEncoding]];
+        [mutableRequest setHTTPBody:[query dataUsingEncoding:self.encoding]];
     }
     return mutableRequest;
 }

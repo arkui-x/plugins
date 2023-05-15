@@ -73,12 +73,12 @@ void IosUploadAdpImpl::PutUpdate(const std::string &method, std::shared_ptr<Uplo
     NSString *url = [NSString stringWithUTF8String:config->url.c_str()];
     NSURL *baseUrl = [NSURL URLWithString:url];
     sessionCtrl_ = [[OHHttpSessionController alloc] initWithBaseURL:baseUrl sessionConfiguration:nil];
-    [sessionCtrl_.requestHandler setValue:@"application/octet-stream" forHTTPHeaderField:@"Content-Type"];
+    [sessionCtrl_.requestHandler setValue:@"application/octet-stream" forHeaderField:@"Content-Type"];
     for (auto it = config->header.begin(); it != config->header.end(); it++) {
         std::string key = it->first;
         std::string value = it->second;
         [sessionCtrl_.requestHandler setValue:[NSString stringWithUTF8String:value.c_str()]
-            forHTTPHeaderField:[NSString stringWithUTF8String:key.c_str()]];
+            forHeaderField:[NSString stringWithUTF8String:key.c_str()]];
     }
     NSString *methodStr = [NSString stringWithUTF8String:method.c_str()];
     if ([url hasPrefix:@"https"]) {
@@ -97,7 +97,7 @@ void IosUploadAdpImpl::PutUpdate(const std::string &method, std::shared_ptr<Uplo
         putTotalUnitCount_ += GetFileSize(localPath);
         putFileCount_++;
         NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
-        NSMutableURLRequest *request = [sessionCtrl_.requestHandler requestWithMethod:methodStr URLString:dstUrl.absoluteString parameters:nil error:nil];
+        NSMutableURLRequest *request = [sessionCtrl_.requestHandler requestWithMethod:methodStr urlString:dstUrl.absoluteString parameters:nil error:nil];
         NSURLSessionUploadTask *task = [sessionCtrl_ uploadTaskWithRequest:request fromFile:localPath progress:^(NSProgress *uploadProgress) {
             if (callback != nullptr) {
                 std::lock_guard<std::mutex> guard(mutex_);
@@ -201,11 +201,11 @@ void IosUploadAdpImpl::PostUpdate(const std::string &method, std::shared_ptr<Upl
         UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "is http upload");
     }
     NSMutableURLRequest *request = [sessionCtrl_.requestHandler multipartFormRequestWithMethod:[NSString stringWithUTF8String:method.c_str()]
-        URLString:url parameters:nil
-        constructingBodyWithBlock:^(id<OHMultipartFormData> formData) {
+        urlString:url parameters:nil
+        constructingBodyWithBlock:^(id<OHMultiFormData> formData) {
             // name-value of form data
             for (const auto& formDt : config->data) {
-                [formData appendPartWithFormData:[NSData dataWithBytes:formDt.value.c_str() length:formDt.value.size()]
+                [formData addPartWithFormData:[NSData dataWithBytes:formDt.value.c_str() length:formDt.value.size()]
                     name:[NSString stringWithUTF8String:formDt.name.c_str()]];
             }
             // files
@@ -216,7 +216,7 @@ void IosUploadAdpImpl::PostUpdate(const std::string &method, std::shared_ptr<Upl
                 NSURL *localPath = [NSURL URLWithString:filePath];
                 UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "upload name:%{public}s, localPath:%{public}s",
                     [name UTF8String], [[localPath description] UTF8String]);
-                [formData appendPartWithFileURL:localPath name:name fileName:fileName mimeType:@"application/octet-stream" error:nil];
+                [formData addPartWithFile:localPath name:name fileName:fileName mimeType:@"application/octet-stream" error:nil];
             }
         } error:nil];
 

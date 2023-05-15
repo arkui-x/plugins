@@ -22,29 +22,29 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// OHMultipartFormData
-@protocol OHMultipartFormData
+// OHMultiFormData
+@protocol OHMultiFormData
 
-- (BOOL)appendPartWithFileURL:(NSURL *)fileURL
+- (BOOL)addPartWithFile:(NSURL *)url
                          name:(NSString *)name
                      fileName:(NSString *)fileName
-                     mimeType:(NSString *)mimeType
+                     mime:(NSString *)mime
                         error:(NSError * _Nullable __autoreleasing *)error;
 
-- (void)appendPartWithFormData:(NSData *)data
+- (void)addPartWithFormData:(NSData *)data
                           name:(NSString *)name;
-- (void)appendPartWithHeaders:(nullable NSDictionary <NSString *, NSString *> *)headers
+- (void)addPartWithHeaders:(nullable NSDictionary <NSString *, NSString *> *)headers
                          body:(NSData *)body;
 
 @end
 
 
-// OHStreamingMultipartFormData
-@interface OHStreamingMultipartFormData : NSObject <OHMultipartFormData>
+// OHStreamingMultiFormData
+@interface OHStreamingMultiFormData : NSObject <OHMultiFormData>
 
-- (instancetype)initWithURLRequest:(NSMutableURLRequest *)urlRequest
-                    stringEncoding:(NSStringEncoding)encoding;
-- (NSMutableURLRequest *)requestByFinalizingMultipartFormData;
+- (instancetype)initWithUrlReq:(NSMutableURLRequest *)urlRequest
+                    encoding:(NSStringEncoding)encoding;
+- (NSMutableURLRequest *)requestByFinMultiFormData;
 
 @end
 

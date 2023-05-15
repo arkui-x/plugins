@@ -29,48 +29,39 @@ typedef NS_ENUM(NSUInteger, OHHTTPRequestQueryStringSerializationStyle) {
     OHHTTPRequestQueryStringDefaultStyle = 0,
 };
 
-@protocol OHMultipartFormData;
+@protocol OHMultiFormData;
 
 @interface OHHttpRequestHandler : NSObject <NSObject>
-@property (nonatomic, assign) NSStringEncoding stringEncoding;
-@property (nonatomic, assign) BOOL allowsCellularAccess;
-@property (nonatomic, assign) NSURLRequestCachePolicy cachePolicy;
-@property (nonatomic, assign) BOOL HTTPShouldHandleCookies;
-@property (nonatomic, assign) BOOL HTTPShouldUsePipelining;
-@property (nonatomic, assign) NSURLRequestNetworkServiceType networkServiceType;
-@property (nonatomic, assign) NSTimeInterval timeoutInterval;
-@property (readonly, nonatomic, strong) NSDictionary <NSString *, NSString *> *HTTPRequestHeaders;
-@property (nonatomic, strong) NSSet <NSString *> *HTTPMethodsEncodingParametersInURI;
+@property (nonatomic, assign) NSStringEncoding encoding;
+@property (readonly, nonatomic, strong) NSDictionary <NSString *, NSString *> *requestHeaders;
+@property (nonatomic, strong) NSSet <NSString *> *httpMethodEncodeParamInUri;
 
 
 + (instancetype)instance;
 
-- (void)setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field;
+- (void)setValue:(nullable NSString *)value forHeaderField:(NSString *)field;
 
-- (nullable NSString *)valueForHTTPHeaderField:(NSString *)field;
+- (nullable NSString *)valueForHeaderField:(NSString *)field;
 
-- (void)setAuthorizationHeaderFieldWithUsername:(NSString *)username
-                                       password:(NSString *)password;
+- (void)clearAuthHeader;
 
-- (void)clearAuthorizationHeader;
+- (void)setQryStrSeriWithStyle:(OHHTTPRequestQueryStringSerializationStyle)style;
 
-- (void)setQueryStringSerializationWithStyle:(OHHTTPRequestQueryStringSerializationStyle)style;
-
-- (void)setQueryStringSerializationWithBlock:(nullable NSString * _Nullable (^)(NSURLRequest *request,
+- (void)setQryStrSeriWithBlock:(nullable NSString * _Nullable (^)(NSURLRequest *request,
     id parameters, NSError * __autoreleasing *error))block;
 
 - (nullable NSMutableURLRequest *)requestWithMethod:(NSString *)method
-                                          URLString:(NSString *)URLString
+                                          urlString:(NSString *)urlString
                                          parameters:(nullable id)parameters
                                               error:(NSError * _Nullable __autoreleasing *)error;
 
 - (NSMutableURLRequest *)multipartFormRequestWithMethod:(NSString *)method
-                                              URLString:(NSString *)URLString
+                                              urlString:(NSString *)urlString
                                              parameters:(nullable NSDictionary <NSString *, id> *)parameters
-                              constructingBodyWithBlock:(nullable void (^)(id <OHMultipartFormData> formData))block
+                              constructingBodyWithBlock:(nullable void (^)(id <OHMultiFormData> formData))block
                                                   error:(NSError * _Nullable __autoreleasing *)error;
 
-- (nullable NSURLRequest *)requestBySerializingRequest:(NSURLRequest *)request
+- (nullable NSURLRequest *)requestBySeriReq:(NSURLRequest *)request
                                withParameters:(nullable id)parameters
                                         error:(NSError * _Nullable __autoreleasing *)error NS_SWIFT_NOTHROW;
 

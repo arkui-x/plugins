@@ -87,12 +87,12 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 }
 
 - (void)setSslHandler:(OHSslHandler *)sslHandler {
-    if (sslHandler.SSLPinningMode != OHSSLPinningModeNone && ![self.baseURL.scheme isEqualToString:@"https"]) {
+    if (sslHandler.sslMode != OHSSLModeNone && ![self.baseURL.scheme isEqualToString:@"https"]) {
         NSString *pinningMode = @"Unknown Pinning Mode";
-        switch (sslHandler.SSLPinningMode) {
-            case OHSSLPinningModeNone:        pinningMode = @"OHSSLPinningModeNone"; break;
-            case OHSSLPinningModeCertificate: pinningMode = @"OHSSLPinningModeCertificate"; break;
-            case OHSSLPinningModePublicKey:   pinningMode = @"OHSSLPinningModePublicKey"; break;
+        switch (sslHandler.sslMode) {
+            case OHSSLModeNone:        pinningMode = @"OHSSLModeNone"; break;
+            case OHSSLModeCert: pinningMode = @"OHSSLModeCert"; break;
+            case OHSSLModePubKey:   pinningMode = @"OHSSLModePubKey"; break;
         }
         NSString *reason = [NSString stringWithFormat:@"A pinning mode configured with `%@`
             can only be applied on a ctrl with a secure base URL (i.e. https)", pinningMode];
@@ -313,7 +313,7 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend {
     int64_t totalUnitCount = totalBytesExpectedToSend;
     if (totalUnitCount == NSURLSessionTransferSizeUnknown) {
-        NSString *contentLength = [task.originalRequest valueForHTTPHeaderField:@"Content-Length"];
+        NSString *contentLength = [task.originalRequest valueForHeaderField:@"Content-Length"];
         if (contentLength) {
             totalUnitCount = (int64_t) [contentLength longLongValue];
         }

@@ -72,7 +72,7 @@ void IosDownloadAdpImpl::Download(const DownloadConfig &config, IosDownloadAdpCa
             NSString *value = [NSString stringWithUTF8String:header.second.c_str()];
             [sessionCtrl_.requestHandler setValue:value forHTTPHeaderField:key];
         }
-        NSURLRequest *serializedRequest = [sessionCtrl_.requestHandler requestBySerializingRequest:request withParameters:nil error:nil];
+        NSURLRequest *serializedRequest = [sessionCtrl_.requestHandler requestBySeriReq:request withParameters:nil error:nil];
         downloadTask_ = [sessionCtrl_ downloadTaskWithRequest:serializedRequest
             progress:^(NSProgress *downloadProgress) {
                 if (callback != nullptr) {
