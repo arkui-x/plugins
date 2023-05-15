@@ -80,6 +80,17 @@ public class DownloadManagerPlugin {
     private String downloadTitle;
     private boolean isDownloadBackground;
     private String downloadFilePath;
+    private final Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            queryProgress();
+            if (isDownloading) {
+                handle.postDelayed(runnable, QUERY_PROGRESS_TIME);
+            }
+        }
+    };
+
+    private final Handler handle = new Handler(Looper.getMainLooper());
 
     /**
      * DownloadManagerPlugin
@@ -129,18 +140,6 @@ public class DownloadManagerPlugin {
         private String title;
         private boolean isBackground;
     }
-
-    private final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            queryProgress();
-            if (isDownloading) {
-                handle.postDelayed(runnable, QUERY_PROGRESS_TIME);
-            }
-        }
-    };
-
-    private final Handler handle = new Handler(Looper.getMainLooper());
 
     private void registerReceiver() {
         downloadCompleteReceiver = new BroadcastReceiver() {
