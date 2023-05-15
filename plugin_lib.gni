@@ -15,7 +15,6 @@ import("//build/ohos.gni")
 
 
 common_plugin_libs_static = [
-  "ability_access_ctrl",
   "bridge",
   "buffer",
   "common_event",
@@ -58,6 +57,7 @@ common_plugin_libs_static = [
 ]
 
 common_plugin_libs = [
+  "ability_access_ctrl",
 ]
 
 if (target_os == "android") {
