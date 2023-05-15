@@ -86,12 +86,12 @@ void InstallCertificateChain(OHHttpSessionController *sessionCtrl_)
 
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "Certificate chain count:%{public}d", certSet.count);
     if ([certSet count] == 0) {
-        return; // use default: OHSSLModeNone
+        return; // use default: OHSslTypeNone
     }
-    OHSslHandler *sslHandler = [OHSslHandler handlerWithPinningMode:OHSSLModeCert];
+    OHSslHandler *sslHandler = [OHSslHandler handlerWithSslType:OHSslTypeCert];
     [sslHandler setAllowInvalidCertificates:YES];
     [sslHandler setValidatesDomainName:NO];
-    [sslHandler setPinnedCertificates:certSet];
+    [sslHandler setCerts:certSet];
     sessionCtrl_.sslHandler = sslHandler;
 }
 

@@ -205,7 +205,7 @@ void IosUploadAdpImpl::PostUpdate(const std::string &method, std::shared_ptr<Upl
         constructingBodyWithBlock:^(id<OHMultiFormData> formData) {
             // name-value of form data
             for (const auto& formDt : config->data) {
-                [formData addPartWithFormData:[NSData dataWithBytes:formDt.value.c_str() length:formDt.value.size()]
+                [formData addFormData:[NSData dataWithBytes:formDt.value.c_str() length:formDt.value.size()]
                     name:[NSString stringWithUTF8String:formDt.name.c_str()]];
             }
             // files
@@ -216,7 +216,7 @@ void IosUploadAdpImpl::PostUpdate(const std::string &method, std::shared_ptr<Upl
                 NSURL *localPath = [NSURL URLWithString:filePath];
                 UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "upload name:%{public}s, localPath:%{public}s",
                     [name UTF8String], [[localPath description] UTF8String]);
-                [formData addPartWithFile:localPath name:name fileName:fileName mimeType:@"application/octet-stream" error:nil];
+                [formData addFile:localPath name:name mime:@"application/octet-stream" fileName:fileName error:nil];
             }
         } error:nil];
 

@@ -148,7 +148,7 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
 @implementation OHStreamingMultiFormData
 
 - (instancetype)initWithUrlReq:(NSMutableURLRequest *)urlRequest
-                    encoding:(NSStringEncoding)encoding {
+    encoding:(NSStringEncoding)encoding {
     self = [super init];
     if (!self) {
         return nil;
@@ -165,11 +165,32 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     _request = [request mutableCopy];
 }
 
-- (BOOL)addPartWithFile:(NSURL *)url
-                         name:(NSString *)name
-                     fileName:(NSString *)fileName
-                     mime:(NSString *)mime
-                        error:(NSError * __autoreleasing *)error {
+- (void)addHeaders:(NSDictionary *)headers
+    body:(NSData *)body {
+    NSParameterAssert(body);
+    OHHttpBodyPart *bodyPart = [[OHHttpBodyPart alloc] init];
+    bodyPart.stringEncoding = self.stringEncoding;
+    bodyPart.headers = headers;
+    bodyPart.boundary = self.boundary;
+    bodyPart.bodyContentLength = [body length];
+    bodyPart.body = body;
+    [self.bodyStream appendHTTPBodyPart:bodyPart];
+}
+
+- (void)addFormData:(NSData *)data
+    name:(NSString *)name {
+    NSParameterAssert(name);
+    NSMutableDictionary *mutableHeaders = [NSMutableDictionary dictionary];
+    [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"", name]
+        forKey:@"Content-Disposition"];
+    [self addHeaders:mutableHeaders body:data];
+}
+
+- (BOOL)addFile:(NSURL *)url
+    name:(NSString *)name
+    mime:(NSString *)mime
+    fileName:(NSString *)fileName
+    error:(NSError * __autoreleasing *)error {
     NSParameterAssert(url);
     NSParameterAssert(name);
     NSParameterAssert(fileName);
@@ -211,27 +232,6 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
     bodyPart.bodyContentLength = [fileAttributes[NSFileSize] unsignedLongLongValue];
     [self.bodyStream appendHTTPBodyPart:bodyPart];
     return YES;
-}
-
-- (void)addPartWithFormData:(NSData *)data
-                          name:(NSString *)name {
-    NSParameterAssert(name);
-    NSMutableDictionary *mutableHeaders = [NSMutableDictionary dictionary];
-    [mutableHeaders setValue:[NSString stringWithFormat:@"form-data; name=\"%@\"", name]
-        forKey:@"Content-Disposition"];
-    [self addPartWithHeaders:mutableHeaders body:data];
-}
-
-- (void)addPartWithHeaders:(NSDictionary *)headers
-                         body:(NSData *)body {
-    NSParameterAssert(body);
-    OHHttpBodyPart *bodyPart = [[OHHttpBodyPart alloc] init];
-    bodyPart.stringEncoding = self.stringEncoding;
-    bodyPart.headers = headers;
-    bodyPart.boundary = self.boundary;
-    bodyPart.bodyContentLength = [body length];
-    bodyPart.body = body;
-    [self.bodyStream appendHTTPBodyPart:bodyPart];
 }
 
 - (NSMutableURLRequest *)requestByFinMultiFormData {

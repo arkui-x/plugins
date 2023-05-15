@@ -240,7 +240,7 @@ forHeaderField:(NSString *)field {
             }
 
             if (data) {
-                [formData addPartWithFormData:data name:[pair.field description]];
+                [formData addFormData:data name:[pair.field description]];
             }
         }
     }

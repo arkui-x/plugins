@@ -25,16 +25,18 @@ NS_ASSUME_NONNULL_BEGIN
 // OHMultiFormData
 @protocol OHMultiFormData
 
-- (BOOL)addPartWithFile:(NSURL *)url
-                         name:(NSString *)name
-                     fileName:(NSString *)fileName
-                     mime:(NSString *)mime
-                        error:(NSError * _Nullable __autoreleasing *)error;
 
-- (void)addPartWithFormData:(NSData *)data
-                          name:(NSString *)name;
-- (void)addPartWithHeaders:(nullable NSDictionary <NSString *, NSString *> *)headers
-                         body:(NSData *)body;
+- (void)addHeaders:(nullable NSDictionary <NSString *, NSString *> *)headers
+    body:(NSData *)body;
+
+- (void)addFormData:(NSData *)data
+    name:(NSString *)name;
+
+- (BOOL)addFile:(NSURL *)url
+    name:(NSString *)name
+    mime:(NSString *)mime
+    fileName:(NSString *)fileName
+    error:(NSError * _Nullable __autoreleasing *)error;
 
 @end
 

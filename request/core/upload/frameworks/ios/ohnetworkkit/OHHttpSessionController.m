@@ -87,12 +87,12 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
 }
 
 - (void)setSslHandler:(OHSslHandler *)sslHandler {
-    if (sslHandler.sslMode != OHSSLModeNone && ![self.baseURL.scheme isEqualToString:@"https"]) {
+    if (sslHandler.sslType != OHSslTypeNone && ![self.baseURL.scheme isEqualToString:@"https"]) {
         NSString *pinningMode = @"Unknown Pinning Mode";
-        switch (sslHandler.sslMode) {
-            case OHSSLModeNone:        pinningMode = @"OHSSLModeNone"; break;
-            case OHSSLModeCert: pinningMode = @"OHSSLModeCert"; break;
-            case OHSSLModePubKey:   pinningMode = @"OHSSLModePubKey"; break;
+        switch (sslHandler.sslType) {
+            case OHSslTypeNone:        pinningMode = @"OHSslTypeNone"; break;
+            case OHSslTypeCert: pinningMode = @"OHSslTypeCert"; break;
+            case OHSslTypePubKey:   pinningMode = @"OHSslTypePubKey"; break;
         }
         NSString *reason = [NSString stringWithFormat:@"A pinning mode configured with `%@`
             can only be applied on a ctrl with a secure base URL (i.e. https)", pinningMode];
