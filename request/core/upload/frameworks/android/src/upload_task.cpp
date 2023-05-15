@@ -32,7 +32,7 @@ bool IUploadTask::CheckFilesValid(const std::vector<File> &files)
         if (fp == nullptr) {
             return false;
         }
-        fclose(fp);
+        (void)fclose(fp);
     }
     return true;
 }

@@ -62,6 +62,7 @@ public class DownloadManagerPlugin {
     private static Context context;
     private static int alreadyRetried;
     private static boolean isDownloading = false;
+
     private DownloadManager.Request request;
     private DownloadManager downloadManager;
     private BroadcastReceiver downloadCompleteReceiver;
@@ -79,23 +80,6 @@ public class DownloadManagerPlugin {
     private String downloadTitle;
     private boolean isDownloadBackground;
     private String downloadFilePath;
-
-    /**
-     * DownloadConfig
-     *
-     * @since 1
-     */
-    public class DownloadConfig {
-        private String url;
-        private Object header;
-        private boolean isEnableMetered;
-        private boolean isEnableRoaming;
-        private String description;
-        private int networkType;
-        private String filePath;
-        private String title;
-        private boolean isBackground;
-    }
 
     /**
      * DownloadManagerPlugin
@@ -127,6 +111,23 @@ public class DownloadManagerPlugin {
         if (isNativeInit) {
             nativeInit();
         }
+    }
+
+    /**
+     * DownloadConfig
+     *
+     * @since 1
+     */
+    public class DownloadConfig {
+        private String url;
+        private Object header;
+        private boolean isEnableMetered;
+        private boolean isEnableRoaming;
+        private String description;
+        private int networkType;
+        private String filePath;
+        private String title;
+        private boolean isBackground;
     }
 
     private final Runnable runnable = new Runnable() {

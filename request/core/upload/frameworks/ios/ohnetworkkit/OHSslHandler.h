@@ -15,8 +15,9 @@
 #ifndef PLUGINS_REQUEST_IOS_OHNETWORKKIT_OHSSLHANDLER_H
 #define PLUGINS_REQUEST_IOS_OHNETWORKKIT_OHSSLHANDLER_H
 
-#import <Foundation/Foundation.h>
 #import <Security/Security.h>
+#import <Foundation/Foundation.h>
+
 
 typedef NS_ENUM(NSUInteger, OHSslType) {
     OHSslTypePubKey,
@@ -27,11 +28,11 @@ typedef NS_ENUM(NSUInteger, OHSslType) {
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface OHSslHandler : NSObject <NSSecureCoding, NSCopying>
+@interface OHSslHandler : NSObject
 
 @property (nonatomic, strong, nullable) NSSet <NSData *> *certList;
-@property (nonatomic, assign) BOOL allowValideDomain;
-@property (nonatomic, assign) BOOL passInvalidCerts;
+@property (nonatomic, assign) BOOL allowIvdHostDomain;
+@property (nonatomic, assign) BOOL allowIvdCerts;
 @property (readonly, nonatomic, assign) OHSslType sslType;
 
 

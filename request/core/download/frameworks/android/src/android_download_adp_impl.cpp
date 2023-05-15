@@ -81,8 +81,7 @@ void AndroidDownloadAdpImpl::Download(const DownloadConfig &config, void *downlo
 {
     DOWNLOAD_HILOGI("AndroidDownloadAdpImpl Download called");
     CHECK_NULL_VOID(downloadProgress);
-    PluginUtils::RunTaskOnPlatform([&, downloadProgress]() {
-        DownloadManagerJni::Download(config, downloadProgress); });
+    PluginUtils::RunTaskOnPlatform([&, downloadProgress]() { DownloadManagerJni::Download(config, downloadProgress); });
 }
 
 void AndroidDownloadAdpImpl::Suspend()
@@ -110,3 +109,5 @@ void AndroidDownloadAdpImpl::GetNetworkType(void *network)
     PluginUtils::RunSyncTaskOnLocal([network]() { DownloadManagerJni::GetNetworkType(network); }, span);
 }
 } // namespace OHOS::Plugin::Request::Download
+
+

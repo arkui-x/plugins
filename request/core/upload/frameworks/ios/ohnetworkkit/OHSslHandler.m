@@ -151,7 +151,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
     if (!self) {
         return nil;
     }
-    self.allowValideDomain = YES;
+    self.allowIvdHostDomain = YES;
     return self;
 }
 
@@ -176,22 +176,22 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
 #pragma mark -
 - (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust
                   forDomain:(NSString *)domain {
-    if (domain && self.passInvalidCerts && self.allowValideDomain &&
+    if (domain && self.allowIvdCerts && self.allowIvdHostDomain &&
         (self.sslType == OHSslTypeNone || [self.certList count] == 0)) {
         NSLog(@"In order to validate a domain name for self signed certificates, you MUST use pinning.");
         return NO;
     }
 
     NSMutableArray *policies = [NSMutableArray array];
-    if (self.allowValideDomain) {
+    if (self.allowIvdHostDomain) {
         [policies addObject:(__bridge_transfer id)SecPolicyCreateSSL(true, (__bridge CFStringRef)domain)];
     } else {
         [policies addObject:(__bridge_transfer id)SecPolicyCreateBasicX509()];
     }
     SecTrustSetPolicies(serverTrust, (__bridge CFArrayRef)policies);
     if (self.sslType == OHSslTypeNone) {
-        return self.passInvalidCerts || OHServerTrustIsValid(serverTrust);
-    } else if (!self.passInvalidCerts && !OHServerTrustIsValid(serverTrust)) {
+        return self.allowIvdCerts || OHServerTrustIsValid(serverTrust);
+    } else if (!self.allowIvdCerts && !OHServerTrustIsValid(serverTrust)) {
         return NO;
     }
 
