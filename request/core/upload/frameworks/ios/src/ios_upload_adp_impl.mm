@@ -192,7 +192,7 @@ void IosUploadAdpImpl::PostUpdate(const std::string &method, std::shared_ptr<Upl
         std::string key = it->first;
         std::string value = it->second;
         [sessionCtrl_.requestHandler setValue:[NSString stringWithUTF8String:value.c_str()]
-            forHTTPHeaderField:[NSString stringWithUTF8String:key.c_str()]];
+            forHeaderField:[NSString stringWithUTF8String:key.c_str()]];
     }
     if ([url hasPrefix:@"https"]) {
         OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);

@@ -40,6 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)handlerWithSslType:(OHSslType)sslType;
 - (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust
                   forDomain:(nullable NSString *)domain;
+- (void)setCerts:(NSSet *)certList;
 
 @end
 

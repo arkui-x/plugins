@@ -225,7 +225,7 @@ forHeaderField:(NSString *)field {
     NSParameterAssert(![method isEqualToString:@"GET"] && ![method isEqualToString:@"HEAD"]);
     NSMutableURLRequest *mutableRequest = [self requestWithMethod:method urlString:urlString parameters:nil
         error:error];
-    __block OHStreamingMultiFormData *formData = [[OHStreamingMultiFormData alloc]
+    __block OHStreamMulFormData *formData = [[OHStreamMulFormData alloc]
         initWithUrlReq:mutableRequest encoding:NSUTF8StringEncoding];
 
     if (parameters) {
@@ -258,8 +258,8 @@ forHeaderField:(NSString *)field {
     NSParameterAssert(request);
     NSMutableURLRequest *mutableRequest = [request mutableCopy];
     [self.requestHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id value, BOOL * __unused stop) {
-        if (![request valueForHeaderField:field]) {
-            [mutableRequest setValue:value forHeaderField:field];
+        if (![request valueForHTTPHeaderField:field]) {
+            [mutableRequest setValue:value forHTTPHeaderField:field];
         }
     }];
 
@@ -292,8 +292,8 @@ forHeaderField:(NSString *)field {
         if (!query) {
             query = @"";
         }
-        if (![mutableRequest valueForHeaderField:@"Content-Type"]) {
-            [mutableRequest setValue:@"application/x-www-form-urlencoded" forHeaderField:@"Content-Type"];
+        if (![mutableRequest valueForHTTPHeaderField:@"Content-Type"]) {
+            [mutableRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
         }
         [mutableRequest setHTTPBody:[query dataUsingEncoding:self.encoding]];
     }

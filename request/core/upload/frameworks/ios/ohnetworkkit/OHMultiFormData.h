@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 // OHMultiFormData
 @protocol OHMultiFormData
 
-
 - (void)addHeaders:(nullable NSDictionary <NSString *, NSString *> *)headers
     body:(NSData *)body;
 
@@ -40,17 +39,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-
-// OHStreamingMultiFormData
-@interface OHStreamingMultiFormData : NSObject <OHMultiFormData>
-
-- (instancetype)initWithUrlReq:(NSMutableURLRequest *)urlRequest
-                    encoding:(NSStringEncoding)encoding;
-- (NSMutableURLRequest *)requestByFinMultiFormData;
-
-@end
-
-
 // OHQueryStringPair
 @interface OHQueryStringPair : NSObject
 
@@ -59,6 +47,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithField:(id)field value:(id)value;
 - (NSString *)URLEncodedStringValue;
+
+@end
+
+// OHStreamMulFormData
+@interface OHStreamMulFormData : NSObject <OHMultiFormData>
+
+- (instancetype)initWithUrlReq:(NSMutableURLRequest *)urlRequest
+                    encoding:(NSStringEncoding)encoding;
+- (NSMutableURLRequest *)requestByFinMultiFormData;
 
 @end
 

@@ -94,7 +94,7 @@ typedef void (^OHURLSessionDidFinishEventsForBackgroundURLSessionBlock)(NSURLSes
             case OHSslTypeCert: pinningMode = @"OHSslTypeCert"; break;
             case OHSslTypePubKey:   pinningMode = @"OHSslTypePubKey"; break;
         }
-        NSString *reason = [NSString stringWithFormat:@"A pinning mode configured with `%@`
+        NSString *reason = [NSString stringWithFormat:@"A pinning mode configured with `%@` \
             can only be applied on a ctrl with a secure base URL (i.e. https)", pinningMode];
         @throw [NSException exceptionWithName:@"Invalid pinning mode" reason:reason userInfo:nil];
     }
@@ -272,11 +272,11 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 
 - (nonnull NSError *)serverTrustErrorForServerTrust:(nullable SecTrustRef)serverTrust url:(nullable NSURL *)url {
     NSBundle *CFNetworkBundle = [NSBundle bundleWithIdentifier:@"com.apple.CFNetwork"];
-    NSString *defaultValue = @"The certificate for this server is invalid. You might be connecting to a server
+    NSString *defaultValue = @"The certificate for this server is invalid. You might be connecting to a server \
         that is pretending to be “%@” which could put your confidential information at risk.";
     NSString *descriptionFormat = NSLocalizedStringWithDefaultValue(@"Err-1202.w", nil,
         CFNetworkBundle, defaultValue, @"") ?: defaultValue;
-    NSString *localizedDescription = [descriptionFormat componentsSeparatedByString:@"%@"].count <= 2 ?
+    NSString *localizedDescription = [descriptionFormat componentsSeparatedByString:@"%@"].count <= 2 ? \
         [NSString localizedStringWithFormat:descriptionFormat, url.host] : descriptionFormat;
     NSMutableDictionary *userInfo = [@{
         NSLocalizedDescriptionKey: localizedDescription
@@ -313,7 +313,7 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend {
     int64_t totalUnitCount = totalBytesExpectedToSend;
     if (totalUnitCount == NSURLSessionTransferSizeUnknown) {
-        NSString *contentLength = [task.originalRequest valueForHeaderField:@"Content-Length"];
+        NSString *contentLength = [task.originalRequest valueForHTTPHeaderField:@"Content-Length"];
         if (contentLength) {
             totalUnitCount = (int64_t) [contentLength longLongValue];
         }

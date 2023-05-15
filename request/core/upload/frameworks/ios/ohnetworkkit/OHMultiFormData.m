@@ -134,8 +134,8 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
 @end
 
 
-#pragma mark - OHStreamingMultiFormData
-@interface OHStreamingMultiFormData ()
+#pragma mark - OHStreamMulFormData
+@interface OHStreamMulFormData ()
 
 @property (readwrite, nonatomic, copy) NSMutableURLRequest *request;
 @property (readwrite, nonatomic, assign) NSStringEncoding stringEncoding;
@@ -145,7 +145,7 @@ static inline NSString * OHContentTypeForPathExtension(NSString *extension) {
 @end
 
 
-@implementation OHStreamingMultiFormData
+@implementation OHStreamMulFormData
 
 - (instancetype)initWithUrlReq:(NSMutableURLRequest *)urlRequest
     encoding:(NSStringEncoding)encoding {

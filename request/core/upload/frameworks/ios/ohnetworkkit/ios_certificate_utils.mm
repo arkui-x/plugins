@@ -89,8 +89,8 @@ void InstallCertificateChain(OHHttpSessionController *sessionCtrl_)
         return; // use default: OHSslTypeNone
     }
     OHSslHandler *sslHandler = [OHSslHandler handlerWithSslType:OHSslTypeCert];
-    [sslHandler setAllowInvalidCertificates:YES];
-    [sslHandler setValidatesDomainName:NO];
+    [sslHandler setPassInvalidCerts:YES];
+    [sslHandler setAllowValideDomain:NO];
     [sslHandler setCerts:certSet];
     sessionCtrl_.sslHandler = sslHandler;
 }
