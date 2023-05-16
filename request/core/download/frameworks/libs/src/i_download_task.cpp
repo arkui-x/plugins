@@ -14,6 +14,7 @@
  */
 
 #include "i_download_task.h"
+#include <thread>
 #include <vector>
 #include "log.h"
 
@@ -59,10 +60,16 @@ bool IDownloadTask::AddListener(const std::string &type, std::shared_ptr<Downloa
     // event buf
     auto iter = eventBufMap_.find(type);
     if (iter != eventBufMap_.end()) {
-        uint32_t argv1 = std::get<0>(iter->second);
-        uint32_t argv2 = std::get<1>(iter->second);
-        OnCallBack(type, argv1, argv2);
+        uint32_t argv1 = std::get<0>(iter->second); // 0: argv1
+        uint32_t argv2 = std::get<1>(iter->second); // 1: argv2
         eventBufMap_.erase(iter);
+        std::unique_ptr<std::thread> thread =
+            std::make_unique<std::thread>(&IDownloadTask::OnCallBack, this, type, argv1, argv2);
+        if (thread == nullptr) {
+            DOWNLOAD_HILOGE("create for event buf callback thread failed, task:[%{public}d]", GetId());
+            return true;
+        }
+        thread->detach();
     }
     return true;
 }
