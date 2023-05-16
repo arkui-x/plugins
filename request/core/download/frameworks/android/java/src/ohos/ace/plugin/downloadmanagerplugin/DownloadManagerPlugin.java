@@ -335,6 +335,9 @@ public class DownloadManagerPlugin {
         downloadProgressObj = downloadProgress;
         downloadId = downloadManager.enqueue(request);
         Log.i(LOG_TAG, "Start to download task: " + downloadId);
+        if (downloadId != 0) {
+            startQueryProgress();
+        }
         return downloadId;
     }
 
