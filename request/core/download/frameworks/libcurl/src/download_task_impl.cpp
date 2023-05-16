@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-#include "download_task_impl.h"
-
+#include <unistd.h>
 #include <algorithm>
 #include <mutex>
-#include <unistd.h>
 #include <fstream>
 #include <sstream>
 #include <ios>
@@ -28,18 +26,23 @@
 #include <utility>
 #include <vector>
 #include <curl/easy.h>
-
 #include "log.h"
+#include "download_task_impl.h"
 
 namespace OHOS::Plugin::Request::Download {
 static const std::string URL_HTTPS = "https";
 static constexpr uint32_t MAX_RETRY_TIMES = 3;
 static std::string TLS_VERSION_DEFAULT = "CURL_SSLVERSION_TLSv1_2";
+
+
+IDownloadTask* IDownloadTask::CreateDownloadTask(uint32_t taskId, const DownloadConfig &config)
+{
+    return new (std::nothrow) DownloadTaskImpl(taskId, config);
+}
+
 DownloadTaskImpl::DownloadTaskImpl(uint32_t taskId, const DownloadConfig &config)
-    : DownloadTask(taskId), config_(config), status_(SESSION_UNKNOWN), code_(ERROR_UNKNOWN),
-      reason_(PAUSED_UNKNOWN), mimeType_(""), totalSize_(0), downloadSize_(0), isPartialMode_(false),
-      forceStop_(false), isRemoved_(false), retryTime_(MAX_RETRY_TIMES), eventCb_(nullptr), hasFileSize_(false),
-      isOnline_(true), prevSize_(0) {
+    : IDownloadTask(taskId, config), mimeType_(""), totalSize_(0), downloadSize_(0), isPartialMode_(false),
+      forceStop_(false), isRemoved_(false), retryTime_(MAX_RETRY_TIMES), hasFileSize_(false), prevSize_(0) {
 }
 
 DownloadTaskImpl::~DownloadTaskImpl(void)
@@ -49,8 +52,6 @@ DownloadTaskImpl::~DownloadTaskImpl(void)
         close(config_.GetFD());
         config_.SetFD(-1);
     }
-
-    eventCb_ = nullptr;
 }
 
 void DownloadTaskImpl::ExecuteTask()
@@ -77,7 +78,7 @@ bool DownloadTaskImpl::Run()
     bool result = false;
     bool enableTimeout = false;
     SetStatus(SESSION_RUNNING);
-    
+
     do {
         if (!IsSatisfiedConfiguration()) {
             DOWNLOAD_HILOGI("networktype not Satisfied Configuration");
@@ -132,13 +133,8 @@ bool DownloadTaskImpl::Remove()
     if (eventCb_ != nullptr) {
         eventCb_("remove", GetId(), 0, 0);
     }
-    
-    return true;
-}
 
-void DownloadTaskImpl::InstallCallback(DownloadTaskCallback cb)
-{
-    eventCb_ = cb;
+    return true;
 }
 
 void DownloadTaskImpl::GetRunResult(DownloadStatus &status, ErrorCode &code, PausedReason &reason)
@@ -159,232 +155,6 @@ void DownloadTaskImpl::SetNetworkStatus(bool isOnline)
     isOnline_ = isOnline;
     if (status_ == SESSION_PAUSED && reason_ == PAUSED_WAITING_TO_RETRY && !isOnline_) {
         reason_ = PAUSED_WAITING_FOR_NETWORK;
-    }
-}
-
-void DownloadTaskImpl::SetStatus(DownloadStatus status, ErrorCode code, PausedReason reason)
-{
-    auto stateChange = [this](DownloadStatus status, ErrorCode code, PausedReason reason) -> bool {
-        std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-        bool isChanged = false;
-        if (status != this->status_) {
-            this->status_ = status;
-            isChanged = true;
-        }
-        if (code != this->code_) {
-            this->code_ = code;
-            isChanged = true;
-        }
-        if (this->reason_ != PAUSED_BY_USER) {
-            if (!isOnline_ && reason == PAUSED_WAITING_TO_RETRY) {
-                reason = PAUSED_WAITING_FOR_NETWORK;
-            }
-            if (reason != this->reason_) {
-                this->reason_ = reason;
-                isChanged = true;
-            }
-        }
-
-        return isChanged;
-    };
-    DOWNLOAD_HILOGI("Status [%{public}d], Code [%{public}d], Reason [%{public}d]", status, code, reason);
-    if (!stateChange(status, code, reason)) {
-        return;
-    }
-    if (eventCb_ != nullptr) {
-        std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-        switch (status_) {
-            case SESSION_SUCCESS:
-                eventCb_("complete", GetId(), 0, 0);
-                break;
-
-            case SESSION_PAUSED:
-                eventCb_("pause", GetId(), 0, 0);
-                break;
-
-            case SESSION_FAILED:
-                eventCb_("fail", GetId(), code_, 0);
-                break;
-
-            default:
-                break;
-        }
-    }
-}
-
-bool DownloadTaskImpl::IsRunning()
-{
-    return (status_ == SESSION_RUNNING);
-}
-
-void DownloadTaskImpl::SetStatus(DownloadStatus status)
-{
-    auto stateChange = [this](DownloadStatus status) -> bool {
-        std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-        if (status == this->status_) {
-            DOWNLOAD_HILOGD("ignore same status");
-            return false;
-        }
-        this->status_ = status;
-        return true;
-    };
-    DOWNLOAD_HILOGI("Status [%{public}d]", status);
-    if (!stateChange(status)) {
-        return;
-    }
-    if (eventCb_ != nullptr) {
-        std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-        switch (status_) {
-            case SESSION_SUCCESS:
-                eventCb_("complete", GetId(), 0, 0);
-                break;
-
-            case SESSION_PAUSED:
-                eventCb_("pause", GetId(), 0, 0);
-                break;
-
-            case SESSION_FAILED:
-                eventCb_("fail", GetId(), code_, 0);
-                break;
-
-            default:
-                break;
-        }
-    }
-}
-
-void DownloadTaskImpl::SetError(ErrorCode code)
-{
-    DOWNLOAD_HILOGI("Code [%{public}d]", code);
-    std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-    if (code == code_) {
-        DOWNLOAD_HILOGD("ignore same error code");
-        return;
-    }
-    code_ = code;
-}
-
-void DownloadTaskImpl::SetReason(PausedReason reason)
-{
-    DOWNLOAD_HILOGI("Reason [%{public}d]", reason);
-    std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-
-    if (reason_ != PAUSED_BY_USER) {
-        if (!isOnline_ && reason == PAUSED_WAITING_TO_RETRY) {
-            reason = PAUSED_WAITING_FOR_NETWORK;
-        }
-        if (reason == reason_) {
-            DOWNLOAD_HILOGD("ignore same paused reason");
-            return;
-        }
-        reason_ = reason;
-    }
-}
-
-void DownloadTaskImpl::DumpStatus()
-{
-    switch (status_) {
-        case SESSION_SUCCESS:
-            DOWNLOAD_HILOGD("status:	SESSION_SUCCESS");
-            break;
-
-        case SESSION_RUNNING:
-            DOWNLOAD_HILOGD("status:	SESSION_RUNNING");
-            break;
-
-        case SESSION_PENDING:
-            DOWNLOAD_HILOGD("status:	SESSION_PENDING");
-            break;
-
-        case SESSION_PAUSED:
-            DOWNLOAD_HILOGD("status:	SESSION_PAUSED");
-            break;
-
-        case SESSION_FAILED:
-            DOWNLOAD_HILOGD("status:	SESSION_FAILED");
-            break;
-
-        case SESSION_UNKNOWN:
-            DOWNLOAD_HILOGD("status:	SESSION_UNKNOWN");
-            break;
-
-        default:
-            DOWNLOAD_HILOGD("status:	SESSION_UNKNOWN");
-            break;
-    }
-}
-
-void DownloadTaskImpl::DumpErrorCode()
-{
-    switch (code_) {
-        case ERROR_CANNOT_RESUME:
-            DOWNLOAD_HILOGD("error code:	ERROR_CANNOT_RESUME");
-            break;
-
-        case ERROR_DEVICE_NOT_FOUND:
-            DOWNLOAD_HILOGD("error code:	ERROR_DEVICE_NOT_FOUND");
-            break;
-
-        case ERROR_INSUFFICIENT_SPACE:
-            DOWNLOAD_HILOGD("error code:	ERROR_INSUFFICIENT_SPACE");
-            break;
-
-        case ERROR_FILE_ALREADY_EXISTS:
-            DOWNLOAD_HILOGD("error code:	ERROR_FILE_ALREADY_EXISTS");
-            break;
-
-        case ERROR_FILE_ERROR:
-            DOWNLOAD_HILOGD("error code:	ERROR_FILE_ERROR");
-            break;
-
-        case ERROR_HTTP_DATA_ERROR:
-            DOWNLOAD_HILOGD("error code:	ERROR_HTTP_DATA_ERROR");
-            break;
-
-        case ERROR_TOO_MANY_REDIRECTS:
-            DOWNLOAD_HILOGD("error code:	ERROR_TOO_MANY_REDIRECTS");
-            break;
-
-        case ERROR_UNHANDLED_HTTP_CODE:
-            DOWNLOAD_HILOGD("error code:	ERROR_UNHANDLED_HTTP_CODE");
-            break;
-
-        case ERROR_UNKNOWN:
-            DOWNLOAD_HILOGD("error code:	ERROR_UNKNOWN");
-            break;
-
-        default:
-            DOWNLOAD_HILOGD("error code:	SESSION_UNKNOWN");
-            break;
-    }
-}
-
-void DownloadTaskImpl::DumpPausedReason()
-{
-    switch (reason_) {
-        case PAUSED_QUEUED_FOR_WIFI:
-            DOWNLOAD_HILOGD("paused reason:	PAUSED_QUEUED_FOR_WIFI");
-            break;
-
-        case PAUSED_WAITING_FOR_NETWORK:
-            DOWNLOAD_HILOGD("paused reason:	PAUSED_WAITING_FOR_NETWORK");
-            break;
-
-        case PAUSED_WAITING_TO_RETRY:
-            DOWNLOAD_HILOGD("paused reason:	PAUSED_WAITING_TO_RETRY");
-            break;
-
-        case PAUSED_BY_USER:
-            DOWNLOAD_HILOGD("paused reason:	PAUSED_BY_USER");
-            break;
-
-        case PAUSED_UNKNOWN:
-            DOWNLOAD_HILOGD("paused reason:	PAUSED_UNKNOWN");
-            break;
-
-        default:
-            DOWNLOAD_HILOGD("paused reason:	PAUSED_UNKNOWN");
-            break;
     }
 }
 
@@ -497,7 +267,7 @@ bool DownloadTaskImpl::ExecHttp()
 
     return code == CURLE_OK;
 }
-   
+
 CURLcode DownloadTaskImpl::CurlPerformFileTransfer(CURL *handle) const
 {
     return curl_easy_perform(handle);
@@ -506,7 +276,6 @@ CURLcode DownloadTaskImpl::CurlPerformFileTransfer(CURL *handle) const
 bool DownloadTaskImpl::SetFileSizeOption(CURL *curl, struct curl_slist *requestHeader)
 {
     curl_easy_setopt(curl, CURLOPT_URL, config_.GetUrl().c_str());
-    
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HeaderCallback);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, this);
 
@@ -660,7 +429,7 @@ void DownloadTaskImpl::HandleResponseCode(CURLcode code, int32_t httpCode)
         DOWNLOAD_HILOGI("Pause By User:ignore status changed caused by libcurl");
         return;
     }
-    
+
     switch (code) {
         case CURLE_OK:
             if (httpCode == HTTP_OK || (isPartialMode_ && httpCode == HTTP_PARIAL_FILE)) {
@@ -669,7 +438,7 @@ void DownloadTaskImpl::HandleResponseCode(CURLcode code, int32_t httpCode)
                 return;
             }
             break;
-            
+
         case CURLE_ABORTED_BY_CALLBACK:
             if (httpCode == HTTP_OK || (isPartialMode_ && httpCode == HTTP_PARIAL_FILE)) {
                 SetStatus(SESSION_PAUSED, ERROR_UNKNOWN, PAUSED_BY_USER);
@@ -683,7 +452,7 @@ void DownloadTaskImpl::HandleResponseCode(CURLcode code, int32_t httpCode)
                 return;
             }
             break;
-            
+
         case CURLE_TOO_MANY_REDIRECTS:
             SetStatus(SESSION_FAILED, ERROR_TOO_MANY_REDIRECTS, PAUSED_UNKNOWN);
             return;
@@ -734,7 +503,7 @@ bool DownloadTaskImpl::HandleFileError()
                 DOWNLOAD_HILOGD("Download File already exists");
                 code = ERROR_FILE_ALREADY_EXISTS;
                 break;
-                
+
             case ENODEV:
                 code = ERROR_DEVICE_NOT_FOUND;
                 break;
@@ -870,10 +639,5 @@ uint32_t DownloadTaskImpl::ProgressNotification(uint32_t prevSize, uint32_t down
         }
     }
     return ret;
-}
-
-DownloadTask* DownloadTask::CreateDownLoadTask(uint32_t taskId, const DownloadConfig &config)
-{
-    return new (std::nothrow) DownloadTaskImpl(taskId, config);
 }
 } // namespace OHOS::Plugin::Request::Download

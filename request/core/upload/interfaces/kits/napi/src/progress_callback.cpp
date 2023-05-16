@@ -90,4 +90,4 @@ void ProgressCallback::Progress(const int64_t uploadedSize, const int64_t totalS
         delete work;
     }
 }
-} // end of  OHOS::Plugin::Request::Upload
+} // namespace OHOS::Plugin::Request::Upload

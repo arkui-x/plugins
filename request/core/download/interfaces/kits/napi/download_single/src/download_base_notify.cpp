@@ -59,7 +59,7 @@ void DownloadBaseNotify::OnCallBack(const std::vector<uint32_t> &params)
         delete notifyDataPtr;
         return;
     }
-    
+
     notifyData_->params = params;
     notifyDataPtr->notifyData = notifyData_;
     work->data = notifyDataPtr;

@@ -51,5 +51,5 @@ private:
     napi_env env_;
     uv_loop_s *loop_ = nullptr;
 };
-} // end of  OHOS::Plugin::Request::Upload
+} // namespace OHOS::Plugin::Request::Upload
 #endif

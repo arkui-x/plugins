@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,25 +14,27 @@
  */
 
 #include "download_task_napi.h"
-
+#include <unistd.h>
+#include <uv.h>
 #include <fcntl.h>
 #include <mutex>
 #include <regex>
-#include <uv.h>
-#include <unistd.h>
-
 #include "async_call.h"
 #include "constant.h"
 #include "download_event.h"
 #include "download_manager.h"
 #include "download_remove.h"
+#include "download_pause.h"
+#include "download_resume.h"
+#include "download_query.h"
+#include "download_query_mimetype.h"
 #include "log.h"
 #include "napi_utils.h"
 
 
 static constexpr const char *FUNCTION_ON = "on";
 static constexpr const char *FUNCTION_OFF = "off";
-static constexpr const char *FUNCTION_REMOVE = "remove";
+static constexpr const char *FUNCTION_DELETE = "delete";
 
 static constexpr const char *PARAM_KEY_URI = "url";
 static constexpr const char *PARAM_KEY_HEADER = "header";
@@ -46,8 +48,9 @@ static constexpr const char *PARAM_KEY_BACKGROUND = "background";
 
 static constexpr uint32_t FILE_PERMISSION = 0644;
 
+
 namespace OHOS::Plugin::Request::Download {
-constexpr const std::uint32_t CONFIG_PARAM_AT_FIRST = 0;
+constexpr const std::uint32_t CONFIG_PARAM_AT_FIRST = 1;
 __thread napi_ref DownloadTaskNapi::globalCtor = nullptr;
 std::mutex mutex_;
 napi_value DownloadTaskNapi::JsMain(napi_env env, napi_callback_info info)
@@ -59,7 +62,12 @@ napi_value DownloadTaskNapi::JsMain(napi_env env, napi_callback_info info)
     auto ctxInfo = std::make_shared<ContextInfo>();
     auto input = [ctxInfo](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
         DOWNLOAD_HILOGD("download parser to native params %{public}d!", static_cast<int>(argc));
-        NAPI_ASSERT_BASE(env, (argc > 0) && (argc < 3), " need 2 parameters!", napi_invalid_arg);
+        if (!((argc > 0) && (argc <= 3))) {
+            DOWNLOAD_HILOGE("native params %{public}d parameters is error", static_cast<int>(argc));
+            std::string errInfo = "native params parameters is error,need 2 or 3 parameters";
+            NapiUtils::ThrowError(env, EXCEPTION_PARAMETER_CHECK, errInfo);
+            return napi_generic_failure;
+        }
         napi_value proxy = nullptr;
         napi_status status = napi_new_instance(env, GetCtor(env), argc, argv, &proxy);
         if ((proxy == nullptr) || (status != napi_ok)) {
@@ -75,7 +83,7 @@ napi_value DownloadTaskNapi::JsMain(napi_env env, napi_callback_info info)
         return status;
     };
     auto context = std::make_shared<AsyncCall::Context>(input, output);
-    AsyncCall asyncCall(env, info, context, 1);
+    AsyncCall asyncCall(env, info, context, "", 2); // 2: two args
     return asyncCall.Call(env);
 }
 
@@ -91,7 +99,11 @@ napi_value DownloadTaskNapi::GetCtor(napi_env env)
     napi_property_descriptor clzDes[] = {
         {FUNCTION_ON, 0, DownloadEvent::On, 0, 0, 0, napi_default, 0},
         {FUNCTION_OFF, 0, DownloadEvent::Off, 0, 0, 0, napi_default, 0},
-        {FUNCTION_REMOVE, 0, DownloadRemove::Exec, 0, 0, 0, napi_default, 0},
+        {FUNCTION_DELETE, 0, DownloadRemove::Exec, 0, 0, 0, napi_default, 0},
+        {FUNCTION_SUSPEND, 0, DownloadPause::Suspend, 0, 0, 0, napi_default, 0 },
+        {FUNCTION_RESTORE, 0, DownloadResume::Restore, 0, 0, 0, napi_default, 0 },
+        { FUNCTION_GET_TASK_INFO, 0, DownloadQuery::GetTaskInfo, 0, 0, 0, napi_default, 0 },
+        { FUNCTION_GET_TASK_MIME_TYPE, 0, DownloadQueryMimeType::GetTaskMimeType, 0, 0, 0, napi_default, 0 },
     };
     NAPI_CALL(env, napi_define_class(env, "DownloadTaskNapi", NAPI_AUTO_LENGTH, Initialize, nullptr,
                        sizeof(clzDes) / sizeof(napi_property_descriptor), clzDes, &cons));
@@ -110,10 +122,19 @@ napi_value DownloadTaskNapi::Initialize(napi_env env, napi_callback_info info)
 
     DownloadConfig config;
     if (!ParseConfig(env, argv[parametersPosition], config)) {
-        DOWNLOAD_HILOGE("download config has wrong type");
+        std::string errInfo = "download config has wrong type";
+        DOWNLOAD_HILOGE("%{public}s", errInfo.c_str());
+        NapiUtils::ThrowError(env, EXCEPTION_PARAMETER_CHECK, errInfo);
         return nullptr;
     }
-    
+
+    if (!IDownloadTask::CheckPathValid(config.GetFilePath())) {
+        std::string errInfo = "bad file path";
+        DOWNLOAD_HILOGE("%{public}s", errInfo.c_str());
+        NapiUtils::ThrowError(env, EXCEPTION_FILE_PATH, errInfo);
+        return nullptr;
+    }
+
     auto *task = DownloadManager::GetInstance().Download(config);
     if (task == nullptr) {
         DOWNLOAD_HILOGE("download task fail");
@@ -121,14 +142,10 @@ napi_value DownloadTaskNapi::Initialize(napi_env env, napi_callback_info info)
     }
     auto finalize = [](napi_env env, void *data, void *hint) {
         DOWNLOAD_HILOGD("destructed download task start.");
-        DownloadTask *task = reinterpret_cast<DownloadTask *>(data);
-        if (task) {
-            auto ret = DownloadManager::GetInstance().Remove(task->GetId());
-            do {
-                DOWNLOAD_HILOGE("DownloadTask. delete.wait==%d", task->GetId());
-                usleep(500 * 1000);
-            } while (task->IsRunning());
-            DOWNLOAD_HILOGD("destructed download task, ret: %d wait end =%d", ret, task->GetId());
+        IDownloadTask *task = reinterpret_cast<IDownloadTask *>(data);
+        if (task != nullptr) {
+            DOWNLOAD_HILOGD("destructed download task: %d", task->GetId());
+            DownloadManager::GetInstance().ReleaseTask(task->GetId());
             delete task;
             task = nullptr;
         }
@@ -136,6 +153,9 @@ napi_value DownloadTaskNapi::Initialize(napi_env env, napi_callback_info info)
     };
     if (napi_wrap(env, self, task, finalize, nullptr, nullptr) != napi_ok) {
         finalize(env, task, nullptr);
+        std::string errInfo = "napi_wrap failed";
+        DOWNLOAD_HILOGE("%{public}s", errInfo.c_str());
+        NapiUtils::ThrowError(env, EXCEPTION_OTHER, errInfo);
         return nullptr;
     }
     DOWNLOAD_HILOGD("Succeed to allocate download task");
@@ -154,32 +174,10 @@ bool DownloadTaskNapi::ParseConfig(napi_env env, napi_value configValue, Downloa
     config.SetMetered(NapiUtils::GetBooleanProperty(env, configValue, PARAM_KEY_METERED));
     config.SetRoaming(NapiUtils::GetBooleanProperty(env, configValue, PARAM_KEY_ROAMING));
     config.SetDescription(NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_DESCRIPTION));
+    config.SetNetworkType(NapiUtils::GetUint32Property(env, configValue, PARAM_KEY_NETWORKTYPE));
     config.SetFilePath(NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_FILE_PATH));
     config.SetTitle(NapiUtils::GetStringPropertyUtf8(env, configValue, PARAM_KEY_TITLE));
     config.SetBackground(NapiUtils::GetBooleanProperty(env, configValue, PARAM_KEY_BACKGROUND));
-
-    if (!IsPathValid(config.GetFilePath())) {
-        return false;
-    }
-
-    int32_t fd = -1;
-    int32_t err = 0;
-    fd = open(config.GetFilePath().c_str(), O_RDWR);
-    if (fd > 0) {
-        DOWNLOAD_HILOGD("Download File already exists");
-        close(fd);
-        fd = -1;
-    } else {
-        fd = open(config.GetFilePath().c_str(), O_CREAT | O_RDWR, FILE_PERMISSION);
-        if (fd < 0) {
-            DOWNLOAD_HILOGE("Failed to open file errno [%{public}d]", errno);
-        }
-        err = errno;
-    }
-    config.SetFD(fd);
-    config.SetFDError(err);
-    config.SetApplicationInfoUid(static_cast<int32_t>(getuid()));
-
     return true;
 }
 
@@ -190,18 +188,6 @@ bool DownloadTaskNapi::ParseUrl(napi_env env, napi_value configValue, DownloadCo
         return false;
     }
     config.SetUrl(url);
-    return true;
-}
-
-bool DownloadTaskNapi::IsPathValid(const std::string &filePath)
-{
-    auto path = filePath.substr(0, filePath.rfind('/'));
-    char resolvedPath[PATH_MAX + 1] = { 0 };
-    if (path.length() > PATH_MAX || realpath(path.c_str(), resolvedPath) == nullptr
-        || strncmp(resolvedPath, path.c_str(), path.length()) != 0) {
-        DOWNLOAD_HILOGE("invalid file path!");
-        return false;
-    }
     return true;
 }
 

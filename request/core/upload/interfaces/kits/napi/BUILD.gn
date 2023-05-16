@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Huawei Device Co., Ltd.
+# Copyright (C) 2022-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -30,6 +30,9 @@ config("upload_native_public_config") {
     "$rq_upload_path/frameworks/libs/include",
     "$rq_utils_path",
     "$plugin_interfaces_path",
+    "$rq_upload_path/frameworks/common/include",
+    "$rq_upload_path/frameworks/android/include",
+    "$rq_download_path/interfaces/kits/napi/download_single/include"
   ]
 }
 
@@ -41,6 +44,7 @@ ohos_source_set("upload") {
     "src/js_util.cpp",
     "src/progress_callback.cpp",
     "src/upload_task_napi.cpp",
+    "src/header_receive_callback.cpp",
   ]
 
   configs = [ ":upload_native_config" ]
@@ -48,12 +52,16 @@ ohos_source_set("upload") {
   deps = [
     "//plugins/libs/napi:napi_${target_os}",
     "$plugin_interfaces_path/native:plugin_log",
-    "$rq_upload_path/frameworks/libs:upload_lib",
-    "$third_party_path/libuv:uv_static",
+    #"$rq_upload_path/frameworks/libs:upload_lib",
+    "$third_party_path/libuv:uv_static"
   ]
 
-  if (target_os == "android") {
+  if (target_os == "ios") {
+    defines = [ "IOS_PLATFORM" ]
+    deps += [ "$rq_upload_path/frameworks/ios:upload_ios" ]
+  } else if (target_os == "android") {
     defines = [ "ANDROID_PLATFORM" ]
+    deps += [ "$rq_upload_path/frameworks/android:upload_android" ]
   }
 
   external_deps = [ "c_utils:utils" ]

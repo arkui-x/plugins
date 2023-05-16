@@ -31,8 +31,8 @@ public:
         using InputAction = std::function<napi_status(napi_env, size_t, napi_value *, napi_value)>;
         using OutputAction = std::function<napi_status(napi_env, napi_value *)>;
         using ExecAction = std::function<void(Context *)>;
-        Context(InputAction input, OutputAction output): input_(std::move(input)), output_(std::move(output)) {};
-        virtual ~Context() {};
+        Context(InputAction input, OutputAction output): input_(std::move(input)), output_(std::move(output)) {}
+        virtual ~Context() {}
         void SetAction(InputAction input, OutputAction output = nullptr)
         {
             input_ = input;
@@ -68,6 +68,7 @@ public:
             }
             exec_(this);
         };
+
     protected:
         friend class AsyncCall;
         InputAction input_ = nullptr;
@@ -79,6 +80,7 @@ public:
     ~AsyncCall();
     napi_value Call(napi_env env, Context::ExecAction exec = nullptr);
     napi_value SyncCall(napi_env env, Context::ExecAction exec = nullptr);
+
 private:
     enum {
         ARG_ERROR,
@@ -99,6 +101,6 @@ private:
     AsyncContext *context_ = nullptr;
     napi_env env_ = nullptr;
 };
-}
+} // namespace OHOS::Plugin::Request::UploadNapi
 
 #endif // PLUGINS_REQUEST_UPLOAD_ASYNC_CALL_H
