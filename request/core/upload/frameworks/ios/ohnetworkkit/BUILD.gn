@@ -32,7 +32,7 @@ ohos_source_set("ios_ohnetworkkit") {
     "$rq_upload_path/frameworks/common/include"
   ]
 
-  libs = [
+  frameworks = [
     "MobileCoreServices.framework",
     "Security.framework",
     "SystemConfiguration.framework",
