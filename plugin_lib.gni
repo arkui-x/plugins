@@ -58,6 +58,7 @@ common_plugin_libs_static = [
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "worker",
 ]
 
 if (target_os == "android") {
