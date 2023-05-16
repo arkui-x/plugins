@@ -124,9 +124,9 @@ void LRUCache::Put(const std::string& key, const std::unordered_map<std::string,
 
 void LRUCache::MergeOtherCache(const LRUCache& other)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
     std::list<Node> reverseList;
     {
+        std::lock_guard<std::mutex> guard(mutex_);
         if (other.nodeList_.empty()) {
             return;
         }
