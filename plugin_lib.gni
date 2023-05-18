@@ -18,10 +18,8 @@ common_plugin_libs_static = [
   "bridge",
   "buffer",
   "common_event",
-  "data/relationalstore",
   "device_info",
   "display",
-  "data/preferences",
   "convertxml",
   "file/fs",
   "hilog",
@@ -58,6 +56,8 @@ common_plugin_libs_static = [
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "data/preferences",
+  "data/relationalstore",
   "worker",
 ]
 
