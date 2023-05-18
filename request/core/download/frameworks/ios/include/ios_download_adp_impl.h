@@ -37,6 +37,7 @@ private:
     void PushNotification(BOOL isFailed);
     void CompletionHandler(IosDownloadAdpCallback *callback, NSURLResponse *response, NSURL *filePath, NSError *error);
     void PushNotification(NSString *fileName, NSValue *result);
+    void ReportMimeType(IosDownloadAdpCallback *callback, NSURLResponse *response);
 
 private:
     OHHttpSessionController *sessionCtrl_ = nil;
@@ -46,6 +47,7 @@ private:
     DownloadConfig config_;
     bool isSuspendByNetwork_ = false;
     bool isCompleted_ = false;
+    bool isMimeReported_ = false;
     std::mutex mutex_;
 };
 } // namespace OHOS::Plugin::Request::Download

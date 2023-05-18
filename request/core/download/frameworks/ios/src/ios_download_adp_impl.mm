@@ -78,6 +78,9 @@ void IosDownloadAdpImpl::Download(const DownloadConfig &config, IosDownloadAdpCa
                 if (callback != nullptr) {
                     callback->OnProgress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
                 }
+                if (!isMimeReported_) {
+                    ReportMimeType(callback, [downloadTask_ response]);
+                }
             }
             destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
                 NSString *filePath = [NSString stringWithUTF8String:config.GetFilePath().c_str()];
@@ -110,14 +113,8 @@ void IosDownloadAdpImpl::PushNotification(BOOL isFailed)
 
 void IosDownloadAdpImpl::CompletionHandler(IosDownloadAdpCallback *callback, NSURLResponse *response, NSURL *filePath, NSError *error)
 {
-    NSString *mimeType = [response MIMEType];
-    if ([mimeType length] == 0) {
-        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
-        mimeType = [resp valueForHTTPHeaderField:@"Content-Type"];
-    }
-    DOWNLOAD_HILOGD("download, response:%{public}s, mimeType:%{public}s", [[response description] UTF8String], [mimeType UTF8String]);
-    if ([mimeType length] > 0 && callback != nullptr) {
-        callback->SetMimeType([mimeType UTF8String]);
+    if (!isMimeReported_) {
+        ReportMimeType(callback, response);
     }
     if (error == nil) {
         DOWNLOAD_HILOGD("success download file to: %{public}s", [[filePath description] UTF8String]);
@@ -224,5 +221,19 @@ bool IosDownloadAdpImpl::IsCompleted()
 {
     std::lock_guard<std::mutex> guard(mutex_);
     return isCompleted_;
+}
+
+void IosDownloadAdpImpl::ReportMimeType(IosDownloadAdpCallback *callback, NSURLResponse *response)
+{
+    isMimeReported_ = true;
+    NSString *mimeType = [response MIMEType];
+    if ([mimeType length] == 0) {
+        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
+        mimeType = [resp valueForHTTPHeaderField:@"Content-Type"];
+    }
+    DOWNLOAD_HILOGD("download, response:%{public}s, mimeType:%{public}s", [[response description] UTF8String], [mimeType UTF8String]);
+    if ([mimeType length] > 0 && callback != nullptr) {
+        callback->SetMimeType([mimeType UTF8String]);
+    }
 }
 } // namespace OHOS::Plugin::Request::Download
