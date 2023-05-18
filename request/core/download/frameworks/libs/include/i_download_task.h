@@ -73,6 +73,8 @@ protected:
     void DumpStatus();
     void DumpErrorCode();
     void DumpPausedReason();
+    void SetTaskReturned();
+    bool IsTaskReturned();
 
 protected:
     DownloadStatus status_ = SESSION_UNKNOWN;
@@ -87,6 +89,7 @@ protected:
     std::recursive_mutex rmutex_;
     bool isOnline_ = true;
     std::map<std::string, std::tuple<uint32_t, uint32_t>> eventBufMap_;
+    bool isTaskReturn_ = false;
 };
 } // namespace OHOS::Plugin::Request::Download
 #endif // PLUGINS_REQUEST_DOWNLOAD_TASK_H

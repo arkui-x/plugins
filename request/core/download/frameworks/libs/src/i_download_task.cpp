@@ -101,7 +101,10 @@ void IDownloadTask::OnCallBack(const std::string &type, uint32_t argv1, uint32_t
     std::lock_guard<std::mutex> autoLock(mutex_);
     auto it = listenerMap_.find(type);
     if (it == listenerMap_.end()) {
-        DOWNLOAD_HILOGE("no event listener, tmp store to event buf");
+        if (IsTaskReturned()) {
+            return;
+        }
+        DOWNLOAD_HILOGE("task is not returned, no event listener, tmp store to event buf");
         eventBufMap_[type] = std::make_tuple(argv1, argv2);
         return;
     }
@@ -341,4 +344,17 @@ bool IDownloadTask::IsRunning()
 {
     return (status_ == SESSION_RUNNING);
 }
+
+void IDownloadTask::SetTaskReturned()
+{
+    std::lock_guard<std::recursive_mutex> autoLock(rmutex_);
+    isTaskReturn_ = true;
+}
+
+bool IDownloadTask::IsTaskReturned()
+{
+    std::lock_guard<std::recursive_mutex> autoLock(rmutex_);
+    return isTaskReturn_;
+}
+
 } // namespace OHOS::Plugin::Request::Download
