@@ -26,7 +26,6 @@ common_plugin_libs_static = [
   "file/fs",
   "hilog",
   "hitrace_meter",
-  "i18n",
   "ndk_raw_file",
   "net/http",
   "net/connection",
@@ -58,11 +57,12 @@ common_plugin_libs_static = [
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "i18n",
+  "intl",
   "worker",
 ]
 
 if (target_os == "android") {
-  common_plugin_libs += [ "intl" ]
   common_plugin_libs += common_plugin_libs_static
 }
 
