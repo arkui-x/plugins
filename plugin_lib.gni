@@ -16,19 +16,33 @@ import("//build/ohos.gni")
 
 common_plugin_libs_static = [
   "bridge",
-  "buffer",
   "common_event",
   "device_info",
   "display",
-  "convertxml",
   "file/fs",
   "hilog",
   "hitrace_meter",
   "ndk_raw_file",
   "net/http",
-  "process",
   "running_lock",
   "test_plugin",
+]
+
+common_plugin_libs = [
+  "ability_access_ctrl",
+  "data/preferences",
+  "data/relationalstore",
+  "i18n",
+  "intl",
+  "net/connection",
+  "net/socket",
+  "net/websocket",
+  "worker",
+  "request",
+  "resource_manager",
+  "buffer",
+  "convertxml",
+  "process",
   "uri",
   "url",
   "xml",
@@ -46,20 +60,6 @@ common_plugin_libs_static = [
   "util/stack",
   "util/treemap",
   "util/treeset",
-]
-
-common_plugin_libs = [
-  "ability_access_ctrl",
-  "data/preferences",
-  "data/relationalstore",
-  "i18n",
-  "intl",
-  "net/connection",
-  "net/socket",
-  "net/websocket",
-  "worker",
-  "request",
-  "resource_manager",
 ]
 
 if (target_os == "android") {
