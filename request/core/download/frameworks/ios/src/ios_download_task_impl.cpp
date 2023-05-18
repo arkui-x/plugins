@@ -75,6 +75,7 @@ void IosDownloadTaskImpl::RunTaskImpl()
 {
     if (networkType_ == NETWORK_INVALID) {
         SetStatus(SESSION_FAILED, ERROR_OFFLINE, PAUSED_UNKNOWN); // off line
+        SetTaskReturned();
         return;
     }
 
@@ -84,6 +85,7 @@ void IosDownloadTaskImpl::RunTaskImpl()
             DOWNLOAD_HILOGD("unsupported meter network, enableMetered:%{public}d, real:%{public}d",
                 config_.IsMetered(), networkType_);
             SetStatus(SESSION_FAILED, ERROR_UNSUPPORTED_NETWORK_TYPE, PAUSED_UNKNOWN); // unsupported network type
+            SetTaskReturned();
             return;
         }
         downloadAdp_ = IosDownloadAdp::Instance();
@@ -94,6 +96,7 @@ void IosDownloadTaskImpl::RunTaskImpl()
             config_.GetNetworkType(), networkType_);
         SetStatus(SESSION_FAILED, ERROR_UNSUPPORTED_NETWORK_TYPE, PAUSED_UNKNOWN); // unsupported network type
     }
+    SetTaskReturned();
 }
 
 bool IosDownloadTaskImpl::Remove()
