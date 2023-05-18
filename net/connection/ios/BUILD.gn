@@ -13,20 +13,11 @@
 
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//plugins/net/connection/connection.gni")
 
 ohos_source_set("net_connection_ios") {
-  include_dirs = [
-    "//foundation/communication/netmanager_base",
-    "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
-    "//foundation/graphic/graphic_2d/rosen/modules/platform/utils",
-    "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/include/utils",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient/include",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/include",
-    "//foundation/communication/netmanager_base/utils/napi_utils/include",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient/include/proxy",
-    "//foundation/communication/netmanager_base/frameworks/js/napi/connection/observer/include",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/netpolicyclient/include",
-  ]
+  include_dirs = utils_include
+  include_dirs += connection_include
 
   sources = [
     "net_conn_client.mm",

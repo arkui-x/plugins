@@ -32,14 +32,11 @@ template("plugin_net_connection_static") {
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
+      "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
+      "//foundation/graphic/graphic_2d/rosen/modules/platform:ipc_core",
     ]
 
     if (platform == "android") {
-      sources += [
-        "$PLATFORM_ROOT/ipc_core/ipc_object_stub.cpp",
-        "$PLATFORM_ROOT/ipc_core/iremote_object.cpp",
-        "$PLATFORM_ROOT/ipc_core/message_parcel.cpp",
-      ]
       deps += [ "android/java:netconnclient_anroid_jni" ]
     } else if (platform == "ios") {
       deps += [ "ios:net_connection_ios" ]
