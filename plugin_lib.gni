@@ -33,7 +33,6 @@ common_plugin_libs_static = [
   "net/socket",
   "net/websocket",
   "process",
-  "request",
   "running_lock",
   "test_plugin",
   "resource_manager",
@@ -59,6 +58,7 @@ common_plugin_libs_static = [
 common_plugin_libs = [
   "ability_access_ctrl",
   "worker",
+  "request",
 ]
 
 if (target_os == "android") {
