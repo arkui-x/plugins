@@ -29,9 +29,6 @@ common_plugin_libs_static = [
   "i18n",
   "ndk_raw_file",
   "net/http",
-  "net/connection",
-  "net/socket",
-  "net/websocket",
   "process",
   "request",
   "running_lock",
@@ -58,6 +55,9 @@ common_plugin_libs_static = [
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "net/connection",
+  "net/socket",
+  "net/websocket",
   "worker",
 ]
 
