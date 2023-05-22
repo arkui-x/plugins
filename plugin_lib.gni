@@ -24,7 +24,6 @@ common_plugin_libs_static = [
   "file/fs",
   "hilog",
   "hitrace_meter",
-  "i18n",
   "ndk_raw_file",
   "net/http",
   "process",
@@ -53,6 +52,8 @@ common_plugin_libs = [
   "ability_access_ctrl",
   "data/preferences",
   "data/relationalstore",
+  "i18n",
+  "intl",
   "net/connection",
   "net/socket",
   "net/websocket",
@@ -62,7 +63,6 @@ common_plugin_libs = [
 ]
 
 if (target_os == "android") {
-  common_plugin_libs += [ "intl" ]
   common_plugin_libs += common_plugin_libs_static
 }
 
