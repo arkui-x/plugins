@@ -134,7 +134,7 @@ napi_value PluginInnerNApiUtils::CreateStringUtf8(napi_env env, const std::strin
 
 std::string PluginInnerNApiUtils::GetStringFromValueUtf8(napi_env env, napi_value value)
 {
-    static constexpr size_t max_length = 2048;
+    static constexpr size_t max_length = 2097152;
     if (GetValueType(env, value) != napi_string) {
         return {};
     }

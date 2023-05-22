@@ -451,6 +451,7 @@ public class DownloadManagerPlugin {
      */
     private void queryDownloadStatus(int downloadStatus, int[] bytesAndStatus) {
         Log.i(LOG_TAG, "query download status, download status: " + downloadStatus);
+        String mimeType = downloadManager.getMimeTypeForDownloadedFile(downloadId);
         switch (downloadStatus) {
             case DownloadManager.STATUS_PAUSED:
                 getPausedReason(bytesAndStatus[DOWNLOAD_COLUMN_REASON]);
@@ -465,10 +466,10 @@ public class DownloadManagerPlugin {
                 break;
             case DownloadManager.STATUS_RUNNING:
                 getDownloadBytesCallback(bytesAndStatus);
+                onRequestMimeTypeCallback(mimeType, downloadProgressObj);
                 break;
             case DownloadManager.STATUS_SUCCESSFUL:
                 getDownloadBytesCallback(bytesAndStatus);
-                String mimeType = downloadManager.getMimeTypeForDownloadedFile(downloadId);
                 onRequestMimeTypeCallback(mimeType, downloadProgressObj);
                 stopQueryProgress();
                 break;

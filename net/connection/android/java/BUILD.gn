@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//plugins/net/connection/connection.gni")
 
 java_library("netconnclient_android_java") {
   java_files =
@@ -24,21 +25,13 @@ ohos_combine_jars("netconnclient_java") {
   deps = [ ":netconnclient_android_java" ]
   subsystem_name = "plugins"
   part_name = "net_connection"
-  jar_path = "${root_out_dir}/plugins/net/connection/ace_netconnclient_java.jar"
+  jar_path = "${root_out_dir}/plugins/net/connection/arkui_netconnclient_java.jar"
 }
 
 ohos_source_set("netconnclient_anroid_jni") {
-  include_dirs = [
-    "//foundation/communication/netmanager_base",
-    "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
-    "//foundation/graphic/graphic_2d/rosen/modules/platform/utils",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient/include",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/include",
-    "//foundation/communication/netmanager_base/utils/napi_utils/include",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient/include/proxy",
-    "//foundation/communication/netmanager_base/frameworks/js/napi/connection/observer/include",
-    "//foundation/communication/netmanager_base/interfaces/innerkits/netpolicyclient/include",
-  ]
+  include_dirs = utils_include
+  include_dirs += connection_include
+
   sources = [
     "jni/net_conn_client.cpp",
     "jni/net_conn_client_jni.cpp",

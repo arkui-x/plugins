@@ -52,6 +52,7 @@ void AndroidDownloadTaskImpl::ExecuteTask()
     AndroidDownloadAdp_->GetNetworkType(reinterpret_cast<void *>(this));
     if (networkType_ == NETWORK_INVALID) {
         SetStatus(SESSION_FAILED, ERROR_OFFLINE, PAUSED_UNKNOWN); // off line
+        SetTaskReturned();
         return;
     }
 
@@ -61,6 +62,7 @@ void AndroidDownloadTaskImpl::ExecuteTask()
             DOWNLOAD_HILOGD("unsupported meter network, enableMetered: %{public}d, real: %{public}d",
                 config_.IsMetered(), networkType_);
             SetStatus(SESSION_FAILED, ERROR_UNSUPPORTED_NETWORK_TYPE, PAUSED_UNKNOWN); // unsupported network type
+            SetTaskReturned();
             return;
         }
         AndroidDownloadAdp_->Download(config_, reinterpret_cast<void *>(this));
@@ -70,6 +72,7 @@ void AndroidDownloadTaskImpl::ExecuteTask()
             config_.GetNetworkType(), networkType_);
         SetStatus(SESSION_FAILED, ERROR_UNSUPPORTED_NETWORK_TYPE, PAUSED_UNKNOWN); // unsupported network type
     }
+    SetTaskReturned();
 }
 
 bool AndroidDownloadTaskImpl::Remove()

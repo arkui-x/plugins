@@ -28,14 +28,9 @@ common_plugin_libs_static = [
   "hitrace_meter",
   "ndk_raw_file",
   "net/http",
-  "net/connection",
-  "net/socket",
-  "net/websocket",
   "process",
-  "request",
   "running_lock",
   "test_plugin",
-  "resource_manager",
   "uri",
   "url",
   "xml",
@@ -59,7 +54,12 @@ common_plugin_libs = [
   "ability_access_ctrl",
   "i18n",
   "intl",
+  "net/connection",
+  "net/socket",
+  "net/websocket",
   "worker",
+  "request",
+  "resource_manager",
 ]
 
 if (target_os == "android") {

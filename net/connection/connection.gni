@@ -31,11 +31,6 @@ utils_include = [
   "$INNERKITS_ROOT/netstatsclient/include",
   "$PLATFORM_ROOT/utils",
   "$PLATFORM_ROOT/ipc_core",
-  "//foundation/arkui/napi/interfaces/kits",
-  "//third_party/node/src",
-  "//foundation/arkui/napi/interfaces/inner_api",
-  "//foundation/arkui/napi/native_engine",
-  "//foundation/arkui/napi",
 ]
 
 utils_source = [
@@ -47,8 +42,6 @@ utils_source = [
   "$NETMANAGER_BASE_ROOT/utils/napi_utils/src/module_template.cpp",
   "$NETMANAGER_BASE_ROOT/utils/napi_utils/src/napi_utils.cpp",
   "$NETMANAGER_BASE_ROOT/utils/common_utils/src/netmanager_base_common_utils.cpp",
-  "$PLATFORM_ROOT/utils/refbase.cpp",
-  "$PLATFORM_ROOT/utils/parcel.cpp",
 ]
 
 connection_include = [
@@ -63,14 +56,11 @@ connection_include = [
   "$INNERKITS_ROOT/netconnclient/include",
   "$INNERKITS_ROOT/include",
   "//plugins/hilog/include",
-  "//base/hiviewdfx/hilog/interfaces/native/kits/include",
   "//plugins/net/connection",
   "//plugins/net",
   "//plugins/net/connection/android/java/jni",
   "//plugins/interfaces",
   "//plugins/interfaces/native",
-  "//third_party/bounds_checking_function/include",
-  "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
 ]
 
 connection_sources = [
