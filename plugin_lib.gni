@@ -35,7 +35,6 @@ common_plugin_libs_static = [
   "process",
   "running_lock",
   "test_plugin",
-  "resource_manager",
   "uri",
   "url",
   "xml",
@@ -59,6 +58,7 @@ common_plugin_libs = [
   "ability_access_ctrl",
   "worker",
   "request",
+  "resource_manager",
 ]
 
 if (target_os == "android") {
