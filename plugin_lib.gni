@@ -19,7 +19,6 @@ common_plugin_libs_static = [
   "common_event",
   "device_info",
   "display",
-  "file/fs",
   "hitrace_meter",
   "ndk_raw_file",
   "net/http",
@@ -29,6 +28,7 @@ common_plugin_libs_static = [
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "file/fs",
   "data/preferences",
   "data/relationalstore",
   "i18n",
