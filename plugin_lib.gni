@@ -20,7 +20,6 @@ common_plugin_libs_static = [
   "device_info",
   "display",
   "file/fs",
-  "hilog",
   "hitrace_meter",
   "ndk_raw_file",
   "net/http",
@@ -60,6 +59,7 @@ common_plugin_libs = [
   "util/stack",
   "util/treemap",
   "util/treeset",
+  "hilog",
 ]
 
 if (target_os == "android") {
