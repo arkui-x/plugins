@@ -365,10 +365,11 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void* data)
     if (NapiUtils::GetValueType(context->GetEnv(), progress) == napi_undefined) {
         return;
     }
-    NapiUtils::SetUint32Property(
-        context->GetEnv(), progress, "receiveSize", static_cast<uint32_t>(context->GetNowLen()));
-    NapiUtils::SetUint32Property(
-        context->GetEnv(), progress, "totalSize", static_cast<uint32_t>(context->GetTotalLen()));
+    NapiUtils::SetUint32Property(context->GetEnv(), progress, "receiveSize",
+                                 static_cast<uint32_t>(context->GetDlLen().nLen));
+    NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
+                                 static_cast<uint32_t>(context->GetDlLen().tLen));
+    context->PopDlLen();
     context->Emit(ON_DATA_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
 }
 
@@ -390,9 +391,8 @@ int HttpExec::ProgressCallback(long dltotal, long dlnow, long ultotal, long ulno
     if (context == nullptr || !context->IsRequest2()) {
         return 0;
     }
-    context->SetTotalLen(dltotal);
-    context->SetNowLen(dlnow);
-    if (dlnow != 0) {
+    if (dltotal != 0) {
+        context->SetDlLen(dlnow, dltotal);
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataProgress);
     }
     return 0;
