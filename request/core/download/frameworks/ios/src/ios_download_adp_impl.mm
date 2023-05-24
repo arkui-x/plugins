@@ -175,8 +175,9 @@ bool IosDownloadAdpImpl::Restore(IosDownloadAdpCallback *callback)
 {
     DOWNLOAD_HILOGD("Restore download");
     if (resumeData_ == nil) {
-        DOWNLOAD_HILOGD("error, can not restore download. because resumeData is nil.");
-        return false;
+        DOWNLOAD_HILOGD("restore download, because resumeData is nil, download from begin.");
+        Download(config_, callback);
+        return true;
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         downloadTask_ = [sessionCtrl_ downloadTaskWithResumeData:resumeData_
