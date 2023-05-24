@@ -57,7 +57,7 @@ template("plugin_bridge_static") {
       defines += [ "ANDROID_PLATFORM" ]
       libs = [ "log" ]
     } else {
-      deps += [ "//foundation/arkui/ace_engine/adapter/ios/capability:ace_capability_ios" ]
+      deps += [ "//foundation/arkui/ace_engine/adapter/ios/build:libarkui_ios" ]
       defines += [ "IOS_PLATFORM" ]
     }
 

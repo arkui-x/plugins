@@ -13,27 +13,26 @@
 
 import("//build/ohos.gni")
 
-
 common_plugin_libs_static = [
-  "bridge",
   "common_event",
   "device_info",
   "display",
   "hitrace_meter",
   "ndk_raw_file",
-  "net/http",
   "running_lock",
   "test_plugin",
 ]
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "bridge",
   "file/fs",
   "data/preferences",
   "data/relationalstore",
   "i18n",
   "intl",
   "net/connection",
+  "net/http",
   "net/socket",
   "net/websocket",
   "worker",
