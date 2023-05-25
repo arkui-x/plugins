@@ -129,13 +129,12 @@ template("plugin_net_socket_static") {
 
       deps = [
         "//plugins/interfaces/native:ace_plugin_util_${platform}",
-        "//plugins/net/utils:netstack_util_${platform}",
+        "//plugins/net/utils:netstack_util_static_ios",
         "//third_party/curl:curl",
         "//third_party/openssl:libcrypto_static",
         "//third_party/openssl:ssl_source",
         "//third_party/zlib:libz",
       ]
-
     }
 
     subsystem_name = "plugins"

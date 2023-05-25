@@ -28,7 +28,7 @@ ohos_source_set("net_http_ios") {
   deps = [
     "//plugins/interfaces/native:ace_plugin_util_ios",
     "//plugins/interfaces/native:plugin_log",
-    "//plugins/net/utils:netstack_utils_ios",
+    "//plugins/net/utils:netstack_util_static_ios",
   ]
 
   defines = [ "IOS_PLATFORM" ]
