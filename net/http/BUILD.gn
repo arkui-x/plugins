@@ -44,7 +44,7 @@ template("plugin_net_http_static") {
     } else if (platform == "ios") {
       deps += [
         "ios:net_http_ios",
-        "//third_party/jsoncpp:jsoncpp",
+        "//third_party/jsoncpp:jsoncpp_static",
       ]
     }
 
