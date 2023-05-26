@@ -34,6 +34,9 @@ import android.app.DownloadManager;
 
 import java.io.File;
 import java.util.HashMap;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.IOException;
 
 /**
  * DownloadManagerPlugin
@@ -557,6 +560,33 @@ public class DownloadManagerPlugin {
     }
 
     /**
+     * judge whether support breakpoint continuation
+     *
+     * @return true or false
+     */
+    public boolean isSupportBreakpoint() {
+        try {
+            URL url = new URL(downloadUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            int responseCode = conn.getResponseCode();
+            Log.i(LOG_TAG, "get network response code: " + responseCode);
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                String acceptRanges = conn.getHeaderField("Accept-Ranges");
+                if (acceptRanges != null && acceptRanges.equals("bytes")) {
+                    Log.i(LOG_TAG, "The url support breakpoint continuation");
+                } else {
+                    Log.e(LOG_TAG, "The url unsupport breakpoint continuation, download from the start location");
+                    return false;
+                }
+            }
+        } catch (IOException error) {
+            Log.e(LOG_TAG, "URL connection failed, error: " + error.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * pause download
      */
     public void pauseDownload() {
@@ -582,6 +612,10 @@ public class DownloadManagerPlugin {
      */
     public boolean resumeDownload() {
         Log.i(LOG_TAG, "execute resumeDownload");
+        if (!isSupportBreakpoint()) {
+            startDownload(downloadProgressObj);
+            return true;
+        }
         ContentResolver contentResolver = context.getContentResolver();
         ContentValues contentValues = new ContentValues();
         int updateRows = 0;
