@@ -41,6 +41,10 @@ void Split(const string &src, const string &sep, vector<string> &dest)
 
 int32_t ConvertString2Int(const string &numberStr, int32_t& status)
 {
+    if (numberStr.empty()) {
+        status = -1;
+        return -1;
+    }
     try {
         return std::stoi(numberStr);
     } catch(const std::invalid_argument& except) {

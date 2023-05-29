@@ -92,7 +92,7 @@ NumberFormat::NumberFormat(const std::vector<std::string> &localeTags, std::map<
             localeBaseName = localeInfo->GetBaseName();
             numberFormat = icu::number::NumberFormatter::withLocale(locale);
             icu::MeasureUnit::getAvailable(unitArray, MAX_UNIT_NUM, status);
-            if (!U_SUCCESS(status)) {
+            if (U_SUCCESS(status)) {
                 createSuccess = true;
             }
         }
