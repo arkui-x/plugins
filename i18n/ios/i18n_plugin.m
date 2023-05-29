@@ -38,7 +38,7 @@
 }
 
 -(NSString*)getSystemLocale{
-    NSString *language = [[NSLocale preferredLanguages] firstObject];
+    NSString *localeString = [[NSLocale preferredLanguages] firstObject];
     return localeString;
 }
 
