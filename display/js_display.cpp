@@ -91,7 +91,7 @@ static napi_module displayModule = {
 static void DisplayJniRegister()
 {
     const char className[] = "ohos.ace.plugin.displayplugin.DisplayPlugin";
-    OH_Plugin_RegisterPlugin(&DisplayJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&DisplayJni::Register, className);
 }
 #endif
 
@@ -99,7 +99,7 @@ extern "C" __attribute__((constructor)) void DisplayRegister()
 {
     napi_module_register(&displayModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&DisplayJniRegister);
+    OH_Plugin_RunAsyncTask(&DisplayJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace OHOS::Plugin

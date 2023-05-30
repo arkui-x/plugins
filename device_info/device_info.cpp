@@ -388,7 +388,7 @@ static void DeviceInfoPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.device_infoplugin.DeviceInfoPlugin";
     LOGI("DeviceInfoPluginJniRegister deviceinfo %s.", className);
-    OH_Plugin_RegisterPlugin(&DeviceInfoJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&DeviceInfoJni::Register, className);
 }
 #endif
 /*
@@ -399,7 +399,7 @@ extern "C" __attribute__((constructor)) void DeviceInfoRegisterModule(void)
     LOGI("DeviceInfoRegisterModule deviceinfo.");
     napi_module_register(&_module);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&DeviceInfoPluginJniRegister);
+    OH_Plugin_RunAsyncTask(&DeviceInfoPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace OHOS::Plugin

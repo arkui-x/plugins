@@ -504,7 +504,7 @@ static napi_module abilityAccessCtrlModule = {
 static void AbilityAccessCtrlJniRegister()
 {
     const char className[] = "ohos.ace.plugin.abilityaccessctrl.AbilityAccessCtrl";
-    OH_Plugin_RegisterPlugin(&AbilityAccessCtrlJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&AbilityAccessCtrlJni::Register, className);
 }
 #endif
 
@@ -512,7 +512,7 @@ extern "C" __attribute__((constructor)) void AbilityAccessCtrlRegister()
 {
     napi_module_register(&abilityAccessCtrlModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&AbilityAccessCtrlJniRegister);
+    OH_Plugin_RunAsyncTask(&AbilityAccessCtrlJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace OHOS::Plugin

@@ -292,14 +292,14 @@ static napi_module g_httpModule = {
 static void HttpJniRegister()
 {
     const char className[] = "ohos.ace.plugin.httpplugin.HttpPlugin";
-    OH_Plugin_RegisterPlugin(&HttpJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&HttpJni::Register, className);
 }
 #endif
 
 extern "C" __attribute__((constructor)) void RegisterHttpModule(void)
 {
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&HttpJniRegister);
+    OH_Plugin_RunAsyncTask(&HttpJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
     napi_module_register(&g_httpModule);
 }

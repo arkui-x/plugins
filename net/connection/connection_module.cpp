@@ -390,14 +390,14 @@ static napi_module g_connectionModule = {
 static void NetConnClientJniRegister()
 {
     const char className[] = "ohos.ace.plugin.netconnclientplugin.NetConnClientPlugin";
-    OH_Plugin_RegisterPlugin(&Plugin::NetConnClientJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&Plugin::NetConnClientJni::Register, className);
 }
 #endif
 
 extern "C" __attribute__((constructor)) void RegisterConnectionModule(void)
 {
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&NetConnClientJniRegister);
+    OH_Plugin_RunAsyncTask(&NetConnClientJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
     napi_module_register(&g_connectionModule);
 }

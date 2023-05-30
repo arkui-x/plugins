@@ -66,7 +66,7 @@ static napi_module i18nPluginModule = {
 static void I18NPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.i18nplugin.I18NPlugin";
-    OH_Plugin_RegisterPlugin(&I18NPluginJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&I18NPluginJni::Register, className);
 }
 #endif
 
@@ -74,7 +74,7 @@ extern "C" __attribute__((constructor)) void I18NPluginRegister()
 {
     napi_module_register(&i18nPluginModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&I18NPluginJniRegister);
+    OH_Plugin_RunAsyncTask(&I18NPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace OHOS::Plugin

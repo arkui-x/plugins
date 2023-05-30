@@ -29,17 +29,23 @@ JNIEnv* OH_Plugin_GetJniEnv()
     return OHOS::Ace::Platform::JniEnvironment::GetInstance().GetJniEnv(nullptr, false).get();
 }
 
-void OH_Plugin_RegisterPlugin(bool (*func)(void*), const char* name)
+void OH_Plugin_RegisterJavaPlugin(bool (*func)(void*), const char* name)
 {
     std::string className = name;
     OHOS::Plugin::PluginUtils::RegisterPlugin(func, className);
 }
 #endif
 
-void OH_Plugin_RunTaskOnPlatform(OH_Plugin_Task task)
+void OH_Plugin_RunAsyncTask(OH_Plugin_Task task, OH_Plugin_Thread_Mode mode)
 {
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (taskExecutor) {
-        taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+        if (mode == OH_PLUGIN_PLATFORM_THREAD) {
+            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+        } else if (mode == OH_PLUGIN_JS_THREAD) {
+            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::JS);
+        } else {
+            LOGE("The mode of thread is not support in the OH_Plugin_RunAsyncTask method!");
+        }
     }
 }
