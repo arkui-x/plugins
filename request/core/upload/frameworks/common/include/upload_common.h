@@ -44,6 +44,7 @@ struct TaskState {
 
 static constexpr const char *POST = "POST";
 static constexpr const char *PUT = "PUT";
+static constexpr const char *API5 = "API5";
 static constexpr int32_t ONE_ARG = 1;
 static constexpr int32_t TWO_ARG = 2;
 

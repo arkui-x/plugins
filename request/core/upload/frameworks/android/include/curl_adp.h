@@ -26,7 +26,7 @@
 #include "upload_config.h"
 
 namespace OHOS::Plugin::Request::Upload {
-class CUrlAdp {
+class CUrlAdp : public std::enable_shared_from_this<CUrlAdp> {
 public:
     CUrlAdp(std::vector<FileData> &fileArray, std::shared_ptr<UploadConfig> &config);
     virtual ~CUrlAdp();
@@ -39,11 +39,15 @@ public:
 
 protected:
     bool ClearCurlResource();
+    void SplitHttpMessage(const std::string &stmp, FileData *&fData);
     static int ProgressCallback(void *clientp,
         curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
     static size_t HeaderCallback(char *buffer, size_t size, size_t nitems, void *userdata);
     static size_t HeaderCallbackL5(char *buffer, size_t size, size_t nitems, void *userdata);
     static size_t ReadCallback(char *buffer, size_t size, size_t nitems, void *arg);
+    static void Notify(FileData *fData, std::string &headers);
+    static void NotifyAPI5(FileData *fData, std::string &headers);
+    static bool CheckCUrlAdp(FileData *fData);
     static int OnDebug(CURL *curl, curl_infotype itype, char *pData, size_t size, void *lpvoid);
 
 private:

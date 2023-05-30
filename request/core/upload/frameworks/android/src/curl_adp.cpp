@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <numeric>
 #include "upload_hilog_wrapper.h"
 #include "upload_task.h"
 #include "constant.h"
@@ -58,7 +59,7 @@ uint32_t CUrlAdp::DoUpload(CurlAdpCallback *task)
         }
 
         mfileData_ = vmem;
-        mfileData_.adp = this;
+        mfileData_.adp = shared_from_this();
         vmem.result = static_cast<uint32_t>(UploadOneFile());
         if (vmem.result != UPLOAD_OK) {
             allFileUploadResult = UPLOAD_ERRORCODE_UPLOAD_FAIL;
@@ -335,14 +336,30 @@ int CUrlAdp::OnDebug(CURL *curl, curl_infotype itype, char *pData, size_t size, 
     return (int)itype;
 }
 
+bool CUrlAdp::CheckCUrlAdp(FileData *fData)
+{
+    if (fData == nullptr || fData->adp == nullptr) {
+        UPLOAD_HILOGE(UPLOAD_MODULE_FRAMEWORK, "CheckCUrlAdp url == nullptr");
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(fData->adp->curlMutex_);
+    if (fData->adp->IsReadAbort()) {
+        UPLOAD_HILOGE(UPLOAD_MODULE_FRAMEWORK, "CheckCUrlAdp url->IsReadAbort()");
+        return false;
+    }
+    return true;
+}
+
 int CUrlAdp::ProgressCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow,
     curl_off_t ultotal, curl_off_t ulnow)
 {
-    FileData *fData = (FileData *) clientp;
-    if (fData == nullptr) {
-        return Download::HTTP_FORCE_STOP;
+    FileData *fData = (FileData *)clientp;
+    if (!CheckCUrlAdp(fData)) {
+        return UPLOAD_ERRORCODE_UPLOAD_FAIL;
     }
-    CUrlAdp *url = (CUrlAdp *) fData->adp;
+
+    std::shared_ptr<CUrlAdp> url = fData->adp;
+    std::lock_guard<std::mutex> lock(url->curlMutex_);
     if (url == nullptr) {
         return Download::HTTP_FORCE_STOP;
     }
@@ -352,6 +369,11 @@ int CUrlAdp::ProgressCallback(void *clientp, curl_off_t dltotal, curl_off_t dlno
         fData->upsize = ulnow;
     }
 
+    UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK,
+        "progress upload total: %{public}" PRIu64 " upload now: %{public}" PRIu64 " upload size: %{public}" PRIu64
+        " total size: %{public}" PRIu64 " thread:%{public}lu",
+        ultotal, ulnow, fData->upsize, fData->totalsize, pthread_self());
+
     if (url && url->uploadTask_) {
         int64_t totalulnow = 0;
         for (auto &vmem : url->fileDatas_) {
@@ -360,25 +382,43 @@ int CUrlAdp::ProgressCallback(void *clientp, curl_off_t dltotal, curl_off_t dlno
             }
             totalulnow += vmem.upsize;
         }
+        UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK,
+            "report progress total upload size: %{public}" PRIu64 " upload now: %{public}" PRIu64, totalulnow, ultotal);
         url->uploadTask_->OnProgress(dltotal, dlnow, ultotal, totalulnow);
     }
     return 0;
 }
 
-size_t CUrlAdp::HeaderCallback(char *buffer, size_t size, size_t nitems, void *userdata)
+void CUrlAdp::Notify(FileData *fData, std::string &headers)
 {
-    FileData *fData = (FileData *) userdata;
-    if (fData == nullptr) {
-        return size;
+    if (fData->httpCode == HTTP_SUCCESS) {
+        if (fData->adp->fileDatas_.size() == fData->fileIndex) {
+            fData->adp->uploadTask_->OnHeaderReceive(headers);
+        }
+    } else {
+        fData->adp->uploadTask_->OnHeaderReceive(headers);
     }
-    CUrlAdp *url = (CUrlAdp *) fData->adp;
-    if (url == nullptr) {
-        return size;
-    }
-    std::string stmp(buffer, size * nitems);
-    const int32_t codeOk = 200;
-    const std::string headEndFlag = "\r\n";
+}
 
+void CUrlAdp::NotifyAPI5(FileData *fData, std::string &headers)
+{
+    if (fData->httpCode == HTTP_SUCCESS) {
+        if (fData->adp->fileDatas_.size() == fData->fileIndex && fData->adp->config_->fsuccess != nullptr) {
+            UploadResponse resData;
+            resData.headers = headers;
+            resData.code = fData->httpCode;
+            fData->adp->config_->fsuccess(resData);
+        }
+    } else {
+        if (fData->adp->config_->ffail) {
+            fData->adp->config_->ffail(headers, fData->httpCode);
+        }
+    }
+}
+
+void CUrlAdp::SplitHttpMessage(const std::string &stmp, FileData* &fData)
+{
+    const std::string headEndFlag = "\r\n";
     if (std::string::npos != stmp.find("HTTP")) {
         fData->headSendFlag = COLLECT_DO_FLAG;
         UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "http header begin: %{public}s", stmp.c_str());
@@ -393,14 +433,29 @@ size_t CUrlAdp::HeaderCallback(char *buffer, size_t size, size_t nitems, void *u
     if (fData->headSendFlag == COLLECT_DO_FLAG || fData->headSendFlag == COLLECT_END_FLAG) {
         fData->responseHead.push_back(stmp);
     }
-    if (url && url->uploadTask_ && fData->headSendFlag == COLLECT_END_FLAG) {
-        std::string stoatalHead = "";
-        for (auto &smem : fData->responseHead) {
-            stoatalHead += smem;
-        }
-        UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "report head len: %{public}zu, content: %{public}s",
-            stoatalHead.length(), stoatalHead.c_str());
+}
 
+size_t CUrlAdp::HeaderCallback(char *buffer, size_t size, size_t nitems, void *userdata)
+{
+    FileData *fData = (FileData *)userdata;
+    if (!CheckCUrlAdp(fData)) {
+        return CURLE_WRITE_ERROR;
+    }
+
+    std::shared_ptr<CUrlAdp> url = fData->adp;
+    std::lock_guard<std::mutex> lock(url->curlMutex_);
+    if (url == nullptr) {
+        return size;
+    }
+    std::string stmp(buffer, size * nitems);
+    url->SplitHttpMessage(stmp, fData);
+
+    if (url && url->uploadTask_ && fData->headSendFlag == COLLECT_END_FLAG) {
+        std::string headers = std::accumulate(fData->responseHead.begin(), fData->responseHead.end(), std::string(""));
+        UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "report head len: %{public}zu, content: %{public}s",
+            headers.length(), headers.c_str());
+        auto func = (url->config_->protocolVersion == API5) ? NotifyAPI5 : Notify;
+        func(fData, headers);
         fData->responseHead.clear();
         fData->httpCode = 0;
     }
@@ -409,31 +464,21 @@ size_t CUrlAdp::HeaderCallback(char *buffer, size_t size, size_t nitems, void *u
 
 size_t CUrlAdp::HeaderCallbackL5(char *buffer, size_t size, size_t nitems, void *userdata)
 {
-    FileData *fData = (FileData *) userdata;
-    if (fData == nullptr) {
-        return size;
+    FileData *fData = (FileData *)userdata;
+    if (!CheckCUrlAdp(fData)) {
+        return CURLE_WRITE_ERROR;
     }
-    CUrlAdp *url = (CUrlAdp *) fData->adp;
+
+    std::shared_ptr<CUrlAdp> url = fData->adp;
+    std::lock_guard<std::mutex> lock(url->curlMutex_);
     if (url == nullptr) {
         return size;
     }
     std::string stmp(buffer, size * nitems);
     const int32_t codeOk = 200;
     UploadResponse resData;
-    const std::string headEndFlag = "\r\n";
+    url->SplitHttpMessage(stmp, fData);
 
-    if (std::string::npos != stmp.find("HTTP")) {
-        fData->headSendFlag = COLLECT_DO_FLAG;
-        const int codeLen = 3;
-        std::string::size_type position = stmp.find_first_of(" ");
-        std::string scode(stmp, position + 1, codeLen);
-        fData->httpCode = std::stol(scode);
-    } else if (stmp == headEndFlag) {
-        fData->headSendFlag = COLLECT_END_FLAG;
-    }
-    if (COLLECT_DO_FLAG == fData->headSendFlag || COLLECT_END_FLAG == fData->headSendFlag) {
-        fData->responseHead.push_back(stmp);
-    }
     if (url && url->uploadTask_ && COLLECT_END_FLAG == fData->headSendFlag) {
         std::string stoatalHead = "";
         for (auto &smem : fData->responseHead) {
@@ -461,12 +506,13 @@ size_t CUrlAdp::HeaderCallbackL5(char *buffer, size_t size, size_t nitems, void 
 
 size_t CUrlAdp::ReadCallback(char *buffer, size_t size, size_t nitems, void *arg)
 {
-    FileData *read = (FileData *) arg;
-    if (read == nullptr) {
-        UPLOAD_HILOGI(UPLOAD_MODULE_FRAMEWORK, "read is null");
+    UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "size is %{public}zu, nitems is %{public}zu.", size, nitems);
+    FileData *read = (FileData *)arg;
+    if (!CheckCUrlAdp(read) || ferror(read->fp)) {
         return CURL_READFUNC_ABORT;
     }
-    CUrlAdp *adp = (CUrlAdp *) read->adp;
+
+    std::shared_ptr<CUrlAdp> adp = read->adp;
     if (adp == nullptr) {
         UPLOAD_HILOGI(UPLOAD_MODULE_FRAMEWORK, "adp is null");
         return CURL_READFUNC_ABORT;

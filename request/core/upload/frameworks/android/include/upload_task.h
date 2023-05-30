@@ -66,8 +66,7 @@ private:
     static constexpr const char *ERROR_INFO = "ERROR_INFO";
 
     std::shared_ptr<CUrlAdp> curlAdp_;
-    // std::vector<std::string> headerArray_;
-    // std::string header_;
+    bool isRemoved_ {false};
     std::vector<FileData> fileDatas_;
     std::thread::native_handle_type thread_handle_;
     static constexpr int USLEEP_INTERVEL_BEFOR_RUN = 50 * 1000;
