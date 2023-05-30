@@ -161,13 +161,13 @@ static napi_value Init(napi_env env, napi_value exports)
 static void DownloadPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.downloadmanagerplugin.DownloadManagerPlugin";
-    OH_Plugin_RegisterPlugin(&DownloadManagerJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&DownloadManagerJni::Register, className);
 }
 
 static void JSRegisterProgressResult()
 {
     const char className[] = "ohos.ace.plugin.downloadmanagerplugin.DownloadManagerPlugin";
-    OH_Plugin_RegisterPlugin(&DownloadManagerJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&DownloadManagerJni::Register, className);
 }
 #endif
 
@@ -185,8 +185,8 @@ extern "C" __attribute__((constructor)) void RequestRegister()
     napi_module_register(&module);
 
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&DownloadPluginJniRegister);
-    OH_Plugin_RunTaskOnPlatform(&JSRegisterProgressResult);
+    OH_Plugin_RunAsyncTask(&DownloadPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    OH_Plugin_RunAsyncTask(&JSRegisterProgressResult, OH_PLUGIN_PLATFORM_THREAD);
 #endif
 
     UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "module register request");

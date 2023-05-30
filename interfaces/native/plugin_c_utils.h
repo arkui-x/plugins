@@ -22,10 +22,16 @@
 // Android plugin utils
 JNIEnv* OH_Plugin_GetJniEnv();
 
-void OH_Plugin_RegisterPlugin(bool (*func)(void*), const char* name);
+void OH_Plugin_RegisterJavaPlugin(bool (*func)(void*), const char* name);
 #endif
 
 typedef void (*OH_Plugin_Task)();
-void OH_Plugin_RunTaskOnPlatform(OH_Plugin_Task task);
+
+typedef enum {
+    OH_PLUGIN_PLATFORM_THREAD = 1,
+    OH_PLUGIN_JS_THREAD = 2,
+} OH_Plugin_Thread_Mode;
+
+void OH_Plugin_RunAsyncTask(OH_Plugin_Task task, OH_Plugin_Thread_Mode mode);
 
 #endif // PLUGIN_INTERFACE_NATIVE_PLUGIN_C_UTILS_H

@@ -84,7 +84,7 @@ static napi_module testPluginModule = {
 static void TestPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.testplugin.TestPlugin";
-    OH_Plugin_RegisterPlugin(&TestPluginJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&TestPluginJni::Register, className);
 }
 #endif
 
@@ -92,7 +92,7 @@ extern "C" __attribute__((constructor)) void TestPluginRegister()
 {
     napi_module_register(&testPluginModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&TestPluginJniRegister);
+    OH_Plugin_RunAsyncTask(&TestPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 

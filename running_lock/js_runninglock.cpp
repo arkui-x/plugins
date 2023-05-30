@@ -304,7 +304,7 @@ static napi_module g_module = {.nm_version = 1,
 static void RunningLockJniRegister()
 {
     const char className[] = "ohos.ace.plugin.runninglockplugin.RunningLockPlugin";
-    OH_Plugin_RegisterPlugin(&RunningLockJni::Register, className);
+    OH_Plugin_RegisterJavaPlugin(&RunningLockJni::Register, className);
 }
 #endif
 
@@ -315,7 +315,7 @@ extern "C" __attribute__((constructor)) void RegisterRunninglockModule(void)
 {
     napi_module_register(&g_module);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunTaskOnPlatform(&RunningLockJniRegister);
+    OH_Plugin_RunAsyncTask(&RunningLockJniRegister, OH_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 }  // namespace OHOS::Plugin
