@@ -51,13 +51,13 @@ struct UploadConfig {
     std::function<void()> fcomplete;
     std::string protocolVersion;
 };
-
+class CUrlAdp;
 struct FileData {
     FILE *fp;
     std::string filename;
     std::string name;
     std::string type;
-    void *adp;
+    std::shared_ptr<CUrlAdp> adp;
     int64_t upsize;
     int64_t totalsize;
     uint32_t fileIndex;

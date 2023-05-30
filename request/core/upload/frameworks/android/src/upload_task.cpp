@@ -229,6 +229,10 @@ std::vector<TaskState> UploadTask::GetTaskStates()
 void UploadTask::OnFail()
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnFail. In.");
+    if (isRemoved_) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnFail isRemoved");
+        return;
+    }
     if (uploadConfig_ && uploadConfig_->protocolVersion == "L5") {
         return;
     }
@@ -244,6 +248,13 @@ void UploadTask::OnFail()
 void UploadTask::OnComplete()
 {
     UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnComplete. In.");
+    if (isRemoved_) {
+        UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "OnComplete isRemoved");
+        return;
+    }
+    if (uploadConfig_->protocolVersion == API5) {
+        return;
+    }
     std::lock_guard<std::recursive_mutex> guard(mutex_);
     std::vector<TaskState> taskStates = GetTaskStates();
     taskStates_ = taskStates;
