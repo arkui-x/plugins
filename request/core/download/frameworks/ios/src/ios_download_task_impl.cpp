@@ -122,6 +122,10 @@ bool IosDownloadTaskImpl::Suspend()
 bool IosDownloadTaskImpl::Restore()
 {
     DOWNLOAD_HILOGD("restore download task");
+    if (status_ == SESSION_RUNNING || status_ == SESSION_SUCCESS) {
+        DOWNLOAD_HILOGD("no need restore download.");
+        return true;
+    }
     bool res = downloadAdp_->Restore(this);
     if (res) {
         SetStatus(SESSION_RUNNING);
