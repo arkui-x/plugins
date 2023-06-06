@@ -335,14 +335,41 @@ NSString* PercentEscapedStringFromString(NSString* string) {
             self.request.URL = [NSURL URLWithString:string];
         }
     } else {
+        NSString * contentType = [self.request valueForHTTPHeaderField:@"Content-Type"];
+        //default application/json
+        if (contentType.length == 0) {
+            [self.request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+        }
+        NSData * bodyData = queryDataFromParameters(contentType, query, parameters);
+        if (bodyData) {
+            [self.request setHTTPBody:bodyData];
+        }
+    }
+}
+
+NSData * queryDataFromParameters(NSString* contentType, NSString* query,NSDictionary* parameters)
+{
+    NSData *bodyData = nil;
+    if ([contentType isEqualToString:@"application/x-plist"]) {
+        NSError *error = nil;
+        bodyData = [NSPropertyListSerialization dataWithPropertyList:parameters
+            format:NSPropertyListXMLFormat_v1_0 options:0 error:&error];
+        if (error) {
+            NSLog(@"JSONSerialization fail：%@", error.localizedDescription);
+        }
+    } else if ([contentType isEqualToString:@"application/x-www-form-urlencoded"]) {
         if (!query) {
             query = @"";
         }
-        if (![self.request valueForHTTPHeaderField:@"Content-Type"]) {
-            [self.request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+        bodyData = [query dataUsingEncoding:NSUTF8StringEncoding];
+    }else {
+        NSError *error = nil;
+        bodyData = [NSJSONSerialization dataWithJSONObject:parameters options:0 error:&error];
+        if (error) {
+            NSLog(@"JSONSerialization fail：%@", error.localizedDescription);
         }
-        [self.request setHTTPBody:[query dataUsingEncoding:NSUTF8StringEncoding]];
     }
+    return bodyData;
 }
 
 NSString* queryStringFromParameters(NSDictionary* parameters)
