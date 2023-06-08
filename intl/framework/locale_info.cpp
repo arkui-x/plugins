@@ -294,7 +294,6 @@ std::string LocaleInfo::Minimize()
 
 bool LocaleInfo::Init()
 {
-    SetHwIcuDirectory();
     return true;
 }
 
