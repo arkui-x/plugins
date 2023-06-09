@@ -59,6 +59,9 @@ common_plugin_libs = [
   "util/treemap",
   "util/treeset",
   "hilog",
+  "taskpool",
+  "timer",
+  "console",
 ]
 
 if (target_os == "android") {
