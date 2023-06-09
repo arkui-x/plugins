@@ -178,7 +178,7 @@ static napi_value GetOsReleaseType(napi_env env, napi_callback_info info)
 static napi_value GetOSFullName(napi_env env, napi_callback_info info)
 {
     napi_value napiValue = nullptr;
-    auto deviceinfo = SdkVersionInfo::Create();
+    auto deviceinfo = DeviceInfo::Create();
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetOSFullName");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getOSFullName, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));

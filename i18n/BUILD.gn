@@ -53,7 +53,7 @@ template("plugin_i18n_static") {
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
-      "//third_party/icu/icu4c:static_icu",
+      "//plugins/libs/icu:icu_${target_os}",
     ]
 
     if (platform == "android") {

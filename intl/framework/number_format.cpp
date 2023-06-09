@@ -452,7 +452,6 @@ std::string NumberFormat::GetLocaleMatcher() const
 
 bool NumberFormat::Init()
 {
-    SetHwIcuDirectory();
     return true;
 }
 } // namespace I18n

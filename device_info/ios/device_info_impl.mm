@@ -22,6 +22,10 @@
 #import <mach/mach.h>
 #import <mach-o/arch.h>
 #import <UIKit/UIKit.h>
+#if TARGET_OS_MACCATALYST
+#import <IOKit/usb/IOUSBLib.h>
+#import <IOKit/IOCFPlugIn.h>
+#endif
 
 namespace OHOS::Plugin {
 std::unique_ptr<DeviceInfo> DeviceInfo::Create()
@@ -142,6 +146,42 @@ int DeviceInfoImpl::GetFirstApiVersion(int def)
     return def;
 }
 
+const std::string DeviceInfoImpl::GetOSFullName(void)
+{
+    NSString *space = @" ";
+#if TARGET_OS_MACCATALYST
+    NSString *modelIdentifier = nil;
+    io_service_t platformExpert ;
+    platformExpert = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+    if (platformExpert) {
+        CFTypeRef modelAsCFString = IORegistryEntryCreateCFProperty(platformExpert, CFSTR("model"), kCFAllocatorDefault, 0);
+        if (modelAsCFString)   {
+            modelIdentifier = CFBridgingRelease(modelAsCFString);
+            CFRelease(modelAsCFString);
+            modelAsCFString = NULL;
+        }
+        IOObjectRelease(platformExpert);
+        platformExpert = 0;
+    }
+    NSString *osType = @"macOS";
+    NSString *osName = [[NSProcessInfo processInfo] operatingSystemVersionString];
+    NSString *osFullName = [NSString stringWithFormat:@"%@%@%@%@%@", modelIdentifier, space, osType, space, osName];
+
+    return [osFullName cStringUsingEncoding : NSUTF8StringEncoding];
+#else
+    UIDevice *device=[UIDevice currentDevice];
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *machineString = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+    NSString *strSystemName = [[UIDevice currentDevice] systemName];
+    NSString *strSysVersion = [[UIDevice currentDevice] systemVersion];
+    NSString *osFullName = [NSString stringWithFormat:@"%@%@%@%@%@", machineString, space, strSystemName,
+        space, strSysVersion];
+
+    return [osFullName cStringUsingEncoding : NSUTF8StringEncoding];
+#endif
+}
+
 const std::string DeviceInfoImpl::GetDeviceInfo(int id, const std::string &defValue)
 {
     switch(id) {
@@ -171,6 +211,8 @@ const std::string DeviceInfoImpl::GetDeviceInfo(int id, const std::string &defVa
             return GetDisplayVersion();
         case METHOD_ID_getIncrementalVersion:
             return GetIncrementalVersion(defValue);
+        case METHOD_ID_getOSFullName:
+            return GetOSFullName();
         default:
             return defValue;
     }

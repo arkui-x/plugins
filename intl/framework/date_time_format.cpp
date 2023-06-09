@@ -706,7 +706,6 @@ std::string DateTimeFormat::GetSecond() const
 
 bool DateTimeFormat::Init()
 {
-    SetHwIcuDirectory();
     return true;
 }
 } // namespace I18n
