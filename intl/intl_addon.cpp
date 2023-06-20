@@ -20,7 +20,7 @@
 
 #include "hilog/log.h"
 #include "node_api.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 
 #ifdef ANDROID_PLATFORM
 #include "plugins/intl/android/java/jni/intl_plugin_jni.h"
@@ -1846,7 +1846,7 @@ static napi_module g_intlModule = {
 static void INTLPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.intlplugin.INTLPlugin";
-    OH_Plugin_RegisterJavaPlugin(&Plugin::INTLPluginJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::INTLPluginJni::Register, className);
 }
 #endif
 
@@ -1854,7 +1854,7 @@ extern "C" __attribute__((constructor)) void INTLPluginRegister()
 {
     napi_module_register(&g_intlModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&INTLPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&INTLPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace I18n

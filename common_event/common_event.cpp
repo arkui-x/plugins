@@ -18,7 +18,7 @@
 #include <strstream>
 
 #include "log.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 
 namespace OHOS {
 namespace Plugin {

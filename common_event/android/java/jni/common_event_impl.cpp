@@ -15,8 +15,8 @@
 
 #include "plugins/common_event/android/java/jni/common_event_impl.h"
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_utils.h"
 #include "plugins/common_event/android/java/jni/broadcast_jni.h"
 
 namespace OHOS {
@@ -29,19 +29,19 @@ std::unique_ptr<CommonEventInterface> CommonEventInterface::Create()
 void CommonEventImpl::PublishCommonEvent(const std::string &event, AsyncCallbackInfo* ptr)
 {
     LOGI("CommonEventImpl PublishCommonEvent called");
-    PluginUtils::RunTaskOnPlatform([event, ptr]() { BroadcastJni::SendBroadcast(event, "", ptr); });
+    PluginUtilsInner::RunTaskOnPlatform([event, ptr]() { BroadcastJni::SendBroadcast(event, "", ptr); });
 }
 
 void CommonEventImpl::SubscribeCommonEvent(const std::string &key, const std::vector<std::string> events)
 {
     LOGI("CommonEventImpl SubscribeCommonEvent called");
-    PluginUtils::RunTaskOnPlatform([key, events]() { BroadcastJni::RegisterBroadcast(key, events); });
+    PluginUtilsInner::RunTaskOnPlatform([key, events]() { BroadcastJni::RegisterBroadcast(key, events); });
 }
 
 void CommonEventImpl::UnSubscribeCommonEvent(const std::string &key, AsyncCallbackInfo* ptr)
 {
     LOGI("CommonEventImpl UnSubscribeCommonEvent called");
-    PluginUtils::RunTaskOnPlatform([key, ptr]() { BroadcastJni::UnRegisterBroadcast(key, ptr); });
+    PluginUtilsInner::RunTaskOnPlatform([key, ptr]() { BroadcastJni::UnRegisterBroadcast(key, ptr); });
 }
 }  // namespace Plugin
 }  // namespace OHOS

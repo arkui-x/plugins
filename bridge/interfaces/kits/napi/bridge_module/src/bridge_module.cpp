@@ -22,8 +22,8 @@
 #include "napi/native_node_api.h"
 #include "napi_async_event.h"
 #include "napi_utils.h"
-#include "plugins/interfaces/native/inner_utils/plugin_inner_napi_utils.h"
-#include "plugins/interfaces/native/plugin_c_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 #include "plugins/interfaces/native/plugin_utils.h"
 
 namespace OHOS::Plugin::Bridge {
@@ -39,31 +39,31 @@ napi_value BridgeModule::InitBridgeModule(napi_env env, napi_value exports)
 
 napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
 {
-    size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-    napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
 
-    if (argc != PluginInnerNApiUtils::ARG_NUM_1 ||
-        PluginInnerNApiUtils::GetValueType(env, argv[PluginInnerNApiUtils::ARG_NUM_0]) != napi_string) {
-        return PluginInnerNApiUtils::CreateUndefined(env);
+    if (argc != PluginUtilsNApi::ARG_NUM_1 ||
+        PluginUtilsNApi::GetValueType(env, argv[PluginUtilsNApi::ARG_NUM_0]) != napi_string) {
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    std::string bridgeName = PluginInnerNApiUtils::GetStringFromValueUtf8(env, argv[PluginInnerNApiUtils::ARG_NUM_0]);
+    std::string bridgeName = PluginUtilsNApi::GetStringFromValueUtf8(env, argv[PluginUtilsNApi::ARG_NUM_0]);
     if (bridgeName.empty()) {
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
-    napi_ref bridgeNameRef = PluginInnerNApiUtils::CreateReference(env, argv[PluginInnerNApiUtils::ARG_NUM_0]);
-    napi_value bridgeNameValue = PluginInnerNApiUtils::GetReference(env, bridgeNameRef);
+    napi_ref bridgeNameRef = PluginUtilsNApi::CreateReference(env, argv[PluginUtilsNApi::ARG_NUM_0]);
+    napi_value bridgeNameValue = PluginUtilsNApi::GetReference(env, bridgeNameRef);
 
     napi_value thisVar =
-        PluginInnerNApiUtils::NewInstance(env, info, INTERFACE_PLUGIN_BRIDGE_OBJECT, 1, &bridgeNameValue);
+        PluginUtilsNApi::NewInstance(env, info, INTERFACE_PLUGIN_BRIDGE_OBJECT, 1, &bridgeNameValue);
     if (thisVar == nullptr) {
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     auto bridge = BridgeWrap::CreateBridge(bridgeName);
     if (bridge == nullptr) {
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
     napi_wrap(
         env, thisVar, reinterpret_cast<void*>(bridge),
@@ -85,7 +85,7 @@ void BridgeModule::DefinePluginBridgeObjectClass(napi_env env, napi_value export
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_SEND_MESSAGE, BridgeObject::SendMessage),
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_REGISTER_ON_MESSAGE, BridgeObject::SetMessageListener),
     };
-    PluginInnerNApiUtils::DefineClass(env, exports, properties, INTERFACE_PLUGIN_BRIDGE_OBJECT);
+    PluginUtilsNApi::DefineClass(env, exports, properties, INTERFACE_PLUGIN_BRIDGE_OBJECT);
 }
 
 void BridgeModule::InitBridgeProperties(napi_env env, napi_value exports)
@@ -93,7 +93,7 @@ void BridgeModule::InitBridgeProperties(napi_env env, napi_value exports)
     std::initializer_list<napi_property_descriptor> properties = {
         DECLARE_NAPI_FUNCTION(FUNCTION_CREATE_PLUGIN_BRIDGE, CreateBridge),
     };
-    PluginInnerNApiUtils::DefineProperties(env, exports, properties);
+    PluginUtilsNApi::DefineProperties(env, exports, properties);
 }
 
 Bridge* BridgeModule::GetBridge(napi_env env, napi_value thisVal)
@@ -139,7 +139,7 @@ void BridgeModule::RegisterMethodInner(
         LOGE("RegisterMethodInner:Failed to obtain the Bridge object.");
     }
     callback->SetMethodName(methodData->GetMethodName());
-    callback->SendAsyncCallback(static_cast<int>(code), PluginInnerNApiUtils::CreateUndefined(env));
+    callback->SendAsyncCallback(static_cast<int>(code), PluginUtilsNApi::CreateUndefined(env));
 }
 
 void BridgeModule::UnRegisterMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> callback)
@@ -153,7 +153,7 @@ void BridgeModule::UnRegisterMethodInner(napi_env env, napi_value thisVal, std::
         code = ErrorCode::BRIDGE_INVALID;
         LOGE("UnRegisterMethodInner:Failed to obtain the Bridge object.");
     }
-    callback->SendAsyncCallback(static_cast<int>(code), PluginInnerNApiUtils::CreateUndefined(env));
+    callback->SendAsyncCallback(static_cast<int>(code), PluginUtilsNApi::CreateUndefined(env));
 }
 
 void BridgeModule::SendMessageInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> callback)
@@ -169,7 +169,7 @@ void BridgeModule::SendMessageInner(napi_env env, napi_value thisVal, std::share
     }
 
     if (code != ErrorCode::BRIDGE_ERROR_NO) {
-        callback->SendAsyncCallback(static_cast<int>(code), PluginInnerNApiUtils::CreateUndefined(env));
+        callback->SendAsyncCallback(static_cast<int>(code), PluginUtilsNApi::CreateUndefined(env));
         if (bridge) {
             bridge->RemoveMessageData();
         }
@@ -191,38 +191,38 @@ void BridgeModule::SetMessageListenerInner(
 napi_value BridgeModule::BridgeObject::GetBridgeName(napi_env env, napi_callback_info info)
 {
     napi_value thisVal = nullptr;
-    size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-    napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
     Bridge* bridge = GetBridge(env, thisVal);
     if (bridge) {
-        return PluginInnerNApiUtils::CreateStringUtf8(env, bridge->GetBridgeName());
+        return PluginUtilsNApi::CreateStringUtf8(env, bridge->GetBridgeName());
     } else {
         LOGE("GetBridgeName: Failed to obtain the Bridge object.");
     }
-    return PluginInnerNApiUtils::CreateUndefined(env);
+    return PluginUtilsNApi::CreateUndefined(env);
 }
 
 napi_value BridgeModule::BridgeObject::CallMethod(napi_env env, napi_callback_info info)
 {
     napi_value thisVal = nullptr;
-    size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-    napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
-    if (argc == PluginInnerNApiUtils::ARG_NUM_0 || argc > PluginInnerNApiUtils::MAX_ARG_NUM) {
+    if (argc == PluginUtilsNApi::ARG_NUM_0 || argc > PluginUtilsNApi::MAX_ARG_NUM) {
         LOGE("BridgeObject::CallMethod: Method parameter error.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     std::shared_ptr<MethodData> methodData = std::make_shared<MethodData>(env);
-    if (!methodData->GetName(argv[PluginInnerNApiUtils::ARG_NUM_0])) {
+    if (!methodData->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::CallMethod: Parsing the method name failed.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    size_t paramCount = (argc > PluginInnerNApiUtils::ARG_NUM_1) ? argc - 1 : 0;
+    size_t paramCount = (argc > PluginUtilsNApi::ARG_NUM_1) ? argc - 1 : 0;
     bool ret = false;
     if (paramCount > 0) {
         ret = methodData->GetParamsByRecord(paramCount, &argv[1]);
@@ -232,10 +232,10 @@ napi_value BridgeModule::BridgeObject::CallMethod(napi_env env, napi_callback_in
 
     if (!ret) {
         LOGE("BridgeObject::CallMethod: Parsing the method parameters failed.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    napi_value result = PluginInnerNApiUtils::CreateUndefined(env);
+    napi_value result = PluginUtilsNApi::CreateUndefined(env);
     if (!methodData->IsCallback()) {
         result = methodData->GetPromise(true);
     }
@@ -247,31 +247,31 @@ napi_value BridgeModule::BridgeObject::CallMethod(napi_env env, napi_callback_in
 napi_value BridgeModule::BridgeObject::RegisterMethod(napi_env env, napi_callback_info info)
 {
     napi_value thisVal = nullptr;
-    size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-    napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
-    if (argc == PluginInnerNApiUtils::ARG_NUM_0 || argc > PluginInnerNApiUtils::ARG_NUM_2) {
+    if (argc == PluginUtilsNApi::ARG_NUM_0 || argc > PluginUtilsNApi::ARG_NUM_2) {
         LOGE("BridgeObject::RegisterMethod: Method parameter error.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     std::shared_ptr<MethodData> methodData = std::make_shared<MethodData>(env);
-    if (argc > PluginInnerNApiUtils::ARG_NUM_0 &&
-        !methodData->GetJSRegisterMethodObject(argv[PluginInnerNApiUtils::ARG_NUM_0])) {
+    if (argc > PluginUtilsNApi::ARG_NUM_0 &&
+        !methodData->GetJSRegisterMethodObject(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::RegisterMethod: Failed to create the callback event.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     std::shared_ptr<MethodData> callback = std::make_shared<MethodData>(env);
-    if (argc > PluginInnerNApiUtils::ARG_NUM_1 &&
-        !callback->GetCallback(argv[PluginInnerNApiUtils::ARG_NUM_1], false)) {
+    if (argc > PluginUtilsNApi::ARG_NUM_1 &&
+        !callback->GetCallback(argv[PluginUtilsNApi::ARG_NUM_1], false)) {
         methodData->ReleaseEvent();
         LOGE("BridgeObject::RegisterMethod: Failed to create the callback event.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    napi_value result = PluginInnerNApiUtils::CreateUndefined(env);
+    napi_value result = PluginUtilsNApi::CreateUndefined(env);
     if (!callback->IsCallback()) {
         result = callback->GetPromise(false);
     }
@@ -283,29 +283,29 @@ napi_value BridgeModule::BridgeObject::RegisterMethod(napi_env env, napi_callbac
 napi_value BridgeModule::BridgeObject::UnRegisterMethod(napi_env env, napi_callback_info info)
 {
     napi_value thisVal = nullptr;
-    size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-    napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
-    if (argc == PluginInnerNApiUtils::ARG_NUM_0 || argc > PluginInnerNApiUtils::ARG_NUM_2) {
+    if (argc == PluginUtilsNApi::ARG_NUM_0 || argc > PluginUtilsNApi::ARG_NUM_2) {
         LOGE("BridgeObject::UnRegisterMethod: Method parameter error.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     std::shared_ptr<MethodData> callback = std::make_shared<MethodData>(env);
-    if (argc > PluginInnerNApiUtils::ARG_NUM_0 &&
-        !callback->GetName(argv[PluginInnerNApiUtils::ARG_NUM_0])) {
+    if (argc > PluginUtilsNApi::ARG_NUM_0 &&
+        !callback->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::UnRegisterMethod: Method name error.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    if (argc > PluginInnerNApiUtils::ARG_NUM_1 &&
-        !callback->GetCallback(argv[PluginInnerNApiUtils::ARG_NUM_1], false)) {
+    if (argc > PluginUtilsNApi::ARG_NUM_1 &&
+        !callback->GetCallback(argv[PluginUtilsNApi::ARG_NUM_1], false)) {
         LOGE("BridgeObject::UnRegisterMethod: Failed to create the callback event.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    napi_value result = PluginInnerNApiUtils::CreateUndefined(env);
+    napi_value result = PluginUtilsNApi::CreateUndefined(env);
     if (!callback->IsCallback()) {
         result = callback->GetPromise(false);
     }
@@ -317,29 +317,29 @@ napi_value BridgeModule::BridgeObject::UnRegisterMethod(napi_env env, napi_callb
 napi_value BridgeModule::BridgeObject::SendMessage(napi_env env, napi_callback_info info)
 {
     napi_value thisVal = nullptr;
-    size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-    napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
-    if (argc == PluginInnerNApiUtils::ARG_NUM_0 || argc > PluginInnerNApiUtils::ARG_NUM_2) {
+    if (argc == PluginUtilsNApi::ARG_NUM_0 || argc > PluginUtilsNApi::ARG_NUM_2) {
         LOGE("BridgeObject::SendMessage: Method parameter error.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     std::shared_ptr<MethodData> callback = std::make_shared<MethodData>(env);
-    if (argc > PluginInnerNApiUtils::ARG_NUM_0 &&
-        !callback->GetMessageData(argv[PluginInnerNApiUtils::ARG_NUM_0])) {
+    if (argc > PluginUtilsNApi::ARG_NUM_0 &&
+        !callback->GetMessageData(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::SendMessage: Failed to create the callback event.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    if (argc == PluginInnerNApiUtils::ARG_NUM_2 &&
-        !callback->GetCallback(argv[PluginInnerNApiUtils::ARG_NUM_1], false)) {
+    if (argc == PluginUtilsNApi::ARG_NUM_2 &&
+        !callback->GetCallback(argv[PluginUtilsNApi::ARG_NUM_1], false)) {
         LOGE("BridgeObject::SendMessage: Failed to create the callback event.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    napi_value result = PluginInnerNApiUtils::CreateUndefined(env);
+    napi_value result = PluginUtilsNApi::CreateUndefined(env);
     if (!callback->IsCallback()) {
         result = callback->GetPromise(false);
     }
@@ -351,25 +351,25 @@ napi_value BridgeModule::BridgeObject::SendMessage(napi_env env, napi_callback_i
 napi_value BridgeModule::BridgeObject::SetMessageListener(napi_env env, napi_callback_info info)
 {
     napi_value thisVal = nullptr;
-    size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-    napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
-    if (argc != PluginInnerNApiUtils::ARG_NUM_1) {
+    if (argc != PluginUtilsNApi::ARG_NUM_1) {
         LOGE("BridgeObject::SetMessageListener: Method parameter error.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     std::shared_ptr<MethodData> onMessageCallback = std::make_shared<MethodData>(env);
     onMessageCallback->SetIsMessageEvent(true);
 
-    if (!onMessageCallback->GetCallback(argv[PluginInnerNApiUtils::ARG_NUM_0], true)) {
+    if (!onMessageCallback->GetCallback(argv[PluginUtilsNApi::ARG_NUM_0], true)) {
         LOGE("BridgeObject::SetMessageListener: Failed to create the listener method.");
-        return PluginInnerNApiUtils::CreateUndefined(env);
+        return PluginUtilsNApi::CreateUndefined(env);
     }
 
     SetMessageListenerInner(env, thisVal, onMessageCallback);
-    return PluginInnerNApiUtils::CreateUndefined(env);
+    return PluginUtilsNApi::CreateUndefined(env);
 }
 
 static napi_module BridgeModule = {

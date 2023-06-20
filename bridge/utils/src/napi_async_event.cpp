@@ -18,7 +18,7 @@
 #include "napi_utils.h"
 #include "napi/native_api.h"
 #include "napi/native_common.h"
-#include "plugins/interfaces/native/inner_utils/plugin_inner_napi_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 
 namespace OHOS::Plugin::Bridge {
 NAPIAsyncEvent::NAPIAsyncEvent(napi_env env) : env_(env) {}
@@ -78,22 +78,22 @@ napi_value NAPIAsyncEvent::GetData(void)
 
 void NAPIAsyncEvent::SetRefData(napi_value data)
 {
-    refData_ = PluginInnerNApiUtils::CreateReference(env_, data);
+    refData_ = PluginUtilsNApi::CreateReference(env_, data);
 }
 
 napi_value NAPIAsyncEvent::GetRefData(void)
 {
-    return PluginInnerNApiUtils::GetReference(env_, refData_);
+    return PluginUtilsNApi::GetReference(env_, refData_);
 }
 
 void NAPIAsyncEvent::SetRefErrorData(napi_value data)
 {
-    refErrorData_ = PluginInnerNApiUtils::CreateReference(env_, data);
+    refErrorData_ = PluginUtilsNApi::CreateReference(env_, data);
 }
 
 napi_value NAPIAsyncEvent::GetRefErrorData(void)
 {
-    return PluginInnerNApiUtils::GetReference(env_, refErrorData_);
+    return PluginUtilsNApi::GetReference(env_, refErrorData_);
 }
 
 void NAPIAsyncEvent::SetMethodParameter(const std::string& jsonStr)
@@ -104,30 +104,30 @@ void NAPIAsyncEvent::SetMethodParameter(const std::string& jsonStr)
 bool NAPIAsyncEvent::CreateCallback(napi_value callback)
 {
     if (callback_ != nullptr) {
-        PluginInnerNApiUtils::DeleteReference(env_, callback_);
+        PluginUtilsNApi::DeleteReference(env_, callback_);
         callback_ = nullptr;
     }
 
-    if (PluginInnerNApiUtils::GetValueType(env_, callback) != napi_function) {
+    if (PluginUtilsNApi::GetValueType(env_, callback) != napi_function) {
         return false;
     }
 
-    callback_ = PluginInnerNApiUtils::CreateReference(env_, callback);
+    callback_ = PluginUtilsNApi::CreateReference(env_, callback);
     return callback_ != nullptr;
 }
 
 void NAPIAsyncEvent::DeleteCallback(void)
 {
     if (callback_ != nullptr) {
-        PluginInnerNApiUtils::DeleteReference(env_, callback_);
+        PluginUtilsNApi::DeleteReference(env_, callback_);
         callback_ = nullptr;
     }
     if (refData_ != nullptr) {
-        PluginInnerNApiUtils::DeleteReference(env_, refData_);
+        PluginUtilsNApi::DeleteReference(env_, refData_);
         refData_ = nullptr;
     }
     if (refErrorData_ != nullptr) {
-        PluginInnerNApiUtils::DeleteReference(env_, refErrorData_);
+        PluginUtilsNApi::DeleteReference(env_, refErrorData_);
         refErrorData_ = nullptr;
     }
 }
@@ -141,15 +141,15 @@ bool NAPIAsyncEvent::CreateAsyncWork(const std::string& asyncWorkName,
     AsyncWorkExecutor executor, AsyncWorkComplete callback)
 {
     asyncWorkName_ = asyncWorkName;
-    napi_value workName = PluginInnerNApiUtils::CreateStringUtf8(env_, asyncWorkName);
-    asyncWork_ = PluginInnerNApiUtils::CreateAsyncWork(env_, workName, executor, callback, this);
+    napi_value workName = PluginUtilsNApi::CreateStringUtf8(env_, asyncWorkName);
+    asyncWork_ = PluginUtilsNApi::CreateAsyncWork(env_, workName, executor, callback, this);
     return asyncWork_ != nullptr;
 }
 
 void NAPIAsyncEvent::DeleteAsyncWork(void)
 {
     if (asyncWork_ != nullptr) {
-        PluginInnerNApiUtils::DeleteAsyncWork(env_, asyncWork_);
+        PluginUtilsNApi::DeleteAsyncWork(env_, asyncWork_);
         asyncWork_ = nullptr;
     }
 }
@@ -181,20 +181,20 @@ void NAPIAsyncEvent::TriggerEventError(ErrorCode code)
 
 void NAPIAsyncEvent::AsyncWorkCallback(void)
 {
-    size_t argc = PluginInnerNApiUtils::ARG_NUM_2;
-    napi_value argv[PluginInnerNApiUtils::ARG_NUM_2] = { GetRefErrorData(), GetRefData() };
+    size_t argc = PluginUtilsNApi::ARG_NUM_2;
+    napi_value argv[PluginUtilsNApi::ARG_NUM_2] = { GetRefErrorData(), GetRefData() };
     if (callback_) {
-        napi_value callback = PluginInnerNApiUtils::GetReference(env_, callback_);
-        PluginInnerNApiUtils::CallFunction(env_, PluginInnerNApiUtils::CreateUndefined(env_), callback, argc, argv);
+        napi_value callback = PluginUtilsNApi::GetReference(env_, callback_);
+        PluginUtilsNApi::CallFunction(env_, PluginUtilsNApi::CreateUndefined(env_), callback, argc, argv);
     } else {
         if (deferred_ == nullptr) {
             return;
         }
 
         if (errorCode_ == 0) {
-            napi_resolve_deferred(env_, deferred_, argv[PluginInnerNApiUtils::ARG_NUM_1]);
+            napi_resolve_deferred(env_, deferred_, argv[PluginUtilsNApi::ARG_NUM_1]);
         } else {
-            napi_reject_deferred(env_, deferred_, argv[PluginInnerNApiUtils::ARG_NUM_0]);
+            napi_reject_deferred(env_, deferred_, argv[PluginUtilsNApi::ARG_NUM_0]);
         }
     }
 }
@@ -211,17 +211,17 @@ void NAPIAsyncEvent::AsyncWorkCallMethod(void)
     napi_value methodResultValue = nullptr;
     napi_get_reference_value(env_, callback_, &callback);
     if (methodParameter_.empty()) {
-        methodResultValue = PluginInnerNApiUtils::CallFunction(
-            env_, PluginInnerNApiUtils::CreateUndefined(env_), callback, 0, nullptr);
+        methodResultValue = PluginUtilsNApi::CallFunction(
+            env_, PluginUtilsNApi::CreateUndefined(env_), callback, 0, nullptr);
         TriggerEventSuccess(methodResultValue);
     } else {
-        size_t argc = PluginInnerNApiUtils::MAX_ARG_NUM;
-        napi_value argv[PluginInnerNApiUtils::MAX_ARG_NUM] = { nullptr };
+        size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+        napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
 
         bool ret = NAPIUtils::JsonStringToNapiValues(env_, methodParameter_, argc, argv);
         if (ret) {
-            methodResultValue = PluginInnerNApiUtils::CallFunction(
-                env_, PluginInnerNApiUtils::CreateUndefined(env_), callback, argc, argv);
+            methodResultValue = PluginUtilsNApi::CallFunction(
+                env_, PluginUtilsNApi::CreateUndefined(env_), callback, argc, argv);
             TriggerEventSuccess(methodResultValue);
         } else {
             TriggerEventError(ErrorCode::BRIDGE_METHOD_PARAM_ERROR);
@@ -240,7 +240,7 @@ void NAPIAsyncEvent::AsyncWorkMessage(void)
     napi_value result = nullptr;
     napi_get_reference_value(env_, callback_, &callback);
     napi_value data = GetRefData();
-    result = PluginInnerNApiUtils::CallFunction(env_, PluginInnerNApiUtils::CreateUndefined(env_), callback, 1, &data);
+    result = PluginUtilsNApi::CallFunction(env_, PluginUtilsNApi::CreateUndefined(env_), callback, 1, &data);
     TriggerEventSuccess(result);
 }
 } // namespace OHOS::Plugin::Bridge

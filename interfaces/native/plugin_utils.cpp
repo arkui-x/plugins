@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,60 +15,37 @@
 
 #include "plugins/interfaces/native/plugin_utils.h"
 
-#include <future>
+#include <cstddef>
 
+#include "base/thread/task_executor.h"
 #include "frameworks/core/common/container.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
+
 #ifdef ANDROID_PLATFORM
-#include "adapter/android/capability/java/jni/grantresult/grant_result_manager.h"
-#include "adapter/android/capability/java/jni/plugin/plugin_manager_jni.h"
-#endif
+#include "adapter/android/entrance/java/jni/jni_environment.h"
 
-namespace OHOS::Plugin {
-
-void PluginUtils::RegisterPlugin(RegisterCallback callback, const std::string& className)
+JNIEnv* ARKUI_X_Plugin_GetJniEnv()
 {
-#ifdef ANDROID_PLATFORM
-    OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
-#endif
+    return OHOS::Ace::Platform::JniEnvironment::GetInstance().GetJniEnv(nullptr, false).get();
 }
 
-void PluginUtils::RunTaskOnPlatform(const Task& task)
+void ARKUI_X_Plugin_RegisterJavaPlugin(bool (*func)(void*), const char* name)
+{
+    std::string className = name;
+    OHOS::Plugin::PluginUtilsInner::RegisterPlugin(func, className);
+}
+#endif
+
+void ARKUI_X_Plugin_RunAsyncTask(ARKUI_X_Plugin_Task task, ARKUI_X_Plugin_Thread_Mode mode)
 {
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (taskExecutor) {
-        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+        if (mode == ARKUI_X_PLUGIN_PLATFORM_THREAD) {
+            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+        } else if (mode == ARKUI_X_PLUGIN_JS_THREAD) {
+            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::JS);
+        } else {
+            LOGE("The mode of thread is not support in the ARKUI_X_Plugin_RunAsyncTask method!");
+        }
     }
 }
-
-void PluginUtils::RunSyncTaskOnLocal(const Task& task, std::chrono::milliseconds timeout)
-{
-    std::future<void> future = std::async(std::launch::async, task);
-    while (future.wait_for(timeout) == std::future_status::timeout) {
-        LOGE("RunSyncTaskOnLocal timeout ...");
-        return;
-    }
-}
-
-void PluginUtils::RunTaskOnJS(const Task& task)
-{
-    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
-    if (taskExecutor) {
-        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
-    }
-}
-
-void PluginUtils::RunSyncTaskOnJS(const Task& task)
-{
-    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
-    if (taskExecutor) {
-        taskExecutor->PostSyncTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
-    }
-}
-
-void PluginUtils::JSRegisterGrantResult(GrantResult grantResult)
-{
-#ifdef ANDROID_PLATFORM
-    OHOS::Ace::Platform::GrantResultManager::JSRegisterGrantResult(grantResult);
-#endif
-}
-} // namespace OHOS::Plugin

@@ -42,7 +42,7 @@ struct AsyncCallbackInfo {
     int32_t status;
 };
 
-class PluginInnerNApiUtils {
+class PluginUtilsNApi {
 public:
     static constexpr const size_t MAX_ARG_NUM = 10;
     static constexpr const int ARG_NUM_0 = 0;

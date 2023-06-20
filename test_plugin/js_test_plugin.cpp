@@ -16,8 +16,8 @@
 #include <cstddef>
 
 #include "log.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
+#include "inner_api/plugin_utils_napi.h"
+#include "plugin_utils.h"
 
 #include "plugins/test_plugin/test_plugin.h"
 
@@ -84,7 +84,7 @@ static napi_module testPluginModule = {
 static void TestPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.testplugin.TestPlugin";
-    OH_Plugin_RegisterJavaPlugin(&TestPluginJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&TestPluginJni::Register, className);
 }
 #endif
 
@@ -92,7 +92,7 @@ extern "C" __attribute__((constructor)) void TestPluginRegister()
 {
     napi_module_register(&testPluginModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&TestPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&TestPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 

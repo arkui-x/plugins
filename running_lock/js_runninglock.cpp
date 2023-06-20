@@ -18,8 +18,8 @@
 #include <cstddef>
 
 #include "log.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
+#include "inner_api/plugin_utils_napi.h"
+#include "plugin_utils.h"
 #ifdef ANDROID_PLATFORM
 #include "plugins/running_lock/android/java/jni/runninglock_jni.h"
 #endif
@@ -304,7 +304,7 @@ static napi_module g_module = {.nm_version = 1,
 static void RunningLockJniRegister()
 {
     const char className[] = "ohos.ace.plugin.runninglockplugin.RunningLockPlugin";
-    OH_Plugin_RegisterJavaPlugin(&RunningLockJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&RunningLockJni::Register, className);
 }
 #endif
 
@@ -315,7 +315,7 @@ extern "C" __attribute__((constructor)) void RegisterRunninglockModule(void)
 {
     napi_module_register(&g_module);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&RunningLockJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&RunningLockJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 }  // namespace OHOS::Plugin

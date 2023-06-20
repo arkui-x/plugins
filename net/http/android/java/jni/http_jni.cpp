@@ -15,8 +15,8 @@
 
 #include "plugins/net/http/android/java/jni/http_jni.h"
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 
 namespace OHOS::NetStack::Http {
@@ -69,7 +69,7 @@ void HttpJni::NativeInit(JNIEnv* env, jobject jobj)
 
 std::string HttpJni::GetCacheDirJni()
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);
     CHECK_NULL_RETURN(g_pluginClass.globalRef_, ERROR);
     CHECK_NULL_RETURN(g_pluginClass.getCacheDir_, ERROR);

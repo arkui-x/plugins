@@ -16,8 +16,8 @@
 #ifndef PLUGINS_RUNNINGLOCK_JS_RUNNINGLOCK_H
 #define PLUGINS_RUNNINGLOCK_JS_RUNNINGLOCK_H
 
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
+#include "inner_api/plugin_utils_napi.h"
+#include "plugin_utils.h"
 #include "plugins/running_lock/runninglock.h"
 
 namespace OHOS::Plugin {

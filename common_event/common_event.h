@@ -22,7 +22,7 @@
 
 #include "common_event_interface.h"
 #include "common_event_subscriber.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
+#include "inner_api/plugin_utils_napi.h"
 
 namespace OHOS {
 namespace Plugin {

@@ -35,7 +35,7 @@
 #include "setglobalhttpproxy_context.h"
 #ifdef ANDROID_PLATFORM
 #include "net_conn_client_jni.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 #endif
 
 static constexpr const char *CONNECTION_MODULE_NAME = "net.connection";
@@ -390,14 +390,14 @@ static napi_module g_connectionModule = {
 static void NetConnClientJniRegister()
 {
     const char className[] = "ohos.ace.plugin.netconnclientplugin.NetConnClientPlugin";
-    OH_Plugin_RegisterJavaPlugin(&Plugin::NetConnClientJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::NetConnClientJni::Register, className);
 }
 #endif
 
 extern "C" __attribute__((constructor)) void RegisterConnectionModule(void)
 {
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&NetConnClientJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&NetConnClientJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
     napi_module_register(&g_connectionModule);
 }

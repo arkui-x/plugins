@@ -16,7 +16,7 @@
 #include "log.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 #include "securec.h"
 #include "plugins/device_info/device_info.h"
 
@@ -388,7 +388,7 @@ static void DeviceInfoPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.device_infoplugin.DeviceInfoPlugin";
     LOGI("DeviceInfoPluginJniRegister deviceinfo %s.", className);
-    OH_Plugin_RegisterJavaPlugin(&DeviceInfoJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&DeviceInfoJni::Register, className);
 }
 #endif
 /*
@@ -399,7 +399,7 @@ extern "C" __attribute__((constructor)) void DeviceInfoRegisterModule(void)
     LOGI("DeviceInfoRegisterModule deviceinfo.");
     napi_module_register(&_module);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&DeviceInfoPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&DeviceInfoPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace OHOS::Plugin

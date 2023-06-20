@@ -19,7 +19,7 @@
 #include <jni.h>
 #include <memory>
 #include <vector>
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 
 namespace OHOS::Plugin {
 class AbilityAccessCtrlJni final {

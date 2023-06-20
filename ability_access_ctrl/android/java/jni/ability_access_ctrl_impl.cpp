@@ -16,8 +16,8 @@
 #include "ability_access_ctrl_impl.h"
 #include <map>
 #include "ability_access_ctrl_jni.h"
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_utils.h"
 
 namespace OHOS::Plugin {
 static bool isInited = false;
@@ -66,7 +66,7 @@ void AbilityAccessCtrlImpl::RequestPermissions(
     for (size_t i = 0; i < permissions.size(); i++) {
         javaStrings.emplace_back(OhPermissionToJava(permissions[i]));
     }
-    PluginUtils::RunTaskOnPlatform([permissions, callback, data]() {
+    PluginUtilsInner::RunTaskOnPlatform([permissions, callback, data]() {
         auto task = [permissions, callback, data](const std::vector<std::string> perms, const std::vector<int> result) {
             std::vector<int> grantResult = result;
             for (size_t i = 0; i < permissions.size(); i++) {
@@ -77,10 +77,10 @@ void AbilityAccessCtrlImpl::RequestPermissions(
             }
             callback(data, permissions, grantResult);
         };
-        PluginUtils::JSRegisterGrantResult(task);
+        PluginUtilsInner::JSRegisterGrantResult(task);
         LOGI("AbilityAccessCtrlImpl JSRegisterGrantResult end");
     });
-    PluginUtils::RunTaskOnPlatform([javaStrings]() {
+    PluginUtilsInner::RunTaskOnPlatform([javaStrings]() {
         AbilityAccessCtrlJni::RequestPermissions(javaStrings);
     });
 }

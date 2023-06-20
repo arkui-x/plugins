@@ -26,7 +26,7 @@
 #include "module_template.h"
 #include "netstack_log.h"
 #ifdef ANDROID_PLATFORM
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 #endif
 
 #define DECLARE_RESPONSE_CODE(code) \
@@ -292,14 +292,14 @@ static napi_module g_httpModule = {
 static void HttpJniRegister()
 {
     const char className[] = "ohos.ace.plugin.httpplugin.HttpPlugin";
-    OH_Plugin_RegisterJavaPlugin(&HttpJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&HttpJni::Register, className);
 }
 #endif
 
 extern "C" __attribute__((constructor)) void RegisterHttpModule(void)
 {
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&HttpJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&HttpJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
     napi_module_register(&g_httpModule);
 }

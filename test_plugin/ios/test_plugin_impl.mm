@@ -17,10 +17,9 @@
 
 #include <memory>
 
+#include "inner_api/plugin_utils_inner.h"
+#include "ios_test_plugin.h"
 #include "log.h"
-#include "plugin_utils.h"
-
-#import "ios_test_plugin.h"
 
 namespace OHOS::Plugin {
 
@@ -32,7 +31,7 @@ std::unique_ptr<TestPlugin> TestPlugin::Create()
 void TestPluginImpl::Hello()
 {
     LOGI("TestPluginImpl Hello called");
-    PluginUtils::RunTaskOnPlatform([]() {
+    PluginUtilsInner::RunTaskOnPlatform([]() {
         [[iOSTestPlugin shareinstance] hello];
     });
 }

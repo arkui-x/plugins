@@ -17,8 +17,8 @@
 
 #include <jni.h>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
@@ -73,7 +73,7 @@ void TestPluginJni::NativeInit(JNIEnv* env, jobject jobj)
 void TestPluginJni::Hello()
 {
     LOGI("TestPlugin JNI: Hello");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.hello);

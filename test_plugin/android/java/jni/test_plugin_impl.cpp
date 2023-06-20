@@ -17,9 +17,8 @@
 
 #include <memory>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_utils.h"
-
 #include "plugins/test_plugin/android/java/jni/test_plugin_jni.h"
 
 namespace OHOS::Plugin {
@@ -32,7 +31,7 @@ std::unique_ptr<TestPlugin> TestPlugin::Create()
 void TestPluginImpl::Hello()
 {
     LOGI("TestPluginImpl Hello called");
-    PluginUtils::RunTaskOnPlatform([]() { TestPluginJni::Hello(); });
+    PluginUtilsInner::RunTaskOnPlatform([]() { TestPluginJni::Hello(); });
 }
 
 } // namespace OHOS::Plugin

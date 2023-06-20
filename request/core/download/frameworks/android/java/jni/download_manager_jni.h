@@ -19,8 +19,8 @@
 #include <jni.h>
 #include <memory>
 
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
+#include "inner_api/plugin_utils_inner.h"
 #include "download_config.h"
 
 class AndroidDownloadAdpImpl;

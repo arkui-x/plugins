@@ -15,8 +15,8 @@
 
 #include "plugins/common_event/android/java/jni/common_event_receiver.h"
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_utils.h"
 #include "plugins/common_event/common_event.h"
 
 namespace OHOS {
@@ -29,9 +29,9 @@ void CommonEventReceiver::ReceiveCommonEvent(std::string action, std::string jso
 
 void CommonEventReceiver::ReceiveCallBack(AsyncCallbackInfo* ptr)
 {
-    PluginUtils::RunTaskOnJS([ptr]() {
-        LOGI("PluginInnerNApiUtils::EmitAsyncCallbackWork called.");
-        PluginInnerNApiUtils::EmitAsyncCallbackWork(ptr);
+    PluginUtilsInner::RunTaskOnJS([ptr]() {
+        LOGI("PluginUtilsNApi::EmitAsyncCallbackWork called.");
+        PluginUtilsNApi::EmitAsyncCallbackWork(ptr);
     });
 }
 }  // namespace Plugin

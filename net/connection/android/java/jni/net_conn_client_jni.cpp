@@ -20,8 +20,8 @@
 #include <locale>
 #include <securec.h>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 #include "net_handle.h"
 #include "route.h"
@@ -207,7 +207,7 @@ void NetConnClientJni::UnregisterCallback(const sptr<NetManagerStandard::INetCon
 int32_t NetConnClientJni::RegisterDefaultNetConnCallback(const sptr<NetManagerStandard::INetConnCallback> &callback)
 {
     RegisterCallback(callback);
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.globalRef, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.registerDefaultNetConnCallback,
@@ -228,7 +228,7 @@ int32_t NetConnClientJni::RegisterNetConnCallback(const sptr<NetManagerStandard:
     const sptr<NetManagerStandard::INetConnCallback> &callback, const uint32_t &timeoutMS)
 {
     RegisterCallback(callback);
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.globalRef, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.registerNetConnCallback, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
@@ -257,7 +257,7 @@ int32_t NetConnClientJni::RegisterNetConnCallback(const sptr<NetManagerStandard:
 int32_t NetConnClientJni::UnregisterNetConnCallback(const sptr<NetManagerStandard::INetConnCallback> &callback)
 {
     UnregisterCallback(callback);
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.globalRef, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.unregisterNetConnCallback,
@@ -276,7 +276,7 @@ int32_t NetConnClientJni::UnregisterNetConnCallback(const sptr<NetManagerStandar
 
 int32_t NetConnClientJni::HasDefaultNet(bool &flag)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.globalRef, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.isDefaultNetworkActive,

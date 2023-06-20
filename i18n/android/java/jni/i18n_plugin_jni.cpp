@@ -18,8 +18,8 @@
 #include <jni.h>
 #include <string>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
@@ -96,7 +96,7 @@ void I18NPluginJni::NativeInit(JNIEnv* env, jobject jobj)
 bool I18NPluginJni::Is24HourClock()
 {
     bool result = true;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.is24HourClock)) {
         LOGW("I18NPluginJni get none ptr error");
         return result;
@@ -113,7 +113,7 @@ bool I18NPluginJni::Is24HourClock()
 std::string I18NPluginJni::GetSystemLocale()
 {
     jstring result;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getSystemLocale)) {
         LOGW("I18NPluginJni get none ptr error");
         return "";
@@ -131,7 +131,7 @@ std::string I18NPluginJni::GetSystemLocale()
 std::string I18NPluginJni::GetSystemLanguage()
 {
     jstring result;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getSystemLanguage)) {
         LOGW("I18NPluginJni get none ptr error");
         return "";
@@ -149,7 +149,7 @@ std::string I18NPluginJni::GetSystemLanguage()
 std::string I18NPluginJni::GetSystemRegion()
 {
     jstring result;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getSystemRegion)) {
         LOGW("I18NPluginJni get none ptr error");
         return "";
@@ -167,7 +167,7 @@ std::string I18NPluginJni::GetSystemRegion()
 std::string I18NPluginJni::GetSystemTimezone()
 {
     jstring result;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getSystemTimezone)) {
         LOGW("I18NPluginJni get none ptr error");
         return "";

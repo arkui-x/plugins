@@ -23,7 +23,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_utils.h"
-#include "plugins/interfaces/native/plugin_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
 
 using namespace OHOS::Ace::Platform;
 namespace OHOS::Plugin::Bridge {
@@ -130,7 +130,7 @@ ErrorCode Bridge::CallMethod(const std::string& methodName, const std::shared_pt
     auto task = [bridgeName = this->bridgeName_, methodName, parameter = methodData->GetMethodParamName()]() {
         BridgeManager::JSCallMethod(bridgeName, methodName, parameter);
     };
-    PluginUtils::RunTaskOnPlatform(task);
+    PluginUtilsInner::RunTaskOnPlatform(task);
     return ErrorCode::BRIDGE_ERROR_NO;
 }
 
@@ -144,7 +144,7 @@ ErrorCode Bridge::SendMethodResult(const std::string& methodName, const std::str
     auto task = [bridgeName = this->bridgeName_, methodName, result]() {
         BridgeManager::JSSendMethodResult(bridgeName, methodName, result);
     };
-    PluginUtils::RunTaskOnPlatform(task);
+    PluginUtilsInner::RunTaskOnPlatform(task);
     return ErrorCode::BRIDGE_ERROR_NO;
 }
 
@@ -158,7 +158,7 @@ ErrorCode Bridge::SendMessage(const std::string& data, std::shared_ptr<MethodDat
     std::lock_guard<std::mutex> lock(jsSendMessageDataListLock_);
     jsSendMessageDataList_.push_back(methodData);
     auto task = [bridgeName = this->bridgeName_, data]() { BridgeManager::JSSendMessage(bridgeName, data); };
-    PluginUtils::RunTaskOnPlatform(task);
+    PluginUtilsInner::RunTaskOnPlatform(task);
 
     return ErrorCode::BRIDGE_ERROR_NO;
 }
@@ -176,7 +176,7 @@ ErrorCode Bridge::SendMessageResponse(const std::string& data)
     }
 
     auto task = [bridgeName = this->bridgeName_, data]() { BridgeManager::JSSendMessageResponse(bridgeName, data); };
-    PluginUtils::RunTaskOnPlatform(task);
+    PluginUtilsInner::RunTaskOnPlatform(task);
     return ErrorCode::BRIDGE_ERROR_NO;
 }
 
@@ -227,7 +227,7 @@ ErrorCode Bridge::UnRegisterMethod(const std::string& methodName)
         auto task = [bridgeName = this->bridgeName_, methodName]() {
             BridgeManager::JSCancelMethod(bridgeName, methodName);
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
         return ErrorCode::BRIDGE_ERROR_NO;
     }
     return ErrorCode::BRIDGE_METHOD_NOT_EXISTS;
@@ -311,7 +311,7 @@ void Bridge::OnPlatformCallMethod(const std::string& methodName, const std::stri
             result.CreateMethodResultForError();
             BridgeManager::JSSendMethodResult(braidgeName, methodName, result.GetResult());
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
         return;
     }
 
@@ -332,7 +332,7 @@ void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::st
             result.CreateMethodResultForError();
             BridgeManager::JSSendMethodResult(braidgeName, methodName, result.GetResult());
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
         return;
     }
     jsMethodData->SendMethodResult(result, true);

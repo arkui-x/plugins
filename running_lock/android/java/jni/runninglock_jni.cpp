@@ -19,8 +19,8 @@
 #include <jni.h>
 #include <locale>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 #include "plugins/running_lock/android/java/jni/runninglock_receiver.h"
 
@@ -100,7 +100,7 @@ void RunningLockJni::NativeInit(JNIEnv *env, jobject jobj)
 void RunningLockJni::Init(const std::string &name, RunningLockType type, RunningLockAsyncCallbackInfo *ptr)
 {
     LOGI("RunningLockJni JNI: Init");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.init);
@@ -117,7 +117,7 @@ void RunningLockJni::Init(const std::string &name, RunningLockType type, Running
 bool RunningLockJni::IsUsed()
 {
     LOGI("RunningLockJni JNI: IsUsed");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, false);
     CHECK_NULL_RETURN(g_pluginClass.globalRef, false);
     CHECK_NULL_RETURN(g_pluginClass.isUsed, false);
@@ -135,7 +135,7 @@ bool RunningLockJni::IsUsed()
 void RunningLockJni::Lock(uint32_t timeOutMs)
 {
     LOGI("RunningLockJni JNI: Lock");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.lock);
@@ -151,7 +151,7 @@ void RunningLockJni::Lock(uint32_t timeOutMs)
 void RunningLockJni::UnLock()
 {
     LOGI("RunningLockJni JNI: UnLock");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.unLock);
