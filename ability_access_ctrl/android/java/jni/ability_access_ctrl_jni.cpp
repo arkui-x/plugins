@@ -19,8 +19,8 @@
 #include <locale>
 #include <jni.h>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
@@ -84,7 +84,7 @@ void AbilityAccessCtrlJni::NativeInit(JNIEnv* env, jobject jobj)
 bool AbilityAccessCtrlJni::CheckPermission(const std::string& permission)
 {
     LOGI("AbilityAccessCtrl JNI: Check");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if ((env == nullptr) || (g_pluginClass.globalRef == nullptr) || (g_pluginClass.checkPermission == nullptr)) {
         LOGW("AbilityAccessCtrl JNI get none ptr error");
         return false;
@@ -104,7 +104,7 @@ bool AbilityAccessCtrlJni::CheckPermission(const std::string& permission)
 void AbilityAccessCtrlJni::RequestPermissions(const std::vector<std::string>& permissions)
 {
     LOGI("AbilityAccessCtrl JNI: Request");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if ((env == nullptr) || (g_pluginClass.globalRef == nullptr) || (g_pluginClass.requestPermissions == nullptr)) {
         LOGW("AbilityAccessCtrl JNI get none ptr error");
         return;

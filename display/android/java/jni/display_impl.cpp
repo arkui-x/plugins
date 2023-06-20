@@ -15,9 +15,9 @@
 
 #include "plugins/display/android/java/jni/display_impl.h"
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
 #include "plugins/display/android/java/jni/display_jni.h"
-#include "plugin_utils.h"
 
 namespace OHOS::Plugin {
 std::unique_ptr<Display> Display::Create()
@@ -27,7 +27,7 @@ std::unique_ptr<Display> Display::Create()
 
 void DisplayImpl::GetDefaultDisplay(AsyncCallbackInfo* ptr)
 {
-    PluginUtils::RunTaskOnPlatform([ptr]() {
+    PluginUtilsInner::RunTaskOnPlatform([ptr]() {
         LOGE("GetDefaultDisplay called.");
         DisplayJni::GetDefaultDisplay(ptr);
     });

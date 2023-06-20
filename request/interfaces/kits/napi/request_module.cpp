@@ -20,8 +20,8 @@
 #include "constant.h"
 #include "download_task_napi.h"
 #include "js_util.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
+#include "inner_api/plugin_utils_napi.h"
+#include "plugin_utils.h"
 #include "upload_task_napi.h"
 
 #ifdef ANDROID_PLATFORM
@@ -161,13 +161,13 @@ static napi_value Init(napi_env env, napi_value exports)
 static void DownloadPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.downloadmanagerplugin.DownloadManagerPlugin";
-    OH_Plugin_RegisterJavaPlugin(&DownloadManagerJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&DownloadManagerJni::Register, className);
 }
 
 static void JSRegisterProgressResult()
 {
     const char className[] = "ohos.ace.plugin.downloadmanagerplugin.DownloadManagerPlugin";
-    OH_Plugin_RegisterJavaPlugin(&DownloadManagerJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&DownloadManagerJni::Register, className);
 }
 #endif
 
@@ -185,8 +185,8 @@ extern "C" __attribute__((constructor)) void RequestRegister()
     napi_module_register(&module);
 
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&DownloadPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
-    OH_Plugin_RunAsyncTask(&JSRegisterProgressResult, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&DownloadPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&JSRegisterProgressResult, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 
     UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "module register request");

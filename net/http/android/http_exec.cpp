@@ -30,7 +30,7 @@
 #include "napi_utils.h"
 #include "netstack_common_utils.h"
 #include "netstack_log.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 #include "securec.h"
 
 #define NETSTACK_CURL_EASY_SET_OPTION(handle, opt, data, asyncContext)                                   \

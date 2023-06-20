@@ -19,15 +19,15 @@
 #include <codecvt>
 #include <locale>
 
+#include "android_download_adp.h"
+#include "android_download_adp_impl.h"
+#include "android_download_task_impl.h"
+#include "constant.h"
+#include "download_manager_receiver.h"
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
 #include "plugins/interfaces/native/log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
-#include "android_download_adp.h"
-#include "android_download_task_impl.h"
-#include "download_manager_receiver.h"
-#include "android_download_adp_impl.h"
-#include "constant.h"
 
 namespace OHOS::Plugin::Request::Download {
 static constexpr uint32_t DOWNLOAD_RECEIVED_SIZE_ARGC = 0;
@@ -354,7 +354,7 @@ void DownloadManagerJni::OnRequestNetworkTypeCallback(JNIEnv* env, jobject obj, 
 
 static void GetDownloadHeader(const DownloadConfig &config)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
 
     std::map<std::string, std::string> downloadHeader = config.GetHeader();
@@ -390,7 +390,7 @@ static void GetDownloadHeader(const DownloadConfig &config)
 
 static void GetDownloadUrl(const std::string &url)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
 
     jstring jUrl = env->NewStringUTF(url.c_str());
@@ -408,7 +408,7 @@ static void GetDownloadUrl(const std::string &url)
 
 static void GetDownloadDesc(const std::string &description)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
 
     jstring jDesc = env->NewStringUTF(description.c_str());
@@ -426,7 +426,7 @@ static void GetDownloadDesc(const std::string &description)
 
 static void GetDownloadFilePath(const std::string &filePath)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
 
     jstring jPath = env->NewStringUTF(filePath.c_str());
@@ -444,7 +444,7 @@ static void GetDownloadFilePath(const std::string &filePath)
 
 static void GetDownloadTitle(const std::string &title)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
 
     jstring jTitle = env->NewStringUTF(title.c_str());
@@ -462,7 +462,7 @@ static void GetDownloadTitle(const std::string &title)
 
 static void GetDownloadConfig(const DownloadConfig &config)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
 
     GetDownloadUrl(config.GetUrl());
@@ -495,7 +495,7 @@ void DownloadManagerJni::Download(const DownloadConfig &config, void *downloadPr
 {
     DOWNLOAD_HILOGI("DownloadManager JNI: start to execute Download");
     CHECK_NULL_VOID(downloadProgress);
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.download);
@@ -514,7 +514,7 @@ void DownloadManagerJni::Download(const DownloadConfig &config, void *downloadPr
 void DownloadManagerJni::RemoveDownload()
 {
     DOWNLOAD_HILOGI("DownloadManager JNI: start to execute RemoveDownload");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.removeDownload);
@@ -532,7 +532,7 @@ void DownloadManagerJni::RemoveDownload()
 void DownloadManagerJni::PauseDownload()
 {
     DOWNLOAD_HILOGI("DownloadManager JNI: start to execute PauseDownload");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.pauseDownload);
@@ -549,7 +549,7 @@ void DownloadManagerJni::PauseDownload()
 
 bool DownloadManagerJni::ResumeDownload()
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, false);
     CHECK_NULL_RETURN(g_pluginClass.globalRef, false);
     CHECK_NULL_RETURN(g_pluginClass.resumeDownload, false);
@@ -567,7 +567,7 @@ bool DownloadManagerJni::ResumeDownload()
 
 void DownloadManagerJni::GetNetworkType(void *network)
 {
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.getNetworkState);

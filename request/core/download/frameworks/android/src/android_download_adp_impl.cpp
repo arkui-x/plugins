@@ -21,10 +21,10 @@
 #include <jni.h>
 #include <chrono>
 
+#include "inner_api/plugin_utils_inner.h"
+#include "java/jni/download_manager_jni.h"
 #include "log.h"
 #include "plugin_utils.h"
-#include "plugin_c_utils.h"
-#include "java/jni/download_manager_jni.h"
 
 namespace {
 constexpr int FILE_NOT_EXIST_NUM = -1;
@@ -81,13 +81,15 @@ void AndroidDownloadAdpImpl::Download(const DownloadConfig &config, void *downlo
 {
     DOWNLOAD_HILOGI("AndroidDownloadAdpImpl Download called");
     CHECK_NULL_VOID(downloadProgress);
-    PluginUtils::RunTaskOnPlatform([&, downloadProgress]() { DownloadManagerJni::Download(config, downloadProgress); });
+    PluginUtilsInner::RunTaskOnPlatform([&, downloadProgress]() {
+        DownloadManagerJni::Download(config, downloadProgress);
+    });
 }
 
 void AndroidDownloadAdpImpl::Suspend()
 {
     DOWNLOAD_HILOGI("AndroidDownloadAdpImpl Suspend called");
-    PluginUtils::RunTaskOnPlatform([]() { DownloadManagerJni::PauseDownload(); });
+    PluginUtilsInner::RunTaskOnPlatform([]() { DownloadManagerJni::PauseDownload(); });
 }
 
 bool AndroidDownloadAdpImpl::Restore()
@@ -99,13 +101,13 @@ bool AndroidDownloadAdpImpl::Restore()
 void AndroidDownloadAdpImpl::Remove()
 {
     DOWNLOAD_HILOGI("AndroidDownloadAdpImpl Remove called");
-    PluginUtils::RunTaskOnPlatform([]() { DownloadManagerJni::RemoveDownload(); });
+    PluginUtilsInner::RunTaskOnPlatform([]() { DownloadManagerJni::RemoveDownload(); });
 }
 
 void AndroidDownloadAdpImpl::GetNetworkType(void *network)
 {
     DOWNLOAD_HILOGI("AndroidDownloadAdpImpl GetNetworkType called");
     std::chrono::milliseconds span(WAIT_TIME);
-    PluginUtils::RunSyncTaskOnLocal([network]() { DownloadManagerJni::GetNetworkType(network); }, span);
+    PluginUtilsInner::RunSyncTaskOnLocal([network]() { DownloadManagerJni::GetNetworkType(network); }, span);
 }
 } // namespace OHOS::Plugin::Request::Download

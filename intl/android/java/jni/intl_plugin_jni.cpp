@@ -18,8 +18,8 @@
 #include <jni.h>
 #include <string>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
@@ -84,7 +84,7 @@ void INTLPluginJni::NativeInit(JNIEnv* env, jobject jobj)
 bool INTLPluginJni::Is24HourClock()
 {
     bool result = true;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.is24HourClock)) {
         LOGW("INTLPluginJni get none ptr error");
         return result;
@@ -101,7 +101,7 @@ bool INTLPluginJni::Is24HourClock()
 std::string INTLPluginJni::GetSystemLocale()
 {
     jstring result;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getSystemLocale)) {
         LOGW("INTLPluginJni get none ptr error");
         return "";
@@ -119,7 +119,7 @@ std::string INTLPluginJni::GetSystemLocale()
 std::string INTLPluginJni::GetSystemTimezone()
 {
     jstring result;
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getSystemTimezone)) {
         LOGW("INTLPluginJni get none ptr error");
         return "";

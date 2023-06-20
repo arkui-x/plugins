@@ -22,8 +22,8 @@
 
 #include "error_code.h"
 #include "napi/native_api.h"
-#include "plugins/interfaces/native/plugin_c_utils.h"
-#include "plugins/interfaces/native/inner_utils/plugin_inner_napi_utils.h"
+#include "plugins/interfaces/native/plugin_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 
 namespace OHOS::Plugin::Bridge {
 using OnAsyncEventSuccess = std::function<void(

@@ -20,7 +20,7 @@
 #include <string>
 #include <map>
 
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 
 #ifdef __cplusplus
 extern "C" {

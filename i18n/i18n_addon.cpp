@@ -21,7 +21,7 @@
 #include "hilog/log.h"
 #include "i18n_calendar.h"
 #include "node_api.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 #include "unicode/locid.h"
 #include "unicode/datefmt.h"
 #include "unicode/smpdtfmt.h"
@@ -2975,7 +2975,7 @@ static napi_module g_i18nModule = {
 static void I18NPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.i18nplugin.I18NPlugin";
-    OH_Plugin_RegisterJavaPlugin(&Plugin::I18NPluginJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::I18NPluginJni::Register, className);
 }
 #endif
 
@@ -2983,7 +2983,7 @@ extern "C" __attribute__((constructor)) void I18nRegister()
 {
     napi_module_register(&g_i18nModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&I18NPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&I18NPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace I18n

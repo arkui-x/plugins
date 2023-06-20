@@ -20,8 +20,8 @@
 #include "log.h"
 #include "napi/native_api.h"
 #include "napi_utils.h"
-#include "plugins/interfaces/native/inner_utils/plugin_inner_napi_utils.h"
-#include "plugins/interfaces/native/plugin_c_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 #include "plugins/interfaces/native/plugin_utils.h"
 
 namespace OHOS::Plugin::Bridge {
@@ -98,8 +98,8 @@ NAPIAsyncEvent* MethodData::GetAsyncEvent(void) const
 
 bool MethodData::GetName(napi_value arg)
 {
-    if (PluginInnerNApiUtils::GetValueType(env_, arg) == napi_string) {
-        methodName_ = PluginInnerNApiUtils::GetStringFromValueUtf8(env_, arg);
+    if (PluginUtilsNApi::GetValueType(env_, arg) == napi_string) {
+        methodName_ = PluginUtilsNApi::GetStringFromValueUtf8(env_, arg);
         return !methodName_.empty();
     }
     return false;
@@ -148,7 +148,7 @@ bool MethodData::CreateEvent(napi_value arg, bool needListenEvent)
 
 bool MethodData::GetCallback(napi_value arg, bool needListenEvent)
 {
-    if (PluginInnerNApiUtils::GetValueType(env_, arg) != napi_function) {
+    if (PluginUtilsNApi::GetValueType(env_, arg) != napi_function) {
         LOGE("GetCallback: The napi_value is not napi_function.");
         return false;
     }
@@ -207,7 +207,7 @@ void MethodData::InitEventSuccessForMethod(void)
         auto task = [platfromResult = result.GetResult(), bridgeName, methodName]() {
             Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platfromResult);
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
     };
     asyncEvent_->SetAsyncEventSuccess(event);
 }
@@ -229,7 +229,7 @@ void MethodData::InitEventErrorForMethod(void)
         auto task = [platfromResult = result.GetResult(), bridgeName, methodName]() {
             Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platfromResult);
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
     };
     asyncEvent_->SetAsyncEventError(event);
 }
@@ -250,7 +250,7 @@ void MethodData::InitEventSuccessForMessage(void)
         auto task = [data, bridgeName]() {
             Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
     };
     asyncEvent_->SetAsyncEventSuccess(event);
 }
@@ -268,7 +268,7 @@ void MethodData::InitEventErrorForMessage(void)
         auto task = [data, bridgeName]() {
             Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
     };
     asyncEvent_->SetAsyncEventError(event);
 }
@@ -283,20 +283,20 @@ void MethodData::ReleaseEvent(void)
 
 bool MethodData::GetJSRegisterMethodObject(napi_value object)
 {
-    if (!PluginInnerNApiUtils::HasNamedProperty(env_, object, JS_REGISTER_METHOD_NAME) ||
-        !PluginInnerNApiUtils::HasNamedProperty(env_, object, JS_REGISTER_METHOD_FUNCTION)) {
+    if (!PluginUtilsNApi::HasNamedProperty(env_, object, JS_REGISTER_METHOD_NAME) ||
+        !PluginUtilsNApi::HasNamedProperty(env_, object, JS_REGISTER_METHOD_FUNCTION)) {
         LOGE("GetJSRegisterMethodObject: Parameter error.");
         return false;
     }
 
-    napi_value jsMethodName = PluginInnerNApiUtils::GetNamedProperty(env_, object, JS_REGISTER_METHOD_NAME);
-    napi_value jsMethodFun = PluginInnerNApiUtils::GetNamedProperty(env_, object, JS_REGISTER_METHOD_FUNCTION);
+    napi_value jsMethodName = PluginUtilsNApi::GetNamedProperty(env_, object, JS_REGISTER_METHOD_NAME);
+    napi_value jsMethodFun = PluginUtilsNApi::GetNamedProperty(env_, object, JS_REGISTER_METHOD_FUNCTION);
     if (jsMethodName == nullptr || jsMethodFun == nullptr) {
         LOGE("GetJSRegisterMethodObject: Analytic parameter error.");
         return false;
     }
 
-    methodName_ = PluginInnerNApiUtils::GetStringFromValueUtf8(env_, jsMethodName);
+    methodName_ = PluginUtilsNApi::GetStringFromValueUtf8(env_, jsMethodName);
     if (methodName_.empty()) {
         LOGE("GetJSRegisterMethodObject: methodName_ is empty.");
         return false;
@@ -390,7 +390,7 @@ void MethodData::PlatformCallMethod(const std::string& parameter)
         auto task = [platfromResult = result.GetResult(), bridgeName = this->bridgeName_, methodName = methodName_]() {
             Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platfromResult);
         };
-        PluginUtils::RunTaskOnPlatform(task);
+        PluginUtilsInner::RunTaskOnPlatform(task);
         return;
     }
 

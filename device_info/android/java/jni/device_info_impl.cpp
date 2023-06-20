@@ -16,7 +16,7 @@
 #include "plugins/device_info/android/java/jni/device_info_impl.h"
 
 #include "log.h"
-#include "plugin_utils.h"
+#include "inner_api/plugin_utils_inner.h"
 
 #include "plugins/device_info/android/java/jni/device_info_jni.h"
 

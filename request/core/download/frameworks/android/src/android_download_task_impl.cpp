@@ -18,7 +18,7 @@
 #include <jni.h>
 
 #include "log.h"
-#include "plugin_utils.h"
+#include "inner_api/plugin_utils_inner.h"
 #include "java/jni/download_manager_jni.h"
 
 namespace OHOS::Plugin::Request::Download {

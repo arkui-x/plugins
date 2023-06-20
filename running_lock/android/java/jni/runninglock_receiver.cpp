@@ -15,9 +15,9 @@
 
 #include "plugins/running_lock/android/java/jni/runninglock_receiver.h"
 
+#include "inner_api/plugin_utils_inner.h"
+#include "inner_api/plugin_utils_napi.h"
 #include "log.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 #include "plugins/running_lock/js_runninglock.h"
 
@@ -26,7 +26,7 @@ namespace Plugin {
 void RunningLockReceiver::ReceiveCallBack(RunningLockAsyncCallbackInfo *ptr)
 {
     LOGI("RunningLockReceiver::ReceiveCallBack ptr->env[%p] ptr->callbackRef[%p] ", ptr->env, ptr->callbackRef);
-    PluginUtils::RunTaskOnJS([ptr]() {
+    PluginUtilsInner::RunTaskOnJS([ptr]() {
         AsyncCallbackInfo *pptr =
             new (std::nothrow) AsyncCallbackInfo {.env = ptr->env, .asyncWork = nullptr};
         pptr->callback[0] = ptr->callbackRef;
@@ -38,11 +38,11 @@ void RunningLockReceiver::ReceiveCallBack(RunningLockAsyncCallbackInfo *ptr)
             pptr->status = -1;
         }
         if (pptr->callback[0] == nullptr) {
-            LOGI("PluginInnerNApiUtils::EmitPromiseWork called.");
-            PluginInnerNApiUtils::EmitPromiseWork(pptr);
+            LOGI("PluginUtilsNApi::EmitPromiseWork called.");
+            PluginUtilsNApi::EmitPromiseWork(pptr);
         } else {
-            LOGI("PluginInnerNApiUtils::EmitAsyncCallbackWork called.");
-            PluginInnerNApiUtils::EmitAsyncCallbackWork(pptr);
+            LOGI("PluginUtilsNApi::EmitAsyncCallbackWork called.");
+            PluginUtilsNApi::EmitAsyncCallbackWork(pptr);
         }
     });
 }

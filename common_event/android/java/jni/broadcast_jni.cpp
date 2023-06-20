@@ -19,8 +19,8 @@
 #include <codecvt>
 #include <jni.h>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_utils.h"
 #include "plugins/common_event/android/java/jni/common_event_receiver.h"
 
 namespace OHOS::Plugin {
@@ -229,7 +229,7 @@ void BroadcastJni::NativeReceiveBroadcast(JNIEnv* env, jobject jobj, jstring act
 void BroadcastJni::SendBroadcast(std::string action, std::string json, AsyncCallbackInfo* ptr)
 {
     LOGI("Broadcast JNI: SendBroadcast");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.sendBroadcast);
@@ -252,7 +252,7 @@ void BroadcastJni::SendBroadcast(std::string action, std::string json, AsyncCall
 void BroadcastJni::RegisterBroadcast(std::string key, std::vector<std::string> actions)
 {
     LOGI("Broadcast JNI: RegisterBroadcast");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
 
     jstring jkey = StringToJavaString(env, key);
     jstring jactions[actions.size()];
@@ -279,7 +279,7 @@ void BroadcastJni::RegisterBroadcast(std::string key, std::vector<std::string> a
 void BroadcastJni::UnRegisterBroadcast(std::string key, AsyncCallbackInfo* ptr)
 {
     LOGI("Broadcast JNI: UnRegisterBroadcast");
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
     CHECK_NULL_VOID(g_pluginClass.unRegisterBroadcast);

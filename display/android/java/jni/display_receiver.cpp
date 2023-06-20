@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
+#include "inner_api/plugin_utils_inner.h"
 #include "plugins/display/android/java/jni/display_receiver.h"
-#include "plugin_utils.h"
 
 namespace OHOS::Plugin {
 static napi_value WrapDisplayInfo(napi_env env, const DisplayInfo& displayInfo)
@@ -65,12 +65,12 @@ static napi_value WrapDisplayInfo(napi_env env, const DisplayInfo& displayInfo)
 }
 void DisplayReceiver::ReceiveFun(DisplayInfo displayInfo, AsyncCallbackInfo* ptr)
 {
-    PluginUtils::RunTaskOnJS([displayInfo, ptr]() {
+    PluginUtilsInner::RunTaskOnJS([displayInfo, ptr]() {
         ptr->jsdata = WrapDisplayInfo(ptr->env, displayInfo);
         if (ptr->callback[0] == nullptr) {
-            PluginInnerNApiUtils::EmitPromiseWork(ptr);
+            PluginUtilsNApi::EmitPromiseWork(ptr);
         } else {
-            PluginInnerNApiUtils::EmitAsyncCallbackWork(ptr);
+            PluginUtilsNApi::EmitAsyncCallbackWork(ptr);
         }
     });
 }

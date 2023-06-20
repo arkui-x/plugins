@@ -17,8 +17,8 @@
 
 #include <jni.h>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
@@ -96,7 +96,7 @@ std::string DeviceInfoJni::CallMethod(int id, const std::string &defValue)
         return defValue;
     }
     LOGD("DeviceInfoJni JNI: CallMethod %{public}s", METHOD_NAMES[id].methodName);
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, defValue);
     CHECK_NULL_RETURN(g_pluginClass.globalRef, defValue);
     if (g_pluginClass.methodIDs[id] == nullptr) {
@@ -133,7 +133,7 @@ int DeviceInfoJni::CallIntMethod(int id, int defValue)
         return defValue;
     }
     LOGD("DeviceInfoJni JNI: CallMethod %{public}s", METHOD_NAMES[id].methodName);
-    auto env = OH_Plugin_GetJniEnv();
+    auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, defValue);
     CHECK_NULL_RETURN(g_pluginClass.globalRef, defValue);
     if (g_pluginClass.methodIDs[id] == nullptr) {

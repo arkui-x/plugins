@@ -17,8 +17,8 @@
 
 #include <memory>
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_utils.h"
 
 namespace OHOS::Plugin {
 static const std::string CAMERA_PERMISSION = "ohos.permission.CAMERA";

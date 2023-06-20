@@ -15,8 +15,8 @@
 
 #include "plugins/device_info/ios/device_info_impl.h"
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
-#include "plugin_utils.h"
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 #import <mach/mach.h>

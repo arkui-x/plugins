@@ -14,7 +14,7 @@
  */
 
 #include "log.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 
 #include "plugins/ability_access_ctrl/napi_common.h"
 

@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 
 namespace OHOS::Plugin {
 typedef enum {

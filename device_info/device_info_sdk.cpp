@@ -16,7 +16,7 @@
 #include <cstdlib>
 
 #include "log.h"
-#include "plugin_c_utils.h"
+#include "plugin_utils.h"
 #include "securec.h"
 #include "etc/parameter_map.h"
 #include "plugins/device_info/device_info.h"

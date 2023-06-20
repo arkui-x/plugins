@@ -46,8 +46,8 @@ template("ace_plugin_util_static") {
     public_configs = [ ":plugin_util_config" ]
 
     sources = [
-      "inner_utils/plugin_inner_napi_utils.cpp",
-      "plugin_c_utils.cpp",
+      "inner_api/plugin_utils_inner.cpp",
+      "inner_api/plugin_utils_napi.cpp",
       "plugin_utils.cpp",
     ]
 

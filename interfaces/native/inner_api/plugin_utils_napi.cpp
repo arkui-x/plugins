@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
-#include "plugins/interfaces/native/inner_utils/plugin_inner_napi_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 
 #include "securec.h"
 
 namespace OHOS::Plugin {
-void PluginInnerNApiUtils::DefineProperties(
+void PluginUtilsNApi::DefineProperties(
     napi_env env, napi_value object, const std::initializer_list<napi_property_descriptor>& properties)
 {
     napi_property_descriptor descriptors[properties.size()];
@@ -27,7 +27,7 @@ void PluginInnerNApiUtils::DefineProperties(
     (void)napi_define_properties(env, object, properties.size(), descriptors);
 }
 
-void PluginInnerNApiUtils::DefineClass(napi_env env, napi_value exports,
+void PluginUtilsNApi::DefineClass(napi_env env, napi_value exports,
     const std::initializer_list<napi_property_descriptor>& properties, const std::string& className)
 {
     auto constructor = [](napi_env env, napi_callback_info info) -> napi_value {
@@ -48,7 +48,7 @@ void PluginInnerNApiUtils::DefineClass(napi_env env, napi_value exports,
     SetNamedProperty(env, exports, className, jsConstructor);
 }
 
-void PluginInnerNApiUtils::SetNamedProperty(
+void PluginUtilsNApi::SetNamedProperty(
     napi_env env, napi_value object, const std::string& propertyName, napi_value value)
 {
     if (GetValueType(env, object) != napi_object) {
@@ -58,7 +58,7 @@ void PluginInnerNApiUtils::SetNamedProperty(
     napi_set_named_property(env, object, propertyName.c_str(), value);
 }
 
-napi_value PluginInnerNApiUtils::GetNamedProperty(napi_env env, napi_value object, const std::string& propertyName)
+napi_value PluginUtilsNApi::GetNamedProperty(napi_env env, napi_value object, const std::string& propertyName)
 {
     if (GetValueType(env, object) != napi_object) {
         return CreateUndefined(env);
@@ -69,7 +69,7 @@ napi_value PluginInnerNApiUtils::GetNamedProperty(napi_env env, napi_value objec
     return value;
 }
 
-bool PluginInnerNApiUtils::HasNamedProperty(napi_env env, napi_value object, const std::string& propertyName)
+bool PluginUtilsNApi::HasNamedProperty(napi_env env, napi_value object, const std::string& propertyName)
 {
     if (GetValueType(env, object) != napi_object) {
         return false;
@@ -80,7 +80,7 @@ bool PluginInnerNApiUtils::HasNamedProperty(napi_env env, napi_value object, con
     return hasProperty;
 }
 
-bool PluginInnerNApiUtils::GetPropertyNames(napi_env env, napi_value object, std::vector<std::string>& nameList)
+bool PluginUtilsNApi::GetPropertyNames(napi_env env, napi_value object, std::vector<std::string>& nameList)
 {
     napi_value names = nullptr;
     NAPI_CALL_BASE(env, napi_get_property_names(env, object, &names), false);
@@ -99,7 +99,7 @@ bool PluginInnerNApiUtils::GetPropertyNames(napi_env env, napi_value object, std
     return true;
 }
 
-napi_value PluginInnerNApiUtils::NewInstance(napi_env env, napi_callback_info info,
+napi_value PluginUtilsNApi::NewInstance(napi_env env, napi_callback_info info,
     const std::string& className, size_t argc, const napi_value* argv)
 {
     napi_value thisVal = nullptr;
@@ -115,7 +115,7 @@ napi_value PluginInnerNApiUtils::NewInstance(napi_env env, napi_callback_info in
     return result;
 }
 
-napi_value PluginInnerNApiUtils::CreateErrorMessage(napi_env env, int errorCode, const std::string& errorMessage)
+napi_value PluginUtilsNApi::CreateErrorMessage(napi_env env, int errorCode, const std::string& errorMessage)
 {
     napi_value result = CreateObject(env);
     SetNamedProperty(env, result, "code", GetNapiInt32(errorCode, env));
@@ -123,7 +123,7 @@ napi_value PluginInnerNApiUtils::CreateErrorMessage(napi_env env, int errorCode,
     return result;
 }
 
-napi_value PluginInnerNApiUtils::CreateStringUtf8(napi_env env, const std::string& str)
+napi_value PluginUtilsNApi::CreateStringUtf8(napi_env env, const std::string& str)
 {
     napi_value value = nullptr;
     if (napi_create_string_utf8(env, str.c_str(), strlen(str.c_str()), &value) != napi_ok) {
@@ -132,7 +132,7 @@ napi_value PluginInnerNApiUtils::CreateStringUtf8(napi_env env, const std::strin
     return value;
 }
 
-std::string PluginInnerNApiUtils::GetStringFromValueUtf8(napi_env env, napi_value value)
+std::string PluginUtilsNApi::GetStringFromValueUtf8(napi_env env, napi_value value)
 {
     static constexpr size_t max_length = 2097152;
     if (GetValueType(env, value) != napi_string) {
@@ -163,7 +163,7 @@ std::string PluginInnerNApiUtils::GetStringFromValueUtf8(napi_env env, napi_valu
     return result;
 }
 
-ReportEventType PluginInnerNApiUtils::IsMatchType(napi_value value, napi_valuetype type, napi_env env)
+ReportEventType PluginUtilsNApi::IsMatchType(napi_value value, napi_valuetype type, napi_env env)
 {
     napi_valuetype paramType;
     napi_typeof(env, value, &paramType);
@@ -173,42 +173,42 @@ ReportEventType PluginInnerNApiUtils::IsMatchType(napi_value value, napi_valuety
     return TYPE_CHECK_FAIL;
 }
 
-napi_value PluginInnerNApiUtils::GetNapiInt32(int32_t number, napi_env env)
+napi_value PluginUtilsNApi::GetNapiInt32(int32_t number, napi_env env)
 {
     napi_value value;
     napi_create_int32(env, number, &value);
     return value;
 }
 
-napi_value PluginInnerNApiUtils::GetNamedProperty(napi_value jsonObject, std::string name, napi_env env)
+napi_value PluginUtilsNApi::GetNamedProperty(napi_value jsonObject, std::string name, napi_env env)
 {
     napi_value value;
     napi_get_named_property(env, jsonObject, name.c_str(), &value);
     return value;
 }
 
-int32_t PluginInnerNApiUtils::GetCInt32(napi_value value, napi_env env)
+int32_t PluginUtilsNApi::GetCInt32(napi_value value, napi_env env)
 {
     int32_t num;
     napi_get_value_int32(env, value, &num);
     return num;
 }
 
-size_t PluginInnerNApiUtils::GetCString(napi_value value, napi_env env, char* buffer, size_t bufSize)
+size_t PluginUtilsNApi::GetCString(napi_value value, napi_env env, char* buffer, size_t bufSize)
 {
     size_t valueLength;
     napi_get_value_string_utf8(env, value, buffer, bufSize, &valueLength);
     return valueLength;
 }
 
-int64_t PluginInnerNApiUtils::GetCInt64(napi_value value, napi_env env)
+int64_t PluginUtilsNApi::GetCInt64(napi_value value, napi_env env)
 {
     int64_t num;
     napi_get_value_int64(env, value, &num);
     return num;
 }
 
-void PluginInnerNApiUtils::EmitAsyncCallbackWork(AsyncCallbackInfo* asyncCallbackInfo)
+void PluginUtilsNApi::EmitAsyncCallbackWork(AsyncCallbackInfo* asyncCallbackInfo)
 {
     constexpr int ARGCOUNT = 2;
     if (asyncCallbackInfo == nullptr) {
@@ -251,7 +251,7 @@ void PluginInnerNApiUtils::EmitAsyncCallbackWork(AsyncCallbackInfo* asyncCallbac
     napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
 }
 
-void PluginInnerNApiUtils::EmitPromiseWork(AsyncCallbackInfo* asyncCallbackInfo)
+void PluginUtilsNApi::EmitPromiseWork(AsyncCallbackInfo* asyncCallbackInfo)
 {
     if (asyncCallbackInfo == nullptr) {
         return;
@@ -281,28 +281,28 @@ void PluginInnerNApiUtils::EmitPromiseWork(AsyncCallbackInfo* asyncCallbackInfo)
     napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
 }
 
-napi_value PluginInnerNApiUtils::CreateObject(napi_env env)
+napi_value PluginUtilsNApi::CreateObject(napi_env env)
 {
     napi_value object = nullptr;
     NAPI_CALL(env, napi_create_object(env, &object));
     return object;
 }
 
-napi_value PluginInnerNApiUtils::CreateUndefined(napi_env env)
+napi_value PluginUtilsNApi::CreateUndefined(napi_env env)
 {
     napi_value undefined = nullptr;
     NAPI_CALL(env, napi_get_undefined(env, &undefined));
     return undefined;
 }
 
-napi_value PluginInnerNApiUtils::CreateNull(napi_env env)
+napi_value PluginUtilsNApi::CreateNull(napi_env env)
 {
     napi_value jsNull = nullptr;
     NAPI_CALL(env, napi_get_null(env, &jsNull));
     return jsNull;
 }
 
-napi_valuetype PluginInnerNApiUtils::GetValueType(napi_env env, napi_value value)
+napi_valuetype PluginUtilsNApi::GetValueType(napi_env env, napi_value value)
 {
     if (value == nullptr) {
         return napi_undefined;
@@ -313,7 +313,7 @@ napi_valuetype PluginInnerNApiUtils::GetValueType(napi_env env, napi_value value
     return valueType;
 }
 
-napi_value PluginInnerNApiUtils::CreateInt32(napi_env env, int32_t code)
+napi_value PluginUtilsNApi::CreateInt32(napi_env env, int32_t code)
 {
     napi_value value = nullptr;
     if (napi_create_int32(env, code, &value) != napi_ok) {
@@ -322,14 +322,14 @@ napi_value PluginInnerNApiUtils::CreateInt32(napi_env env, int32_t code)
     return value;
 }
 
-napi_value PluginInnerNApiUtils::CreateBoolean(napi_env env, bool value)
+napi_value PluginUtilsNApi::CreateBoolean(napi_env env, bool value)
 {
     napi_value jsValue = nullptr;
     NAPI_CALL(env, napi_get_boolean(env, value, &jsValue));
     return jsValue;
 }
 
-bool PluginInnerNApiUtils::GetBool(napi_env env, napi_value value)
+bool PluginUtilsNApi::GetBool(napi_env env, napi_value value)
 {
     bool boolValue = false;
     napi_status ret = napi_get_value_bool(env, value, &boolValue);
@@ -339,14 +339,14 @@ bool PluginInnerNApiUtils::GetBool(napi_env env, napi_value value)
     return false;
 }
 
-napi_value PluginInnerNApiUtils::CreateDouble(napi_env env, double value)
+napi_value PluginUtilsNApi::CreateDouble(napi_env env, double value)
 {
     napi_value jsValue = nullptr;
     NAPI_CALL(env, napi_create_double(env, value, &jsValue));
     return jsValue;
 }
 
-double PluginInnerNApiUtils::GetDouble(napi_env env, napi_value value)
+double PluginUtilsNApi::GetDouble(napi_env env, napi_value value)
 {
     double numberValue = 0;
     napi_status ret = napi_get_value_double(env, value, &numberValue);
@@ -356,7 +356,7 @@ double PluginInnerNApiUtils::GetDouble(napi_env env, napi_value value)
     return 0;
 }
 
-bool PluginInnerNApiUtils::IsArray(napi_env env, napi_value value)
+bool PluginUtilsNApi::IsArray(napi_env env, napi_value value)
 {
     bool isArray = false;
     napi_status ret = napi_is_array(env, value, &isArray);
@@ -366,38 +366,38 @@ bool PluginInnerNApiUtils::IsArray(napi_env env, napi_value value)
     return false;
 }
 
-napi_value PluginInnerNApiUtils::CreateArray(napi_env env)
+napi_value PluginUtilsNApi::CreateArray(napi_env env)
 {
     napi_value value = nullptr;
     NAPI_CALL(env, napi_create_array(env, &value));
     return value;
 }
 
-void PluginInnerNApiUtils::SetSelementToArray(napi_env env, napi_value array, int index, napi_value value)
+void PluginUtilsNApi::SetSelementToArray(napi_env env, napi_value array, int index, napi_value value)
 {
     napi_set_element(env, array, index, value);
 }
 
-napi_ref PluginInnerNApiUtils::CreateReference(napi_env env, napi_value callback)
+napi_ref PluginUtilsNApi::CreateReference(napi_env env, napi_value callback)
 {
     napi_ref callbackRef = nullptr;
     NAPI_CALL(env, napi_create_reference(env, callback, 1, &callbackRef));
     return callbackRef;
 }
 
-napi_value PluginInnerNApiUtils::GetReference(napi_env env, napi_ref callbackRef)
+napi_value PluginUtilsNApi::GetReference(napi_env env, napi_ref callbackRef)
 {
     napi_value callback = nullptr;
     NAPI_CALL(env, napi_get_reference_value(env, callbackRef, &callback));
     return callback;
 }
 
-void PluginInnerNApiUtils::DeleteReference(napi_env env, napi_ref callbackRef)
+void PluginUtilsNApi::DeleteReference(napi_env env, napi_ref callbackRef)
 {
     (void)napi_delete_reference(env, callbackRef);
 }
 
-napi_value PluginInnerNApiUtils::CallFunction(napi_env env, napi_value recv, napi_value func,
+napi_value PluginUtilsNApi::CallFunction(napi_env env, napi_value recv, napi_value func,
     size_t argc, const napi_value* argv)
 {
     napi_value result = nullptr;
@@ -405,7 +405,7 @@ napi_value PluginInnerNApiUtils::CallFunction(napi_env env, napi_value recv, nap
     return result;
 }
 
-napi_async_work PluginInnerNApiUtils::CreateAsyncWork(napi_env env, napi_value asyncWorkName,
+napi_async_work PluginUtilsNApi::CreateAsyncWork(napi_env env, napi_value asyncWorkName,
     AsyncWorkExecutor executor, AsyncWorkComplete callback, void* data)
 {
     napi_async_work asyncWork = nullptr;
@@ -422,7 +422,7 @@ napi_async_work PluginInnerNApiUtils::CreateAsyncWork(napi_env env, napi_value a
     return asyncWork;
 }
 
-void PluginInnerNApiUtils::DeleteAsyncWork(napi_env env, napi_async_work asyncWork)
+void PluginUtilsNApi::DeleteAsyncWork(napi_env env, napi_async_work asyncWork)
 {
     if (asyncWork != nullptr) {
         (void)napi_delete_async_work(env, asyncWork);

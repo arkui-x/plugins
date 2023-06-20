@@ -20,7 +20,6 @@ common_plugin_libs_static = [
   "hitrace_meter",
   "ndk_raw_file",
   "running_lock",
-  "test_plugin",
 ]
 
 common_plugin_libs = [
@@ -60,6 +59,7 @@ common_plugin_libs = [
   "util/treeset",
   "hilog",
   "taskpool",
+  "test_plugin",
   "timer",
   "console",
 ]

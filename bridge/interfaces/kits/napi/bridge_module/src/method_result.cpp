@@ -18,8 +18,8 @@
 #include "error_code.h"
 #include "log.h"
 #include "napi_utils.h"
-#include "plugins/interfaces/native/inner_utils/plugin_inner_napi_utils.h"
-#include "plugins/interfaces/native/plugin_c_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
+#include "plugins/interfaces/native/plugin_utils.h"
 
 namespace OHOS::Plugin::Bridge {
 /*
@@ -106,7 +106,7 @@ napi_value MethodResult::GetOkResult(void) const
 void MethodResult::CreateErrorObject(napi_env env)
 {
     GetErrorInfoByErrorCode();
-    errorResult_ = PluginInnerNApiUtils::CreateErrorMessage(env, errorCode_, errcodeMessage_);
+    errorResult_ = PluginUtilsNApi::CreateErrorMessage(env, errorCode_, errcodeMessage_);
 }
 
 void MethodResult::CreateDefaultJsonString(void)

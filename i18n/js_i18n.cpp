@@ -16,8 +16,8 @@
 #include <cstddef>
 
 #include "log.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
+#include "inner_api/plugin_utils_napi.h"
+#include "plugin_utils.h"
 
 #include "plugins/i18n/i18n.h"
 
@@ -66,7 +66,7 @@ static napi_module i18nPluginModule = {
 static void I18NPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.i18nplugin.I18NPlugin";
-    OH_Plugin_RegisterJavaPlugin(&I18NPluginJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&I18NPluginJni::Register, className);
 }
 #endif
 
@@ -74,7 +74,7 @@ extern "C" __attribute__((constructor)) void I18NPluginRegister()
 {
     napi_module_register(&i18nPluginModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&I18NPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&I18NPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace OHOS::Plugin

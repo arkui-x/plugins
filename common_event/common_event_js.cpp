@@ -26,7 +26,7 @@ namespace Plugin {
 static void CommonEventPluginJniRegister()
 {
     const char className[] = "ohos.ace.plugin.broadcastplugin.BroadcastPlugin";
-    OH_Plugin_RegisterJavaPlugin(&BroadcastJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&BroadcastJni::Register, className);
 }
 #endif
 
@@ -51,7 +51,7 @@ extern "C" __attribute__((constructor)) void RegisterModule(void)
 {
     napi_module_register(&commonEventModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&CommonEventPluginJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&CommonEventPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 }  // namespace Plugin

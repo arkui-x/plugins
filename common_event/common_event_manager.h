@@ -19,8 +19,8 @@
 #include <memory>
 
 #include "common_event_subscriber.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
+#include "inner_api/plugin_utils_napi.h"
+#include "plugin_utils.h"
 
 namespace OHOS {
 namespace Plugin {

@@ -15,8 +15,8 @@
 
 #include "napi_utils.h"
 
-#include "plugins/interfaces/native/inner_utils/plugin_inner_napi_utils.h"
-#include "plugins/interfaces/native/plugin_c_utils.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
+#include "plugins/interfaces/native/plugin_utils.h"
 
 namespace OHOS::Plugin::Bridge {
 static constexpr double double_min_value = 0.00001;
@@ -48,32 +48,32 @@ napi_value NAPIUtils::NAPI_GetPremers(napi_env env, Json json)
 {
     napi_value result = nullptr;
     if (json.is_string()) {
-        result = PluginInnerNApiUtils::CreateStringUtf8(env, json.get<std::string>());
+        result = PluginUtilsNApi::CreateStringUtf8(env, json.get<std::string>());
     } else if (json.is_boolean()) {
-        result = PluginInnerNApiUtils::CreateBoolean(env, json.get<bool>());
+        result = PluginUtilsNApi::CreateBoolean(env, json.get<bool>());
     } else if (json.is_number()) {
         float okResultFloat = json.get<float>();
         int okResultInt = json.get<int>();
         if (okResultFloat - okResultInt < double_min_value) {
-            result = PluginInnerNApiUtils::CreateInt32(env, okResultInt);
+            result = PluginUtilsNApi::CreateInt32(env, okResultInt);
         } else {
-            result = PluginInnerNApiUtils::CreateDouble(env, okResultFloat);
+            result = PluginUtilsNApi::CreateDouble(env, okResultFloat);
         }
     } else if (json.is_array()) {
-        result = PluginInnerNApiUtils::CreateArray(env);
+        result = PluginUtilsNApi::CreateArray(env);
         int i = 0;
         for (auto& element : json) {
             napi_value value = NAPI_GetPremers(env, element);
-            PluginInnerNApiUtils::SetSelementToArray(env, result, i, value);
+            PluginUtilsNApi::SetSelementToArray(env, result, i, value);
             i++;
         }
     } else if (json.is_object()) {
-        result = PluginInnerNApiUtils::CreateObject(env);
+        result = PluginUtilsNApi::CreateObject(env);
         for (const auto& [key, value] : json.items()) {
-            PluginInnerNApiUtils::SetNamedProperty(env, result, key, NAPI_GetPremers(env, value));
+            PluginUtilsNApi::SetNamedProperty(env, result, key, NAPI_GetPremers(env, value));
         }
     } else {
-        result = PluginInnerNApiUtils::CreateNull(env);
+        result = PluginUtilsNApi::CreateNull(env);
     }
     return result;
 }
@@ -81,15 +81,15 @@ napi_value NAPIUtils::NAPI_GetPremers(napi_env env, Json json)
 Json NAPIUtils::PlatformPremers(napi_env env, napi_value value)
 {
     Json result;
-    napi_valuetype valueType = PluginInnerNApiUtils::GetValueType(env, value);
+    napi_valuetype valueType = PluginUtilsNApi::GetValueType(env, value);
     switch (valueType) {
         case napi_boolean: {
-            result = PluginInnerNApiUtils::GetBool(env, value);
+            result = PluginUtilsNApi::GetBool(env, value);
             break;
         }
         case napi_number: {
-            int intValue = PluginInnerNApiUtils::GetCInt32(value, env);
-            double numberValue = PluginInnerNApiUtils::GetDouble(env, value);
+            int intValue = PluginUtilsNApi::GetCInt32(value, env);
+            double numberValue = PluginUtilsNApi::GetDouble(env, value);
             if (numberValue - intValue > double_min_value) {
                 result = numberValue;
             } else {
@@ -98,11 +98,11 @@ Json NAPIUtils::PlatformPremers(napi_env env, napi_value value)
             break;
         }
         case napi_string: {
-            result = PluginInnerNApiUtils::GetStringFromValueUtf8(env, value);
+            result = PluginUtilsNApi::GetStringFromValueUtf8(env, value);
             break;
         }
         case napi_object: {
-            bool isArray = PluginInnerNApiUtils::IsArray(env, value);
+            bool isArray = PluginUtilsNApi::IsArray(env, value);
             if (isArray) {
                 uint32_t length;
                 napi_get_array_length(env, value, &length);
@@ -116,9 +116,9 @@ Json NAPIUtils::PlatformPremers(napi_env env, napi_value value)
                 break;
             }
             std::vector<std::string> props;
-            if (PluginInnerNApiUtils::GetPropertyNames(env, value, props)) {
+            if (PluginUtilsNApi::GetPropertyNames(env, value, props)) {
                 for (auto prop : props) {
-                    result[prop] = PlatformPremers(env, PluginInnerNApiUtils::GetNamedProperty(env, value, prop));
+                    result[prop] = PlatformPremers(env, PluginUtilsNApi::GetNamedProperty(env, value, prop));
                 }
             }
             break;

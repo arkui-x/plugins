@@ -15,10 +15,10 @@
 
 #include "plugins/net/connection/net_conn_client.h"
 
-#include "plugin_utils.h"
-#include "plugins/net/connection/android/java/jni/net_conn_client_jni.h"
-#include "net_manager_constants.h"
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
+#include "net_manager_constants.h"
+#include "plugins/net/connection/android/java/jni/net_conn_client_jni.h"
 
 namespace OHOS::NetManagerStandard {
 int32_t NetConnClient::RegisterNetConnCallback(const sptr<NetManagerStandard::INetConnCallback> &callback)

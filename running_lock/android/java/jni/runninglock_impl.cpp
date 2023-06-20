@@ -15,9 +15,9 @@
 
 #include "plugins/running_lock/android/java/jni/runninglock_impl.h"
 
+#include "inner_api/plugin_utils_inner.h"
+#include "inner_api/plugin_utils_napi.h"
 #include "log.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
 #include "plugin_utils.h"
 #include "plugins/running_lock/android/java/jni/runninglock_jni.h"
 
@@ -37,7 +37,7 @@ void RunningLockImpl::Init(RunningLockAsyncCallbackInfo *ptr)
     RunningLockType type = type_;
     LOGI("RunningLockImpl::Init name[%s], type[%d] ptr->env[%p] ptr->callbackRef[%p]",
         name_.c_str(), type_, ptr->env, ptr->callbackRef);
-    PluginUtils::RunTaskOnPlatform([name, type, ptr]() { RunningLockJni::Init(name, type, ptr); });
+    PluginUtilsInner::RunTaskOnPlatform([name, type, ptr]() { RunningLockJni::Init(name, type, ptr); });
 }
 
 RunningLockImpl::RunningLockImpl(const std::string &name, RunningLockType type)
@@ -52,19 +52,19 @@ bool RunningLockImpl::IsUsed()
     bool isused = false;
     LOGI("RunningLockImpl IsUsed called");
     std::chrono::milliseconds span(WAIT_TIME);
-    PluginUtils::RunSyncTaskOnLocal([&isused]() mutable { isused = RunningLockJni::IsUsed(); }, span);
+    PluginUtilsInner::RunSyncTaskOnLocal([&isused]() mutable { isused = RunningLockJni::IsUsed(); }, span);
     return isused;
 }
 
 void RunningLockImpl::Lock(uint32_t timeOutMs)
 {
     LOGI("RunningLockImpl Lock called");
-    PluginUtils::RunTaskOnPlatform([timeOutMs]() { RunningLockJni::Lock(timeOutMs); });
+    PluginUtilsInner::RunTaskOnPlatform([timeOutMs]() { RunningLockJni::Lock(timeOutMs); });
 }
 
 void RunningLockImpl::UnLock()
 {
     LOGI("RunningLockImpl UnLock called");
-    PluginUtils::RunTaskOnPlatform([]() { RunningLockJni::UnLock(); });
+    PluginUtilsInner::RunTaskOnPlatform([]() { RunningLockJni::UnLock(); });
 }
 }  // namespace OHOS::Plugin

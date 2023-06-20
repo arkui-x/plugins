@@ -16,8 +16,8 @@
 #include <cstddef>
 
 #include "log.h"
-#include "inner_utils/plugin_inner_napi_utils.h"
-#include "plugin_c_utils.h"
+#include "inner_api/plugin_utils_napi.h"
+#include "plugin_utils.h"
 
 #include "plugins/display/display.h"
 
@@ -91,7 +91,7 @@ static napi_module displayModule = {
 static void DisplayJniRegister()
 {
     const char className[] = "ohos.ace.plugin.displayplugin.DisplayPlugin";
-    OH_Plugin_RegisterJavaPlugin(&DisplayJni::Register, className);
+    ARKUI_X_Plugin_RegisterJavaPlugin(&DisplayJni::Register, className);
 }
 #endif
 
@@ -99,7 +99,7 @@ extern "C" __attribute__((constructor)) void DisplayRegister()
 {
     napi_module_register(&displayModule);
 #ifdef ANDROID_PLATFORM
-    OH_Plugin_RunAsyncTask(&DisplayJniRegister, OH_PLUGIN_PLATFORM_THREAD);
+    ARKUI_X_Plugin_RunAsyncTask(&DisplayJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
 #endif
 }
 } // namespace OHOS::Plugin
