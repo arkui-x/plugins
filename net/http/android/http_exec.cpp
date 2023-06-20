@@ -79,7 +79,18 @@ HttpExec::Task::Task(RequestContext* context) : context_(context) {}
 void HttpExec::Task::Execute()
 {
     HttpAsyncWork::ExecRequest(context_->GetEnv(), context_);
-    NapiUtils::CreateUvQueueWorkEnhanced(context_->GetEnv(), context_, HttpAsyncWork::RequestCallback);
+    if (context_->GetManager() == nullptr) {
+        NETSTACK_LOGE("can not find context manager");
+        return;
+    }
+
+    if (context_->GetManager()->IsManagerValid()) {
+        if (context_->IsRequest2()) {
+            NapiUtils::CreateUvQueueWorkEnhanced(context_->GetEnv(), context_, HttpAsyncWork::Request2Callback);
+        } else {
+            NapiUtils::CreateUvQueueWorkEnhanced(context_->GetEnv(), context_, HttpAsyncWork::RequestCallback);
+        }
+    }
 }
 
 bool HttpExec::Task::operator<(const Task& e) const
