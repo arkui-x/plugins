@@ -26,11 +26,19 @@ std::unique_ptr<Trace> Trace::Create()
 
 void TraceImpl::AsyncTraceBegin(int32_t taskId, const char* name)
 {
+#if defined(__ANDROID_API__) && __ANDROID_API__ >= 29
     ATrace_beginAsyncSection(name, taskId);
+#else defined(__ANDROID_API__) && __ANDROID_API__>=23 && __ANDROID_API__ < 29
+    ATrace_beginSection(name);
+#endif
 }
 
 void TraceImpl::AsyncTraceEnd(int32_t taskId, const char* name)
 {
+#if defined(__ANDROID_API__) && __ANDROID_API__ >= 29
     ATrace_endAsyncSection(name, taskId);
+#else defined(__ANDROID_API__) && __ANDROID_API__>=23 && __ANDROID_API__ < 29
+    ATrace_endSection();
+#endif
 }
 } // namespace OHOS::Ace
