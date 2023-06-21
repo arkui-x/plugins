@@ -64,10 +64,11 @@ public class DeviceInfoPlugin {
     /**
      * getOSFullName
      *
+     * @param defValue default value
      * @return OSFullName
      */
     public String getOSFullName(String defValue) {
-        return "Android" + Build.VERSION.RELEASE;
+        return "Android " + Build.VERSION.RELEASE;
     }
 
     /**

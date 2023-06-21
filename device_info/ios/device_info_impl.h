@@ -29,7 +29,6 @@ public:
     const std::string GetDeviceInfo(int id, const std::string &defValue) override;
     int GetDeviceInfo(int id, int defValue) override;
 private:
-    const std::string GetOSFullName(void);
     const std::string GetDeviceType(void);
     const std::string GetManufacture(void);
     const std::string GetBrand(void);
