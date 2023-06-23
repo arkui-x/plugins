@@ -27,8 +27,6 @@
 
 using namespace OHOS::Ace::Platform;
 namespace OHOS::Plugin::Bridge {
-static constexpr int64_t BRIDGE_TIMEOUT = 5000;
-
 Bridge::Bridge(const std::string& bridgeName) : bridgeName_(bridgeName)
 {
     avaiable_ = (RegisterBridge(bridgeName) == ErrorCode::BRIDGE_ERROR_NO);
@@ -114,15 +112,6 @@ ErrorCode Bridge::CallMethod(const std::string& methodName, const std::shared_pt
     }
 
     std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
-    auto jsMethodData = FindJSMethodData(methodName);
-    if (jsMethodData) {
-        if (MethodData::GetSystemTime() - jsMethodData->GetStartTime() <= BRIDGE_TIMEOUT) {
-            LOGE("CallMethod: The %s{public}s is running...", methodName.c_str());
-            return ErrorCode::BRIDGE_METHOD_RUNNING;
-        } else {
-            EraseJSMethodData(methodName);
-        }
-    }
 
     methodData->SetStartTime(MethodData::GetSystemTime());
     jsMethodDataList_[methodName] = methodData;
@@ -342,7 +331,7 @@ void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::st
 void Bridge::OnPlatformSendMessage(const std::string& data)
 {
     if (messageCallback_) {
-        messageCallback_->PlatformSendMessge(data);
+        messageCallback_->PlatformSendMessage(data);
     }
 }
 
