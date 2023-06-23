@@ -240,6 +240,7 @@ napi_value BridgeModule::BridgeObject::CallMethod(napi_env env, napi_callback_in
         result = methodData->GetPromise(true);
     }
 
+    methodData->UpdateMethodName();
     CallMethodInner(env, thisVal, methodData);
     return result;
 }

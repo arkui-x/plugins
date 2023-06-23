@@ -20,6 +20,7 @@
 #include "log.h"
 #include "napi/native_api.h"
 #include "napi_utils.h"
+#include "plugins/bridge/interfaces/kits/napi/bridge_module/include/method_id.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 #include "plugins/interfaces/native/plugin_utils.h"
@@ -340,7 +341,8 @@ bool MethodData::SendMethodResult(const std::string& data, bool removeMethod)
             event->AsyncWorkCallback();
         };
     }
-    return asyncEvent_->CreateAsyncWork(methodName_, [](napi_env env, void* data) {}, jsCallback);
+    std::string methodName = MethodID::FetchMethodName(methodName_);
+    return asyncEvent_->CreateAsyncWork(methodName, [](napi_env env, void* data) {}, jsCallback);
 }
 
 bool MethodData::SendMessageResponse(const std::string& data, bool removeMethod)
@@ -403,10 +405,10 @@ void MethodData::PlatformCallMethod(const std::string& parameter)
     asyncEvent_->CreateAsyncWork(methodName_, [](napi_env env, void* data) {}, jsCallback);
 }
 
-void MethodData::PlatformSendMessge(const std::string& data)
+void MethodData::PlatformSendMessage(const std::string& data)
 {
     if (asyncEvent_ == nullptr) {
-        LOGE("PlatformSendMessge: asyncEvent_ is null.");
+        LOGE("PlatformSendMessage: asyncEvent_ is null.");
         return;
     }
 
@@ -450,6 +452,13 @@ void MethodData::SendAsyncCallback(int errorCode, napi_value okArg)
     if (!ret) {
         LOGE("SendAsyncCallback: Failed to call the JS callback.");
         ReleaseEvent();
+    }
+}
+
+void MethodData::UpdateMethodName(void)
+{
+    if (!methodName_.empty()) {
+        methodName_ = MethodID::MakeMethodNameID(methodName_);
     }
 }
 } // namespace OHOS::Plugin::Bridge

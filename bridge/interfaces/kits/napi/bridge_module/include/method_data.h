@@ -53,8 +53,9 @@ public:
     bool SendMethodResult(const std::string& data, bool removeMethod);
     bool SendMessageResponse(const std::string& data, bool removeMethod);
     void PlatformCallMethod(const std::string& parameter);
-    void PlatformSendMessge(const std::string& data);
+    void PlatformSendMessage(const std::string& data);
     void SendAsyncCallback(int errorCode, napi_value okArg);
+    void UpdateMethodName(void);
 
 private:
     NAPIAsyncEvent* asyncEvent_ = nullptr;
