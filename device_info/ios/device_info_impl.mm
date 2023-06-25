@@ -142,6 +142,27 @@ int DeviceInfoImpl::GetFirstApiVersion(int def)
     return def;
 }
 
+const std::string DeviceInfoImpl::GetOSFullName(void)
+{
+    NSString *space = @" ";
+#if TARGET_OS_MACCATALYST
+    NSString *osType = @"macOS";
+    NSString *osName = [[NSProcessInfo processInfo] operatingSystemVersionString];
+    NSString *osFullName = [NSString stringWithFormat:@"%@%@%@", osType, space, osName];
+
+    return [osFullName cStringUsingEncoding : NSUTF8StringEncoding];
+#else
+    UIDevice *device=[UIDevice currentDevice];
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *strSystemName = [[UIDevice currentDevice] systemName];
+    NSString *strSysVersion = [[UIDevice currentDevice] systemVersion];
+    NSString *osFullName = [NSString stringWithFormat:@"%@%@%@", strSystemName, space, strSysVersion];
+
+    return [osFullName cStringUsingEncoding : NSUTF8StringEncoding];
+#endif
+}
+
 const std::string DeviceInfoImpl::GetDeviceInfo(int id, const std::string &defValue)
 {
     switch(id) {
@@ -171,6 +192,8 @@ const std::string DeviceInfoImpl::GetDeviceInfo(int id, const std::string &defVa
             return GetDisplayVersion();
         case METHOD_ID_getIncrementalVersion:
             return GetIncrementalVersion(defValue);
+        case METHOD_ID_getOSFullName:
+            return GetOSFullName();
         default:
             return defValue;
     }

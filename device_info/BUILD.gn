@@ -32,8 +32,6 @@ template("plugin_device_info_static") {
     ]
 
     if (platform == "android") {
-      defines += [ "IS_ANDROID" ]
-
       deps += [ "android/java:device_info_android_jni" ]
     } else if (platform == "ios") {
       deps += [ "ios:device_info_plugin_ios" ]
