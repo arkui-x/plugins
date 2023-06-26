@@ -57,7 +57,6 @@ void SdkVersionInfo::Init(void)
     memberFuncMap_[METHOD_ID_getFirstApiVersion] = &SdkVersionInfo::GetFirstApiVersion;
 
     memberStringFuncMap_[METHOD_ID_getOsReleaseType] = &SdkVersionInfo::GetOsReleaseType;
-    memberStringFuncMap_[METHOD_ID_getOSFullName] = &SdkVersionInfo::GetOSFullName;
     memberStringFuncMap_[METHOD_ID_getBuildType] = &SdkVersionInfo::GetBuildType;
     memberStringFuncMap_[METHOD_ID_getBuildUser] = &SdkVersionInfo::GetBuildUser;
     memberStringFuncMap_[METHOD_ID_getBuildHost] = &SdkVersionInfo::GetBuildHost;
@@ -115,16 +114,6 @@ int SdkVersionInfo::GetSdkApiVersion(void)
 const std::string SdkVersionInfo::GetOsReleaseType(void)
 {
     return GetParameter("const.ohos.releasetype", "Canary1");
-}
-
-const std::string SdkVersionInfo::GetOSFullName(void)
-{
-    std::string release = GetOsReleaseType();
-    std::string fullName = fullName_;
-    if (release.rfind("Release", 0) == 0) {
-        return fullName + "(" + release + ")";
-    }
-    return fullName;
 }
 
 const std::string SdkVersionInfo::GetBuildRootHash(void)
