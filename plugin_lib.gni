@@ -15,7 +15,6 @@ import("//build/ohos.gni")
 
 common_plugin_libs_static = [
   "common_event",
-  "device_info",
   "display",
   "hitrace_meter",
   "ndk_raw_file",
@@ -28,6 +27,7 @@ common_plugin_libs = [
   "file/fs",
   "data/preferences",
   "data/relationalstore",
+  "device_info",
   "i18n",
   "intl",
   "net/connection",
