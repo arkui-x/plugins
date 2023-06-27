@@ -17,11 +17,30 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 template("plugin_util_static") {
   forward_variables_from(invoker, "*")
 
+  config("util_plugin_config") {
+    include_dirs = [ "plugin/include" ]
+    if (target_os == "android") {
+      include_dirs += [ "plugin/android/java/jni" ]
+    }
+  }
+
   ohos_source_set(target_name) {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
+    include_dirs = [ "include" ]
+
+    sources = [ "plugin/framework/util_plugin.cpp" ]
+
     deps = [ "//commonlibrary/ets_utils/js_util_module/util:util_static" ]
+    if (target_os == "android") {
+      include_dirs += [ "plugin/android/java/jni" ]
+      defines += [ "ANDROID_PLATFORM" ]
+      deps += [ "plugin/android/java:util_plugin_android_jni" ]
+    } else if (target_os == "ios") {
+      defines += [ "IOS_PLATFORM" ]
+      deps += [ "plugin/ios:util_plugin_ios" ]
+    }
 
     subsystem_name = "plugins"
     part_name = "ets_utils"
