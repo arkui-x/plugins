@@ -53,13 +53,8 @@ template("ace_plugin_util_static") {
 
     deps = [
       ":plugin_log",
-      "//plugins/libs/napi:napi_${target_os}",
-      "//plugins/libs/securec:sec_${target_os}",
+      "//foundation/arkui/napi:ace_napi",
     ]
-
-    if (defined(config.libace_target)) {
-      deps += [ config.libace_target ]
-    }
 
     subsystem_name = "plugins"
     part_name = "plugin_utils"
@@ -86,25 +81,29 @@ foreach(item, ace_platforms) {
     }
   }
 
-  if (item.name == "android") {
-    ohos_shared_library("ace_plugin_util_" + item.name) {
-      platform = item.name
-      public_configs = [ ":plugin_util_config" ]
-      deps = [ ":ace_plugin_util_static_${platform}" ]
-      public_deps = [ "//plugins/libs/napi:napi_${target_os}" ]
+  ohos_source_set("ace_plugin_util_inner_" + item.name) {
+    platform = item.name
+    public_configs = [ ":plugin_util_config" ]
+    deps = [ ":ace_plugin_util_static_${platform}" ]
+  }
 
-      subsystem_name = "plugins"
-      part_name = "plugin_utils"
-    }
-  } else {
-    ohos_source_set("ace_plugin_util_" + item.name) {
-      platform = item.name
-      public_configs = [ ":plugin_util_config" ]
-      deps = [ ":ace_plugin_util_static_${platform}" ]
-      public_deps = [ "//plugins/libs/napi:napi_${target_os}" ]
+  ohos_source_set("ace_plugin_util_" + item.name) {
+    platform = item.name
+    public_configs = [ ":plugin_util_config" ]
+    public_deps = [ "//plugins/libs/napi:napi_${platform}" ]
 
-      subsystem_name = "plugins"
-      part_name = "plugin_utils"
+    config = {
     }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.libace_target)) {
+      deps = [ config.libace_target ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "plugin_utils"
   }
 }
