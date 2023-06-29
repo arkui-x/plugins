@@ -157,12 +157,6 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 
 - (void)URLSession:(NSURLSession*)session task:(NSURLSessionTask*)task didCompleteWithError:(NSError*)error
 {
-    NSData* data = nil;
-    if (self.mutableData) {
-        data = [self.mutableData copy];
-        self.mutableData = nil;
-    }
-
     NSHTTPURLResponse* response = (NSHTTPURLResponse*)task.response;
     if (error) {
         if (self.failBlock) {
@@ -177,7 +171,7 @@ NSString* PercentEscapedStringFromString(NSString* string) {
         }
     } else {
         if (self.responseBlock) {
-            self.responseBlock(task, response, data, self.context);
+            self.responseBlock(task, response, self.mutableData, self.context);
         }
     }
 }
@@ -484,6 +478,8 @@ NSArray* queryStringPairsFromKeyAndValue(NSString* key, id value)
         [self.urlSession invalidateAndCancel];
         self.urlSession = nil;
     }
+
+    self.mutableData = nil;
 }
 
 - (void)dealloc

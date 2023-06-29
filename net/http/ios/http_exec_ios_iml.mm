@@ -129,14 +129,9 @@ void HttpExecIosIml::RequestCallBack()
         }
         
         NSHTTPCookieStorage* cookieJar = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-        NSMutableDictionary* cookiesDic = [[NSMutableDictionary alloc] init];
-        for (NSHTTPCookie* cookie in [cookieJar cookies]) {
-            [cookiesDic setValue:cookie.value forKey:cookie.name];
-        }
         std::string cookiesStr;
-        for (NSString* key in cookiesDic.allKeys) {
-            NSString* value = [cookiesDic valueForKey:key];
-            cookiesStr += [[NSString stringWithFormat:@"%@: %@", key, value] UTF8String];
+        for (NSHTTPCookie* cookie in [cookieJar cookies]) {
+            cookiesStr += [[NSString stringWithFormat:@"%@: %@", cookie.name, cookie.value] UTF8String];
             cookiesStr += "\r\n";
         }
 
@@ -147,6 +142,8 @@ void HttpExecIosIml::RequestCallBack()
         httpRespone.SetRawHeader(header);
         httpRespone.SetCookies(cookiesStr);
         HttpExecIosIml::successResponseCallback_(httpRespone, userData);
+
+        headerDic = nil;
     }];
 
     [request setFailBlock:^(NSInteger errorCode, NSString* _Nonnull errorMessage, void* _Nonnull userData) {
