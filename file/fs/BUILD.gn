@@ -60,6 +60,7 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/properties/copy_file.cpp",
       "$fs_dirs/src/mod_fs/properties/fdatasync.cpp",
       "$fs_dirs/src/mod_fs/properties/fsync.cpp",
+      "$fs_dirs/src/mod_fs/properties/listfile.cpp",
       "$fs_dirs/src/mod_fs/properties/lstat.cpp",
       "$fs_dirs/src/mod_fs/properties/mkdtemp.cpp",
       "$fs_dirs/src/mod_fs/properties/move.cpp",
