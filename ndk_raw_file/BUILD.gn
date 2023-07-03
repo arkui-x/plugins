@@ -11,61 +11,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/global/resource_management/resmgr.gni")
 import("//build/ohos.gni")
 import("//foundation/appframework/ability/ability_runtime/ability_runtime.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-template("plugin_ndk_raw_file_static") {
-  forward_variables_from(invoker, "*")
-
-  ohos_source_set(target_name) {
-    defines += invoker.defines
-    cflags_cc += invoker.cflags_cc
-
-    configs = [ "${ability_runtime_cross_platform_path}/interfaces/kits/native/appkit:appkit_native_config" ]
-
-    include_dirs = [
-      "//base/global/resource_management/frameworks/resmgr/include",
-      "//third_party/icu/icu4c/source/i18n",
-    ]
-
-    cflags = [ "-Wno-error=inconsistent-missing-override" ]
-
-    sources = [ "core/raw_file_manager.cpp" ]
-
-    public_deps = [
-      "//plugins/interfaces/native:plugin_log",
-      "//plugins/libs/napi:napi_${target_os}",
-      "//plugins/libs/resmgr:resmgr_${target_os}",
-    ]
-
-    defines += [ "__ARKUI_CROSS__" ]
-    if (defined(config.libace_target)) {
-      deps = [ config.libace_target ]
-    }
-
-    subsystem_name = "plugins"
-    part_name = "ndk_raw_file"
+config("rawfile_config") {
+  include_dirs = [
+    "//base/global/resource_management/interfaces/native/resource/include",
+    "//third_party/bounds_checking_function/include",
+  ]
+  if (resource_management_support_icu) {
+    include_dirs += [ "//third_party/icu/icu4c/source/i18n" ]
   }
 }
 
 foreach(item, ace_platforms) {
-  plugin_ndk_raw_file_static("ndk_raw_file_static_" + item.name) {
-    defines = []
-    cflags_cc = []
-    config = {
-    }
+  if (item.name == "android") {
+    ohos_shared_library("ndk_raw_file_" + item.name) {
+      platform = item.name
+      public_configs = [ ":rawfile_config" ]
+      cflags = [ "-Wno-error=inconsistent-missing-override" ]
+      sources = [ "//base/global/resource_management/frameworks/resmgr/src/raw_file_manager.cpp" ]
 
-    if (defined(item.config)) {
-      config = item.config
+      public_deps = [
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${platform}",
+        "//plugins/libs/napi:napi_${platform}",
+        "//plugins/libs/resmgr:resmgr_${platform}",
+      ]
+      defines = [ "__ARKUI_CROSS__" ]
+      subsystem_name = "plugins"
+      part_name = "ndk_raw_file"
     }
+  } else {
+    ohos_source_set("ndk_raw_file_static_" + item.name) {
+      platform = item.name
+      public_configs = [ ":rawfile_config" ]
+      cflags = [ "-Wno-error=inconsistent-missing-override" ]
+      sources = [ "//base/global/resource_management/frameworks/resmgr/src/raw_file_manager.cpp" ]
 
-    if (defined(config.defines)) {
-      defines = config.defines
-    }
-
-    if (defined(config.cflags_cc)) {
-      cflags_cc = config.cflags_cc
+      public_deps = [
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${platform}",
+        "//plugins/libs/napi:napi_${platform}",
+        "//plugins/libs/resmgr:resmgr_${platform}",
+      ]
+      defines = [ "__ARKUI_CROSS__" ]
+      subsystem_name = "plugins"
+      part_name = "ndk_raw_file"
     }
   }
 }
