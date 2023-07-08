@@ -62,7 +62,6 @@ napi_value HttpModuleExports::CreateHttp(napi_env env, napi_callback_info info)
         auto manager = reinterpret_cast<EventManager *>(data);
         if (manager != nullptr) {
             manager->SetInvalid();
-            delete manager;
         }
     });
 }
