@@ -30,6 +30,7 @@
 #include "fdatasync.h"
 #include "filemgmt_libn.h"
 #include "fsync.h"
+#include "listfile.h"
 #include "lstat.h"
 #include "mkdtemp.h"
 #include "move.h"
@@ -557,6 +558,8 @@ bool PropNExporter::Export()
             NVal::DeclareNapiFunction("fdatasyncSync", Fdatasync::Sync),
             NVal::DeclareNapiFunction("fsync", Fsync::Async),
             NVal::DeclareNapiFunction("fsyncSync", Fsync::Sync),
+            NVal::DeclareNapiFunction("listFile", ListFile::Async),
+            NVal::DeclareNapiFunction("listFileSync", ListFile::Sync),
             NVal::DeclareNapiFunction("lstat", Lstat::Async),
             NVal::DeclareNapiFunction("lstatSync", Lstat::Sync),
             NVal::DeclareNapiFunction("mkdir", Mkdir),
