@@ -19,7 +19,8 @@
 #include <vector>
 
 namespace OHOS {
-namespace DistributedFS {
+namespace FileManagement {
+namespace ModuleFileIO {
 class FileFilter {
 public:
     FileFilter() = default;
@@ -113,6 +114,7 @@ private:
     bool excludeMedia_ = false;
     bool hasFilter_ = false;
 };
-} // namespace DistributedFS
+} // namespace ModuleFileIO
+} // namespace FileManagement
 } // namespace OHOS
 #endif // FILE_FILTER_H
