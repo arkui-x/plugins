@@ -39,6 +39,7 @@ common_plugin_libs = [
   "buffer",
   "convertxml",
   "process",
+  "uitest",
   "uri",
   "url",
   "xml",
