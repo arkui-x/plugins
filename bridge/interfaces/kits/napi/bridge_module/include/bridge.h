@@ -48,10 +48,12 @@ public:
     bool GetAvaiable(void);
     void RemoveJSMethodData(const std::string& methodName);
     void RemoveMessageData(void);
-
+    bool GetTerminate(void);
+    void SetTerminate(bool terminate);
 private:
     std::string bridgeName_;
     bool avaiable_ = false;
+    bool terminate_ = false;
     napi_env env_ = nullptr;
     std::map<std::string, std::shared_ptr<MethodData>> platformMethodDataList_;
     std::map<std::string, std::shared_ptr<MethodData>> jsMethodDataList_;
@@ -69,6 +71,7 @@ private:
     void OnPlatformMethodResult(const std::string& methodName, const std::string& result);
     void OnPlatformSendMessage(const std::string& data);
     void OnPlatformSendMessageResponse(const std::string& data);
+    void OnPlatformSendWillTerminate(bool data);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif

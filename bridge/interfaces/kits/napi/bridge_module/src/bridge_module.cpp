@@ -69,7 +69,11 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
         env, thisVar, reinterpret_cast<void*>(bridge),
         [](napi_env env, void* data, void* argv) {
             auto bridge = reinterpret_cast<Bridge*>(data);
-            BridgeWrap::DeleteBridge(bridge->GetBridgeName());
+            bool isTerminate = bridge->GetTerminate();
+            if (!isTerminate) {
+                LOGI("deleteBridge()");
+                BridgeWrap::DeleteBridge(bridge->GetBridgeName());
+            }
         },
         nullptr, nullptr);
     return thisVar;

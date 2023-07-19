@@ -75,6 +75,9 @@ ErrorCode Bridge::RegisterBridge(const std::string& bridgeName)
     receiver->sendMessageResponseCallback_ =
         std::bind(&Bridge::OnPlatformSendMessageResponse, this, std::placeholders::_1);
 
+    receiver->sendWillTerminateResponseCallback_ =
+        std::bind(&Bridge::OnPlatformSendWillTerminate, this, std::placeholders::_1);
+
     if (BridgeManager::JSRegisterBridge(bridgeName, receiver)) {
         return ErrorCode::BRIDGE_ERROR_NO;
     }
@@ -286,6 +289,16 @@ void Bridge::RemoveMessageData(void)
     EraseJSMessageData();
 }
 
+void Bridge::SetTerminate(bool terminate)
+{
+    terminate_ = terminate;
+}
+
+bool Bridge::GetTerminate(void)
+{
+    return terminate_;
+}
+
 void Bridge::OnPlatformCallMethod(const std::string& methodName, const std::string& parameter)
 {
     std::lock_guard<std::mutex> lock(platformMethodDataListLock_);
@@ -346,5 +359,10 @@ void Bridge::OnPlatformSendMessageResponse(const std::string& data)
     std::shared_ptr<MethodData> methodData = jsSendMessageDataList_[0];
     methodData->SendMessageResponse(data, true);
     EraseJSMessageData();
+}
+
+void Bridge::OnPlatformSendWillTerminate(bool data)
+{
+    SetTerminate(data);
 }
 } // namespace OHOS::Plugin::Bridge
