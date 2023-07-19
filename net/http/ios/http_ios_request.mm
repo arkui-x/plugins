@@ -418,6 +418,9 @@ NSArray* queryStringPairsFromKeyAndValue(NSString* key, id value)
 
 - (NSDictionary*)convertDictionaryWithJSONString:(NSString*)jsonString
 {
+    if (!jsonString || jsonString.length == 0) {
+        return nil;
+    }
     NSData* jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
     NSError* err;
     NSDictionary* dic = [NSJSONSerialization JSONObjectWithData:jsonData

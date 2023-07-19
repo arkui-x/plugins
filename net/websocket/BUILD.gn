@@ -85,6 +85,7 @@ template("plugin_net_websocket_static") {
         "//plugins/net/utils:netstack_util_static_ios",
         "//third_party/bounds_checking_function:libsec_static",
         "//third_party/curl:curl",
+        "//third_party/jsoncpp:jsoncpp_static",
         "//third_party/libwebsockets:websockets",
         "//third_party/openssl:libcrypto_static",
         "//third_party/openssl:ssl_source",

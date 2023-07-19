@@ -490,8 +490,7 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext* context)
                 return false;
             }
 
-            napi_value obj = NapiUtils::JsonParse(
-                context->GetEnv(), NapiUtils::CreateStringUtf8(context->GetEnv(), context->response.GetResult()));
+            napi_value obj = NapiUtils::JsonParse(context->GetEnv(), context->response.GetResult());
             if (obj) {
                 NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, obj);
                 NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,

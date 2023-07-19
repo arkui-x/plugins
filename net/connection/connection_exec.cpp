@@ -279,7 +279,7 @@ napi_value ConnectionExec::ReportNetDisconnectedCallback(ReportNetConnectedConte
     return NapiUtils::GetUndefined(context->GetEnv());
 }
 
-bool ConnectionExec::ExecGetGlobalHttpProxy(GetGlobalHttpProxyContext *context)
+bool ConnectionExec::ExecGetGlobalHttpProxy(GetHttpProxyContext *context)
 {
     int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->GetGlobalHttpProxy(context->httpProxy_);
     if (errorCode != NET_CONN_SUCCESS) {
@@ -289,7 +289,35 @@ bool ConnectionExec::ExecGetGlobalHttpProxy(GetGlobalHttpProxyContext *context)
     return true;
 }
 
-napi_value ConnectionExec::GetGlobalHttpProxyCallback(GetGlobalHttpProxyContext *context)
+bool ConnectionExec::ExecGetDefaultHttpProxy(GetHttpProxyContext *context)
+{
+    int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->GetDefaultHttpProxy(context->httpProxy_);
+    if (errorCode != NET_CONN_SUCCESS) {
+        context->SetErrorCode(errorCode);
+        return false;
+    }
+    return true;
+}
+
+napi_value ConnectionExec::GetDefaultHttpProxyCallback(GetHttpProxyContext *context)
+{
+    napi_value host = NapiUtils::CreateStringUtf8(context->GetEnv(), context->httpProxy_.GetHost());
+    napi_value port = NapiUtils::CreateInt32(context->GetEnv(), context->httpProxy_.GetPort());
+    auto lists = context->httpProxy_.GetExclusionList();
+    napi_value exclusionList = NapiUtils::CreateArray(context->GetEnv(), lists.size());
+    size_t index = 0;
+    for (auto list : lists) {
+        napi_value jsList = NapiUtils::CreateStringUtf8(context->GetEnv(), list);
+        NapiUtils::SetArrayElement(context->GetEnv(), exclusionList, index++, jsList);
+    }
+    napi_value httpProxy = NapiUtils::CreateObject(context->GetEnv());
+    NapiUtils::SetNamedProperty(context->GetEnv(), httpProxy, "host", host);
+    NapiUtils::SetNamedProperty(context->GetEnv(), httpProxy, "port", port);
+    NapiUtils::SetNamedProperty(context->GetEnv(), httpProxy, "exclusionList", exclusionList);
+    return httpProxy;
+}
+
+napi_value ConnectionExec::GetGlobalHttpProxyCallback(GetHttpProxyContext *context)
 {
     napi_value host = NapiUtils::CreateStringUtf8(context->GetEnv(), context->httpProxy_.GetHost());
     napi_value port = NapiUtils::CreateInt32(context->GetEnv(), context->httpProxy_.GetPort());
