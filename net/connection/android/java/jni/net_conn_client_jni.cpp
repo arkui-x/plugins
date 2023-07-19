@@ -58,9 +58,14 @@ struct {
 } g_netconnclientpluginClass;
 }  // namespace
 std::map<long, sptr<NetManagerStandard::INetConnCallback>> NetConnClientJni::observer_;
+static bool  NetConnClientJni::hasInit_ = false;
 
 bool NetConnClientJni::Register(void *env)
 {
+    LOGI("NetConnClientJni::Register");
+    if (hasInit_) {
+        return hasInit_;
+    }
     auto *jniEnv = static_cast<JNIEnv *>(env);
     CHECK_NULL_RETURN(jniEnv, false);
     jclass cls = jniEnv->FindClass(NetConnClient_CLASS_NAME);
@@ -77,6 +82,7 @@ bool NetConnClientJni::Register(void *env)
 
 void NetConnClientJni::NativeInit(JNIEnv *env, jobject jobj)
 {
+    LOGI("NetConnClientJni::NativeInit");
     CHECK_NULL_VOID(env);
     g_netconnclientpluginClass.globalRef = env->NewGlobalRef(jobj);
     CHECK_NULL_VOID(g_netconnclientpluginClass.globalRef);
@@ -100,6 +106,7 @@ void NetConnClientJni::NativeInit(JNIEnv *env, jobject jobj)
     CHECK_NULL_VOID(g_netconnclientpluginClass.isDefaultNetworkActive);
 
     env->DeleteLocalRef(cls);
+    hasInit_ = true;
 }
 
 void NetConnClientJni::NativeOnAvailable(JNIEnv *env, jobject jthiz, jobject jNetWork, jlong jcallbackKey)
@@ -206,6 +213,9 @@ void NetConnClientJni::UnregisterCallback(const sptr<NetManagerStandard::INetCon
 
 int32_t NetConnClientJni::RegisterDefaultNetConnCallback(const sptr<NetManagerStandard::INetConnCallback> &callback)
 {
+    if (!hasInit_) {
+        NetConnClientJniRegister();
+    }
     RegisterCallback(callback);
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
@@ -227,6 +237,9 @@ int32_t NetConnClientJni::RegisterDefaultNetConnCallback(const sptr<NetManagerSt
 int32_t NetConnClientJni::RegisterNetConnCallback(const sptr<NetManagerStandard::NetSpecifier> &netSpecifier,
     const sptr<NetManagerStandard::INetConnCallback> &callback, const uint32_t &timeoutMS)
 {
+    if (!hasInit_) {
+        NetConnClientJniRegister();
+    }
     RegisterCallback(callback);
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
@@ -256,6 +269,9 @@ int32_t NetConnClientJni::RegisterNetConnCallback(const sptr<NetManagerStandard:
 
 int32_t NetConnClientJni::UnregisterNetConnCallback(const sptr<NetManagerStandard::INetConnCallback> &callback)
 {
+    if (!hasInit_) {
+        NetConnClientJniRegister();
+    }
     UnregisterCallback(callback);
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
@@ -276,6 +292,10 @@ int32_t NetConnClientJni::UnregisterNetConnCallback(const sptr<NetManagerStandar
 
 int32_t NetConnClientJni::HasDefaultNet(bool &flag)
 {
+    LOGI("NetConnClientJni HasDefaultNet");
+    if (!hasInit_) {
+        NetConnClientJniRegister();
+    }
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
     CHECK_NULL_RETURN(g_netconnclientpluginClass.globalRef, NetManagerStandard::NETMANAGER_ERR_INTERNAL);
@@ -290,5 +310,12 @@ int32_t NetConnClientJni::HasDefaultNet(bool &flag)
         return NetManagerStandard::NETMANAGER_ERR_PERMISSION_DENIED;
     }
     return NetManagerStandard::NETMANAGER_SUCCESS;
+}
+
+void NetConnClientJni::NetConnClientJniRegister()
+{
+    const char className[] = "ohos.ace.plugin.netconnclientplugin.NetConnClientPlugin";
+    LOGI("NetConnClientJni::NetConnClientJniRegister!");
+    ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::NetConnClientJni::Register, className);
 }
 }

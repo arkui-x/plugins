@@ -47,8 +47,10 @@ public:
 private:
     static void RegisterCallback(const sptr<NetManagerStandard::INetConnCallback> &callback);
     static void UnregisterCallback(const sptr<NetManagerStandard::INetConnCallback> &callback);
+    static void NetConnClientJniRegister();
 
     static std::map<long, sptr<NetManagerStandard::INetConnCallback>> observer_;
+    static bool hasInit_;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_NET_CONNECTION_JNI_NET_CONN_CLIENT_JNI_H
