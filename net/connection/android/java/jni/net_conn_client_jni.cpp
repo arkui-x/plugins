@@ -58,7 +58,7 @@ struct {
 } g_netconnclientpluginClass;
 }  // namespace
 std::map<long, sptr<NetManagerStandard::INetConnCallback>> NetConnClientJni::observer_;
-static bool  NetConnClientJni::hasInit_ = false;
+bool  NetConnClientJni::hasInit_ = false;
 
 bool NetConnClientJni::Register(void *env)
 {
