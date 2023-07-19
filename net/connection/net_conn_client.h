@@ -77,6 +77,8 @@ public:
         { return 0; }
     int32_t GetGlobalHttpProxy(NetManagerStandard::HttpProxy &httpProxy)
         { return 0; }
+    int32_t GetDefaultHttpProxy(HttpProxy &httpProxy)
+        { return 0; }
     int32_t SetAppNet(int32_t netId)
         { return 0; }
     int32_t GetAppNet(int32_t &netId)

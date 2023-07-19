@@ -75,7 +75,7 @@ connection_sources = [
   "$WORK_DIR/async_context/src/getaddressbyname_context.cpp",
   "$WORK_DIR/async_context/src/getappnet_context.cpp",
   "$WORK_DIR/async_context/src/getdefaultnet_context.cpp",
-  "$WORK_DIR/async_context/src/getglobalhttpproxy_context.cpp",
+  "$WORK_DIR/async_context/src/gethttpproxy_context.cpp",
   "$WORK_DIR/async_context/src/none_params_context.cpp",
   "$WORK_DIR/async_context/src/parse_nethandle_context.cpp",
   "$WORK_DIR/async_context/src/register_context.cpp",
