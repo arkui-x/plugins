@@ -37,12 +37,21 @@ std::shared_ptr<AndroidDownloadAdp> AndroidDownloadAdp::Instance()
     return std::make_shared<AndroidDownloadAdpImpl>();
 }
 
+bool AndroidDownloadAdp::DetetLegalPath(std::string path)
+{
+    if (std::string::npos == path.find("../") &&
+        std::string::npos == path.find("/..")) {
+            return true;
+    }
+    return false;
+}
+
 bool AndroidDownloadAdp::IsPathValid(const std::string &filePath)
 {
     auto path = filePath.substr(0, filePath.rfind('/'));
     char resolvedPath[PATH_MAX + 1] = { 0 };
     if (path.length() > PATH_MAX || realpath(path.c_str(), resolvedPath) == nullptr ||
-        strncmp(resolvedPath, path.c_str(), path.length()) != 0) {
+        !DetetLegalPath(resolvedPath)) {
         DOWNLOAD_HILOGE("filePath is invalid, filePath = %s", filePath.c_str());
         return false;
     }
