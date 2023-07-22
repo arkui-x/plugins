@@ -31,7 +31,6 @@ public:
     void GetNetworkType(void *network) override;
 
 private:
-    bool DetetLegalPath(std::string path);
     std::string downloadUrl_;
     std::string fileName_;
 };
