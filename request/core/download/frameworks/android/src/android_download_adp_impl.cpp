@@ -41,7 +41,7 @@ bool AndroidDownloadAdp::DetetLegalPath(std::string path)
 {
     if (std::string::npos == path.find("../") &&
         std::string::npos == path.find("/..")) {
-            return true;
+        return true;
     }
     return false;
 }
