@@ -117,8 +117,9 @@ void NumberFormat::InitProperties()
         }
     }
     if (!styleString.empty() && styleString == "percent") {
-        numberFormat = numberFormat.unit(icu::NoUnit::percent()).scale(icu::number::Scale::powerOfTen(2))
-            .precision(icu::number::Precision::fixedFraction(0)); // 2 means divided by 100
+        numberFormat = numberFormat.unit(icu::NoUnit::percent())
+            .scale(icu::number::Scale::powerOfTen(2)) // 2 means divided by 100
+            .precision(icu::number::Precision::fixedFraction(0));
     }
     if (!styleString.empty() && styleString == "unit") {
         for (icu::MeasureUnit curUnit : unitArray) {
