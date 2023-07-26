@@ -149,10 +149,10 @@ void PluralRules::InitNumberFormatter()
         if (minSignificant > 0) {
             icu::number::Precision precision = icu::number::Precision::minMaxSignificantDigits(minSignificant,
                 maxSignificant);
-            numberFormatter.precision(precision);
+            numberFormatter = numberFormatter.precision(precision);
         } else {
             icu::number::Precision precision = icu::number::Precision::minMaxFraction(minFraction, maxFraction);
-            numberFormatter.precision(precision);
+            numberFormatter = numberFormatter.precision(precision);
         }
     }
 }

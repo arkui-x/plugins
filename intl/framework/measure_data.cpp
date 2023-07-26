@@ -416,7 +416,7 @@ void GetRestPreferredUnit(const string &region, const string &usage, vector<stri
         }
     }
     if (!units.size()) {
-        GetFallbackPreferredUnit(region, usage, units);
+        GetDefaultPreferredUnit(region, usage, units);
     }
 }
 

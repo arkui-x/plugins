@@ -117,7 +117,8 @@ void NumberFormat::InitProperties()
         }
     }
     if (!styleString.empty() && styleString == "percent") {
-        numberFormat = numberFormat.unit(icu::NoUnit::percent());
+        numberFormat = numberFormat.unit(icu::NoUnit::percent()).scale(icu::number::Scale::powerOfTen(2)).precision(
+            icu::number::Precision::fixedFraction(0));
     }
     if (!styleString.empty() && styleString == "unit") {
         for (icu::MeasureUnit curUnit : unitArray) {
@@ -135,7 +136,7 @@ void NumberFormat::InitProperties()
         numberFormat = numberFormat.precision(icu::number::Precision::maxFraction(DEFAULT_FRACTION_DIGITS));
     }
     if (!useGrouping.empty()) {
-        numberFormat.grouping((useGrouping == "true") ?
+        numberFormat = numberFormat.grouping((useGrouping == "true") ?
             UNumberGroupingStrategy::UNUM_GROUPING_AUTO : UNumberGroupingStrategy::UNUM_GROUPING_OFF);
     }
     if (!currencySign.empty() || !signDisplayString.empty()) {
@@ -188,9 +189,9 @@ void NumberFormat::ParseConfigs(std::map<std::string, std::string> &configs)
 {
     if (configs.count("signDisplay") > 0) {
         signDisplayString = configs["signDisplay"];
-        if (signAutoStyle.count(signDisplayString) > 0) {
-            signDisplay = signAutoStyle[signDisplayString];
-        }
+    }
+    if (signAutoStyle.count(signDisplayString) > 0) {
+        signDisplay = signAutoStyle[signDisplayString];
     }
     if (configs.count("style") > 0) {
         styleString = configs["style"];
@@ -211,10 +212,9 @@ void NumberFormat::ParseConfigs(std::map<std::string, std::string> &configs)
         currency = configs["currency"];
         if (configs.count("currencySign") > 0) {
             currencySign = configs["currencySign"];
-            if (configs["currencySign"] != "accounting" && !signDisplayString.empty() &&
-                signAccountingStyle.count(signDisplayString) > 0) {
-                signDisplay = signAccountingStyle[signDisplayString];
-            }
+        }
+        if (currencySign.compare("accounting") == 0 && signAccountingStyle.count(signDisplayString) > 0) {
+            signDisplay = signAccountingStyle[signDisplayString];
         }
         if (configs.count("currencyDisplay") > 0 && currencyStyle.count(configs["currencyDisplay"]) > 0) {
             currencyDisplayString = configs["currencyDisplay"];
