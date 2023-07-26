@@ -2983,7 +2983,7 @@ extern "C" __attribute__((constructor)) void I18nRegister()
 {
     napi_module_register(&g_i18nModule);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&I18NPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    I18NPluginJniRegister();
 #endif
 }
 } // namespace I18n
