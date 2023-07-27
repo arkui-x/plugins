@@ -30,7 +30,7 @@ std::shared_ptr<IosDownloadAdp> IosDownloadAdp::Instance()
 
 bool IosDownloadAdp::IsDirectory(const std::string &path)
 {
-    NSURL *url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path.c_str()]];
+    NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:path.c_str()]];
     NSFileWrapper *fileWrapper = [[NSFileWrapper alloc] initWithURL:url options:NSFileWrapperReadingImmediate|NSFileWrapperReadingWithoutMapping error:nil];
     return fileWrapper.isDirectory;
 }
