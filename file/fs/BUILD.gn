@@ -57,7 +57,6 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/class_stat/stat_n_exporter.cpp",
       "$fs_dirs/src/mod_fs/common_func.cpp",
       "$fs_dirs/src/mod_fs/properties/close.cpp",
-      "$fs_dirs/src/mod_fs/properties/copy_file.cpp",
       "$fs_dirs/src/mod_fs/properties/fdatasync.cpp",
       "$fs_dirs/src/mod_fs/properties/fsync.cpp",
       "$fs_dirs/src/mod_fs/properties/listfile.cpp",
@@ -71,6 +70,7 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/properties/truncate.cpp",
       "$plugin_fs_dirs/common/fd_guard.cpp",
       "$plugin_fs_dirs/module.cpp",
+      "$plugin_fs_dirs/src/copy_file.cpp",
       "$plugin_fs_dirs/src/open.cpp",
       "$plugin_fs_dirs/src/prop_n_exporter.cpp",
     ]
