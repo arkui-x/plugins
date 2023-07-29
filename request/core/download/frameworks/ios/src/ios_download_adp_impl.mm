@@ -30,9 +30,17 @@ std::shared_ptr<IosDownloadAdp> IosDownloadAdp::Instance()
 
 bool IosDownloadAdp::IsDirectory(const std::string &path)
 {
-    NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:path.c_str()]];
-    NSFileWrapper *fileWrapper = [[NSFileWrapper alloc] initWithURL:url options:NSFileWrapperReadingImmediate|NSFileWrapperReadingWithoutMapping error:nil];
-    return fileWrapper.isDirectory;
+    if (path.length() < 1) {
+        return false;
+    }
+    bool bDir = false;
+    NSString *strDirPath = [NSString stringWithUTF8String:path.c_str()];
+    bool bExist = [[NSFileManager defaultManager] fileExistsAtPath:strDirPath isDirectory:&bDir];
+    if (bDir && bExist) {
+        return true;
+    }
+    DOWNLOAD_HILOGE("Invalid path, path:%{private}s", path.c_str());
+    return false;
 }
 
 IosDownloadAdpImpl::IosDownloadAdpImpl()
