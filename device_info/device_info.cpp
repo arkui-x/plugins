@@ -397,9 +397,9 @@ static void DeviceInfoPluginJniRegister()
 extern "C" __attribute__((constructor)) void DeviceInfoRegisterModule(void)
 {
     LOGI("DeviceInfoRegisterModule deviceinfo.");
-    napi_module_register(&_module);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&DeviceInfoPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    DeviceInfoPluginJniRegister();
 #endif
+    napi_module_register(&_module);
 }
 } // namespace OHOS::Plugin

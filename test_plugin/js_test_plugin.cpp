@@ -90,10 +90,10 @@ static void TestPluginJniRegister()
 
 extern "C" __attribute__((constructor)) void TestPluginRegister()
 {
-    napi_module_register(&testPluginModule);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&TestPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    TestPluginJniRegister();
 #endif
+    napi_module_register(&testPluginModule);
 }
 
 } // namespace OHOS::Plugin

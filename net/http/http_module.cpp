@@ -299,7 +299,7 @@ static void HttpJniRegister()
 extern "C" __attribute__((constructor)) void RegisterHttpModule(void)
 {
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&HttpJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    HttpJniRegister();
 #endif
     napi_module_register(&g_httpModule);
 }

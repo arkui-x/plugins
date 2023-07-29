@@ -97,9 +97,9 @@ static void DisplayJniRegister()
 
 extern "C" __attribute__((constructor)) void DisplayRegister()
 {
-    napi_module_register(&displayModule);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&DisplayJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    DisplayJniRegister();
 #endif
+    napi_module_register(&displayModule);
 }
 } // namespace OHOS::Plugin

@@ -182,13 +182,11 @@ extern "C" __attribute__((constructor)) void RequestRegister()
         .nm_priv = ((void *)0),
         .reserved = { 0 }
     };
-    napi_module_register(&module);
-
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&DownloadPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
-    ARKUI_X_Plugin_RunAsyncTask(&JSRegisterProgressResult, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    DownloadPluginJniRegister();
+    JSRegisterProgressResult();
 #endif
-
+    napi_module_register(&module);
     UPLOAD_HILOGD(UPLOAD_MODULE_JS_NAPI, "module register request");
 }
 } // namespace OHOS::Plugin::Request

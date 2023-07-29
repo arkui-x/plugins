@@ -313,9 +313,9 @@ static void RunningLockJniRegister()
  */
 extern "C" __attribute__((constructor)) void RegisterRunninglockModule(void)
 {
-    napi_module_register(&g_module);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&RunningLockJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    RunningLockJniRegister();
 #endif
+    napi_module_register(&g_module);
 }
 }  // namespace OHOS::Plugin

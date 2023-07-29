@@ -49,10 +49,10 @@ static napi_module commonEventModule = {
 };
 extern "C" __attribute__((constructor)) void RegisterModule(void)
 {
-    napi_module_register(&commonEventModule);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&CommonEventPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    CommonEventPluginJniRegister();
 #endif
+    napi_module_register(&commonEventModule);
 }
 }  // namespace Plugin
 }  // namespace OHOS
