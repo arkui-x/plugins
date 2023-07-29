@@ -27,7 +27,19 @@ namespace OHOS::Plugin {
 void PluginUtilsInner::RegisterPlugin(RegisterCallback callback, const std::string& className)
 {
 #ifdef ANDROID_PLATFORM
-    OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
+    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
+    if (!taskExecutor) {
+        LOGE("RegisterPlugin taskExecutor is nullptr");
+        return;
+    }
+    if (taskExecutor->WillRunOnCurrentThread(OHOS::Ace::TaskExecutor::TaskType::PLATFORM)) {
+        OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
+    } else {
+        auto task = [callback, className]() {
+            OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
+        };
+        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+    }
 #endif
 }
 

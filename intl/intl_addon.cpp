@@ -1852,10 +1852,10 @@ static void INTLPluginJniRegister()
 
 extern "C" __attribute__((constructor)) void INTLPluginRegister()
 {
-    napi_module_register(&g_intlModule);
 #ifdef ANDROID_PLATFORM
     INTLPluginJniRegister();
 #endif
+    napi_module_register(&g_intlModule);
 }
 } // namespace I18n
 } // namespace Global

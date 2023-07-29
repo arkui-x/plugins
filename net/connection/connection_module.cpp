@@ -397,7 +397,7 @@ static void NetConnClientJniRegister()
 extern "C" __attribute__((constructor)) void RegisterConnectionModule(void)
 {
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&NetConnClientJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    NetConnClientJniRegister();
 #endif
     napi_module_register(&g_connectionModule);
 }

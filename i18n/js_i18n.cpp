@@ -72,9 +72,9 @@ static void I18NPluginJniRegister()
 
 extern "C" __attribute__((constructor)) void I18NPluginRegister()
 {
-    napi_module_register(&i18nPluginModule);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&I18NPluginJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    I18NPluginJniRegister();
 #endif
+    napi_module_register(&i18nPluginModule);
 }
 } // namespace OHOS::Plugin

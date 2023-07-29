@@ -510,9 +510,9 @@ static void AbilityAccessCtrlJniRegister()
 
 extern "C" __attribute__((constructor)) void AbilityAccessCtrlRegister()
 {
-    napi_module_register(&abilityAccessCtrlModule);
 #ifdef ANDROID_PLATFORM
-    ARKUI_X_Plugin_RunAsyncTask(&AbilityAccessCtrlJniRegister, ARKUI_X_PLUGIN_PLATFORM_THREAD);
+    AbilityAccessCtrlJniRegister();
 #endif
+    napi_module_register(&abilityAccessCtrlModule);
 }
 } // namespace OHOS::Plugin
