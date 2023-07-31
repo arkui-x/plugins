@@ -307,6 +307,7 @@ bool HttpExec::OnFailedResponse(int32_t errCode, std::string& errMessage, void* 
     }
 
     context->SetError(errCode, errMessage);
+    context->SetExecOK(false);
     ReleaseRequestInfo(context);
 
     if (context->GetManager()->IsManagerValid()) {
