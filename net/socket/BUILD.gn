@@ -147,7 +147,7 @@ foreach(item, ace_platforms) {
   plugin_net_socket_static("net_socket_static_" + item.name) {
     platform = item.name
 
-    defines = []
+    defines = [ "CROSS_PLATFORM" ]
     cflags_cc = []
     config = {
     }
@@ -157,7 +157,7 @@ foreach(item, ace_platforms) {
     }
 
     if (defined(config.defines)) {
-      defines = config.defines
+      defines += config.defines
     }
 
     if (defined(config.cflags_cc)) {
