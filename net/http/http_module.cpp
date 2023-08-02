@@ -61,7 +61,7 @@ napi_value HttpModuleExports::CreateHttp(napi_env env, napi_callback_info info)
         NETSTACK_LOGI("http request handle is finalized");
         auto manager = reinterpret_cast<EventManager *>(data);
         if (manager != nullptr) {
-            manager->SetInvalid();
+            manager->SetInvalid(manager);
         }
     });
 }

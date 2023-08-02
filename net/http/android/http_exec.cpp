@@ -84,7 +84,7 @@ void HttpExec::Task::Execute()
         return;
     }
 
-    if (context_->GetManager()->IsManagerValid()) {
+    if (context_->GetManager()->IsManagerValid(context_->GetManager())) {
         if (context_->IsRequest2()) {
             NapiUtils::CreateUvQueueWorkEnhanced(context_->GetEnv(), context_, HttpAsyncWork::Request2Callback);
         } else {

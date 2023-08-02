@@ -74,7 +74,7 @@ bool HttpExec::ExecRequest(RequestContext* context)
 
     if (!RequestWithoutCache(context)) {
         context->SetErrorCode(NapiUtils::NETSTACK_NAPI_INTERNAL_ERROR);
-        if (context->GetManager()->IsManagerValid()) {
+        if (context->GetManager()->IsManagerValid(context->GetManager())) {
             if (context->IsRequest2()) {
                 NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::Request2Callback);
             } else {
@@ -285,7 +285,7 @@ bool HttpExec::OnSuccessResponse(HttpResponse& httpResponse, void* userData)
 
     ReleaseRequestInfo(context);
 
-    if (context->GetManager()->IsManagerValid()) {
+    if (context->GetManager()->IsManagerValid(context->GetManager())) {
         if (context->IsRequest2()) {
             if (context->IsExecOK()) {
                 NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataEnd);
@@ -310,7 +310,7 @@ bool HttpExec::OnFailedResponse(int32_t errCode, std::string& errMessage, void* 
     context->SetExecOK(false);
     ReleaseRequestInfo(context);
 
-    if (context->GetManager()->IsManagerValid()) {
+    if (context->GetManager()->IsManagerValid(context->GetManager())) {
         if (context->IsRequest2()) {
             NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::Request2Callback);
         } else {
