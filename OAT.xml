@@ -54,6 +54,16 @@ Note:If the text contains special characters, please escape them according to th
 <configuration>
     <oatconfig>
         <licensefile></licensefile>
-        <filefilterlist></filefilterlist>
+        <filefilterlist>
+            <filefilter name="copyrightPolicyFilter" desc="Copyright文件头校验策略的过滤条件" >
+                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/.*.h|.*.m|.*.mm" desc="import third-party AFNetworking files"/>
+                <filteritem type="filepath" name="net/connection/ios/.*.h|.*.mm|.*.txt" desc="import third-party Apple sample files"/>
+            </filefilter>
+            <filefilter name="defaultPolicyFilter" desc="License文件头校验策略的过滤条件" >
+                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/LICENSE" desc="import third-party AFNetworking files"/>
+                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/.*.h|.*.m|.*.mm" desc="import third-party AFNetworking files"/>
+                <filteritem type="filepath" name="net/connection/ios/.*.h|.*.mm|.*.txt" desc="import third-party Apple sample files"/>
+            </filefilter>
+        </filefilterlist>
     </oatconfig>
 </configuration>
