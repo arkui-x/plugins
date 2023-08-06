@@ -1,0 +1,89 @@
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+template("plugin_intl_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+    use_exceptions = true
+    include_dirs = [
+      "include",
+      "$ace_root",
+      "$ace_root/frameworks",
+      "$root_out_dir/arkui/framework",
+      "//third_party/icu/icu4c/source",
+      "//third_party/icu/icu4c/source/common",
+      "//third_party/icu/icu4c/source/i18n",
+      "//third_party/icu/icu4c/source/common/unicode",
+      "//plugins/hilog/include",
+      "//plugins/interfaces",
+    ]
+
+    sources = [
+      "framework/collator.cpp",
+      "framework/date_time_format.cpp",
+      "framework/locale_info.cpp",
+      "framework/locale_config.cpp",
+      "framework/measure_data.cpp",
+      "framework/number_format.cpp",
+      "framework/plural_rules.cpp",
+      "framework/relative_time_format.cpp",
+      "framework/utils.cpp",
+      "intl_addon.cpp",
+    ]
+
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/icu:icu_${target_os}",
+    ]
+
+    if (platform == "android") {
+      deps += [ "android/java:intl_plugin_android_jni" ]
+    } else if (platform == "ios") {
+      deps += [ "ios:intl_plugin_ios" ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "intl"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_intl_static("intl_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

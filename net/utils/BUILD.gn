@@ -1,0 +1,127 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+SUBSYSTEM_DIR = "//foundation/communication"
+
+ohos_source_set("netstack_utils") {
+  include_dirs = [
+    "$SUBSYSTEM_DIR/netstack/utils/log/include",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
+    "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+    "//commonlibrary/c_utils/base/include",
+    "//third_party/bounds_checking_function/include",
+    "//third_party/curl/include",
+    "//third_party/jsoncpp/include",
+    "//plugins/hilog/include",
+    "//plugins/interfaces",
+  ]
+
+  sources = [
+    "$SUBSYSTEM_DIR/netstack/utils/common_utils/src/netstack_common_utils.cpp",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/base_context.cpp",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_listener.cpp",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_manager.cpp",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/module_template.cpp",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/napi_utils.cpp",
+  ]
+
+  deps = [
+    "//plugins/libs/jsoncpp:jsoncpp_${target_os}",
+    "//plugins/libs/napi:napi_${target_os}",
+    "//third_party/curl:curl",
+  ]
+}
+
+config("plugin_util_config") {
+  include_dirs = [
+    "$SUBSYSTEM_DIR/netstack/utils/log/include",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
+    "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+    "//commonlibrary/c_utils/base/include",
+    "//third_party/bounds_checking_function/include",
+    "//third_party/curl/include",
+    "//third_party/jsoncpp/include",
+    "//plugins/hilog/include",
+    "//plugins/interfaces",
+  ]
+}
+
+template("netstack_util_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    deps = [ ":netstack_utils" ]
+
+    if (defined(config.libace_target)) {
+      deps += [ config.libace_target ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "net_utils"
+  }
+}
+
+foreach(item, ace_platforms) {
+  netstack_util_static("netstack_util_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+
+  if (item.name == "android") {
+    ohos_shared_library("netstack_util_" + item.name) {
+      platform = item.name
+      public_configs = [ ":plugin_util_config" ]
+      deps = [ ":netstack_util_static_${platform}" ]
+      public_deps = [
+        "//plugins/interfaces/native:plugin_log",
+        "//plugins/libs/napi:napi_${target_os}",
+      ]
+
+      subsystem_name = "plugins"
+      part_name = "net_utils"
+    }
+  } else {
+    ohos_source_set("netstack_util_" + item.name) {
+      platform = item.name
+      public_configs = [ ":plugin_util_config" ]
+      deps = [ ":netstack_util_static_${platform}" ]
+      public_deps = [
+        "//plugins/interfaces/native:plugin_log",
+        "//plugins/libs/napi:napi_${target_os}",
+      ]
+
+      subsystem_name = "plugins"
+      part_name = "net_utils"
+    }
+  }
+}

@@ -1,0 +1,91 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+template("plugin_bridge_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+    include_dirs = [
+      "//foundation/arkui/ace_engine/",
+      "//plugins/bridge/utils/include",
+      "//foundation/arkui/ace_engine/frameworks",
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/include",
+      "//third_party/json/include",
+    ]
+
+    if (platform == "android") {
+      include_dirs += [ "//foundation/arkui/ace_engine/adapter/android/capability/java/jni/bridge" ]
+    } else {
+      include_dirs +=
+          [ "//foundation/arkui/ace_engine/adapter/ios/capability/bridge" ]
+    }
+
+    sources = [
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/src/bridge.cpp",
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/src/bridge_module.cpp",
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/src/bridge_wrap.cpp",
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_data.cpp",
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_id.cpp",
+      "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_result.cpp",
+      "//plugins/bridge/utils/src/napi_async_event.cpp",
+      "//plugins/bridge/utils/src/napi_utils.cpp",
+    ]
+
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
+    ]
+
+    if (platform == "android") {
+      deps += [
+        "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
+      ]
+      defines += [ "ANDROID_PLATFORM" ]
+      libs = [ "log" ]
+    } else {
+      deps += [ "//foundation/arkui/ace_engine/adapter/ios/build:libarkui_ios" ]
+      defines += [ "IOS_PLATFORM" ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "bridge"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_bridge_static("bridge_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
