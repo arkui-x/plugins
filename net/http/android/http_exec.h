@@ -16,36 +16,33 @@
 #ifndef PLUGINS_NET_HTTP_REQUEST_EXEC_H
 #define PLUGINS_NET_HTTP_REQUEST_EXEC_H
 
+#include <atomic>
+#include <condition_variable>
+#include <functional>
 #include <mutex>
+#include <queue>
+#include <thread>
+#include <utility>
 #include <vector>
 
 #include "curl/curl.h"
 #include "napi/native_api.h"
 #include "request_context.h"
-#ifndef MAC_PLATFORM
-#include "thread_pool.h"
-#endif
 
 namespace OHOS::NetStack::Http {
-#ifndef MAC_PLATFORM
-static constexpr const size_t DEFAULT_THREAD_NUM = 5;
-static constexpr const size_t MAX_THREAD_NUM = 100;
-static constexpr const uint32_t DEFAULT_TIMEOUT = 5;
-#endif
-
 class HttpResponseCacheExec final {
 public:
     HttpResponseCacheExec() = default;
 
     ~HttpResponseCacheExec() = default;
 
-    static bool ExecFlush(BaseContext* context);
+    static bool ExecFlush(BaseContext *context);
 
-    static napi_value FlushCallback(BaseContext* context);
+    static napi_value FlushCallback(BaseContext *context);
 
-    static bool ExecDelete(BaseContext* context);
+    static bool ExecDelete(BaseContext *context);
 
-    static napi_value DeleteCallback(BaseContext* context);
+    static napi_value DeleteCallback(BaseContext *context);
 };
 
 class HttpExec final {
@@ -54,78 +51,131 @@ public:
 
     ~HttpExec() = default;
 
-    static bool RequestWithoutCache(RequestContext* context, const std::string& cacert = "");
+    static bool RequestWithoutCache(RequestContext *context);
 
-    static bool ExecRequest(RequestContext* context);
+    static bool ExecRequest(RequestContext *context);
 
-    static napi_value RequestCallback(RequestContext* context);
+    static napi_value RequestCallback(RequestContext *context);
 
-    static napi_value Request2Callback(RequestContext* context);
+    static napi_value Request2Callback(RequestContext *context);
 
-    static std::string MakeUrl(const std::string& url, std::string param, const std::string& extraParam);
+    static std::string MakeUrl(const std::string &url, std::string param, const std::string &extraParam);
 
-    static bool MethodForGet(const std::string& method);
+    static bool MethodForGet(const std::string &method);
 
-    static bool MethodForPost(const std::string& method);
+    static bool MethodForPost(const std::string &method);
 
-    static bool EncodeUrlParam(std::string& str);
+    static bool EncodeUrlParam(std::string &str);
 
     static bool Initialize();
 
-    static std::string GetCacheFileName();
+    static bool IsInitialized();
+
+    static void DeInitialize();
+
 #ifndef MAC_PLATFORM
-    static void AsyncRunRequest(RequestContext* context);
+    static void AsyncRunRequest(RequestContext *context);
 #endif
 
+    static std::string GetCacheFileName();
 private:
-    static bool SetCertification(CURL* curl, RequestContext* context, const std::string& cacert);
-    static bool SetOptionParam(CURL* curl, RequestContext* context, struct curl_slist* requestHeader,
-        const std::string& method);
-    static bool SetOption(CURL* curl, RequestContext* context, struct curl_slist* requestHeader,
-        const std::string& cacert);
+    static void GetCacertListFromSystem(void);
 
-    static size_t OnWritingMemoryBody(const void* data, size_t size, size_t memBytes, void* userData);
+    static bool SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
+        const std::string &cacert);
 
-    static size_t OnWritingMemoryHeader(const void* data, size_t size, size_t memBytes, void* userData);
+    static bool SetOtherOption(CURL *curl, RequestContext *context, const std::string &cacert);
 
-    static struct curl_slist* MakeHeaders(const std::vector<std::string>& vec);
+    static size_t OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData);
 
-    static napi_value MakeResponseHeader(RequestContext* context);
+    static size_t OnWritingMemoryHeader(const void *data, size_t size, size_t memBytes, void *userData);
 
-    static void OnHeaderReceive(RequestContext* context, napi_value header);
+    static struct curl_slist *MakeHeaders(const std::vector<std::string> &vec);
+
+    static napi_value MakeResponseHeader(napi_env env, void *ctx);
 
     static bool IsUnReserved(unsigned char in);
 
-    static bool ProcByExpectDataType(napi_value object, RequestContext* context);
+    static bool ProcByExpectDataType(napi_value object, RequestContext *context);
 
-    static void GetCacertListFromSystem(std::vector<std::string>& cacertList);
+    static bool AddCurlHandle(CURL *handle, RequestContext *context);
 
-#ifndef MAC_PLATFORM
-private:
-    class Task {
-    public:
-        Task() = default;
+    static void HandleCurlData(CURLMsg *msg);
 
-        explicit Task(RequestContext* context);
+    static bool GetCurlDataFromHandle(CURL *handle, RequestContext *context, CURLMSG curlMsg, CURLcode result);
 
-        bool operator<(const Task& e) const;
+    static void RunThread();
 
-        void Execute();
+    static void SendRequest();
 
-    private:
-        RequestContext* context_ = nullptr;
+    static void ReadResponse();
+
+    static void GetGlobalHttpProxyInfo(std::string &host, int32_t &port, std::string &exclusions);
+
+    static void GetHttpProxyInfo(RequestContext *context, std::string &host, int32_t &port, std::string &exclusions);
+
+    static void OnDataReceive(napi_env env, napi_status status, void *data);
+
+    static void OnDataProgress(napi_env env, napi_status status, void *data);
+
+    static void OnDataEnd(napi_env env, napi_status status, void *data);
+
+    static int ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
+                                curl_off_t ulnow);
+
+    static void AddRequestInfo();
+
+    struct RequestInfo {
+        RequestInfo() = delete;
+        ~RequestInfo() = default;
+
+        RequestInfo(RequestContext *c, CURL *h)
+        {
+            context = c;
+            handle = h;
+        }
+
+        RequestContext *context;
+        CURL *handle;
+
+        bool operator<(const RequestInfo &info) const
+        {
+            return context->options.GetPriority() < info.context->options.GetPriority();
+        }
+
+        bool operator>(const RequestInfo &info) const
+        {
+            return context->options.GetPriority() > info.context->options.GetPriority();
+        }
     };
-#endif
 
-    static std::mutex mutex_;
+    struct StaticVariable {
+        StaticVariable() : curlMulti(nullptr), initialized(false), runThread(true) {}
+
+        ~StaticVariable()
+        {
+            if (HttpExec::IsInitialized()) {
+                HttpExec::DeInitialize();
+            }
+        }
+
+        std::mutex curlMultiMutex;
+        CURLM *curlMulti;
+        std::map<CURL *, RequestContext *> contextMap;
+        std::thread workThread;
+        std::condition_variable conditionVariable;
+        std::priority_queue<RequestInfo> infoQueue;
+        std::vector<std::string> cacertList;
 
 #ifndef MAC_PLATFORM
-    static ThreadPool<Task, DEFAULT_THREAD_NUM, MAX_THREAD_NUM> threadPool_;
-
-    static std::atomic_bool initialized_;
+        std::atomic_bool initialized;
+        std::atomic_bool runThread;
 #else
-    static bool initialized_;
+        bool initialized;
+        bool runThread;
 #endif
+    };
+    static StaticVariable staticVariable_;
 };
 } // namespace OHOS::NetStack::Http
 #endif /* PLUGINS_NET_HTTP_REQUEST_EXEC_H */
