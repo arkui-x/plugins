@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <tuple>
 
 #include "error_code.h"
 #include "napi/native_api.h"
@@ -50,6 +51,8 @@ public:
     void SetRefErrorData(napi_value data);
     napi_value GetRefErrorData(void);
     void SetMethodParameter(const std::string& jsonStr);
+    void SetMethodParameter(uint8_t* data, size_t size);
+    std::tuple<uint8_t*, size_t> GetMethodParameter(void);
 
     bool CreateCallback(napi_value callback);
     void DeleteCallback(void);
@@ -60,6 +63,7 @@ public:
     napi_value CreatePromise(void);
     void AsyncWorkCallback(void);
     void AsyncWorkCallMethod(void);
+    void AsyncWorkCallMethod(size_t argc, const napi_value* argv);
     void AsyncWorkMessage(void);
 
 private:
@@ -74,6 +78,7 @@ private:
     napi_ref refErrorData_ = nullptr;
     int errorCode_ = 0;
     std::string methodParameter_;
+    std::tuple<uint8_t*, size_t> methodBuffer_;
     OnAsyncEventSuccess eventSuccess_ = nullptr;
     OnAsyncEventError eventError_ = nullptr;
 
