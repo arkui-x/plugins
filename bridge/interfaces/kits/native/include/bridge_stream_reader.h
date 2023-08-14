@@ -46,7 +46,10 @@ public:
             LOGE("invalid read in readbyte function.");
             return;
         }
-        memcpy_s(buffer, length, &bytes_[currentPos_], length);
+        if (memcpy_s(buffer, length, &bytes_[currentPos_], length) != EOK) {
+            LOGE("invalid read in memcpy_s function.");
+            return;
+        };
         currentPos_ += length;
     }
 

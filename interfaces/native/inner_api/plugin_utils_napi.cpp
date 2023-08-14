@@ -141,8 +141,9 @@ bool PluginUtilsNApi::GetArrayBuffer(napi_env env, napi_value value, std::vector
         size_t bufferSize = 0;
         if (napi_get_arraybuffer_info(env, value, &buffer, &bufferSize) == napi_ok) {
             vector.resize(bufferSize);
-            memcpy_s(reinterpret_cast<uint8_t*>(vector.data()), bufferSize, buffer, bufferSize);
-            return true;
+            if (memcpy_s(reinterpret_cast<uint8_t*>(vector.data()), bufferSize, buffer, bufferSize) == EOK) {
+                return true;
+            }
         }
     }
     return false;
