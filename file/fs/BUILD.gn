@@ -62,7 +62,6 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/properties/listfile.cpp",
       "$fs_dirs/src/mod_fs/properties/lstat.cpp",
       "$fs_dirs/src/mod_fs/properties/mkdtemp.cpp",
-      "$fs_dirs/src/mod_fs/properties/move.cpp",
       "$fs_dirs/src/mod_fs/properties/read_text.cpp",
       "$fs_dirs/src/mod_fs/properties/rename.cpp",
       "$fs_dirs/src/mod_fs/properties/rmdirent.cpp",
@@ -71,6 +70,7 @@ template("plugin_fs_static") {
       "$plugin_fs_dirs/common/fd_guard.cpp",
       "$plugin_fs_dirs/module.cpp",
       "$plugin_fs_dirs/src/copy_file.cpp",
+      "$plugin_fs_dirs/src/move.cpp",
       "$plugin_fs_dirs/src/open.cpp",
       "$plugin_fs_dirs/src/prop_n_exporter.cpp",
     ]
