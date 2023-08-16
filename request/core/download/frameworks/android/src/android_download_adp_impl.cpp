@@ -42,7 +42,7 @@ bool AndroidDownloadAdp::IsPathValid(const std::string &filePath)
     auto path = filePath.substr(0, filePath.rfind('/'));
     char resolvedPath[PATH_MAX + 1] = { 0 };
     if (path.length() > PATH_MAX || realpath(path.c_str(), resolvedPath) == nullptr ||
-        strncmp(resolvedPath, path.c_str(), path.length()) != 0) {
+        std::string::npos != path.find("../") || std::string::npos != path.find("/..")) {
         DOWNLOAD_HILOGE("filePath is invalid, filePath = %s", filePath.c_str());
         return false;
     }
