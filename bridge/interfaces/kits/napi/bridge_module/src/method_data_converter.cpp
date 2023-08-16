@@ -64,7 +64,7 @@ CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_v
 
 CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, const size_t& argc, const napi_value* argv)
 {
-    if ( argc == 0 | argv == nullptr) {
+    if ( argc == 0 || argv == nullptr) {
         CodecableList list;
         return CodecableValue(list);
     }
