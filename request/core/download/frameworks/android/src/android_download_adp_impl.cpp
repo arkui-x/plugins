@@ -52,9 +52,6 @@ bool AndroidDownloadAdp::IsPathValid(const std::string &filePath)
 bool AndroidDownloadAdp::IsDirectory(const std::string &path)
 {
     DOWNLOAD_HILOGI("AndroidDownloadAdpImpl IsDirectory called, get file path: %{private}s", path.c_str());
-    if (!IsPathValid(path)) {
-        return false;
-    }
     struct stat statBuffer;
     if (access(path.c_str(), 0) != FILE_NOT_EXIST_NUM &&
         stat(path.c_str(), &statBuffer) != FILE_NOT_EXIST_NUM &&

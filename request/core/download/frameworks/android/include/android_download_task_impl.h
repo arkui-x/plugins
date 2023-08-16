@@ -61,6 +61,7 @@ private:
     NetworkType networkType_ = NETWORK_INVALID;
     bool isRemoved_ = false;
     std::shared_ptr<AndroidDownloadAdp> AndroidDownloadAdp_ = nullptr;
+    std::string sendBoxPath_;
 };
 } // namespace OHOS::Plugin::Request::Download
 #endif

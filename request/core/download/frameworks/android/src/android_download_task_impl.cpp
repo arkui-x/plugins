@@ -65,6 +65,27 @@ void AndroidDownloadTaskImpl::ExecuteTask()
             SetTaskReturned();
             return;
         }
+
+        auto filePath = config_.GetFilePath();
+        if (filePath.find("/data") == 0) { // 沙箱路径
+            sendBoxPath_ = filePath;
+
+            // 获取absPath
+            int pos1 = filePath.find("com");
+            std::string tempAbsPath = filePath.substr(pos1);
+            int pos2 = tempAbsPath.rfind('/');
+            std::string absPath = "/storage/emulated/0/Android/data/" + tempAbsPath; // 外部存储路径
+
+            if (!CheckPathValid(absPath)) {
+                SetStatus(SESSION_FAILED, ERROR_FILE_ERROR, PAUSED_UNKNOWN); // invalid file path
+                SetTaskReturned();
+                return;
+            }
+            config_.SetFilePath(absPath);
+        } else {
+            DOWNLOAD_HILOGI("config_ filePath is not sandbox path");
+        }
+
         AndroidDownloadAdp_->Download(config_, reinterpret_cast<void *>(this));
         SetStatus(SESSION_RUNNING);
     } else {
@@ -152,6 +173,18 @@ void AndroidDownloadTaskImpl::OnComplete()
 {
     DOWNLOAD_HILOGI("success to download file to %s", config_.GetFilePath().c_str());
     SetStatus(SESSION_SUCCESS);
+
+    std::string copyFile = "cp " + config_.GetFilePath() + " " + sendBoxPath_;
+    if (system(copyFile.c_str()) != 0) {
+        DOWNLOAD_HILOGI("%s failed", copyFile.c_str());
+        return;
+    }
+    DOWNLOAD_HILOGI("%s completed", copyFile.c_str());
+
+    std::string removeFile = "rm -rf " + config_.GetFilePath();
+    if (system(removeFile.c_str()) != 0) {
+        DOWNLOAD_HILOGI("%s failed", removeFile.c_str());
+    }
 }
 
 void AndroidDownloadTaskImpl::OnFail(ErrorCode errorCode)
