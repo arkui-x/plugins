@@ -53,6 +53,10 @@ public:
     void SetNetworkType(NetworkType networkType);
 
 private:
+    std::string GetUserId(const std::string &sandBoxPath, const std::string &prefix);
+    std::string GetPackageName(const std::string &sandBoxPath, const std::string &prefix);
+
+private:
     std::string mimeType_;
     uint32_t receivedSize_;
     uint32_t totalSize_;
@@ -61,6 +65,7 @@ private:
     NetworkType networkType_ = NETWORK_INVALID;
     bool isRemoved_ = false;
     std::shared_ptr<AndroidDownloadAdp> AndroidDownloadAdp_ = nullptr;
+    std::string sandBoxPath_;
 };
 } // namespace OHOS::Plugin::Request::Download
 #endif

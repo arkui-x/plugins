@@ -45,6 +45,36 @@ AndroidDownloadTaskImpl::~AndroidDownloadTaskImpl()
     AndroidDownloadAdp_ = nullptr;
 }
 
+std::string AndroidDownloadTaskImpl::GetUserId(const std::string &sandBoxPath, const std::string &prefix)
+{
+    std::string userId("");
+    if (sandBoxPath.find(prefix) != std::string::npos) {
+        std::string temp = sandBoxPath.substr(prefix.length());
+        size_t pos = temp.find('/');
+        if (pos != std::string::npos) {
+            userId = temp.substr(0, pos);
+        }
+    }
+    return userId;
+}
+
+std::string AndroidDownloadTaskImpl::GetPackageName(const std::string &sandBoxPath, const std::string &prefix)
+{
+    std::string packageName("");
+    std::string userId = GetUserId(sandBoxPath, prefix);
+    if (!userId.empty()) {
+        size_t pos = sandBoxPath.find(userId);
+        if (pos != std::string::npos) {
+            std::string temp = sandBoxPath.substr(pos + userId.length() + 1);
+            pos = temp.find('/');
+            if (pos != std::string::npos) {
+                packageName = temp.substr(0, pos);
+            }
+        }
+    }
+    return packageName;
+}
+
 void AndroidDownloadTaskImpl::ExecuteTask()
 {
     DOWNLOAD_HILOGI("start to execute ExecuteTask.");
@@ -65,6 +95,31 @@ void AndroidDownloadTaskImpl::ExecuteTask()
             SetTaskReturned();
             return;
         }
+
+        auto filePath = config_.GetFilePath();
+        const std::string prefix = "/data/user/";
+        if (filePath.find(prefix) == 0) { // 沙箱路径
+            sandBoxPath_ = filePath;
+            // 获取userid(0)
+            std::string userId = GetUserId(filePath, prefix);
+            // 获取包名(com.example.com)
+            std::string packageName = GetPackageName(filePath, prefix);
+            if (userId.empty() || packageName.empty()) {
+                SetStatus(SESSION_FAILED, ERROR_FILE_ERROR, PAUSED_UNKNOWN);
+                SetTaskReturned();
+                return;
+            }
+            // 获取absPath(外部存储路径)
+            std::string fileName = filePath.substr(filePath.rfind('/') + 1);
+            std::string absPath = "/storage/emulated/" + userId + "/Android/data/" + packageName + "/files/" + fileName;
+            if (!CheckPathValid(absPath)) {
+                SetStatus(SESSION_FAILED, ERROR_FILE_ERROR, PAUSED_UNKNOWN);
+                SetTaskReturned();
+                return;
+            }
+            config_.SetFilePath(absPath);
+        }
+
         AndroidDownloadAdp_->Download(config_, reinterpret_cast<void *>(this));
         SetStatus(SESSION_RUNNING);
     } else {
@@ -115,7 +170,11 @@ bool AndroidDownloadTaskImpl::GetTaskInfo(DownloadInfo &info)
     info.SetDownloadId(taskId_);
     info.SetFailedReason(code_);
     std::string fileName = config_.GetFilePath().substr(config_.GetFilePath().rfind('/') + 1);
-    std::string filePath = config_.GetFilePath().substr(0, config_.GetFilePath().rfind('/'));
+    std::string orgFilePath = config_.GetFilePath();
+    if (!sandBoxPath_.empty()) {
+        orgFilePath = sandBoxPath_;
+    }
+    std::string filePath = orgFilePath.substr(0, config_.GetFilePath().rfind('/'));
     info.SetFileName(fileName);
     info.SetFilePath(filePath);
     info.SetPausedReason(reason_);
@@ -150,6 +209,18 @@ void AndroidDownloadTaskImpl::OnProgress(uint32_t receivedSize, uint32_t totalSi
 
 void AndroidDownloadTaskImpl::OnComplete()
 {
+    if (!sandBoxPath_.empty()) {
+        std::string copyFile = "cp " + config_.GetFilePath() + " " + sandBoxPath_;
+        std::string removeFile = "rm -rf " + config_.GetFilePath();
+        if (system(copyFile.c_str()) != 0) {
+            DOWNLOAD_HILOGE("%s failed", copyFile.c_str());
+            system(removeFile.c_str());
+            SetStatus(SESSION_FAILED, ERROR_FILE_ERROR, PAUSED_UNKNOWN);
+            return;
+        }
+        system(removeFile.c_str());
+    }
+ 
     DOWNLOAD_HILOGI("success to download file to %s", config_.GetFilePath().c_str());
     SetStatus(SESSION_SUCCESS);
 }
