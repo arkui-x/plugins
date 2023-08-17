@@ -53,6 +53,10 @@ public:
     void SetNetworkType(NetworkType networkType);
 
 private:
+    std::string GetUserId(const std::string &sandBoxPath, const std::string &prefix);
+    std::string GetPackageName(const std::string &sandBoxPath, const std::string &prefix);
+
+private:
     std::string mimeType_;
     uint32_t receivedSize_;
     uint32_t totalSize_;

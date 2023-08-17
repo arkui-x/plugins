@@ -45,19 +45,7 @@ AndroidDownloadTaskImpl::~AndroidDownloadTaskImpl()
     AndroidDownloadAdp_ = nullptr;
 }
 
-bool IsAllNumber(const std::string &str)
-{
-    for (size_t i = 0; i < str.size(); i++) {
-        int tmp = (int)str[i];
-        if (tmp >= 48 && tmp <= 57) {
-            continue;
-        }
-        return false;
-    }
-    return true;
-}
-
-const std::string GetUserId(const std::string &sandBoxPath, const std::string &prefix)
+std::string AndroidDownloadTaskImpl::GetUserId(const std::string &sandBoxPath, const std::string &prefix)
 {
     std::string userId("");
     if (sandBoxPath.find(prefix) != std::string::npos) {
@@ -67,13 +55,10 @@ const std::string GetUserId(const std::string &sandBoxPath, const std::string &p
             userId = temp.substr(0, pos);
         }
     }
-    if (!IsAllNumber(userId)) {
-        return "";
-    }
     return userId;
 }
 
-const std::string GetPackageName(const std::string &sandBoxPath, const std::string &prefix)
+std::string AndroidDownloadTaskImpl::GetPackageName(const std::string &sandBoxPath, const std::string &prefix)
 {
     std::string packageName("");
     std::string userId = GetUserId(sandBoxPath, prefix);
@@ -115,7 +100,7 @@ void AndroidDownloadTaskImpl::ExecuteTask()
         const std::string prefix = "/data/user/";
         if (filePath.find(prefix) == 0) { // 沙箱路径
             sandBoxPath_ = filePath;
-            // 获取userid
+            // 获取userid(0)
             std::string userId = GetUserId(filePath, prefix);
             // 获取包名(com.example.com)
             std::string packageName = GetPackageName(filePath, prefix);
