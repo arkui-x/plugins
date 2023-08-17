@@ -57,7 +57,7 @@ public:
 
     static napi_value RequestCallback(RequestContext *context);
 
-    static napi_value Request2Callback(RequestContext *context);
+    static napi_value RequestInStreamCallback(RequestContext *context);
 
     static std::string MakeUrl(const std::string &url, std::string param, const std::string &extraParam);
 

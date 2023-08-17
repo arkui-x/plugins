@@ -229,11 +229,11 @@ void HttpExec::HandleCurlData(CURLMsg *msg)
     }
 
     if (EventManager::IsManagerValid(context->GetManager())) {
-        if (context->IsRequest2()) {
+        if (context->IsRequestInStream()) {
             if (context->IsExecOK()) {
                 NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataEnd);
             }
-            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::Request2Callback);
+            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
         } else {
             NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
         }
@@ -251,8 +251,8 @@ bool HttpExec::ExecRequest(RequestContext *context)
     if (!RequestWithoutCache(context)) {
         context->SetErrorCode(NapiUtils::NETSTACK_NAPI_INTERNAL_ERROR);
         if (EventManager::IsManagerValid(context->GetManager())) {
-            if (context->IsRequest2()) {
-                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::Request2Callback);
+            if (context->IsRequestInStream()) {
+                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
             } else {
                 NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
             }
@@ -311,7 +311,7 @@ napi_value HttpExec::RequestCallback(RequestContext *context)
     return object;
 }
 
-napi_value HttpExec::Request2Callback(OHOS::NetStack::Http::RequestContext *context)
+napi_value HttpExec::RequestInStreamCallback(OHOS::NetStack::Http::RequestContext* context)
 {
     napi_value number = NapiUtils::CreateUint32(context->GetEnv(), context->response.GetResponseCode());
     if (NapiUtils::GetValueType(context->GetEnv(), number) != napi_number) {
@@ -632,7 +632,7 @@ size_t HttpExec::OnWritingMemoryBody(const void *data, size_t size, size_t memBy
     if (context == nullptr) {
         return 0;
     }
-    if (context->IsRequest2()) {
+    if (context->IsRequestInStream()) {
         context->SetTempData(data, size * memBytes);
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataReceive);
         return size * memBytes;
@@ -704,7 +704,7 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void *data)
     NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
                                  static_cast<uint32_t>(context->GetDlLen().tLen));
     context->PopDlLen();
-    context->Emit(ON_DATA_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
+    context->Emit(ON_DATA_RECEIVE_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
 }
 
 void HttpExec::OnDataEnd(napi_env env, napi_status status, void *data)
@@ -723,7 +723,7 @@ int HttpExec::ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dl
     (void)ultotal;
     (void)ulnow;
     auto context = static_cast<RequestContext *>(userData);
-    if (context == nullptr || !context->IsRequest2()) {
+    if (context == nullptr || !context->IsRequestInStream()) {
         return 0;
     }
     if (dltotal != 0) {
