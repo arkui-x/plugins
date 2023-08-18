@@ -34,7 +34,7 @@ template("plugin_net_connection_static") {
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
-      "//third_party/libuv:uv",
+      "//third_party/libuv:uv_static",
     ]
 
     if (platform == "android") {

@@ -42,7 +42,7 @@ ohos_source_set("netstack_utils") {
     "//plugins/libs/jsoncpp:jsoncpp_${target_os}",
     "//plugins/libs/napi:napi_${target_os}",
     "//third_party/curl:curl",
-    "//third_party/libuv:uv",
+    "//third_party/libuv:uv_static",
   ]
 }
 
