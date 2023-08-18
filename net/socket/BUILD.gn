@@ -33,8 +33,10 @@ tls_sources = [
   "$TLS/src/tls_certificate.cpp",
   "$TLS/src/tls_configuration.cpp",
   "$TLS/src/tls_context.cpp",
+  "$TLS/src/tls_context_server.cpp",
   "$TLS/src/tls_key.cpp",
   "$TLS/src/tls_socket.cpp",
+  "$TLS/src/tls_socket_server.cpp",
   "$TLS/src/tls_utils.cpp",
 ]
 
@@ -44,10 +46,17 @@ tls_napi_sources = [
   "$TLS_NAPI/src/context/tls_extra_context.cpp",
   "$TLS_NAPI/src/context/tls_napi_context.cpp",
   "$TLS_NAPI/src/context/tls_send_context.cpp",
+  "$TLS_NAPI/src/context/tls_server_close_context.cpp",
+  "$TLS_NAPI/src/context/tls_server_napi_context.cpp",
+  "$TLS_NAPI/src/context/tls_server_send_context.cpp",
   "$TLS_NAPI/src/monitor.cpp",
+  "$TLS_NAPI/src/monitor_server.cpp",
   "$TLS_NAPI/src/tlssocket_async_work.cpp",
   "$TLS_NAPI/src/tlssocket_exec.cpp",
   "$TLS_NAPI/src/tlssocket_module.cpp",
+  "$TLS_NAPI/src/tlssocketserver_async_work.cpp",
+  "$TLS_NAPI/src/tlssocketserver_exec.cpp",
+  "$TLS_NAPI/src/tlssocketserver_module.cpp",
 ]
 
 socket_include = [
@@ -71,6 +80,10 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/connect_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_extra_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_common_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_extra_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_listen_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_send_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_extra_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_send_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_work/src/socket_async_work.cpp",
