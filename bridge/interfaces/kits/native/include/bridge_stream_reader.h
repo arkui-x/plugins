@@ -25,8 +25,8 @@
 namespace OHOS::Plugin::Bridge {
 class BridgeStreamReader {
 public:
-    explicit BridgeStreamReader(const uint8_t* bytes, size_t size) : bytes_(bytes), size_(size) {}
-    explicit BridgeStreamReader() = default;
+    BridgeStreamReader(const uint8_t* bytes, size_t size) : bytes_(bytes), size_(size) {}
+    BridgeStreamReader() = default;
     virtual ~BridgeStreamReader() = default;
 
     constexpr static uint8_t READER_ERROR = 0;
@@ -55,21 +55,21 @@ public:
 
     int32_t ReadInt32()
     {
-        int32_t value { 0 };
+        int32_t value = 0;
         ReadBytes(reinterpret_cast<uint8_t*>(&value), 4);
         return value;
     }
 
     int64_t ReadInt64()
     {
-        int64_t value { 0 };
+        int64_t value = 0;
         ReadBytes(reinterpret_cast<uint8_t*>(&value), 8);
         return value;
     }
 
     double ReadDouble()
     {
-        double value { 0 };
+        double value = 0;
         ReadBytes(reinterpret_cast<uint8_t*>(&value), 8);
         return value;
     }
@@ -83,9 +83,9 @@ public:
     }
 
 private:
-    const uint8_t* bytes_;
-    size_t size_;
-    size_t currentPos_ { 0 };
+    const uint8_t* bytes_ = nullptr;
+    size_t size_ = 0;
+    size_t currentPos_ = 0;
 };
 } // OHOS::Plugin::Bridge
 #endif

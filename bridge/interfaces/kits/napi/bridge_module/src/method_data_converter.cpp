@@ -21,7 +21,7 @@
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 
 namespace OHOS::Plugin::Bridge {
-static constexpr double double_min_value = 0.00001;
+static constexpr double DOUBLE_MIN_VALUE = 0.00001;
 
 CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_value value)
 {
@@ -40,7 +40,7 @@ CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_v
         case napi_number: {
             int32_t intValue = PluginUtilsNApi::GetCInt32(value, env);
             double numberValue = PluginUtilsNApi::GetDouble(env, value);
-            if (numberValue - intValue > double_min_value) {
+            if (numberValue - intValue > DOUBLE_MIN_VALUE) {
                 return CodecableValue(numberValue);
             } else {
                 return CodecableValue(intValue);
@@ -231,7 +231,7 @@ CodecableValue MethodDataConverter::GainListValue(napi_env env, napi_value value
         case napi_number: {
             int32_t intValue = PluginUtilsNApi::GetCInt32(firstValue, env);
             double numberValue = PluginUtilsNApi::GetDouble(env, firstValue);
-            bool isDouble = numberValue - intValue > double_min_value;
+            bool isDouble = numberValue - intValue > DOUBLE_MIN_VALUE;
             if (isDouble) {
                 return GainListDoubleValue(env, value, length);
             } else {
