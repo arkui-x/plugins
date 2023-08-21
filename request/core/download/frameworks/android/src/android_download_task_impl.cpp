@@ -170,11 +170,10 @@ bool AndroidDownloadTaskImpl::GetTaskInfo(DownloadInfo &info)
     info.SetDownloadId(taskId_);
     info.SetFailedReason(code_);
     std::string fileName = config_.GetFilePath().substr(config_.GetFilePath().rfind('/') + 1);
-    std::string orgFilePath = config_.GetFilePath();
+    std::string filePath = config_.GetFilePath();
     if (!sandBoxPath_.empty()) {
-        orgFilePath = sandBoxPath_;
+        filePath = sandBoxPath_;
     }
-    std::string filePath = orgFilePath.substr(0, config_.GetFilePath().rfind('/'));
     info.SetFileName(fileName);
     info.SetFilePath(filePath);
     info.SetPausedReason(reason_);
