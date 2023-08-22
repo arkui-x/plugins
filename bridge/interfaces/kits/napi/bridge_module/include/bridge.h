@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "buffer_mapping.h"
 #include "error_code.h"
 #include "method_data.h"
 #include "napi/native_api.h"
@@ -29,7 +30,7 @@
 namespace OHOS::Plugin::Bridge {
 class Bridge {
 public:
-    Bridge(const std::string& bridgeName);
+    Bridge(const std::string& bridgeName, const CodecType& type);
     ~Bridge();
 
     static bool BridgeNameExists(const std::string& bridgeName);
@@ -50,8 +51,13 @@ public:
     void RemoveMessageData(void);
     bool GetTerminate(void);
     void SetTerminate(bool terminate);
+
+    ErrorCode SendMessageBinary(const std::vector<uint8_t>& data, std::shared_ptr<MethodData>& methodData);
+    CodecType GetCodecType() { return codecType_; };
+  
 private:
     std::string bridgeName_;
+    CodecType codecType_ = CodecType::JSON_CODEC;
     bool avaiable_ = false;
     bool terminate_ = false;
     napi_env env_ = nullptr;
@@ -72,6 +78,11 @@ private:
     void OnPlatformSendMessage(const std::string& data);
     void OnPlatformSendMessageResponse(const std::string& data);
     void OnPlatformSendWillTerminate(bool data);
+
+    void OnPlatformMethodResultBinary(const std::string& methodName, int errorCode,
+        const std::string& errorMessage, std::unique_ptr<Ace::Platform::BufferMapping> result);
+    void OnPlatformCallMethodBinary(const std::string& methodName, std::unique_ptr<Ace::Platform::BufferMapping> data);
+    void OnPlatformSendMessageBinary(std::unique_ptr<Ace::Platform::BufferMapping> data);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif

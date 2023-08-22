@@ -101,6 +101,17 @@ void NAPIAsyncEvent::SetMethodParameter(const std::string& jsonStr)
     methodParameter_ = jsonStr;
 }
 
+void NAPIAsyncEvent::SetMethodParameter(uint8_t* data, size_t size)
+{
+    std::get<uint8_t*>(methodBuffer_) = data;
+    std::get<size_t>(methodBuffer_) = size;
+}
+
+std::tuple<uint8_t*, size_t> NAPIAsyncEvent::GetMethodParameter(void)
+{
+    return methodBuffer_;
+}
+
 bool NAPIAsyncEvent::CreateCallback(napi_value callback)
 {
     if (callback_ != nullptr) {
@@ -226,6 +237,33 @@ void NAPIAsyncEvent::AsyncWorkCallMethod(void)
         } else {
             TriggerEventError(ErrorCode::BRIDGE_METHOD_PARAM_ERROR);
         }
+    }
+}
+
+void NAPIAsyncEvent::AsyncWorkCallMethod(size_t argc, const napi_value* argv)
+{
+    SetErrorCode(0);
+    if (callback_ == nullptr) {
+        TriggerEventError(ErrorCode::BRIDGE_METHOD_UNIMPL);
+        return;
+    }
+
+    if (argc > 0 && argv == nullptr) {
+        TriggerEventError(ErrorCode::BRIDGE_METHOD_PARAM_ERROR);
+        return;
+    }
+
+    napi_value callback = nullptr;
+    napi_value methodResultValue = nullptr;
+    napi_get_reference_value(env_, callback_, &callback);
+    if (argc == 0) {
+        methodResultValue = PluginUtilsNApi::CallFunction(
+            env_, PluginUtilsNApi::CreateUndefined(env_), callback, 0, nullptr);
+        TriggerEventSuccess(methodResultValue);
+    } else {
+        methodResultValue = PluginUtilsNApi::CallFunction(
+            env_, PluginUtilsNApi::CreateUndefined(env_), callback, argc, argv);
+        TriggerEventSuccess(methodResultValue);
     }
 }
 

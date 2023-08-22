@@ -98,6 +98,10 @@ public:
     static napi_async_work CreateAsyncWork(napi_env env, napi_value asyncWorkName,
         AsyncWorkExecutor executor, AsyncWorkComplete callback, void* data);
     static void DeleteAsyncWork(napi_env env, napi_async_work asyncWork);
+    static bool IsArrayBuffer(napi_env env, napi_value value);
+    static bool GetArrayBuffer(napi_env env, napi_value value, std::vector<uint8_t>& vector);
+    static napi_value CreateArrayBuffer(napi_env env, const std::vector<uint8_t>& value);
+    static napi_status SetEnumItem(napi_env env, napi_value object, const char* name, int32_t value);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGIN_INTERFACE_NATIVE_INNER_UTILS_PLUGIN_INNER_NAPI_UTILS_H

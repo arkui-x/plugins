@@ -15,25 +15,16 @@
 
 #include "method_result.h"
 
+#include "bridge_binary_codec.h"
+#include "bridge_json_codec.h"
 #include "error_code.h"
 #include "log.h"
+#include "method_data_converter.h"
 #include "napi_utils.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 #include "plugins/interfaces/native/plugin_utils.h"
 
 namespace OHOS::Plugin::Bridge {
-/*
- * Method parameter:
- * { "0":0, "1":"OK", "2":value }
- * Method returns values in a uniform format：
- * { "errorcode":0, "errormessage":"OK", "result":value }
- * Message response returns values in a uniform format：
- * { "result":value, "errorcode":errorcode }
- */
-static constexpr const char* METHOD_RESULT_ERROR_CODE = "errorcode";
-static constexpr const char* METHOD_RESULT_ERROR_MESSAGE = "errormessage";
-static constexpr const char* METHOD_RESULT_RESULT = "result";
-
 void MethodResult::SetMethodName(const std::string& methodName)
 {
     methodName_ = methodName;
@@ -111,57 +102,77 @@ void MethodResult::CreateErrorObject(napi_env env)
 
 void MethodResult::CreateDefaultJsonString(void)
 {
-    Json json = Json {};
-    json[METHOD_RESULT_ERROR_CODE] = errorCode_;
-    json[METHOD_RESULT_ERROR_MESSAGE] = errcodeMessage_;
-    json[METHOD_RESULT_RESULT] = "";
-    result_ = json.dump();
+    NapiRawValue rawValue { .errorCode = errorCode_, .errorMessage = errcodeMessage_ };
+    auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
+    result_ = encoded->value;
 }
 
 void MethodResult::ParsePlatformMethodResult(napi_env env, const std::string& result)
 {
     LOGI("ParsePlatformMethodResult: result=%{public}s", result.c_str());
     errorCode_ = static_cast<int>(ErrorCode::BRIDGE_ERROR_NO);
-    Json resultJson;
+
+    napi_value resultValue = nullptr;
     if (!result.empty()) {
-        auto jsonObject = Json::parse(result, nullptr, false);
-        auto it = jsonObject.find(METHOD_RESULT_ERROR_CODE);
-        if (it != jsonObject.end()) {
-            errorCode_ = jsonObject.at(METHOD_RESULT_ERROR_CODE).get<int>();
-        }
-        it = jsonObject.find(METHOD_RESULT_ERROR_MESSAGE);
-        if (it != jsonObject.end()) {
-            errcodeMessage_ = jsonObject.at(METHOD_RESULT_ERROR_MESSAGE).get<std::string>();
-        }
-        it = jsonObject.find(METHOD_RESULT_RESULT);
-        if (it != jsonObject.end()) {
-            resultJson = jsonObject.at(METHOD_RESULT_RESULT);
-        }
+        DecodeValue decodeValue { .env = env, .value = result };
+        auto decoded = BridgeJsonCodec::GetInstance().Decode(decodeValue);
+        errorCode_ = decoded->errorCode;
+        errcodeMessage_ = decoded->errorMessage;
+        resultValue = decoded->value;
     }
 
     CreateErrorObject(env);
     if (errorCode_ == 0) {
-        okResult_ = NAPIUtils::NAPI_GetPremers(env, resultJson);
+        okResult_ = resultValue;
     } else {
         napi_get_null(env, &okResult_);
     }
 }
 
+void MethodResult::ParsePlatformMethodResultBinary(napi_env env, int errorCode,
+    const std::string& errorMessage, std::unique_ptr<Ace::Platform::BufferMapping> resultData)
+{
+    errorCode_ = errorCode;
+    errcodeMessage_ = errorMessage;
+    okResult_ = nullptr;
+    CreateErrorObject(env);
+    if (errorCode_ == 0) {
+        auto decoded = BridgeBinaryCodec::GetInstance().DecodeBuffer(resultData->GetMapping(), resultData->GetSize());
+        okResult_ = MethodDataConverter::ConvertToNapiValue(env, *decoded);
+    } else {
+        napi_get_null(env, &okResult_);
+    }
+}
+
+void MethodResult::ParseJSMethodResultBinary(napi_env env, napi_value result)
+{
+    const auto& resultValue = MethodDataConverter::ConvertToCodecableValue(env, result);
+    binaryResult_ = BridgeBinaryCodec::GetInstance().EncodeBuffer(resultValue);
+}
+
+std::vector<uint8_t>* MethodResult::GetResultBinary(void)
+{
+    return binaryResult_;
+}
+
+std::string MethodResult::GetErrorMessage() const
+{
+    return errcodeMessage_;
+}
+
 void MethodResult::ParseJSMethodResult(napi_env env, napi_value result)
 {
-    Json jsonRsult = Json {};
-    jsonRsult[METHOD_RESULT_ERROR_CODE] = errorCode_;
-    jsonRsult[METHOD_RESULT_ERROR_MESSAGE] = errcodeMessage_;
-    jsonRsult[METHOD_RESULT_RESULT] = NAPIUtils::PlatformPremers(env, result);
-    result_ = jsonRsult.dump();
+    NapiRawValue rawValue { .env = env, .value = result, 
+        .errorCode = errorCode_, .errorMessage = errcodeMessage_ };
+    auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
+    result_ = encoded->value;
 }
 
 void MethodResult::CreateMethodResultForError(void)
 {
-    Json jsonRsult = Json {};
-    jsonRsult[METHOD_RESULT_ERROR_CODE] = errorCode_;
-    jsonRsult[METHOD_RESULT_ERROR_MESSAGE] = errcodeMessage_;
-    jsonRsult[METHOD_RESULT_RESULT] = 0;
-    result_ = jsonRsult.dump();
+    NapiRawValue rawValue { .errorCode = errorCode_,
+        .errorMessage = errcodeMessage_, .isForError = true };
+    auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
+    result_ = encoded->value;
 }
 } // namespace OHOS::Plugin::Bridge

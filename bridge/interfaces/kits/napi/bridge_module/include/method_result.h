@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include "buffer_mapping.h"
 #include "base/utils/macros.h"
 #include "napi/native_api.h"
 #include "nlohmann/json.hpp"
@@ -40,11 +41,18 @@ public:
     napi_value GetErrorResult(void) const;
     void SetOkResult(napi_value value);
     napi_value GetOkResult(void) const;
+
     void ParsePlatformMethodResult(napi_env env, const std::string& result);
     void ParseJSMethodResult(napi_env env, napi_value result);
     void CreateMethodResultForError(void);
     void CreateErrorObject(napi_env env);
     void CreateDefaultJsonString(void);
+
+    void ParsePlatformMethodResultBinary(napi_env env, int errorCode,
+        const std::string& errorMessage, std::unique_ptr<Ace::Platform::BufferMapping> result);
+    void ParseJSMethodResultBinary(napi_env env, napi_value result);
+    std::vector<uint8_t>* GetResultBinary(void);
+    std::string GetErrorMessage() const;
 
 private:
     int errorCode_ = 0;
@@ -53,6 +61,8 @@ private:
     std::string errcodeMessage_;
     napi_value errorResult_ = nullptr;
     napi_value okResult_ = nullptr;
+    // for binary codec
+    std::vector<uint8_t>* binaryResult_;
 
     void GetErrorInfoByErrorCode(void);
 };

@@ -27,7 +27,8 @@
 
 using namespace OHOS::Ace::Platform;
 namespace OHOS::Plugin::Bridge {
-Bridge::Bridge(const std::string& bridgeName) : bridgeName_(bridgeName)
+Bridge::Bridge(const std::string& bridgeName, const CodecType& type)
+    : bridgeName_(bridgeName), codecType_(type)
 {
     avaiable_ = (RegisterBridge(bridgeName) == ErrorCode::BRIDGE_ERROR_NO);
 }
@@ -63,15 +64,23 @@ ErrorCode Bridge::RegisterBridge(const std::string& bridgeName)
         return ErrorCode::BRIDGE_CREATE_ERROR;
     }
 
-    receiver->callMethodCallback_ = std::bind(
-        &Bridge::OnPlatformCallMethod, this, std::placeholders::_1, std::placeholders::_2);
-
-    receiver->methodResultCallback_ = std::bind(
-        &Bridge::OnPlatformMethodResult, this, std::placeholders::_1, std::placeholders::_2);
-
-    receiver->sendMessageCallback_ =
-        std::bind(&Bridge::OnPlatformSendMessage, this, std::placeholders::_1);
-
+    if (codecType_ == CodecType::JSON_CODEC) {
+        receiver->callMethodCallback_ = std::bind(
+            &Bridge::OnPlatformCallMethod, this, std::placeholders::_1, std::placeholders::_2);
+        receiver->methodResultCallback_ = std::bind(
+            &Bridge::OnPlatformMethodResult, this, std::placeholders::_1, std::placeholders::_2);
+        receiver->sendMessageCallback_ =
+            std::bind(&Bridge::OnPlatformSendMessage, this, std::placeholders::_1);
+    } else if (codecType_ == CodecType::BINARY_CODEC) {
+        receiver->callMethodBinaryCallback_ = std::bind(
+            &Bridge::OnPlatformCallMethodBinary, this, std::placeholders::_1, std::placeholders::_2);
+        receiver->sendMessageBinaryCallback_ =
+            std::bind(&Bridge::OnPlatformSendMessageBinary, this, std::placeholders::_1);
+        receiver->methodResultBinaryCallback_ = std::bind(
+            &Bridge::OnPlatformMethodResultBinary, this,
+            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+    }
+    // only send message response callback by json string results.
     receiver->sendMessageResponseCallback_ =
         std::bind(&Bridge::OnPlatformSendMessageResponse, this, std::placeholders::_1);
 
@@ -119,10 +128,19 @@ ErrorCode Bridge::CallMethod(const std::string& methodName, const std::shared_pt
     methodData->SetStartTime(MethodData::GetSystemTime());
     jsMethodDataList_[methodName] = methodData;
 
-    auto task = [bridgeName = this->bridgeName_, methodName, parameter = methodData->GetMethodParamName()]() {
-        BridgeManager::JSCallMethod(bridgeName, methodName, parameter);
-    };
-    PluginUtilsInner::RunTaskOnPlatform(task);
+    if (codecType_ == CodecType::JSON_CODEC) {
+        auto task = [bridgeName = this->bridgeName_, methodName, parameter = methodData->GetMethodParamName()]() {
+            BridgeManager::JSCallMethod(bridgeName, methodName, parameter);
+        };
+        PluginUtilsInner::RunTaskOnPlatform(task);
+    } else if (codecType_ == CodecType::BINARY_CODEC) {
+        const auto& data = methodData->GetMethodParamNameBinary();
+        auto task = [bridgeName = this->bridgeName_, methodName, &data]() {
+            BridgeManager::JSCallMethodBinary(bridgeName, methodName, data);
+        };
+        PluginUtilsInner::RunTaskOnPlatform(task);
+    }
+
     return ErrorCode::BRIDGE_ERROR_NO;
 }
 
@@ -150,6 +168,21 @@ ErrorCode Bridge::SendMessage(const std::string& data, std::shared_ptr<MethodDat
     std::lock_guard<std::mutex> lock(jsSendMessageDataListLock_);
     jsSendMessageDataList_.push_back(methodData);
     auto task = [bridgeName = this->bridgeName_, data]() { BridgeManager::JSSendMessage(bridgeName, data); };
+    PluginUtilsInner::RunTaskOnPlatform(task);
+
+    return ErrorCode::BRIDGE_ERROR_NO;
+}
+
+ErrorCode Bridge::SendMessageBinary(const std::vector<uint8_t>& data, std::shared_ptr<MethodData>& methodData)
+{
+    if (!GetAvaiable()) {
+        LOGE("SendMessage: The bridge is unavailable.");
+        return ErrorCode::BRIDGE_INVALID;
+    }
+
+    std::lock_guard<std::mutex> lock(jsSendMessageDataListLock_);
+    jsSendMessageDataList_.push_back(methodData);
+    auto task = [bridgeName = this->bridgeName_, &data]() { BridgeManager::JSSendMessageBinary(bridgeName, data); };
     PluginUtilsInner::RunTaskOnPlatform(task);
 
     return ErrorCode::BRIDGE_ERROR_NO;
@@ -320,6 +353,27 @@ void Bridge::OnPlatformCallMethod(const std::string& methodName, const std::stri
     jsMethodData->PlatformCallMethod(parameter);
 }
 
+void Bridge::OnPlatformCallMethodBinary(const std::string& methodName, std::unique_ptr<BufferMapping> data)
+{
+    std::lock_guard<std::mutex> lock(platformMethodDataListLock_);
+    std::shared_ptr<MethodData> jsMethodData = FindPlatformMethodData(methodName);
+    if (jsMethodData == nullptr) {
+        LOGE("OnPlatformCallMethodBinary: The jsMethodData is null.");
+        auto task = [methodName, braidgeName = this->bridgeName_] {
+            MethodResult result;
+            result.SetErrorCodeInfo(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+            result.SetMethodName(methodName);
+            result.CreateMethodResultForError();
+            BridgeManager::JSSendMethodResultBinary(braidgeName,
+                methodName, result.GetErrorCode(), result.GetErrorMessage(), nullptr);
+        };
+        PluginUtilsInner::RunTaskOnPlatform(task);
+        return;
+    }
+
+    jsMethodData->PlatformCallMethodBinary(std::move(data));
+}
+
 void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::string& result)
 {
     LOGI("OnPlatformMethodResult methodName=%{public}s, result=%{public}s", methodName.c_str(), result.c_str());
@@ -341,10 +395,40 @@ void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::st
     EraseJSMethodData(methodName);
 }
 
+void Bridge::OnPlatformMethodResultBinary(const std::string& methodName, int errorCode,
+    const std::string& errorMessage, std::unique_ptr<BufferMapping> result)
+{
+    LOGI("OnPlatformMethodResultBinary methodName=%{public}s", methodName.c_str());
+    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
+    std::shared_ptr<MethodData> jsMethodData = FindJSMethodData(methodName);
+    if (jsMethodData == nullptr) {
+        LOGE("OnPlatformMethodResultBinary: The jsMethodData is null.");
+        auto task = [methodName, braidgeName = this->bridgeName_] {
+            MethodResult result;
+            result.SetErrorCodeInfo(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+            result.SetMethodName(methodName);
+            result.CreateMethodResultForError();
+            BridgeManager::JSSendMethodResultBinary(braidgeName,
+                methodName, result.GetErrorCode(), result.GetErrorMessage(), nullptr);
+        };
+        PluginUtilsInner::RunTaskOnPlatform(task);
+        return;
+    }
+    jsMethodData->SendMethodResultBinary(errorCode, errorMessage, std::move(result), true);
+    EraseJSMethodData(methodName);
+}
+
 void Bridge::OnPlatformSendMessage(const std::string& data)
 {
     if (messageCallback_) {
         messageCallback_->PlatformSendMessage(data);
+    }
+}
+
+void Bridge::OnPlatformSendMessageBinary(std::unique_ptr<BufferMapping> data)
+{
+    if (messageCallback_) {
+        messageCallback_->PlatformSendMessageBinary(std::move(data));
     }
 }
 

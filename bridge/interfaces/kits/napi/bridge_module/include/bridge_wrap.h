@@ -35,14 +35,14 @@ public:
         int32_t ref_ = 0;
         Bridge* bridge_ = nullptr;
     };
-    static Bridge* CreateBridge(const std::string& bridgeName);
+    static Bridge* CreateBridge(const std::string& bridgeName, const CodecType& codecType);
     static void DeleteBridge(const std::string& bridgeName);
 private:
     static std::map<std::string, std::shared_ptr<Data>> bridgeList_;
     static std::mutex bridgeListLock_;
 
     static std::shared_ptr<Data> findData(const std::string& bridgeName);
-    static Bridge* BuildBridge(const std::string& bridgeName);
+    static Bridge* BuildBridge(const std::string& bridgeName, const CodecType& codecType);
     static Bridge* CopyBridge(std::shared_ptr<Data> data);
 };
 } // namespace OHOS::Plugin::Bridge
