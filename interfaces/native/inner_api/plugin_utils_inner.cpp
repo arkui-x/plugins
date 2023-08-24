@@ -24,23 +24,51 @@
 #endif
 
 namespace OHOS::Plugin {
+std::shared_ptr<OHOS::AppExecFwk::EventHandler> PluginUtilsInner::eventHandler = nullptr;
+
 void PluginUtilsInner::RegisterPlugin(RegisterCallback callback, const std::string& className)
 {
 #ifdef ANDROID_PLATFORM
+    auto task = [callback, className]() {
+        OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
+    };
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (!taskExecutor) {
-        LOGE("RegisterPlugin taskExecutor is nullptr");
-        return;
-    }
-    if (taskExecutor->WillRunOnCurrentThread(OHOS::Ace::TaskExecutor::TaskType::PLATFORM)) {
-        OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
+        RegisterPluginOnEvent(task);
     } else {
-        auto task = [callback, className]() {
-            OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
-        };
-        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+        if (taskExecutor->WillRunOnCurrentThread(OHOS::Ace::TaskExecutor::TaskType::PLATFORM)) {
+           task();
+        } else {
+            taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+        }
     }
 #endif
+}
+
+void PluginUtilsInner::RegisterPluginOnEvent(const Task& task)
+{
+#ifdef ANDROID_PLATFORM
+    auto eventRunner = AppExecFwk::EventRunner::Current();
+    if (!eventRunner) {
+        LOGE("RegisterPluginOnEvent eventRunner is nullptr");
+        return;
+    }
+    if (eventRunner->IsCurrentRunnerThread()) {
+        task();
+    } else {
+        RunTaskOnEvent(task, eventRunner);
+    }
+#endif
+}
+
+void PluginUtilsInner::RunTaskOnEvent(const Task& task, std::shared_ptr<OHOS::AppExecFwk::EventRunner> eventRunner)
+{
+    eventHandler = std::make_shared<OHOS::AppExecFwk::EventHandler>(eventRunner);
+    if (!eventHandler) {
+        LOGE("RunTaskOnEvent eventHandler is nullptr");
+        return;
+    }
+    eventHandler->PostTask(task);
 }
 
 void PluginUtilsInner::RunTaskOnPlatform(const Task& task)
@@ -48,6 +76,13 @@ void PluginUtilsInner::RunTaskOnPlatform(const Task& task)
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (taskExecutor) {
         taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+    } else {
+        auto eventRunner = AppExecFwk::EventRunner::Current();
+        if (!eventRunner) {
+            LOGE("RunTaskOnPlatform eventRunner is nullptr");
+            return;
+        }
+        RunTaskOnEvent(task, eventRunner);
     }
 }
 
