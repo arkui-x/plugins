@@ -114,7 +114,7 @@ napi_value Open::Sync(napi_env env, napi_callback_info info)
         S_IWUSR | S_IRGRP | S_IWGRP, nullptr);
     if (ret < 0) {
         HILOGE("Failed to open file for libuv error %{public}d", ret);
-        NError(errno).ThrowErr(env);
+        NError(ret).ThrowErr(env);
         return nullptr;
     }
     auto file = InstantiateFile(env, ret, pathStr, false).val_;
@@ -158,7 +158,7 @@ napi_value Open::Async(napi_env env, napi_callback_info info)
             S_IWUSR | S_IRGRP | S_IWGRP, nullptr);
         if (ret < 0) {
             HILOGE("Failed to open file for libuv error %{public}d", ret);
-            return NError(errno);
+            return NError(ret);
         }
         arg->fd = ret;
         arg->path = path;
