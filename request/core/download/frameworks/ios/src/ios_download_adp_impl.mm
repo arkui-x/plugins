@@ -92,7 +92,7 @@ void IosDownloadAdpImpl::Download(const DownloadConfig &config, IosDownloadAdpCa
             }
             destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
                 NSString *filePath = [NSString stringWithUTF8String:config.GetFilePath().c_str()];
-                NSURL *destPath = [NSURL URLWithString:filePath];
+                NSURL *destPath = [NSURL fileURLWithPath:filePath];
                 return destPath;
             } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
                 CompletionHandler(callback, response, filePath, error);

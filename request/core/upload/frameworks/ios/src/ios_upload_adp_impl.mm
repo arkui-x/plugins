@@ -33,9 +33,14 @@ std::shared_ptr<IosUploadAdp> IosUploadAdp::Instance()
 bool IosUploadAdp::IsRegularFiles(const std::vector<File> &files)
 {
     for (const auto &file : files) {
-        NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:file.uri.c_str()]];
-        NSFileWrapper *fileWrapper = [[NSFileWrapper alloc] initWithURL:url options:NSFileWrapperReadingImmediate|NSFileWrapperReadingWithoutMapping error:nil];
-        if (!fileWrapper.isRegularFile) {
+        std::string fileUri = file.uri;
+        if (fileUri.empty()) {
+            return false;
+        }
+        NSString *strFilePath = [NSString stringWithUTF8String:fileUri.c_str()];
+        bool bExist = [[NSFileManager defaultManager] fileExistsAtPath:strFilePath];
+        if (!bExist) {
+            UPLOAD_HILOGE(UPLOAD_MODULE_FRAMEWORK, "invalid file path:%{public}s", fileUri.c_str());
             return false;
         }
     }
@@ -92,7 +97,7 @@ void IosUploadAdpImpl::PutUpdate(const std::string &method, std::shared_ptr<Uplo
         NSString *filePath = [NSString stringWithUTF8String:file.uri.c_str()];
         NSString *name = [NSString stringWithUTF8String:!file.name.empty() ? file.name.c_str() : "file"]; // default: file
         NSString *fileName = [NSString stringWithUTF8String:file.filename.c_str()];
-        NSURL *localPath = [NSURL URLWithString:filePath];
+        NSURL *localPath = [NSURL fileURLWithPath:filePath];
         UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "upload name:%{public}s, localPath:%{public}s", [name UTF8String], [[localPath description] UTF8String]);
         putTotalUnitCount_ += GetFileSize(localPath);
         putFileCount_++;
@@ -213,7 +218,7 @@ void IosUploadAdpImpl::PostUpdate(const std::string &method, std::shared_ptr<Upl
                 NSString *filePath = [NSString stringWithUTF8String:file.uri.c_str()];
                 NSString *name = [NSString stringWithUTF8String:!file.name.empty() ? file.name.c_str() : "file"]; // default: file
                 NSString *fileName = [NSString stringWithUTF8String:file.filename.c_str()];
-                NSURL *localPath = [NSURL URLWithString:filePath];
+                NSURL *localPath = [NSURL fileURLWithPath:filePath];
                 UPLOAD_HILOGD(UPLOAD_MODULE_FRAMEWORK, "upload name:%{public}s, localPath:%{public}s",
                     [name UTF8String], [[localPath description] UTF8String]);
                 [formData addFile:localPath name:name mime:@"application/octet-stream" fileName:fileName error:nil];
