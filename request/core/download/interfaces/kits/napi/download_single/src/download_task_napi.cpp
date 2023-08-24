@@ -130,7 +130,7 @@ napi_value DownloadTaskNapi::Initialize(napi_env env, napi_callback_info info)
 
     if (!IDownloadTask::CheckPathValid(config.GetFilePath())) {
         std::string errInfo = "bad file path";
-        DOWNLOAD_HILOGE("%{public}s", errInfo.c_str());
+        DOWNLOAD_HILOGE("%{public}s, path:%{public}s", errInfo.c_str(), config.GetFilePath().c_str());
         NapiUtils::ThrowError(env, EXCEPTION_FILE_PATH, errInfo);
         return nullptr;
     }
