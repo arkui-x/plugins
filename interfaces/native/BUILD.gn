@@ -27,7 +27,11 @@ ohos_source_set("plugin_log") {
 }
 
 config("plugin_util_config") {
-  include_dirs = [ "//plugins/interfaces/native" ]
+  include_dirs = [
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/error",
+    "//plugins/interfaces/native",
+  ]
 }
 
 template("ace_plugin_util_static") {

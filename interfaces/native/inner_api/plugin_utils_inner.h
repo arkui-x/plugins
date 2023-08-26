@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "event_handler.h"
+
 #ifndef PLUGIN_EXPORT
 #ifdef WINDOWS_PLATFORM
 #define PLUGIN_EXPORT __declspec(dllexport)
@@ -53,11 +55,16 @@ using GrantResult =
 class PLUGIN_EXPORT PluginUtilsInner {
 public:
     static void RegisterPlugin(RegisterCallback callback, const std::string& packageName);
+    static void RegisterPluginOnEvent(const Task& task);
+    static void RunTaskOnEvent(const Task& task, std::shared_ptr<OHOS::AppExecFwk::EventRunner> eventRunner);
     static void RunTaskOnPlatform(const Task& task);
     static void RunSyncTaskOnLocal(const Task& task, std::chrono::milliseconds timeout);
     static void RunTaskOnJS(const Task& task);
     static void RunSyncTaskOnJS(const Task& task);
     static void JSRegisterGrantResult(GrantResult grantResult);
+
+private:
+    static std::shared_ptr<OHOS::AppExecFwk::EventHandler> eventHandler;
 };
 } // namespace OHOS::Plugin
 
