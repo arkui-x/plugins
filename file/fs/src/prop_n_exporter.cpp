@@ -143,7 +143,7 @@ static NError CheckDir(const string &path)
         HILOGE("Failed to request heap memory.");
         return NError(ENOMEM);
     }
-    int ret = uv_fs_stat(nullptr, req, fileInfo.path.get(), nullptr);
+    int ret = uv_fs_stat(nullptr, stat_req.get(), path.c_str(), nullptr);
     if (ret < 0) {
         HILOGE("Failed to stat file with path");
         return NError(ret);

@@ -25,9 +25,10 @@ namespace ModuleFileIO {
 using namespace std;
 using namespace OHOS::FileManagement::LibN;
 
-static bool CheckValidPath(const std::string path)
+static bool CheckValidPath(const std::string &path)
 {
-    return path.find("XXXXXX") != path.npos;
+    auto res = path.find_last_of("XXXXXX");
+    return res == path.length() - 1;
 }
 
 napi_value Mkdtemp::Sync(napi_env env, napi_callback_info info)
