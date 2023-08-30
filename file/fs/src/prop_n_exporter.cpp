@@ -135,6 +135,26 @@ napi_value PropNExporter::Access(napi_env env, napi_callback_info info)
     }
 }
 
+static NError CheckDir(const string &path)
+{
+    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> stat_req = {
+        new (std::nothrow) uv_fs_t, CommonFunc::fs_req_cleanup };
+    if (!stat_req) {
+        HILOGE("Failed to request heap memory.");
+        return NError(ENOMEM);
+    }
+    int ret = uv_fs_stat(nullptr, stat_req.get(), path.c_str(), nullptr);
+    if (ret < 0) {
+        HILOGE("Failed to stat file with path");
+        return NError(ret);
+    }
+    if ((stat_req->statbuf.st_mode & S_IFMT) == S_IFDIR) {
+        HILOGE("The path is a directory");
+        return NError(EISDIR);
+    }
+    return NError(ERRNO_NOERR);
+}
+
 napi_value PropNExporter::Unlink(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
@@ -152,6 +172,10 @@ napi_value PropNExporter::Unlink(napi_env env, napi_callback_info info)
     }
 
     auto cbExec = [path = string(tmp.get())]() -> NError {
+        auto checkRes = CheckDir(path);
+        if (checkRes) {
+            return checkRes;
+        }
         std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> unlink_req = {
             new uv_fs_t, CommonFunc::fs_req_cleanup };
         if (!unlink_req) {
@@ -197,7 +221,11 @@ napi_value PropNExporter::UnlinkSync(napi_env env, napi_callback_info info)
         NError(EINVAL).ThrowErr(env);
         return nullptr;
     }
-
+    auto checkRes = CheckDir(string(path.get()));
+    if (checkRes) {
+        checkRes.ThrowErr(env);
+        return nullptr;
+    }
     std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> unlink_req = {
         new uv_fs_t, CommonFunc::fs_req_cleanup };
     if (!unlink_req) {
