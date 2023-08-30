@@ -79,6 +79,10 @@ public:
 
     static std::string GetCacheFileName();
 private:
+    static bool FindCacertInCache(CURL *curl, RequestContext *context);
+
+    static bool FindCacert(CURL *curl, RequestContext *context);
+
     static void GetCacertListFromSystem(void);
 
     static bool SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
@@ -166,6 +170,7 @@ private:
         std::condition_variable conditionVariable;
         std::priority_queue<RequestInfo> infoQueue;
         std::vector<std::string> cacertList;
+        std::vector<std::string> cacertCacheList;
 
 #ifndef MAC_PLATFORM
         std::atomic_bool initialized;
