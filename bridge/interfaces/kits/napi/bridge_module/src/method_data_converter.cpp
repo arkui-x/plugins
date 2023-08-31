@@ -21,6 +21,7 @@
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 
 namespace OHOS::Plugin::Bridge {
+static constexpr int32_t MAX_INT_32 = std::numeric_limits<int>::max();
 static constexpr double DOUBLE_MIN_VALUE = 0.00001;
 
 CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_value value)
@@ -38,12 +39,18 @@ CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_v
             return CodecableValue(PluginUtilsNApi::GetBool(env, value));
         }
         case napi_number: {
-            int32_t intValue = PluginUtilsNApi::GetCInt32(value, env);
-            double numberValue = PluginUtilsNApi::GetDouble(env, value);
-            if (numberValue - intValue > DOUBLE_MIN_VALUE) {
-                return CodecableValue(numberValue);
+            int32_t int32Value = PluginUtilsNApi::GetCInt32(value, env);
+            int64_t int64Value = PluginUtilsNApi::GetCInt64(value, env);
+            double doubleValue = PluginUtilsNApi::GetDouble(env, value);
+
+            if (doubleValue - int64Value > DOUBLE_MIN_VALUE) {
+                return CodecableValue(doubleValue);
             } else {
-                return CodecableValue(intValue);
+                if (int64Value > MAX_INT_32) {
+                    return CodecableValue(int64Value);
+                } else {
+                    return CodecableValue(int32Value);
+                }
             }
         }
         case napi_string: {
