@@ -108,7 +108,7 @@ HttpExec::StaticVariable HttpExec::staticVariable_; /* NOLINT */
 
 bool HttpExec::FindCacertInCache(CURL *curl, RequestContext *context)
 {
-    for (uint32_t i = staticVariable_.cacertCacheList.size() - 1; i >= 0 ; i--) {
+    for (uint32_t i = 0; i < staticVariable_.cacertCacheList.size(); i++) {
         if (!SetOption(curl, context, context->GetCurlHeaderList(), staticVariable_.cacertCacheList[i])) {
             NETSTACK_LOGE("set option failed");
             return false;
