@@ -21,6 +21,7 @@ ohos_source_set("netstack_utils") {
     "$SUBSYSTEM_DIR/netstack/utils/log/include",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
     "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+    "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/http/http_module/include",
     "//commonlibrary/c_utils/base/include",
     "//third_party/bounds_checking_function/include",
     "//third_party/curl/include",

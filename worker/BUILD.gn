@@ -23,6 +23,7 @@ template("plugin_worker_static") {
 
     deps = [
       "//commonlibrary/ets_utils/js_concurrent_module/worker:worker_static",
+      "//third_party/libuv:uv_static",
     ]
 
     subsystem_name = "plugins"
