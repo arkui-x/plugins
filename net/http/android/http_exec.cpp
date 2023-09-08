@@ -58,7 +58,6 @@ static constexpr int CURL_TIMEOUT_MS = 50;
 static constexpr int CONDITION_TIMEOUT_S = 3600;
 static constexpr int CURL_MAX_WAIT_MSECS = 10;
 static constexpr int CURL_HANDLE_NUM = 10;
-static constexpr int CURL_QUEUE_SIZE = 50;
 #ifdef HTTP_PROXY_ENABLE
 static constexpr int32_t SYSPARA_MAX_SIZE = 128;
 static constexpr const char *DEFAULT_HTTP_PROXY_HOST = "NONE";
@@ -69,6 +68,8 @@ static constexpr const char *HTTP_PROXY_PORT_KEY = "persist.netmanager_base.http
 static constexpr const char *HTTP_PROXY_EXCLUSIONS_KEY = "persist.netmanager_base.http_proxy.exclusion_list";
 #endif
 static constexpr const char *HTTP_SYSTEM_CA_PATH = "/system/etc/security/cacerts/";
+static constexpr const char *HTTP_SYSTEM_CA_FILE1 = "/system/etc/security/cacerts/455f1b52.0";
+static constexpr const char *HTTP_SYSTEM_CA_FILE2 = "/system/etc/security/cacerts/1e8e7201.0";
 
 template <napi_value (*MakeJsValue)(napi_env, void *)> static void CallbackTemplate(uv_work_t *work, int status)
 {
@@ -96,54 +97,95 @@ bool HttpExec::AddCurlHandle(CURL *handle, RequestContext *context)
     }
 
     std::lock_guard guard(staticVariable_.curlMultiMutex);
-    if (staticVariable_.infoQueue.size() < CURL_QUEUE_SIZE) {
-        staticVariable_.infoQueue.emplace(context, handle);
-        staticVariable_.conditionVariable.notify_all();
+    staticVariable_.infoQueue.emplace(context, handle);
+    staticVariable_.conditionVariable.notify_all();
+    return true;
+}
+
+HttpExec::StaticVariable HttpExec::staticVariable_; /* NOLINT */
+
+bool HttpExec::FindCacertInCache(RequestContext *context, std::string &cacertFile)
+{
+    auto result = staticVariable_.cacertCacheList.find(context->options.GetUrl());
+    if (result != staticVariable_.cacertCacheList.end()) {
+        cacertFile = result->second;
         return true;
     }
     return false;
 }
 
-HttpExec::StaticVariable HttpExec::staticVariable_; /* NOLINT */
-
-bool HttpExec::FindCacertInCache(CURL *curl, RequestContext *context)
+bool HttpExec::FindCacertInUse(CURL *curl, RequestContext *context, std::string &cacertFile)
 {
-    for (uint32_t i = 0; i < staticVariable_.cacertCacheList.size(); i++) {
-        if (!SetOption(curl, context, context->GetCurlHeaderList(), staticVariable_.cacertCacheList[i])) {
+    for (uint32_t i = 0; i < staticVariable_.cacertUseList.size(); i++) {
+        if (!SetOptionForCacert(curl, context, context->GetCurlHeaderList(),
+                staticVariable_.cacertUseList[i])) {
             NETSTACK_LOGE("set option failed");
             return false;
         }
 
         CURLcode resultPerform = curl_easy_perform(curl);
         if (resultPerform == CURLE_OK) {
-            context->response.SetRequestTime(HttpTime::GetNowTimeGMT());
-            if (AddCurlHandle(curl, context)) {
-                return true;
-            }
+            cacertFile = staticVariable_.cacertUseList[i];
+            staticVariable_.cacertCacheList[context->options.GetUrl()] = staticVariable_.cacertUseList[i];
+            return true;
         }
     }
     return false;
 }
 
-bool HttpExec::FindCacert(CURL *curl, RequestContext *context)
+bool HttpExec::FindCacert(CURL *curl, RequestContext *context, std::string &cacertFile)
 {
     for (uint32_t i = 0; i < staticVariable_.cacertList.size(); i++) {
-        if (!SetOption(curl, context, context->GetCurlHeaderList(), staticVariable_.cacertList[i])) {
+        if (!SetOptionForCacert(curl, context, context->GetCurlHeaderList(),
+                staticVariable_.cacertList[i])) {
             NETSTACK_LOGE("set option failed");
             return false;
         }
 
         CURLcode resultPerform = curl_easy_perform(curl);
         if (resultPerform == CURLE_OK) {
-            context->response.SetRequestTime(HttpTime::GetNowTimeGMT());
-            if (AddCurlHandle(curl, context)) {
-                staticVariable_.cacertCacheList.push_back(staticVariable_.cacertList[i]);
-                staticVariable_.cacertList.erase(staticVariable_.cacertList.begin() + i);
-                return true;
-            }
+            cacertFile = staticVariable_.cacertList[i];
+            staticVariable_.cacertList.erase(staticVariable_.cacertList.begin() + i);
+            staticVariable_.cacertCacheList[context->options.GetUrl()] = cacertFile;
+            return true;
         }
     }
     return false;
+}
+
+bool HttpExec::SetOptionForCacert(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
+    const std::string &cacert)
+{
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_URL, context->options.GetUrl().c_str(), context);
+
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTPHEADER, requestHeader, context);
+
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CONNECTTIMEOUT_MS, context->options.GetConnectTimeout(), context);
+
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTP_VERSION, context->options.GetHttpVersion(), context);
+
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, cacert.c_str(), context);
+
+    return true;
+}
+
+bool HttpExec::VierfyCacert(RequestContext *context, std::string &cacertFile)
+{
+    if (FindCacertInCache(context, cacertFile)) {
+        return true;
+    }
+    
+    auto handle = curl_easy_init();
+    if (!handle) {
+        return false;
+    }
+
+    bool result = FindCacertInUse(handle, context, cacertFile);
+    if (!result) {
+        result = FindCacert(handle, context, cacertFile);
+    }
+    curl_easy_cleanup(handle);
+    return result;
 }
 
 bool HttpExec::RequestWithoutCache(RequestContext *context)
@@ -165,15 +207,17 @@ bool HttpExec::RequestWithoutCache(RequestContext *context)
                     vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second);
                 });
     context->SetCurlHeaderList(MakeHeaders(vec));
-    
-    bool result = FindCacertInCache(handle, context);
-    if (!result) {
-        result = FindCacert(handle, context);
+
+    std::string cacertFile;
+    if (VierfyCacert(context, cacertFile)) {
+        if (!SetOption(handle, context, context->GetCurlHeaderList(), cacertFile)) {
+            NETSTACK_LOGE("set option failed");
+            return false;
+        }
+        context->response.SetRequestTime(HttpTime::GetNowTimeGMT());
+        return AddCurlHandle(handle, context);
     }
-    if (!result) {
-        curl_easy_cleanup(handle);
-    }
-    return result;
+    return false;
 }
 
 bool HttpExec::GetCurlDataFromHandle(CURL *handle, RequestContext *context, CURLMSG curlMsg, CURLcode result)
@@ -299,14 +343,15 @@ bool HttpExec::ExecRequest(RequestContext *context)
 napi_value HttpExec::RequestCallback(RequestContext *context)
 {
     napi_value object = NapiUtils::CreateObject(context->GetEnv());
+
     if (NapiUtils::GetValueType(context->GetEnv(), object) != napi_object) {
         return nullptr;
     }
 
     NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESPONSE_CODE,
-                                 context->response.GetResponseCode());
+                                context->response.GetResponseCode());
     NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_COOKIES,
-                                     context->response.GetCookies());
+                                context->response.GetCookies());
 
     napi_value header = MakeResponseHeader(context->GetEnv(), context);
     if (NapiUtils::GetValueType(context->GetEnv(), header) == napi_object) {
@@ -319,6 +364,7 @@ napi_value HttpExec::RequestCallback(RequestContext *context)
 
     auto contentType = CommonUtils::ToLower(const_cast<std::map<std::string, std::string> &>(
         context->response.GetHeader())[HttpConstant::HTTP_CONTENT_TYPE]);
+
     if (contentType.find(HttpConstant::HTTP_CONTENT_TYPE_OCTET_STREAM) != std::string::npos ||
         contentType.find(HttpConstant::HTTP_CONTENT_TYPE_IMAGE) != std::string::npos) {
         void *data = nullptr;
@@ -332,13 +378,13 @@ napi_value HttpExec::RequestCallback(RequestContext *context)
             NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, arrayBuffer);
         }
         NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                     static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
+                                    static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
         return object;
     }
 
     /* now just support utf8 */
     NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT,
-                                     context->response.GetResult());
+                                    context->response.GetResult());
     NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
                                  static_cast<uint32_t>(HttpDataType::STRING));
     return object;
@@ -416,11 +462,11 @@ void HttpExec::AddRequestInfo()
 
         auto info = staticVariable_.infoQueue.top();
         staticVariable_.infoQueue.pop();
+
         auto ret = curl_multi_add_handle(staticVariable_.curlMulti, info.handle);
         if (ret == CURLM_OK) {
             staticVariable_.contextMap[info.handle] = info.context;
         }
-
         ++num;
         if (num >= CURL_HANDLE_NUM) {
             break;
@@ -587,10 +633,7 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYPEER, 0L, context);
 #else
 #ifndef WINDOWS_PLATFORM
-    std::string path;
-    path.append(HTTP_SYSTEM_CA_PATH);
-    path.append(cacert);
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, path.c_str(), context);
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, cacert.c_str(), context);
 #endif // WINDOWS_PLATFORM
 #endif // NO_SSL_CERTIFICATION
 
@@ -733,9 +776,9 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void *data)
         return;
     }
     NapiUtils::SetUint32Property(context->GetEnv(), progress, "receiveSize",
-                                 static_cast<uint32_t>(context->GetDlLen().nLen));
+                                static_cast<uint32_t>(context->GetDlLen().nLen));
     NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
-                                 static_cast<uint32_t>(context->GetDlLen().tLen));
+                                static_cast<uint32_t>(context->GetDlLen().tLen));
     context->PopDlLen();
     context->Emit(ON_DATA_RECEIVE_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
 }
@@ -751,7 +794,7 @@ void HttpExec::OnDataEnd(napi_env env, napi_status status, void *data)
 }
 
 int HttpExec::ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
-                               curl_off_t ulnow)
+                                curl_off_t ulnow)
 {
     (void)ultotal;
     (void)ulnow;
@@ -784,11 +827,11 @@ napi_value HttpExec::MakeResponseHeader(napi_env env, void *ctx)
     napi_value header = NapiUtils::CreateObject(context->GetEnv());
     if (NapiUtils::GetValueType(context->GetEnv(), header) == napi_object) {
         std::for_each(context->response.GetHeader().begin(), context->response.GetHeader().end(),
-                      [context, header](const std::pair<std::string, std::string> &p) {
-                          if (!p.first.empty() && !p.second.empty()) {
-                              NapiUtils::SetStringPropertyUtf8(context->GetEnv(), header, p.first, p.second);
-                          }
-                      });
+                    [context, header](const std::pair<std::string, std::string> &p) {
+                        if (!p.first.empty() && !p.second.empty()) {
+                            NapiUtils::SetStringPropertyUtf8(context->GetEnv(), header, p.first, p.second);
+                        }
+                    });
     }
     return header;
 }
@@ -815,9 +858,9 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
     switch (context->options.GetHttpDataType()) {
         case HttpDataType::STRING: {
             NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT,
-                                             context->response.GetResult());
+                                            context->response.GetResult());
             NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                         static_cast<uint32_t>(HttpDataType::STRING));
+                                        static_cast<uint32_t>(HttpDataType::STRING));
             return true;
         }
         case HttpDataType::OBJECT: {
@@ -829,7 +872,7 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
             if (obj) {
                 NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, obj);
                 NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                             static_cast<uint32_t>(HttpDataType::OBJECT));
+                                            static_cast<uint32_t>(HttpDataType::OBJECT));
                 return true;
             }
 
@@ -847,7 +890,7 @@ bool HttpExec::ProcByExpectDataType(napi_value object, RequestContext *context)
                 }
                 NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, arrayBuffer);
                 NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-                                             static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
+                                            static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
             }
             return true;
         }
@@ -888,8 +931,8 @@ void HttpExec::GetCacertListFromSystem(void)
     DIR *dir = nullptr;
     struct dirent *ptr = nullptr;
 
-    staticVariable_.cacertCacheList.clear();
     staticVariable_.cacertList.clear();
+    staticVariable_.cacertUseList.clear();
     dir = opendir(HTTP_SYSTEM_CA_PATH);
     while ((ptr = readdir(dir)) != nullptr) {
         if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0) {
@@ -898,9 +941,14 @@ void HttpExec::GetCacertListFromSystem(void)
         if (strcmp(ptr->d_name, "pcd") == 0) {
             continue;
         }
-        staticVariable_.cacertList.push_back(ptr->d_name);
+        std::string path { HTTP_SYSTEM_CA_PATH };
+        path.append(ptr->d_name);
+        staticVariable_.cacertList.push_back(path);
     }
     closedir(dir);
+
+    staticVariable_.cacertUseList.push_back(HTTP_SYSTEM_CA_FILE1);
+    staticVariable_.cacertUseList.push_back(HTTP_SYSTEM_CA_FILE2);
 }
 
 std::string HttpExec::GetCacheFileName()
