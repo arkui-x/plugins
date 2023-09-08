@@ -79,9 +79,11 @@ public:
 
     static std::string GetCacheFileName();
 private:
-    static bool FindCacertInCache(CURL *curl, RequestContext *context);
+    static bool FindCacertInCache(RequestContext *context, std::string &cacertFile);
 
-    static bool FindCacert(CURL *curl, RequestContext *context);
+    static bool FindCacertInUse(CURL *curl, RequestContext *context, std::string &cacertFile);
+
+    static bool FindCacert(CURL *curl, RequestContext *context, std::string &cacertFile);
 
     static void GetCacertListFromSystem(void);
 
@@ -129,6 +131,11 @@ private:
 
     static void AddRequestInfo();
 
+    static bool VierfyCacert(RequestContext *context, std::string &cacertFile);
+
+    static bool SetOptionForCacert(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
+        const std::string &cacert);
+
     struct RequestInfo {
         RequestInfo() = delete;
         ~RequestInfo() = default;
@@ -170,7 +177,8 @@ private:
         std::condition_variable conditionVariable;
         std::priority_queue<RequestInfo> infoQueue;
         std::vector<std::string> cacertList;
-        std::vector<std::string> cacertCacheList;
+        std::vector<std::string> cacertUseList;
+        std::map<std::string, std::string> cacertCacheList;
 
 #ifndef MAC_PLATFORM
         std::atomic_bool initialized;
