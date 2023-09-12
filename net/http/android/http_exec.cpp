@@ -17,8 +17,6 @@
 
 #include <cstddef>
 #include <cstring>
-#include <memory>
-#include <thread>
 #include <unistd.h>
 
 #ifdef HTTP_PROXY_ENABLE
@@ -31,6 +29,7 @@
 #include "base64_utils.h"
 #include "cache_proxy.h"
 #include "constant.h"
+#include "core/common/ace_application_info.h"
 #include "event_list.h"
 #include "http_async_work.h"
 #include "http_jni.h"
@@ -67,9 +66,8 @@ static constexpr const char *HTTP_PROXY_HOST_KEY = "persist.netmanager_base.http
 static constexpr const char *HTTP_PROXY_PORT_KEY = "persist.netmanager_base.http_proxy.port";
 static constexpr const char *HTTP_PROXY_EXCLUSIONS_KEY = "persist.netmanager_base.http_proxy.exclusion_list";
 #endif
-static constexpr const char *HTTP_SYSTEM_CA_PATH = "/system/etc/security/cacerts/";
-static constexpr const char *HTTP_SYSTEM_CA_FILE1 = "/system/etc/security/cacerts/455f1b52.0";
-static constexpr const char *HTTP_SYSTEM_CA_FILE2 = "/system/etc/security/cacerts/1e8e7201.0";
+static constexpr const char *HTTP_SYSTEM_CA_PATH = "/storage/emulated/0/Android/data/";
+static constexpr const char *HTTP_APPLICATION_CA_FILE = "/files/cacert.ca";
 
 template <napi_value (*MakeJsValue)(napi_env, void *)> static void CallbackTemplate(uv_work_t *work, int status)
 {
@@ -104,90 +102,6 @@ bool HttpExec::AddCurlHandle(CURL *handle, RequestContext *context)
 
 HttpExec::StaticVariable HttpExec::staticVariable_; /* NOLINT */
 
-bool HttpExec::FindCacertInCache(RequestContext *context, std::string &cacertFile)
-{
-    auto result = staticVariable_.cacertCacheList.find(context->options.GetUrl());
-    if (result != staticVariable_.cacertCacheList.end()) {
-        cacertFile = result->second;
-        return true;
-    }
-    return false;
-}
-
-bool HttpExec::FindCacertInUse(CURL *curl, RequestContext *context, std::string &cacertFile)
-{
-    for (uint32_t i = 0; i < staticVariable_.cacertUseList.size(); i++) {
-        if (!SetOptionForCacert(curl, context, context->GetCurlHeaderList(),
-                staticVariable_.cacertUseList[i])) {
-            NETSTACK_LOGE("set option failed");
-            return false;
-        }
-
-        CURLcode resultPerform = curl_easy_perform(curl);
-        if (resultPerform == CURLE_OK) {
-            cacertFile = staticVariable_.cacertUseList[i];
-            staticVariable_.cacertCacheList[context->options.GetUrl()] = staticVariable_.cacertUseList[i];
-            return true;
-        }
-    }
-    return false;
-}
-
-bool HttpExec::FindCacert(CURL *curl, RequestContext *context, std::string &cacertFile)
-{
-    for (uint32_t i = 0; i < staticVariable_.cacertList.size(); i++) {
-        if (!SetOptionForCacert(curl, context, context->GetCurlHeaderList(),
-                staticVariable_.cacertList[i])) {
-            NETSTACK_LOGE("set option failed");
-            return false;
-        }
-
-        CURLcode resultPerform = curl_easy_perform(curl);
-        if (resultPerform == CURLE_OK) {
-            cacertFile = staticVariable_.cacertList[i];
-            staticVariable_.cacertList.erase(staticVariable_.cacertList.begin() + i);
-            staticVariable_.cacertCacheList[context->options.GetUrl()] = cacertFile;
-            return true;
-        }
-    }
-    return false;
-}
-
-bool HttpExec::SetOptionForCacert(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
-    const std::string &cacert)
-{
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_URL, context->options.GetUrl().c_str(), context);
-
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTPHEADER, requestHeader, context);
-
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CONNECTTIMEOUT_MS, context->options.GetConnectTimeout(), context);
-
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTP_VERSION, context->options.GetHttpVersion(), context);
-
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, cacert.c_str(), context);
-
-    return true;
-}
-
-bool HttpExec::VierfyCacert(RequestContext *context, std::string &cacertFile)
-{
-    if (FindCacertInCache(context, cacertFile)) {
-        return true;
-    }
-    
-    auto handle = curl_easy_init();
-    if (!handle) {
-        return false;
-    }
-
-    bool result = FindCacertInUse(handle, context, cacertFile);
-    if (!result) {
-        result = FindCacert(handle, context, cacertFile);
-    }
-    curl_easy_cleanup(handle);
-    return result;
-}
-
 bool HttpExec::RequestWithoutCache(RequestContext *context)
 {
     if (!staticVariable_.initialized) {
@@ -208,16 +122,22 @@ bool HttpExec::RequestWithoutCache(RequestContext *context)
                 });
     context->SetCurlHeaderList(MakeHeaders(vec));
 
-    std::string cacertFile;
-    if (VierfyCacert(context, cacertFile)) {
-        if (!SetOption(handle, context, context->GetCurlHeaderList(), cacertFile)) {
-            NETSTACK_LOGE("set option failed");
-            return false;
+    if (!HttpExec::SetOption(handle, context, context->GetCurlHeaderList())) {
+        NETSTACK_LOGE("set option failed");
+        if (handle) {
+            (void)curl_easy_cleanup(handle);
         }
-        context->response.SetRequestTime(HttpTime::GetNowTimeGMT());
-        return AddCurlHandle(handle, context);
+        return false;
     }
-    return false;
+
+    context->response.SetRequestTime(HttpTime::GetNowTimeGMT());
+    if (!HttpExec::AddCurlHandle(handle, context)) {
+        if (handle) {
+            (void)curl_easy_cleanup(handle);
+        }
+        return false;
+    }
+    return true;
 }
 
 bool HttpExec::GetCurlDataFromHandle(CURL *handle, RequestContext *context, CURLMSG curlMsg, CURLcode result)
@@ -587,7 +507,6 @@ bool HttpExec::Initialize()
     if (staticVariable_.initialized) {
         return true;
     }
-    GetCacertListFromSystem();
 
     NETSTACK_LOGI("call curl_global_init");
     if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
@@ -602,13 +521,11 @@ bool HttpExec::Initialize()
     }
 
     staticVariable_.workThread = std::thread(RunThread);
-
     staticVariable_.initialized = true;
     return staticVariable_.initialized;
 }
 
-bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context,
-    const std::string &cacert)
+bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context)
 {
     std::string host, exclusions;
     int32_t port = 0;
@@ -633,7 +550,15 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYPEER, 0L, context);
 #else
 #ifndef WINDOWS_PLATFORM
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, cacert.c_str(), context);
+    std::string cacertFile { HTTP_SYSTEM_CA_PATH };
+    cacertFile.append(Ace::AceApplicationInfo::GetInstance().GetPackageName());
+    cacertFile.append(HTTP_APPLICATION_CA_FILE);
+    if (access(cacertFile.c_str(), F_OK) == 0) {
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, cacertFile.c_str(), context);
+    } else {
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYHOST, 0L, context);
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYPEER, 0L, context);
+    }
 #endif // WINDOWS_PLATFORM
 #endif // NO_SSL_CERTIFICATION
 
@@ -647,8 +572,7 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
     return true;
 }
 
-bool HttpExec::SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
-    const std::string &cacert)
+bool HttpExec::SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader)
 {
     const std::string &method = context->options.GetMethod();
     if (!MethodForGet(method) && !MethodForPost(method)) {
@@ -695,7 +619,7 @@ bool HttpExec::SetOption(CURL *curl, RequestContext *context, struct curl_slist 
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CONNECTTIMEOUT_MS, context->options.GetConnectTimeout(), context);
 
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTP_VERSION, context->options.GetHttpVersion(), context);
-    if (!SetOtherOption(curl, context, cacert)) {
+    if (!SetOtherOption(curl, context)) {
         return false;
     }
 
@@ -924,31 +848,6 @@ void HttpExec::DeInitialize()
         curl_multi_cleanup(staticVariable_.curlMulti);
     }
     staticVariable_.initialized = false;
-}
-
-void HttpExec::GetCacertListFromSystem(void)
-{
-    DIR *dir = nullptr;
-    struct dirent *ptr = nullptr;
-
-    staticVariable_.cacertList.clear();
-    staticVariable_.cacertUseList.clear();
-    dir = opendir(HTTP_SYSTEM_CA_PATH);
-    while ((ptr = readdir(dir)) != nullptr) {
-        if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0) {
-            continue;
-        }
-        if (strcmp(ptr->d_name, "pcd") == 0) {
-            continue;
-        }
-        std::string path { HTTP_SYSTEM_CA_PATH };
-        path.append(ptr->d_name);
-        staticVariable_.cacertList.push_back(path);
-    }
-    closedir(dir);
-
-    staticVariable_.cacertUseList.push_back(HTTP_SYSTEM_CA_FILE1);
-    staticVariable_.cacertUseList.push_back(HTTP_SYSTEM_CA_FILE2);
 }
 
 std::string HttpExec::GetCacheFileName()

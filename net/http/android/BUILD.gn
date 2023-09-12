@@ -16,11 +16,16 @@ import("//plugins/net/http/http.gni")
 ohos_source_set("net_http_android") {
   include_dirs = http_include
   include_dirs += utils_include
+  include_dirs += [
+    "//foundation/arkui/ace_engine/frameworks",
+    "//foundation/arkui/ace_engine",
+  ]
 
   sources = http_sources
   sources += [ "http_exec.cpp" ]
 
   deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//plugins/interfaces/native:plugin_log",
     "//plugins/net/utils:netstack_utils",
