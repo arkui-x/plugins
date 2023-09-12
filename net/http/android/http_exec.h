@@ -79,18 +79,9 @@ public:
 
     static std::string GetCacheFileName();
 private:
-    static bool FindCacertInCache(RequestContext *context, std::string &cacertFile);
+    static bool SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader);
 
-    static bool FindCacertInUse(CURL *curl, RequestContext *context, std::string &cacertFile);
-
-    static bool FindCacert(CURL *curl, RequestContext *context, std::string &cacertFile);
-
-    static void GetCacertListFromSystem(void);
-
-    static bool SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
-        const std::string &cacert);
-
-    static bool SetOtherOption(CURL *curl, RequestContext *context, const std::string &cacert);
+    static bool SetOtherOption(CURL *curl, RequestContext *context);
 
     static size_t OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData);
 
@@ -130,11 +121,6 @@ private:
                                 curl_off_t ulnow);
 
     static void AddRequestInfo();
-
-    static bool VierfyCacert(RequestContext *context, std::string &cacertFile);
-
-    static bool SetOptionForCacert(CURL *curl, RequestContext *context, struct curl_slist *requestHeader,
-        const std::string &cacert);
 
     struct RequestInfo {
         RequestInfo() = delete;
@@ -176,10 +162,6 @@ private:
         std::thread workThread;
         std::condition_variable conditionVariable;
         std::priority_queue<RequestInfo> infoQueue;
-        std::vector<std::string> cacertList;
-        std::vector<std::string> cacertUseList;
-        std::map<std::string, std::string> cacertCacheList;
-
 #ifndef MAC_PLATFORM
         std::atomic_bool initialized;
         std::atomic_bool runThread;
