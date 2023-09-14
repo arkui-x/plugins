@@ -239,7 +239,7 @@ CodecableValue BridgeSerializer::ReadString(BridgeStreamReader* stream) const
 size_t BridgeSerializer::ReadSize(BridgeStreamReader* stream) const
 {
     uint8_t byte = stream->ReadByte();
-    if (byte < 0xFF) {
+    if (byte < 0xFE) {
         return byte;
     } else if (byte == 0xFE) {
         uint16_t value = 0;
