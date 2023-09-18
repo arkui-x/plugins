@@ -26,7 +26,9 @@
 #include "android/java/jni/webview_controller_android.h"
 #include "android/java/jni/webview_controller_jni.h"
 #endif
-
+#ifdef IOS_PLATFORM
+#include "ios/webview_controller_ios.h"
+#endif
 #include "napi_parse_utils.h"
 #include "business_error.h"
 
@@ -96,6 +98,9 @@ napi_value NapiWebviewController::JsConstructor(napi_env env, napi_callback_info
 
 #ifdef ANDROID_PLATFORM
     WebviewController *webviewController = new (std::nothrow) WebviewControllerAndroid();
+#endif
+#ifdef IOS_PLATFORM  
+    WebviewController *webviewController = new (std::nothrow) WebviewControllerIOS();
 #endif
     if (webviewController == nullptr) {
         LOGE("new webview controller failed");

@@ -44,7 +44,7 @@ template("plugin_web_webview_static") {
     if (platform == "android") {
       deps += [ "android/java:web_webview_android_jni" ]
     } else if (platform == "ios") {
-      deps += []
+      deps += [ "ios:web_webview_ios" ]
     }
 
     subsystem_name = "plugins"
