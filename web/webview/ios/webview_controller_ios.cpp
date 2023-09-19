@@ -1,6 +1,6 @@
 #include "webview_controller_ios.h"
 
-#include "AceWebControllerOC.h"
+#include "AceWebControllerBridge.h"
 #include "log.h"
 using namespace OHOS::NWebError;
 

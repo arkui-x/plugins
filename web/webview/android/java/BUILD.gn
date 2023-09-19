@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../web_webview.gni")
+import("//plugins/web/webview/web_webview.gni")
 
 ohos_source_set("web_webview_android_jni") {
   sources = [
