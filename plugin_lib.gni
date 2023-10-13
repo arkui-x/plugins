@@ -14,10 +14,8 @@
 import("//build/ohos.gni")
 
 common_plugin_libs_static = [
-  "common_event",
   "display",
   "hitrace_meter",
-  "running_lock",
 ]
 
 common_plugin_libs = [
