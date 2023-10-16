@@ -16,10 +16,8 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 
 ohos_source_set("trace_ios") {
   sources = [ "trace_impl.mm" ]
-
   include_dirs = [ "//plugins/hitrace_meter" ]
-
-  deps = []
+  deps = [ "//plugins/interfaces/native:ace_plugin_util_ios" ]
 
   subsystem_name = "plugins"
   part_name = "hitrace_meter"

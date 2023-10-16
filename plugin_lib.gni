@@ -13,10 +13,7 @@
 
 import("//build/ohos.gni")
 
-common_plugin_libs_static = [
-  "display",
-  "hitrace_meter",
-]
+common_plugin_libs_static = [ "display" ]
 
 common_plugin_libs = [
   "ability_access_ctrl",
@@ -25,6 +22,7 @@ common_plugin_libs = [
   "data/preferences",
   "data/relationalstore",
   "device_info",
+  "hitrace_meter",
   "i18n",
   "intl",
   "net/connection",
