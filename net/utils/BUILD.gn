@@ -113,7 +113,7 @@ foreach(item, ace_platforms) {
       part_name = "net_utils"
     }
   } else {
-    ohos_source_set("netstack_util_" + item.name) {
+    ohos_source_set("net_utils_static_" + item.name) {
       platform = item.name
       public_configs = [ ":plugin_util_config" ]
       deps = [ ":netstack_util_static_${platform}" ]
