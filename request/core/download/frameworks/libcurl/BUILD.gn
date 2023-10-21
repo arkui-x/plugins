@@ -17,7 +17,8 @@ import("//plugins/request/request.gni")
 
 config("download_lib_config") {
   visibility = [ ":*" ]
-  include_dirs = [ "include",
+  include_dirs = [
+    "include",
     "$rq_download_path/frameworks/libs/include",
   ]
   cflags_cc = [ "-fexceptions" ]
@@ -36,18 +37,18 @@ config("download_lib_public_config") {
 }
 
 ohos_source_set("download_libcurl") {
-  sources = [
-    "src/download_task_impl.cpp"
-  ]
+  sources = [ "src/download_task_impl.cpp" ]
 
   configs = [ ":download_lib_config" ]
 
   public_configs = [ ":download_lib_public_config" ]
 
-  deps = [
-    "$plugin_interfaces_path/native:plugin_log",
-    "$third_party_path/curl:curl",
-  ]
+  deps = [ "$plugin_interfaces_path/native:plugin_log" ]
+  if (is_cross_platform_build && target_os == "ios") {
+    deps += [ "//foundation/arkui/ace_engine/adapter/ios/build:arkui_curl" ]
+  } else {
+    deps += [ "$third_party_path/curl:curl" ]
+  }
 
   subsystem_name = "plugins"
   part_name = "request"
