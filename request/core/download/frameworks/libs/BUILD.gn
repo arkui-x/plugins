@@ -45,10 +45,12 @@ ohos_source_set("download_lib") {
 
   public_configs = [ ":download_lib_public_config" ]
 
-  deps = [
-    "$plugin_interfaces_path/native:plugin_log",
-    "$third_party_path/curl:curl",
-  ]
+  deps = [ "$plugin_interfaces_path/native:plugin_log" ]
+  if (is_cross_platform_build && target_os == "ios") {
+    deps += [ "//foundation/arkui/ace_engine/adapter/ios/build:arkui_curl" ]
+  } else {
+    deps += [ "$third_party_path/curl:curl" ]
+  }
 
   if (target_os == "ios") {
     defines = [ "IOS_PLATFORM" ]
