@@ -26,9 +26,9 @@ ohos_source_set("net_http_ios") {
   ]
 
   deps = [
-    "//foundation/arkui/ace_engine/adapter/ios/build:net_utils",
     "//plugins/interfaces/native:ace_plugin_util_ios",
     "//plugins/interfaces/native:plugin_log",
+    "//plugins/net/utils:net_utils_static_ios",
   ]
 
   defines = [ "IOS_PLATFORM" ]
