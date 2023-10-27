@@ -65,10 +65,7 @@ if (target_os == "android") {
   common_plugin_libs += common_plugin_libs_static
 }
 if (target_os == "ios") {
-  common_plugin_libs += [
-    "ndk_raw_file",
-    "net/utils",
-  ]
+  common_plugin_libs += [ "ndk_raw_file" ]
 }
 
 template("plugin_lib") {
