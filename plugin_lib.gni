@@ -59,6 +59,7 @@ common_plugin_libs = [
   "timer",
   "console",
   "web/webview",
+  "zlib",
 ]
 
 if (target_os == "android") {
