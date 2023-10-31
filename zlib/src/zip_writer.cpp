@@ -54,9 +54,8 @@ bool AddFileContentToZip(zipFile zip_file, FilePath& file_path)
         return false;
     }
 
-    uint32_t num_bytes;
     while (!feof(fp)) {
-        num_bytes = fread(buf, 1, kZipBufSize, fp);
+        uint32_t num_bytes = fread(buf, 1, kZipBufSize, fp);
         if (num_bytes > 0) {
             if (zipWriteInFileInZip(zip_file, buf, num_bytes) != ZIP_OK) {
                 LOGI("Could not write data to zip for path:%{private}s ", file_path.Value().c_str());
