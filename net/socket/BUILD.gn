@@ -141,13 +141,13 @@ template("plugin_net_socket_static") {
       sources += tls_napi_sources
 
       deps = [
-        "//foundation/arkui/ace_engine/adapter/ios/build:crypto_openssl",
+        "//foundation/arkui/ace_engine/adapter/ios/build:crypto_source",
         "//foundation/arkui/ace_engine/adapter/ios/build:shared_libz",
+        "//foundation/arkui/ace_engine/adapter/ios/build:ssl_source",
         "//plugins/interfaces/native:ace_plugin_util_${platform}",
         "//plugins/net/utils:net_utils_static_ios",
         "//third_party/curl:curl",
         "//third_party/jsoncpp:jsoncpp_static",
-        "//third_party/openssl:ssl_source",
       ]
     }
 
