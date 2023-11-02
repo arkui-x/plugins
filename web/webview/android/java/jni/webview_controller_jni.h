@@ -29,6 +29,16 @@ public:
     static void NativeInit(JNIEnv* env, jobject jobj);
     static ErrCode LoadUrl(int id, const std::string& url,
         const std::map<std::string, std::string>& httpHeaders);
+    static ErrCode LoadData(int id, const std::string& data, const std::string& mimeType, const std::string& encoding,
+        const std::string& baseUrl, const std::string& historyUrl);
+    static std::string GetUrl(int id);
+    static bool AccessForward(int id);
+    static bool AccessBackward(int id);
+    static void Forward(int id);
+    static void Backward(int id);
+    static void Refresh(int id);
+    static void EvaluateJavaScript(int id, const std::string& script);
+    static void OnReceiveValue(JNIEnv* env, jobject jobj, jstring jResult);
 };
 }
 

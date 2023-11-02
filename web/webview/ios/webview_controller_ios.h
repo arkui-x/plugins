@@ -26,6 +26,15 @@ public:
     bool IsInit() override;
     ErrCode LoadUrl(const std::string& url) override;
     ErrCode LoadUrl(const std::string& url, const std::map<std::string, std::string>& httpHeaders) override;
+    ErrCode LoadData(const std::string& data, const std::string& mimeType, const std::string& encoding,
+        const std::string& baseUrl, const std::string& historyUrl) override;
+    ErrCode Backward() override;
+    ErrCode Forward() override;
+    ErrCode Refresh() override;
+    std::string GetUrl() override;
+    bool AccessBackward() override;
+    bool AccessForward() override;
+    void EvaluateJavaScript(const std::string& script) override;
 };
 } // namespace OHOS::Plugin
 #endif

@@ -37,8 +37,52 @@ ErrCode WebviewControllerAndroid::LoadUrl(
     return WebviewControllerJni::LoadUrl(webId_, url, httpHeaders);
 }
 
+ErrCode WebviewControllerAndroid::LoadData(const std::string& data, const std::string& mimeType, const std::string& encoding,
+    const std::string& baseUrl, const std::string& historyUrl)
+{
+    return WebviewControllerJni::LoadData(webId_, data, mimeType, encoding, baseUrl, historyUrl);
+}
+
+std::string WebviewControllerAndroid::GetUrl()
+{
+    return WebviewControllerJni::GetUrl(webId_);
+}
+
+bool WebviewControllerAndroid::AccessForward()
+{
+    return WebviewControllerJni::AccessForward(webId_);
+}
+
+bool WebviewControllerAndroid::AccessBackward()
+{
+    return WebviewControllerJni::AccessBackward(webId_);
+}
+
+ErrCode WebviewControllerAndroid::Forward()
+{
+    WebviewControllerJni::Forward(webId_);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerAndroid::Backward()
+{
+    WebviewControllerJni::Backward(webId_);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerAndroid::Refresh()
+{
+    WebviewControllerJni::Refresh(webId_);
+    return NO_ERROR;
+}
+
 bool WebviewControllerAndroid::IsInit()
 {
     return webId_ != -1;
+}
+
+void WebviewControllerAndroid::EvaluateJavaScript(const std::string& script)
+{
+    WebviewControllerJni::EvaluateJavaScript(webId_, script);
 }
 }
