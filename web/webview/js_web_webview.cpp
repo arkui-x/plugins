@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <unistd.h>
+#include <string.h>
 
 #include "log.h"
 #include "inner_api/plugin_utils_napi.h"
@@ -25,9 +26,12 @@
 #ifdef ANDROID_PLATFORM
 #include "android/java/jni/webview_controller_android.h"
 #include "android/java/jni/webview_controller_jni.h"
+#include "android/java/jni/web_data_base_android.h"
+#include "android/java/jni/web_data_base_jni.h"
 #endif
 #ifdef IOS_PLATFORM
 #include "ios/webview_controller_ios.h"
+#include "ios/web_data_base_ios.h"
 #endif
 #include "napi_parse_utils.h"
 #include "business_error.h"
@@ -286,9 +290,177 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
     return exports;
 }
 
+napi_value NapiWebDataBase::Init(napi_env env, napi_value exports)
+{
+    const std::string WEB_DATA_BASE_CLASS_NAME = "WebDataBase";
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_STATIC_FUNCTION("deleteHttpAuthCredentials", NapiWebDataBase::DeleteHttpAuthCredentials),
+        DECLARE_NAPI_STATIC_FUNCTION("saveHttpAuthCredentials", NapiWebDataBase::SaveHttpAuthCredentials),
+        DECLARE_NAPI_STATIC_FUNCTION("getHttpAuthCredentials", NapiWebDataBase::GetHttpAuthCredentials),
+        DECLARE_NAPI_STATIC_FUNCTION("existHttpAuthCredentials", NapiWebDataBase::ExistHttpAuthCredentials),
+    };
+    napi_value constructor = nullptr;
+    napi_define_class(env, WEB_DATA_BASE_CLASS_NAME.c_str(), WEB_DATA_BASE_CLASS_NAME.length(), JsConstructor, nullptr,
+        sizeof(properties) / sizeof(properties[0]), properties, &constructor);
+    NAPI_ASSERT(env, constructor != nullptr, "define js class WebDataBase failed");
+    napi_status status = napi_set_named_property(env, exports, "WebDataBase", constructor);
+    NAPI_ASSERT(env, status == napi_ok, "set property WebDataBase failed");
+    return exports;
+}
+
+napi_value NapiWebDataBase::JsConstructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = 2;
+    napi_value argv[2] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    return thisVar;
+}
+
+napi_value NapiWebDataBase::ExistHttpAuthCredentials(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+
+#ifdef ANDROID_PLATFORM
+    bool isExist = WebDataBaseAndroid::ExistHttpAuthCredentials();
+#endif
+#ifdef IOS_PLATFORM
+    bool isExist = WebDataBaseIOS::ExistHttpAuthCredentials();
+#endif
+    NAPI_CALL(env, napi_get_boolean(env, isExist, &result));
+    return result;
+}
+
+napi_value NapiWebDataBase::DeleteHttpAuthCredentials(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+
+#ifdef ANDROID_PLATFORM
+    WebDataBaseAndroid::DeleteHttpAuthCredentials();
+#endif
+#ifdef IOS_PLATFORM
+    WebDataBaseIOS::DeleteHttpAuthCredentials();
+#endif
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDataBase::SaveHttpAuthCredentials(napi_env env, napi_callback_info info)
+{
+    napi_value retValue = nullptr;
+    size_t argc = 4;
+    napi_value argv[4] = { 0 };
+
+    napi_get_cb_info(env, info, &argc, argv, &retValue, nullptr);
+    if (argc != INTEGER_FOUR) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    std::string host;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], host)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    std::string realm;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ONE], realm)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    std::string username;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_TWO], username)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    if (host.empty() || username.empty()) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    size_t bufferSize = 0;
+    if (!NapiParseUtils::ParseSize(env, argv[INTEGER_THREE], bufferSize) || bufferSize > MAX_PWD_LENGTH) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+    if (bufferSize > 0) {
+        char password[bufferSize + 1];
+        if (!NapiParseUtils::ParseChar(env, argv[INTEGER_THREE], password, bufferSize)) {
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return nullptr;
+        }
+
+#ifdef ANDROID_PLATFORM
+    WebDataBaseAndroid::SaveHttpAuthCredentials(host, realm, username, password);
+#endif
+#ifdef IOS_PLATFORM
+    WebDataBaseIOS::SaveHttpAuthCredentials(host, realm, username, password);
+#endif
+        (void)memset(password, 0, sizeof(password));
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDataBase::GetHttpAuthCredentials(napi_env env, napi_callback_info info)
+{
+    napi_value retValue = nullptr;
+    size_t argc = 2;
+    napi_value argv[2] = { 0 };
+
+    napi_get_cb_info(env, info, &argc, argv, &retValue, nullptr);
+    if (argc != INTEGER_TWO) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    std::string host;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], host)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    std::string realm;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ONE], realm)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    if (host.empty()) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    std::string username;
+    char password[MAX_PWD_LENGTH + 1] = {0};
+    napi_value result = nullptr;
+    napi_create_array(env, &result);
+
+#ifdef ANDROID_PLATFORM
+    WebDataBaseAndroid::GetHttpAuthCredentials(host, realm, username, password, MAX_PWD_LENGTH + 1);
+#endif
+#ifdef IOS_PLATFORM
+    WebDataBaseIOS::GetHttpAuthCredentials(host, realm, username, password, MAX_PWD_LENGTH + 1);
+#endif
+    if (!username.empty() && strlen(password) > 0) {
+        napi_value nameVal = nullptr;
+        napi_value pwdVal = nullptr;
+        napi_create_string_utf8(env, username.c_str(), username.length(), &nameVal);
+        napi_set_element(env, result, INTEGER_ZERO, nameVal);
+        napi_create_string_utf8(env, password, strlen(password), &pwdVal);
+        napi_set_element(env, result, INTEGER_ONE, pwdVal);
+    }
+    (void)memset(password, 0, MAX_PWD_LENGTH + 1);
+    return result;
+}
+
 static napi_value WebWebviewExport(napi_env env, napi_value exports)
 {
     NapiWebviewController::Init(env, exports);
+    NapiWebDataBase::Init(env, exports);
     return exports;
 }
 
@@ -307,6 +479,8 @@ static void WebWebviewJniRegister()
 {
     const char className[] = "ohos.ace.adapter.capability.web.AceWebBase";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebviewControllerJni::Register, className);
+    const char dataBaseClassName[] = "ohos.ace.plugin.webviewplugin.WebDataBasePlugin";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&WebDataBaseJni::Register, dataBaseClassName);
 }
 #endif
 

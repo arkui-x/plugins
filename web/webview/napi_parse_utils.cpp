@@ -227,4 +227,34 @@ bool NapiParseUtils::ParseDouble(napi_env env, napi_value argv, double& outValue
     outValue = value;
     return true;
 }
+
+bool NapiParseUtils::ParseSize(napi_env env, napi_value argv, size_t& outValue)
+{
+    size_t bufferSize = 0;
+    napi_valuetype valueType = napi_null;
+
+    napi_typeof(env, argv, &valueType);
+    if (valueType != napi_string) {
+        return false;
+    }
+    napi_get_value_string_utf8(env, argv, nullptr, 0, &bufferSize);
+    if (bufferSize > MAX_STRING_LENGTH) {
+        return false;
+    }
+    outValue = bufferSize;
+    return true;
+}
+
+bool NapiParseUtils::ParseChar(napi_env env, napi_value argv, char* buffer, size_t bufferSize)
+{
+    if (bufferSize == 0) {
+        return false;
+    }
+    size_t jsStringLength = 0;
+    napi_get_value_string_utf8(env, argv, buffer, bufferSize + 1, &jsStringLength);
+    if (jsStringLength != bufferSize) {
+        return false;
+    }
+    return true;
+}
 } // namespace OHOS::NWeb

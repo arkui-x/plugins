@@ -37,6 +37,7 @@ enum class ResourceType : uint32_t {
 };
 
 const std::string WEBVIEW_CONTROLLER_CLASS_NAME = "WebviewController";
+
 class NapiWebviewController {
 public:
     NapiWebviewController() {}
@@ -56,6 +57,25 @@ private:
 
     static napi_value LoadUrlWithHttpHeaders(napi_env env, napi_callback_info info, const std::string& url,
         const napi_value* argv, WebviewController* webviewController);    
+};
+
+class NapiWebDataBase {
+public:
+    NapiWebDataBase() {}
+    ~NapiWebDataBase() = default;
+
+    static napi_value Init(napi_env env, napi_value exports);
+
+private:
+    static napi_value JsConstructor(napi_env env, napi_callback_info info);
+
+    static napi_value ExistHttpAuthCredentials(napi_env env, napi_callback_info info);
+
+    static napi_value DeleteHttpAuthCredentials(napi_env env, napi_callback_info info);
+
+    static napi_value SaveHttpAuthCredentials(napi_env env, napi_callback_info info);
+
+    static napi_value GetHttpAuthCredentials(napi_env env, napi_callback_info info);
 };
 }
 #endif

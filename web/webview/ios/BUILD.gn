@@ -15,7 +15,10 @@ import("//build/ohos.gni")
 import("//plugins/web/webview/web_webview.gni")
 
 ohos_source_set("web_webview_ios") {
-  sources = [ "webview_controller_ios.cpp" ]
+  sources = [
+    "web_data_base_ios.cpp",
+    "webview_controller_ios.cpp",
+  ]
 
   include_dirs = web_include
   include_dirs += [ "${WEB_PLUGIN_ROOT_DIR}" ]

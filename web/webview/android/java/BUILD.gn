@@ -14,8 +14,33 @@
 import("//build/ohos.gni")
 import("//plugins/web/webview/web_webview.gni")
 
+java_library("web_webview_android_java") {
+  java_files = [
+    "src/ohos/ace/plugin/webviewplugin/WebDataBaseColumns.java",
+    "src/ohos/ace/plugin/webviewplugin/WebDataBaseHelper.java",
+    "src/ohos/ace/plugin/webviewplugin/WebDataBaseCredential.java",
+    "src/ohos/ace/plugin/webviewplugin/WebDataBaseHttpAuth.java",
+    "src/ohos/ace/plugin/webviewplugin/WebDataBaseCredentialDao.java",
+    "src/ohos/ace/plugin/webviewplugin/WebDataBaseHttpAuthDao.java",
+    "src/ohos/ace/plugin/webviewplugin/WebDataBaseManager.java",
+    "src/ohos/ace/plugin/webviewplugin/WebDataBasePlugin.java",
+  ]
+  subsystem_name = "plugins"
+  part_name = "web_webview"
+}
+
+ohos_combine_jars("web_webview_java") {
+  deps = [ ":web_webview_android_java" ]
+
+  subsystem_name = "plugins"
+  part_name = "web_webview"
+  jar_path = "${root_out_dir}/plugins/web/ace_web_webview_android.jar"
+}
+
 ohos_source_set("web_webview_android_jni") {
   sources = [
+    "jni/web_data_base_android.cpp",
+    "jni/web_data_base_jni.cpp",
     "jni/webview_controller_android.cpp",
     "jni/webview_controller_jni.cpp",
   ]
@@ -25,7 +50,10 @@ ohos_source_set("web_webview_android_jni") {
 
   defines = [ "ANDROID_PLATFORM" ]
 
-  deps = [ "//plugins/interfaces/native:ace_plugin_util_android" ]
+  deps = [
+    ":web_webview_java",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+  ]
 
   subsystem_name = "plugins"
   part_name = "web_webview"
