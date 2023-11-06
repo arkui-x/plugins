@@ -56,7 +56,23 @@ private:
     static napi_value LoadUrl(napi_env env, napi_callback_info info);
 
     static napi_value LoadUrlWithHttpHeaders(napi_env env, napi_callback_info info, const std::string& url,
-        const napi_value* argv, WebviewController* webviewController);    
+        const napi_value* argv, WebviewController* webviewController);
+
+    static napi_value LoadData(napi_env env, napi_callback_info info);
+
+    static napi_value GetUrl(napi_env env, napi_callback_info info);
+
+    static napi_value AccessForward(napi_env env, napi_callback_info info);
+
+    static napi_value AccessBackward(napi_env env, napi_callback_info info);
+
+    static napi_value Forward(napi_env env, napi_callback_info info);
+
+    static napi_value Backward(napi_env env, napi_callback_info info);
+
+    static napi_value Refresh(napi_env env, napi_callback_info info);
+
+    static napi_value RunJavaScript(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {
