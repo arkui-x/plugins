@@ -26,7 +26,9 @@ template("plugin_zlib_static") {
       "include",
       "napi",
       "//commonlibrary/c_utils/base/include",
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
       "//foundation/multimedia/image_framework/mock/native/include/secure",
+      "//plugins/interfaces/native",
       "//plugins/interfaces/native/inner_api",
     ]
 
@@ -46,15 +48,20 @@ template("plugin_zlib_static") {
     ]
 
     deps = [
-      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
       "//third_party/zlib:libz",
     ]
 
     if (platform == "android") {
-      deps += [ "//commonlibrary/c_utils/base:utils" ]
+      deps += [
+        "//commonlibrary/c_utils/base:utils",
+        "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
+      ]
+      defines += [ "ANDROID_PLATFORM" ]
     } else if (platform == "ios") {
       deps += [ "//commonlibrary/c_utils/base:utilsbase" ]
+      defines += [ "IOS_PLATFORM" ]
     }
 
     subsystem_name = "plugins"
