@@ -31,6 +31,8 @@ constexpr int INTEGER_FOUR = 4;
 constexpr int INTEGER_FIVE = 5;
 constexpr int MAX_CUSTOM_SCHEME_NAME_LENGTH = 32;
 constexpr int MAX_CUSTOM_SCHEME_SIZE = 10;
+constexpr int32_t MAX_STRING_LENGTH = 40960;
+constexpr int32_t MAX_PWD_LENGTH = 256;
 
 class NapiParseUtils {
 public:
@@ -46,6 +48,8 @@ public:
     static bool ParseDoubleArray(napi_env env, napi_value argv, std::vector<double>& outValue);
     static bool ParseInt64Array(napi_env env, napi_value argv, std::vector<int64_t>& outValue);
     static bool ParseFloat(napi_env env, napi_value argv, float& outValue);
+    static bool ParseSize(napi_env env, napi_value argv, size_t& outValue);
+    static bool ParseChar(napi_env env, napi_value argv, char* buffer, size_t bufferSize);
 };
 } // namespace OHOS::Plugin
 #endif
