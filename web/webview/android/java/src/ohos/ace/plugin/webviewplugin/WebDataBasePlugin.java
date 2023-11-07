@@ -24,6 +24,7 @@ public class WebDataBasePlugin {
 
     public WebDataBasePlugin(Context context) {
         dataBase = WebDataBaseManager.getInstance(context);
+        nativeInit();
     }
 
     public boolean existHttpAuthCredentials() {
