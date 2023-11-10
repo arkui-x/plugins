@@ -105,7 +105,7 @@ template("plugin_i18n_static") {
       "${ABSEIL_DIR}/absl/base/internal/spinlock_win32.inc",
       "${ABSEIL_DIR}/absl/base/internal/sysinfo.cc",
       "${ABSEIL_DIR}/absl/base/internal/thread_identity.cc",
-      "${ABSEIL_DIR}/absl/base/internal/throw_delegate.cc"
+      "${ABSEIL_DIR}/absl/base/internal/throw_delegate.cc",
       "${ABSEIL_DIR}/absl/base/internal/unscaledcycleclock.cc",
       "${ABSEIL_DIR}/absl/base/log_severity.cc",
       "${ABSEIL_DIR}/absl/numeric/int128.cc",
