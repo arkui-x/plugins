@@ -37,6 +37,7 @@ template("plugin_intl_static") {
     sources = [
       "framework/collator.cpp",
       "framework/date_time_format.cpp",
+      "framework/icu_data.cpp",
       "framework/locale_info.cpp",
       "framework/locale_config.cpp",
       "framework/measure_data.cpp",
@@ -45,6 +46,7 @@ template("plugin_intl_static") {
       "framework/relative_time_format.cpp",
       "framework/utils.cpp",
       "intl_addon.cpp",
+      "//third_party/icu/ohos_icu4j/data/lite/icudt69l_dat.S",
     ]
 
     deps = [
