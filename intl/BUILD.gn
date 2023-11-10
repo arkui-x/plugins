@@ -35,25 +35,25 @@ template("plugin_intl_static") {
     ]
 
     sources = [
+      "//third_party/icu/ohos_icu4j/data/lite/icudt69l_dat.S",
       "framework/collator.cpp",
       "framework/date_time_format.cpp",
       "framework/icu_data.cpp",
-      "framework/locale_info.cpp",
       "framework/locale_config.cpp",
+      "framework/locale_info.cpp",
       "framework/measure_data.cpp",
       "framework/number_format.cpp",
       "framework/plural_rules.cpp",
       "framework/relative_time_format.cpp",
       "framework/utils.cpp",
       "intl_addon.cpp",
-      "//third_party/icu/ohos_icu4j/data/lite/icudt69l_dat.S",
     ]
 
     deps = [
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
-      "//plugins/libs/napi:napi_${target_os}",
       "//plugins/libs/icu:icu_${target_os}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     if (platform == "android") {
