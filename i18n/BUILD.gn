@@ -52,10 +52,10 @@ template("plugin_i18n_static") {
       "//third_party/icu/ohos_icu4j/data/lite/icudt69l_dat.S",
     ]
 
+    # libphonnumber
     LIBPHONE_DIR = "//third_party/libphonenumber/cpp"
 
     sources += [
-      # libphonnumber
       "${LIBPHONE_DIR}/src/phonenumbers/phonenumber.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/default_logger.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/phonenumbermatch.cc",
@@ -90,27 +90,27 @@ template("plugin_i18n_static") {
       "//third_party/protobuf/src/google/protobuf",
     ]
 
+    # abseil-cpp
     ABSEIL_DIR = "abseil-cpp"
 
     sources += [
-      # absl_base
       "${ABSEIL_DIR}/absl/base/internal/cycleclock.cc",
       "${ABSEIL_DIR}/absl/base/internal/low_level_alloc.cc",
-      "${ABSEIL_DIR}/absl/base/internal/spinlock.cc",
-      "${ABSEIL_DIR}/absl/base/internal/sysinfo.cc",
-      "${ABSEIL_DIR}/absl/base/internal/thread_identity.cc",
-      "${ABSEIL_DIR}/absl/base/internal/unscaledcycleclock.cc",
-      # absl_log_severity
-      "${ABSEIL_DIR}/absl/base/log_severity.cc",
-      # absl_raw_logging_internal
       "${ABSEIL_DIR}/absl/base/internal/raw_logging.cc",
-      # absl_spinlock_wait
+      "${ABSEIL_DIR}/absl/base/internal/spinlock.cc",
       "${ABSEIL_DIR}/absl/base/internal/spinlock_akaros.inc",
       "${ABSEIL_DIR}/absl/base/internal/spinlock_linux.inc",
       "${ABSEIL_DIR}/absl/base/internal/spinlock_posix.inc",
       "${ABSEIL_DIR}/absl/base/internal/spinlock_wait.cc",
       "${ABSEIL_DIR}/absl/base/internal/spinlock_win32.inc",
-      # absl_strings
+      "${ABSEIL_DIR}/absl/base/internal/sysinfo.cc",
+      "${ABSEIL_DIR}/absl/base/internal/thread_identity.cc",
+      "${ABSEIL_DIR}/absl/base/internal/throw_delegate.cc"
+      "${ABSEIL_DIR}/absl/base/internal/unscaledcycleclock.cc",
+      "${ABSEIL_DIR}/absl/base/log_severity.cc",
+      "${ABSEIL_DIR}/absl/numeric/int128.cc",
+      "${ABSEIL_DIR}/absl/numeric/int128_have_intrinsic.inc",
+      "${ABSEIL_DIR}/absl/numeric/int128_no_intrinsic.inc",
       "${ABSEIL_DIR}/absl/strings/ascii.cc",
       "${ABSEIL_DIR}/absl/strings/charconv.cc",
       "${ABSEIL_DIR}/absl/strings/escaping.cc",
@@ -121,9 +121,11 @@ template("plugin_i18n_static") {
       "${ABSEIL_DIR}/absl/strings/internal/escaping.cc",
       "${ABSEIL_DIR}/absl/strings/internal/memutil.cc",
       "${ABSEIL_DIR}/absl/strings/internal/memutil.h",
+      "${ABSEIL_DIR}/absl/strings/internal/ostringstream.cc",
       "${ABSEIL_DIR}/absl/strings/internal/stl_type_traits.h",
       "${ABSEIL_DIR}/absl/strings/internal/str_join_internal.h",
       "${ABSEIL_DIR}/absl/strings/internal/str_split_internal.h",
+      "${ABSEIL_DIR}/absl/strings/internal/utf8.cc",
       "${ABSEIL_DIR}/absl/strings/match.cc",
       "${ABSEIL_DIR}/absl/strings/numbers.cc",
       "${ABSEIL_DIR}/absl/strings/str_cat.cc",
@@ -131,15 +133,7 @@ template("plugin_i18n_static") {
       "${ABSEIL_DIR}/absl/strings/str_split.cc",
       "${ABSEIL_DIR}/absl/strings/string_view.cc",
       "${ABSEIL_DIR}/absl/strings/substitute.cc",
-      # absl_int128
-      "${ABSEIL_DIR}/absl/numeric/int128.cc",
-      "${ABSEIL_DIR}/absl/numeric/int128_have_intrinsic.inc",
-      "${ABSEIL_DIR}/absl/numeric/int128_no_intrinsic.inc",
-      # absl_strings_internal
-      "${ABSEIL_DIR}/absl/strings/internal/ostringstream.cc",
-      "${ABSEIL_DIR}/absl/strings/internal/utf8.cc",
-      # absl_throw_delegate
-      "${ABSEIL_DIR}/absl/base/internal/throw_delegate.cc"
+
     ]
 
     include_dirs += [ "${ABSEIL_DIR}/" ]
@@ -175,9 +169,9 @@ template("plugin_i18n_static") {
       "${PROTOBUF_DIR}/src/google/protobuf/wire_format_lite.cc",
     ]
     include_dirs += [
+      "${PROTOBUF_DIR}/src",
       "${PROTOBUF_DIR}/src/google/protobuf/**/*.h",
       "${PROTOBUF_DIR}/src/google/protobuf/**/*.inc",
-      "${PROTOBUF_DIR}/src",
     ]
 
     defines += [
