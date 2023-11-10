@@ -36,9 +36,9 @@ public:
         bool sentenceCase);
     static std::string GetDisplayRegion(const std::string &region, const std::string &displayLocale,
         bool sentenceCase);
-private:
-    static std::unique_ptr<Plugin::I18N> plugin;
     static bool IsValidRegion(const std::string &region);
+private:
+    static std::unique_ptr<Plugin::I18N> plugin; 
 };
 } // namespace I18n
 } // namespace Global
