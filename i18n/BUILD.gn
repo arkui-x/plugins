@@ -35,6 +35,7 @@ template("plugin_i18n_static") {
     ]
 
     sources = [
+      "//third_party/icu/ohos_icu4j/data/lite/icudt69l_dat.S",
       "framework/character.cpp",
       "framework/error_util.cpp",
       "framework/i18n_break_iterator.cpp",
@@ -43,42 +44,41 @@ template("plugin_i18n_static") {
       "framework/i18n_timezone.cpp",
       "framework/icu_data.cpp",
       "framework/index_util.cpp",
-      "framework/locale_info.cpp",
       "framework/locale_config.cpp",
+      "framework/locale_info.cpp",
       "framework/phone_number_format.cpp",
       "framework/plural_rules.cpp",
       "framework/utils.cpp",
       "i18n_addon.cpp",
-      "//third_party/icu/ohos_icu4j/data/lite/icudt69l_dat.S",
     ]
 
     # libphonnumber
     LIBPHONE_DIR = "//third_party/libphonenumber/cpp"
 
     sources += [
-      "${LIBPHONE_DIR}/src/phonenumbers/phonenumber.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/alternate_format.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/asyoutypeformatter.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/base/strings/string_piece.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/default_logger.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/logger.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/metadata.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/phonemetadata.pb.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/phonenumber.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/phonenumber.pb.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/phonenumbermatch.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/phonenumbermatcher.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/regexp_cache.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/phonemetadata.pb.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/string_byte_sink.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/asyoutypeformatter.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/phonenumberutil.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/regexp_adapter_icu.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/phonenumber.pb.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/base/strings/string_piece.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/alternate_format.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/shortnumberinfo.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/utf/unilib.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/utf/unicodetext.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/metadata.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/short_metadata.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/regex_based_matcher.cc",
-      "${LIBPHONE_DIR}/src/phonenumbers/logger.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/regexp_adapter_icu.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/regexp_cache.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/short_metadata.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/shortnumberinfo.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/string_byte_sink.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/stringutil.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/unicodestring.cc",
       "${LIBPHONE_DIR}/src/phonenumbers/utf/rune.c",
+      "${LIBPHONE_DIR}/src/phonenumbers/utf/unicodetext.cc",
+      "${LIBPHONE_DIR}/src/phonenumbers/utf/unilib.cc",
     ]
 
     include_dirs += [
@@ -133,7 +133,6 @@ template("plugin_i18n_static") {
       "${ABSEIL_DIR}/absl/strings/str_split.cc",
       "${ABSEIL_DIR}/absl/strings/string_view.cc",
       "${ABSEIL_DIR}/absl/strings/substitute.cc",
-
     ]
 
     include_dirs += [ "${ABSEIL_DIR}/" ]
@@ -183,8 +182,8 @@ template("plugin_i18n_static") {
     deps = [
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
-      "//plugins/libs/napi:napi_${target_os}",
       "//plugins/libs/icu:icu_${target_os}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     if (platform == "android") {
