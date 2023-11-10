@@ -22,7 +22,6 @@
 #include "map"
 #include "new"
 #include "set"
-#include "securec.h"
 #include "string"
 #include "utility"
 
