@@ -20,6 +20,7 @@
 #include "error_util.h"
 #include "hilog/log.h"
 #include "i18n_calendar.h"
+#include "icu_data.h"
 #include "node_api.h"
 #include "plugin_utils.h"
 #include "unicode/locid.h"
@@ -69,6 +70,11 @@ static std::unordered_map<std::string, UCalendarDateFields> g_fieldsMap {
     { "julian_day", UCAL_JULIAN_DAY },
     { "milliseconds_in_day", UCAL_MILLISECONDS_IN_DAY },
     { "is_leap_month", UCAL_IS_LEAP_MONTH },
+};
+static std::unordered_set<std::string> g_fieldsInFunctionAdd {
+    "year", "month", "date", "hour", "minute", "second", "millisecond",
+    "week_of_year", "week_of_month", "day_of_year", "day_of_week",
+    "day_of_week_in_month", "hour_of_day", "milliseconds_in_day",
 };
 static std::unordered_map<std::string, CalendarType> g_typeMap {
     { "buddhist", CalendarType::BUDDHIST },
@@ -352,47 +358,31 @@ std::string I18nAddon::ModifyOrder(std::string &pattern)
 {
     int order[3] = { 0 }; // total 3 elements 'y', 'M'/'L', 'd'
     int lengths[4] = { 0 }; // first elements is the currently found elememnts, thus 4 elements totally.
-    size_t len = pattern.length();
-    for (size_t i = 0; i < len; ++i) {
+    bool flag = true;
+    for (size_t i = 0; i < pattern.length(); ++i) {
         char ch = pattern[i];
-        if (((ch >= 'a') && (ch <= 'z')) || ((ch >= 'A') && (ch <= 'Z'))) {
+        if (flag && std::isalpha(ch)) {
             ProcessNormal(ch, order, 3, lengths, 4); // 3, 4 are lengths of these arrays
         } else if (ch == '\'') {
-            ++i;
-            while ((i < len) && pattern[i] != '\'') {
-                ++i;
-            }
+            flag = !flag;
         }
     }
+    std::unordered_map<char, int> pattern2index = {
+        { 'y', 1 },
+        { 'L', 2 },
+        { 'd', 3 },
+    };
     std::string ret;
     for (int i = 0; i < 3; ++i) { // 3 is the size of orders
-        switch (order[i]) {
-            case 'y': {
-                if ((lengths[1] <= 0) || (lengths[1] > 6)) { // 6 is the max length of a filed
-                    break;
-                }
-                ret.append(lengths[1], order[i]);
-                break;
-            }
-            case 'L': {
-                if ((lengths[2] <= 0) || (lengths[2] > 6)) { // 6 is the max length of a filed, 2 is the index
-                    break;
-                }
-                ret.append(lengths[2], order[i]); // 2 is the index of 'L'
-                break;
-            }
-            case 'd': {
-                if ((lengths[3] <= 0) || (lengths[3] > 6)) { // 6 is the max length of a filed, 3 is the index
-                    break;
-                }
-                ret.append(lengths[3], order[i]); // 3 is the index of 'y'
-                break;
-            }
-            default: {
-                break;
-            }
+        auto it = pattern2index.find(order[i]);
+        if (it == pattern2index.end()) {
+            continue;
         }
-        if ((i < 2) && (order[i] != 0)) { // 2 is the index of 'L'
+        int index = it->second;
+        if ((lengths[index] > 0) && (lengths[index] <= 6)) { // 6 is the max length of a filed
+            ret.append(lengths[index], order[i]);
+        }
+        if (i < 2) { // 2 is the size of the order minus one
             ret.append(1, '-');
         }
     }
@@ -1106,6 +1096,30 @@ napi_value I18nAddon::IsRTL(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value I18nAddon::InitPhoneNumberFormat(napi_env env, napi_value exports)
+{
+    napi_status status = napi_ok;
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_FUNCTION("isValidNumber", IsValidPhoneNumber),
+        DECLARE_NAPI_FUNCTION("format", FormatPhoneNumber),
+    };
+
+    napi_value constructor;
+    status = napi_define_class(env, "PhoneNumberFormat", NAPI_AUTO_LENGTH, PhoneNumberFormatConstructor, nullptr,
+                               sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Define class failed when InitPhoneNumberFormat");
+        return nullptr;
+    }
+
+    status = napi_set_named_property(env, exports, "PhoneNumberFormat", constructor);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Set property failed when InitPhoneNumberFormat");
+        return nullptr;
+    }
+    return exports;
+}
+
 void GetOptionValue(napi_env env, napi_value options, const std::string &optionName,
                     std::map<std::string, std::string> &map)
 {
@@ -1131,6 +1145,157 @@ void GetOptionValue(napi_env env, napi_value options, const std::string &optionN
             map.insert(make_pair(optionName, optionBuf.data()));
         }
     }
+}
+
+napi_value I18nAddon::PhoneNumberFormatConstructor(napi_env env, napi_callback_info info)
+{
+    size_t argc = 2;
+    napi_value argv[2] = { 0 };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_valuetype::napi_string) {
+        napi_throw_type_error(env, nullptr, "Parameter type does not match");
+        return nullptr;
+    }
+    size_t len = 0;
+    status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &len);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Get country tag length failed");
+        return nullptr;
+    }
+    std::vector<char> country (len + 1);
+    status = napi_get_value_string_utf8(env, argv[0], country.data(), len + 1, &len);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Get country tag failed");
+        return nullptr;
+    }
+    std::map<std::string, std::string> options;
+    GetOptionValue(env, argv[1], "type", options);
+    std::unique_ptr<I18nAddon> obj = nullptr;
+    obj = std::make_unique<I18nAddon>();
+    status = napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()),
+                       I18nAddon::Destructor, nullptr, nullptr);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Wrap I18nAddon failed");
+        return nullptr;
+    }
+    if (!obj->InitPhoneNumberFormatContext(env, info, country.data(), options)) {
+        return nullptr;
+    }
+    obj.release();
+    return thisVar;
+}
+
+bool I18nAddon::InitPhoneNumberFormatContext(napi_env env, napi_callback_info info, const std::string &country,
+                                             const std::map<std::string, std::string> &options)
+{
+    napi_value global = nullptr;
+    napi_status status = napi_get_global(env, &global);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Get global failed");
+        return false;
+    }
+    env_ = env;
+    phonenumberfmt_ = PhoneNumberFormat::CreateInstance(country, options);
+
+    return phonenumberfmt_ != nullptr;
+}
+
+napi_value I18nAddon::IsValidPhoneNumber(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = { 0 };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_valuetype::napi_string) {
+        napi_throw_type_error(env, nullptr, "Parameter type does not match");
+        return nullptr;
+    }
+
+    size_t len = 0;
+    napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &len);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Get phone number length failed");
+        return nullptr;
+    }
+    std::vector<char> buf(len + 1);
+    status = napi_get_value_string_utf8(env, argv[0], buf.data(), len + 1, &len);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Get phone number failed");
+        return nullptr;
+    }
+
+    I18nAddon *obj = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if (status != napi_ok || !obj || !obj->phonenumberfmt_) {
+        HiLog::Error(LABEL, "GetPhoneNumberFormat object failed");
+        return nullptr;
+    }
+
+    bool isValid = obj->phonenumberfmt_->isValidPhoneNumber(buf.data());
+
+    napi_value result = nullptr;
+    status = napi_get_boolean(env, isValid, &result);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Create boolean failed");
+        return nullptr;
+    }
+
+    return result;
+}
+
+napi_value I18nAddon::FormatPhoneNumber(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = { 0 };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_valuetype::napi_string) {
+        napi_throw_type_error(env, nullptr, "Parameter type does not match");
+        return nullptr;
+    }
+
+    size_t len = 0;
+    napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &len);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Get phone number length failed");
+        return nullptr;
+    }
+    std::vector<char> buf(len + 1);
+    status = napi_get_value_string_utf8(env, argv[0], buf.data(), len + 1, &len);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Get phone number failed");
+        return nullptr;
+    }
+
+    I18nAddon *obj = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if (status != napi_ok || !obj || !obj->phonenumberfmt_) {
+        HiLog::Error(LABEL, "Get PhoneNumberFormat object failed");
+        return nullptr;
+    }
+
+    std::string formattedPhoneNumber = obj->phonenumberfmt_->format(buf.data());
+
+    napi_value result = nullptr;
+    status = napi_create_string_utf8(env, formattedPhoneNumber.c_str(), NAPI_AUTO_LENGTH, &result);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Create format phone number failed");
+        return nullptr;
+    }
+    return result;
 }
 
 std::string I18nAddon::GetString(napi_env &env, napi_value &value, int32_t &code)
@@ -1165,8 +1330,11 @@ napi_value I18nAddon::InitI18nCalendar(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getMinimalDaysInFirstWeek", GetMinimalDaysInFirstWeek),
         DECLARE_NAPI_FUNCTION("setMinimalDaysInFirstWeek", SetMinimalDaysInFirstWeek),
         DECLARE_NAPI_FUNCTION("get", Get),
+        DECLARE_NAPI_FUNCTION("add", Add),
         DECLARE_NAPI_FUNCTION("getDisplayName", GetDisplayName),
-        DECLARE_NAPI_FUNCTION("isWeekend", IsWeekend)
+        DECLARE_NAPI_FUNCTION("getTimeInMillis", GetTimeInMillis),
+        DECLARE_NAPI_FUNCTION("isWeekend", IsWeekend),
+        DECLARE_NAPI_FUNCTION("compareDays", CompareDays)
     };
     napi_value constructor = nullptr;
     status = napi_define_class(env, "I18nCalendar", NAPI_AUTO_LENGTH, CalendarConstructor, nullptr,
@@ -1636,6 +1804,118 @@ napi_value I18nAddon::Get(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value I18nAddon::Add(napi_env env, napi_callback_info info)
+{
+    size_t argc = 2;
+    napi_value argv[2] = { 0 };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "can not obtain add function param.");
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
+        return nullptr;
+    }
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_valuetype::napi_string) {
+        HiLog::Error(LABEL, "Parameter type does not match");
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
+        return nullptr;
+    }
+    int32_t code = 0;
+    std::string field = GetAddField(env, argv[0], code);
+    if (code) {
+        return nullptr;
+    }
+    napi_typeof(env, argv[1], &valueType);
+    if (valueType != napi_valuetype::napi_number) {
+        HiLog::Error(LABEL, "Parameter type does not match");
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
+        return nullptr;
+    }
+    int32_t amount;
+    status = napi_get_value_int32(env, argv[1], &amount);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Can not obtain add function param.");
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, true);
+        return nullptr;
+    }
+    I18nAddon *obj = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if (status != napi_ok || !obj || !obj->calendar_) {
+        HiLog::Error(LABEL, "Get calendar object failed");
+        return nullptr;
+    }
+    obj->calendar_->Add(g_fieldsMap[field], amount);
+    return nullptr;
+}
+
+napi_value I18nAddon::GetDisplayName(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = { 0 };
+    argv[0] = nullptr;
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+    if (valueType != napi_valuetype::napi_string) {
+        napi_throw_type_error(env, nullptr, "Parameter type does not match");
+        return nullptr;
+    }
+    int32_t code = 0;
+    std::string localeTag = GetString(env, argv[0], code);
+    if (code) {
+        return nullptr;
+    }
+    I18nAddon *obj = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if (status != napi_ok || !obj || !obj->calendar_) {
+        HiLog::Error(LABEL, "Get calendar object failed");
+        return nullptr;
+    }
+    if (!obj->calendar_) {
+        return nullptr;
+    }
+    std::string name = obj->calendar_->GetDisplayName(localeTag);
+    napi_value result = nullptr;
+    status = napi_create_string_utf8(env, name.c_str(), NAPI_AUTO_LENGTH, &result);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Create calendar name string failed");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value I18nAddon::GetTimeInMillis(napi_env env, napi_callback_info info)
+{
+    bool flag = true;
+    size_t argc = 0;
+    napi_value *argv = nullptr;
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    I18nAddon *obj = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    if (status != napi_ok || !obj || !obj->calendar_) {
+        HiLog::Error(LABEL, "Get calendar object failed");
+        flag = false;
+    }
+    UDate temp = 0;
+    if (flag) {
+        temp = obj->calendar_->GetTimeInMillis();
+    }
+    napi_value result = nullptr;
+    status = napi_create_double(env, temp, &result);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "Create UDate failed");
+        napi_create_double(env, 0, &result);
+    }
+    return result;
+}
+
 napi_value I18nAddon::IsWeekend(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
@@ -1686,43 +1966,52 @@ napi_value I18nAddon::IsWeekend(napi_env env, napi_callback_info info)
     return result;
 }
 
-napi_value I18nAddon::GetDisplayName(napi_env env, napi_callback_info info)
+napi_value I18nAddon::CompareDays(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    argv[0] = nullptr;
     napi_value thisVar = nullptr;
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    napi_valuetype valueType = napi_valuetype::napi_undefined;
-    napi_typeof(env, argv[0], &valueType);
-    if (valueType != napi_valuetype::napi_string) {
-        napi_throw_type_error(env, nullptr, "Parameter type does not match");
+    napi_value result = nullptr;
+    UDate milliseconds = 0;
+    napi_status status = napi_get_date_value(env, argv[0], &milliseconds);
+    if (status != napi_ok) {
+        HiLog::Error(LABEL, "compareDays function param is not Date");
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
         return nullptr;
     }
-    int32_t code = 0;
-    std::string localeTag = GetString(env, argv[0], code);
-    if (code) {
-        return nullptr;
-    }
+
     I18nAddon *obj = nullptr;
-    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->calendar_) {
         HiLog::Error(LABEL, "Get calendar object failed");
-        return nullptr;
+        status = napi_create_int32(env, 0, &result); // if error return 0
+        return result;
     }
-    if (!obj->calendar_) {
-        return nullptr;
-    }
-    std::string name = obj->calendar_->GetDisplayName(localeTag);
-    napi_value result = nullptr;
-    status = napi_create_string_utf8(env, name.c_str(), NAPI_AUTO_LENGTH, &result);
-    if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create calendar name string failed");
-        return nullptr;
-    }
+
+    int32_t diff_date = obj->calendar_->CompareDays(milliseconds);
+    status = napi_create_int32(env, diff_date, &result);
     return result;
 }
+
+std::string I18nAddon::GetAddField(napi_env &env, napi_value &value, int32_t &code)
+{
+    std::string field = GetString(env, value, code);
+    if (code != 0) {
+        HiLog::Error(LABEL, "can't get string from js array param.");
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, true);
+        return field;
+    }
+    if (g_fieldsInFunctionAdd.find(field) == g_fieldsInFunctionAdd.end()) {
+        code = 1;
+        HiLog::Error(LABEL, "Parameter rangs do not match");
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, true);
+        return field;
+    }
+    return field;
+}
+
 
 napi_value I18nAddon::InitIndexUtil(napi_env env, napi_value exports)
 {
@@ -1736,7 +2025,7 @@ napi_value I18nAddon::InitIndexUtil(napi_env env, napi_value exports)
     napi_status status = napi_define_class(env, "IndexUtil", NAPI_AUTO_LENGTH, IndexUtilConstructor, nullptr,
         sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Define class failed when InitPhoneNumberFormat");
+        HiLog::Error(LABEL, "Define class failed when InitIndexUtil");
         return nullptr;
     }
 
@@ -2951,6 +3240,7 @@ napi_value I18nAddon::Normalize(napi_env env, napi_callback_info info)
 napi_value Init(napi_env env, napi_value exports)
 {
     napi_value val = I18nAddon::Init(env, exports);
+    val = I18nAddon::InitPhoneNumberFormat(env, val);
     val = I18nAddon::InitBreakIterator(env, val);
     val = I18nAddon::InitI18nCalendar(env, val);
     val = I18nAddon::InitIndexUtil(env, val);
@@ -2985,6 +3275,7 @@ extern "C" __attribute__((constructor)) void I18nRegister()
     I18NPluginJniRegister();
 #endif
     napi_module_register(&g_i18nModule);
+    InitIcuData();
 }
 } // namespace I18n
 } // namespace Global
