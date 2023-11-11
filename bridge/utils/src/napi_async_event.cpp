@@ -14,6 +14,7 @@
  */
 
 #include "napi_async_event.h"
+#include "log.h"
 
 #include "napi_utils.h"
 #include "napi/native_api.h"
@@ -103,13 +104,18 @@ void NAPIAsyncEvent::SetMethodParameter(const std::string& jsonStr)
 
 void NAPIAsyncEvent::SetMethodParameter(uint8_t* data, size_t size)
 {
-    std::get<uint8_t*>(methodBuffer_) = data;
-    std::get<size_t>(methodBuffer_) = size;
+    std::tuple<uint8_t*, size_t> methodBuffer;
+    std::get<uint8_t*>(methodBuffer) = data;
+    std::get<size_t>(methodBuffer) = size; 
+    taskQueue_.push_back(methodBuffer);
 }
 
 std::tuple<uint8_t*, size_t> NAPIAsyncEvent::GetMethodParameter(void)
 {
-    return methodBuffer_;
+    std::tuple<uint8_t*, size_t> nextTask = taskQueue_.front();
+    taskQueue_.pop_front();
+
+    return nextTask;
 }
 
 bool NAPIAsyncEvent::CreateCallback(napi_value callback)

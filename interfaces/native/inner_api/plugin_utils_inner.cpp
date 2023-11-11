@@ -117,4 +117,9 @@ void PluginUtilsInner::JSRegisterGrantResult(GrantResult grantResult)
     OHOS::Ace::Platform::GrantResultManager::JSRegisterGrantResult(grantResult);
 #endif
 }
+
+int32_t PluginUtilsInner::GetInstanceId()
+{
+    return OHOS::Ace::Container::CurrentId();;
+}
 } // namespace OHOS::Plugin

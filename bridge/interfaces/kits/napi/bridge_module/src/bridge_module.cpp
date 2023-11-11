@@ -29,8 +29,8 @@
 namespace OHOS::Plugin::Bridge {
 static constexpr const char* BRIDGE_MODULE_NAME = "bridge";
 static constexpr const char* INTERFACE_BRIDGE_TYPE_ENUM = "BridgeType";
-static constexpr int32_t BRIDGE_TYPE_JSON = 0;
-static constexpr int32_t BRIDGE_TYPE_BINARY = 1;
+static constexpr const int32_t BRIDGE_TYPE_JSON = 0;
+static constexpr const int32_t BRIDGE_TYPE_BINARY = 1;
 static constexpr const char* BRIDGE_TYPE_ENUM_JSON_NAME = "JSON_TYPE";
 static constexpr const char* BRIDGE_TYPE_ENUM_BINARY_NAME = "BINARY_TYPE";
 napi_value BridgeModule::InitBridgeModule(napi_env env, napi_value exports)
@@ -82,8 +82,8 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
             auto bridge = reinterpret_cast<Bridge*>(data);
             bool isTerminate = bridge->GetTerminate();
             if (!isTerminate) {
-                LOGI("deleteBridge()");
-                BridgeWrap::DeleteBridge(bridge->GetBridgeName());
+                LOGI("Delete bridge object");
+                BridgeWrap::DeleteBridge(bridge->GetBridgeName(), bridge->GetInstanceID());
             }
         },
         nullptr, nullptr);
@@ -99,6 +99,7 @@ void BridgeModule::DefinePluginBridgeObjectClass(napi_env env, napi_value export
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_UNREGISTER_METHOD, BridgeObject::UnRegisterMethod),
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_SEND_MESSAGE, BridgeObject::SendMessage),
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_REGISTER_ON_MESSAGE, BridgeObject::SetMessageListener),
+        DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_CALL_METHOD_CALLBACK, BridgeObject::CallMethodWithCallBack),
     };
     PluginUtilsNApi::DefineClass(env, exports, properties, INTERFACE_PLUGIN_BRIDGE_OBJECT);
 }
@@ -259,12 +260,13 @@ napi_value BridgeModule::BridgeObject::CallMethod(napi_env env, napi_callback_in
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    size_t paramCount = (argc > PluginUtilsNApi::ARG_NUM_1) ? argc - 1 : 0;
+    size_t paramCount =
+        (argc > PluginUtilsNApi::ARG_NUM_1) ? argc - PluginUtilsNApi::ARG_NUM_1 : PluginUtilsNApi::ARG_NUM_0;
     bool ret = false;
-    if (paramCount > 0) {
-        ret = methodData->GetParamsByRecord(paramCount, &argv[1]);
+    if (paramCount > PluginUtilsNApi::ARG_NUM_0) {
+        ret = methodData->GetParamsByRecord(paramCount, &argv[PluginUtilsNApi::ARG_NUM_1]);
     } else {
-        ret = methodData->GetParamsByRecord(0, nullptr);
+        ret = methodData->GetParamsByRecord(PluginUtilsNApi::ARG_NUM_0, nullptr);
     }
 
     if (!ret) {
@@ -432,6 +434,91 @@ napi_value BridgeModule::BridgeObject::SetMessageListener(napi_env env, napi_cal
 
     SetMessageListenerInner(env, thisVal, onMessageCallback);
     return PluginUtilsNApi::CreateUndefined(env);
+}
+
+napi_value BridgeModule::CallMethodWithCallBackInnter(napi_env env, napi_callback_info info)
+{
+    napi_value thisVal = nullptr;
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
+
+    if (argc < PluginUtilsNApi::ARG_NUM_2 || argc > PluginUtilsNApi::MAX_ARG_NUM) {
+        LOGE("BridgeObject::CallMethodWithCallBackInnter: Method parameter error.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject::CallMethodWithCallBackInnter: Failed to obtain the Bridge object.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto methodData = MethodData::CreateMethodData(env, bridge->GetCodecType());
+    if (!methodData->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
+        LOGE("BridgeObject::CallMethodWithCallBackInnter: Parsing the method name failed.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    size_t paramCount =
+        (argc > PluginUtilsNApi::ARG_NUM_2) ? argc - PluginUtilsNApi::ARG_NUM_2 : PluginUtilsNApi::ARG_NUM_0;
+    bool ret = false;
+    if (paramCount > PluginUtilsNApi::ARG_NUM_0) {
+        ret = methodData->GetParamsByRecord(paramCount, &argv[PluginUtilsNApi::ARG_NUM_2]);
+    } else {
+        ret = methodData->GetParamsByRecord(PluginUtilsNApi::ARG_NUM_0, nullptr);
+    }
+    if (!ret) {
+        LOGE("BridgeObject::CallMethodWithCallBackInnter: Parsing the method parameters failed.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    napi_value result = PluginUtilsNApi::CreateUndefined(env);
+    if (!methodData->IsCallback()) {
+        result = methodData->GetPromise(true);
+    }
+
+    methodData->UpdateMethodName();
+    CallMethodInner(env, thisVal, methodData);
+    return result;
+}
+
+napi_value BridgeModule::BridgeObject::CallMethodWithCallBack(napi_env env, napi_callback_info info)
+{
+    napi_value thisVal = nullptr;
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
+
+    if (argc < PluginUtilsNApi::ARG_NUM_2 || argc > PluginUtilsNApi::MAX_ARG_NUM) {
+        LOGE("BridgeObject::CallMethodWithCallBack: Method parameter error.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject::CallMethodWithCallBack: Failed to obtain the Bridge object.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto methodData = MethodData::CreateMethodData(env, bridge->GetCodecType());
+    if (!methodData->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
+        LOGE("BridgeObject::CallMethodWithCallBack: Parsing the method name failed.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto methodName = PluginUtilsNApi::GetStringFromValueUtf8(env, argv[PluginUtilsNApi::ARG_NUM_0]);
+    if (!methodData->GetJSRegisterMethodObjectCallBack(methodName, argv[PluginUtilsNApi::ARG_NUM_1])) {
+        LOGE("BridgeObject::CallMethodWithCallBack: Failed to create the callback event.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto callback = MethodData::CreateMethodData(env, bridge->GetCodecType());
+    callback->GetPromise(false);
+
+    RegisterMethodInner(env, thisVal, methodData, callback);
+    auto result = CallMethodWithCallBackInnter(env, info);
+    return result;
 }
 
 static napi_module BridgeModule = {

@@ -33,7 +33,7 @@ public:
 
     void WriteBytes(const uint8_t* bytes, size_t length)
     {
-        if(length <= 0) {
+        if (length <= 0) {
             LOGE("invalid write in writebyte function.");
             return;
         }
