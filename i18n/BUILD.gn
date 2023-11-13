@@ -14,6 +14,58 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
+action("untar_abseil-cpp") {
+  script = "untar_abseil-cpp.sh"
+  libabseil_path = rebase_path("//third_party/abseil-cpp")
+  out_path = rebase_path("$root_out_dir")
+  args = [
+    "$libabseil_path",
+    "$out_path",
+  ]
+  ABSEIL_DIR = "$root_out_dir/abseil-cpp"
+  outputs = [
+    "${ABSEIL_DIR}/absl/base/internal/cycleclock.cc",
+    "${ABSEIL_DIR}/absl/base/internal/low_level_alloc.cc",
+    "${ABSEIL_DIR}/absl/base/internal/raw_logging.cc",
+    "${ABSEIL_DIR}/absl/base/internal/spinlock.cc",
+    "${ABSEIL_DIR}/absl/base/internal/spinlock_akaros.inc",
+    "${ABSEIL_DIR}/absl/base/internal/spinlock_linux.inc",
+    "${ABSEIL_DIR}/absl/base/internal/spinlock_posix.inc",
+    "${ABSEIL_DIR}/absl/base/internal/spinlock_wait.cc",
+    "${ABSEIL_DIR}/absl/base/internal/spinlock_win32.inc",
+    "${ABSEIL_DIR}/absl/base/internal/sysinfo.cc",
+    "${ABSEIL_DIR}/absl/base/internal/thread_identity.cc",
+    "${ABSEIL_DIR}/absl/base/internal/throw_delegate.cc",
+    "${ABSEIL_DIR}/absl/base/internal/unscaledcycleclock.cc",
+    "${ABSEIL_DIR}/absl/base/log_severity.cc",
+    "${ABSEIL_DIR}/absl/numeric/int128.cc",
+    "${ABSEIL_DIR}/absl/numeric/int128_have_intrinsic.inc",
+    "${ABSEIL_DIR}/absl/numeric/int128_no_intrinsic.inc",
+    "${ABSEIL_DIR}/absl/strings/ascii.cc",
+    "${ABSEIL_DIR}/absl/strings/charconv.cc",
+    "${ABSEIL_DIR}/absl/strings/escaping.cc",
+    "${ABSEIL_DIR}/absl/strings/internal/charconv_bigint.cc",
+    "${ABSEIL_DIR}/absl/strings/internal/charconv_bigint.h",
+    "${ABSEIL_DIR}/absl/strings/internal/charconv_parse.cc",
+    "${ABSEIL_DIR}/absl/strings/internal/charconv_parse.h",
+    "${ABSEIL_DIR}/absl/strings/internal/escaping.cc",
+    "${ABSEIL_DIR}/absl/strings/internal/memutil.cc",
+    "${ABSEIL_DIR}/absl/strings/internal/memutil.h",
+    "${ABSEIL_DIR}/absl/strings/internal/ostringstream.cc",
+    "${ABSEIL_DIR}/absl/strings/internal/stl_type_traits.h",
+    "${ABSEIL_DIR}/absl/strings/internal/str_join_internal.h",
+    "${ABSEIL_DIR}/absl/strings/internal/str_split_internal.h",
+    "${ABSEIL_DIR}/absl/strings/internal/utf8.cc",
+    "${ABSEIL_DIR}/absl/strings/match.cc",
+    "${ABSEIL_DIR}/absl/strings/numbers.cc",
+    "${ABSEIL_DIR}/absl/strings/str_cat.cc",
+    "${ABSEIL_DIR}/absl/strings/str_replace.cc",
+    "${ABSEIL_DIR}/absl/strings/str_split.cc",
+    "${ABSEIL_DIR}/absl/strings/string_view.cc",
+    "${ABSEIL_DIR}/absl/strings/substitute.cc",
+  ]
+}
+
 template("plugin_i18n_static") {
   forward_variables_from(invoker, "*")
 
@@ -82,7 +134,6 @@ template("plugin_i18n_static") {
     ]
 
     include_dirs += [
-      "//third_party/abseil-cpp/abseil-cpp",
       "//third_party/libphonenumber/",
       "//third_party/libphonenumber/cpp/src",
       "//third_party/protobuf/src",
@@ -91,7 +142,7 @@ template("plugin_i18n_static") {
     ]
 
     # abseil-cpp
-    ABSEIL_DIR = "abseil-cpp"
+    ABSEIL_DIR = "$root_out_dir/abseil-cpp"
 
     sources += [
       "${ABSEIL_DIR}/absl/base/internal/cycleclock.cc",
@@ -180,6 +231,7 @@ template("plugin_i18n_static") {
     ]
 
     deps = [
+      ":untar_abseil-cpp",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/icu:icu_${target_os}",
