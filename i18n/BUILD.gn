@@ -19,7 +19,7 @@ action("untar_abseil-cpp") {
   libabseil_path = rebase_path("//third_party/abseil-cpp")
   out_path = rebase_path("$root_out_dir")
   args = [
-    "$libabseil_path/abseil-cpp-20220623.1.tar.gz",
+    "$libabseil_path",
     "$out_path",
   ]
   ABSEIL_DIR = "$root_out_dir/abseil-cpp"
