@@ -91,7 +91,7 @@ template("plugin_i18n_static") {
     ]
 
     # abseil-cpp
-    ABSEIL_DIR = "abseil-cpp"
+    ABSEIL_DIR = "//third_party/skia/third_party/externals/abseil-cpp"
 
     sources += [
       "${ABSEIL_DIR}/absl/base/internal/cycleclock.cc",
