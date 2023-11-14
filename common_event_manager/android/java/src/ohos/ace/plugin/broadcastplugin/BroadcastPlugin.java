@@ -38,11 +38,17 @@ import java.util.Map;
  */
 public class BroadcastPlugin {
     private static final String LOG_TAG = "BroadcastPlugin";
+
     private static final int BATTERY_LOW_VALUE = 20;
+
+    private static final int BATTERY_FULL_VALUE = 100;
+
     private static boolean BATTERY_LOW_FLAG = false;
+
     private static boolean BATTERY_NORMAL_FLAG = false;
 
     private Context context;
+
     private Map<String, BroadcastReceiver> broadcastReceiverMap;
 
     /**
@@ -158,9 +164,9 @@ public class BroadcastPlugin {
     private void receiveBroadcast(String key, Intent intent, String json) {
         Log.i(LOG_TAG, " receiveBroadcast " + key);
         if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-            int level1 = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-            int scale1 = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
-            int batteryPercent = level1 * 100 / scale1;
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+            int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, BATTERY_FULL_VALUE);
+            int batteryPercent = level * BATTERY_FULL_VALUE / scale;
             if (batteryPercent <= BATTERY_LOW_VALUE
                 && key.contains("usual.event.BATTERY_LOW")
                 && !BATTERY_LOW_FLAG) {
