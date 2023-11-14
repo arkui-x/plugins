@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.BatteryManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -37,6 +38,9 @@ import java.util.Map;
  */
 public class BroadcastPlugin {
     private static final String LOG_TAG = "BroadcastPlugin";
+    private static final int BATTERY_LOW_VALUE = 20;
+    private static boolean BATTERY_LOW_FLAG = false;
+    private static boolean BATTERY_NORMAL_FLAG = false;
 
     private Context context;
     private Map<String, BroadcastReceiver> broadcastReceiverMap;
@@ -113,7 +117,12 @@ public class BroadcastPlugin {
         BroadcastReceiver broadcastReceiver;
         IntentFilter filter = new IntentFilter();
         for (String action : actions) {
-            filter.addAction(action);
+            if (action.equals(Intent.ACTION_BATTERY_LOW)
+                || action.equals(Intent.ACTION_BATTERY_OKAY)) {
+                filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+            } else {
+                filter.addAction(action);
+            }
         }
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -134,7 +143,7 @@ public class BroadcastPlugin {
                             break;
                         }
                     }
-                    receiveBroadcast(key, intent.getAction(), jsonObject.toString());
+                    receiveBroadcast(key, intent, jsonObject.toString());
                 } catch (JSONException e) {
                     Log.e(LOG_TAG, "Receive broadcast failed, JSONException.");
                     e.printStackTrace();
@@ -146,8 +155,29 @@ public class BroadcastPlugin {
         return true;
     }
 
-    private void receiveBroadcast(String key, String action, String json) {
-        nativeReceiveBroadcast(key, action, json);
+    private void receiveBroadcast(String key, Intent intent, String json) {
+        Log.i(LOG_TAG, " receiveBroadcast " + key);
+        if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+            int level1 = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+            int scale1 = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+            int batteryPercent = level1 * 100 / scale1;
+            if (batteryPercent <= BATTERY_LOW_VALUE
+                && key.contains("usual.event.BATTERY_LOW")
+                && !BATTERY_LOW_FLAG) {
+                    nativeReceiveBroadcast(key, Intent.ACTION_BATTERY_LOW, json);
+                    BATTERY_LOW_FLAG = true;
+                    BATTERY_NORMAL_FLAG = false;
+            }
+            if (batteryPercent > BATTERY_LOW_VALUE
+                && key.contains("usual.event.BATTERY_OKAY")
+                && !BATTERY_NORMAL_FLAG) {
+                    nativeReceiveBroadcast(key, Intent.ACTION_BATTERY_OKAY, json);
+                    BATTERY_NORMAL_FLAG = true;
+                    BATTERY_LOW_FLAG = false;
+            }
+        } else {
+            nativeReceiveBroadcast(key, intent.getAction(), json);
+        }
     }
 
     public boolean unRegisterBroadcast(String key) {
