@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <string>
 
+#include "event_handler.h"
 namespace OHOS {
 namespace AppExecFwk {
 namespace LIBZIP {
@@ -118,6 +119,7 @@ struct tm* GetCurrentSystemTime(void);
 bool StartsWith(const std::string& str, const std::string& searchFor);
 bool EndsWith(const std::string& str, const std::string& searchFor);
 bool FilePathCheckValid(const std::string& str);
+void PostTask(const OHOS::AppExecFwk::InnerEvent::Callback& callback);
 } // namespace LIBZIP
 } // namespace AppExecFwk
 } // namespace OHOS

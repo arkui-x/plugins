@@ -17,6 +17,8 @@
 
 #include <regex>
 
+#include "event_handler.h"
+
 namespace OHOS {
 namespace AppExecFwk {
 namespace LIBZIP {
@@ -25,6 +27,19 @@ const std::string SEPARATOR = "/";
 const std::regex FILE_PATH_REGEX(".*");
 const std::string ZIP_THREAD = "ZipThread";
 } // namespace
+
+std::shared_ptr<EventHandler> g_handler = nullptr;
+void PostTask(const InnerEvent::Callback& callback)
+{
+    if (g_handler == nullptr) {
+        auto runner = EventRunner::Create(ZIP_THREAD);
+        g_handler = std::make_shared<EventHandler>(runner);
+    }
+
+    if (g_handler != nullptr) {
+        g_handler->PostTask(callback);
+    }
+}
 
 struct tm* GetCurrentSystemTime(void)
 {

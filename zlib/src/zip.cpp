@@ -297,8 +297,7 @@ bool Unzip(const std::string& srcFile, const std::string& destFile, OPTIONS opti
             zlibCallbackInfo->OnZipUnZipFinish(err);
         }
     };
-
-    Plugin::PluginUtilsInner::RunTaskOnPlatform(innerTask);
+    PostTask(innerTask);
     return true;
 }
 
@@ -368,8 +367,7 @@ bool Zip(const std::string& srcPath, const std::string& destPath, bool includeHi
             }
         }
     };
-
-    Plugin::PluginUtilsInner::RunTaskOnPlatform(innerTask);
+    PostTask(innerTask);
     return true;
 }
 } // namespace LIBZIP
