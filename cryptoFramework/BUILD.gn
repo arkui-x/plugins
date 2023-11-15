@@ -34,6 +34,7 @@ template("plugin_cryptoFramework_static") {
       "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_asy_key_spec_generator.cpp",
       "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_cipher.cpp",
       "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_init.cpp",
+      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_kdf.cpp",
       "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_key.cpp",
       "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_key_agreement.cpp",
       "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_key_pair.cpp",
