@@ -14,7 +14,8 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-CRPTO_FRAMEWORK_ROOT_DIR = "//base/security/crypto_framework/frameworks/js/napi/"
+CRPTO_FRAMEWORK_ROOT_DIR =
+    "//base/security/crypto_framework/frameworks/js/napi/"
 
 template("plugin_cryptoFramework_static") {
   forward_variables_from(invoker, "*")
@@ -51,12 +52,12 @@ template("plugin_cryptoFramework_static") {
     ]
 
     deps = [
-      "//plugins/cryptoFramework/frameworks:crypto_framework_lib",
-      "//plugins/cryptoFramework/common:crypto_plugin_common",
-      "//plugins/libs/securec:sec_${target_os}",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+      "//plugins/cryptoFramework/common:crypto_plugin_common",
+      "//plugins/cryptoFramework/frameworks:crypto_framework_lib",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/securec:sec_${target_os}",
     ]
 
     subsystem_name = "plugins"
