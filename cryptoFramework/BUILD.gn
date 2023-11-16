@@ -14,9 +14,6 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-CRPTO_FRAMEWORK_ROOT_DIR =
-    "//base/security/crypto_framework/frameworks/js/napi/"
-
 template("plugin_cryptoFramework_static") {
   forward_variables_from(invoker, "*")
 
@@ -31,24 +28,24 @@ template("plugin_cryptoFramework_static") {
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     ]
     sources = [
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_asy_key_generator.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_asy_key_spec_generator.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_cipher.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_init.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_kdf.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_key.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_key_agreement.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_key_pair.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_mac.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_md.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_pri_key.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_pub_key.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_rand.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_sign.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_sym_key.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_sym_key_generator.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_utils.cpp",
-      "${CRPTO_FRAMEWORK_ROOT_DIR}/crypto/src/napi_verify.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_asy_key_generator.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_asy_key_spec_generator.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_cipher.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_init.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_kdf.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_key.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_key_agreement.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_key_pair.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_mac.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_md.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_pri_key.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_pub_key.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_rand.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sign.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sym_key.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sym_key_generator.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_utils.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_verify.cpp",
     ]
 
     deps = [
