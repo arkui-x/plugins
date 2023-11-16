@@ -200,8 +200,7 @@ void HttpExec::RunThread()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
 
-        std::mutex m;
-        std::unique_lock l(m);
+        std::unique_lock l(staticVariable_.mutex);
         auto &contextMap = staticVariable_.contextMap;
         staticVariable_.conditionVariable.wait_for(l, std::chrono::seconds(CONDITION_TIMEOUT_S),
             [contextMap] { return !contextMap.empty(); });
@@ -535,10 +534,12 @@ bool HttpExec::IsInitialized()
 
 void HttpExec::DeInitialize()
 {
+    std::lock_guard<std::mutex> lock(staticVariable_.mutex);
     staticVariable_.runThread = false;
     if (staticVariable_.workThread.joinable()) {
         staticVariable_.workThread.join();
     }
+    staticVariable_.initialized = false;
 }
 
 void HttpExec::ReleaseRequestInfo(RequestContext* context)
