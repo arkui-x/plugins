@@ -25,6 +25,8 @@
 #include "plugin_utils.h"
 #include "webview_controller.h"
 #ifdef ANDROID_PLATFORM
+#include "android/java/jni/web_cookie_manager_android.h"
+#include "android/java/jni/web_cookie_manager_jni.h"
 #include "android/java/jni/webview_controller_android.h"
 #include "android/java/jni/webview_controller_jni.h"
 #include "android/java/jni/web_data_base_android.h"
@@ -674,6 +676,7 @@ static napi_value WebWebviewExport(napi_env env, napi_value exports)
 {
     NapiWebviewController::Init(env, exports);
     NapiWebDataBase::Init(env, exports);
+    NapiWebCookieManager::Init(env, exports);
     return exports;
 }
 
@@ -694,6 +697,8 @@ static void WebWebviewJniRegister()
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebviewControllerJni::Register, className);
     const char dataBaseClassName[] = "ohos.ace.plugin.webviewplugin.WebDataBasePlugin";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDataBaseJni::Register, dataBaseClassName);
+    const char webCookieClassName[] = "ohos.ace.plugin.webviewplugin.webcookie.WebCookiePlugin";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&WebCookieManagerJni::Register, webCookieClassName);
 }
 #endif
 
@@ -703,5 +708,234 @@ extern "C" __attribute__((constructor)) void WebWebviewRegister()
     WebWebviewJniRegister();
 #endif
     napi_module_register(&webWebviewModule);
+}
+
+napi_value NapiWebCookieManager::Init(napi_env env, napi_value exports)
+{
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_STATIC_FUNCTION("fetchCookie", NapiWebCookieManager::JsFetchCookieAsync),
+        DECLARE_NAPI_STATIC_FUNCTION("configCookie", NapiWebCookieManager::JsConfigCookieAsync),
+        DECLARE_NAPI_STATIC_FUNCTION("clearAllCookies", NapiWebCookieManager::JsClearAllCookiesAsync),
+    };
+    napi_value constructor = nullptr;
+
+    napi_define_class(env, WEB_COOKIE_MANAGER_CLASS_NAME.c_str(), WEB_COOKIE_MANAGER_CLASS_NAME.length(),
+        NapiWebCookieManager::JsConstructor, nullptr, sizeof(properties) / sizeof(properties[0]),
+        properties, &constructor);
+    NAPI_ASSERT(env, constructor != nullptr, "NapiWebCookieManager define js class failed");
+    napi_status status = napi_set_named_property(env, exports, "WebCookieManager", constructor);
+    NAPI_ASSERT(env, status == napi_ok, "NapiWebCookieManager set property failed");
+    return exports;
+}
+
+napi_value NapiWebCookieManager::JsConstructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = 2;
+    napi_value argv[2] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    return thisVar;
+}
+
+napi_value NapiWebCookieManager::JsConfigCookieAsync(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_THREE;
+    size_t argcPromise = INTEGER_TWO;
+    size_t argcCallback = INTEGER_THREE;
+    napi_value argv[INTEGER_THREE] = { 0 };
+
+    napi_get_undefined(env, &result);
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+
+    if (argc != argcPromise && argc != argcCallback) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    std::string url;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], url)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    std::string value;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ONE], value)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    WebCookieManager::ConfigCookie(url, value);
+    std::shared_ptr<AsyncCookieManagerResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    asyncCallbackInfo->taskType = TaskType::CONFIG_COOKIE;
+    napi_value promise = nullptr;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[argcCallback - 1], &valueType);
+        if (valueType != napi_function) {
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return result;
+        }
+        NAPI_CALL(env, napi_create_reference(env, argv[argcCallback - 1], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env,  &promise));
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateCookieAsyncWork(env, "JsConfigCookieAsync", asyncCallbackInfoInstance);
+    return promise;
+}
+
+napi_value NapiWebCookieManager::JsFetchCookieAsync(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_TWO;
+    size_t argcPromise = INTEGER_ONE;
+    size_t argcCallback = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = { 0 };
+
+    napi_get_undefined(env, &result);
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+
+    if (argc != argcPromise && argc != argcCallback) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    std::string url;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], url)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    std::shared_ptr<AsyncCookieManagerResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    napi_value promise = nullptr;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[argcCallback - 1], &valueType);
+        if (valueType != napi_function) {
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return result;
+        }
+        NAPI_CALL(env, napi_create_reference(env, argv[argcCallback - 1], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env, &promise));
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateFetchCookieAsyncWork(env, asyncCallbackInfoInstance);
+    WebCookieManager::FetchCookie(url);
+    return promise;
+}
+
+napi_value NapiWebCookieManager::JsClearAllCookiesAsync(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    size_t argcPromise = INTEGER_ZERO;
+    size_t argcCallback = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+
+    napi_get_undefined(env, &result);
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+
+    if (argc != argcPromise && argc != argcCallback) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    WebCookieManager::ClearAllCookies();
+    std::shared_ptr<AsyncCookieManagerResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    asyncCallbackInfo->taskType = TaskType::CLEAR_ALL_COOKIES;
+    napi_value promise = nullptr;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[argcCallback - 1], &valueType);
+        if (valueType != napi_function) {
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return result;
+        }
+        NAPI_CALL(env, napi_create_reference(env, argv[argcCallback - 1], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env,  &promise));
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateCookieAsyncWork(env, "JsClearAllCookiesAsync", asyncCallbackInfoInstance);
+    return promise;
+}
+
+void NapiWebCookieManager::CreateCookieAsyncWork(napi_env env, const std::string& taskName,
+    const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& callbackInfo)
+{
+    napi_value resource = nullptr;
+    auto asyncCallbackInfo = callbackInfo.get();
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, taskName.c_str(), NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL_RETURN_VOID(env, napi_create_async_work(env, nullptr, resource,
+        [](napi_env env, void* data) {},
+        [](napi_env env, napi_status status, void* data) {
+            AsyncCookieManagerResultCallbackInfo* asyncCallbackInfo =
+                reinterpret_cast<AsyncCookieManagerResultCallbackInfo*>(data);
+            if (!asyncCallbackInfo) {
+                return;
+            }
+            if (asyncCallbackInfo->deferred) {
+                napi_value jsResult = nullptr;
+                napi_get_undefined(env, &jsResult);
+                napi_resolve_deferred(env, asyncCallbackInfo->deferred, jsResult);
+            } else {
+                napi_value result[INTEGER_ONE] = { 0 };
+                napi_get_null(env, &result[INTEGER_ZERO]);
+
+                napi_value onCookieFunc = nullptr;
+                napi_get_reference_value(env, asyncCallbackInfo->callback, &onCookieFunc);
+                napi_value callbackResult = nullptr;
+                napi_call_function(env, nullptr, onCookieFunc, INTEGER_ONE, &result[INTEGER_ZERO], &callbackResult);
+            }
+            WebCookieManager::EraseCallbackInfo(asyncCallbackInfo, asyncCallbackInfo->taskType);
+        },
+        reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    WebCookieManager::InsertCallbackInfo(callbackInfo, callbackInfo->taskType);
+}
+
+void NapiWebCookieManager::CreateFetchCookieAsyncWork(
+    napi_env env, const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& callbackInfo)
+{
+    napi_value resource = nullptr;
+    auto asyncCallbackInfo = callbackInfo.get();
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, "JsFetchCookieAsync", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL_RETURN_VOID(env, napi_create_async_work(env, nullptr, resource,
+        [](napi_env env, void* data) {},
+        [](napi_env env, napi_status status, void* data) {
+            AsyncCookieManagerResultCallbackInfo* asyncCallbackInfo =
+                reinterpret_cast<AsyncCookieManagerResultCallbackInfo*>(data);
+            if (!asyncCallbackInfo) {
+                return;
+            }
+            napi_value args[INTEGER_TWO] = { 0 };
+            if (asyncCallbackInfo->result.empty()) {
+                NAPI_CALL_RETURN_VOID(env, napi_get_null(env, &args[INTEGER_ZERO]));
+            }
+            napi_value jsCookies = nullptr;
+            LOGD("asyncCallbackInfo result: %{public}s", asyncCallbackInfo->result.c_str());
+            NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(
+                env, asyncCallbackInfo->result.c_str(), asyncCallbackInfo->result.length(), &jsCookies));
+            args[INTEGER_ONE] = jsCookies;
+            if (asyncCallbackInfo->deferred) {
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
+            } else {
+                napi_value callback = nullptr;
+                napi_value callbackResult = nullptr;
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncCallbackInfo->callback, &callback));
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, nullptr, callback,
+                    sizeof(args) / sizeof(args[0]), args, &callbackResult));
+            }
+            WebCookieManager::EraseCallbackInfo(asyncCallbackInfo, TaskType::FETCH_COOKIE);
+        },
+        reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    WebCookieManager::InsertCallbackInfo(callbackInfo, TaskType::FETCH_COOKIE);
 }
 } // namespace OHOS::Plugin
