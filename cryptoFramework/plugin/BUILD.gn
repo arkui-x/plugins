@@ -50,19 +50,9 @@ ohos_source_set("crypto_openssl_plugin_lib") {
     "//plugins/cryptoFramework/common:crypto_plugin_common",
     "//plugins/libs/securec:sec_${target_os}",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+    "//third_party/openssl:libcrypto_shared",
+    "//third_party/openssl:libssl_shared",
   ]
-
-  if (target_os == "android") {
-    deps += [
-      "//third_party/openssl:libcrypto_shared",
-      "//third_party/openssl:libssl_shared",
-    ]
-  } else if (target_os == "ios") {
-    deps += [
-      "//foundation/arkui/ace_engine/adapter/ios/build:crypto_source",
-      "//foundation/arkui/ace_engine/adapter/ios/build:ssl_source",
-    ]
-  }
 
   external_deps = [
     "c_utils:utils",
