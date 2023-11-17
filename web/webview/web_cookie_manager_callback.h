@@ -21,6 +21,7 @@
 
 namespace OHOS::Plugin {
 enum class TaskType {
+    NONE,
     CONFIG_COOKIE,
     FETCH_COOKIE,
     CLEAR_ALL_COOKIES
@@ -39,7 +40,7 @@ struct AsyncCookieManagerResultCallbackInfo : public AsyncWorkCookieData {
 public:
     explicit AsyncCookieManagerResultCallbackInfo(napi_env env) : AsyncWorkCookieData(env) {}
     std::string result;
-    TaskType taskType;
+    TaskType taskType = TaskType::NONE;
 };
 }
 

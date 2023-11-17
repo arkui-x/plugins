@@ -117,6 +117,8 @@ void WebCookieManagerJni::ConfigCookie(const std::string& url, const std::string
         LOGE("WebCookieManagerJni JNI: call ConfigCookie has exception");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        env->DeleteLocalRef(jUrl);
+        env->DeleteLocalRef(jValue);
         return;
     }
     env->DeleteLocalRef(jUrl);
@@ -136,6 +138,7 @@ void WebCookieManagerJni::FetchCookie(const std::string& url)
         LOGE("WebCookieManagerJni JNI: call FetchCookie has exception");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        env->DeleteLocalRef(jUrl);
         return;
     }
     env->DeleteLocalRef(jUrl);

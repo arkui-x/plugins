@@ -76,6 +76,8 @@ void WebCookieManager::InsertCallbackInfo(
                 clearAllCookiesCallbackInfoContainer_.push_back(asyncCallbackInfo);
             }
             break;
+        case TaskType::NONE:
+            break;
     }
 }
 
@@ -122,6 +124,8 @@ bool WebCookieManager::EraseCallbackInfo(
                 }
             }
             break;
+        case TaskType::NONE:
+            break;
     }
     return false;
 }
@@ -151,6 +155,8 @@ void WebCookieManager::IncreaseIndex(TaskType taskType)
                 clearAllCookiesIndex_ = 0;
             }
             break;
+        case TaskType::NONE:
+            break;
     }
 }
 
@@ -175,6 +181,8 @@ void WebCookieManager::DecreaseIndex(TaskType taskType)
             if (clearAllCookiesCallbackInfoContainer_.empty() || clearAllCookiesIndex_ < 0) {
                 clearAllCookiesIndex_ = 0;
             }
+            break;
+        case TaskType::NONE:
             break;
     }
 }
