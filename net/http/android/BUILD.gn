@@ -29,6 +29,7 @@ ohos_source_set("net_http_android") {
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//plugins/interfaces/native:plugin_log",
     "//plugins/net/utils:netstack_utils",
+    "//third_party/curl:curl",
   ]
 
   defines = [ "ANDROID_PLATFORM" ]

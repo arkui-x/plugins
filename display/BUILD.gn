@@ -23,10 +23,14 @@ template("plugin_display_static") {
 
     sources = [ "js_display.cpp" ]
 
-    deps = [
-      "//plugins/interfaces/native:ace_plugin_util_${platform}",
-      "//plugins/libs/napi:napi_${target_os}",
+    include_dirs = [ "//plugins/interfaces/native" ]
+
+    public_configs = [
+      "$ace_napi:ace_napi_config",
+      "//plugins/interfaces/native:plugin_util_config",
     ]
+
+    deps = [ "//plugins/interfaces/native:plugin_log" ]
 
     if (platform == "android") {
       deps += [ "android/java:display_android_jni" ]

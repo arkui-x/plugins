@@ -120,40 +120,25 @@ template("plugin_net_socket_static") {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
+    include_dirs = socket_include
+    include_dirs += tls_include
+    sources = socket_sources
+    sources += tls_sources
+    sources += tls_napi_sources
+
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/net/utils:net_utils_${target_os}",
+      "//third_party/curl:curl_shared",
+      "//third_party/openssl:libcrypto_shared",
+      "//third_party/openssl:libssl_shared",
+    ]
+
     if (target_os == "android") {
-      include_dirs = socket_include
-      include_dirs += tls_include
-
-      sources = socket_sources
-      sources += tls_sources
-      sources += tls_napi_sources
-
-      deps = [
-        "//plugins/interfaces/native:ace_plugin_util_${platform}",
-        "//plugins/libs/napi:napi_${platform}",
-        "//plugins/net/utils:netstack_util_${platform}",
-        "//third_party/curl:curl_shared",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-      ]
+      deps += [ "//plugins/libs/napi:napi_${platform}" ]
     } else if (target_os == "ios") {
-      include_dirs = socket_include
-      include_dirs += tls_include
       include_dirs += utils_include
-
-      sources = socket_sources
-      sources += tls_sources
-      sources += tls_napi_sources
-
-      deps = [
-        "//foundation/arkui/ace_engine/adapter/ios/build:crypto_source",
-        "//foundation/arkui/ace_engine/adapter/ios/build:shared_libz",
-        "//foundation/arkui/ace_engine/adapter/ios/build:ssl_source",
-        "//plugins/interfaces/native:ace_plugin_util_${platform}",
-        "//plugins/net/utils:net_utils_static_ios",
-        "//third_party/curl:curl",
-        "//third_party/jsoncpp:jsoncpp_static",
-      ]
+      deps += [ "//third_party/jsoncpp:jsoncpp_static" ]
     }
 
     subsystem_name = "plugins"

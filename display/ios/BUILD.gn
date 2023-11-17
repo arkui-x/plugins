@@ -26,7 +26,12 @@ ohos_source_set("display_ios") {
 
   cflags_objcc = cflags_objc
 
-  deps = [ "//plugins/interfaces/native:ace_plugin_util_ios" ]
+  include_dirs = [ "//plugins/interfaces/native" ]
+
+  public_configs = [
+    "$ace_napi:ace_napi_config",
+    "//plugins/interfaces/native:plugin_util_config",
+  ]
 
   subsystem_name = "plugins"
   part_name = "display"
