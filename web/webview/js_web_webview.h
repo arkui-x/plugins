@@ -16,9 +16,13 @@
 #ifndef PLUGIN_WEB_WEBVIEW_JS_WEB_WEBVIEW_H
 #define PLUGIN_WEB_WEBVIEW_JS_WEB_WEBVIEW_H
 
+#include <uv.h>
+
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 #include "napi/native_node_api.h"
+#include "web_cookie_manager_callback.h"
+#include "web_cookie_manager.h"
 #include "webview_controller.h"
 
 namespace OHOS::Plugin {
@@ -92,6 +96,44 @@ private:
     static napi_value SaveHttpAuthCredentials(napi_env env, napi_callback_info info);
 
     static napi_value GetHttpAuthCredentials(napi_env env, napi_callback_info info);
+};
+
+const std::string WEB_COOKIE_MANAGER_CLASS_NAME = "WebCookieManager";
+class NapiWebCookieManager {
+public:
+    NapiWebCookieManager() {}
+
+    ~NapiWebCookieManager() = default;
+
+    struct WebCookieManagerParam {
+        napi_env env_;
+        napi_ref callback_;
+        napi_deferred deferred_;
+    };
+
+    struct WebFetchCookieManagerParam {
+        napi_env env_;
+        napi_ref callback_;
+        napi_deferred deferred_;
+        std::string result_;
+    };
+
+    static napi_value Init(napi_env env, napi_value exports);
+
+private:
+    static napi_value JsConstructor(napi_env env, napi_callback_info info);
+
+    static napi_value JsFetchCookieAsync(napi_env env, napi_callback_info info);
+
+    static napi_value JsConfigCookieAsync(napi_env env, napi_callback_info info);
+
+    static napi_value JsClearAllCookiesAsync(napi_env env, napi_callback_info info);
+
+    static void CreateCookieAsyncWork(napi_env env, const std::string& taskName,
+        const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& callbackInfo);
+
+    static void CreateFetchCookieAsyncWork(napi_env env,
+        const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& callbackInfo);
 };
 }
 #endif
