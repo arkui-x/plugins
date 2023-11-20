@@ -28,8 +28,8 @@ ohos_source_set("net_http_android") {
     "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//plugins/interfaces/native:plugin_log",
-    "//plugins/net/utils:netstack_utils",
-    "//third_party/curl:curl",
+    "//plugins/net/utils:net_utils_android",
+    "//third_party/curl:curl_shared",
   ]
 
   defines = [ "ANDROID_PLATFORM" ]
