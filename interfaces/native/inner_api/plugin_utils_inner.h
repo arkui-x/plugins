@@ -62,6 +62,7 @@ public:
     static void RunTaskOnJS(const Task& task);
     static void RunSyncTaskOnJS(const Task& task);
     static void JSRegisterGrantResult(GrantResult grantResult);
+    static int32_t GetInstanceId();
 
 private:
     static std::shared_ptr<OHOS::AppExecFwk::EventHandler> eventHandler;

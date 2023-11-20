@@ -14,14 +14,16 @@
  */
 
 #include "bridge_wrap.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
 
 namespace OHOS::Plugin::Bridge {
+static constexpr const char* BRIDGENAME_ID_SEP = "$";
 std::map<std::string, std::shared_ptr<BridgeWrap::Data>> BridgeWrap::bridgeList_;
 std::mutex BridgeWrap::bridgeListLock_;
 
-std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridgeName)
+std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridgeNameWithId)
 {
-    auto data = bridgeList_.find(bridgeName);
+    auto data = bridgeList_.find(bridgeNameWithId);
     if (data == bridgeList_.end()) {
         return nullptr;
     }
@@ -29,9 +31,10 @@ std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridge
     return data->second;
 }
 
-Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& codecType)
+Bridge* BridgeWrap::BuildBridge(
+    const std::string& bridgeName, const CodecType& codecType, const std::string& dataKey, int32_t instanceId)
 {
-    auto bridge = new (std::nothrow) Bridge(bridgeName, codecType);
+    auto bridge = new (std::nothrow) Bridge(bridgeName, instanceId, codecType);
     if (bridge == nullptr) {
         return nullptr;
     }
@@ -39,7 +42,7 @@ Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& 
     std::shared_ptr<Data> data = std::make_shared<BridgeWrap::Data>();
     data->ref_++;
     data->bridge_ = bridge;
-    bridgeList_[bridgeName] = data;
+    bridgeList_[dataKey] = data;
     return bridge;
 }
 
@@ -55,17 +58,20 @@ Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data)
 Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
 {
     std::lock_guard<std::mutex> lock(bridgeListLock_);
-    auto data = findData(bridgeName);
+    int32_t instanceId = PluginUtilsInner::GetInstanceId();
+    std::string key(GetBridgeNameWithID(bridgeName, instanceId));
+    auto data = findData(key);
     if (data == nullptr) {
-        return BuildBridge(bridgeName, codecType);
+        return BuildBridge(bridgeName, codecType, key, instanceId);
     }
     return CopyBridge(data);
 }
 
-void BridgeWrap::DeleteBridge(const std::string& bridgeName)
+void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
 {
     std::lock_guard<std::mutex> lock(bridgeListLock_);
-    auto data = findData(bridgeName);
+    std::string bridgeNameWithId(GetBridgeNameWithID(bridgeName, instanceId));
+    auto data = findData(bridgeNameWithId);
     if (data == nullptr) {
         return;
     }
@@ -78,10 +84,18 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName)
             data->bridge_ = nullptr;
         }
 
-        auto it = bridgeList_.find(bridgeName);
+        auto it = bridgeList_.find(bridgeNameWithId);
         if (it != bridgeList_.end()) {
             bridgeList_.erase(it);
         }
     }
+}
+
+std::string BridgeWrap::GetBridgeNameWithID(const std::string& bridgeName, int32_t instanceId)
+{
+    std::string bridgeNameWithId(bridgeName);
+    bridgeNameWithId.append(BRIDGENAME_ID_SEP);
+    bridgeNameWithId.append(std::to_string(instanceId));
+    return bridgeNameWithId;
 }
 } // namespace OHOS::Plugin::Bridge

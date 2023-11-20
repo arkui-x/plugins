@@ -33,7 +33,7 @@ enum class CodecType {
 
 class MethodData {
 public:
-    explicit MethodData(napi_env env, const CodecType& type) : env_(env), codecType_(type) {};
+    explicit MethodData(napi_env env, const CodecType& type);
     ~MethodData();
 
     static std::shared_ptr<MethodData> CreateMethodData(napi_env env, const CodecType& type);
@@ -64,6 +64,7 @@ public:
     napi_value GetPromise(bool needListenEvent);
     void ReleaseEvent(void);
     bool GetJSRegisterMethodObject(napi_value object);
+    bool GetJSRegisterMethodObjectCallBack(const std::string& arg, napi_value object);
     bool IsCallback(void) const;
 
     bool SendMethodResult(const std::string& data, bool removeMethod);
@@ -81,6 +82,7 @@ public:
 
 private:
     NAPIAsyncEvent* asyncEvent_ = nullptr;
+    int32_t instanceId_ = -1;
     std::string bridgeName_;
     std::string methodName_;
     napi_env env_ = nullptr;

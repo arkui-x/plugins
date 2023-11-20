@@ -32,7 +32,7 @@ CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_v
         PluginUtilsNApi::GetArrayBuffer(env, value, vector);
         return CodecableValue(vector);
     }
-    
+
     napi_valuetype valueType = PluginUtilsNApi::GetValueType(env, value);
     switch (valueType) {
         case napi_boolean: {
@@ -71,7 +71,7 @@ CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_v
 
 CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, const size_t& argc, const napi_value* argv)
 {
-    if ( argc == 0 || argv == nullptr) {
+    if (argc == 0 || argv == nullptr) {
         CodecableList list;
         return CodecableValue(list);
     }
@@ -201,8 +201,8 @@ napi_value MethodDataConverter::CreateMapValue(napi_env env, const CodecableValu
     result = PluginUtilsNApi::CreateObject(env);
     const auto& map = std::get<CodecableMap>(value);
     for (const auto& pair : map) {
-        PluginUtilsNApi::SetNamedProperty(env, result,
-            std::get<std::string>(pair.first), ConvertToNapiValue(env, pair.second));
+        PluginUtilsNApi::SetNamedProperty(
+            env, result, std::get<std::string>(pair.first), ConvertToNapiValue(env, pair.second));
     }
     return result;
 }
@@ -302,7 +302,7 @@ CodecableValue MethodDataConverter::GainListDoubleValue(napi_env env, napi_value
 }
 
 CodecableValue MethodDataConverter::GainMapValue(napi_env env, napi_value value)
-{  
+{
     CodecableMap mapValue;
     std::vector<std::string> props;
     if (PluginUtilsNApi::GetPropertyNames(env, value, props)) {

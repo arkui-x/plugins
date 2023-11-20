@@ -15,7 +15,7 @@
 import { AsyncCallback } from './basic';
 
 declare namespace Bridge {
-	/**
+    /**
      * Bridge data type definition.
      *
      * @since 10
@@ -27,31 +27,31 @@ declare namespace Bridge {
     type Response = Message;
     type ResultValue = T | Map<string, T>;
 
-	/**
+    /**
      * Creates the bridge and returns the bridge object.
      *
      * @param bridgeName Unique bridge name.
-	 * @return Bridge object.
+     * @return Bridge object.
      * @since 10
      */
     function createBridge(bridgeName: string): BridgeObject;
 
-	/**
+    /**
      * Method or event interface.
      *
      * @since 10
      */
     export interface MethodData {
-		/**
-		 * Method or event name.
-		 *
-		 * @since 10
-		*/
+        /**
+         * Method or event name.
+         *
+         * @since 10
+        */
         name: string;
 
         /**
          * @param Method parameter.
-		 * @return ResultValue the js-side method return value.
+         * @return ResultValue the js-side method return value.
          * @since 10
          * @crossplatform
          */
@@ -71,7 +71,7 @@ declare namespace Bridge {
          * @param methodName The name of the called platform side method.
          * @param parameters Platform method parameters to be called.
          * @param callback The value returned by the called platform method.
-		 * @return Returns the platform-side method return value.
+         * @return Returns the platform-side method return value.
          * @since 10
          */
         callMethod(methodName: string, parameters?: Record<string, Parameter>): Promise<ResultValue>;
@@ -88,7 +88,7 @@ declare namespace Bridge {
 
         /**
          * UnRegister JS side event.
-		 *
+         *
          * @param methodName The name of JS side event.
          * @since 9
          */
@@ -111,6 +111,19 @@ declare namespace Bridge {
          * @since 10
          */
         setMessageListener(callback: (message: Message) => Response);
+
+        /**
+         * Register a callback for platform side calls and call platform side functions.
+         * 
+         * @param methodName:The name of the called platform side method.
+         * @param method: Functions defined on the JS side for platform side calls.
+         * @param parameters: Platform method parameters to be called.
+         * @since 11
+         */
+        callMethodWithCallback(methodName: string, method: (parameters?: Record<string , Parameter>) => ResultValue,
+        parameters?: Record<string, Parameter>): Promise<ResultValue>;
+        callMethodWithCallback(methodName: string, method: (parameters?: Record<string , Parameter>) => ResultValue,
+        parameters?: Array<any>): Promise<ResultValue>;
     }
 }
 export default Bridge;
