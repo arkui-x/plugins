@@ -249,7 +249,6 @@ void BroadcastJni::SendBroadcast(std::string action, std::string json, AsyncCall
     }
     LOGI("Broadcast JNI: call back");
     ptr->status = jResult;
-    CommonEventReceiver::ReceiveCallBack(ptr);
 }
 
 void BroadcastJni::RegisterBroadcast(std::string key, std::vector<std::string> actions)
@@ -297,6 +296,5 @@ void BroadcastJni::UnRegisterBroadcast(std::string key, AsyncCallbackInfo* ptr)
         return;
     }
     ptr->status = jResult;
-    CommonEventReceiver::ReceiveCallBack(ptr);
 }
 } // namespace OHOS::Plugin

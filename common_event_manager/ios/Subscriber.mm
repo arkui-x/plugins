@@ -84,7 +84,6 @@ NSString* getOCstring(const std::string& c_string) {
     if (ptr) {
         OHOS::Plugin::AsyncCallbackInfo* callbackPtr = (OHOS::Plugin::AsyncCallbackInfo*)ptr;
         callbackPtr->status = true;
-        OHOS::Plugin::CommonEventReceiver::ReceiveCallBack(callbackPtr);
     }
 }
 

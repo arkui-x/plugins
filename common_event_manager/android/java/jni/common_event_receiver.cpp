@@ -26,11 +26,5 @@ void CommonEventReceiver::ReceiveCommonEvent(std::string key, std::string action
     LOGI("CommonEventReceiver ReceiveCommonEvent called.");
     CommonEvent::GetInstance().ReceiveCommonEvent(key, action, json);
 }
-
-void CommonEventReceiver::ReceiveCallBack(AsyncCallbackInfo* ptr)
-{
-    LOGI("PluginUtilsNApi::EmitAsyncCallbackWork called.");
-    PluginUtilsNApi::EmitAsyncCallbackWork(ptr);
-}
 } // namespace Plugin
 } // namespace OHOS
