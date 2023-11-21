@@ -26,7 +26,6 @@ namespace Plugin {
 class CommonEventReceiver {
 public:
     static void ReceiveCommonEvent(std::string key, std::string action, std::string json);
-    static void ReceiveCallBack(AsyncCallbackInfo* ptr);
 };
 } // namespace Plugin
 } // namespace OHOS
