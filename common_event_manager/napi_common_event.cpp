@@ -853,11 +853,11 @@ napi_value UnSubscribeCommonEvent(napi_env env, napi_callback_info info)
     }
 
     AsyncCallbackInfo* asyncCallbackInfo = new (std::nothrow) AsyncCallbackInfo();
-    asyncCallbackInfo->env = env;
     if (asyncCallbackInfo == nullptr) {
         LOGE("Async callback is nullptr.");
         return NapiGetNull(env);
     }
+    asyncCallbackInfo->env = env;
     if (argc >= UNSUBSCRIBE_MAX_PARA) {
         asyncCallbackInfo->callback[0] = callback;
     }
