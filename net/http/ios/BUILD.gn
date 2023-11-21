@@ -32,7 +32,16 @@ ohos_source_set("net_http_ios") {
     "//third_party/curl:curl_shared",
   ]
 
+  cflags_objc = [
+    "-fvisibility=default",
+    "-fobjc-weak",
+    "-fobjc-arc",
+    "-O0",
+  ]
+
   defines = [ "IOS_PLATFORM" ]
+
+  cflags_objcc = cflags_objc
 
   subsystem_name = "plugins"
   part_name = "net_http"

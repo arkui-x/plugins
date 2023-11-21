@@ -25,7 +25,7 @@ WritingHeaderCallback HttpExecIosIml::writingHeaderCallback_ = nullptr;
 
 HttpExecIosIml::~HttpExecIosIml()
 {
-    http_ios_request* request = (http_ios_request*)request_;
+    http_ios_request* request = (__bridge http_ios_request*)request_;
     if (!request) {
         return;
     }
@@ -77,7 +77,7 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
     requestParam.usingHttpProxyType = static_cast<NSInteger>(requestOptions.GetUsingHttpProxyType());
 
     http_ios_request* request = [[http_ios_request alloc] init];
-    request_ = (void*)request;
+    request_ = (__bridge void*)request;
     RequestCallBack();
 
     [request sendRequestWith:requestParam];
@@ -87,7 +87,7 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
 
 void HttpExecIosIml::RequestCallBack()
 {
-    http_ios_request* request = (http_ios_request*)request_;
+    http_ios_request* request = (__bridge http_ios_request*)request_;
     [request setMemoryHeaderBlock:^(NSDictionary* _Nonnull headers, void* _Nonnull userData) {
         NSData* data = [NSJSONSerialization dataWithJSONObject:headers options:NSJSONWritingPrettyPrinted error:nil];
         if (!data) {
