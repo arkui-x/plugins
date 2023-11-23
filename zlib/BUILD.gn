@@ -55,10 +55,7 @@ template("plugin_zlib_static") {
     ]
 
     if (platform == "android") {
-      deps += [
-        "//commonlibrary/c_utils/base:utils",
-        "//third_party/zlib:shared_libz",
-      ]
+      deps += [ "//commonlibrary/c_utils/base:utils" ]
       defines += [ "ANDROID_PLATFORM" ]
     } else if (platform == "ios") {
       deps += [ "//commonlibrary/c_utils/base:utilsbase" ]
