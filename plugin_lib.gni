@@ -13,8 +13,6 @@
 
 import("//build/ohos.gni")
 
-common_plugin_libs_static = [ "display" ]
-
 common_plugin_libs = [
   "ability_access_ctrl",
   "bridge",
@@ -64,9 +62,6 @@ common_plugin_libs = [
   "cryptoFramework",
 ]
 
-if (target_os == "android") {
-  common_plugin_libs += common_plugin_libs_static
-}
 if (target_os == "ios") {
   common_plugin_libs += [ "ndk_raw_file" ]
 }
