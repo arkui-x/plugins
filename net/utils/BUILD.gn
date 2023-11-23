@@ -113,7 +113,6 @@ foreach(item, ace_platforms) {
         "-install_name",
         "@rpath/libnet_utils.framework/libnet_utils",
       ]
-      deps += [ "//third_party/jsoncpp:jsoncpp_static" ]
       output_name = "net_utils"
     } else {
       output_name = "libnet_utils"
