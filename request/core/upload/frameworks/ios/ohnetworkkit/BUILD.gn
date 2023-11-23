@@ -15,21 +15,19 @@ import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 import("//plugins/request/request.gni")
 
-
 ohos_source_set("ios_ohnetworkkit") {
   sources = [
-    "OHHttpRequestHandler.m",
-    "OHHttpSessionController.m",
-    "OHHttpSessionTaskDelegate.m",
-    "OHMultiFormData.m",
+    "OHMultipartFormStream.m",
     "OHNetStatusMonitor.m",
+    "OHRequestResult.m",
+    "OHSessionManager.m",
     "OHSslHandler.m",
-    "ios_certificate_utils.mm"
+    "ios_certificate_utils.mm",
   ]
 
   include_dirs = [
     "./",
-    "$rq_upload_path/frameworks/common/include"
+    "$rq_upload_path/frameworks/common/include",
   ]
 
   frameworks = [

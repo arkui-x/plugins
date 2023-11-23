@@ -80,7 +80,7 @@ void GetDerList(NSMutableArray *derList)
     [derList addObjectsFromArray:cacheDerList];
 }
 
-void InstallCertificateChain(OHHttpSessionController *sessionCtrl_)
+void InstallCertificateChain(OHSessionManager *sessionCtrl_)
 {
     NSMutableArray *derList = [[NSMutableArray alloc] init];
     OHOS::Plugin::Request::CertificateUtils::GetDerList(derList);

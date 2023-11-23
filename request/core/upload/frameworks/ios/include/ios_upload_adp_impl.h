@@ -40,7 +40,7 @@ private:
     void ResumePutTask();
 
 private:
-    OHHttpSessionController *sessionCtrl_ = nil;
+    OHSessionManager *sessionCtrl_ = nil;
     NSURLSessionUploadTask *uploadTask_ = nil;
     std::vector<NSURLSessionUploadTask *> putUploadTaskList_;
     int64_t putCompletedUnitCount_ = 0;

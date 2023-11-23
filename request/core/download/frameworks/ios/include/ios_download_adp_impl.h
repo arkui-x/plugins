@@ -40,7 +40,7 @@ private:
     void ReportMimeType(IosDownloadAdpCallback *callback, NSURLResponse *response);
 
 private:
-    OHHttpSessionController *sessionCtrl_ = nil;
+    OHSessionManager *sessionCtrl_ = nil;
     NSURLSessionDownloadTask *downloadTask_ = nil;
     NSData *resumeData_ = nil;
     std::string fileName_;
