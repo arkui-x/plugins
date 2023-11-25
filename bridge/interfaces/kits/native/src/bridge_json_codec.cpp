@@ -21,14 +21,14 @@ namespace OHOS::Plugin::Bridge {
 /*
  * Method parameter:
  * { "0":0, "1":"OK", "2":value }
- * Method returns values in a uniform format：
- * { "errorcode":0, "errormessage":"OK", "result":value }
- * Message response returns values in a uniform format：
- * { "result":value, "errorcode":errorcode }
+ * Method returns values in a uniform format:
+ * { "errorCode":0, "errorMessage":"OK", "result":value }
+ * Message response returns values in a uniform format:
+ * { "result":value, "errorCode":errorCode }
  */
 static constexpr const char* MESSAGE_RESPONSE_RESULT = "result";
-static constexpr const char* MESSAGE_RESPONSE_ERROR_CODE = "errorcode";
-static constexpr const char* MESSAGE_RESPONSE_ERROR_MESSAGE = "errormessage";
+static constexpr const char* MESSAGE_RESPONSE_ERROR_CODE = "errorCode";
+static constexpr const char* MESSAGE_RESPONSE_ERROR_MESSAGE = "errorMessage";
 
 const BridgeJsonCodec& BridgeJsonCodec::GetInstance()
 {
