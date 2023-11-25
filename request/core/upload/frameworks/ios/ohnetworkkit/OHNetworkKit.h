@@ -24,11 +24,8 @@
 #import <Foundation/Foundation.h>
 #import <Availability.h>
 #import <TargetConditionals.h>
-#import "OHHttpRequestHandler.h"
 #import "OHSslHandler.h"
 #import "OHNetStatusMonitor.h"
-#import "OHHttpSessionController.h"
-#import "OHMultiFormData.h"
 #import "OHSessionManager.h"
 #import "OHRequestResult.h"
 #import "OHMultipartFormStream.h"
