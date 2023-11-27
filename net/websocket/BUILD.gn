@@ -54,7 +54,10 @@ template("plugin_net_websocket_static") {
 
   ohos_source_set(target_name) {
     defines += invoker.defines
-    defines += [ "OHOS_LIBWEBSOCKETS=1" ]
+    defines += [
+      "OHOS_LIBWEBSOCKETS=1",
+      "ENABLE_EVENT_HANDLER",
+    ]
     cflags_cc += invoker.cflags_cc
 
     include_dirs = websocket_include
