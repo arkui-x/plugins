@@ -465,6 +465,7 @@ public class DownloadManagerPlugin {
                     alreadyRetried++;
                 } else {
                     downloadManager.remove(downloadId);
+                    alreadyRetried = 0;
                 }
                 break;
             case DownloadManager.STATUS_RUNNING:
@@ -532,6 +533,7 @@ public class DownloadManagerPlugin {
     private void stopQueryProgress() {
         isDownloading = false;
         handle.removeCallbacks(runnable);
+        alreadyRetried = 0;
     }
 
     public boolean isDownload() {
@@ -557,6 +559,7 @@ public class DownloadManagerPlugin {
         downloadManager.remove(downloadId);
         DownloadManager.Query query = new DownloadManager.Query();
         query.setFilterById(downloadId);
+        alreadyRetried = 0;
     }
 
     /**
