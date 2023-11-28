@@ -695,7 +695,7 @@ static void WebWebviewJniRegister()
 {
     const char className[] = "ohos.ace.adapter.capability.web.AceWebBase";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebviewControllerJni::Register, className);
-    const char dataBaseClassName[] = "ohos.ace.plugin.webviewplugin.WebDataBasePlugin";
+    const char dataBaseClassName[] = "ohos.ace.adapter.capability.web.AceWebBase";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDataBaseJni::Register, dataBaseClassName);
     const char webCookieClassName[] = "ohos.ace.plugin.webviewplugin.webcookie.WebCookiePlugin";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebCookieManagerJni::Register, webCookieClassName);
