@@ -29,7 +29,10 @@ ohos_source_set("netstack_utils") {
     "//third_party/jsoncpp/include",
     "//plugins/hilog/include",
     "//plugins/interfaces",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
   ]
+
+  defines = [ "ENABLE_EVENT_HANDLER" ]
 
   sources = [
     "$SUBSYSTEM_DIR/netstack/utils/common_utils/src/netstack_common_utils.cpp",
@@ -41,6 +44,7 @@ ohos_source_set("netstack_utils") {
   ]
 
   deps = [
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
     "//plugins/libs/jsoncpp:jsoncpp_${target_os}",
     "//plugins/libs/napi:napi_${target_os}",
     "//third_party/libuv:uv_static",

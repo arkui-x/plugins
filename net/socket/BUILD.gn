@@ -118,15 +118,18 @@ template("plugin_net_socket_static") {
 
   ohos_source_set(target_name) {
     defines += invoker.defines
+    defines += [ "ENABLE_EVENT_HANDLER" ]
     cflags_cc += invoker.cflags_cc
 
     include_dirs = socket_include
     include_dirs += tls_include
+    include_dirs += [ "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include" ]
     sources = socket_sources
     sources += tls_sources
     sources += tls_napi_sources
 
     deps = [
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${platform}",
       "//plugins/net/utils:net_utils_${target_os}",
