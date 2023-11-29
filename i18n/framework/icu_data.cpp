@@ -24,7 +24,6 @@
 extern "C" const DataHeader U_DATA_API U_ICUDATA_ENTRY_POINT;
 
 namespace {
-const char* g_hwDirectory = "/system/usr/ohos_icu";
 static int status = 0;
 std::mutex dataMutex;
 }
@@ -39,6 +38,6 @@ void InitIcuData()
         return;
     }
 	UErrorCode err;
-    udata_setCommonData(&U_ICUDATA_ENTRY_POINT, &err);
+    udata_setCommonDataAfterClean(&U_ICUDATA_ENTRY_POINT, &err);
     status = 1;
 }
