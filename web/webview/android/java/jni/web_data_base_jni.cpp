@@ -28,7 +28,7 @@ namespace {
 const char WEB_WEBVIEW_CLASS_NAME[] = "ohos/ace/adapter/capability/web/AceWebPluginBase";
 
 static const JNINativeMethod METHODS[] = {
-    { "nativeInit", "()V", reinterpret_cast<void*>(WebDataBaseJni::NativeInit) },
+    { "nativeInitWebDataBase", "()V", reinterpret_cast<void*>(WebDataBaseJni::NativeInit) },
 };
 static const char METHOD_EXIST_HTTP_AUTH_CREDENTIALS[] = "existHttpAuthCredentials";
 static const char METHOD_DELETE_HTTP_AUTH_CREDENTIALS[] = "deleteHttpAuthCredentials";
