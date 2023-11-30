@@ -30,7 +30,7 @@ typedef void (^OHDownloadCompletionBlock)(NSURLResponse * _Nullable response, NS
 
 @interface OHSessionManager : NSObject
 
-@property (nonatomic, strong, nullable) dispatch_queue_t completionQueue;
+@property (nonatomic, nullable) dispatch_queue_t completionQueue;
 
 @property (nonatomic, strong) OHSslHandler *sslHandler;
 
