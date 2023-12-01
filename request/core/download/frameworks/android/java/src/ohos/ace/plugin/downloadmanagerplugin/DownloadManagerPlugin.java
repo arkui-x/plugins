@@ -33,6 +33,7 @@ import android.os.Looper;
 import android.app.DownloadManager;
 
 import java.io.File;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -309,6 +310,18 @@ public class DownloadManagerPlugin {
      */
     public long startDownload(long downloadProgress) {
         Log.i(LOG_TAG, "Download: start download manager service, downloadUrl: " + downloadUrl);
+        if (getNetworkState(networkObj) == NETWORK_INVALID) {
+            Log.e(LOG_TAG, "no network");
+            sendFailCallback(16,0);
+            return 0;
+        }
+
+        if (!canMakeRequest(downloadUrl)) {
+            Log.e(LOG_TAG, "can not make request");
+            sendFailCallback(16,1);
+            return 0;
+        }
+
         downloadManager = (DownloadManager) context.getSystemService(context.DOWNLOAD_SERVICE);
         if (!(downloadManager instanceof DownloadManager)) {
             Log.e(LOG_TAG, "no http or https url");
@@ -532,6 +545,7 @@ public class DownloadManagerPlugin {
     private void stopQueryProgress() {
         isDownloading = false;
         handle.removeCallbacks(runnable);
+        alreadyRetried = 0;
     }
 
     public boolean isDownload() {
@@ -557,6 +571,7 @@ public class DownloadManagerPlugin {
         downloadManager.remove(downloadId);
         DownloadManager.Query query = new DownloadManager.Query();
         query.setFilterById(downloadId);
+        alreadyRetried = 0;
     }
 
     /**
@@ -629,6 +644,31 @@ public class DownloadManagerPlugin {
         }
         return updateRows > 0;
     }
+
+    public boolean canMakeRequest(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            URLConnection connection = url.openConnection();
+            connection.setConnectTimeout(5000); // 设置超时时间，单位为ms
+            connection.connect(); // 尝试连接
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void sendFailCallback(int status, int reason) {
+        int[] bytesAndStatus = new int[]{
+                ARRAY_INIT_VAL, ARRAY_INIT_VAL, 0, 0
+        };
+
+        bytesAndStatus[2] = status;
+        bytesAndStatus[3] = reason;
+        onRequestDataCallback(bytesAndStatus,downloadProgressObj);
+
+    }
+
 
     /**
      * Register the initialization method of the plugin for the plugin constructor to call
