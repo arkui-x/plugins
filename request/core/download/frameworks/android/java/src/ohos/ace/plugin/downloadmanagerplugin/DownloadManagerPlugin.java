@@ -316,12 +316,6 @@ public class DownloadManagerPlugin {
             return 0;
         }
 
-        if (!canMakeRequest(downloadUrl)) {
-            Log.e(LOG_TAG, "can not make request");
-            sendFailCallback(16,1);
-            return 0;
-        }
-
         downloadManager = (DownloadManager) context.getSystemService(context.DOWNLOAD_SERVICE);
         if (!(downloadManager instanceof DownloadManager)) {
             Log.e(LOG_TAG, "no http or https url");
@@ -649,8 +643,8 @@ public class DownloadManagerPlugin {
         try {
             URL url = new URL(urlString);
             URLConnection connection = url.openConnection();
-            connection.setConnectTimeout(5000); // 设置超时时间，单位为ms
-            connection.connect(); // 尝试连接
+            connection.setConnectTimeout(5000);
+            connection.connect();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
