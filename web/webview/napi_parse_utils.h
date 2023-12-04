@@ -33,6 +33,8 @@ constexpr int MAX_CUSTOM_SCHEME_NAME_LENGTH = 32;
 constexpr int MAX_CUSTOM_SCHEME_SIZE = 10;
 constexpr int32_t MAX_STRING_LENGTH = 40960;
 constexpr int32_t MAX_PWD_LENGTH = 256;
+constexpr float ZOOM_FACTOR_LOW_LIMIT_ANDROID = 0.01;
+constexpr float ZOOM_FACTOR_HIGH_LIMIT_ANDROID = 100.0;
 
 class NapiParseUtils {
 public:

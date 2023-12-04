@@ -64,6 +64,46 @@ void WebviewControllerIOS::EvaluateJavaScript(const std::string& script)
     EvaluateJavaScriptOC(webId_, script, WebviewController::OnReceiveValue);
 }
 
+ErrCode WebviewControllerIOS::ScrollTo(float x, float y)
+{
+    scrollToOC(webId_, x, y);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerIOS::ScrollBy(float deltaX, float deltaY)
+{
+    scrollByOC(webId_, deltaX, deltaY);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerIOS::Zoom(float factor)
+{
+    zoomOC(webId_, factor);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerIOS::Stop()
+{
+    stopOC(webId_);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerIOS::SetCustomUserAgent(const std::string& userAgent)
+{
+    setCustomUserAgentOC(webId_, userAgent);
+    return NO_ERROR;
+}
+
+std::string WebviewControllerIOS::GetCustomUserAgent()
+{
+    return getCustomUserAgentOC(webId_);
+}
+
+bool WebviewControllerIOS::AccessStep(int32_t step)
+{
+    return accessStepOC(webId_, step);
+}
+
 bool WebviewControllerIOS::IsInit()
 {
     return webId_ != -1;

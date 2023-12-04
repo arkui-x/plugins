@@ -41,6 +41,16 @@ public:
     virtual ErrCode Forward() = 0;
     virtual ErrCode Refresh() = 0;
     virtual void EvaluateJavaScript(const std::string& script) = 0;
+    virtual ErrCode ScrollTo(float x, float y) = 0;
+    virtual ErrCode ScrollBy(float deltaX, float deltaY) = 0;
+    virtual ErrCode Zoom(float factor) = 0;
+    virtual ErrCode Stop() = 0;
+    virtual ErrCode SetCustomUserAgent(const std::string& userAgent) = 0;
+    virtual std::string GetCustomUserAgent() = 0;
+    virtual bool AccessStep(int32_t step) = 0;
+    virtual ErrCode ClearHistory() {
+        return NWebError::NO_ERROR;
+    }
     void SetWebId(int32_t webId)
     {
         webId_= webId;

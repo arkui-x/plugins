@@ -76,6 +76,46 @@ ErrCode WebviewControllerAndroid::Refresh()
     return NO_ERROR;
 }
 
+ErrCode WebviewControllerAndroid::ScrollTo(float x, float y)
+{
+    return WebviewControllerJni::ScrollTo(webId_, static_cast<int>(x), static_cast<int>(y));
+}
+
+ErrCode WebviewControllerAndroid::ScrollBy(float deltaX, float deltaY)
+{
+    return WebviewControllerJni::ScrollBy(webId_, static_cast<int>(deltaX), static_cast<int>(deltaY));
+}
+
+ErrCode WebviewControllerAndroid::Zoom(float factor)
+{
+    return WebviewControllerJni::Zoom(webId_, factor);;
+}
+
+ErrCode WebviewControllerAndroid::Stop()
+{
+    return WebviewControllerJni::Stop(webId_);
+}
+
+ErrCode WebviewControllerAndroid::SetCustomUserAgent(const std::string& userAgent)
+{
+    return WebviewControllerJni::SetCustomUserAgent(webId_, userAgent);
+}
+
+std::string WebviewControllerAndroid::GetCustomUserAgent()
+{
+    return WebviewControllerJni::GetCustomUserAgent(webId_);
+}
+
+ErrCode WebviewControllerAndroid::ClearHistory()
+{
+    return WebviewControllerJni::ClearHistory(webId_);
+}
+
+bool WebviewControllerAndroid::AccessStep(int32_t step)
+{
+    return WebviewControllerJni::AccessStep(webId_, step);
+}
+
 bool WebviewControllerAndroid::IsInit()
 {
     return webId_ != -1;

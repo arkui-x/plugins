@@ -77,6 +77,22 @@ private:
     static napi_value Refresh(napi_env env, napi_callback_info info);
 
     static napi_value RunJavaScript(napi_env env, napi_callback_info info);
+
+    static napi_value ScrollTo(napi_env env, napi_callback_info info);
+
+    static napi_value ScrollBy(napi_env env, napi_callback_info info);
+
+    static napi_value Zoom(napi_env env, napi_callback_info info);
+
+    static napi_value Stop(napi_env env, napi_callback_info info);
+
+    static napi_value SetCustomUserAgent(napi_env env, napi_callback_info info);
+
+    static napi_value GetCustomUserAgent(napi_env env, napi_callback_info info);
+
+    static napi_value AccessStep(napi_env env, napi_callback_info info);
+
+    static napi_value ClearHistory(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {

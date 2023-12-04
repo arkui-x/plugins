@@ -49,6 +49,22 @@ static const char METHOD_REFRESH[] = "refresh";
 
 static const char METHOD_EVALUTEJS[] = "evaluateJavascript";
 
+static const char METHOD_ACCESS_STEP[] = "accessStep";
+
+static const char METHOD_SCROLL_TO[] = "scrollTo";
+
+static const char METHOD_SCROLL_BY[] = "scrollBy";
+
+static const char METHOD_ZOOM[] = "zoom";
+
+static const char METHOD_STOP[] = "stop";
+
+static const char METHOD_CLEAR_HISTORY[] = "clearHistory";
+
+static const char METHOD_SET_CUSTOM_USER_AGENT[] = "setCustomUserAgent";
+
+static const char METHOD_GET_CUSTOM_USER_AGENT[] = "getCustomUserAgent";
+
 static const char SIGNATURE_LOADURL[] = "(JLjava/lang/String;Ljava/util/HashMap;)V";
 
 static const char SIGNATURE_LOADDATA[] = "(JLjava/util/HashMap;)V";
@@ -67,6 +83,22 @@ static const char SIGNATURE_REFRESH[] = "(J)V";
 
 static const char SIGNATURE_EVALUTEJS[] = "(JLjava/lang/String;)V";
 
+static const char SIGNATURE_ACCESS_STEP[] = "(JI)Ljava/lang/String;";
+
+static const char SIGNATURE_SCROLL_TO[] = "(JII)V";
+
+static const char SIGNATURE_SCROLL_BY[] = "(JII)V";
+
+static const char SIGNATURE_ZOOM[] = "(JF)V";
+
+static const char SIGNATURE_STOP[] = "(J)V";
+
+static const char SIGNATURE_CLEAR_HISTORY[] = "(J)V";
+
+static const char SIGNATURE_SET_CUSTOM_USER_AGENT[] = "(JLjava/lang/String;)V";
+
+static const char SIGNATURE_GET_CUSTOM_USER_AGENT[] = "(J)Ljava/lang/String;";
+
 struct {
     jmethodID loadUrl;
     jmethodID loadData;
@@ -77,6 +109,14 @@ struct {
     jmethodID backward;
     jmethodID refresh;
     jmethodID evaluateJavascript;
+    jmethodID accessStep;
+    jmethodID scrollTo;
+    jmethodID scrollBy;
+    jmethodID zoom;
+    jmethodID stop;
+    jmethodID clearHistory;
+    jmethodID setCustomUserAgent;
+    jmethodID getCustomUserAgent;
     jobject globalRef;
 } g_webWebviewClass;
 }
@@ -113,6 +153,16 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.backward = env->GetMethodID(cls, METHOD_BACKWARD, SIGNATURE_BACKWARD);
     g_webWebviewClass.refresh = env->GetMethodID(cls, METHOD_REFRESH, SIGNATURE_REFRESH);
     g_webWebviewClass.evaluateJavascript = env->GetMethodID(cls, METHOD_EVALUTEJS, SIGNATURE_EVALUTEJS);
+    g_webWebviewClass.accessStep = env->GetMethodID(cls, METHOD_ACCESS_STEP, SIGNATURE_ACCESS_STEP);
+    g_webWebviewClass.scrollTo = env->GetMethodID(cls, METHOD_SCROLL_TO, SIGNATURE_SCROLL_TO);
+    g_webWebviewClass.scrollBy = env->GetMethodID(cls, METHOD_SCROLL_BY, SIGNATURE_SCROLL_BY);
+    g_webWebviewClass.zoom = env->GetMethodID(cls, METHOD_ZOOM, SIGNATURE_ZOOM);
+    g_webWebviewClass.stop = env->GetMethodID(cls, METHOD_STOP, SIGNATURE_STOP);
+    g_webWebviewClass.clearHistory = env->GetMethodID(cls, METHOD_CLEAR_HISTORY, SIGNATURE_CLEAR_HISTORY);
+    g_webWebviewClass.setCustomUserAgent = env->GetMethodID(cls, METHOD_SET_CUSTOM_USER_AGENT,
+        SIGNATURE_SET_CUSTOM_USER_AGENT);
+    g_webWebviewClass.getCustomUserAgent = env->GetMethodID(cls, METHOD_GET_CUSTOM_USER_AGENT,
+        SIGNATURE_GET_CUSTOM_USER_AGENT);
     env->DeleteLocalRef(cls);
 }
 
@@ -364,5 +414,147 @@ void WebviewControllerJni::EvaluateJavaScript(int id, const std::string& script)
     CHECK_NULL_VOID(JsName);
     env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.evaluateJavascript, id, JsName);
     env->DeleteLocalRef(JsName);
+}
+
+bool WebviewControllerJni::AccessStep(int id, int32_t step)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.accessStep)) {
+        return false;
+    }
+    jstring jResult = static_cast<jstring>(
+        env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.accessStep, id, step));
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return false;
+    }
+    std::string result;
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    if (jResult != nullptr) {
+        env->DeleteLocalRef(jResult);
+    }
+    return result == "true";
+}
+
+ErrCode WebviewControllerJni::ScrollTo(int id, int x, int y)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.scrollTo, id, x, y);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call ScrollTo has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerJni::ScrollBy(int id, int x, int y)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.scrollBy, id, x, y);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call ScrollBy has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerJni::Zoom(int id, float factor)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.zoom, id, factor);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call Zoom has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerJni::Stop(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.stop, id);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call Stop has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerJni::ClearHistory(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.clearHistory, id);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call ClearHistory has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerJni::SetCustomUserAgent(int id, const std::string& userAgent)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+
+    jstring jsUserAgent = env->NewStringUTF(userAgent.c_str());
+    CHECK_NULL_RETURN(jsUserAgent, INIT_ERROR);
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.setCustomUserAgent, id, jsUserAgent);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call SetCustomUserAgent has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
+std::string WebviewControllerJni::GetCustomUserAgent(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.getCustomUserAgent)) {
+        return "";
+    }
+    jstring jResult = static_cast<jstring>(
+        env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getCustomUserAgent, id));
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return "";
+    }
+    std::string result;
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    if (jResult != nullptr) {
+        env->DeleteLocalRef(jResult);
+    }
+    return result;
 }
 }
