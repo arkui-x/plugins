@@ -12,20 +12,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AsyncCallback } from './basic';
+
+import { AsyncCallback } from '@ohos.base';
 
 declare namespace Bridge {
     /**
      * Bridge data type definition.
+     * ArrayBuffer: Binary data transfer.
      *
      * @since 10
      */
-    type S = number | boolean | string | null;
+    type S = number | boolean | string | null | ArrayBuffer;
     type T = S | Array<number> | Array<boolean> | Array<string>;
     type Message = T | Record<string, T>;
     type Parameter = Message;
     type Response = Message;
     type ResultValue = T | Map<string, T>;
+
+    /**
+     * Data transmission encoding type.
+     *
+     * @since 10
+     */
+    export enum BridgeType {
+        /**
+         * Json encoding mode, default.
+         *
+         * @since 10
+         */
+	 JSON_TYPE = 0,
+
+        /**
+         * Binary stream encoding.
+         *
+         * @since 10
+         */
+        BINARY_TYPE = 1
+    }
 
     /**
      * Creates the bridge and returns the bridge object.
@@ -35,6 +58,16 @@ declare namespace Bridge {
      * @since 10
      */
     function createBridge(bridgeName: string): BridgeObject;
+
+    /**
+     * Creates the bridge and returns the bridge object.
+     *
+     * @param bridgeName Unique bridge name.
+     * @param type Data encoding type.
+     * @return Bridge object.
+     * @since 10
+     */
+    function createBridge(bridgeName: string, type: BridgeType): BridgeObject;
 
     /**
      * Method or event interface.
@@ -90,10 +123,10 @@ declare namespace Bridge {
          * UnRegister JS side event.
          *
          * @param methodName The name of JS side event.
-         * @since 9
+         * @since 10
          */
-         unRegisterMethod(methodName: string, callback: AsyncCallback<void>): void;
-         unRegisterMethod(methodName: string): Promise<void>;
+        unRegisterMethod(methodName: string, callback: AsyncCallback<void>): void;
+        unRegisterMethod(methodName: string): Promise<void>;
 
         /**
          * JS sends messages to the platform side.
