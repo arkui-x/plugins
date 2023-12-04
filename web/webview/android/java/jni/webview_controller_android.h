@@ -35,6 +35,14 @@ public:
     ErrCode Forward() override;
     ErrCode Backward() override;
     ErrCode Refresh() override;
+    ErrCode ScrollTo(float x, float y) override;
+    ErrCode ScrollBy(float deltaX, float deltaY) override;
+    ErrCode Zoom(float factor) override;
+    ErrCode Stop() override;
+    ErrCode SetCustomUserAgent(const std::string& userAgent) override;
+    std::string GetCustomUserAgent() override;
+    ErrCode ClearHistory() override;
+    bool AccessStep(int32_t step) override;
     void EvaluateJavaScript(const std::string& script) override;
 };
 }

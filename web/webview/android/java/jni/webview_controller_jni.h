@@ -37,6 +37,14 @@ public:
     static void Forward(int id);
     static void Backward(int id);
     static void Refresh(int id);
+    static ErrCode Stop(int id);
+    static ErrCode ClearHistory(int id);
+    static bool AccessStep(int id, int32_t step);
+    static ErrCode ScrollTo(int id, int x, int y);
+    static ErrCode ScrollBy(int id, int x, int y);
+    static ErrCode Zoom(int id, float factor);
+    static std::string GetCustomUserAgent(int id);
+    static ErrCode SetCustomUserAgent(int id, const std::string& userAgent);
     static void EvaluateJavaScript(int id, const std::string& script);
     static void OnReceiveValue(JNIEnv* env, jobject jobj, jstring jResult);
 };

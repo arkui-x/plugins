@@ -480,6 +480,203 @@ napi_value NapiWebviewController::RunJavaScript(napi_env env, napi_callback_info
     return promise;
 }
 
+napi_value NapiWebviewController::AccessStep(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE];
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    int32_t step = INTEGER_ZERO;
+    if (!NapiParseUtils::ParseInt32(env, argv[INTEGER_ZERO], step)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    bool access = webviewController->AccessStep(step);
+    NAPI_CALL(env, napi_get_boolean(env, access, &result));
+    return result;
+
+}
+
+napi_value NapiWebviewController::ScrollTo(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = { 0 };
+    float x;
+    float y;
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_TWO) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseFloat(env, argv[INTEGER_ZERO], x)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseFloat(env, argv[INTEGER_ONE], y)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    webviewController->ScrollTo(x, y);
+    return result;
+}
+
+napi_value NapiWebviewController::ScrollBy(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = { 0 };
+    float deltaX;
+    float deltaY;
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_TWO) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseFloat(env, argv[INTEGER_ZERO], deltaX)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseFloat(env, argv[INTEGER_ONE], deltaY)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    webviewController->ScrollBy(deltaX, deltaY);
+    return result;
+}
+
+napi_value NapiWebviewController::Zoom(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    float factor = 0.0;
+    if (!NapiParseUtils::ParseFloat(env, argv[0], factor)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+#ifdef ANDROID_PLATFORM
+    if (factor < ZOOM_FACTOR_LOW_LIMIT_ANDROID || factor > ZOOM_FACTOR_HIGH_LIMIT_ANDROID) {
+        return result;
+    }
+#endif
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    ErrCode ret = webviewController->Zoom(factor);
+    if (ret != NO_ERROR) {
+        if (ret == NWEB_ERROR) {
+            LOGE("Zoom failed.");
+            return result;
+        }
+        BusinessError::ThrowErrorByErrcode(env, ret);
+    }
+
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebviewController::Stop(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    webviewController->Stop();
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebviewController::SetCustomUserAgent(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE];
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    std::string userAgent;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], userAgent)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    ErrCode ret = webviewController->SetCustomUserAgent(userAgent);
+    if (ret != NO_ERROR) {
+        BusinessError::ThrowErrorByErrcode(env, ret);
+    }
+    return result;
+}
+
+napi_value NapiWebviewController::GetCustomUserAgent(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    std::string userAgent = webviewController->GetCustomUserAgent();
+    napi_create_string_utf8(env, userAgent.c_str(), userAgent.length(), &result);
+    return result;
+}
+
+napi_value NapiWebviewController::ClearHistory(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    webviewController->ClearHistory();
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
 napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor properties[] = {
@@ -494,6 +691,14 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("backward", NapiWebviewController::Backward),
         DECLARE_NAPI_FUNCTION("refresh", NapiWebviewController::Refresh),
         DECLARE_NAPI_FUNCTION("runJavaScript", NapiWebviewController::RunJavaScript),
+        DECLARE_NAPI_FUNCTION("accessStep", NapiWebviewController::AccessStep),
+        DECLARE_NAPI_FUNCTION("scrollTo", NapiWebviewController::ScrollTo),
+        DECLARE_NAPI_FUNCTION("scrollBy", NapiWebviewController::ScrollBy),
+        DECLARE_NAPI_FUNCTION("zoom", NapiWebviewController::Zoom),
+        DECLARE_NAPI_FUNCTION("stop", NapiWebviewController::Stop),
+        DECLARE_NAPI_FUNCTION("clearHistory", NapiWebviewController::ClearHistory),
+        DECLARE_NAPI_FUNCTION("setCustomUserAgent", NapiWebviewController::SetCustomUserAgent),
+        DECLARE_NAPI_FUNCTION("getCustomUserAgent", NapiWebviewController::GetCustomUserAgent),
     };
     napi_value constructor = nullptr;
     napi_define_class(env, WEBVIEW_CONTROLLER_CLASS_NAME.c_str(), WEBVIEW_CONTROLLER_CLASS_NAME.length(),

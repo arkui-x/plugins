@@ -35,6 +35,13 @@ public:
     bool AccessBackward() override;
     bool AccessForward() override;
     void EvaluateJavaScript(const std::string& script) override;
+    ErrCode ScrollTo(float x, float y) override;
+    ErrCode ScrollBy(float deltaX, float deltaY) override;
+    ErrCode Zoom(float factor) override;
+    ErrCode Stop() override;
+    ErrCode SetCustomUserAgent(const std::string& userAgent) override;
+    std::string GetCustomUserAgent() override;
+    bool AccessStep(int32_t step) override;
 };
 } // namespace OHOS::Plugin
 #endif
