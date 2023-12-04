@@ -316,7 +316,10 @@ void DownloadManagerJni::OnRequestDataCallback(JNIEnv* env, jobject obj, jintArr
             receivedSize, totalSize, downloadStatus);
         downloadTaskImpl->OnProgress(receivedSize, totalSize);
     }
-    
+    else
+    {
+        DOWNLOAD_HILOGE("downloadTaskImpl is nullptr");
+    }
     if (downloadStatus == DOWNLOAD_PAUSE)
     {
         DOWNLOAD_HILOGE("download pause reason: %{private}d", downloadStatus);

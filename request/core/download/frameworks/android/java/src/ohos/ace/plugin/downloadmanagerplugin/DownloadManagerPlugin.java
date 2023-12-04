@@ -38,6 +38,9 @@ import java.util.HashMap;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 /**
  * DownloadManagerPlugin
@@ -310,9 +313,28 @@ public class DownloadManagerPlugin {
      */
     public long startDownload(long downloadProgress) {
         Log.i(LOG_TAG, "Download: start download manager service, downloadUrl: " + downloadUrl);
+        downloadProgressObj = downloadProgress;
         if (getNetworkState(networkObj) == NETWORK_INVALID) {
             Log.e(LOG_TAG, "no network");
             sendFailCallback(16,0);
+            return 0;
+        }
+        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+            return canMakeRequest(downloadUrl);
+        });
+
+        boolean canMakeRequest = false;
+        try {
+            canMakeRequest = future.get();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (!canMakeRequest) {
+            Log.d(LOG_TAG, "can not make request");
+            sendFailCallback(16, 1);
             return 0;
         }
 
@@ -329,7 +351,7 @@ public class DownloadManagerPlugin {
         request.setAllowedNetworkTypes(downloadNetworkType);
         request.setTitle(downloadTitle);
         request.setMimeType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-            MimeTypeMap.getFileExtensionFromUrl(downloadUrl)));
+        MimeTypeMap.getFileExtensionFromUrl(downloadUrl)));
         int downloadNotify = isDownloadBackground ? VISIBILITY_VISIBLE_NOTIFY_COMPLETED : VISIBILITY_HIDDEN;
         request.setNotificationVisibility(downloadNotify);
         for (String key : downloadHeader.keySet()) {
@@ -342,7 +364,6 @@ public class DownloadManagerPlugin {
         File parentFile = saveFile.getParentFile();
         request.setDestinationUri(Uri.fromFile(parentFile));
 
-        downloadProgressObj = downloadProgress;
         downloadId = downloadManager.enqueue(request);
         Log.i(LOG_TAG, "Start to download task: " + downloadId);
         if (downloadId != 0) {
@@ -472,6 +493,7 @@ public class DownloadManagerPlugin {
                     alreadyRetried++;
                 } else {
                     downloadManager.remove(downloadId);
+                    alreadyRetried = 0;
                 }
                 break;
             case DownloadManager.STATUS_RUNNING:
@@ -640,14 +662,17 @@ public class DownloadManagerPlugin {
     }
 
     public boolean canMakeRequest(String urlString) {
+        Log.i(LOG_TAG, "Download: start download manager service, downloadUrl: " + urlString);
         try {
             URL url = new URL(urlString);
             URLConnection connection = url.openConnection();
             connection.setConnectTimeout(5000);
             connection.connect();
+            Log.i(LOG_TAG, "canMakeRequest success");
             return true;
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            Log.i(LOG_TAG, "canMakeRequest failed");
             return false;
         }
     }
