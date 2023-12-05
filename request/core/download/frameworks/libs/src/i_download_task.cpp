@@ -50,10 +50,15 @@ void IDownloadTask::InstallCallback(DownloadTaskCallback cb)
 
 bool IDownloadTask::AddListener(const std::string &type, std::shared_ptr<DownloadNotifyInterface> listener)
 {
+    DOWNLOAD_HILOGE("AddListener: event listener with %{public}s event ", type.c_str());
     std::lock_guard<std::mutex> autoLock(mutex_);
     auto it = listenerMap_.find(type);
     if (it != listenerMap_.end()) {
         DOWNLOAD_HILOGE("replace event listener with %{public}s event", type.c_str());
+    }
+    if (listener == nullptr)
+    {
+        DOWNLOAD_HILOGE("AddListener: event listener is nullptr");
     }
     listenerMap_[type] = listener;
 
@@ -71,11 +76,13 @@ bool IDownloadTask::AddListener(const std::string &type, std::shared_ptr<Downloa
         }
         thread->detach();
     }
+    DOWNLOAD_HILOGE("AddListener: event listener with %{public}s event ok", type.c_str());
     return true;
 }
 
 void IDownloadTask::RemoveListener(const std::string &type, std::shared_ptr<DownloadNotifyInterface> listener)
 {
+    DOWNLOAD_HILOGE("RemoveListener: event listener with %{public}s event start", type.c_str());
     std::lock_guard<std::mutex> autoLock(mutex_);
     auto it = listenerMap_.find(type);
     if (it == listenerMap_.end() || it->second != listener) {
@@ -83,10 +90,12 @@ void IDownloadTask::RemoveListener(const std::string &type, std::shared_ptr<Down
         return;
     }
     listenerMap_.erase(it);
+    DOWNLOAD_HILOGE("RemoveListener: event listener with %{public}s event ok", type.c_str());
 }
 
 void IDownloadTask::RemoveListener(const std::string &type)
 {
+    DOWNLOAD_HILOGE("RemoveListener: event listener with %{public}s event start", type.c_str());
     std::lock_guard<std::mutex> autoLock(mutex_);
     auto it = listenerMap_.find(type);
     if (it == listenerMap_.end()) {
@@ -94,17 +103,16 @@ void IDownloadTask::RemoveListener(const std::string &type)
         return;
     }
     listenerMap_.erase(it);
+    DOWNLOAD_HILOGE("RemoveListener: event listener with %{public}s event ok", type.c_str());
 }
 
 void IDownloadTask::OnCallBack(const std::string &type, uint32_t argv1, uint32_t argv2)
 {
+    DOWNLOAD_HILOGE("OnCallBack in with %{public}s event", type.c_str());
     std::lock_guard<std::mutex> autoLock(mutex_);
     auto it = listenerMap_.find(type);
     if (it == listenerMap_.end()) {
-        if (IsTaskReturned()) {
-            return;
-        }
-        DOWNLOAD_HILOGE("task is not returned, no event listener, tmp store to event buf");
+    DOWNLOAD_HILOGE("no event listener, tmp store to event buf");
         eventBufMap_[type] = std::make_tuple(argv1, argv2);
         return;
     }
@@ -112,6 +120,7 @@ void IDownloadTask::OnCallBack(const std::string &type, uint32_t argv1, uint32_t
     params.push_back(argv1);
     params.push_back(argv2);
     it->second->OnCallBack(params);
+    DOWNLOAD_HILOGE("OnCallBack out");
 }
 
 bool IDownloadTask::IsSupportType(const std::string &type)
@@ -166,6 +175,10 @@ void IDownloadTask::SetStatus(DownloadStatus status, ErrorCode code, PausedReaso
             default:
                 break;
         }
+    }
+    else
+    {
+        DOWNLOAD_HILOGE("eventCb_ is nullptr");
     }
 }
 
