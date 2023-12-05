@@ -224,8 +224,15 @@ void AndroidDownloadTaskImpl::OnComplete()
     SetStatus(SESSION_SUCCESS);
 }
 
+void AndroidDownloadTaskImpl::OnPause()
+ {
+    DOWNLOAD_HILOGI("download task is paused");
+    SetStatus(SESSION_PAUSED);
+ }
+
 void AndroidDownloadTaskImpl::OnFail(ErrorCode errorCode)
 {
+    DOWNLOAD_HILOGI("download task is failed");
     std::lock_guard<std::mutex> guard(queryMutex_);
     if (status_ == SESSION_PAUSED || isRemoved_) {
         DOWNLOAD_HILOGI("download task is paused or removed");

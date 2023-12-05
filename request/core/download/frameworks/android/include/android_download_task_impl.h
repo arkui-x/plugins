@@ -48,6 +48,7 @@ public:
 public:
     void OnProgress(uint32_t receivedSize, uint32_t totalSize);
     void OnComplete();
+    void OnPause();
     void OnFail(ErrorCode errorCode);
     void SetMimeType(const std::string &mimeType);
     void SetNetworkType(NetworkType networkType);
