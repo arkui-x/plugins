@@ -164,7 +164,7 @@ bool AndroidDownloadTaskImpl::Restore()
 bool AndroidDownloadTaskImpl::GetTaskInfo(DownloadInfo &info)
 {
     std::lock_guard<std::mutex> guard(queryMutex_);
-    DOWNLOAD_HILOGD("getTaskInfo, recvSize:%{public}d, totalSize:%{public}d", receivedSize_, totalSize_);
+    DOWNLOAD_HILOGD("getTaskInfo, recvSize:%{public}lld, totalSize:%{public}lld", receivedSize_, totalSize_);
     info.SetDescription(config_.GetDescription());
     info.SetDownloadedBytes(receivedSize_);
     info.SetDownloadId(taskId_);
@@ -192,10 +192,10 @@ bool AndroidDownloadTaskImpl::GetTaskMimeType(std::string &mimeType)
     return true;
 }
 
-void AndroidDownloadTaskImpl::OnProgress(uint32_t receivedSize, uint32_t totalSize)
+void AndroidDownloadTaskImpl::OnProgress(int64_t receivedSize, int64_t totalSize)
 {
     std::lock_guard<std::mutex> guard(queryMutex_);
-    DOWNLOAD_HILOGI("download progress: task: %d, filepath: %s, receivedSize: %d, totalSize: %d, eventCb_: %p",
+    DOWNLOAD_HILOGI("download progress: task: %d, filepath: %s, receivedSize: %lld, totalSize: %lld, eventCb_: %p",
         GetId(), config_.GetFilePath().c_str(), receivedSize, totalSize, eventCb_);
 
     receivedSize_ = receivedSize;

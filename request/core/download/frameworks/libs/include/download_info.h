@@ -28,7 +28,7 @@ public:
 
     void SetDescription(const std::string &description);
 
-    void SetDownloadedBytes(uint32_t downloadedBytes);
+    void SetDownloadedBytes(int64_t downloadedBytes);
 
     void SetDownloadId(uint32_t downloadId);
 
@@ -46,7 +46,7 @@ public:
 
     void SetDownloadTitle(const std::string & downloadTitle);
 
-    void SetDownloadTotalBytes(uint32_t downloadTotalBytes);
+    void SetDownloadTotalBytes(int64_t downloadTotalBytes);
 
     void SetNetworkType(uint32_t networkType);
     void SetRoaming(bool enableRoaming);
@@ -54,7 +54,7 @@ public:
 
     [[nodiscard]] const std::string &GetDescription() const;
 
-    [[nodiscard]] uint32_t GetDownloadedBytes() const;
+    [[nodiscard]] int64_t GetDownloadedBytes() const;
 
     [[nodiscard]] uint32_t GetDownloadId() const;
 
@@ -72,7 +72,7 @@ public:
 
     [[nodiscard]] const std::string &GetDownloadTitle() const;
 
-    [[nodiscard]] uint32_t GetDownloadTotalBytes() const;
+    [[nodiscard]] int64_t GetDownloadTotalBytes() const;
 
     [[nodiscard]] uint32_t GetNetworkType() const;
     [[nodiscard]] bool GetMetered() const;
@@ -82,7 +82,7 @@ public:
 
 private:
     std::string description_;
-    uint32_t downloadedBytes_;
+    int64_t downloadedBytes_;
     uint32_t downloadId_;
     ErrorCode failedReason_;
     std::string fileName_;
@@ -92,7 +92,7 @@ private:
     std::string targetURI_;
     std::string downloadTitle_;
     std::string taskType_;
-    uint32_t downloadTotalBytes_;
+    int64_t downloadTotalBytes_;
     bool enableMetered_ {false};
     bool enableRoaming_ {false};
     uint32_t networkType_ {0};

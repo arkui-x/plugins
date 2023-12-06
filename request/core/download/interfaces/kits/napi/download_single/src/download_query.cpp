@@ -65,7 +65,7 @@ napi_value DownloadQuery::Exec(napi_env env, napi_callback_info info)
         napi_create_object(env, result);
 
         NapiUtils::SetStringPropertyUtf8(env, *result, "description", context->info.GetDescription().c_str());
-        NapiUtils::SetUint32Property(env, *result, "downloadedBytes", context->info.GetDownloadedBytes());
+        NapiUtils::SetInt64Property(env, *result, "downloadedBytes", context->info.GetDownloadedBytes());
         NapiUtils::SetUint32Property(env, *result, "downloadId", context->info.GetDownloadId());
         NapiUtils::SetUint32Property(env, *result, "failedReason", context->info.GetFailedReason());
         NapiUtils::SetStringPropertyUtf8(env, *result, "fileName", context->info.GetFileName().c_str());
@@ -74,7 +74,7 @@ napi_value DownloadQuery::Exec(napi_env env, napi_callback_info info)
         NapiUtils::SetUint32Property(env, *result, "status", context->info.GetStatus());
         NapiUtils::SetStringPropertyUtf8(env, *result, "targetURI", context->info.GetTargetURI().c_str());
         NapiUtils::SetStringPropertyUtf8(env, *result, "downloadTitle", context->info.GetDownloadTitle().c_str());
-        NapiUtils::SetUint32Property(env, *result, "downloadTotalBytes", context->info.GetDownloadTotalBytes());
+        NapiUtils::SetInt64Property(env, *result, "downloadTotalBytes", context->info.GetDownloadTotalBytes());
         return napi_ok;
     };
     auto exec = [context](AsyncCall::Context *ctx) {
