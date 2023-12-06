@@ -71,6 +71,11 @@ napi_value CreateInt32(napi_env env, int32_t code);
 
 int32_t GetInt32FromValue(napi_env env, napi_value value);
 
+/* INT64 */
+napi_value CreateInt64(napi_env env, int64_t code);
+
+void SetInt64Property(napi_env env, napi_value object, const std::string &name, int64_t value);
+
 /* String UTF8 */
 napi_value CreateStringUtf8(napi_env env, const std::string &str);
 

@@ -305,14 +305,14 @@ void DownloadManagerJni::OnRequestDataCallback(JNIEnv* env, jobject obj, jintArr
         downloadDataVector[i] = downloadDataElements[i];
     }
 
-    uint32_t receivedSize = downloadDataVector[DOWNLOAD_RECEIVED_SIZE_ARGC];
-    uint32_t totalSize = downloadDataVector[DOWNLOAD_TOTAL_SIZE_ARGC];
+    int64_t receivedSize = static_cast<int64_t>(downloadDataVector[DOWNLOAD_RECEIVED_SIZE_ARGC]);
+    int64_t totalSize = static_cast<int64_t>(downloadDataVector[DOWNLOAD_TOTAL_SIZE_ARGC]);
     uint32_t downloadStatus = downloadDataVector[DOWNLOAD_STATUS];
     uint32_t dmFailedReason = downloadDataVector[DOWNLOAD_FAILED_REASON];
     void *downloadProgress = reinterpret_cast<void *>(jDownloadProgress);
     AndroidDownloadTaskImpl *downloadTaskImpl = reinterpret_cast<AndroidDownloadTaskImpl *>(downloadProgress);
     if (downloadTaskImpl != nullptr) {
-        DOWNLOAD_HILOGI("Query receivedSize: %{private}d, totalSize: %{private}d, status:%{private}d",
+        DOWNLOAD_HILOGI("Query receivedSize: %{private}lld, totalSize: %{private}lld, status:%{private}d",
             receivedSize, totalSize, downloadStatus);
         downloadTaskImpl->OnProgress(receivedSize, totalSize);
     }
@@ -326,7 +326,7 @@ void DownloadManagerJni::OnRequestDataCallback(JNIEnv* env, jobject obj, jintArr
         downloadTaskImpl->OnPause();
     }
     else if ((receivedSize == totalSize) && (downloadStatus == DOWNLOAD_SUCCESS)) {
-        DOWNLOAD_HILOGI("download completed, receivedSize: %{private}d, totalSize: %{private}d",
+        DOWNLOAD_HILOGI("download completed, receivedSize: %{private}lld, totalSize: %{private}lld",
             receivedSize, totalSize);
         downloadTaskImpl->OnComplete();
     }

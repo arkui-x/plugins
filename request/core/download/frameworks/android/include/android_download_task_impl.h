@@ -46,7 +46,7 @@ public:
     bool GetTaskMimeType(std::string &mimeType) override;
 
 public:
-    void OnProgress(uint32_t receivedSize, uint32_t totalSize);
+    void OnProgress(int64_t receivedSize, int64_t totalSize);
     void OnComplete();
     void OnPause();
     void OnFail(ErrorCode errorCode);
@@ -59,8 +59,8 @@ private:
 
 private:
     std::string mimeType_;
-    uint32_t receivedSize_;
-    uint32_t totalSize_;
+    int64_t receivedSize_;
+    int64_t totalSize_;
     std::mutex queryMutex_;
 
     NetworkType networkType_ = NETWORK_INVALID;
