@@ -16,5 +16,5 @@ codec_path = "//plugins/bridge/interfaces/kits/native/src"
 bridge_codec_sources = [
   "${codec_path}/bridge_binary_codec.cpp",
   "${codec_path}/bridge_json_codec.cpp",
-  "${codec_path}/bridge_serializer.cpp",
+  "${codec_path}/bridge_packager.cpp",
 ]

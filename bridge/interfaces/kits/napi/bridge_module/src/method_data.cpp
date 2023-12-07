@@ -332,7 +332,7 @@ void MethodData::InitEventErrorForMessage(void)
 
     auto event = [instanceId = instanceId_](
                      napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
-        auto data = BridgeJsonCodec::GetInstance().ParseNullParams("{}");
+        auto data = BridgeJsonCodec::ParseNullParams("{}");
         auto task = [instanceId, data, bridgeName]() {
             Ace::Platform::BridgeManager::JSSendMessageResponse(instanceId, bridgeName, data);
         };

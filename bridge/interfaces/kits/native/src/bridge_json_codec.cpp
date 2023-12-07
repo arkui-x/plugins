@@ -92,9 +92,4 @@ std::unique_ptr<NapiRawValue> BridgeJsonCodec::DecodeInner(const DecodeValue& de
 
     return std::move(rawValue);
 }
-
-std::string BridgeJsonCodec::ParseNullParams(const std::string& data) const
-{
-    return Json::parse(data, nullptr, false).dump();
-}
 } // OHOS::Plugin::Bridge
