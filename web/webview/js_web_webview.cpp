@@ -590,7 +590,8 @@ napi_value NapiWebviewController::Zoom(napi_env env, napi_callback_info info)
     }
 
 #ifdef ANDROID_PLATFORM
-    if (factor < ZOOM_FACTOR_LOW_LIMIT_ANDROID || factor > ZOOM_FACTOR_HIGH_LIMIT_ANDROID) {
+    if (std::to_string(factor) == ZOOM_FACTOR_NAN || factor <= ZOOM_FACTOR_LOW_LIMIT_ANDROID ||
+        factor > ZOOM_FACTOR_HIGH_LIMIT_ANDROID) {
         return result;
     }
 #endif
