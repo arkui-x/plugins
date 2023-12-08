@@ -13,23 +13,20 @@
  * limitations under the License.
  */
 
-#include "webview_javascript_execute_callback.h"
+#ifndef PLUGINS_WEB_WEBVIEW_IOS_WEB_MESSAGE_PORT_IOS_H
+#define PLUGINS_WEB_WEBVIEW_IOS_WEB_MESSAGE_PORT_IOS_H
+
+#include "plugins/web/webview/web_message_port.h"
 
 namespace OHOS::Plugin {
-AsyncWorkData::AsyncWorkData(napi_env napiEnv) : env(napiEnv) {}
-
-AsyncWorkData::~AsyncWorkData()
-{
-    if (!env) {
-        return;
-    }
-    if (callback) {
-        napi_delete_reference(env, callback);
-        callback = nullptr;
-    }
-    if (asyncWork) {
-        napi_delete_async_work(env, asyncWork);
-        asyncWork = nullptr;
-    }
-}
+class WebMessagePortIOS : public WebMessagePort {
+public:
+    WebMessagePortIOS(int32_t webId, const std::string& portHandle);
+    ~WebMessagePortIOS() = default;
+    void ClosePort() override;
+    ErrCode PostMessageEvent(const std::string& webMessage) override;
+    ErrCode OnMessageEvent() override;
+};
 } // namespace OHOS::Plugin
+
+#endif // PLUGINS_WEB_WEBVIEW_IOS_WEB_MESSAGE_PORT_IOS_H

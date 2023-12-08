@@ -18,6 +18,7 @@ ohos_source_set("web_webview_ios") {
   sources = [
     "web_cookie_manager_ios.mm",
     "web_data_base_ios.cpp",
+    "web_message_port_ios.cpp",
     "webview_controller_ios.cpp",
   ]
 

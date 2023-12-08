@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PLUGIN_WEB_WEBVIEW_WEBVIEW_JAVASCRIPT_EXECUTE_CALLBACK_H
-#define PLUGIN_WEB_WEBVIEW_WEBVIEW_JAVASCRIPT_EXECUTE_CALLBACK_H
+#ifndef PLUGIN_WEB_WEBVIEW_WEBVIEW_ASYNC_WORK_CALLBACK_H
+#define PLUGIN_WEB_WEBVIEW_WEBVIEW_ASYNC_WORK_CALLBACK_H
 
 #include "napi_parse_utils.h"
 #include "web_errors.h"
@@ -29,11 +29,22 @@ struct AsyncWorkData {
     napi_ref callback = nullptr;
 };
 
+struct NapiJsCallBackParm : public AsyncWorkData {
+    explicit NapiJsCallBackParm(napi_env env) : AsyncWorkData(env) {}
+    std::string result_ = "";
+};
+
 struct AsyncEvaluteJSResultCallbackInfo : public AsyncWorkData {
 public:
-    explicit AsyncEvaluteJSResultCallbackInfo(napi_env env) : AsyncWorkData(env) {}
+    explicit AsyncEvaluteJSResultCallbackInfo(napi_env env, int32_t id) : AsyncWorkData(env), uniqueId_(id) {}
     std::string result;
+    int32_t GetUniqueId() const
+    {
+        return uniqueId_;
+    }
+private:
+    int32_t uniqueId_;
 };
 }
 
-#endif // PLUGIN_WEB_WEBVIEW_WEBVIEW_JAVASCRIPT_EXECUTE_CALLBACK_H
+#endif // PLUGIN_WEB_WEBVIEW_WEBVIEW_ASYNC_WORK_CALLBACK_H

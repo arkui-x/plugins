@@ -59,9 +59,52 @@ ErrCode WebviewControllerIOS::Refresh()
     return NO_ERROR;
 }
 
-void WebviewControllerIOS::EvaluateJavaScript(const std::string& script)
+void WebviewControllerIOS::EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId)
 {
-    EvaluateJavaScriptOC(webId_, script, WebviewController::OnReceiveValue);
+    EvaluateJavaScriptOC(webId_, script, asyncCallbackInfoId, WebviewController::OnReceiveValue);
+}
+
+void WebviewControllerIOS::RemoveCache(bool value)
+{
+    removeCacheOC(webId_, value);
+}
+
+void WebviewControllerIOS::BackOrForward(int32_t step){
+    backOrForwardOC(webId_, step);
+}
+
+std::string WebviewControllerIOS::GetTitle(){
+    return getTitleOC(webId_);
+}
+
+int32_t WebviewControllerIOS::GetPageHeight(){
+    return getPageHeightOC(webId_);
+}
+
+std::shared_ptr<WebHistoryList> WebviewControllerIOS::GetBackForwardEntries()
+{
+    std::shared_ptr<WebHistoryList> historyList = std::make_shared<WebHistoryList>();
+    BackForwardResult backForwardResult = getBackForwardEntriesOC(webId_);
+    historyList->SetCurrentIndex(backForwardResult.currentIndex);
+    historyList->SetListSize(backForwardResult.backForwardItemList.size());
+    for (const auto& item : backForwardResult.backForwardItemList) {
+        std::shared_ptr<WebHistoryItem> webHistoryItem = std::make_shared<WebHistoryItem>();
+        webHistoryItem->historyUrl = item.URL;
+        webHistoryItem->title = item.title;
+        webHistoryItem->historyRawUrl = item.initialURL;
+        historyList->InsertHistoryItem(webHistoryItem);
+    }
+    return historyList;
+}
+
+void WebviewControllerIOS::CreateWebMessagePorts(std::vector<std::string>& ports)
+{
+    createWebMessagePortsOC(webId_, ports);
+}
+
+void WebviewControllerIOS::PostWebMessage(std::string& message, std::vector<std::string>& ports, std::string& targetUrl)
+{
+    postWebMessageOC(webId_, message, ports, targetUrl);
 }
 
 ErrCode WebviewControllerIOS::ScrollTo(float x, float y)

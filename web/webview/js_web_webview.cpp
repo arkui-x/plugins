@@ -24,6 +24,7 @@
 #include "inner_api/plugin_utils_napi.h"
 #include "plugin_utils.h"
 #include "webview_controller.h"
+#include "web_message_port.h"
 #ifdef ANDROID_PLATFORM
 #include "android/java/jni/web_cookie_manager_android.h"
 #include "android/java/jni/web_cookie_manager_jni.h"
@@ -31,10 +32,12 @@
 #include "android/java/jni/webview_controller_jni.h"
 #include "android/java/jni/web_data_base_android.h"
 #include "android/java/jni/web_data_base_jni.h"
+#include "android/java/jni/web_message_port_android.h"
 #endif
 #ifdef IOS_PLATFORM
 #include "ios/webview_controller_ios.h"
 #include "ios/web_data_base_ios.h"
+#include "ios/web_message_port_ios.h"
 #endif
 #include "napi_parse_utils.h"
 #include "business_error.h"
@@ -43,6 +46,11 @@ using namespace OHOS::NWebError;
 
 namespace OHOS::Plugin {
 namespace {
+thread_local napi_ref g_historyListRef;
+thread_local napi_ref g_classWebMsgPort;
+thread_local int32_t g_asyncCallbackInfoId = 0;
+constexpr int32_t MAX_COUNT_ID = 1024;
+
 bool GetRawFileUrl(const std::string &fileName, std::string &result)
 {
     if (fileName.empty()) {
@@ -423,9 +431,8 @@ napi_value NapiWebviewController::RunJavaScript(napi_env env, napi_callback_info
     }
     WebviewController *webviewController = GetWebviewController(env, info);
     CHECK_NULL_RETURN(webviewController, result);
-    webviewController->EvaluateJavaScript(script);
     std::shared_ptr<AsyncEvaluteJSResultCallbackInfo> asyncCallbackInfoInstance =
-        std::make_shared<AsyncEvaluteJSResultCallbackInfo>(env);
+        std::make_shared<AsyncEvaluteJSResultCallbackInfo>(env, g_asyncCallbackInfoId);
     auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
     napi_value promise = nullptr;
     if (argc == argcCallback) {
@@ -456,7 +463,7 @@ napi_value NapiWebviewController::RunJavaScript(napi_env env, napi_callback_info
                 NAPI_CALL_RETURN_VOID(env, napi_get_null(env, &args[INTEGER_ZERO]));
             }
             napi_value jsResult = nullptr;
-            LOGD("asyncCallbackInfo result: %{public}s", asyncCallbackInfo->result.c_str());
+            LOGI("asyncCallbackInfo result: %{public}s", asyncCallbackInfo->result.c_str());
             NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(
                 env, asyncCallbackInfo->result.c_str(), asyncCallbackInfo->result.length(), &jsResult));
             args[INTEGER_ONE] = jsResult;
@@ -477,6 +484,10 @@ napi_value NapiWebviewController::RunJavaScript(napi_env env, napi_callback_info
         },
         reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
     WebviewController::InsertAsyncCallbackInfo(asyncCallbackInfoInstance);
+    webviewController->EvaluateJavaScript(script, g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
     return promise;
 }
 
@@ -677,6 +688,438 @@ napi_value NapiWebviewController::ClearHistory(napi_env env, napi_callback_info 
     return result;
 }
 
+napi_value NapiWebviewController::GetBackForwardEntries(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    auto webHistoryListInstance = webviewController->GetBackForwardEntries();
+    CHECK_NULL_RETURN(webHistoryListInstance, result);
+    WebHistoryList *webHistoryList = new (std::nothrow) WebHistoryList(*webHistoryListInstance);
+    CHECK_NULL_RETURN(webHistoryList, result);
+    int32_t currentIndex = webHistoryList->GetCurrentIndex();
+    int32_t size = webHistoryList->GetListSize();
+    napi_value jsHistoryList = nullptr;
+    NAPI_CALL(env, napi_get_reference_value(env, g_historyListRef, &jsHistoryList));
+    NAPI_CALL(env, napi_new_instance(env, jsHistoryList, 0, NULL, &result));
+
+    napi_value js_currentIndex;
+    napi_create_int32(env, currentIndex, &js_currentIndex);
+    napi_set_named_property(env, result, "currentIndex", js_currentIndex);
+
+    napi_value js_size;
+    napi_create_int32(env, size, &js_size);
+    napi_set_named_property(env, result, "size", js_size);
+    NAPI_CALL(env, napi_wrap(env, result, webHistoryList,
+        [](napi_env env, void *data, void *hint) {
+            WebHistoryList *webHistoryList = static_cast<WebHistoryList *>(data);
+            delete webHistoryList;
+            webHistoryList = nullptr;
+        },
+        nullptr, nullptr));
+
+    return result;
+}
+
+napi_value NapiWebHistoryList::JsConstructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+    return thisVar;
+}
+
+napi_value NapiWebHistoryList::GetItem(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    int32_t index;
+    WebHistoryList *historyList = nullptr;
+
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&historyList));
+    if (historyList == nullptr) {
+        LOGE("unwrap historyList failed.");
+        return result;
+    }
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    if (!NapiParseUtils::ParseInt32(env, argv[0], index)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    if (index >= historyList->GetListSize() || index < 0) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    auto item = historyList->GetItemAtIndex(index);
+    CHECK_NULL_RETURN(item, result);
+    napi_create_object(env, &result);
+    std::string historyUrl = item->historyUrl;
+    std::string historyRawUrl = item->historyRawUrl;
+    std::string title = item->title;
+    napi_value js_historyUrl;
+    napi_create_string_utf8(env, historyUrl.c_str(), historyUrl.length(), &js_historyUrl);
+    napi_set_named_property(env, result, "historyUrl", js_historyUrl);
+    napi_value js_historyRawUrl;
+    napi_create_string_utf8(env, historyRawUrl.c_str(), historyRawUrl.length(), &js_historyRawUrl);
+    napi_set_named_property(env, result, "historyRawUrl", js_historyRawUrl);
+    napi_value js_title;
+    napi_create_string_utf8(env, title.c_str(), title.length(), &js_title);
+    napi_set_named_property(env, result, "title", js_title);
+    return result;
+}
+
+napi_value NapiWebviewController::RemoveCache(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    bool include_disk_files = false;
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseBoolean(env, argv[0], include_disk_files)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    webviewController->RemoveCache(include_disk_files);
+    return result;
+}
+
+napi_value NapiWebviewController::BackOrForward(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    int32_t step = 0;
+    if (!NapiParseUtils::ParseInt32(env, argv[INTEGER_ZERO], step)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    webviewController->BackOrForward(step);
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebviewController::GetTitle(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    std::string title = webviewController->GetTitle();
+    napi_create_string_utf8(env, title.c_str(), title.length(), &result);
+
+    return result;
+}
+
+napi_value NapiWebviewController::GetPageHeight(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    int32_t pageHeight = webviewController->GetPageHeight();
+    napi_create_int32(env, pageHeight, &result);
+
+    return result;
+}
+
+napi_value NapiWebMessagePort::JsConstructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = INTEGER_THREE;
+    napi_value argv[INTEGER_THREE] = {0};
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    int32_t webId = -1;
+    if (!NapiParseUtils::ParseInt32(env, argv[INTEGER_ZERO], webId)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    std::string portHandle;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ONE], portHandle)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    bool isExtentionType = false;
+    if (!NapiParseUtils::ParseBoolean(env, argv[INTEGER_TWO], isExtentionType)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+#ifdef ANDROID_PLATFORM
+    WebMessagePort *msgPort = new (std::nothrow) WebMessagePortAndroid(webId, portHandle);
+#endif
+#ifdef IOS_PLATFORM
+    WebMessagePort *msgPort = new (std::nothrow) WebMessagePortIOS(webId, portHandle);
+#endif
+    if (msgPort == nullptr) {
+        LOGE("new webMessagePort failed");
+        return nullptr;
+    }
+    WebMessagePort::InsertPort(msgPort);
+
+    NAPI_CALL(env, napi_wrap(env, thisVar, msgPort,
+        [](napi_env env, void *data, void *hint) {
+            WebMessagePort *msgPort = static_cast<WebMessagePort *>(data);
+            WebMessagePort::ErasePort(msgPort);
+            delete msgPort;
+            msgPort = nullptr;
+        },
+        nullptr, nullptr));
+    return thisVar;
+}
+
+napi_value NapiWebMessagePort::Close(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr));
+
+    WebMessagePort *msgPort = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&msgPort));
+    if (msgPort == nullptr) {
+        LOGE("close message port failed, napi unwrap msg port failed");
+        return nullptr;
+    }
+    msgPort->ClosePort();
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+
+    return result;
+}
+
+napi_value NapiWebMessagePort::PostMessageEvent(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = 1;
+    napi_value argv[INTEGER_ONE];
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+    std::string webMessage;
+    if (valueType != napi_string) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], webMessage)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    WebMessagePort *msgPort = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&msgPort));
+    if (msgPort == nullptr) {
+        LOGE("close message port failed, napi unwrap msg port failed");
+        return nullptr;
+    }
+    auto errorCode = msgPort->PostMessageEvent(webMessage);
+    if (errorCode == CAN_NOT_POST_MESSAGE) {
+        BusinessError::ThrowErrorByErrcode(env, CAN_NOT_POST_MESSAGE);
+        return nullptr;
+    }
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebMessagePort::OnMessageEvent(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE];
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+    if (valueType != napi_function) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    napi_ref onMsgEventFunc = nullptr;
+    NAPI_CALL(env, napi_create_reference(env, argv[INTEGER_ZERO], INTEGER_ONE, &onMsgEventFunc));
+
+    WebMessagePort *msgPort = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&msgPort));
+    CHECK_NULL_RETURN(msgPort, nullptr);
+
+    auto webMessageCallbackInfo = std::make_shared<NapiJsCallBackParm>(env);
+    auto param = webMessageCallbackInfo.get();
+    CHECK_NULL_RETURN(param, nullptr);
+    param->callback = onMsgEventFunc;
+    msgPort->SetWebMessageCallback(webMessageCallbackInfo);
+    ErrCode ret = msgPort->OnMessageEvent();
+    if (ret != NO_ERROR) {
+        BusinessError::ThrowErrorByErrcode(env, ret);
+    }
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebviewController::CreateWebMessagePorts(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    bool isExtentionType = false;
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    if (argc != INTEGER_ZERO && argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    if (argc == INTEGER_ONE) {
+        if (!NapiParseUtils::ParseBoolean(env, argv[0], isExtentionType)) {
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return result;
+        }
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    if (webviewController == nullptr || !webviewController->IsInit()) {
+        BusinessError::ThrowErrorByErrcode(env, INIT_ERROR);
+        LOGE("create message port failed, napi unwrap webviewController failed");
+        return nullptr;
+    }
+    int32_t nwebId = webviewController->GetWebId();
+    std::vector<std::string> ports;
+    webviewController->CreateWebMessagePorts(ports);
+    if (ports.size() != INTEGER_TWO) {
+        LOGE("create web message port failed");
+        return result;
+    }
+    napi_value msgPortcons = nullptr;
+    NAPI_CALL(env, napi_get_reference_value(env, g_classWebMsgPort, &msgPortcons));
+    napi_create_array(env, &result);
+    napi_value consParam[INTEGER_TWO][INTEGER_THREE] = {{0}};
+    for (uint32_t i = 0; i < INTEGER_TWO; i++) {
+        napi_value msgPortObj = nullptr;
+        NAPI_CALL(env, napi_create_int32(env, nwebId, &consParam[i][INTEGER_ZERO]));
+        NAPI_CALL(env, napi_create_string_utf8(env, ports[i].c_str(), ports[i].length(), &consParam[i][INTEGER_ONE]));
+        NAPI_CALL(env, napi_get_boolean(env, isExtentionType, &consParam[i][INTEGER_TWO]));
+        NAPI_CALL(env, napi_new_instance(env, msgPortcons, INTEGER_THREE, consParam[i], &msgPortObj));
+
+        napi_set_element(env, result, i, msgPortObj);
+    }
+
+    return result;
+}
+
+bool GetSendPorts(napi_env env, napi_value argv, std::vector<std::string>& sendPorts)
+{
+    uint32_t arrayLen = 0;
+    napi_get_array_length(env, argv, &arrayLen);
+    if (arrayLen == 0) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return false;
+    }
+
+    napi_valuetype valueType = napi_undefined;
+    for (uint32_t i = 0; i < arrayLen; i++) {
+        napi_value portItem = nullptr;
+        napi_get_element(env, argv, i, &portItem);
+        napi_typeof(env, portItem, &valueType);
+        if (valueType != napi_object) {
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return false;
+        }
+        WebMessagePort *msgPort = nullptr;
+        napi_status status = napi_unwrap(env, portItem, (void **)&msgPort);
+        if ((!msgPort) || (status != napi_ok)) {
+            LOGE("post port to html failed, napi unwrap msg port fail");
+            return false;
+        }
+        std::string portHandle = msgPort->GetPortHandle();
+        sendPorts.emplace_back(portHandle);
+    }
+    return true;
+}
+
+napi_value NapiWebviewController::PostMessage(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_THREE;
+    napi_value argv[INTEGER_THREE];
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    if (argc != INTEGER_THREE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    std::string portName;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], portName)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    bool isArray = false;
+    NAPI_CALL(env, napi_is_array(env, argv[INTEGER_ONE], &isArray));
+    if (!isArray) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    std::vector<std::string> sendPorts;
+    if (!GetSendPorts(env, argv[INTEGER_ONE], sendPorts)) {
+        LOGE("post port to html failed, getSendPorts fail");
+        return result;
+    }
+
+    std::string urlStr;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_TWO], urlStr)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    WebviewController *webviewController = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&webviewController));
+    if (webviewController == nullptr || !webviewController->IsInit()) {
+        BusinessError::ThrowErrorByErrcode(env, INIT_ERROR);
+        LOGE("post port to html failed, napi unwrap webviewController failed");
+        return nullptr;
+    }
+    webviewController->PostWebMessage(portName, sendPorts, urlStr);
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+
+    return result;
+}
+
 napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor properties[] = {
@@ -699,6 +1142,13 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("clearHistory", NapiWebviewController::ClearHistory),
         DECLARE_NAPI_FUNCTION("setCustomUserAgent", NapiWebviewController::SetCustomUserAgent),
         DECLARE_NAPI_FUNCTION("getCustomUserAgent", NapiWebviewController::GetCustomUserAgent),
+        DECLARE_NAPI_FUNCTION("getBackForwardEntries", NapiWebviewController::GetBackForwardEntries),
+        DECLARE_NAPI_FUNCTION("removeCache", NapiWebviewController::RemoveCache),
+        DECLARE_NAPI_FUNCTION("backOrForward", NapiWebviewController::BackOrForward),
+        DECLARE_NAPI_FUNCTION("getTitle", NapiWebviewController::GetTitle),
+        DECLARE_NAPI_FUNCTION("getPageHeight", NapiWebviewController::GetPageHeight),
+        DECLARE_NAPI_FUNCTION("createWebMessagePorts", NapiWebviewController::CreateWebMessagePorts),
+        DECLARE_NAPI_FUNCTION("postMessage", NapiWebviewController::PostMessage),
     };
     napi_value constructor = nullptr;
     napi_define_class(env, WEBVIEW_CONTROLLER_CLASS_NAME.c_str(), WEBVIEW_CONTROLLER_CLASS_NAME.length(),
@@ -707,6 +1157,29 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
     NAPI_ASSERT(env, constructor != nullptr, "define js class WebviewController failed");
     napi_status status = napi_set_named_property(env, exports, "WebviewController", constructor);
     NAPI_ASSERT(env, status == napi_ok, "set property WebviewController failed");
+
+    napi_value historyList = nullptr;
+    napi_property_descriptor historyListProperties[] = {
+        DECLARE_NAPI_FUNCTION("getItemAtIndex", NapiWebHistoryList::GetItem)
+    };
+    napi_define_class(env, WEB_HISTORY_LIST_CLASS_NAME.c_str(), WEB_HISTORY_LIST_CLASS_NAME.length(),
+        NapiWebHistoryList::JsConstructor, nullptr, sizeof(historyListProperties) / sizeof(historyListProperties[0]),
+        historyListProperties, &historyList);
+    napi_create_reference(env, historyList, 1, &g_historyListRef);
+    napi_set_named_property(env, exports, WEB_HISTORY_LIST_CLASS_NAME.c_str(), historyList);
+
+    napi_value msgPortCons = nullptr;
+    napi_property_descriptor msgPortProperties[] = {
+        DECLARE_NAPI_FUNCTION("close", NapiWebMessagePort::Close),
+        DECLARE_NAPI_FUNCTION("postMessageEvent", NapiWebMessagePort::PostMessageEvent),
+        DECLARE_NAPI_FUNCTION("onMessageEvent", NapiWebMessagePort::OnMessageEvent),
+    };
+    NAPI_CALL(env, napi_define_class(env, WEB_MESSAGE_PORT_CLASS_NAME.c_str(), WEB_MESSAGE_PORT_CLASS_NAME.length(),
+        NapiWebMessagePort::JsConstructor, nullptr, sizeof(msgPortProperties) / sizeof(msgPortProperties[0]),
+        msgPortProperties, &msgPortCons));
+    NAPI_CALL(env, napi_create_reference(env, msgPortCons, 1, &g_classWebMsgPort));
+    NAPI_CALL(env, napi_set_named_property(env, exports, WEB_MESSAGE_PORT_CLASS_NAME.c_str(), msgPortCons));
+
     return exports;
 }
 

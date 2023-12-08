@@ -41,6 +41,8 @@ enum class ResourceType : uint32_t {
 };
 
 const std::string WEBVIEW_CONTROLLER_CLASS_NAME = "WebviewController";
+const std::string WEB_HISTORY_LIST_CLASS_NAME = "WebHistoryList";
+const std::string WEB_MESSAGE_PORT_CLASS_NAME = "WebMessagePort";
 
 class NapiWebviewController {
 public:
@@ -93,6 +95,20 @@ private:
     static napi_value AccessStep(napi_env env, napi_callback_info info);
 
     static napi_value ClearHistory(napi_env env, napi_callback_info info);
+
+    static napi_value GetBackForwardEntries(napi_env env, napi_callback_info info);
+
+    static napi_value RemoveCache(napi_env env, napi_callback_info info);
+
+    static napi_value BackOrForward(napi_env env, napi_callback_info info);
+
+    static napi_value GetTitle(napi_env env, napi_callback_info info);
+
+    static napi_value GetPageHeight(napi_env env, napi_callback_info info);
+
+    static napi_value CreateWebMessagePorts(napi_env env, napi_callback_info info);
+
+    static napi_value PostMessage(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {
@@ -150,6 +166,30 @@ private:
 
     static void CreateFetchCookieAsyncWork(napi_env env,
         const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& callbackInfo);
+};
+
+class NapiWebHistoryList {
+public:
+    NapiWebHistoryList() = default;
+    virtual ~NapiWebHistoryList() = default;
+
+    static napi_value JsConstructor(napi_env env, napi_callback_info info);
+
+    static napi_value GetItem(napi_env env, napi_callback_info info);
+};
+
+class NapiWebMessagePort {
+public:
+    NapiWebMessagePort() = default;
+    virtual ~NapiWebMessagePort() = default;
+
+    static napi_value JsConstructor(napi_env env, napi_callback_info info);
+
+    static napi_value Close(napi_env env, napi_callback_info info);
+
+    static napi_value PostMessageEvent(napi_env env, napi_callback_info info);
+
+    static napi_value OnMessageEvent(napi_env env, napi_callback_info info);
 };
 }
 #endif

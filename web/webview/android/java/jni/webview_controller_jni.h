@@ -45,8 +45,19 @@ public:
     static ErrCode Zoom(int id, float factor);
     static std::string GetCustomUserAgent(int id);
     static ErrCode SetCustomUserAgent(int id, const std::string& userAgent);
-    static void EvaluateJavaScript(int id, const std::string& script);
-    static void OnReceiveValue(JNIEnv* env, jobject jobj, jstring jResult);
+    static void EvaluateJavaScript(int id, const std::string& script, int32_t asyncCallbackInfoId);
+    static void OnReceiveValue(JNIEnv* env, jclass jcls, jstring jResult, jint jId);
+    static std::shared_ptr<WebHistoryList> GetBackForwardEntries(int id);
+    static void RemoveCache(int id, bool value);
+    static void BackOrForward(int id, int32_t step);
+    static std::string GetTitle(int id);
+    static int32_t GetPageHeight(int id);
+    static void CreateWebMessagePorts(int id, std::vector<std::string>& ports);
+    static void PostWebMessage(int id, std::string& message, std::vector<std::string>& ports, std::string& targetUrl);
+    static void CloseWebMessagePort(int id, const std::string& portHandle);
+    static ErrCode PostMessageEvent(int id, const std::string& portHandle, const std::string& webMessage);
+    static ErrCode OnWebMessagePortEvent(int id, const std::string& portHandle);
+    static void OnMessage(JNIEnv* env, jclass jcls, jint jWebId, jstring jPortHandle, jstring jResult);
 };
 }
 

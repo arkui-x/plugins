@@ -121,8 +121,44 @@ bool WebviewControllerAndroid::IsInit()
     return webId_ != -1;
 }
 
-void WebviewControllerAndroid::EvaluateJavaScript(const std::string& script)
+void WebviewControllerAndroid::EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId)
 {
-    WebviewControllerJni::EvaluateJavaScript(webId_, script);
+    WebviewControllerJni::EvaluateJavaScript(webId_, script, asyncCallbackInfoId);
+}
+
+std::shared_ptr<WebHistoryList> WebviewControllerAndroid::GetBackForwardEntries()
+{
+    return WebviewControllerJni::GetBackForwardEntries(webId_);
+}
+
+void WebviewControllerAndroid::RemoveCache(bool value)
+{
+    WebviewControllerJni::RemoveCache(webId_, value);
+}
+
+void WebviewControllerAndroid::BackOrForward(int32_t step)
+{
+    WebviewControllerJni::BackOrForward(webId_, step);
+}
+
+std::string WebviewControllerAndroid::GetTitle()
+{
+    return WebviewControllerJni::GetTitle(webId_);
+}
+
+int32_t WebviewControllerAndroid::GetPageHeight()
+{
+    return WebviewControllerJni::GetPageHeight(webId_);
+}
+
+void WebviewControllerAndroid::CreateWebMessagePorts(std::vector<std::string>& ports)
+{
+    WebviewControllerJni::CreateWebMessagePorts(webId_, ports);
+}
+
+void WebviewControllerAndroid::PostWebMessage(
+    std::string& message, std::vector<std::string>& ports,std::string& targetUrl)
+{
+    WebviewControllerJni::PostWebMessage(webId_, message, ports, targetUrl);
 }
 }
