@@ -27,14 +27,15 @@
 #endif
 
 namespace OHOS::Plugin {
-std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>> WebCookieManager::configCookieCallbackInfoContainer_;
-std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>> WebCookieManager::fetchCookieCallbackInfoContainer_;
-std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
+thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
+    WebCookieManager::configCookieCallbackInfoContainer_;
+thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
+    WebCookieManager::fetchCookieCallbackInfoContainer_;
+thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
     WebCookieManager::clearAllCookiesCallbackInfoContainer_;
-int32_t WebCookieManager::configCookieIndex_ = 0;
-int32_t WebCookieManager::fetchCookieIndex_ = 0;
-int32_t WebCookieManager::clearAllCookiesIndex_ = 0;
-std::mutex WebCookieManager::mutex_;
+thread_local int32_t WebCookieManager::configCookieIndex_ = 0;
+thread_local int32_t WebCookieManager::fetchCookieIndex_ = 0;
+thread_local int32_t WebCookieManager::clearAllCookiesIndex_ = 0;
 
 void WebCookieManager::OnFetchReceiveValue(const std::string& result)
 {
@@ -132,7 +133,6 @@ bool WebCookieManager::EraseCallbackInfo(
 
 void WebCookieManager::IncreaseIndex(TaskType taskType)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
     switch (taskType) {
         case TaskType::CONFIG_COOKIE:
             configCookieIndex_++;
@@ -162,7 +162,6 @@ void WebCookieManager::IncreaseIndex(TaskType taskType)
 
 void WebCookieManager::DecreaseIndex(TaskType taskType)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
     switch (taskType) {
         case TaskType::CONFIG_COOKIE:
             configCookieIndex_--;

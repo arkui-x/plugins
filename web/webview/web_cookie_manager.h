@@ -48,13 +48,15 @@ private:
     static bool ExcuteAsyncCallbackInfo();
     static void IncreaseIndex(TaskType taskType);
     static void DecreaseIndex(TaskType taskType);
-    static std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>> configCookieCallbackInfoContainer_;
-    static std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>> fetchCookieCallbackInfoContainer_;
-    static std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>> clearAllCookiesCallbackInfoContainer_;
-    static int32_t configCookieIndex_;
-    static int32_t fetchCookieIndex_;
-    static int32_t clearAllCookiesIndex_;
-    static std::mutex mutex_;
+    static thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
+        configCookieCallbackInfoContainer_;
+    static thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
+        fetchCookieCallbackInfoContainer_;
+    static thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
+        clearAllCookiesCallbackInfoContainer_;
+    static thread_local int32_t configCookieIndex_;
+    static thread_local int32_t fetchCookieIndex_;
+    static thread_local int32_t clearAllCookiesIndex_;
 };
 } // namespace OHOS::Plugin
 
