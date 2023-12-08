@@ -18,14 +18,12 @@
 #include "webview_controller.h"
 
 namespace OHOS::Plugin {
-std::vector<std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>> WebviewController::asyncCallbackInfoContainer_;
-int32_t WebviewController::index_ = 0;
-std::mutex WebviewController::mutex_;
+thread_local std::vector<std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>> WebviewController::asyncCallbackInfoContainer_;
 
-void WebviewController::OnReceiveValue(const std::string& result)
+void WebviewController::OnReceiveValue(const std::string& result, int32_t asyncCallbackInfoId)
 {
-    if (!result.empty() && ExcuteAsyncCallbackInfo(result)) {
-        IncreaseIndex();
+    if (!result.empty()) {
+        ExcuteAsyncCallbackInfo(result, asyncCallbackInfoId);
     }
 }
 
@@ -42,48 +40,67 @@ bool WebviewController::EraseAsyncCallbackInfo(const AsyncEvaluteJSResultCallbac
     if (asyncCallbackInfoContainer_.empty() || !asyncCallbackInfo) {
         return false;
     }
-    for (auto it = asyncCallbackInfoContainer_.begin(); it != asyncCallbackInfoContainer_.end(); it++) {
+    for (auto it = asyncCallbackInfoContainer_.cbegin(); it != asyncCallbackInfoContainer_.cend(); it++) {
         if ((*it) && (*it).get() == asyncCallbackInfo) {
             asyncCallbackInfoContainer_.erase(it);
-            DecreaseIndex();
             return true;
         }
     }
     return false;
 }
 
-void WebviewController::IncreaseIndex()
+bool WebviewController::ExcuteAsyncCallbackInfo(const std::string& result, int32_t asyncCallbackInfoId)
 {
-    std::lock_guard<std::mutex> guard(mutex_);
-    index_++;
-    if (asyncCallbackInfoContainer_.empty() || index_ >= asyncCallbackInfoContainer_.size()) {
-        index_ = 0;
-    }
-}
-
-void WebviewController::DecreaseIndex()
-{
-    std::lock_guard<std::mutex> guard(mutex_);
-    index_--;
-    if (asyncCallbackInfoContainer_.empty() || index_ < 0) {
-        index_ = 0;
-    }
-}
-
-bool WebviewController::ExcuteAsyncCallbackInfo(const std::string& result)
-{
-    LOGD("index_ == %{public}d, asyncCallbackInfoContainer_ size == %{public}d", index_,
-        asyncCallbackInfoContainer_.size());
-    if (asyncCallbackInfoContainer_.empty()) {
-        return false;
-    }
-    auto asyncCallbackInfo = asyncCallbackInfoContainer_.at(index_);
-    CHECK_NULL_RETURN(asyncCallbackInfo, false);
-    asyncCallbackInfo->result = result;
-    if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
-        napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
-        return true;
+    LOGI("WebviewController OnReceiveValue result: %{public}s, asyncCallbackInfoId: %{public}d.",
+        result.c_str(), asyncCallbackInfoId);
+    for (const auto& asyncCallbackInfo : asyncCallbackInfoContainer_) {
+        if (!asyncCallbackInfo) {
+            continue;
+        }
+        if (asyncCallbackInfo->GetUniqueId() == asyncCallbackInfoId) {
+            if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
+                asyncCallbackInfo->result = result;
+                napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
+                return true;
+            }
+        }
     }
     return false;
+}
+
+WebHistoryItem::WebHistoryItem(const WebHistoryItem& other) : historyUrl(other.historyUrl),
+    historyRawUrl(other.historyRawUrl), title(other.title)
+{}
+
+WebHistoryList::WebHistoryList(const WebHistoryList& other) : currentIndex_(other.currentIndex_),
+    size_(other.size_)
+{
+    for (const auto& webHistoryItem : other.webHistoryItemContainer_) {
+        if (!webHistoryItem) {
+            continue;
+        }
+        auto item = std::make_shared<WebHistoryItem>(*webHistoryItem);
+        webHistoryItemContainer_.push_back(item);
+    }
+}
+
+WebHistoryList::~WebHistoryList()
+{
+    webHistoryItemContainer_.clear();
+}
+
+bool WebHistoryList::InsertHistoryItem(const std::shared_ptr<WebHistoryItem>& value)
+{
+    CHECK_NULL_RETURN(value, false);
+    webHistoryItemContainer_.push_back(value);
+    return true;
+}
+
+std::shared_ptr<WebHistoryItem> WebHistoryList::GetItemAtIndex(int32_t index)
+{
+    if (webHistoryItemContainer_.empty() || index < 0 || index >= size_) {
+        return nullptr;
+    }
+    return webHistoryItemContainer_.at(index);
 }
 } // namespace OHOS::Plugin

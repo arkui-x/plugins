@@ -14,6 +14,7 @@
  */
 
 #include "plugins/web/webview/android/java/jni/webview_controller_jni.h"
+#include "plugins/web/webview/web_message_port.h"
 
 #include <jni.h>
 
@@ -29,7 +30,8 @@ const char WEB_WEBVIEW_CLASS_NAME[] = "ohos/ace/adapter/capability/web/AceWebPlu
 
 static const JNINativeMethod METHODS[] = {
     { "nativeInit", "()V", reinterpret_cast<void*>(WebviewControllerJni::NativeInit) },
-    { "onReceiveValue", "(Ljava/lang/String;)V", reinterpret_cast<void*>(WebviewControllerJni::OnReceiveValue) },
+    { "onReceiveValue", "(Ljava/lang/String;J)V", reinterpret_cast<void*>(WebviewControllerJni::OnReceiveValue) },
+    { "onMessage", "(JLjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void*>(WebviewControllerJni::OnMessage) },
 };
 static const char METHOD_LOADURL[] = "loadUrl";
 
@@ -65,6 +67,26 @@ static const char METHOD_SET_CUSTOM_USER_AGENT[] = "setCustomUserAgent";
 
 static const char METHOD_GET_CUSTOM_USER_AGENT[] = "getCustomUserAgent";
 
+static const char METHOD_GETBACKFORWARDENTRIES[] = "getBackForwardEntries";
+
+static const char METHOD_REMOVECACHE[] = "removeCache";
+
+static const char METHOD_BACKORFORWARD[] = "backOrForward";
+
+static const char METHOD_GETTITLE[] = "getTitle";
+
+static const char METHOD_GETPAGEHEIGHT[] = "getPageHeight";
+
+static const char METHOD_CREATEWEBMESSAGEPORTS[] = "createWebMessagePorts";
+
+static const char METHOD_POSTWEBMESSAGE[] = "postWebMessage";
+
+static const char METHOD_CLOSEWEBMESSAGEPORT[] = "closeWebMessagePort";
+
+static const char METHOD_POSTMESSAGEEVENT[] = "postMessageEvent";
+
+static const char METHOD_ONWEBMESSAGEPORTEVENT[] = "onWebMessagePortEvent";
+
 static const char SIGNATURE_LOADURL[] = "(JLjava/lang/String;Ljava/util/HashMap;)V";
 
 static const char SIGNATURE_LOADDATA[] = "(JLjava/util/HashMap;)V";
@@ -81,7 +103,27 @@ static const char SIGNATURE_BACKWARD[] = "(J)V";
 
 static const char SIGNATURE_REFRESH[] = "(J)V";
 
-static const char SIGNATURE_EVALUTEJS[] = "(JLjava/lang/String;)V";
+static const char SIGNATURE_EVALUTEJS[] = "(JLjava/lang/String;J)V";
+
+static const char SIGNATURE_GETBACKFORWARDENTRIES[] = "(J)Landroid/webkit/WebBackForwardList;";
+
+static const char SIGNATURE_REMOVECACHE[] = "(JZ)V";
+
+static const char SIGNATURE_BACKORFORWARD[] = "(JI)V";
+
+static const char SIGNATURE_GETTITLE[] = "(J)Ljava/lang/String;";
+
+static const char SIGNATURE_GETPAGEHEIGHT[] = "(J)I";
+
+static const char SIGNATURE_CREATEWEBMESSAGEPORTS[] = "(J)[Ljava/lang/String;";
+
+static const char SIGNATURE_POSTWEBMESSAGE[] = "(JLjava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V";
+
+static const char SIGNATURE_CLOSEWEBMESSAGEPORT[] = "(JLjava/lang/String;)V";
+
+static const char SIGNATURE_POSTMESSAGEEVENT[] = "(JLjava/lang/String;Ljava/lang/String;)I";
+
+static const char SIGNATURE_ONWEBMESSAGEPORTEVENT[] = "(JLjava/lang/String;)I";
 
 static const char SIGNATURE_ACCESS_STEP[] = "(JI)Ljava/lang/String;";
 
@@ -117,6 +159,16 @@ struct {
     jmethodID clearHistory;
     jmethodID setCustomUserAgent;
     jmethodID getCustomUserAgent;
+    jmethodID getBackForwardEntries;
+    jmethodID removeCache;
+    jmethodID backOrForward;
+    jmethodID getTitle;
+    jmethodID getPageHeight;
+    jmethodID createWebMessagePorts;
+    jmethodID postWebMessage;
+    jmethodID closeWebMessagePort;
+    jmethodID postMessageEvent;
+    jmethodID onWebMessagePortEvent;
     jobject globalRef;
 } g_webWebviewClass;
 }
@@ -159,17 +211,26 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.zoom = env->GetMethodID(cls, METHOD_ZOOM, SIGNATURE_ZOOM);
     g_webWebviewClass.stop = env->GetMethodID(cls, METHOD_STOP, SIGNATURE_STOP);
     g_webWebviewClass.clearHistory = env->GetMethodID(cls, METHOD_CLEAR_HISTORY, SIGNATURE_CLEAR_HISTORY);
-    g_webWebviewClass.setCustomUserAgent = env->GetMethodID(cls, METHOD_SET_CUSTOM_USER_AGENT,
-        SIGNATURE_SET_CUSTOM_USER_AGENT);
-    g_webWebviewClass.getCustomUserAgent = env->GetMethodID(cls, METHOD_GET_CUSTOM_USER_AGENT,
-        SIGNATURE_GET_CUSTOM_USER_AGENT);
+    g_webWebviewClass.setCustomUserAgent = env->GetMethodID(cls, METHOD_SET_CUSTOM_USER_AGENT, SIGNATURE_SET_CUSTOM_USER_AGENT);
+    g_webWebviewClass.getCustomUserAgent = env->GetMethodID(cls, METHOD_GET_CUSTOM_USER_AGENT, SIGNATURE_GET_CUSTOM_USER_AGENT);
+    g_webWebviewClass.getBackForwardEntries = env->GetMethodID(cls, METHOD_GETBACKFORWARDENTRIES, SIGNATURE_GETBACKFORWARDENTRIES);
+    g_webWebviewClass.removeCache = env->GetMethodID(cls, METHOD_REMOVECACHE, SIGNATURE_REMOVECACHE);
+    g_webWebviewClass.backOrForward = env->GetMethodID(cls, METHOD_BACKORFORWARD, SIGNATURE_BACKORFORWARD);
+    g_webWebviewClass.getTitle = env->GetMethodID(cls, METHOD_GETTITLE, SIGNATURE_GETTITLE);
+    g_webWebviewClass.getPageHeight = env->GetMethodID(cls, METHOD_GETPAGEHEIGHT, SIGNATURE_GETPAGEHEIGHT);
+    g_webWebviewClass.createWebMessagePorts = env->GetMethodID(cls, METHOD_CREATEWEBMESSAGEPORTS, SIGNATURE_CREATEWEBMESSAGEPORTS);
+    g_webWebviewClass.postWebMessage = env->GetMethodID(cls, METHOD_POSTWEBMESSAGE, SIGNATURE_POSTWEBMESSAGE);
+    g_webWebviewClass.closeWebMessagePort = env->GetMethodID(cls, METHOD_CLOSEWEBMESSAGEPORT, SIGNATURE_CLOSEWEBMESSAGEPORT);
+    g_webWebviewClass.postMessageEvent = env->GetMethodID(cls, METHOD_POSTMESSAGEEVENT, SIGNATURE_POSTMESSAGEEVENT);
+    g_webWebviewClass.onWebMessagePortEvent = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENT, SIGNATURE_ONWEBMESSAGEPORTEVENT);
     env->DeleteLocalRef(cls);
 }
 
-void WebviewControllerJni::OnReceiveValue(JNIEnv* env, jobject jobj, jstring jResult)
+void WebviewControllerJni::OnReceiveValue(JNIEnv* env, jclass jcls, jstring jResult, jint jId)
 {
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(jResult);
+
     std::string result;
     const char* content = env->GetStringUTFChars(jResult, nullptr);
     if (content != nullptr) {
@@ -179,8 +240,9 @@ void WebviewControllerJni::OnReceiveValue(JNIEnv* env, jobject jobj, jstring jRe
     if (jResult != nullptr) {
         env->DeleteLocalRef(jResult);
     }
-    LOGD("WebviewControllerJni::OnReceiveValue result == %{public}s", result.c_str());
-    WebviewController::OnReceiveValue(result);
+
+    auto nativeId = static_cast<int32_t>(jId);
+    WebviewController::OnReceiveValue(result, nativeId);
 }
 
 ErrCode WebviewControllerJni::LoadUrl(int id, const std::string& url, 
@@ -403,7 +465,7 @@ void WebviewControllerJni::Refresh(int id)
     env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.refresh, id);
 }
 
-void WebviewControllerJni::EvaluateJavaScript(int id, const std::string& script)
+void WebviewControllerJni::EvaluateJavaScript(int id, const std::string& script, int32_t asyncCallbackInfoId)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.evaluateJavascript)) {
@@ -412,7 +474,7 @@ void WebviewControllerJni::EvaluateJavaScript(int id, const std::string& script)
 
     jstring JsName = env->NewStringUTF(script.c_str());
     CHECK_NULL_VOID(JsName);
-    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.evaluateJavascript, id, JsName);
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.evaluateJavascript, id, JsName, asyncCallbackInfoId);
     env->DeleteLocalRef(JsName);
 }
 
@@ -556,5 +618,303 @@ std::string WebviewControllerJni::GetCustomUserAgent(int id)
         env->DeleteLocalRef(jResult);
     }
     return result;
+}
+
+std::shared_ptr<WebHistoryList> WebviewControllerJni::GetBackForwardEntries(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.getBackForwardEntries)) {
+        return nullptr;
+    }
+
+    auto jsResult = static_cast<jobject>(
+        env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getBackForwardEntries, id));
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return nullptr;
+    }
+
+    jclass cls = env->GetObjectClass(jsResult);
+    CHECK_NULL_RETURN(cls, nullptr);
+    jmethodID getCurrentIndexMethodID = env->GetMethodID(cls, "getCurrentIndex", "()I");
+    jmethodID getSizeMethodID = env->GetMethodID(cls, "getSize", "()I");
+    jmethodID getItemAtIndexMethodID = env->GetMethodID(cls, "getItemAtIndex", "(I)Landroid/webkit/WebHistoryItem;");
+    CHECK_NULL_RETURN(getCurrentIndexMethodID, nullptr);
+    CHECK_NULL_RETURN(getSizeMethodID, nullptr);
+    CHECK_NULL_RETURN(getItemAtIndexMethodID, nullptr);
+    std::shared_ptr<WebHistoryList> historyList = std::make_shared<WebHistoryList>();
+    auto currentindex = static_cast<int32_t>(env->CallIntMethod(jsResult, getCurrentIndexMethodID));
+    historyList->SetCurrentIndex(currentindex);
+    auto size = static_cast<int32_t>(env->CallIntMethod(jsResult, getSizeMethodID));
+    historyList->SetListSize(size);
+    for (int32_t i = 0; i < size; ++i) {
+        auto jHistoryItem = static_cast<jobject>(env->CallObjectMethod(jsResult, getItemAtIndexMethodID, i));
+        CHECK_NULL_RETURN(jHistoryItem, nullptr);
+        auto historyItemClass = env->GetObjectClass(jHistoryItem);
+        CHECK_NULL_RETURN(historyItemClass, nullptr);
+        jmethodID getUrlMethodID = env->GetMethodID(historyItemClass, "getUrl", "()Ljava/lang/String;");
+        jmethodID getOriginalUrlMethodID = env->GetMethodID(historyItemClass, "getOriginalUrl", "()Ljava/lang/String;");
+        jmethodID getTitleMethodID = env->GetMethodID(historyItemClass, "getTitle", "()Ljava/lang/String;");
+        CHECK_NULL_RETURN(getUrlMethodID, nullptr);
+        CHECK_NULL_RETURN(getOriginalUrlMethodID, nullptr);
+        CHECK_NULL_RETURN(getTitleMethodID, nullptr);
+        std::shared_ptr<WebHistoryItem> webHistoryItem = std::make_shared<WebHistoryItem>();
+        // geturl
+        jstring jResult = static_cast<jstring>(env->CallObjectMethod(jHistoryItem, getUrlMethodID));
+        const char* url = env->GetStringUTFChars(jResult, nullptr);
+        if (url != nullptr) {
+            webHistoryItem->historyUrl = std::string(url);
+            env->ReleaseStringUTFChars(jResult, url);
+        }
+        if (jResult != nullptr) {
+            env->DeleteLocalRef(jResult);
+            jResult = nullptr;
+        }
+        // getOriginalUrl
+        jResult = static_cast<jstring>(env->CallObjectMethod(jHistoryItem, getOriginalUrlMethodID));
+        const char* originalUrl = env->GetStringUTFChars(jResult, nullptr);
+        if (originalUrl != nullptr) {
+            webHistoryItem->historyRawUrl = std::string(originalUrl);
+            env->ReleaseStringUTFChars(jResult, originalUrl);
+        }
+        if (jResult != nullptr) {
+            env->DeleteLocalRef(jResult);
+            jResult = nullptr;
+        }
+        // getTitle
+        jResult = static_cast<jstring>(env->CallObjectMethod(jHistoryItem, getTitleMethodID));
+        const char* title = env->GetStringUTFChars(jResult, nullptr);
+        if (title != nullptr) {
+            webHistoryItem->title = std::string(title);
+            env->ReleaseStringUTFChars(jResult, title);
+        }
+        if (jResult != nullptr) {
+            env->DeleteLocalRef(jResult);
+            jResult = nullptr;
+        }
+        // intsert webHistoryItem
+        historyList->InsertHistoryItem(webHistoryItem);
+    }
+    return historyList;
+}
+
+void WebviewControllerJni::RemoveCache(int id, bool value)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.removeCache)) {
+        return;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.removeCache, id, value);
+}
+
+void WebviewControllerJni::BackOrForward(int id, int32_t step)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.backOrForward)) {
+        return;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.backOrForward, id, step);
+}
+
+std::string WebviewControllerJni::GetTitle(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.getTitle)) {
+        return "";
+    }
+    jstring jResult = static_cast<jstring>(
+        env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getTitle, id));
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return "";
+    }
+    std::string result;
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    if (jResult != nullptr) {
+        env->DeleteLocalRef(jResult);
+    }
+    return result;
+}
+
+int32_t WebviewControllerJni::GetPageHeight(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.getPageHeight)) {
+        return -1;
+    }
+
+    auto height = static_cast<int32_t>(env->CallIntMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.getPageHeight, id));
+    return height;
+}
+
+void WebviewControllerJni::CreateWebMessagePorts(int id, std::vector<std::string>& ports)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.createWebMessagePorts)) {
+        return;
+    }
+
+    jstring jstr = nullptr;
+    const char *str = nullptr;
+    jobjectArray jReturnObjectArray = (jobjectArray)env->CallObjectMethod(g_webWebviewClass.globalRef,
+        g_webWebviewClass.createWebMessagePorts, id);
+    jsize arrayLength = env->GetArrayLength(jReturnObjectArray);
+    for (int index = 0; index < arrayLength; index++) {
+        jstr = static_cast<jstring>(env->GetObjectArrayElement(jReturnObjectArray, index));
+        str = env->GetStringUTFChars(jstr, JNI_FALSE);
+        ports.push_back(std::string(str));
+        if (str != nullptr) {
+            env->ReleaseStringUTFChars(jstr, str);
+        }
+        if (jstr != nullptr) {
+            env->DeleteLocalRef(jstr);
+        }
+        str = nullptr;
+    }
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return;
+    }
+}
+
+void WebviewControllerJni::PostWebMessage(int id, std::string& message, std::vector<std::string>& ports,
+    std::string& targetUrl)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.postWebMessage)) {
+        return;
+    }
+    if (ports.empty()) {
+        LOGE("result is nullptr");
+        return;
+    }
+    jclass jStringCls = env->FindClass("java/lang/String");
+    if (!jStringCls) {
+        LOGE("jStringCls is nullptr");
+        return;
+    }
+    jstring jMessage = env->NewStringUTF(message.c_str());
+    CHECK_NULL_VOID(jMessage);
+    jobjectArray objectArray = env->NewObjectArray(ports.size(), jStringCls, nullptr);
+    for (size_t index = 0; index < ports.size(); ++index) {
+        jstring jstr = env->NewStringUTF(ports[index].c_str());
+        if (!jstr) {
+            env->DeleteLocalRef(jMessage);
+            return;
+        }
+        env->SetObjectArrayElement(objectArray, index, jstr);
+        env->DeleteLocalRef(jstr);
+    }
+    jstring jTargetUrl = env->NewStringUTF(targetUrl.c_str());
+    if (!jTargetUrl) {
+        env->DeleteLocalRef(jMessage);
+        return;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.postWebMessage, id, jMessage, objectArray,
+        jTargetUrl);
+    env->DeleteLocalRef(jMessage);
+    env->DeleteLocalRef(jTargetUrl);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return;
+    }
+}
+
+void WebviewControllerJni::CloseWebMessagePort(int id, const std::string& portHandle)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.closeWebMessagePort)) {
+        return;
+    }
+    jstring JPortHandle = env->NewStringUTF(portHandle.c_str());
+    CHECK_NULL_VOID(JPortHandle);
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.closeWebMessagePort, id, JPortHandle);
+    env->DeleteLocalRef(JPortHandle);
+}
+
+ErrCode WebviewControllerJni::PostMessageEvent(int id, const std::string& portHandle,
+    const std::string& webMessage)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.postMessageEvent)) {
+        return CAN_NOT_POST_MESSAGE;
+    }
+    jstring JPortHandle = env->NewStringUTF(portHandle.c_str());
+    CHECK_NULL_RETURN(JPortHandle, CAN_NOT_POST_MESSAGE);
+    jstring JWebMessage = env->NewStringUTF(webMessage.c_str());
+    if (!JWebMessage) {
+        env->DeleteLocalRef(JPortHandle);
+        return CAN_NOT_POST_MESSAGE;
+    }
+    auto result = static_cast<ErrCode>(env->CallIntMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.postMessageEvent, id, JPortHandle, JWebMessage));
+    env->DeleteLocalRef(JPortHandle);
+    env->DeleteLocalRef(JWebMessage);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return CAN_NOT_POST_MESSAGE;
+    }
+    return result;
+}
+
+ErrCode WebviewControllerJni::OnWebMessagePortEvent(int id, const std::string& portHandle)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.onWebMessagePortEvent)) {
+        return CAN_NOT_REGISTER_MESSAGE_EVENT;
+    }
+
+    jstring JPortHandle = env->NewStringUTF(portHandle.c_str());
+    CHECK_NULL_RETURN(JPortHandle, CAN_NOT_REGISTER_MESSAGE_EVENT);
+    auto result = static_cast<ErrCode>(env->CallIntMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.onWebMessagePortEvent, id, JPortHandle));
+    env->DeleteLocalRef(JPortHandle);
+
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return CAN_NOT_REGISTER_MESSAGE_EVENT;
+    }
+    return result;
+}
+
+void WebviewControllerJni::OnMessage(JNIEnv* env, jclass jcls, jint jWebId, jstring jPortHandle, jstring jResult)
+{
+    CHECK_NULL_VOID(env);
+    CHECK_NULL_VOID(jPortHandle);
+    CHECK_NULL_VOID(jResult);
+
+    std::string portHandle;
+    std::string result;
+    const char* content = env->GetStringUTFChars(jPortHandle, nullptr);
+    if (content != nullptr) {
+        portHandle.assign(content);
+        env->ReleaseStringUTFChars(jPortHandle, content);
+    }
+    if (jPortHandle != nullptr) {
+        env->DeleteLocalRef(jPortHandle);
+    }
+
+    content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    if (jResult != nullptr) {
+        env->DeleteLocalRef(jResult);
+    }
+
+    int32_t webId = static_cast<int32_t>(jWebId);
+    WebMessagePort::OnMessage(webId, portHandle, result);
 }
 }

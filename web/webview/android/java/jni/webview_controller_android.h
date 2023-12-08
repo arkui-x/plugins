@@ -43,7 +43,14 @@ public:
     std::string GetCustomUserAgent() override;
     ErrCode ClearHistory() override;
     bool AccessStep(int32_t step) override;
-    void EvaluateJavaScript(const std::string& script) override;
+    void EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId) override;
+    std::shared_ptr<WebHistoryList> GetBackForwardEntries() override;
+    void RemoveCache(bool value) override;
+    void BackOrForward(int32_t step) override;
+    std::string GetTitle() override;
+    int32_t GetPageHeight() override;
+    void CreateWebMessagePorts(std::vector<std::string>& ports) override;
+    void PostWebMessage(std::string& message, std::vector<std::string>& ports, std::string& targetUrl) override;
 };
 }
 
