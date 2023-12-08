@@ -54,14 +54,6 @@ template("plugin_zlib_static") {
       "//plugins/libs/zlib:zlib_${target_os}",
     ]
 
-    if (platform == "android") {
-      deps += [ "//commonlibrary/c_utils/base:utils" ]
-      defines += [ "ANDROID_PLATFORM" ]
-    } else if (platform == "ios") {
-      deps += [ "//commonlibrary/c_utils/base:utilsbase" ]
-      defines += [ "IOS_PLATFORM" ]
-    }
-
     subsystem_name = "plugins"
     part_name = "zlib"
   }
@@ -69,7 +61,6 @@ template("plugin_zlib_static") {
 
 foreach(item, ace_platforms) {
   plugin_zlib_static("zlib_static_" + item.name) {
-    platform = item.name
     defines = []
     cflags_cc = []
     config = {
