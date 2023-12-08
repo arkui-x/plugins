@@ -40,6 +40,7 @@ namespace LIBZIP {
 namespace {
 constexpr size_t ARGS_MAX_COUNT = 10;
 constexpr int32_t PARAM3 = 3;
+constexpr int32_t PARAM2 = 2;
 const char* WRONG_PARAM = "wrong param type";
 } // namespace
 
@@ -337,10 +338,10 @@ bool UnwrapOptionsParams(OPTIONS& options, napi_env env, napi_value arg)
 // interface for v9
 bool InitParam(CallZipUnzipParam& param, napi_env env, NapiArg& args, bool isZipFile)
 {
-    if (args.GetMaxArgc() < PARAM3) {
+    if (args.GetMaxArgc() < PARAM2) {
         return false;
     }
-    for (size_t i = 0; i < PARAM3; ++i) {
+    for (size_t i = 0; i < args.GetMaxArgc(); ++i) {
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, args[i], &valueType);
         if (i == ARGS_POS_ZERO) {
@@ -352,8 +353,12 @@ bool InitParam(CallZipUnzipParam& param, napi_env env, NapiArg& args, bool isZip
                 return false;
             }
         } else if (i == ARGS_POS_TWO) {
-            if (isZipFile && !UnwrapOptionsParams(param.options, env, args[i])) {
+            if (isZipFile && valueType != napi_function && !UnwrapOptionsParams(param.options, env, args[i])) {
                 return false;
+            }
+        } else if (i == ARGS_POS_THREE) {
+            if (valueType == napi_function) {
+                break;
             }
         } else {
             return false;
@@ -442,7 +447,7 @@ napi_value DecompressFile(napi_env env, napi_callback_info info)
 {
     LOGD("napi begin DecompressFile");
     NapiArg args(env, info);
-    if (!args.Init(ARGS_SIZE_THREE, ARGS_SIZE_FOUR)) {
+    if (!args.Init(ARGS_SIZE_TWO, ARGS_SIZE_FOUR)) {
         BusinessError::ThrowError(env, ERROR_PARAM_CHECK_ERROR, WRONG_PARAM);
         return nullptr;
     }
@@ -459,14 +464,15 @@ napi_value DecompressFile(napi_env env, napi_callback_info info)
     std::unique_ptr<AsyncZipCallbackInfo> callbackPtr { asyncZipCallbackInfo };
     asyncZipCallbackInfo->zlibCallbackInfo = std::make_shared<ZlibCallbackInfo>(env, nullptr, nullptr, false);
     asyncZipCallbackInfo->zlibCallbackInfo->SetDeliverErrCode(true);
-    if (args.GetMaxArgc() > PARAM3) {
+    for (size_t i = PARAM2; i < args.GetMaxArgc(); i++) {
         napi_valuetype valuetype = napi_undefined;
-        NAPI_CALL_BASE(env, napi_typeof(env, args[PARAM3], &valuetype), nullptr);
+        NAPI_CALL_BASE(env, napi_typeof(env, args[i], &valuetype), nullptr);
         if (valuetype == napi_function) {
             napi_ref callbackRef = nullptr;
-            NAPI_CALL(env, napi_create_reference(env, args[PARAM3], NAPI_RETURN_ONE, &callbackRef));
+            NAPI_CALL(env, napi_create_reference(env, args[i], NAPI_RETURN_ONE, &callbackRef));
             asyncZipCallbackInfo->zlibCallbackInfo->SetCallback(callbackRef);
             asyncZipCallbackInfo->zlibCallbackInfo->SetIsCallback(true);
+            break;
         }
     }
     napi_value promise = nullptr;
