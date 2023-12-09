@@ -36,7 +36,7 @@ class IosUploadAdpCallback {
 public:
     IosUploadAdpCallback() = default;
     virtual ~IosUploadAdpCallback() {}
-    virtual void OnProgress(uint32_t uploadedSize, uint32_t totalSize) = 0;
+    virtual void OnProgress(int64_t uploadedSize, int64_t totalSize) = 0;
     virtual void OnFail(const std::vector<TaskState>& taskStateList) = 0;
     virtual void OnComplete(const std::vector<TaskState>& taskStateList) = 0;
     virtual void SetRespHeader(const std::string &header) = 0;

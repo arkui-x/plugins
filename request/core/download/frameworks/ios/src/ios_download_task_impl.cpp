@@ -114,7 +114,7 @@ bool IosDownloadTaskImpl::Remove()
 bool IosDownloadTaskImpl::Suspend()
 {
     DOWNLOAD_HILOGD("suspend download task");
-    bool res = downloadAdp_->Suspend(false);
+    bool res = downloadAdp_->Suspend(false, this);
     SetStatus(SESSION_PAUSED, ERROR_UNKNOWN, PAUSED_BY_USER);
     return res;
 }
@@ -144,7 +144,7 @@ bool IosDownloadTaskImpl::GetTaskInfo(DownloadInfo &info)
     info.SetDownloadId(taskId_);
     info.SetFailedReason(code_);
     std::string fileName = config_.GetFilePath().substr(config_.GetFilePath().rfind('/') + 1);
-    std::string filePath = config_.GetFilePath().substr(0, config_.GetFilePath().rfind('/'));
+    std::string filePath = config_.GetFilePath();
     info.SetFileName(fileName);
     info.SetFilePath(filePath);
     info.SetPausedReason(reason_);
@@ -164,7 +164,7 @@ bool IosDownloadTaskImpl::GetTaskMimeType(std::string &mimeType)
 }
 
 // IosDownloadAdpCallback
-void IosDownloadTaskImpl::OnProgress(uint32_t receivedSize, uint32_t totalSize)
+void IosDownloadTaskImpl::OnProgress(int64_t receivedSize, int64_t totalSize)
 {
     std::lock_guard<std::mutex> guard(queryMutex_);
     receivedSize_ = receivedSize;
@@ -172,6 +172,16 @@ void IosDownloadTaskImpl::OnProgress(uint32_t receivedSize, uint32_t totalSize)
     if (eventCb_ != nullptr) {
         eventCb_("progress", GetId(), receivedSize, totalSize);
     }
+}
+
+void IosDownloadTaskImpl::OnPause()
+{
+    SetStatus(SESSION_PAUSED);
+}
+
+void IosDownloadTaskImpl::OnResume()
+{
+    SetStatus(SESSION_RUNNING);
 }
 
 void IosDownloadTaskImpl::OnComplete()
@@ -242,7 +252,7 @@ void IosDownloadTaskImpl::NotReachable()
     if (status_ == SESSION_RUNNING && downloadAdp_ != nullptr) {
         DOWNLOAD_HILOGD("NotReachable set SuspendByNetwork to true");
         isSuspendByNetwork_ = true;
-        downloadAdp_->Suspend(true);
+        downloadAdp_->Suspend(true, this);
         SetStatus(SESSION_PAUSED, ERROR_OFFLINE, PAUSED_WAITING_TO_RETRY);
     }
 }
