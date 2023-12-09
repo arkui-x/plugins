@@ -29,18 +29,18 @@ const char WEB_WEBVIEW_CLASS_NAME[] = "ohos/ace/plugin/webviewplugin/webcookie/W
 
 static const JNINativeMethod METHODS[] = {
     { "nativeInit", "()V", reinterpret_cast<void*>(WebCookieManagerJni::NativeInit) },
-    { "onReceiveCookieValue", "(Ljava/lang/String;)V",
+    { "onReceiveCookieValue", "(Ljava/lang/String;J)V",
         reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveFetchCookieValue) },
-    { "onReceiveCookieValue", "(Z)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveConfigCookieValue) },
-    { "onReceiveCookieValue", "()V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveClearAllCookiesValue) },
+    { "onReceiveCookieValue", "(ZJ)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveConfigCookieValue) },
+    { "onReceiveCookieValue", "(J)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveClearAllCookiesValue) },
 };
 static const char METHOD_CONFIG_COOKIE[] = "configCookie";
 static const char METHOD_FETCH_COOKIE[] = "fetchCookie";
 static const char METHOD_CLEAR_ALL_COOKIE[] = "clearAllCookies";
 
-static const char SIGNATURE_CONFIG_COOKIE[] = "(Ljava/lang/String;Ljava/lang/String;)V";
-static const char SIGNATURE_FETCH_COOKIE[] = "(Ljava/lang/String;)V";
-static const char SIGNATURE_CLEAR_ALL_COOKIE[] = "()V";
+static const char SIGNATURE_CONFIG_COOKIE[] = "(Ljava/lang/String;Ljava/lang/String;J)V";
+static const char SIGNATURE_FETCH_COOKIE[] = "(Ljava/lang/String;J)V";
+static const char SIGNATURE_CLEAR_ALL_COOKIE[] = "(J)V";
 struct {
     jmethodID configCookie;
     jmethodID fetchCookie;
@@ -78,7 +78,7 @@ void WebCookieManagerJni::NativeInit(JNIEnv* env, jobject jobj)
     env->DeleteLocalRef(cls);
 }
 
-void WebCookieManagerJni::OnReceiveFetchCookieValue(JNIEnv* env, jobject jobj, jstring jResult)
+void WebCookieManagerJni::OnReceiveFetchCookieValue(JNIEnv* env, jobject jobj, jstring jResult, jint jId)
 {
     CHECK_NULL_VOID(env);
     CHECK_NULL_VOID(jResult);
@@ -91,20 +91,23 @@ void WebCookieManagerJni::OnReceiveFetchCookieValue(JNIEnv* env, jobject jobj, j
     if (jResult != nullptr) {
         env->DeleteLocalRef(jResult);
     }
-    WebCookieManager::OnFetchReceiveValue(result);
+    auto nativeId = static_cast<int32_t>(jId);
+    WebCookieManager::OnFetchReceiveValue(result, nativeId);
 }
 
-void WebCookieManagerJni::OnReceiveConfigCookieValue(JNIEnv* env, jobject jobj, jboolean jResult)
+void WebCookieManagerJni::OnReceiveConfigCookieValue(JNIEnv* env, jobject jobj, jboolean jResult, jint jId)
 {
-    WebCookieManager::OnConfigReceiveValue(true);
+    auto nativeId = static_cast<int32_t>(jId);
+    WebCookieManager::OnConfigReceiveValue(true, nativeId);
 }
 
-void WebCookieManagerJni::OnReceiveClearAllCookiesValue(JNIEnv* env, jobject jobj)
+void WebCookieManagerJni::OnReceiveClearAllCookiesValue(JNIEnv* env, jobject jobj, jint jId)
 {
-    WebCookieManager::OnClearReceiveValue();
+    auto nativeId = static_cast<int32_t>(jId);
+    WebCookieManager::OnClearReceiveValue(nativeId);
 }
 
-void WebCookieManagerJni::ConfigCookie(const std::string& url, const std::string& value)
+void WebCookieManagerJni::ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
@@ -112,7 +115,7 @@ void WebCookieManagerJni::ConfigCookie(const std::string& url, const std::string
     CHECK_NULL_VOID(jUrl);
     jstring jValue = env->NewStringUTF(value.c_str());
     CHECK_NULL_VOID(jValue);
-    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.configCookie, jUrl, jValue);
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.configCookie, jUrl, jValue, asyncCallbackInfoId);
     if (env->ExceptionCheck()) {
         LOGE("WebCookieManagerJni JNI: call ConfigCookie has exception");
         env->ExceptionDescribe();
@@ -125,7 +128,7 @@ void WebCookieManagerJni::ConfigCookie(const std::string& url, const std::string
     env->DeleteLocalRef(jValue);
 }
 
-void WebCookieManagerJni::FetchCookie(const std::string& url)
+void WebCookieManagerJni::FetchCookie(const std::string& url, int32_t asyncCallbackInfoId)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.fetchCookie)) {
@@ -133,7 +136,7 @@ void WebCookieManagerJni::FetchCookie(const std::string& url)
     }
     jstring jUrl = env->NewStringUTF(url.c_str());
     CHECK_NULL_VOID(jUrl);
-    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.fetchCookie, jUrl);
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.fetchCookie, jUrl, asyncCallbackInfoId);
     if (env->ExceptionCheck()) {
         LOGE("WebCookieManagerJni JNI: call FetchCookie has exception");
         env->ExceptionDescribe();
@@ -144,13 +147,13 @@ void WebCookieManagerJni::FetchCookie(const std::string& url)
     env->DeleteLocalRef(jUrl);
 }
 
-void WebCookieManagerJni::ClearAllCookies()
+void WebCookieManagerJni::ClearAllCookies(int32_t asyncCallbackInfoId)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.clearAllCookies)) {
         return;
     }
-    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.clearAllCookies);
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.clearAllCookies, asyncCallbackInfoId);
     if (env->ExceptionCheck()) {
         LOGE("WebCookieManagerJni JNI: call ClearAllCookies has exception");
         env->ExceptionDescribe();

@@ -1442,9 +1442,8 @@ napi_value NapiWebCookieManager::JsConfigCookieAsync(napi_env env, napi_callback
         BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
         return result;
     }
-    WebCookieManager::ConfigCookie(url, value);
     std::shared_ptr<AsyncCookieManagerResultCallbackInfo> asyncCallbackInfoInstance =
-        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env);
+        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env, g_asyncCallbackInfoId);
     auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
     asyncCallbackInfo->taskType = TaskType::CONFIG_COOKIE;
     napi_value promise = nullptr;
@@ -1462,6 +1461,10 @@ napi_value NapiWebCookieManager::JsConfigCookieAsync(napi_env env, napi_callback
         NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
     }
     CreateCookieAsyncWork(env, "JsConfigCookieAsync", asyncCallbackInfoInstance);
+    WebCookieManager::ConfigCookie(url, value, g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
     return promise;
 }
 
@@ -1487,7 +1490,7 @@ napi_value NapiWebCookieManager::JsFetchCookieAsync(napi_env env, napi_callback_
         return result;
     }
     std::shared_ptr<AsyncCookieManagerResultCallbackInfo> asyncCallbackInfoInstance =
-        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env);
+        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env, g_asyncCallbackInfoId);
     auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
     napi_value promise = nullptr;
     if (argc == argcCallback) {
@@ -1504,7 +1507,10 @@ napi_value NapiWebCookieManager::JsFetchCookieAsync(napi_env env, napi_callback_
         NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
     }
     CreateFetchCookieAsyncWork(env, asyncCallbackInfoInstance);
-    WebCookieManager::FetchCookie(url);
+    WebCookieManager::FetchCookie(url, g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
     return promise;
 }
 
@@ -1524,9 +1530,8 @@ napi_value NapiWebCookieManager::JsClearAllCookiesAsync(napi_env env, napi_callb
         BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
         return result;
     }
-    WebCookieManager::ClearAllCookies();
     std::shared_ptr<AsyncCookieManagerResultCallbackInfo> asyncCallbackInfoInstance =
-        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env);
+        std::make_shared<AsyncCookieManagerResultCallbackInfo>(env, g_asyncCallbackInfoId);
     auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
     asyncCallbackInfo->taskType = TaskType::CLEAR_ALL_COOKIES;
     napi_value promise = nullptr;
@@ -1544,6 +1549,10 @@ napi_value NapiWebCookieManager::JsClearAllCookiesAsync(napi_env env, napi_callb
         NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
     }
     CreateCookieAsyncWork(env, "JsClearAllCookiesAsync", asyncCallbackInfoInstance);
+    WebCookieManager::ClearAllCookies(g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
     return promise;
 }
 

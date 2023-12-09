@@ -27,12 +27,12 @@ public:
     ~WebCookieManagerJni() = delete;
     static bool Register(void* env);
     static void NativeInit(JNIEnv* env, jobject jobj);
-    static void OnReceiveFetchCookieValue(JNIEnv* env, jobject jobj, jstring jResult);
-    static void OnReceiveConfigCookieValue(JNIEnv* env, jobject jobj, jboolean jResult);
-    static void OnReceiveClearAllCookiesValue(JNIEnv* env, jobject jobj);
-    static void ConfigCookie(const std::string& url, const std::string& value);
-    static void FetchCookie(const std::string& url);
-    static void ClearAllCookies();
+    static void OnReceiveFetchCookieValue(JNIEnv* env, jobject jobj, jstring jResult, jint jId);
+    static void OnReceiveConfigCookieValue(JNIEnv* env, jobject jobj, jboolean jResult, jint jId);
+    static void OnReceiveClearAllCookiesValue(JNIEnv* env, jobject jobj, jint jId);
+    static void ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId);
+    static void FetchCookie(const std::string& url, int32_t asyncCallbackInfoId);
+    static void ClearAllCookies(int32_t asyncCallbackInfoId);
 };
 } // namespace OHOS::Plugin
 

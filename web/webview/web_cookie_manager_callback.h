@@ -38,9 +38,16 @@ struct AsyncWorkCookieData {
 
 struct AsyncCookieManagerResultCallbackInfo : public AsyncWorkCookieData {
 public:
-    explicit AsyncCookieManagerResultCallbackInfo(napi_env env) : AsyncWorkCookieData(env) {}
+    AsyncCookieManagerResultCallbackInfo(napi_env env, int32_t id) : AsyncWorkCookieData(env), uniqueId_(id) {}
     std::string result;
     TaskType taskType = TaskType::NONE;
+    int32_t GetUniqueId() const
+    {
+        return uniqueId_;
+    }
+
+private:
+    int32_t uniqueId_;
 };
 }
 
