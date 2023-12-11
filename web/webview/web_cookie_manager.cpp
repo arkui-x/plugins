@@ -177,7 +177,7 @@ void WebCookieManager::ConfigCookie(const std::string& url, const std::string& v
     WebCookieManagerAndroid::ConfigCookie(url, value, asyncCallbackInfoId);
 #endif
 #ifdef IOS_PLATFORM
-    WebCookieManagerIOS::ConfigCookie(url, value);
+    WebCookieManagerIOS::ConfigCookie(url, value, asyncCallbackInfoId);
 #endif
 }
 
@@ -187,7 +187,7 @@ void WebCookieManager::FetchCookie(const std::string& url, int32_t asyncCallback
     WebCookieManagerAndroid::FetchCookie(url, asyncCallbackInfoId);
 #endif
 #ifdef IOS_PLATFORM
-    WebCookieManagerIOS::FetchCookie(url);
+    WebCookieManagerIOS::FetchCookie(url, asyncCallbackInfoId);
 #endif
 }
 
@@ -197,7 +197,7 @@ void WebCookieManager::ClearAllCookies(int32_t asyncCallbackInfoId)
     WebCookieManagerAndroid::ClearAllCookies(asyncCallbackInfoId);
 #endif
 #ifdef IOS_PLATFORM
-    WebCookieManagerIOS::ClearAllCookies();
+    WebCookieManagerIOS::ClearAllCookies(asyncCallbackInfoId);
 #endif
 }
 } // namespace OHOS::Plugin
