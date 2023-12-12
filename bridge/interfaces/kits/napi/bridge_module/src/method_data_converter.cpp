@@ -87,37 +87,37 @@ CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, const 
 
 napi_value MethodDataConverter::ConvertToNapiValue(napi_env env, const CodecableValue& value)
 {
-    switch (static_cast<CodecableValueType>(value.index())) {
-        case CodecableValueType::T_BOOL:
+    switch (static_cast<CodecableType>(value.index())) {
+        case CodecableType::T_BOOL:
             return PluginUtilsNApi::CreateBoolean(env, std::get<bool>(value));
-        case CodecableValueType::T_INT32:
+        case CodecableType::T_INT32:
             return PluginUtilsNApi::CreateInt32(env, std::get<int32_t>(value));
-        case CodecableValueType::T_INT64: {
+        case CodecableType::T_INT64: {
             int64_t temp = std::get<int64_t>(value);
             return PluginUtilsNApi::CreateDouble(env, static_cast<double>(temp));
         }
-        case CodecableValueType::T_DOUBLE:
+        case CodecableType::T_DOUBLE:
             return PluginUtilsNApi::CreateDouble(env, std::get<double>(value));
-        case CodecableValueType::T_STRING:
+        case CodecableType::T_STRING:
             return PluginUtilsNApi::CreateStringUtf8(env, std::get<std::string>(value));
-        case CodecableValueType::T_LIST_UINT8:
+        case CodecableType::T_LIST_UINT8:
             return PluginUtilsNApi::CreateArrayBuffer(env, std::get<std::vector<uint8_t>>(value));
-        case CodecableValueType::T_LIST_BOOL: {
+        case CodecableType::T_LIST_BOOL: {
             return CreateListBoolValue(env, value);
         }
-        case CodecableValueType::T_LIST_INT32: {
+        case CodecableType::T_LIST_INT32: {
             return CreateListInt32Value(env, value);
         }
-        case CodecableValueType::T_LIST_INT64: {
+        case CodecableType::T_LIST_INT64: {
             return CreateListInt64Value(env, value);
         }
-        case CodecableValueType::T_LIST_DOUBLE: {
+        case CodecableType::T_LIST_DOUBLE: {
             return CreateListDoubleValue(env, value);
         }
-        case CodecableValueType::T_LIST_STRING: {
+        case CodecableType::T_LIST_STRING: {
             return CreateListStringValue(env, value);
         }
-        case CodecableValueType::T_MAP: {
+        case CodecableType::T_MAP: {
             return CreateMapValue(env, value);
         }
         default:

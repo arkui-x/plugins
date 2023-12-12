@@ -15,7 +15,7 @@
 
 #include "bridge_binary_codec.h"
 
-#include "bridge_serializer.h"
+#include "bridge_packager.h"
 #include "log.h"
 
 namespace OHOS::Plugin::Bridge {
@@ -28,23 +28,23 @@ const BridgeBinaryCodec& BridgeBinaryCodec::GetInstance()
 std::unique_ptr<std::vector<uint8_t>> BridgeBinaryCodec::EncodeInner(const CodecableValue& data) const
 {
     auto coded = std::make_unique<std::vector<uint8_t>>();
-    BridgeStreamWriter stream(coded.get());
-    BridgeSerializer::GetInstance().WriteValue(data, &stream);
+    BridgeBinaryMarshaller marshaller(coded.get());
+    BridgePackager::Marshalling(data, &marshaller);
     return coded;
 }
 
 std::vector<uint8_t>* BridgeBinaryCodec::EncodeBuffer(const CodecableValue& data) const
 {
     std::vector<uint8_t>* coded = new (std::nothrow) std::vector<uint8_t>();
-    BridgeStreamWriter stream(coded);
-    BridgeSerializer::GetInstance().WriteValue(data, &stream);
+    BridgeBinaryMarshaller marshaller(coded);
+    BridgePackager::Marshalling(data, &marshaller);
     return coded;
 }
 
 std::unique_ptr<CodecableValue> BridgeBinaryCodec::DecodeInner(const std::vector<uint8_t>& data) const
 {
     size_t size = data.size();
-    if (size == 0) {
+    if (size == BridgeBinaryUnmarshaller::UNMARSHALL_SIZE_0) {
         LOGW("The decode data is size error.");
         return std::make_unique<CodecableValue>();
     }
@@ -53,17 +53,17 @@ std::unique_ptr<CodecableValue> BridgeBinaryCodec::DecodeInner(const std::vector
         LOGW("The decode data is nullptr.");
         return std::make_unique<CodecableValue>();
     }
-    BridgeStreamReader stream(dataPtr, size);
-    return std::make_unique<CodecableValue>(BridgeSerializer::GetInstance().ReadValue(&stream));
+    BridgeBinaryUnmarshaller unMarshaller(dataPtr, size);
+    return std::make_unique<CodecableValue>(BridgePackager::UnMarshalling(&unMarshaller));
 }
 
 std::unique_ptr<CodecableValue> BridgeBinaryCodec::DecodeBuffer(const uint8_t* dataPtr, size_t size) const
 {
-    if (!dataPtr || size == 0) {
+    if (!dataPtr || size == BridgeBinaryUnmarshaller::UNMARSHALL_SIZE_0) {
         LOGW("The decode data is error.");
         return std::make_unique<CodecableValue>();
     }
-    BridgeStreamReader stream(dataPtr, size);
-    return std::make_unique<CodecableValue>(BridgeSerializer::GetInstance().ReadValue(&stream));
+    BridgeBinaryUnmarshaller unMarshaller(dataPtr, size);
+    return std::make_unique<CodecableValue>(BridgePackager::UnMarshalling(&unMarshaller));
 }
 } // OHOS::Plugin::Bridge

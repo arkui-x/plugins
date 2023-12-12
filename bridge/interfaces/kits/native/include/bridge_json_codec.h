@@ -50,9 +50,12 @@ public:
 
     static const BridgeJsonCodec& GetInstance();
 
-    std::string ParseNullParams(const std::string& data) const;
+    static std::string ParseNullParams(const std::string& data)
+    {
+        return Json::parse(data, nullptr, false).dump();
+    }
 
-protected:
+private:
     virtual std::unique_ptr<DecodeValue> EncodeInner(const NapiRawValue& data) const override;
     virtual std::unique_ptr<NapiRawValue> DecodeInner(const DecodeValue& data) const override;
 };

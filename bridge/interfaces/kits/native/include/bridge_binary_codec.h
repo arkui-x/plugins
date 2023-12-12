@@ -35,7 +35,7 @@ public:
     std::unique_ptr<CodecableValue> DecodeBuffer(const uint8_t* dataPtr, size_t size) const;
     std::vector<uint8_t>* EncodeBuffer(const CodecableValue& data) const;
 
-protected:
+private:
     virtual std::unique_ptr<std::vector<uint8_t>> EncodeInner(const CodecableValue& data) const override;
     virtual std::unique_ptr<CodecableValue> DecodeInner(const std::vector<uint8_t>& data) const override;
 };
