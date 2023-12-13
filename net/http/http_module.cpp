@@ -42,6 +42,10 @@
 namespace OHOS::NetStack::Http {
 static constexpr const char *FLUSH_ASYNC_WORK_NAME = "ExecFlush";
 
+#ifdef MAC_PLATFORM
+static constexpr const char *REQUEST_ASYNC_WORK_NAME = "ExecRequest";
+#endif
+
 static constexpr const char *DELETE_ASYNC_WORK_NAME = "ExecDelete";
 
 static constexpr const char *HTTP_MODULE_NAME = "net.http";
@@ -89,7 +93,7 @@ void HttpModuleExports::DefineHttpRequestClass(napi_env env, napi_value exports)
 {
     std::initializer_list<napi_property_descriptor> properties = {
         DECLARE_NAPI_FUNCTION(HttpRequest::FUNCTION_REQUEST, HttpRequest::Request),
-        DECLARE_NAPI_FUNCTION(HttpRequest::FUNCTION_REQUEST2, HttpRequest::Request2),
+        DECLARE_NAPI_FUNCTION(HttpRequest::FUNCTION_REQUEST_IN_STREAM, HttpRequest::RequestInStream),
         DECLARE_NAPI_FUNCTION(HttpRequest::FUNCTION_DESTROY, HttpRequest::Destroy),
         DECLARE_NAPI_FUNCTION(HttpRequest::FUNCTION_ON, HttpRequest::On),
         DECLARE_NAPI_FUNCTION(HttpRequest::FUNCTION_ONCE, HttpRequest::Once),
@@ -212,6 +216,7 @@ void HttpModuleExports::InitHttpDataType(napi_env env, napi_value exports)
 
 napi_value HttpModuleExports::HttpRequest::Request(napi_env env, napi_callback_info info)
 {
+#ifndef MAC_PLATFORM
     return ModuleTemplate::InterfaceWithOutAsyncWork<RequestContext>(
         env, info,
         [](napi_env, napi_value, RequestContext *context) -> bool {
@@ -223,10 +228,17 @@ napi_value HttpModuleExports::HttpRequest::Request(napi_env env, napi_callback_i
             return true;
         },
         "Request", HttpAsyncWork::ExecRequest, HttpAsyncWork::RequestCallback);
+#else
+    return ModuleTemplate::Interface<RequestContext>(
+        env, info, REQUEST_ASYNC_WORK_NAME,
+        [](napi_env, napi_value, RequestContext *) -> bool { return HttpExec::Initialize(); },
+        HttpAsyncWork::ExecRequest, HttpAsyncWork::RequestCallback);
+#endif
 }
 
-napi_value HttpModuleExports::HttpRequest::Request2(napi_env env, napi_callback_info info)
+napi_value HttpModuleExports::HttpRequest::RequestInStream(napi_env env, napi_callback_info info)
 {
+#ifndef MAC_PLATFORM
     return ModuleTemplate::InterfaceWithOutAsyncWork<RequestContext>(
         env, info,
         [](napi_env, napi_value, RequestContext *context) -> bool {
@@ -234,11 +246,17 @@ napi_value HttpModuleExports::HttpRequest::Request2(napi_env env, napi_callback_
                 return false;
             }
 
-            context->EnableRequest2();
+            context->EnableRequestInStream();
             HttpExec::AsyncRunRequest(context);
             return true;
         },
-        "Request2", HttpAsyncWork::ExecRequest, HttpAsyncWork::RequestCallback);
+        "RequestInStream", HttpAsyncWork::ExecRequest, HttpAsyncWork::RequestCallback);
+#else
+    return ModuleTemplate::Interface<RequestContext>(
+        env, info, REQUEST_ASYNC_WORK_NAME,
+        [](napi_env, napi_value, RequestContext *) -> bool { return HttpExec::Initialize(); },
+        HttpAsyncWork::ExecRequest, HttpAsyncWork::RequestCallback);
+#endif
 }
 
 napi_value HttpModuleExports::HttpRequest::Destroy(napi_env env, napi_callback_info info)
@@ -251,7 +269,7 @@ napi_value HttpModuleExports::HttpRequest::Destroy(napi_env env, napi_callback_i
 
 napi_value HttpModuleExports::HttpRequest::On(napi_env env, napi_callback_info info)
 {
-    ModuleTemplate::On(env, info, {ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_PROGRESS}, false);
+    ModuleTemplate::On(env, info, {ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_RECEIVE_PROGRESS}, false);
     return ModuleTemplate::On(env, info, {ON_HEADER_RECEIVE}, true);
 }
 
@@ -262,7 +280,7 @@ napi_value HttpModuleExports::HttpRequest::Once(napi_env env, napi_callback_info
 
 napi_value HttpModuleExports::HttpRequest::Off(napi_env env, napi_callback_info info)
 {
-    ModuleTemplate::Off(env, info, {ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_PROGRESS});
+    ModuleTemplate::Off(env, info, {ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_RECEIVE_PROGRESS});
     return ModuleTemplate::Off(env, info, {ON_HEADER_RECEIVE});
 }
 

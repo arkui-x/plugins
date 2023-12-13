@@ -42,10 +42,7 @@ template("plugin_net_http_static") {
         "android/java:http_android_jni",
       ]
     } else if (platform == "ios") {
-      deps += [
-        "ios:net_http_ios",
-        "//third_party/jsoncpp:jsoncpp_static",
-      ]
+      deps += [ "ios:net_http_ios" ]
     }
 
     subsystem_name = "plugins"

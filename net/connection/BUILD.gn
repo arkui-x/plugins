@@ -29,11 +29,12 @@ template("plugin_net_connection_static") {
     sources += utils_source
 
     deps = [
+      "//foundation/graphic/graphic_2d/rosen/modules/platform:ipc_core",
+      "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
-      "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
-      "//foundation/graphic/graphic_2d/rosen/modules/platform:ipc_core",
+      "//third_party/libuv:uv_static",
     ]
 
     if (platform == "android") {

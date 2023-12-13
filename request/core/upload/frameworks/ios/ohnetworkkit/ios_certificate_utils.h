@@ -26,6 +26,6 @@
 
 
 namespace OHOS::Plugin::Request::CertificateUtils {
-void InstallCertificateChain(OHHttpSessionController *sessionCtrl_);
+void InstallCertificateChain(OHSessionManager *sessionCtrl_);
 } // namespace OHOS::Plugin::Request::CertificateUtils
 #endif // PLUGINS_REQUEST_IOS_CERTIFICATE_UTILS_H

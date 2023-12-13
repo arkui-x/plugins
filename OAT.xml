@@ -54,16 +54,33 @@ Note:If the text contains special characters, please escape them according to th
 <configuration>
     <oatconfig>
         <licensefile></licensefile>
+        <policylist>
+            <policy name="projectPolicy" desc="">
+                <policyitem type="license" name="BSDStyleLicense" path="bridge/interfaces/kits/native/src/.*" desc="Some flutter code is modified and used in the plugins repository, and the license and copyright information are retained."/>
+                <policyitem type="license" name="BSD-3-Clause" path="bridge/interfaces/kits/native/src/.*" desc="Some flutter code is modified and used in the plugins repository, and the license and copyright information are retained."/>
+                <policyitem type="license" name="MIT" path="request/core/upload/frameworks/ios/ohnetworkkit/.*" desc="Some AFNetworking code is modified and used in the plugins repository, and the license and copyright information are retained."/>
+                <policyitem type="license" name="Apple Example Code License" path="net/connection/ios/.*" desc="Some Apple Example code is modified and used in the plugins repository, and the license and copyright information are retained."/>
+                <policyitem type="copyright" name="The Flutter Authors. All rights reserved." path="bridge/interfaces/kits/native/src/.*" desc="Some flutter code is modified and used in the plugins repository, and the license and copyright information are retained."/>
+                <policyitem type="copyright" name="Alamofire Software Foundation ( http://alamofire.org/ )" path="request/core/upload/frameworks/ios/ohnetworkkit/.*" desc="Some AFNetworking code is modified and used in the plugins repository, and the license and copyright information are retained."/>
+                <policyitem type="copyright" name="Apple Inc. All Rights Reserved." path="net/connection/ios/.*" desc="Some Apple Example code is modified and used in the plugins repository, and the license and copyright information are retained."/>
+            </policy>
+        </policylist>
         <filefilterlist>
-            <filefilter name="copyrightPolicyFilter" desc="Copyright文件头校验策略的过滤条件" >
-                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/.*.h|.*.m|.*.mm" desc="import third-party AFNetworking files"/>
-                <filteritem type="filepath" name="net/connection/ios/.*.h|.*.mm|.*.txt" desc="import third-party Apple sample files"/>
+            <filefilter name="binaryFileTypePolicyFilter" desc="iOS源文件类型" >
+                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/OHSslHandler.m" desc="ios .m文件"/>
+                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/OHNetStatusMonitor.m" desc="ios .m文件"/>
+                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/ios_certificate_utils.mm" desc="ios .mm文件"/>
             </filefilter>
             <filefilter name="defaultPolicyFilter" desc="License文件头校验策略的过滤条件" >
-                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/LICENSE" desc="import third-party AFNetworking files"/>
-                <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/.*.h|.*.m|.*.mm" desc="import third-party AFNetworking files"/>
-                <filteritem type="filepath" name="net/connection/ios/.*.h|.*.mm|.*.txt" desc="import third-party Apple sample files"/>
+                <filteritem type="filepath" name="net/connection/ios/LICENSE.txt" desc="Some Apple Example code is modified and used in the plugins repository, and the license and copyright information are retained."/>
             </filefilter>
         </filefilterlist>
+        <licensematcherlist>
+            <licensematcher name="Apple Example Code License" desc="Some Apple Example code is modified and used in the plugins repository">
+                <licensetext name="
+Copyright (C) 2016 Apple Inc. All Rights Reserved.
+See LICENSE.txt for this sample" desc="Some Apple Example code is modified and used in the plugins repositor"/>
+            </licensematcher>
+        </licensematcherlist>
     </oatconfig>
 </configuration>

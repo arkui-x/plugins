@@ -33,8 +33,10 @@ tls_sources = [
   "$TLS/src/tls_certificate.cpp",
   "$TLS/src/tls_configuration.cpp",
   "$TLS/src/tls_context.cpp",
+  "$TLS/src/tls_context_server.cpp",
   "$TLS/src/tls_key.cpp",
   "$TLS/src/tls_socket.cpp",
+  "$TLS/src/tls_socket_server.cpp",
   "$TLS/src/tls_utils.cpp",
 ]
 
@@ -44,10 +46,17 @@ tls_napi_sources = [
   "$TLS_NAPI/src/context/tls_extra_context.cpp",
   "$TLS_NAPI/src/context/tls_napi_context.cpp",
   "$TLS_NAPI/src/context/tls_send_context.cpp",
+  "$TLS_NAPI/src/context/tls_server_close_context.cpp",
+  "$TLS_NAPI/src/context/tls_server_napi_context.cpp",
+  "$TLS_NAPI/src/context/tls_server_send_context.cpp",
   "$TLS_NAPI/src/monitor.cpp",
+  "$TLS_NAPI/src/monitor_server.cpp",
   "$TLS_NAPI/src/tlssocket_async_work.cpp",
   "$TLS_NAPI/src/tlssocket_exec.cpp",
   "$TLS_NAPI/src/tlssocket_module.cpp",
+  "$TLS_NAPI/src/tlssocketserver_async_work.cpp",
+  "$TLS_NAPI/src/tlssocketserver_exec.cpp",
+  "$TLS_NAPI/src/tlssocketserver_module.cpp",
 ]
 
 socket_include = [
@@ -71,6 +80,10 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/connect_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_extra_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_common_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_extra_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_listen_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_send_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_extra_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_send_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_work/src/socket_async_work.cpp",
@@ -100,42 +113,28 @@ template("plugin_net_socket_static") {
 
   ohos_source_set(target_name) {
     defines += invoker.defines
+    defines += [ "ENABLE_EVENT_HANDLER" ]
     cflags_cc += invoker.cflags_cc
 
-    if (target_os == "android") {
-      include_dirs = socket_include
-      include_dirs += tls_include
+    include_dirs = socket_include
+    include_dirs += tls_include
+    include_dirs += [ "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include" ]
+    sources = socket_sources
+    sources += tls_sources
+    sources += tls_napi_sources
 
-      sources = socket_sources
-      sources += tls_sources
-      sources += tls_napi_sources
+    deps = [
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${platform}",
+      "//plugins/net/utils:net_utils_${target_os}",
+      "//third_party/curl:curl_shared",
+      "//third_party/openssl:libcrypto_shared",
+      "//third_party/openssl:libssl_shared",
+    ]
 
-      deps = [
-        "//plugins/interfaces/native:ace_plugin_util_${platform}",
-        "//plugins/libs/napi:napi_${platform}",
-        "//plugins/net/utils:netstack_util_${platform}",
-        "//third_party/curl:curl_shared",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-      ]
-    } else if (target_os == "ios") {
-      include_dirs = socket_include
-      include_dirs += tls_include
+    if (target_os == "ios") {
       include_dirs += utils_include
-
-      sources = socket_sources
-      sources += tls_sources
-      sources += tls_napi_sources
-
-      deps = [
-        "//plugins/interfaces/native:ace_plugin_util_${platform}",
-        "//plugins/net/utils:netstack_util_static_ios",
-        "//third_party/curl:curl",
-        "//third_party/jsoncpp:jsoncpp_static",
-        "//third_party/openssl:libcrypto_static",
-        "//third_party/openssl:ssl_source",
-        "//third_party/zlib:libz",
-      ]
     }
 
     subsystem_name = "plugins"

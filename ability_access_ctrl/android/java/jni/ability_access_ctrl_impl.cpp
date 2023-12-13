@@ -29,13 +29,28 @@ static void InitPermissionMap()
     g_permissionMap["ohos.permission.MICROPHONE"] = "android.permission.RECORD_AUDIO";
 }
 
-static std::string OhPermissionToJava(const std::string& permission)
+static bool OhPermissionToJava(const std::string& inPerm, std::string& outPerm)
 {
-    auto it = g_permissionMap.find(permission);
+    outPerm = inPerm;
+    auto it = g_permissionMap.find(inPerm);
     if (it != g_permissionMap.end()) {
-        return it->second;
+        outPerm = it->second;
+        return true;
     }
-    return "";
+    return false;
+}
+
+static bool JavaPermissionToOh(const std::string& inPerm, std::string& outPerm)
+{
+    outPerm = inPerm;
+    for (auto iter = g_permissionMap.begin(); iter != g_permissionMap.end(); ++iter) {
+        std::string tmp = iter->second;
+        if (tmp == inPerm) {
+            outPerm = iter->first;
+            return true;
+        }
+    }
+    return false;
 }
 
 std::unique_ptr<AbilityAccessCtrl> AbilityAccessCtrl::Create()
@@ -50,9 +65,9 @@ std::unique_ptr<AbilityAccessCtrl> AbilityAccessCtrl::Create()
 
 bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
 {
-    LOGI("AbilityAccessCtrlImpl Check called");
-    std::string javaPermission = OhPermissionToJava(permission);
-    if (javaPermission.empty()) {
+    LOGI("AbilityAccessCtrlImpl CheckPermission %{public}s", permission.c_str());
+    std::string javaPermission;
+    if (!OhPermissionToJava(permission, javaPermission)) {
         return false;
     }
     return AbilityAccessCtrlJni::CheckPermission(javaPermission);
@@ -64,18 +79,28 @@ void AbilityAccessCtrlImpl::RequestPermissions(
     LOGI("AbilityAccessCtrlImpl Request called");
     std::vector<std::string> javaStrings;
     for (size_t i = 0; i < permissions.size(); i++) {
-        javaStrings.emplace_back(OhPermissionToJava(permissions[i]));
+        std::string javaPerm;
+        if (!OhPermissionToJava(permissions[i], javaPerm)) {
+            LOGE("AbilityAccessCtrlImpl not found permisson(%{public}s) in map", permissions[i].c_str());
+        } else {
+            LOGE(
+                "AbilityAccessCtrlImpl transfer permisson %{public}s -> %{public}s", permissions[i].c_str(), javaPerm.c_str());
+        }
+        javaStrings.emplace_back(javaPerm);
     }
-    PluginUtilsInner::RunTaskOnPlatform([permissions, callback, data]() {
-        auto task = [permissions, callback, data](const std::vector<std::string> perms, const std::vector<int> result) {
+    PluginUtilsInner::RunTaskOnPlatform([callback, data]() {
+        auto task = [callback, data](const std::vector<std::string> perms, const std::vector<int> result) {
+            std::vector<std::string> permList;
             std::vector<int> grantResult = result;
-            for (size_t i = 0; i < permissions.size(); i++) {
-                if (OhPermissionToJava(permissions[i]).empty()) {
+            for (size_t i = 0; i < perms.size(); i++) {
+                std::string ohPerm;
+                if (!JavaPermissionToOh(perms[i], ohPerm)) {
                     // 2: invalid operation, something is wrong or the app is not permmited to use the permission.
                     grantResult[i] = 2;
                 }
+                permList.emplace_back(ohPerm);
             }
-            callback(data, permissions, grantResult);
+            callback(data, permList, grantResult);
         };
         PluginUtilsInner::JSRegisterGrantResult(task);
         LOGI("AbilityAccessCtrlImpl JSRegisterGrantResult end");

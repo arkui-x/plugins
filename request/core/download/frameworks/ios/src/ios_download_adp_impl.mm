@@ -20,7 +20,6 @@
 #include "log.h"
 #import "ios_certificate_utils.h"
 
-
 namespace OHOS::Plugin::Request::Download {
 
 std::shared_ptr<IosDownloadAdp> IosDownloadAdp::Instance()
@@ -30,9 +29,17 @@ std::shared_ptr<IosDownloadAdp> IosDownloadAdp::Instance()
 
 bool IosDownloadAdp::IsDirectory(const std::string &path)
 {
-    NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:path.c_str()]];
-    NSFileWrapper *fileWrapper = [[NSFileWrapper alloc] initWithURL:url options:NSFileWrapperReadingImmediate|NSFileWrapperReadingWithoutMapping error:nil];
-    return fileWrapper.isDirectory;
+    if (path.length() < 1) {
+        return false;
+    }
+    bool bDir = false;
+    NSString *strDirPath = [NSString stringWithUTF8String:path.c_str()];
+    bool bExist = [[NSFileManager defaultManager] fileExistsAtPath:strDirPath isDirectory:&bDir];
+    if (bDir && bExist) {
+        return true;
+    }
+    DOWNLOAD_HILOGE("Invalid path, path:%{private}s", path.c_str());
+    return false;
 }
 
 IosDownloadAdpImpl::IosDownloadAdpImpl()
@@ -58,11 +65,8 @@ void IosDownloadAdpImpl::Download(const DownloadConfig &config, IosDownloadAdpCa
         fileName_ = GetFileName(config.GetUrl());
         NSString *urlStr = [NSString stringWithUTF8String:config.GetUrl().c_str()];
         NSURL *url = [NSURL URLWithString:urlStr];
-        NSURLRequest *request = [NSURLRequest requestWithURL:url];
-        sessionCtrl_ = [[OHHttpSessionController alloc] initWithBaseURL:url sessionConfiguration:configuration];
-        [sessionCtrl_ setDidFinishEventsForBackgroundURLSessionBlock:(^(NSURLSession *session) {
-            DOWNLOAD_HILOGD("resume from background.");
-        })];
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+        sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:configuration];
         if ([url.scheme compare:@"https"] == NSOrderedSame) {
             OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
         }
@@ -70,24 +74,23 @@ void IosDownloadAdpImpl::Download(const DownloadConfig &config, IosDownloadAdpCa
         for (const auto &header: headerMap) {
             NSString *key = [NSString stringWithUTF8String:header.first.c_str()];
             NSString *value = [NSString stringWithUTF8String:header.second.c_str()];
-            [sessionCtrl_.requestHandler setValue:value forHeaderField:key];
+            [request setValue:value forHTTPHeaderField:key];
         }
-        NSURLRequest *serializedRequest = [sessionCtrl_.requestHandler requestBySeriReq:request withParameters:nil error:nil];
-        downloadTask_ = [sessionCtrl_ downloadTaskWithRequest:serializedRequest
-            progress:^(NSProgress *downloadProgress) {
-                if (callback != nullptr) {
-                    callback->OnProgress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
-                }
-                if (!isMimeReported_) {
-                    ReportMimeType(callback, [downloadTask_ response]);
-                }
+        downloadTask_ = [sessionCtrl_ downloadWithRequest:request
+                                            progressBlock:^(NSProgress *downloadProgress) {
+            if (callback != nullptr) {
+                callback->OnProgress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
             }
-            destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
-                NSString *filePath = [NSString stringWithUTF8String:config.GetFilePath().c_str()];
-                NSURL *destPath = [NSURL URLWithString:filePath];
-                return destPath;
-            } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
-                CompletionHandler(callback, response, filePath, error);
+            if (!isMimeReported_) {
+                ReportMimeType(callback, [downloadTask_ response]);
+            }
+        
+        } destination:^NSURL * _Nullable(NSURLResponse * response, NSURL * temporaryURL) {
+            NSString *filePath = [NSString stringWithUTF8String:config.GetFilePath().c_str()];
+            NSURL *destPath = [NSURL fileURLWithPath:filePath];
+            return destPath;
+        } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+            CompletionHandler(callback, response, filePath, error);
         }];
         [downloadTask_ resume];
         DOWNLOAD_HILOGD("downloadTask resume");
@@ -180,18 +183,18 @@ bool IosDownloadAdpImpl::Restore(IosDownloadAdpCallback *callback)
         return true;
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        downloadTask_ = [sessionCtrl_ downloadTaskWithResumeData:resumeData_
-            progress:^(NSProgress *downloadProgress) {
-                if (callback != nullptr) {
-                    callback->OnProgress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
-                }
+
+        [sessionCtrl_ downloadTaskWithResumeData:resumeData_
+                                   progressBlock:^(NSProgress *downloadProgress) {
+            if (callback != nullptr) {
+                callback->OnProgress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
             }
-            destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
-                NSString *filePath = [NSString stringWithUTF8String:config_.GetFilePath().c_str()];
-                NSURL *destPath = [NSURL URLWithString:filePath];
-                return destPath;
-            } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
-                CompletionHandler(callback, response, filePath, error);
+        } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
+            NSString *filePath = [NSString stringWithUTF8String:config_.GetFilePath().c_str()];
+            NSURL *destPath = [NSURL URLWithString:filePath];
+            return destPath;
+        } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+            CompletionHandler(callback, response, filePath, error);
         }];
         [downloadTask_ resume];
     });

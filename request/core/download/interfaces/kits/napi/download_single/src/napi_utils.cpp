@@ -130,6 +130,26 @@ int32_t GetInt32FromValue(napi_env env, napi_value value)
     return ret;
 }
 
+/* INT64 */
+napi_value CreateInt64(napi_env env, int64_t code)
+{
+    napi_value value = nullptr;
+    if (napi_create_int64(env, code, &value) != napi_ok) {
+        return nullptr;
+    }
+    return value;
+}
+
+void SetInt64Property(napi_env env, napi_value object, const std::string &name, int64_t value)
+{
+    napi_value jsValue = CreateInt64(env, value);
+    if (GetValueType(env, jsValue) != napi_number) {
+        return;
+    }
+
+    napi_set_named_property(env, object, name.c_str(), jsValue);
+}
+
 /* String UTF8 */
 napi_value CreateStringUtf8(napi_env env, const std::string &str)
 {

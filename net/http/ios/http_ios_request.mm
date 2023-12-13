@@ -138,8 +138,10 @@ NSString* PercentEscapedStringFromString(NSString* string) {
     sessionConfig.HTTPShouldUsePipelining = true;
 
     if (requestParam.usingHttpProxyType) {
-        sessionConfig.connectionProxyDictionary =
-        [self setproxyId:requestParam.proxyhost proxyPort:requestParam.proxyport];
+        if (requestParam.proxyhost && requestParam.proxyhost.length != 0 ) {
+            sessionConfig.connectionProxyDictionary = 
+                [self setproxyId:requestParam.proxyhost proxyPort:requestParam.proxyport];
+        }
     }
 
     self.urlSession = [NSURLSession sessionWithConfiguration:sessionConfig delegate:self delegateQueue:nil];

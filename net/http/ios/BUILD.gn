@@ -28,10 +28,20 @@ ohos_source_set("net_http_ios") {
   deps = [
     "//plugins/interfaces/native:ace_plugin_util_ios",
     "//plugins/interfaces/native:plugin_log",
-    "//plugins/net/utils:netstack_util_static_ios",
+    "//plugins/net/utils:net_utils_ios",
+    "//third_party/curl:curl_shared",
+  ]
+
+  cflags_objc = [
+    "-fvisibility=default",
+    "-fobjc-weak",
+    "-fobjc-arc",
+    "-O0",
   ]
 
   defines = [ "IOS_PLATFORM" ]
+
+  cflags_objcc = cflags_objc
 
   subsystem_name = "plugins"
   part_name = "net_http"

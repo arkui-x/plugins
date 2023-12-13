@@ -28,7 +28,11 @@
 
 namespace OHOS::Plugin::Bridge {
 static constexpr const char* BRIDGE_MODULE_NAME = "bridge";
-
+static constexpr const char* INTERFACE_BRIDGE_TYPE_ENUM = "BridgeType";
+static constexpr int32_t BRIDGE_TYPE_JSON = 0;
+static constexpr int32_t BRIDGE_TYPE_BINARY = 1;
+static constexpr const char* BRIDGE_TYPE_ENUM_JSON_NAME = "JSON_TYPE";
+static constexpr const char* BRIDGE_TYPE_ENUM_BINARY_NAME = "BINARY_TYPE";
 napi_value BridgeModule::InitBridgeModule(napi_env env, napi_value exports)
 {
     DefinePluginBridgeObjectClass(env, exports);
@@ -43,8 +47,8 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
     napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
 
-    if (argc != PluginUtilsNApi::ARG_NUM_1 ||
-        PluginUtilsNApi::GetValueType(env, argv[PluginUtilsNApi::ARG_NUM_0]) != napi_string) {
+    if ((argc != PluginUtilsNApi::ARG_NUM_1 && argc != PluginUtilsNApi::ARG_NUM_2) 
+        || PluginUtilsNApi::GetValueType(env, argv[PluginUtilsNApi::ARG_NUM_0]) != napi_string) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
@@ -61,10 +65,17 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    auto bridge = BridgeWrap::CreateBridge(bridgeName);
+    CodecType codecType = CodecType::JSON_CODEC;
+    if (argc == PluginUtilsNApi::ARG_NUM_2) {
+        codecType = static_cast<CodecType>(PluginUtilsNApi::GetCInt32(argv[PluginUtilsNApi::ARG_NUM_1], env));
+    }
+    LOGI("bridge codec type : %d", static_cast<int32_t>(codecType));
+
+    auto bridge = BridgeWrap::CreateBridge(bridgeName, codecType);
     if (bridge == nullptr) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
+
     napi_wrap(
         env, thisVar, reinterpret_cast<void*>(bridge),
         [](napi_env env, void* data, void* argv) {
@@ -95,9 +106,20 @@ void BridgeModule::DefinePluginBridgeObjectClass(napi_env env, napi_value export
 void BridgeModule::InitBridgeProperties(napi_env env, napi_value exports)
 {
     std::initializer_list<napi_property_descriptor> properties = {
+        DECLARE_NAPI_PROPERTY(INTERFACE_BRIDGE_TYPE_ENUM, InitCodecType(env)),
         DECLARE_NAPI_FUNCTION(FUNCTION_CREATE_PLUGIN_BRIDGE, CreateBridge),
     };
     PluginUtilsNApi::DefineProperties(env, exports, properties);
+}
+
+napi_value BridgeModule::InitCodecType(napi_env env)
+{
+    napi_value object = PluginUtilsNApi::CreateObject(env);
+
+    PluginUtilsNApi::SetEnumItem(env, object, BRIDGE_TYPE_ENUM_JSON_NAME, BRIDGE_TYPE_JSON);
+    PluginUtilsNApi::SetEnumItem(env, object, BRIDGE_TYPE_ENUM_BINARY_NAME, BRIDGE_TYPE_BINARY);
+
+    return object;
 }
 
 Bridge* BridgeModule::GetBridge(napi_env env, napi_value thisVal)
@@ -166,7 +188,12 @@ void BridgeModule::SendMessageInner(napi_env env, napi_value thisVal, std::share
     Bridge* bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
         callback->SetBridgeName(bridge->GetBridgeName());
-        code = bridge->SendMessage(callback->GetMethodParamName(), callback);
+        if (bridge->GetCodecType() == CodecType::JSON_CODEC) {
+            code = bridge->SendMessage(callback->GetMethodParamName(), callback); 
+        } else if (bridge->GetCodecType() == CodecType::BINARY_CODEC) {
+            const auto& params = callback->GetMethodParamNameBinary();
+            code = bridge->SendMessageBinary(params, callback);
+        }
     } else {
         code = ErrorCode::BRIDGE_INVALID;
         LOGE("SendMessageInner:Failed to obtain the Bridge object.");
@@ -220,7 +247,13 @@ napi_value BridgeModule::BridgeObject::CallMethod(napi_env env, napi_callback_in
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    std::shared_ptr<MethodData> methodData = std::make_shared<MethodData>(env);
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject::CallMethod: Failed to obtain the Bridge object.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto methodData = MethodData::CreateMethodData(env, bridge->GetCodecType());
     if (!methodData->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::CallMethod: Parsing the method name failed.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -261,14 +294,20 @@ napi_value BridgeModule::BridgeObject::RegisterMethod(napi_env env, napi_callbac
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    std::shared_ptr<MethodData> methodData = std::make_shared<MethodData>(env);
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject:::RegisterMethod Failed to obtain the Bridge object.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto methodData = MethodData::CreateMethodData(env, bridge->GetCodecType());
     if (argc > PluginUtilsNApi::ARG_NUM_0 &&
         !methodData->GetJSRegisterMethodObject(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::RegisterMethod: Failed to create the callback event.");
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    std::shared_ptr<MethodData> callback = std::make_shared<MethodData>(env);
+    auto callback = MethodData::CreateMethodData(env, bridge->GetCodecType());
     if (argc > PluginUtilsNApi::ARG_NUM_1 &&
         !callback->GetCallback(argv[PluginUtilsNApi::ARG_NUM_1], false)) {
         methodData->ReleaseEvent();
@@ -297,7 +336,13 @@ napi_value BridgeModule::BridgeObject::UnRegisterMethod(napi_env env, napi_callb
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    std::shared_ptr<MethodData> callback = std::make_shared<MethodData>(env);
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject::UnRegisterMethod: Failed to obtain the Bridge object.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto callback = MethodData::CreateMethodData(env, bridge->GetCodecType());
     if (argc > PluginUtilsNApi::ARG_NUM_0 &&
         !callback->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::UnRegisterMethod: Method name error.");
@@ -331,7 +376,13 @@ napi_value BridgeModule::BridgeObject::SendMessage(napi_env env, napi_callback_i
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    std::shared_ptr<MethodData> callback = std::make_shared<MethodData>(env);
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject::SendMessage: Failed to obtain the Bridge object.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto callback = MethodData::CreateMethodData(env, bridge->GetCodecType());
     if (argc > PluginUtilsNApi::ARG_NUM_0 &&
         !callback->GetMessageData(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::SendMessage: Failed to create the callback event.");
@@ -365,7 +416,13 @@ napi_value BridgeModule::BridgeObject::SetMessageListener(napi_env env, napi_cal
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    std::shared_ptr<MethodData> onMessageCallback = std::make_shared<MethodData>(env);
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject::SendMessage: Failed to obtain the Bridge object.");
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+
+    auto onMessageCallback = MethodData::CreateMethodData(env, bridge->GetCodecType());
     onMessageCallback->SetIsMessageEvent(true);
 
     if (!onMessageCallback->GetCallback(argv[PluginUtilsNApi::ARG_NUM_0], true)) {

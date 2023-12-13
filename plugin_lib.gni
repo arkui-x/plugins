@@ -13,13 +13,6 @@
 
 import("//build/ohos.gni")
 
-common_plugin_libs_static = [
-  "common_event",
-  "display",
-  "hitrace_meter",
-  "running_lock",
-]
-
 common_plugin_libs = [
   "ability_access_ctrl",
   "bridge",
@@ -27,6 +20,7 @@ common_plugin_libs = [
   "data/preferences",
   "data/relationalstore",
   "device_info",
+  "hitrace_meter",
   "i18n",
   "intl",
   "net/connection",
@@ -62,11 +56,9 @@ common_plugin_libs = [
   "test_plugin",
   "timer",
   "console",
+  "web/webview",
 ]
 
-if (target_os == "android") {
-  common_plugin_libs += common_plugin_libs_static
-}
 if (target_os == "ios") {
   common_plugin_libs += [ "ndk_raw_file" ]
 }

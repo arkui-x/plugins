@@ -54,43 +54,31 @@ template("plugin_net_websocket_static") {
 
   ohos_source_set(target_name) {
     defines += invoker.defines
-    defines += [ "OHOS_LIBWEBSOCKETS=1" ]
+    defines += [
+      "OHOS_LIBWEBSOCKETS=1",
+      "ENABLE_EVENT_HANDLER",
+    ]
     cflags_cc += invoker.cflags_cc
 
+    include_dirs = websocket_include
+    sources = websocket_sources
+
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${platform}",
+      "//plugins/net/utils:net_utils_${target_os}",
+      "//third_party/bounds_checking_function:libsec_static",
+      "//third_party/curl:curl_shared",
+      "//third_party/libwebsockets:websockets",
+      "//third_party/openssl:libcrypto_shared",
+      "//third_party/openssl:libssl_shared",
+    ]
+
     if (target_os == "android") {
-      include_dirs = websocket_include
-
-      sources = websocket_sources
-
-      deps = [
-        "//plugins/interfaces/native:ace_plugin_util_${platform}",
-        "//plugins/libs/napi:napi_${platform}",
-        "//plugins/net/utils:netstack_util_${platform}",
-        "//third_party/bounds_checking_function:libsec_static",
-        "//third_party/curl:curl_shared",
-        "//third_party/libwebsockets:websockets",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-        "//third_party/zlib:shared_libz",
-      ]
-
+      deps += [ "//third_party/zlib:shared_libz" ]
       libs = [ "log" ]
     } else if (target_os == "ios") {
-      include_dirs = websocket_include
       include_dirs += utils_include
-
-      sources = websocket_sources
-      deps = [
-        "//plugins/interfaces/native:ace_plugin_util_${platform}",
-        "//plugins/net/utils:netstack_util_static_ios",
-        "//third_party/bounds_checking_function:libsec_static",
-        "//third_party/curl:curl",
-        "//third_party/jsoncpp:jsoncpp_static",
-        "//third_party/libwebsockets:websockets",
-        "//third_party/openssl:libcrypto_static",
-        "//third_party/openssl:ssl_source",
-        "//third_party/zlib:libz",
-      ]
     }
 
     subsystem_name = "plugins"

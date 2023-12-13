@@ -36,6 +36,7 @@ static constexpr uint32_t DOWNLOAD_TOTAL_SIZE_ARGC = 1;
 static constexpr uint32_t DOWNLOAD_STATUS = 2;
 static constexpr uint32_t DOWNLOAD_FAILED_REASON = 3;
 // download status code
+static constexpr uint32_t DOWNLOAD_PAUSE = 4;
 static constexpr uint32_t DOWNLOAD_SUCCESS = 8;
 static constexpr uint32_t DOWNLOAD_FAILED = 16;
 // DownloadManager error code
@@ -304,30 +305,41 @@ void DownloadManagerJni::OnRequestDataCallback(JNIEnv* env, jobject obj, jintArr
         downloadDataVector[i] = downloadDataElements[i];
     }
 
-    uint32_t receivedSize = downloadDataVector[DOWNLOAD_RECEIVED_SIZE_ARGC];
-    uint32_t totalSize = downloadDataVector[DOWNLOAD_TOTAL_SIZE_ARGC];
+    int64_t receivedSize = static_cast<int64_t>(downloadDataVector[DOWNLOAD_RECEIVED_SIZE_ARGC]);
+    int64_t totalSize = static_cast<int64_t>(downloadDataVector[DOWNLOAD_TOTAL_SIZE_ARGC]);
     uint32_t downloadStatus = downloadDataVector[DOWNLOAD_STATUS];
     uint32_t dmFailedReason = downloadDataVector[DOWNLOAD_FAILED_REASON];
     void *downloadProgress = reinterpret_cast<void *>(jDownloadProgress);
     AndroidDownloadTaskImpl *downloadTaskImpl = reinterpret_cast<AndroidDownloadTaskImpl *>(downloadProgress);
     if (downloadTaskImpl != nullptr) {
-        DOWNLOAD_HILOGI("Query receivedSize: %{private}d, totalSize: %{private}d, status:%{private}d",
+        DOWNLOAD_HILOGI("Query receivedSize: %{private}lld, totalSize: %{private}lld, status:%{private}d",
             receivedSize, totalSize, downloadStatus);
         downloadTaskImpl->OnProgress(receivedSize, totalSize);
     }
-
-    if ((receivedSize == totalSize) && (downloadStatus == DOWNLOAD_SUCCESS)) {
-        DOWNLOAD_HILOGI("download completed, receivedSize: %{private}d, totalSize: %{private}d",
+    else
+    {
+        DOWNLOAD_HILOGE("downloadTaskImpl is nullptr");
+    }
+    if (downloadStatus == DOWNLOAD_PAUSE)
+    {
+        DOWNLOAD_HILOGE("download pause reason: %{private}d", downloadStatus);
+        downloadTaskImpl->OnPause();
+    }
+    else if ((receivedSize == totalSize) && (downloadStatus == DOWNLOAD_SUCCESS)) {
+        DOWNLOAD_HILOGI("download completed, receivedSize: %{private}lld, totalSize: %{private}lld",
             receivedSize, totalSize);
         downloadTaskImpl->OnComplete();
     }
-
-    if (downloadStatus == DOWNLOAD_FAILED) {
+    else if (downloadStatus == DOWNLOAD_FAILED) {
         ErrorCode downloadFailedReason = TranslateErrorCode(dmFailedReason);
         DOWNLOAD_HILOGE("download failed, failed reason: %{private}d", downloadFailedReason);
         downloadTaskImpl->OnFail(downloadFailedReason);
     }
-
+    else
+    {
+        DOWNLOAD_HILOGE("download status: %{private}d", downloadStatus);
+    }
+    
     env->ReleaseIntArrayElements(downloadDataArray, downloadDataElements, JNI_ABORT);
     DownloadManagerReceiver::OnRequestDataCallback(downloadDataVector);
 }

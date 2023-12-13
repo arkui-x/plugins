@@ -17,7 +17,8 @@ import("//plugins/request/request.gni")
 
 config("download_lib_config") {
   visibility = [ ":*" ]
-  include_dirs = [ "include",
+  include_dirs = [
+    "include",
     "$rq_download_path/frameworks/libs/include",
   ]
   cflags_cc = [ "-fexceptions" ]
@@ -36,9 +37,7 @@ config("download_lib_public_config") {
 }
 
 ohos_source_set("download_libcurl") {
-  sources = [
-    "src/download_task_impl.cpp"
-  ]
+  sources = [ "src/download_task_impl.cpp" ]
 
   configs = [ ":download_lib_config" ]
 

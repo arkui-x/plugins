@@ -29,9 +29,9 @@ std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridge
     return data->second;
 }
 
-Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName)
+Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& codecType)
 {
-    auto bridge = new (std::nothrow) Bridge(bridgeName);
+    auto bridge = new (std::nothrow) Bridge(bridgeName, codecType);
     if (bridge == nullptr) {
         return nullptr;
     }
@@ -52,12 +52,12 @@ Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data)
     return nullptr;
 }
 
-Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName)
+Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
 {
     std::lock_guard<std::mutex> lock(bridgeListLock_);
     auto data = findData(bridgeName);
     if (data == nullptr) {
-        return BuildBridge(bridgeName);
+        return BuildBridge(bridgeName, codecType);
     }
     return CopyBridge(data);
 }

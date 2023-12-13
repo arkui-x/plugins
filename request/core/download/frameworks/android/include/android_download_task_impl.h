@@ -46,21 +46,27 @@ public:
     bool GetTaskMimeType(std::string &mimeType) override;
 
 public:
-    void OnProgress(uint32_t receivedSize, uint32_t totalSize);
+    void OnProgress(int64_t receivedSize, int64_t totalSize);
     void OnComplete();
+    void OnPause();
     void OnFail(ErrorCode errorCode);
     void SetMimeType(const std::string &mimeType);
     void SetNetworkType(NetworkType networkType);
 
 private:
+    std::string GetUserId(const std::string &sandBoxPath, const std::string &prefix);
+    std::string GetPackageName(const std::string &sandBoxPath, const std::string &prefix);
+
+private:
     std::string mimeType_;
-    uint32_t receivedSize_;
-    uint32_t totalSize_;
+    int64_t receivedSize_;
+    int64_t totalSize_;
     std::mutex queryMutex_;
 
     NetworkType networkType_ = NETWORK_INVALID;
     bool isRemoved_ = false;
     std::shared_ptr<AndroidDownloadAdp> AndroidDownloadAdp_ = nullptr;
+    std::string sandBoxPath_;
 };
 } // namespace OHOS::Plugin::Request::Download
 #endif

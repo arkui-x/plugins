@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/config/config.gni")
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
@@ -21,13 +22,17 @@ ohos_source_set("netstack_utils") {
     "$SUBSYSTEM_DIR/netstack/utils/log/include",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
     "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+    "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/http/http_module/include",
     "//commonlibrary/c_utils/base/include",
     "//third_party/bounds_checking_function/include",
     "//third_party/curl/include",
     "//third_party/jsoncpp/include",
     "//plugins/hilog/include",
     "//plugins/interfaces",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
   ]
+
+  defines = [ "ENABLE_EVENT_HANDLER" ]
 
   sources = [
     "$SUBSYSTEM_DIR/netstack/utils/common_utils/src/netstack_common_utils.cpp",
@@ -39,9 +44,10 @@ ohos_source_set("netstack_utils") {
   ]
 
   deps = [
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
     "//plugins/libs/jsoncpp:jsoncpp_${target_os}",
     "//plugins/libs/napi:napi_${target_os}",
-    "//third_party/curl:curl",
+    "//third_party/libuv:uv_static",
   ]
 }
 
@@ -97,29 +103,32 @@ foreach(item, ace_platforms) {
     }
   }
 
-  if (item.name == "android") {
-    ohos_shared_library("netstack_util_" + item.name) {
-      platform = item.name
-      public_configs = [ ":plugin_util_config" ]
-      deps = [ ":netstack_util_static_${platform}" ]
-      public_deps = [
-        "//plugins/interfaces/native:plugin_log",
-        "//plugins/libs/napi:napi_${target_os}",
+  ohos_shared_library("net_utils_" + item.name) {
+    platform = item.name
+    deps = [ ":netstack_util_static_${platform}" ]
+    public_configs = [ ":plugin_util_config" ]
+    public_deps = [
+      "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
+    ]
+    if (item.name == "ios") {
+      ldflags = [
+        "-Wl",
+        "-install_name",
+        "@rpath/libnet_utils.framework/libnet_utils",
       ]
-
-      subsystem_name = "plugins"
-      part_name = "net_utils"
+      output_name = "net_utils"
+    } else {
+      output_name = "libnet_utils"
     }
-  } else {
-    ohos_source_set("netstack_util_" + item.name) {
-      platform = item.name
-      public_configs = [ ":plugin_util_config" ]
-      deps = [ ":netstack_util_static_${platform}" ]
-      public_deps = [
-        "//plugins/interfaces/native:plugin_log",
-        "//plugins/libs/napi:napi_${target_os}",
-      ]
 
+    subsystem_name = "plugins"
+    part_name = "net_utils"
+  }
+
+  if (item.name == "ios") {
+    ohos_combine_darwin_framework("libnet_utils") {
+      deps = [ ":net_utils_ios" ]
       subsystem_name = "plugins"
       part_name = "net_utils"
     }

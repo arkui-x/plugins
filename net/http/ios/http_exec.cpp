@@ -74,9 +74,9 @@ bool HttpExec::ExecRequest(RequestContext* context)
 
     if (!RequestWithoutCache(context)) {
         context->SetErrorCode(NapiUtils::NETSTACK_NAPI_INTERNAL_ERROR);
-        if (context->GetManager()->IsManagerValid(context->GetManager())) {
-            if (context->IsRequest2()) {
-                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::Request2Callback);
+        if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
+            if (context->IsRequestInStream()) {
+                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
             } else {
                 NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
             }
@@ -135,7 +135,7 @@ napi_value HttpExec::RequestCallback(RequestContext* context)
     return object;
 }
 
-napi_value HttpExec::Request2Callback(RequestContext* context)
+napi_value HttpExec::RequestInStreamCallback(RequestContext* context)
 {
     return nullptr;
 }
@@ -200,8 +200,7 @@ void HttpExec::RunThread()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
 
-        std::mutex m;
-        std::unique_lock l(m);
+        std::unique_lock l(staticVariable_.mutex);
         auto &contextMap = staticVariable_.contextMap;
         staticVariable_.conditionVariable.wait_for(l, std::chrono::seconds(CONDITION_TIMEOUT_S),
             [contextMap] { return !contextMap.empty(); });
@@ -228,7 +227,7 @@ size_t HttpExec::OnWritingMemoryBody(const void* data, size_t size, void* userDa
         return 0;
     }
 
-    if (context->IsRequest2()) {
+    if (context->IsRequestInStream()) {
         context->SetTempData(data, size);
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataReceive);
         return size;
@@ -254,7 +253,7 @@ size_t HttpExec::OnWritingMemoryHeader(const void* data, size_t size, void* user
 
     context->response.AppendRawHeader(data, size);
 
-    if (context->IsRequest2()) {
+    if (context->IsRequestInStream()) {
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnHeaderReceive);
         return size;
     }
@@ -285,12 +284,12 @@ bool HttpExec::OnSuccessResponse(HttpResponse& httpResponse, void* userData)
 
     ReleaseRequestInfo(context);
 
-    if (context->GetManager()->IsManagerValid(context->GetManager())) {
-        if (context->IsRequest2()) {
+    if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
+        if (context->IsRequestInStream()) {
             if (context->IsExecOK()) {
                 NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataEnd);
             }
-            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::Request2Callback);
+            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
         } else {
             NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
         }
@@ -310,9 +309,9 @@ bool HttpExec::OnFailedResponse(int32_t errCode, std::string& errMessage, void* 
     context->SetExecOK(false);
     ReleaseRequestInfo(context);
 
-    if (context->GetManager()->IsManagerValid(context->GetManager())) {
-        if (context->IsRequest2()) {
-            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::Request2Callback);
+    if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
+        if (context->IsRequestInStream()) {
+            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
         } else {
             NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
         }
@@ -371,7 +370,7 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void* data)
     NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
                                  static_cast<uint32_t>(context->GetDlLen().tLen));
     context->PopDlLen();
-    context->Emit(ON_DATA_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
+    context->Emit(ON_DATA_RECEIVE_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
 }
 
 void HttpExec::OnDataEnd(napi_env env, napi_status status, void* data)
@@ -389,7 +388,7 @@ int HttpExec::ProgressCallback(long dltotal, long dlnow, long ultotal, long ulno
     (void)ultotal;
     (void)ulnow;
     auto context = static_cast<RequestContext*>(userData);
-    if (context == nullptr || !context->IsRequest2()) {
+    if (context == nullptr || !context->IsRequestInStream()) {
         return 0;
     }
     if (dltotal != 0) {
@@ -535,10 +534,12 @@ bool HttpExec::IsInitialized()
 
 void HttpExec::DeInitialize()
 {
+    std::lock_guard<std::mutex> lock(staticVariable_.mutex);
     staticVariable_.runThread = false;
     if (staticVariable_.workThread.joinable()) {
         staticVariable_.workThread.join();
     }
+    staticVariable_.initialized = false;
 }
 
 void HttpExec::ReleaseRequestInfo(RequestContext* context)

@@ -29,7 +29,7 @@ void DownloadInfo::SetDescription(const std::string &description)
     description_ = description;
 }
 
-void DownloadInfo::SetDownloadedBytes(uint32_t downloadedBytes)
+void DownloadInfo::SetDownloadedBytes(int64_t downloadedBytes)
 {
     downloadedBytes_ = downloadedBytes;
 }
@@ -74,7 +74,7 @@ void DownloadInfo::SetDownloadTitle(const std::string &downloadTitle)
     downloadTitle_ = downloadTitle;
 }
 
-void DownloadInfo::SetDownloadTotalBytes(uint32_t downloadTotalBytes)
+void DownloadInfo::SetDownloadTotalBytes(int64_t downloadTotalBytes)
 {
     downloadTotalBytes_ = downloadTotalBytes;
 }
@@ -99,7 +99,7 @@ const std::string &DownloadInfo::GetDescription() const
     return description_;
 }
 
-uint32_t DownloadInfo::GetDownloadedBytes() const
+int64_t DownloadInfo::GetDownloadedBytes() const
 {
     return downloadedBytes_;
 }
@@ -149,7 +149,7 @@ std::string DownloadInfo::GetTaskType() const
     return taskType_;
 }
 
-uint32_t DownloadInfo::GetDownloadTotalBytes() const
+int64_t DownloadInfo::GetDownloadTotalBytes() const
 {
     return downloadTotalBytes_;
 }

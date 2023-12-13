@@ -19,7 +19,7 @@ ohos_source_set("trace_ios") {
 
   include_dirs = [ "//plugins/hitrace_meter" ]
 
-  deps = []
+  deps = [ "//plugins/interfaces/native:ace_plugin_util_ios" ]
 
   subsystem_name = "plugins"
   part_name = "hitrace_meter"
