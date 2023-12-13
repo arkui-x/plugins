@@ -61,6 +61,7 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
 
     napi_value thisVar =
         PluginUtilsNApi::NewInstance(env, info, INTERFACE_PLUGIN_BRIDGE_OBJECT, 1, &bridgeNameValue);
+        PluginUtilsNApi::DeleteReference(env, bridgeNameRef);
     if (thisVar == nullptr) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
