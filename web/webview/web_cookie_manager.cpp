@@ -33,29 +33,20 @@ thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
     WebCookieManager::fetchCookieCallbackInfoContainer_;
 thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
     WebCookieManager::clearAllCookiesCallbackInfoContainer_;
-thread_local int32_t WebCookieManager::configCookieIndex_ = 0;
-thread_local int32_t WebCookieManager::fetchCookieIndex_ = 0;
-thread_local int32_t WebCookieManager::clearAllCookiesIndex_ = 0;
 
-void WebCookieManager::OnFetchReceiveValue(const std::string& result)
+void WebCookieManager::OnFetchReceiveValue(const std::string& result, int32_t asyncCallbackInfoId)
 {
-    if (ExcuteAsyncCallbackInfo(result)) {
-        IncreaseIndex(TaskType::FETCH_COOKIE);
-    }
+    ExcuteAsyncCallbackInfo(result, asyncCallbackInfoId);
 }
 
-void WebCookieManager::OnConfigReceiveValue(bool result)
+void WebCookieManager::OnConfigReceiveValue(bool result, int32_t asyncCallbackInfoId)
 {
-    if (ExcuteAsyncCallbackInfo(result)) {
-        IncreaseIndex(TaskType::CONFIG_COOKIE);
-    }
+    ExcuteAsyncCallbackInfo(result, asyncCallbackInfoId);
 }
 
-void WebCookieManager::OnClearReceiveValue()
+void WebCookieManager::OnClearReceiveValue(int32_t asyncCallbackInfoId)
 {
-    if (ExcuteAsyncCallbackInfo()) {
-        IncreaseIndex(TaskType::CLEAR_ALL_COOKIES);
-    }
+    ExcuteAsyncCallbackInfo(asyncCallbackInfoId);
 }
 
 void WebCookieManager::InsertCallbackInfo(
@@ -94,7 +85,6 @@ bool WebCookieManager::EraseCallbackInfo(
                 it++) {
                 if ((*it) && (*it).get() == asyncCallbackInfo) {
                     configCookieCallbackInfoContainer_.erase(it);
-                    DecreaseIndex(TaskType::CONFIG_COOKIE);
                     return true;
                 }
             }
@@ -107,7 +97,6 @@ bool WebCookieManager::EraseCallbackInfo(
                 it++) {
                 if ((*it) && (*it).get() == asyncCallbackInfo) {
                     fetchCookieCallbackInfoContainer_.erase(it);
-                    DecreaseIndex(TaskType::FETCH_COOKIE);
                     return true;
                 }
             }
@@ -120,7 +109,6 @@ bool WebCookieManager::EraseCallbackInfo(
                 it != clearAllCookiesCallbackInfoContainer_.end(); it++) {
                 if ((*it) && (*it).get() == asyncCallbackInfo) {
                     clearAllCookiesCallbackInfoContainer_.erase(it);
-                    DecreaseIndex(TaskType::CLEAR_ALL_COOKIES);
                     return true;
                 }
             }
@@ -131,137 +119,85 @@ bool WebCookieManager::EraseCallbackInfo(
     return false;
 }
 
-void WebCookieManager::IncreaseIndex(TaskType taskType)
+bool WebCookieManager::ExcuteAsyncCallbackInfo(const std::string& result, int32_t asyncCallbackInfoId)
 {
-    switch (taskType) {
-        case TaskType::CONFIG_COOKIE:
-            configCookieIndex_++;
-            if (configCookieCallbackInfoContainer_.empty() ||
-                configCookieIndex_ >= configCookieCallbackInfoContainer_.size()) {
-                configCookieIndex_ = 0;
+    LOGD("WebCookieManager fetchCookie asyncCallbackInfoId: %{public}d", asyncCallbackInfoId);
+    for (const auto& asyncCallbackInfo : fetchCookieCallbackInfoContainer_) {
+        if (!asyncCallbackInfo) {
+            continue;
+        }
+        if (asyncCallbackInfo->GetUniqueId() == asyncCallbackInfoId) {
+            if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
+                asyncCallbackInfo->result = result;
+                napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
+                return true;
             }
-            break;
-        case TaskType::FETCH_COOKIE:
-            fetchCookieIndex_++;
-            if (fetchCookieCallbackInfoContainer_.empty() ||
-                fetchCookieIndex_ >= fetchCookieCallbackInfoContainer_.size()) {
-                fetchCookieIndex_ = 0;
-            }
-            break;
-        case TaskType::CLEAR_ALL_COOKIES:
-            clearAllCookiesIndex_++;
-            if (clearAllCookiesCallbackInfoContainer_.empty() ||
-                clearAllCookiesIndex_ >= clearAllCookiesCallbackInfoContainer_.size()) {
-                clearAllCookiesIndex_ = 0;
-            }
-            break;
-        case TaskType::NONE:
-            break;
-    }
-}
-
-void WebCookieManager::DecreaseIndex(TaskType taskType)
-{
-    switch (taskType) {
-        case TaskType::CONFIG_COOKIE:
-            configCookieIndex_--;
-            if (configCookieCallbackInfoContainer_.empty() || configCookieIndex_ < 0) {
-                configCookieIndex_ = 0;
-            }
-            break;
-        case TaskType::FETCH_COOKIE:
-            fetchCookieIndex_--;
-            if (fetchCookieCallbackInfoContainer_.empty() || fetchCookieIndex_ < 0) {
-                fetchCookieIndex_ = 0;
-            }
-            break;
-        case TaskType::CLEAR_ALL_COOKIES:
-            clearAllCookiesIndex_--;
-            if (clearAllCookiesCallbackInfoContainer_.empty() || clearAllCookiesIndex_ < 0) {
-                clearAllCookiesIndex_ = 0;
-            }
-            break;
-        case TaskType::NONE:
-            break;
-    }
-}
-
-bool WebCookieManager::ExcuteAsyncCallbackInfo(const std::string& result)
-{
-    LOGD("fetchCookieIndex_ == %{public}d, fetchCookieCallbackInfoContainer_ size == %{public}d", fetchCookieIndex_,
-        fetchCookieCallbackInfoContainer_.size());
-    if (fetchCookieCallbackInfoContainer_.empty()) {
-        return false;
-    }
-    auto asyncCallbackInfo = fetchCookieCallbackInfoContainer_.at(fetchCookieIndex_);
-    CHECK_NULL_RETURN(asyncCallbackInfo, false);
-    asyncCallbackInfo->result = result;
-    if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
-        napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
-        return true;
+        }
     }
     return false;
 }
 
-bool WebCookieManager::ExcuteAsyncCallbackInfo(bool result)
+bool WebCookieManager::ExcuteAsyncCallbackInfo(bool result, int32_t asyncCallbackInfoId)
 {
-    LOGD("configCookieIndex_ == %{public}d, configCookieCallbackInfoContainer_ size == %{public}d", configCookieIndex_,
-        configCookieCallbackInfoContainer_.size());
-    if (configCookieCallbackInfoContainer_.empty()) {
-        return false;
-    }
-    auto asyncCallbackInfo = configCookieCallbackInfoContainer_.at(configCookieIndex_);
-    CHECK_NULL_RETURN(asyncCallbackInfo, false);
-    if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
-        napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
-        return true;
-    }
-    return false;
-}
-
-bool WebCookieManager::ExcuteAsyncCallbackInfo()
-{
-    LOGD("clearAllCookiesIndex_ == %{public}d, clearAllCookiesCallbackInfoContainer_ size == %{public}d",
-        clearAllCookiesIndex_, clearAllCookiesCallbackInfoContainer_.size());
-    if (clearAllCookiesCallbackInfoContainer_.empty()) {
-        return false;
-    }
-    auto asyncCallbackInfo = clearAllCookiesCallbackInfoContainer_.at(clearAllCookiesIndex_);
-    CHECK_NULL_RETURN(asyncCallbackInfo, false);
-    if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
-        napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
-        return true;
+    LOGD("WebCookieManager configCookie asyncCallbackInfoId: %{public}d", asyncCallbackInfoId);
+    for (const auto& asyncCallbackInfo : configCookieCallbackInfoContainer_) {
+        if (!asyncCallbackInfo) {
+            continue;
+        }
+        if (asyncCallbackInfo->GetUniqueId() == asyncCallbackInfoId) {
+            if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
+                napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
+                return true;
+            }
+        }
     }
     return false;
 }
 
-void WebCookieManager::ConfigCookie(const std::string& url, const std::string& value)
+bool WebCookieManager::ExcuteAsyncCallbackInfo(int32_t asyncCallbackInfoId)
+{
+    LOGD("WebCookieManager ClearAllCookies asyncCallbackInfoId: %{public}d", asyncCallbackInfoId);
+    for (const auto& asyncCallbackInfo : clearAllCookiesCallbackInfoContainer_) {
+        if (!asyncCallbackInfo) {
+            continue;
+        }
+        if (asyncCallbackInfo->GetUniqueId() == asyncCallbackInfoId) {
+            if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
+                napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void WebCookieManager::ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId)
 {
 #ifdef ANDROID_PLATFORM
-    WebCookieManagerAndroid::ConfigCookie(url, value);
+    WebCookieManagerAndroid::ConfigCookie(url, value, asyncCallbackInfoId);
 #endif
 #ifdef IOS_PLATFORM
-    WebCookieManagerIOS::ConfigCookie(url, value);
+    WebCookieManagerIOS::ConfigCookie(url, value, asyncCallbackInfoId);
 #endif
 }
 
-void WebCookieManager::FetchCookie(const std::string& url)
+void WebCookieManager::FetchCookie(const std::string& url, int32_t asyncCallbackInfoId)
 {
 #ifdef ANDROID_PLATFORM
-    WebCookieManagerAndroid::FetchCookie(url);
+    WebCookieManagerAndroid::FetchCookie(url, asyncCallbackInfoId);
 #endif
 #ifdef IOS_PLATFORM
-    WebCookieManagerIOS::FetchCookie(url);
+    WebCookieManagerIOS::FetchCookie(url, asyncCallbackInfoId);
 #endif
 }
 
-void WebCookieManager::ClearAllCookies()
+void WebCookieManager::ClearAllCookies(int32_t asyncCallbackInfoId)
 {
 #ifdef ANDROID_PLATFORM
-    WebCookieManagerAndroid::ClearAllCookies();
+    WebCookieManagerAndroid::ClearAllCookies(asyncCallbackInfoId);
 #endif
 #ifdef IOS_PLATFORM
-    WebCookieManagerIOS::ClearAllCookies();
+    WebCookieManagerIOS::ClearAllCookies(asyncCallbackInfoId);
 #endif
 }
 } // namespace OHOS::Plugin

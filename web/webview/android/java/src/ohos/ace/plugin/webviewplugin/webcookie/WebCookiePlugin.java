@@ -26,37 +26,37 @@ public class WebCookiePlugin {
         nativeInit();
     }
 
-    public void configCookie(String url, String StringCookie) {
+    public void configCookie(String url, String StringCookie, long asyncCallbackInfoId) {
         CookieManager.getInstance().setCookie(url, StringCookie, new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean value) {
-                onReceiveCookieValue(true);
+                onReceiveCookieValue(true, asyncCallbackInfoId);
             }
         });
     }
 
-    public void fetchCookie(String url) {
+    public void fetchCookie(String url, long asyncCallbackInfoId) {
         String cookies = CookieManager.getInstance().getCookie(url);
         if (cookies == null) {
             cookies = "";
         }
-        onReceiveCookieValue(cookies);
+        onReceiveCookieValue(cookies, asyncCallbackInfoId);
     }
 
-    public void clearAllCookies() {
+    public void clearAllCookies(long asyncCallbackInfoId) {
         CookieManager.getInstance().removeAllCookies(new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean value) {
-                onReceiveCookieValue();
+                onReceiveCookieValue(asyncCallbackInfoId);
             }
         });
     }
 
     protected native void nativeInit();
 
-    protected native static void onReceiveCookieValue(String value);
+    protected native static void onReceiveCookieValue(String value, long asyncCallbackInfoId);
 
-    protected native static void onReceiveCookieValue(boolean value);
+    protected native static void onReceiveCookieValue(boolean value, long asyncCallbackInfoId);
 
-    protected native static void onReceiveCookieValue();
+    protected native static void onReceiveCookieValue(long asyncCallbackInfoId);
 }

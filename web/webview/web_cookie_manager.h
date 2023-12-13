@@ -30,33 +30,28 @@ class WebCookieManager {
 public:
     WebCookieManager() = default;
     virtual ~WebCookieManager() = default;
-    static void ConfigCookie(const std::string& url, const std::string& value);
-    static void FetchCookie(const std::string& url);
-    static void ClearAllCookies();
+    static void ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId);
+    static void FetchCookie(const std::string& url, int32_t asyncCallbackInfoId);
+    static void ClearAllCookies(int32_t asyncCallbackInfoId);
 
-    static void OnFetchReceiveValue(const std::string& result);
-    static void OnConfigReceiveValue(bool result);
-    static void OnClearReceiveValue();
+    static void OnFetchReceiveValue(const std::string& result, int32_t asyncCallbackInfoId);
+    static void OnConfigReceiveValue(bool result, int32_t asyncCallbackInfoId);
+    static void OnClearReceiveValue(int32_t asyncCallbackInfoId);
     static void InsertCallbackInfo(
         const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& asyncCallbackInfo, TaskType taskType);
     static bool EraseCallbackInfo(
         const AsyncCookieManagerResultCallbackInfo* asyncCallbackInfo, TaskType taskType);
 
 private:
-    static bool ExcuteAsyncCallbackInfo(const std::string& result);
-    static bool ExcuteAsyncCallbackInfo(bool result);
-    static bool ExcuteAsyncCallbackInfo();
-    static void IncreaseIndex(TaskType taskType);
-    static void DecreaseIndex(TaskType taskType);
+    static bool ExcuteAsyncCallbackInfo(const std::string& result, int32_t asyncCallbackInfoId);
+    static bool ExcuteAsyncCallbackInfo(bool result, int32_t asyncCallbackInfoId);
+    static bool ExcuteAsyncCallbackInfo(int32_t asyncCallbackInfoId);
     static thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
         configCookieCallbackInfoContainer_;
     static thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
         fetchCookieCallbackInfoContainer_;
     static thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
         clearAllCookiesCallbackInfoContainer_;
-    static thread_local int32_t configCookieIndex_;
-    static thread_local int32_t fetchCookieIndex_;
-    static thread_local int32_t clearAllCookiesIndex_;
 };
 } // namespace OHOS::Plugin
 

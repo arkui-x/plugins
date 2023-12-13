@@ -21,18 +21,20 @@
 using namespace OHOS::NWebError;
 
 namespace OHOS::Plugin {
-void WebCookieManagerAndroid::ConfigCookie(const std::string& url, const std::string& value)
+void WebCookieManagerAndroid::ConfigCookie(
+    const std::string& url, const std::string& value, int32_t asyncCallbackInfoId)
+
 {
-    WebCookieManagerJni::ConfigCookie(url, value);
+    WebCookieManagerJni::ConfigCookie(url, value, asyncCallbackInfoId);
 }
 
-void WebCookieManagerAndroid::FetchCookie(const std::string& url)
+void WebCookieManagerAndroid::FetchCookie(const std::string& url, int32_t asyncCallbackInfoId)
 {
-    WebCookieManagerJni::FetchCookie(url);
+    WebCookieManagerJni::FetchCookie(url, asyncCallbackInfoId);
 }
 
-void WebCookieManagerAndroid::ClearAllCookies()
+void WebCookieManagerAndroid::ClearAllCookies(int32_t asyncCallbackInfoId)
 {
-    WebCookieManagerJni::ClearAllCookies();
+    WebCookieManagerJni::ClearAllCookies(asyncCallbackInfoId);
 }
 } // namespace OHOS::Plugin

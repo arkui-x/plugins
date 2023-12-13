@@ -70,7 +70,7 @@ bool SetCookie(const std::string& url, std::map<std::string, std::string> cookie
     return true;
 }
 
-ErrCode WebCookieManagerIOS::ConfigCookie(const std::string& url, const std::string& value)
+ErrCode WebCookieManagerIOS::ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId)
 {
     NSArray* cookieAttribute = @[
         @"domain", @"path", @"expires", @"max-age", @"size", @"httponly", @"secure", @"samesite", @"partitioned",
@@ -97,11 +97,11 @@ ErrCode WebCookieManagerIOS::ConfigCookie(const std::string& url, const std::str
             }
         }
     }
-    WebCookieManager::OnConfigReceiveValue(SetCookie(url, cookieAttrDict, cookieValueDict));
+    WebCookieManager::OnConfigReceiveValue(SetCookie(url, cookieAttrDict, cookieValueDict), asyncCallbackInfoId);
     return NO_ERROR;
 }
 
-void WebCookieManagerIOS::FetchCookie(const std::string& url)
+void WebCookieManagerIOS::FetchCookie(const std::string& url, int32_t asyncCallbackInfoId)
 {
     NSString* ocUrl = [NSString stringWithCString:url.c_str() encoding:NSUTF8StringEncoding];
     NSString* urlHost = [[NSURL URLWithString:ocUrl] host];
@@ -120,16 +120,16 @@ void WebCookieManagerIOS::FetchCookie(const std::string& url)
         }
     }
 
-    WebCookieManager::OnFetchReceiveValue([cookieValue UTF8String]);
+    WebCookieManager::OnFetchReceiveValue([cookieValue UTF8String], asyncCallbackInfoId);
 }
 
-void WebCookieManagerIOS::ClearAllCookies()
+void WebCookieManagerIOS::ClearAllCookies(int32_t asyncCallbackInfoId)
 {
     NSHTTPCookieStorage* sharedHTTPCookieStorage = NSHTTPCookieStorage.sharedHTTPCookieStorage;
     NSArray* cookies = sharedHTTPCookieStorage.cookies;
     for (int i = 0; i < (int)cookies.count; i++) {
         [sharedHTTPCookieStorage deleteCookie:cookies[i]];
     }
-    WebCookieManager::OnClearReceiveValue();
+    WebCookieManager::OnClearReceiveValue(asyncCallbackInfoId);
 }
 } // namespace OHOS::Plugin

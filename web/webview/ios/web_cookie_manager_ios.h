@@ -27,9 +27,9 @@ class WebCookieManagerIOS final {
 public:
     WebCookieManagerIOS() = delete;
     ~WebCookieManagerIOS() = delete;
-    static ErrCode ConfigCookie(const std::string& url, const std::string& value);
-    static void FetchCookie(const std::string& url);
-    static void ClearAllCookies();
+    static ErrCode ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId);
+    static void FetchCookie(const std::string& url, int32_t asyncCallbackInfoId);
+    static void ClearAllCookies(int32_t asyncCallbackInfoId);
 };
 } // namespace OHOS::Plugin
 #endif
