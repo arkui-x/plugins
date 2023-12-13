@@ -22,7 +22,6 @@
 #include "upload_hilog_wrapper.h"
 #import "ios_certificate_utils.h"
 
-
 namespace OHOS::Plugin::Request::Upload {
 
 std::shared_ptr<IosUploadAdp> IosUploadAdp::Instance()

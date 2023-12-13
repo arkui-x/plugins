@@ -18,7 +18,6 @@
 #import "OHNetworkKit.h"
 #include "log.h"
 
-
 namespace OHOS::Plugin::Request::Download {
 
 static IosNetMonitor *iosNetMonitor = IosNetMonitor::SharedInstance();
