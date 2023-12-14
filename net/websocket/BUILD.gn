@@ -1,0 +1,110 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+SUBSYSTEM_DIR = "//foundation/communication"
+NETSTACK_NAPI_ROOT = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/"
+TLS_NAPI = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/tls"
+
+utils_include = [
+  "$SUBSYSTEM_DIR/netstack/utils/log/include",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
+  "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+  "//commonlibrary/c_utils/base/include",
+  "//third_party/curl/include",
+]
+
+websocket_include = [
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/include",
+  "$NETSTACK_NAPI_ROOT/websocket/async_work/include",
+  "$NETSTACK_NAPI_ROOT/websocket/constant/include",
+  "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/include",
+  "$NETSTACK_NAPI_ROOT/websocket/websocket_module/include",
+  "//plugins/hilog/include",
+  "//plugins/interfaces",
+  "//plugins/net/websocket",
+  "//third_party/bounds_checking_function/include",
+  "//third_party/libwebsockets/include",
+]
+
+websocket_sources = [
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/close_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/connect_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_work/src/websocket_async_work.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/constant/src/constant.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/src/websocket_exec.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/websocket_module/src/websocket_module.cpp",
+]
+
+template("plugin_net_websocket_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    defines += [
+      "OHOS_LIBWEBSOCKETS=1",
+      "ENABLE_EVENT_HANDLER",
+    ]
+    cflags_cc += invoker.cflags_cc
+
+    include_dirs = websocket_include
+    sources = websocket_sources
+
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${platform}",
+      "//plugins/net/utils:net_utils_${target_os}",
+      "//third_party/bounds_checking_function:libsec_static",
+      "//third_party/curl:curl_shared",
+      "//third_party/libwebsockets:websockets",
+      "//third_party/openssl:libcrypto_shared",
+      "//third_party/openssl:libssl_shared",
+    ]
+
+    if (target_os == "android") {
+      deps += [ "//third_party/zlib:shared_libz" ]
+      libs = [ "log" ]
+    } else if (target_os == "ios") {
+      include_dirs += utils_include
+    }
+
+    subsystem_name = "plugins"
+    part_name = "net_websocket"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_net_websocket_static("net_websocket_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

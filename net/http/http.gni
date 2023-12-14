@@ -1,0 +1,59 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+SUBSYSTEM_DIR = "//foundation/communication"
+NETSTACK_NAPI_ROOT = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/"
+
+utils_include = [
+  "$SUBSYSTEM_DIR/netstack/utils/log/include",
+  "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
+  "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
+]
+
+http_include = [
+  "$NETSTACK_NAPI_ROOT/http/async_context/include",
+  "$NETSTACK_NAPI_ROOT/http/async_work/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/base64/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_constant/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_proxy/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/include",
+  "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/include",
+  "$NETSTACK_NAPI_ROOT/http/constant/include",
+  "$NETSTACK_NAPI_ROOT/http/http_module/include",
+  "$NETSTACK_NAPI_ROOT/http/options/include",
+  "//plugins/hilog/include",
+  "//plugins/interfaces",
+  "//plugins/net/http",
+  "//plugins/net/http/android",
+  "//plugins/net/http/android/java/jni",
+  "//third_party/curl/include",
+  "//third_party/jsoncpp/include",
+  "//third_party/bounds_checking_function/include",
+]
+
+http_sources = [
+  "$NETSTACK_NAPI_ROOT/http/async_context/src/request_context.cpp",
+  "$NETSTACK_NAPI_ROOT/http/async_work/src/http_async_work.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_cache_request.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_cache_response.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_cache_strategy.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_time.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/disk_handler.cpp",
+  "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache_disk_handler.cpp",
+  "$NETSTACK_NAPI_ROOT/http/constant/src/constant.cpp",
+  "$NETSTACK_NAPI_ROOT/http/options/src/http_request_options.cpp",
+  "$NETSTACK_NAPI_ROOT/http/options/src/http_response.cpp",
+]

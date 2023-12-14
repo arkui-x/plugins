@@ -1,0 +1,73 @@
+# Copyright (C) 2022-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//plugins/request/request.gni")
+
+config("upload_native_config") {
+  visibility = [ ":*" ]
+  include_dirs = [ "include" ]
+}
+
+config("upload_native_public_config") {
+  visibility = []
+  include_dirs = [
+    "$ace_napi/interfaces/kits",
+    "$rq_download_path/utils/include",
+    "$rq_upload_path/interfaces/kits/napi/include",
+    "$third_party_path/libuv/include",
+    "$third_party_path/curl/include",
+    "$rq_upload_path/frameworks/libs/include",
+    "$rq_utils_path",
+    "$plugin_interfaces_path",
+    "$rq_upload_path/frameworks/common/include",
+    "$rq_upload_path/frameworks/android/include",
+    "$rq_download_path/interfaces/kits/napi/download_single/include"
+  ]
+}
+
+ohos_source_set("upload") {
+  sources = [
+    "src/async_call.cpp",
+    "src/complete_callback.cpp",
+    "src/fail_callback.cpp",
+    "src/js_util.cpp",
+    "src/progress_callback.cpp",
+    "src/upload_task_napi.cpp",
+    "src/header_receive_callback.cpp",
+  ]
+
+  configs = [ ":upload_native_config" ]
+
+  deps = [
+    "//plugins/libs/napi:napi_${target_os}",
+    "$plugin_interfaces_path/native:plugin_log",
+    #"$rq_upload_path/frameworks/libs:upload_lib",
+    "$third_party_path/libuv:uv_static"
+  ]
+
+  if (target_os == "ios") {
+    defines = [ "IOS_PLATFORM" ]
+    deps += [ "$rq_upload_path/frameworks/ios:upload_ios" ]
+  } else if (target_os == "android") {
+    defines = [ "ANDROID_PLATFORM" ]
+    deps += [ "$rq_upload_path/frameworks/android:upload_android" ]
+  }
+
+  external_deps = [ "c_utils:utils" ]
+
+  public_configs = [ ":upload_native_public_config" ]
+
+  subsystem_name = "plugins"
+  part_name = "request"
+}

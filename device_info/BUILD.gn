@@ -1,0 +1,93 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+template("plugin_device_info_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    sources = [
+      "device_info.cpp",
+      "device_info_sdk.cpp",
+    ]
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/securec:sec_${target_os}",
+    ]
+
+    if (platform == "android") {
+      deps += [ "android/java:device_info_android_jni" ]
+    } else if (platform == "ios") {
+      deps += [ "ios:device_info_plugin_ios" ]
+    }
+
+    if (defined(ohos_version)) {
+      defines += [ "INCREMENTAL_VERSION=\"${ohos_version}\"" ]
+    }
+    if (defined(is_debug) && is_debug) {
+      defines += [ "BUILD_TYPE=\"debug\"" ]
+    } else {
+      defines += [ "BUILD_TYPE=\"release\"" ]
+    }
+    if (defined(ohos_build_user)) {
+      defines += [ "BUILD_USER=\"${ohos_build_user}\"" ]
+    }
+    if (defined(ohos_build_time)) {
+      defines += [ "BUILD_TIME=\"${ohos_build_time}\"" ]
+    }
+    if (defined(host_os)) {
+      defines += [ "BUILD_HOST=\"${host_os}\"" ]
+    }
+    if (defined(ohos_build_roothash)) {
+      defines += [ "BUILD_ROOTHASH=\"${ohos_build_roothash}\"" ]
+    }
+
+    deps += [ "etc:ohos_parameter_to" ]
+    include_dirs = [
+      "//third_party/bounds_checking_function/include",
+      "${target_gen_dir}",
+    ]
+
+    subsystem_name = "plugins"
+    part_name = "device_info"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_device_info_static("device_info_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
