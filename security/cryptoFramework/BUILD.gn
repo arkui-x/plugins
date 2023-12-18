@@ -63,7 +63,7 @@ template("plugin_cryptoFramework_static") {
 }
 
 foreach(item, ace_platforms) {
-  plugin_cryptoFramework_static("Security_cryptoFramework_static_" + item.name) {
+  plugin_cryptoFramework_static("security_cryptoFramework_static_" + item.name) {
     platform = item.name
 
     defines = []
