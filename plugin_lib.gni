@@ -21,6 +21,7 @@ common_plugin_libs = [
   "data/preferences",
   "data/relationalstore",
   "device_info",
+  "display",
   "hitrace_meter",
   "i18n",
   "intl",
