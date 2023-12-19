@@ -61,6 +61,7 @@ common_plugin_libs = [
   "web/webview",
   "zlib",
   "security/cryptoFramework",
+  "security/cert",
 ]
 
 if (target_os == "ios") {

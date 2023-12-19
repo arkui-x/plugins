@@ -1,0 +1,67 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+config("cert_framework_config") {
+  include_dirs = [
+    "../../interfaces/innerkits/certificate",
+    "../../interfaces/innerkits/common",
+    "../../interfaces/innerkits/include",
+  ]
+}
+
+ohos_source_set("certificate_framework_core") {
+  branch_protector_ret = "pac_ret"
+  subsystem_name = "plugins"
+  part_name = "security_cert"
+  public_configs = [ ":cert_framework_config" ]
+  configs = [ "../../config/build:coverage_flag" ]
+  include_dirs = [
+    "//commonlibrary/c_utils/base/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//third_party/bounds_checking_function/include",
+    "//base/security/certificate_framework/frameworks/core/life/inc",
+    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//base/security/crypto_framework/interfaces/innerkits/algorithm_parameter",
+    "//base/security/crypto_framework/interfaces/innerkits/common",
+    "//base/security/crypto_framework/interfaces/innerkits/crypto_operation",
+    "//base/security/crypto_framework/interfaces/innerkits/key",
+  ]
+  sources = [ "//base/security/certificate_framework/frameworks/core/life/cf_api.c" ]
+
+  deps = [
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+    "//plugins/libs/securec:sec_${target_os}",
+    "../ability:libcertificate_framework_ability",
+    "../adapter:libcertificate_framework_adapter",
+    "../common:libcertificate_framework_common_static",
+    "cert:libcertificate_framework_cert_object",
+    "extension:libcertificate_framework_extension_object",
+    "v1.0:libcertificate_framework_vesion1",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "crypto_framework:crypto_framework_lib",
+    "hilog:libhilog",
+  ]
+
+  ldflags = [ "-Wl,--whole-archive" ]
+
+  cflags = [
+    "-DHILOG_ENABLE",
+    "-Wall",
+    "-Werror",
+  ]
+}
