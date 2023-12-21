@@ -58,7 +58,7 @@ bool IosUploadTaskImpl::Remove()
 }
 
 // IosUploadAdpCallback
-void IosUploadTaskImpl::OnProgress(uint32_t uploadedSize, uint32_t totalSize)
+void IosUploadTaskImpl::OnProgress(int64_t uploadedSize, int64_t totalSize)
 {
     std::lock_guard<std::recursive_mutex> guard(mutex_);
     if (isRemoved_) {

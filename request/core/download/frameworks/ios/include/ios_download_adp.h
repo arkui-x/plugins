@@ -30,7 +30,7 @@ public:
     static bool IsDirectory(const std::string &path);
     virtual void Download(const DownloadConfig &config, IosDownloadAdpCallback *callback) = 0;
     virtual bool Remove() = 0;
-    virtual bool Suspend(bool isSuspendByNetwork) = 0;
+    virtual bool Suspend(bool isSuspendByNetwork, IosDownloadAdpCallback *callback) = 0;
     virtual bool Restore(IosDownloadAdpCallback *callback) = 0;
     virtual bool IsCompleted() = 0;
 };
@@ -39,7 +39,9 @@ class IosDownloadAdpCallback {
 public:
     IosDownloadAdpCallback() = default;
     virtual ~IosDownloadAdpCallback() {}
-    virtual void OnProgress(uint32_t receivedSize, uint32_t totalSize) = 0;
+    virtual void OnProgress(int64_t receivedSize, int64_t totalSize) = 0;
+    virtual void OnPause() = 0;
+    virtual void OnResume() = 0;
     virtual void OnComplete() = 0;
     virtual void OnFail(ErrorCode errorCode) = 0;
     virtual void SetMimeType(const std::string &mimeType) = 0;

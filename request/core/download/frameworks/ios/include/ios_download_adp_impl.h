@@ -28,7 +28,7 @@ public:
     // IosDownloadAdp
     void Download(const DownloadConfig &config, IosDownloadAdpCallback *callback) override;
     bool Remove() override;
-    bool Suspend(bool isSuspendByNetwork) override;
+    bool Suspend(bool isSuspendByNetwork, IosDownloadAdpCallback *callback) override;
     bool Restore(IosDownloadAdpCallback *callback) override;
     bool IsCompleted() override;
 

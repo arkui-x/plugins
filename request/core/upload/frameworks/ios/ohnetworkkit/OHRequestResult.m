@@ -15,6 +15,8 @@
 
 #import "OHRequestResult.h"
 
+NSString * const OHNetworkResponseErrorDomain = @"com.oh.network.response.error";
+
 @interface OHRequestResult ()
 
 @property (nonatomic, strong) NSError *error;
@@ -41,6 +43,30 @@
     if (!_error) {
         _error = error;
     }
+}
+
+- (BOOL)checkStatusCode:(NSUInteger)statusCode {
+    NSIndexSet *vaildStatusCode = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(200, 100)];
+    if ([vaildStatusCode containsIndex:statusCode]) {
+        return true;
+    }
+    return false;
+}
+
+- (nullable NSError *)validateResponseWithTask:(NSURLSessionTask *)task {
+    
+    NSError *validError = nil;
+    if (task.response != nil && [task.response isKindOfClass:[NSHTTPURLResponse class]]) {
+        NSHTTPURLResponse *response = (NSHTTPURLResponse *)task.response;
+        if ([self checkStatusCode:response.statusCode] == false) {
+            NSDictionary *userInfo = @{
+                NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Request failed cause by %@ (%ld)",[NSHTTPURLResponse localizedStringForStatusCode:response.statusCode], (long)response.statusCode],
+                NSURLErrorFailingURLErrorKey: response.URL,
+            };
+            validError = [NSError errorWithDomain:OHNetworkResponseErrorDomain code:NSURLErrorBadServerResponse userInfo:userInfo];
+        }
+    }
+    return validError;
 }
 
 @end
@@ -82,6 +108,9 @@
     if (error) {
         self.error = error;
     }
+    if (!self.error) {
+        self.error =  [self validateResponseWithTask:task];
+    }
     dispatch_queue_t queue = self.sessionManager.completionQueue ?: dispatch_get_main_queue();
     dispatch_async(queue, ^{
         self.completionBlock(task.response, self.targetFilePath, self.error);
@@ -120,6 +149,9 @@
 - (void)task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     if (error) {
         self.error = error;
+    }
+    if (!self.error) {
+        self.error =  [self validateResponseWithTask:task];
     }
     dispatch_queue_t queue = self.sessionManager.completionQueue ?: dispatch_get_main_queue();
     dispatch_async(queue, ^{
