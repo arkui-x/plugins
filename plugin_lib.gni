@@ -31,7 +31,6 @@ common_plugin_libs = [
   "net/websocket",
   "worker",
   "request",
-  "resource_manager",
   "buffer",
   "convertxml",
   "process",
@@ -62,10 +61,6 @@ common_plugin_libs = [
   "zlib",
   "security/cryptoFramework",
 ]
-
-if (target_os == "ios") {
-  common_plugin_libs += [ "ndk_raw_file" ]
-}
 
 template("plugin_lib") {
   forward_variables_from(invoker, "*")
