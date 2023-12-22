@@ -18,8 +18,14 @@
 
 namespace OHOS::Plugin::Bridge {
 static constexpr const char* BRIDGENAME_ID_SEP = "$";
-std::map<std::string, std::shared_ptr<BridgeWrap::Data>> BridgeWrap::bridgeList_;
-std::mutex BridgeWrap::bridgeListLock_;
+std::map<std::string, std::shared_ptr<BridgeWrap::Data>> bridgeList_;
+std::mutex bridgeListLock_;
+
+BridgeWrap& BridgeWrap::GetInstance()
+{
+    static BridgeWrap instance;
+    return instance;
+}
 
 std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridgeNameWithId)
 {

@@ -71,7 +71,7 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
     }
     LOGI("bridge codec type : %d", static_cast<int32_t>(codecType));
 
-    auto bridge = BridgeWrap::CreateBridge(bridgeName, codecType);
+    auto bridge = BridgeWrap::GetInstance().CreateBridge(bridgeName, codecType);
     if (bridge == nullptr) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
@@ -83,7 +83,7 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
             bool isTerminate = bridge->GetTerminate();
             if (!isTerminate) {
                 LOGI("Delete bridge object");
-                BridgeWrap::DeleteBridge(bridge->GetBridgeName(), bridge->GetInstanceID());
+                BridgeWrap::GetInstance().DeleteBridge(bridge->GetBridgeName(), bridge->GetInstanceID());
             }
         },
         nullptr, nullptr);
