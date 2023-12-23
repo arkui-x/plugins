@@ -293,5 +293,4 @@ void JsonUtils::JsonStringToProgress(const string &jsonProgress, Progress &progr
         }
     }
 }
-
 }

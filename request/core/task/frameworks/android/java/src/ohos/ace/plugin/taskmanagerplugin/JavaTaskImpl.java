@@ -189,6 +189,7 @@ public class JavaTaskImpl {
             }
         });
     }
+
     public void reportTaskInfo(String taskInfoJson) {
         TaskInfo taskInfo = JsonUtil.jsonToTaskInfo(taskInfoJson);
         if (taskInfo == null) {
@@ -197,6 +198,7 @@ public class JavaTaskImpl {
         }
         JavaTaskImpl.updateTaskInfo(taskInfo);
     }
+
     public String show(long taskId) {
         Log.i(TAG, "show: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
@@ -243,10 +245,6 @@ public class JavaTaskImpl {
         Log.i(TAG, "search: " + filterJson);
         List<Long> taskIdList = new ArrayList<>();
         Filter filter = JsonUtil.jsonToFilter(filterJson);
-        List<TaskInfo> taskinfoAll = TaskDao.queryAll(mContext);
-        for(TaskInfo item :taskinfoAll){
-            Log.i(TAG, "search item: " + JsonUtil.convertTaskInfoToJson(item));
-        }
         CompletableFuture<List<Long>> future = CompletableFuture.supplyAsync(() -> TaskDao.queryByFilter(mContext, filter));
         try {
             taskIdList = future.get();

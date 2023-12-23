@@ -217,13 +217,22 @@ public class DownloadImpl {
         } else {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         }
+        //set begins and ends
+        if (config.getEnds() != 0 && config.getEnds() > config.getBegins()) {
+//        request.addRequestHeader("Range", "bytes=" + config.getBegins() + "-" + config.getEnds());
+        }
+        //todo test code
+        request.addRequestHeader("Range", "bytes=100-1000");
+        Log.i(TAG, "startDownload: begins:" + config.getBegins() + ",ends:" + config.getEnds());
+
         if (config.getHeaders() != null) {
             for (String key : config.getHeaders().keySet()) {
                 request.addRequestHeader(key, config.getHeaders().get(key));
             }
         }
         // set destination save file path
-        String downloadFilePath = config.getSaveas();
+//        String downloadFilePath = config.getSaveas();
+        String downloadFilePath = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
         if (downloadFilePath == null) {
             Log.e(TAG, "startDownload: saveas is null");
             sendFailCallback(taskInfo,Reason.USER_OPERATION);
