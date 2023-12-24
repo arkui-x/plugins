@@ -19,6 +19,8 @@ rq_upload_path = "$rq_root_path/core/upload"
 
 rq_download_path = "$rq_root_path/core/download"
 
+rq_task_path = "$rq_root_path/core/task"
+
 plugin_path = "//plugins"
 
 rq_utils_path = "$plugin_path/hilog/include"
