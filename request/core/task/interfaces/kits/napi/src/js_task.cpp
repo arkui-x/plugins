@@ -356,7 +356,10 @@ int32_t JsTask::PauseExec(const std::shared_ptr<ExecContext> &context)
 
     TaskInfo info;
     auto ret = TaskManager::Get().GetTaskInfo(context->task->GetId(), "", info);
-    if (ret != E_OK || info.progress.state != State::INITIALIZED || info.progress.state != State::WAITING || info.progress.state != State::RUNNING) {
+    if (ret != E_OK ||
+     !(info.progress.state == State::INITIALIZED || 
+     info.progress.state == State::WAITING || 
+     info.progress.state == State::RUNNING)) {
         REQUEST_HILOGE("PauseExec: get task info error. ret: %{public}d  state: %{public}d", ret, info.progress.state);
         return E_TASK_STATE;
     }
