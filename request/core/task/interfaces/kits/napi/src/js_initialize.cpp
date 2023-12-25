@@ -392,7 +392,7 @@ bool JsInitialize::ParseTitle(napi_env env, napi_value jsConfig, Config &config)
     if (config.version == Version::API10 && config.title.size() > TITLE_MAXIMUM) {
         return false;
     }
-    if (config.title.empty()) {
+    if (config.version == Version::API0 && config.title.empty()) {
         config.title = config.action == Action::UPLOAD ? "upload" : "download";
     }
     return true;
