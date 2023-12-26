@@ -109,8 +109,6 @@ public class TaskDao {
                 String title = cursor.getString(cursor.getColumnIndex("title"));
                 String saveas = cursor.getString(cursor.getColumnIndex("saveas"));
                 String headersJson = cursor.getString(cursor.getColumnIndex("headers"));
-                int begins = cursor.getInt(cursor.getColumnIndex("begins"));
-                int ends = cursor.getInt(cursor.getColumnIndex("ends"));
                 HashMap<String, String> headers = JsonUtil.jsonToMapString(headersJson);
                 Config config = new Config();
                 config.setTaskId(taskId);
@@ -123,8 +121,6 @@ public class TaskDao {
                 config.setTitle(title);
                 config.setSaveas(saveas);
                 config.setHeaders(headers);
-                config.setBegins(begins);
-                config.setEnds(ends);
                 return config;
             }
         } catch (Exception e) {
