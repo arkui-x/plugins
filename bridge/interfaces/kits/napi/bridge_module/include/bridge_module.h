@@ -30,7 +30,7 @@ public:
         static constexpr const char* FUNCTION_UNREGISTER_METHOD = "unRegisterMethod";
         static constexpr const char* FUNCTION_SEND_MESSAGE = "sendMessage";
         static constexpr const char* FUNCTION_REGISTER_ON_MESSAGE = "setMessageListener";
-        static constexpr const char* FUNCTION_CALL_METHOD_CALLBACK = "callMethodWithCallBack";
+        static constexpr const char* FUNCTION_CALL_METHOD_CALLBACK = "callMethodWithCallback";
 
         static napi_value GetBridgeName(napi_env env, napi_callback_info info);
         static napi_value CallMethod(napi_env env, napi_callback_info info);
