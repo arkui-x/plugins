@@ -234,7 +234,7 @@ bool JsInitialize::ParseConfig(napi_env env, napi_value jsConfig, Config &config
     config.priority = ParsePriority(env, jsConfig);
     config.begins = ParseBegins(env, jsConfig);
     config.ends = ParseEnds(env, jsConfig);
-    config.mode = static_cast<Mode>(NapiUtils::Convert2Uint32(env, jsConfig, "mode"));
+    config.mode = ParseMode(env, jsConfig);
     if (config.mode != Mode::FOREGROUND) {
         REQUEST_HILOGE("only support foreground task");
         return false;
@@ -345,6 +345,14 @@ uint32_t JsInitialize::ParsePriority(napi_env env, napi_value jsConfig)
         return 0;
     }
     return NapiUtils::Convert2Uint32(env, jsConfig, "priority");
+}
+
+Mode JsInitialize::ParseMode(napi_env env, napi_value jsConfig)
+{
+    if (!NapiUtils::HasNamedProperty(env, jsConfig, "mode")) {
+        return Mode::FOREGROUND;
+    }
+    return static_cast<Mode>(NapiUtils::Convert2Uint32(env, jsConfig, "mode"));
 }
 
 bool JsInitialize::ParseDescription(napi_env env, napi_value jsConfig, std::string &description)

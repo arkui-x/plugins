@@ -54,6 +54,7 @@ private:
     static int64_t ParseEnds(napi_env env, napi_value jsConfig);
     static int64_t ParseBegins(napi_env env, napi_value jsConfig);
     static uint32_t ParsePriority(napi_env env, napi_value jsConfig);
+    static Mode ParseMode(napi_env env, napi_value jsConfig);
     static std::map<std::string, std::string> ParseMap(napi_env env, napi_value jsConfig,
         const std::string &propertyName);
 
