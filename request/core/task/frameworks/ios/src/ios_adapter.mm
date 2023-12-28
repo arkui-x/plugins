@@ -23,6 +23,7 @@
 #include "upload_proxy.h"
 
 namespace OHOS::Plugin::Request {
+std::map<int64_t, std::shared_ptr<ITaskAdp>> IosAdapter::taskList_ = {};
 
 std::shared_ptr<ITaskManagerAdp> ITaskManagerAdp::Get()
 {
@@ -68,19 +69,24 @@ ITask *IosAdapter::Create(const Config &config)
     std::unique_lock<std::mutex> lock(mutex_);
     taskList_.emplace(taskId, proxy);
     task->SetId(taskId);
+    REQUEST_HILOGI("Succeed to creat ios task, taskId:%{public}p", (void*)&taskList_);
     REQUEST_HILOGI("Succeed to creat ios task, taskId:%{public}lld", taskId);
     return task;
 }
 
 int32_t IosAdapter::Remove(int64_t taskId)
 {
+    REQUEST_HILOGI("Remove task, taskId:%{public}lld", taskId);
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
         REQUEST_HILOGE("invalid task id");
         return E_SERVICE_ERROR;
     }
+    REQUEST_HILOGI("Remove ios taskList address, :%{public}p", (void*)&taskList_);
     taskList_.erase(it);
+    REQUEST_HILOGI("Remove ios taskList erase success");
+
 
     int32_t result = IosTaskDao::RemoveTask(taskId);
     REQUEST_HILOGI("remove task: %{public}d", result);

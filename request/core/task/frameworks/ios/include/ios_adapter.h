@@ -38,7 +38,7 @@ public:
 
 private:
     std::mutex mutex_;
-    std::map<int64_t, std::shared_ptr<ITaskAdp>> taskList_ {};
+    static std::map<int64_t, std::shared_ptr<ITaskAdp>> taskList_;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_IOS_ADAPTER_H
