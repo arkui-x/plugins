@@ -53,14 +53,10 @@ int32_t DownloadProxy::Start(int64_t taskId)
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         REQUEST_HILOGI("Start download");
-        NSUUID *uuid = [NSUUID UUID];
-        NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:[uuid UUIDString]];
-        configuration.discretionary = NO;
-        configuration.sessionSendsLaunchEvents = YES;
         NSString *urlStr = [NSString stringWithUTF8String:config_.url.c_str()];
         NSURL *url = [NSURL URLWithString:urlStr];
         NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-        sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:configuration];
+        sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
         if ([url.scheme compare:@"https"] == NSOrderedSame) {
             OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
         }
@@ -82,6 +78,7 @@ int32_t DownloadProxy::Start(int64_t taskId)
             NSURL *destPath = [NSURL fileURLWithPath:filePath];
             return destPath;
         } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+            REQUEST_HILOGI("downloadTask CompletionHandler start");           
             CompletionHandler(response, filePath, error);
         }];
         [downloadTask_ resume];
@@ -147,6 +144,7 @@ void DownloadProxy::PushNotification(BOOL isFailed)
 
 void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, NSError *error)
 {
+    
     if (!isMimeReported_) {
         ReportMimeType(response);
     }

@@ -275,7 +275,7 @@ static DBManager *instance;
 }
 
 - (BOOL)remove:(int64_t)taskId {
-    NSLog(@"remove, taskId:%@", taskId);
+    NSLog(@"remove, taskId:%lld", taskId);
 
     if (![self openDb]) {
         return NO;
