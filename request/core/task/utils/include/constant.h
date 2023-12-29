@@ -30,7 +30,6 @@ enum class Action : uint32_t {
 };
 
 enum class Mode : uint32_t {
-    BACKGROUND = 0,
     FOREGROUND,
     ANY,
 };
