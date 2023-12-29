@@ -32,6 +32,9 @@ ohos_static_library("libcertificate_framework_vesion1") {
   ]
   sources = [
     "//base/security/certificate_framework/frameworks/core/v1.0/certificate/cert_chain_validator.c",
+    "//base/security/certificate_framework/frameworks/core/v1.0/certificate/cert_crl_collection.c",
+    "//base/security/certificate_framework/frameworks/core/v1.0/certificate/cert_crl_common.c",
+    "//base/security/certificate_framework/frameworks/core/v1.0/certificate/x509_cert_chain.c",
     "//base/security/certificate_framework/frameworks/core/v1.0/certificate/x509_certificate.c",
     "//base/security/certificate_framework/frameworks/core/v1.0/certificate/x509_crl.c",
   ]

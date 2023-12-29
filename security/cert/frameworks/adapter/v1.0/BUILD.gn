@@ -34,6 +34,7 @@ ohos_static_library("certificate_openssl_plugin_lib") {
 
   sources = [
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/certificate_openssl_common.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_validator_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_certificate_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_crl_entry_openssl.c",

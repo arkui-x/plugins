@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_NET_HTTP_REQUEST_EXEC_H
-#define PLUGINS_NET_HTTP_REQUEST_EXEC_H
+#ifndef COMMUNICATIONNETSTACK_HTTP_REQUEST_EXEC_H
+#define COMMUNICATIONNETSTACK_HTTP_REQUEST_EXEC_H
 
 #include <atomic>
 #include <condition_variable>
@@ -24,6 +24,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include "curl/curl.h"
 #include "napi/native_api.h"
@@ -55,6 +56,8 @@ public:
 
     static bool ExecRequest(RequestContext *context);
 
+    static napi_value BuildRequestCallback(RequestContext *context);
+
     static napi_value RequestCallback(RequestContext *context);
 
     static napi_value RequestInStreamCallback(RequestContext *context);
@@ -76,12 +79,27 @@ public:
 #ifndef MAC_PLATFORM
     static void AsyncRunRequest(RequestContext *context);
 #endif
+    struct StaticContextVec {
+        StaticContextVec() = default;
+        ~StaticContextVec() = default;
+        std::mutex mutexForContextVec;
+        std::set<RequestContext *> contextSet;
+    };
+    static StaticContextVec staticContextSet_;
 
     static std::string GetCacheFileName();
 private:
     static bool SetOption(CURL *curl, RequestContext *context, struct curl_slist *requestHeader);
 
     static bool SetOtherOption(CURL *curl, RequestContext *context);
+
+    static bool SetRequestOption(void *curl, RequestContext *context);
+
+    static bool SetSSLCertOption(CURL *curl, RequestContext *context);
+
+    static bool SetServerSSLCertOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context);
+
+    static bool SetDnsOption(CURL *curl, RequestContext *context);
 
     static size_t OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData);
 
@@ -101,6 +119,10 @@ private:
 
     static bool GetCurlDataFromHandle(CURL *handle, RequestContext *context, CURLMSG curlMsg, CURLcode result);
 
+    static double GetTimingFromCurl(CURL *handle, CURLINFO info);
+
+    static void CacheCurlPerformanceTiming(CURL *handle, RequestContext *context);
+
     static void RunThread();
 
     static void SendRequest();
@@ -115,10 +137,15 @@ private:
 
     static void OnDataProgress(napi_env env, napi_status status, void *data);
 
-    static void OnDataEnd(napi_env env, napi_status status, void *data);
+    static void OnDataUploadProgress(napi_env env, napi_status status, void *data);
 
     static int ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
                                 curl_off_t ulnow);
+
+    static bool SetMultiPartOption(void *curl, RequestContext *context);
+
+    static void SetFormDataOption(MultiFormData &multiFormData, curl_mimepart *part,
+                                  void *curl, RequestContext *context);
 
     static void AddRequestInfo();
 
@@ -157,11 +184,13 @@ private:
         }
 
         std::mutex curlMultiMutex;
+        std::mutex mutexForInitialize;
         CURLM *curlMulti;
         std::map<CURL *, RequestContext *> contextMap;
         std::thread workThread;
         std::condition_variable conditionVariable;
         std::priority_queue<RequestInfo> infoQueue;
+
 #ifndef MAC_PLATFORM
         std::atomic_bool initialized;
         std::atomic_bool runThread;
@@ -173,4 +202,5 @@ private:
     static StaticVariable staticVariable_;
 };
 } // namespace OHOS::NetStack::Http
-#endif /* PLUGINS_NET_HTTP_REQUEST_EXEC_H */
+
+#endif /* COMMUNICATIONNETSTACK_HTTP_REQUEST_EXEC_H */

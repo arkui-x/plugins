@@ -46,6 +46,8 @@ template("plugin_cryptoFramework_static") {
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sym_key_generator.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_utils.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_verify.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_dh_key_util.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_ecc_key_util.cpp",
     ]
 
     deps = [

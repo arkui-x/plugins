@@ -41,6 +41,8 @@ ohos_source_set("netstack_utils") {
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_manager.cpp",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/module_template.cpp",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/napi_utils.cpp",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/secure_char.cpp",
+    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/timing.cpp",
   ]
 
   deps = [
