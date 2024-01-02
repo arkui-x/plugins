@@ -14,7 +14,8 @@
 import("//build/ohos.gni")
 
 config("libcertificate_framework_cert_object_config") {
-  include_dirs = [ "//base/security/certificate_framework/frameworks/core/cert/inc" ]
+  include_dirs =
+      [ "//base/security/certificate_framework/frameworks/core/cert/inc" ]
 }
 
 ohos_source_set("libcertificate_framework_cert_object") {
