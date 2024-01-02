@@ -40,8 +40,8 @@ public:
     void DeleteBridge(const std::string& bridgeName, int32_t instanceId);
     std::string GetBridgeNameWithID(const std::string& bridgeName, int32_t instanceId);
 private:
-    std::map<std::string, std::shared_ptr<Data>> bridgeList_;
-    std::mutex bridgeListLock_;
+    std::map<std::string, std::shared_ptr<Data>> *bridgeList_ = new std::map<std::string, std::shared_ptr<Data>>;
+    std::mutex *bridgeListLock_ = new std::mutex;
 
     std::shared_ptr<Data> findData(const std::string& bridgeNameWithID);
     Bridge* BuildBridge(
