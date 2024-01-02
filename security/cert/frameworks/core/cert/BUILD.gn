@@ -17,7 +17,7 @@ config("libcertificate_framework_cert_object_config") {
   include_dirs = [ "//base/security/certificate_framework/frameworks/core/cert/inc" ]
 }
 
-ohos_static_library("libcertificate_framework_cert_object") {
+ohos_source_set("libcertificate_framework_cert_object") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"

@@ -13,7 +13,7 @@
 
 import("//build/ohos.gni")
 
-ohos_static_library("certificate_openssl_plugin_lib") {
+ohos_source_set("certificate_openssl_plugin_lib") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"

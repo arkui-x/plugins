@@ -22,7 +22,7 @@ config("libcertificate_framework_extension_object_config") {
   ]
 }
 
-ohos_static_library("libcertificate_framework_extension_object") {
+ohos_source_set("libcertificate_framework_extension_object") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"

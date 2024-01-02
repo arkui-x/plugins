@@ -17,7 +17,7 @@ config("libcertificate_framework_adapter_openssl_config") {
   include_dirs = [ "//base/security/certificate_framework/frameworks/adapter/v2.0/inc" ]
 }
 
-ohos_static_library("libcertificate_framework_adapter_openssl") {
+ohos_source_set("libcertificate_framework_adapter_openssl") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"

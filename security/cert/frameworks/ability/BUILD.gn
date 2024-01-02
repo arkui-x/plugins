@@ -21,7 +21,7 @@ config("libcertificate_framework_ability_config") {
   ]
 }
 
-ohos_static_library("libcertificate_framework_ability") {
+ohos_source_set("libcertificate_framework_ability") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"
@@ -31,7 +31,9 @@ ohos_static_library("libcertificate_framework_ability") {
     "//base/security/certificate_framework/frameworks/core/cert/include",
     "//base/security/certificate_framework/frameworks/core/extension/include",
   ]
-  sources = [ "//base/security/certificate_framework/frameworks/ability/src/cf_ability.c" ]
+  sources = [
+    "//base/security/certificate_framework/frameworks/ability/src/cf_ability.c",
+  ]
 
   cflags = [
     "-DHILOG_ENABLE",
