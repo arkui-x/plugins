@@ -58,9 +58,9 @@ ohos_source_set("cert") {
   ]
 
   deps = [
+    "../../../core:certificate_framework_core",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
     "//plugins/libs/securec:sec_${target_os}",
-    "../../../core:certificate_framework_core",
     "//plugins/security/cert/common:plugin_certificate_common",
   ]
 

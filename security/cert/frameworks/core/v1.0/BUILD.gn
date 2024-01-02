@@ -13,7 +13,7 @@
 
 import("//build/ohos.gni")
 
-ohos_static_library("libcertificate_framework_vesion1") {
+ohos_source_set("libcertificate_framework_vesion1") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"
@@ -42,9 +42,9 @@ ohos_static_library("libcertificate_framework_vesion1") {
   ]
 
   deps = [
+    "../../common:libcertificate_framework_common_static",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
     "//plugins/libs/securec:sec_${target_os}",
-    "../../common:libcertificate_framework_common_static",
   ]
 
   external_deps = [

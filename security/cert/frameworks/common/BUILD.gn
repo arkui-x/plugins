@@ -26,7 +26,7 @@ config("libcertificate_framework_common_static_config") {
   ]
 }
 
-ohos_static_library("libcertificate_framework_common_static") {
+ohos_source_set("libcertificate_framework_common_static") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"
@@ -34,11 +34,11 @@ ohos_static_library("libcertificate_framework_common_static") {
   configs = [ "../../config/build:coverage_flag" ]
   sources = [
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_blob.c",
-    "//base/security/certificate_framework/frameworks/common/v1.0/src/utils.c",
+    "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_check.c",
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_log.c",
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_memory.c",
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_object_base.c",
-    "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_check.c",
+    "//base/security/certificate_framework/frameworks/common/v1.0/src/utils.c",
   ]
 
   cflags = [

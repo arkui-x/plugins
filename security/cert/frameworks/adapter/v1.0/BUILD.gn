@@ -13,7 +13,7 @@
 
 import("//build/ohos.gni")
 
-ohos_static_library("certificate_openssl_plugin_lib") {
+ohos_source_set("certificate_openssl_plugin_lib") {
   branch_protector_ret = "pac_ret"
   subsystem_name = "plugins"
   part_name = "security_cert"
@@ -48,9 +48,9 @@ ohos_static_library("certificate_openssl_plugin_lib") {
 
   deps = [
     "../../common:libcertificate_framework_common_static",
-    "//third_party/openssl:libcrypto_shared",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
     "//plugins/libs/securec:sec_${target_os}",
+    "//third_party/openssl:libcrypto_shared",
   ]
 
   external_deps = [
