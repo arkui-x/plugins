@@ -18,8 +18,6 @@
 
 namespace OHOS::Plugin::Bridge {
 static constexpr const char* BRIDGENAME_ID_SEP = "$";
-std::map<std::string, std::shared_ptr<BridgeWrap::Data>> bridgeList_;
-std::mutex bridgeListLock_;
 
 BridgeWrap& BridgeWrap::GetInstance()
 {
@@ -29,8 +27,8 @@ BridgeWrap& BridgeWrap::GetInstance()
 
 std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridgeNameWithId)
 {
-    auto data = bridgeList_.find(bridgeNameWithId);
-    if (data == bridgeList_.end()) {
+    auto data = bridgeList_->find(bridgeNameWithId);
+    if (data == bridgeList_->end()) {
         return nullptr;
     }
 
@@ -48,7 +46,7 @@ Bridge* BridgeWrap::BuildBridge(
     std::shared_ptr<Data> data = std::make_shared<BridgeWrap::Data>();
     data->ref_++;
     data->bridge_ = bridge;
-    bridgeList_[dataKey] = data;
+    (*bridgeList_)[dataKey] = data;
     return bridge;
 }
 
@@ -63,7 +61,7 @@ Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data)
 
 Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
 {
-    std::lock_guard<std::mutex> lock(bridgeListLock_);
+    std::lock_guard<std::mutex> lock(*bridgeListLock_);
     int32_t instanceId = PluginUtilsInner::GetInstanceId();
     std::string key(GetBridgeNameWithID(bridgeName, instanceId));
     auto data = findData(key);
@@ -75,8 +73,8 @@ Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType&
 
 void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
 {
-    std::lock_guard<std::mutex> lock(bridgeListLock_);
-    std::string bridgeNameWithId(GetBridgeNameWithID(bridgeName, instanceId));
+    std::lock_guard<std::mutex> lock(*bridgeListLock_);
+    std::string bridgeNameWithId = GetBridgeNameWithID(bridgeName, instanceId);
     auto data = findData(bridgeNameWithId);
     if (data == nullptr) {
         return;
@@ -90,9 +88,9 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
             data->bridge_ = nullptr;
         }
 
-        auto it = bridgeList_.find(bridgeNameWithId);
-        if (it != bridgeList_.end()) {
-            bridgeList_.erase(it);
+        auto it = bridgeList_->find(bridgeNameWithId);
+        if (it != bridgeList_->end()) {
+            bridgeList_->erase(it);
         }
     }
 }
