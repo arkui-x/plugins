@@ -34,6 +34,8 @@ public:
     int32_t RegisterNetConnCallback(const sptr<NetManagerStandard::NetSpecifier> &netSpecifier,
         const sptr<NetManagerStandard::INetConnCallback> &callback, const uint32_t &timeoutMS);
     int32_t UnregisterNetConnCallback(const sptr<NetManagerStandard::INetConnCallback> &callback);
+    int32_t FactoryResetNetwork()
+        { return 0; }
     int32_t SystemReady()
         { return 0; }
     int32_t RegisterNetSupplier(NetManagerStandard::NetBearType bearerType, const std::string &ident,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,14 +13,15 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_NET_HTTP_REQUEST_EXEC_H
-#define PLUGINS_NET_HTTP_REQUEST_EXEC_H
+#ifndef COMMUNICATIONNETSTACK_HTTP_REQUEST_EXEC_H
+#define COMMUNICATIONNETSTACK_HTTP_REQUEST_EXEC_H
 
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <set>
 
 #include "curl/curl.h"
 #include "http_exec_interface.h"
@@ -53,6 +54,8 @@ public:
 
     static bool ExecRequest(RequestContext* context);
 
+    static napi_value BuildRequestCallback(RequestContext *context);
+
     static napi_value RequestCallback(RequestContext* context);
 
     static napi_value RequestInStreamCallback(RequestContext* context);
@@ -73,6 +76,14 @@ public:
 
     static void AsyncRunRequest(RequestContext* context);
 
+    struct StaticContextVec {
+        StaticContextVec() = default;
+        ~StaticContextVec() = default;
+        std::mutex mutexForContextVec;
+        std::set<RequestContext *> contextSet;
+    };
+    static StaticContextVec staticContextSet_;
+
     static std::string GetCacheFileName();
 
 private:
@@ -86,7 +97,7 @@ private:
 
     static struct curl_slist* MakeHeaders(const std::vector<std::string>& vec);
 
-    static napi_value MakeResponseHeader(RequestContext* context);
+    static napi_value MakeResponseHeader(napi_env env, void *ctx);
 
     static void OnHeaderReceive(RequestContext* context, napi_value header);
 
@@ -102,9 +113,10 @@ private:
 
     static void OnDataProgress(napi_env env, napi_status status, void* data);
 
-    static void OnDataEnd(napi_env env, napi_status status, void* data);
+    static void OnDataUploadProgress(napi_env env, napi_status status, void *data);
 
-    static int ProgressCallback(long dltotal, long dlnow, long ultotal, long ulnow, void* userData);
+    static int ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
+                                curl_off_t ulnow);
 
     static void SendRequest();
 
@@ -137,6 +149,7 @@ private:
         }
 
         std::mutex mutex;
+        std::mutex mutexForInitialize;
         std::map<RequestContext*, RequestInfo> contextMap;
         std::thread workThread;
         std::condition_variable conditionVariable;
@@ -148,4 +161,4 @@ private:
     static StaticVariable staticVariable_;
 };
 } // namespace OHOS::NetStack::Http
-#endif /* PLUGINS_NET_HTTP_REQUEST_EXEC_H */
+#endif /* COMMUNICATIONNETSTACK_HTTP_REQUEST_EXEC_H */

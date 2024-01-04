@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,13 +32,128 @@
 #include "netstack_common_utils.h"
 #include "netstack_log.h"
 #include "securec.h"
+#include "secure_char.h"
 
 namespace OHOS::NetStack::Http {
-static constexpr size_t MAX_LIMIT = 5 * 1024 * 1024;
 static constexpr int CURL_TIMEOUT_MS = 50;
 static constexpr int CONDITION_TIMEOUT_S = 3600;
+static constexpr const int EVENT_PARAM_ZERO = 0;
+static constexpr const int EVENT_PARAM_ONE = 1;
+static constexpr const int EVENT_PARAM_TWO = 2;
+static constexpr const char *TLS12_SECURITY_CIPHER_SUITE = R"(DEFAULT:!CBC:!eNULL:!EXPORT)";
 
 HttpExec::StaticVariable HttpExec::staticVariable_;
+HttpExec::StaticContextVec HttpExec::staticContextSet_;
+
+napi_value HttpExec::RequestCallback(RequestContext *context)
+{
+    napi_value result = HttpExec::BuildRequestCallback(context);
+    context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_TOTAL_TIMING);
+    context->SetPerformanceTimingToResult(result);
+    return result;
+}
+
+napi_value HttpExec::RequestInStreamCallback(RequestContext* context)
+{
+    return nullptr;
+}
+
+static void RequestContextDeleter(RequestContext *context)
+{
+    std::lock_guard lockGuard(HttpExec::staticContextSet_.mutexForContextVec);
+    auto it = std::find(HttpExec::staticContextSet_.contextSet.begin(), HttpExec::staticContextSet_.contextSet.end(),
+                        context);
+    if (it == HttpExec::staticContextSet_.contextSet.end()) {
+        NETSTACK_LOGE("can't find request context in set");
+    } else {
+        HttpExec::staticContextSet_.contextSet.erase(it);
+    }
+
+    context->DeleteReference();
+    delete context;
+    context = nullptr;
+}
+
+static void AsyncWorkRequestInStreamCallback(napi_env env, napi_status status, void *data)
+{
+    if (status != napi_ok) {
+        return;
+    }
+    std::unique_ptr<RequestContext, decltype(&RequestContextDeleter)> context(static_cast<RequestContext *>(data),
+                                                                              RequestContextDeleter);
+    napi_value argv[EVENT_PARAM_TWO] = {nullptr};
+    if (context->IsParseOK() && context->IsExecOK()) {
+        argv[EVENT_PARAM_ZERO] = NapiUtils::GetUndefined(env);
+        argv[EVENT_PARAM_ONE] = HttpExec::RequestInStreamCallback(context.get());
+        if (argv[EVENT_PARAM_ONE] == nullptr) {
+            return;
+        }
+    } else {
+        argv[EVENT_PARAM_ZERO] =
+            NapiUtils::CreateErrorMessage(env, context->GetErrorCode(), context->GetErrorMessage());
+        if (argv[EVENT_PARAM_ZERO] == nullptr) {
+            return;
+        }
+
+        argv[EVENT_PARAM_ONE] = NapiUtils::GetUndefined(env);
+    }
+
+    napi_value undefined = NapiUtils::GetUndefined(env);
+    if (context->GetDeferred() != nullptr) {
+        if (context->IsExecOK()) {
+            napi_resolve_deferred(env, context->GetDeferred(), argv[EVENT_PARAM_ONE]);
+            context->Emit(ON_DATA_END, std::make_pair(undefined, undefined));
+        } else {
+            napi_reject_deferred(env, context->GetDeferred(), argv[EVENT_PARAM_ZERO]);
+        }
+        return;
+    }
+    napi_value func = context->GetCallback();
+    if (NapiUtils::GetValueType(env, func) == napi_function) {
+        (void)NapiUtils::CallFunction(env, undefined, func, EVENT_PARAM_TWO, argv);
+    }
+    if (context->IsExecOK()) {
+        context->Emit(ON_DATA_END, std::make_pair(undefined, undefined));
+    }
+}
+
+static void AsyncWorkRequestCallback(napi_env env, napi_status status, void *data)
+{
+    if (status != napi_ok) {
+        return;
+    }
+    std::unique_ptr<RequestContext, decltype(&RequestContextDeleter)> context(static_cast<RequestContext *>(data),
+                                                                              RequestContextDeleter);
+    napi_value argv[EVENT_PARAM_TWO] = {nullptr};
+    if (context->IsParseOK() && context->IsExecOK()) {
+        argv[EVENT_PARAM_ZERO] = NapiUtils::GetUndefined(env);
+        argv[EVENT_PARAM_ONE] = HttpExec::RequestCallback(context.get());
+        if (argv[EVENT_PARAM_ONE] == nullptr) {
+            return;
+        }
+    } else {
+        argv[EVENT_PARAM_ZERO] =
+            NapiUtils::CreateErrorMessage(env, context->GetErrorCode(), context->GetErrorMessage());
+        if (argv[EVENT_PARAM_ZERO] == nullptr) {
+            return;
+        }
+
+        argv[EVENT_PARAM_ONE] = NapiUtils::GetUndefined(env);
+    }
+    napi_value undefined = NapiUtils::GetUndefined(env);
+    if (context->GetDeferred() != nullptr) {
+        if (context->IsExecOK()) {
+            napi_resolve_deferred(env, context->GetDeferred(), argv[EVENT_PARAM_ONE]);
+        } else {
+            napi_reject_deferred(env, context->GetDeferred(), argv[EVENT_PARAM_ZERO]);
+        }
+        return;
+    }
+    napi_value func = context->GetCallback();
+    if (NapiUtils::GetValueType(env, func) == napi_function) {
+        (void)NapiUtils::CallFunction(env, undefined, func, EVENT_PARAM_TWO, argv);
+    }
+}
 
 bool HttpExec::RequestWithoutCache(RequestContext* context)
 {
@@ -66,6 +181,13 @@ bool HttpExec::RequestWithoutCache(RequestContext* context)
 
 bool HttpExec::ExecRequest(RequestContext* context)
 {
+    if (!CommonUtils::HasInternetPermission()) {
+        context->SetPermissionDenied(true);
+        return false;
+    }
+    if (context->GetManager()->IsEventDestroy()) {
+        return false;
+    }   
     context->options.SetRequestTime(HttpTime::GetNowTimeGMT());
     CacheProxy proxy(context->options);
     if (context->IsUsingCache() && proxy.ReadResponseFromCache(context)) {
@@ -76,9 +198,10 @@ bool HttpExec::ExecRequest(RequestContext* context)
         context->SetErrorCode(NapiUtils::NETSTACK_NAPI_INTERNAL_ERROR);
         if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
             if (context->IsRequestInStream()) {
-                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
+                std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
+                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestInStreamCallback);
             } else {
-                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
+                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestCallback);
             }
         }
         return false;
@@ -86,7 +209,7 @@ bool HttpExec::ExecRequest(RequestContext* context)
     return true;
 }
 
-napi_value HttpExec::RequestCallback(RequestContext* context)
+napi_value HttpExec::BuildRequestCallback(RequestContext *context)
 {
     napi_value object = NapiUtils::CreateObject(context->GetEnv());
     if (NapiUtils::GetValueType(context->GetEnv(), object) != napi_object) {
@@ -94,13 +217,12 @@ napi_value HttpExec::RequestCallback(RequestContext* context)
     }
 
     NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESPONSE_CODE,
-        context->response.GetResponseCode());
+                                 context->response.GetResponseCode());
     NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_COOKIES,
-        context->response.GetCookies());
+                                     context->response.GetCookies());
 
-    napi_value header = MakeResponseHeader(context);
+    napi_value header = MakeResponseHeader(context->GetEnv(), context);
     if (NapiUtils::GetValueType(context->GetEnv(), header) == napi_object) {
-        OnHeaderReceive(context, header);
         NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_HEADER, header);
     }
 
@@ -108,11 +230,11 @@ napi_value HttpExec::RequestCallback(RequestContext* context)
         return object;
     }
 
-    auto contentType = CommonUtils::ToLower(const_cast<std::map<std::string, std::string>&>(
+    auto contentType = CommonUtils::ToLower(const_cast<std::map<std::string, std::string> &>(
         context->response.GetHeader())[HttpConstant::HTTP_CONTENT_TYPE]);
     if (contentType.find(HttpConstant::HTTP_CONTENT_TYPE_OCTET_STREAM) != std::string::npos ||
         contentType.find(HttpConstant::HTTP_CONTENT_TYPE_IMAGE) != std::string::npos) {
-        void* data = nullptr;
+        void *data = nullptr;
         auto body = context->response.GetResult();
         napi_value arrayBuffer = NapiUtils::CreateArrayBuffer(context->GetEnv(), body.size(), &data);
         if (data != nullptr && arrayBuffer != nullptr) {
@@ -123,21 +245,16 @@ napi_value HttpExec::RequestCallback(RequestContext* context)
             NapiUtils::SetNamedProperty(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT, arrayBuffer);
         }
         NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-            static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
+                                     static_cast<uint32_t>(HttpDataType::ARRAY_BUFFER));
         return object;
     }
 
     /* now just support utf8 */
     NapiUtils::SetStringPropertyUtf8(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT,
-        context->response.GetResult());
+                                     context->response.GetResult());
     NapiUtils::SetUint32Property(context->GetEnv(), object, HttpConstant::RESPONSE_KEY_RESULT_TYPE,
-        static_cast<uint32_t>(HttpDataType::STRING));
+                                 static_cast<uint32_t>(HttpDataType::STRING));
     return object;
-}
-
-napi_value HttpExec::RequestInStreamCallback(RequestContext* context)
-{
-    return nullptr;
 }
 
 std::string HttpExec::MakeUrl(const std::string& url, std::string param, const std::string& extraParam)
@@ -159,13 +276,14 @@ std::string HttpExec::MakeUrl(const std::string& url, std::string param, const s
 bool HttpExec::MethodForGet(const std::string& method)
 {
     return (method == HttpConstant::HTTP_METHOD_HEAD || method == HttpConstant::HTTP_METHOD_OPTIONS ||
-            method == HttpConstant::HTTP_METHOD_DELETE || method == HttpConstant::HTTP_METHOD_TRACE ||
-            method == HttpConstant::HTTP_METHOD_GET || method == HttpConstant::HTTP_METHOD_CONNECT);
+            method == HttpConstant::HTTP_METHOD_TRACE || method == HttpConstant::HTTP_METHOD_GET ||
+            method == HttpConstant::HTTP_METHOD_CONNECT);
 }
 
 bool HttpExec::MethodForPost(const std::string& method)
 {
-    return (method == HttpConstant::HTTP_METHOD_POST || method == HttpConstant::HTTP_METHOD_PUT);
+    return (method == HttpConstant::HTTP_METHOD_POST || method == HttpConstant::HTTP_METHOD_PUT ||
+            method == HttpConstant::HTTP_METHOD_DELETE);
 }
 
 bool HttpExec::EncodeUrlParam(std::string& str)
@@ -209,7 +327,7 @@ void HttpExec::RunThread()
 
 bool HttpExec::Initialize()
 {
-    std::lock_guard<std::mutex> lock(staticVariable_.mutex);
+    std::lock_guard<std::mutex> lock(staticVariable_.mutexForInitialize);
     if (staticVariable_.initialized) {
         return true;
     }
@@ -224,30 +342,115 @@ size_t HttpExec::OnWritingMemoryBody(const void* data, size_t size, void* userDa
 {
     auto context = static_cast<RequestContext*>(userData);
     if (context == nullptr) {
+        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
+        return 0;
+    }
+    if (context->GetManager()->IsEventDestroy()) {
+        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
         return 0;
     }
 
     if (context->IsRequestInStream()) {
         context->SetTempData(data, size);
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataReceive);
+        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
         return size;
     }
 
-    if (context->response.GetResult().size() > MAX_LIMIT) {
+    if (context->response.GetResult().size() > context->options.GetMaxLimit()) {
+        NETSTACK_LOGE("response data exceeds the maximum limit");
+        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
         return 0;
     }
+
     context->response.AppendResult(data, size);
+    context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
     return size;
+}
+
+static void MakeSetCookieArray(napi_env env, napi_value header,
+                               const std::pair<const std::basic_string<char>, std::basic_string<char>> &headerElement)
+{
+    std::vector<std::string> cookieVec =
+        CommonUtils::Split(headerElement.second, HttpConstant::RESPONSE_KEY_SET_COOKIE_SEPARATOR);
+    uint32_t index = 0;
+    auto len = cookieVec.size();
+    auto array = NapiUtils::CreateArray(env, len);
+    for (const auto &setCookie : cookieVec) {
+        auto str = NapiUtils::CreateStringUtf8(env, setCookie);
+        NapiUtils::SetArrayElement(env, array, index, str);
+        ++index;
+    }
+    NapiUtils::SetArrayProperty(env, header, HttpConstant::RESPONSE_KEY_SET_COOKIE, array);
+}
+
+static void MakeHeaderWithSetCookieArray(napi_env env, napi_value header, std::map<std::string, std::string> *headerMap)
+{
+    for (const auto &it : *headerMap) {
+        if (!it.first.empty() && !it.second.empty()) {
+            if (it.first == HttpConstant::RESPONSE_KEY_SET_COOKIE) {
+                MakeSetCookieArray(env, header, it);
+                continue;
+            }
+            NapiUtils::SetStringPropertyUtf8(env, header, it.first, it.second);
+        }
+    }
+}
+
+static void ResponseHeaderCallback(uv_work_t *work, int status)
+{
+    (void)status;
+
+    auto workWrapper = static_cast<UvWorkWrapper *>(work->data);
+    napi_env env = workWrapper->env;
+    auto headerMap = static_cast<std::map<std::string, std::string> *>(workWrapper->data);
+    auto closeScope = [env](napi_handle_scope scope) { NapiUtils::CloseScope(env, scope); };
+    std::unique_ptr<napi_handle_scope__, decltype(closeScope)> scope(NapiUtils::OpenScope(env), closeScope);
+    napi_value header = NapiUtils::CreateObject(env);
+    if (NapiUtils::GetValueType(env, header) == napi_object) {
+        MakeHeaderWithSetCookieArray(env, header, headerMap);
+    }
+    std::pair<napi_value, napi_value> arg = {NapiUtils::GetUndefined(env), header};
+    workWrapper->manager->Emit(workWrapper->type, arg);
+    delete headerMap;
+    headerMap = nullptr;
+    delete workWrapper;
+    workWrapper = nullptr;
+    delete work;
+    work = nullptr;
+}
+
+static std::map<std::string, std::string> MakeHeaderWithSetCookie(RequestContext * context)
+{
+    std::map<std::string, std::string> tempMap = context->response.GetHeader();
+    std::string setCookies;
+    int loop = 0;
+    for (const auto &setCookie : context->response.GetsetCookie()) {
+        setCookies += setCookie;
+        if (loop < context->response.GetsetCookie().size() - 1) {
+            setCookies += HttpConstant::RESPONSE_KEY_SET_COOKIE_SEPARATOR;
+        }
+        ++loop;
+    }
+    tempMap[HttpConstant::RESPONSE_KEY_SET_COOKIE] = setCookies;
+    return tempMap;
 }
 
 size_t HttpExec::OnWritingMemoryHeader(const void* data, size_t size, void* userData)
 {
     auto context = static_cast<RequestContext*>(userData);
     if (context == nullptr) {
+        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
+        return 0;
+    }
+    if (context->GetManager()->IsEventDestroy()) {
+        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_HEADER_TIMING);
         return 0;
     }
 
-    if (context->response.GetResult().size() > MAX_LIMIT) {
+    if (context->response.GetResult().size() > context->options.GetMaxLimit()) {
+        NETSTACK_LOGE("response data exceeds the maximum limit");
+        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_HEADER_TIMING);
         return 0;
     }
 
@@ -257,7 +460,7 @@ size_t HttpExec::OnWritingMemoryHeader(const void* data, size_t size, void* user
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnHeaderReceive);
         return size;
     }
-
+    context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_HEADER_TIMING);
     return size;
 }
 
@@ -286,12 +489,10 @@ bool HttpExec::OnSuccessResponse(HttpResponse& httpResponse, void* userData)
 
     if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
         if (context->IsRequestInStream()) {
-            if (context->IsExecOK()) {
-                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataEnd);
-            }
-            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
+            std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
+            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestInStreamCallback);
         } else {
-            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
+            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestCallback);
         }
     }
 
@@ -311,9 +512,10 @@ bool HttpExec::OnFailedResponse(int32_t errCode, std::string& errMessage, void* 
 
     if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
         if (context->IsRequestInStream()) {
-            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestInStreamCallback);
+            std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
+            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestInStreamCallback);
         } else {
-            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, HttpAsyncWork::RequestCallback);
+            NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestCallback);
         }
     }
 
@@ -324,6 +526,7 @@ void HttpExec::OnDataReceive(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<RequestContext*>(data);
     if (context == nullptr) {
+        NETSTACK_LOGE("context is nullptr");
         return;
     }
 
@@ -347,7 +550,7 @@ void HttpExec::OnHeaderReceive(napi_env env, napi_status status, void* data)
         return;
     }
 
-    napi_value header = MakeResponseHeader(context);
+    napi_value header = MakeResponseHeader(context->GetEnv(), context);
 
     napi_value undefined = NapiUtils::GetUndefined(context->GetEnv());
     context->Emit(ON_HEADER_RECEIVE, std::make_pair(undefined, header));
@@ -360,35 +563,63 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void* data)
     if (context == nullptr) {
         return;
     }
+    {
+        std::lock_guard lockGuard(HttpExec::staticContextSet_.mutexForContextVec);
+        auto it = std::find(HttpExec::staticContextSet_.contextSet.begin(),
+                            HttpExec::staticContextSet_.contextSet.end(), context);
+        if (it == HttpExec::staticContextSet_.contextSet.end()) {
+            NETSTACK_LOGI("context has benn deleted in libuv thread");
+            return;
+        }
+    }
 
     auto progress = NapiUtils::CreateObject(context->GetEnv());
     if (NapiUtils::GetValueType(context->GetEnv(), progress) == napi_undefined) {
         return;
     }
-    NapiUtils::SetUint32Property(context->GetEnv(), progress, "receiveSize",
-                                 static_cast<uint32_t>(context->GetDlLen().nLen));
-    NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
-                                 static_cast<uint32_t>(context->GetDlLen().tLen));
-    context->PopDlLen();
-    context->Emit(ON_DATA_RECEIVE_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
+    auto dlLen = context->GetDlLen();
+    if (dlLen.tLen && dlLen.nLen) {
+        NapiUtils::SetUint32Property(context->GetEnv(), progress, "receiveSize", static_cast<uint32_t>(dlLen.nLen));
+        NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize", static_cast<uint32_t>(dlLen.tLen));
+
+        context->Emit(ON_DATA_RECEIVE_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
+    }
 }
 
-void HttpExec::OnDataEnd(napi_env env, napi_status status, void* data)
+void HttpExec::OnDataUploadProgress(napi_env env, napi_status status, void *data)
 {
-    auto context = static_cast<RequestContext*>(data);
+    auto context = static_cast<RequestContext *>(data);
     if (context == nullptr) {
+        NETSTACK_LOGD("[OnDataUploadProgress] context is null.");
         return;
     }
-    auto undefined = NapiUtils::GetUndefined(context->GetEnv());
-    context->Emit(ON_DATA_END, std::make_pair(undefined, undefined));
+    auto progress = NapiUtils::CreateObject(context->GetEnv());
+    if (NapiUtils::GetValueType(context->GetEnv(), progress) == napi_undefined) {
+        NETSTACK_LOGD("[OnDataUploadProgress] napi_undefined.");
+        return;
+    }
+    NapiUtils::SetUint32Property(context->GetEnv(), progress, "uploadSize",
+                                 static_cast<uint32_t>(context->GetUlLen().nLen));
+    NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
+                                 static_cast<uint32_t>(context->GetUlLen().tLen));
+    context->Emit(ON_DATA_SEND_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
 }
 
-int HttpExec::ProgressCallback(long dltotal, long dlnow, long ultotal, long ulnow, void* userData)
+int HttpExec::ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
+                               curl_off_t ulnow)
 {
-    (void)ultotal;
-    (void)ulnow;
-    auto context = static_cast<RequestContext*>(userData);
-    if (context == nullptr || !context->IsRequestInStream()) {
+    auto context = static_cast<RequestContext *>(userData);
+    if (context == nullptr) {
+        return 0;
+    }
+    if (ultotal != 0 && ultotal >= ulnow && !context->CompareWithLastElement(ulnow, ultotal)) {
+        context->SetUlLen(ulnow, ultotal);
+        NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataUploadProgress);
+    }
+    if (!context->IsRequestInStream()) {
+        return 0;
+    }
+    if (context->GetManager()->IsEventDestroy()) {
         return 0;
     }
     if (dltotal != 0) {
@@ -437,16 +668,32 @@ struct curl_slist* HttpExec::MakeHeaders(const std::vector<std::string>& vec)
     return header;
 }
 
-napi_value HttpExec::MakeResponseHeader(RequestContext* context)
+napi_value HttpExec::MakeResponseHeader(napi_env env, void *ctx)
 {
+    auto context = reinterpret_cast<RequestContext *>(ctx);
+    (void)env;
     napi_value header = NapiUtils::CreateObject(context->GetEnv());
+    if (!context) {
+        NETSTACK_LOGE("context is nullptr");
+        return header;
+    }
     if (NapiUtils::GetValueType(context->GetEnv(), header) == napi_object) {
-        std::for_each(context->response.GetHeader().begin(), context->response.GetHeader().end(),
-            [context, header](const std::pair<std::string, std::string>& p) {
-                if (!p.first.empty() && !p.second.empty()) {
-                    NapiUtils::SetStringPropertyUtf8(context->GetEnv(), header, p.first, p.second);
-                }
-            });
+        for (const auto &it : context->response.GetHeader()) {
+            if (!it.first.empty() && !it.second.empty()) {
+                NapiUtils::SetStringPropertyUtf8(context->GetEnv(), header, it.first, it.second);
+            }
+        }
+        if (!context->response.GetsetCookie().empty()) {
+            uint32_t index = 0;
+            auto len = context->response.GetsetCookie().size();
+            auto array = NapiUtils::CreateArray(context->GetEnv(), len);
+            for (const auto &setCookie : context->response.GetsetCookie()) {
+                auto str = NapiUtils::CreateStringUtf8(context->GetEnv(), setCookie);
+                NapiUtils::SetArrayElement(context->GetEnv(), array, index, str);
+                ++index;
+            }
+            NapiUtils::SetArrayProperty(context->GetEnv(), header, HttpConstant::RESPONSE_KEY_SET_COOKIE, array);
+        }
     }
     return header;
 }
