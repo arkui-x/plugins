@@ -46,9 +46,7 @@ ohos_source_set("cert") {
   sources = [
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_chain_validator.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_crl_collection.cpp",
-    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_match_parameters.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_crl_common.cpp",
-    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl_match_parameters.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_extension.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_utils.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_certificate_init.cpp",
@@ -59,16 +57,18 @@ ohos_source_set("cert") {
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_chain.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_chain_validate_params.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_chain_validate_result.cpp",
-    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_trust_anchor.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_match_parameters.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_certificate.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl_entry.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl_match_parameters.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_trust_anchor.cpp",
   ]
 
   deps = [
+    "../../../core:certificate_framework_core",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
     "//plugins/libs/securec:sec_${target_os}",
-    "../../../core:certificate_framework_core",
     "//plugins/security/cert/common:plugin_certificate_common",
   ]
 

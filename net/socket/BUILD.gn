@@ -95,8 +95,8 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_send_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_work/src/socket_async_work.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/extra_options_base.cpp",
-  "$NETSTACK_NAPI_ROOT/socket/options/src/net_address.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/local_socket_options.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/net_address.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/socket_remote_info.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/socket_state_base.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/tcp_connect_options.cpp",
@@ -104,9 +104,9 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/socket/options/src/tcp_send_options.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/udp_extra_options.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/udp_send_options.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/socket_exec/src/local_socket_exec.cpp",
   "$NETSTACK_NAPI_ROOT/socket/socket_exec/src/socket_exec.cpp",
   "$NETSTACK_NAPI_ROOT/socket/socket_module/src/socket_module.cpp",
-  "$NETSTACK_NAPI_ROOT/socket/socket_exec/src/local_socket_exec.cpp",
 ]
 
 utils_include = [
