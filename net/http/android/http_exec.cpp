@@ -291,24 +291,6 @@ double HttpExec::GetTimingFromCurl(CURL *handle, CURLINFO info)
     return Timing::TimeUtils::Microseconds2Milliseconds(timing);
 }
 
-void HttpExec::CacheCurlPerformanceTiming(CURL *handle, RequestContext *context)
-{
-    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_DNS_TIMING,
-                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_NAMELOOKUP_TIME_T));
-    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_TCP_TIMING,
-                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_CONNECT_TIME_T));
-    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_TLS_TIMING,
-                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_APPCONNECT_TIME_T));
-    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_FIRST_SEND_TIMING,
-                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_PRETRANSFER_TIME_T));
-    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_FIRST_RECEIVE_TIMING,
-                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_STARTTRANSFER_TIME_T));
-    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_TOTAL_FINISH_TIMING,
-                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_TOTAL_TIME_T));
-    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_REDIRECT_TIMING,
-                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_REDIRECT_TIME_T));
-}
-
 void HttpExec::HandleCurlData(CURLMsg *msg)
 {
     if (msg == nullptr) {
@@ -692,94 +674,6 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
     return true;
 }
 
-bool HttpExec::SetSSLCertOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context)
-{
-    std::string cert;
-    std::string certType;
-    std::string key;
-    Secure::SecureChar keyPasswd;
-    context->options.GetClientCert(cert, certType, key, keyPasswd);
-    if (cert.empty()) {
-        NETSTACK_LOGD("SetSSLCertOption param is empty.");
-        return false;
-    }
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLCERT, cert.c_str(), context);
-    if (!key.empty()) {
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLKEY, key.c_str(), context);
-    }
-    if (!certType.empty()) {
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLCERTTYPE, certType.c_str(), context);
-    }
-    if (keyPasswd.Length() > 0) {
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_KEYPASSWD, keyPasswd.Data(), context);
-    }
-    return true;
-}
-
-bool HttpExec::SetServerSSLCertOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context)
-{
-#ifndef NO_SSL_CERTIFICATION
-#ifdef HAS_NETMANAGER_BASE
-    auto hostname = CommonUtils::GetHostnameFromURL(context->options.GetUrl());
-#ifndef WINDOWS_PLATFORM
-    // customize trusted CAs.
-    std::vector<std::string> certs;
-    auto ret = NetManagerStandard::NetConnClient::GetInstance().GetTrustAnchorsForHostName(hostname, certs);
-    if (ret != 0) {
-        return false;
-    }
-
-    std::string *pCert = nullptr;
-    for (auto &cert : certs) {
-        if (!cert.empty()) {
-            pCert = &cert;
-            break;
-        }
-    }
-    if (pCert != nullptr) {
-        NETSTACK_LOGD("curl set option capath: capath=%{public}s.", pCert->c_str());
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, nullptr, context);
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAPATH, pCert->c_str(), context);
-    } else {
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAINFO, context->options.GetCaPath().c_str(), context);
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CAPATH, HttpConstant::HTTP_PREPARE_CA_PATH, context);
-    }
-#endif // WINDOWS_PLATFORM
-    // pin trusted certifcate keys.
-    std::string pins;
-    auto ret1 = NetManagerStandard::NetConnClient::GetInstance().GetPinSetForHostName(hostname, pins);
-    if (ret1 != 0) {
-        return false;
-    }
-    if (!pins.empty()) {
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PINNEDPUBLICKEY, pins.c_str(), context);
-    }
-#endif // HAS_NETMANAGER_BASE
-#else
-    // in real life, you should buy a ssl certification and rename it to /etc/ssl/cert.pem
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYHOST, 0L, context);
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYPEER, 0L, context);
-#endif // NO_SSL_CERTIFICATION
-
-    return true;
-}
-
-bool HttpExec::SetDnsOption(CURL *curl, RequestContext *context)
-{
-    std::vector<std::string> dnsServers = context->options.GetDnsServers();
-    if (dnsServers.empty()) {
-        return true;
-    }
-    std::string serverList;
-    for (auto &server : dnsServers) {
-        serverList += server + ",";
-        NETSTACK_LOGD("SetDns server: %{public}s", CommonUtils::AnonymizeIp(server).c_str());
-    }
-    serverList.pop_back();
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_DNS_SERVERS, serverList.c_str(), context);
-    return true;
-}
-
 bool HttpExec::SetRequestOption(CURL *curl, RequestContext *context)
 {
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTP_VERSION, context->options.GetHttpVersion(), context);
@@ -793,8 +687,7 @@ bool HttpExec::SetRequestOption(CURL *curl, RequestContext *context)
     if (!context->options.GetDohUrl().empty()) {
         NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_DOH_URL, context->options.GetDohUrl().c_str(), context);
     }
-   // SetDnsOption(curl, context);
-   // SetSSLCertOption(curl, context);
+
     SetMultiPartOption(curl, context);
     return true;
 }
@@ -839,9 +732,6 @@ bool HttpExec::SetOption(CURL *curl, RequestContext *context, struct curl_slist 
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_CONNECTTIMEOUT_MS, context->options.GetConnectTimeout(), context);
 
     SetRequestOption(curl, context);
-  //  if (!SetServerSSLCertOption(curl, context)) {
-  //      return false;
-  //  }
     if (!SetOtherOption(curl, context)) {
         return false;
     }

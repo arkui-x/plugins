@@ -95,12 +95,6 @@ private:
 
     static bool SetRequestOption(void *curl, RequestContext *context);
 
-    static bool SetSSLCertOption(CURL *curl, RequestContext *context);
-
-    static bool SetServerSSLCertOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context);
-
-    static bool SetDnsOption(CURL *curl, RequestContext *context);
-
     static size_t OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData);
 
     static size_t OnWritingMemoryHeader(const void *data, size_t size, size_t memBytes, void *userData);
@@ -120,8 +114,6 @@ private:
     static bool GetCurlDataFromHandle(CURL *handle, RequestContext *context, CURLMSG curlMsg, CURLcode result);
 
     static double GetTimingFromCurl(CURL *handle, CURLINFO info);
-
-    static void CacheCurlPerformanceTiming(CURL *handle, RequestContext *context);
 
     static void RunThread();
 
