@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #include "connection_module.h"
 #include "constant.h"
@@ -385,6 +386,124 @@ bool ConnectionExec::ExecSetAppNet(SetAppNetContext *context)
 napi_value ConnectionExec::SetAppNetCallback(SetAppNetContext *context)
 {
     NETMANAGER_BASE_LOGI("into");
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecSetCustomDNSRule(SetCustomDNSRuleContext *context)
+{
+    if (context == nullptr) {
+        NETMANAGER_BASE_LOGE("context is nullptr");
+        return false;
+    }
+
+    if (!CommonUtils::HasInternetPermission()) {
+        context->SetErrorCode(NETMANAGER_ERR_PERMISSION_DENIED);
+        return false;
+    }
+
+    if (context->host_.empty() || context->ip_.empty()) {
+        context->SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+        return false;
+    }
+
+    std::vector<std::string> ip = context->ip_;
+    for (size_t i = 0; i < ip.size(); i++) {
+        if (!CommonUtils::IsValidIPV4(ip[i]) && !CommonUtils::IsValidIPV6(ip[i])) {
+            context->SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+            return false;
+        }
+    }
+
+    if (!context->IsParseOK()) {
+        context->SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+        return false;
+    }
+
+    std::string host_ips = context->host_ + ",";
+    for (size_t i = 0; i < ip.size(); i++) {
+        host_ips.append(ip[i]);
+        if (i < ip.size() - 1) {
+            host_ips.append(",");
+        }
+    }
+
+    NETMANAGER_BASE_LOGI("set host with ip addr string: %{public}s", host_ips.c_str());
+    return true;
+}
+
+napi_value ConnectionExec::SetCustomDNSRuleCallback(SetCustomDNSRuleContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecDeleteCustomDNSRule(DeleteCustomDNSRuleContext *context)
+{
+    if (context == nullptr) {
+        NETMANAGER_BASE_LOGE("context is nullptr");
+        return false;
+    }
+    if (!CommonUtils::HasInternetPermission()) {
+        context->SetErrorCode(NETMANAGER_ERR_PERMISSION_DENIED);
+        return false;
+    }
+
+    if (context->host_.empty()) {
+        context->SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+        return false;
+    }
+
+    if (!context->IsParseOK()) {
+        context->SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+        return false;
+    }
+
+    NETMANAGER_BASE_LOGI("delete host with ip addr string: %{public}s", context->host_.c_str());
+    return true;
+}
+
+napi_value ConnectionExec::DeleteCustomDNSRuleCallback(DeleteCustomDNSRuleContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecDeleteCustomDNSRules(DeleteCustomDNSRulesContext *context)
+{
+    if (context == nullptr) {
+        NETMANAGER_BASE_LOGE("context is nullptr");
+        return false;
+    }
+    if (!CommonUtils::HasInternetPermission()) {
+        context->SetErrorCode(NETMANAGER_ERR_PERMISSION_DENIED);
+        return false;
+    }
+
+    if (!context->IsParseOK()) {
+        context->SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+        return false;
+    }
+
+    return true;
+}
+
+napi_value ConnectionExec::DeleteCustomDNSRulesCallback(DeleteCustomDNSRulesContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecFactoryResetNetwork(FactoryResetNetworkContext *context)
+{
+    NETMANAGER_BASE_LOGI("ExecFactoryResetNetwork into");
+    int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->FactoryResetNetwork();
+    if (errorCode != NET_CONN_SUCCESS) {
+        NETMANAGER_BASE_LOGE("exec ResetNetwork failed errorCode: %{public}d", errorCode);
+        context->SetErrorCode(errorCode);
+        return false;
+    }
+    return true;
+}
+
+napi_value ConnectionExec::FactoryResetNetworkCallback(FactoryResetNetworkContext *context)
+{
     return NapiUtils::GetUndefined(context->GetEnv());
 }
 

@@ -106,11 +106,11 @@ void HttpExecIosIml::RequestCallBack()
     }];
 
     [request setUploadProgress:^(void* _Nonnull userData, long total, long now) {
-        HttpExecIosIml::progressCallback_(0, 0, total, now, userData);
+        HttpExecIosIml::progressCallback_(userData, 0, 0, total, now);
     }];
 
     [request setDownloadProgress:^(void* _Nonnull userData, long total, long now) {
-        HttpExecIosIml::progressCallback_(total, now, 0, 0, userData);
+        HttpExecIosIml::progressCallback_(userData, total, now, 0, 0);
     }];
 
     [request setResponseBlock:^(NSURLSessionTask* _Nonnull task,

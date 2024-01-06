@@ -31,6 +31,8 @@ template("plugin_cryptoFramework_static") {
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_asy_key_generator.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_asy_key_spec_generator.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_cipher.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_dh_key_util.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_ecc_key_util.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_init.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_kdf.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_key.cpp",
@@ -50,11 +52,11 @@ template("plugin_cryptoFramework_static") {
 
     deps = [
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
-      "//plugins/security/cryptoFramework/common:crypto_plugin_common",
-      "//plugins/security/cryptoFramework/frameworks:crypto_framework_lib",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${target_os}",
       "//plugins/libs/securec:sec_${target_os}",
+      "//plugins/security/cryptoFramework/common:crypto_plugin_common",
+      "//plugins/security/cryptoFramework/frameworks:crypto_framework_lib",
     ]
 
     subsystem_name = "plugins"
@@ -63,7 +65,8 @@ template("plugin_cryptoFramework_static") {
 }
 
 foreach(item, ace_platforms) {
-  plugin_cryptoFramework_static("security_cryptoFramework_static_" + item.name) {
+  plugin_cryptoFramework_static(
+      "security_cryptoFramework_static_" + item.name) {
     platform = item.name
 
     defines = []
