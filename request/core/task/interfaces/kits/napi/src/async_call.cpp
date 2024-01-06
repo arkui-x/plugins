@@ -42,7 +42,7 @@ AsyncCall::AsyncCall(napi_env env, napi_callback_info info, std::shared_ptr<Cont
         context_->type = type;
         napi_create_reference(env, self, 1, &context_->self);
     }
-    REQUEST_HILOGE("input result:%{public}d", static_cast<int32_t>(status));
+    REQUEST_HILOGI("input result:%{public}d", static_cast<int32_t>(status));
 }
 
 AsyncCall::~AsyncCall()
@@ -116,14 +116,14 @@ void AsyncCall::OnComplete(napi_env env, napi_status status, void *data)
     napi_status runStatus = (*context->ctx)(env, &output);
     napi_value result[ARG_BUTT] = { 0 };
     if (status == napi_ok && runStatus == napi_ok) {
-        napi_get_undefined(env, &result[ARG_ERROR]);
+        napi_get_null(env, &result[ARG_ERROR]);
         if (output != nullptr) {
             result[ARG_DATA] = output;
         } else {
             napi_get_undefined(env, &result[ARG_DATA]);
         }
-    } else {
-        result[ARG_ERROR] = NapiUtils::CreateBusinessError(env, E_SERVICE_ERROR, "service failed");
+    } else { 
+        result[ARG_ERROR] = NapiUtils::CreateBusinessError(env, static_cast<ExceptionErrorCode>(context->ctx->retCode), "service failed");
         napi_get_undefined(env, &result[ARG_DATA]);
     }
     if (context->defer != nullptr) {

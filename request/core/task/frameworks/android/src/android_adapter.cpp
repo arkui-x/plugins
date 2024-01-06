@@ -48,7 +48,7 @@ ITask *AndroidAdapter::Create(const Config &config)
 int32_t AndroidAdapter::Remove(int64_t taskId)
 {
     auto result = TaskManagerJni::Get().Remove(taskId);
-    REQUEST_HILOGI("remove task: %{public}d", result);
+    REQUEST_HILOGI("remove task result: %{public}d", result);
     return result;
 }
 
@@ -96,6 +96,13 @@ int32_t AndroidAdapter::Stop(int64_t taskId)
 {
     int32_t result = TaskManagerJni::Get().Stop(taskId);
     REQUEST_HILOGI("stop task: %{public}d", result);
+    return result;
+}
+
+int32_t AndroidAdapter::GetDefaultStoragePath(std::string& path)
+{
+    int32_t result = TaskManagerJni::Get().GetDefaultStoragePath(path);
+    REQUEST_HILOGI("get default storage path result: %{public}d", result);
     return result;
 }
 

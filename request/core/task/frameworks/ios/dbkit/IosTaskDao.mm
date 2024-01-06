@@ -50,9 +50,12 @@ int64_t IosTaskDao::CreateTask(const Config &config)
 
 int32_t IosTaskDao::RemoveTask(int64_t taskId)
 {
+    REQUEST_HILOGE("RemoveTask start taskid: %{public}lld", taskId);
     if (![[DBManager shareManager] remove:taskId]) {
+       REQUEST_HILOGE("RemoveTask error");     
         return E_SERVICE_ERROR;
     }
+    REQUEST_HILOGE("RemoveTask end");
     return E_OK;
 }
 

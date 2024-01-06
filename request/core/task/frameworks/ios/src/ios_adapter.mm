@@ -157,4 +157,15 @@ int32_t IosAdapter::Stop(int64_t taskId)
     return result;
 }
 
+int32_t IosAdapter::GetDefaultStoragePath(std::string& path)
+{
+    REQUEST_HILOGI("get default storage path in");
+
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+    NSString *cachesDir = [paths objectAtIndex:0];
+    path = std::string([cachesDir UTF8String]);
+
+    REQUEST_HILOGI("default storage path is %{public}s", path.c_str());
+    return E_OK;
+}
 } // namespace OHOS::Plugin::Request

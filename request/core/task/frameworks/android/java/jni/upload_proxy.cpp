@@ -76,6 +76,15 @@ bool UploadProxy::Remove()
     return true;
 }
 
+bool UploadProxy::Stop()
+{
+    REQUEST_HILOGI("upload stop");
+    std::lock_guard<std::mutex> guard(mutex_);
+    ChangeState(State::STOPPED);
+    isAbort_ = true;
+    return true;
+}
+
 void UploadProxy::Exec()
 {
     uint32_t ret = ExecInner();
@@ -94,7 +103,7 @@ uint32_t UploadProxy::ExecInner()
         info_.progress.extras.clear();
         info_.progress.bodyBytes.clear();
         info_.progress.index++;
-        info_.progress.totalProcessed = 0;
+        info_.progress.processed = 0;
         ReportInfo(false);
     }
     REQUEST_HILOGI("upload end");
@@ -191,6 +200,7 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
 
 void UploadProxy::ChangeState(State state)
 {
+    REQUEST_HILOGI("current state: %{public}d", static_cast<int32_t>(state));
     info_.progress.state = state;
     info_.mtime = RequestUtils::GetTimeNow();
     ReportInfo(true);
@@ -202,7 +212,7 @@ void UploadProxy::ChangeState(State state)
 }
 
 void UploadProxy::Notify(const std::string &type)
-{
+{   
     if (callback_ != nullptr) {
         Json infoJson = info_;
         callback_(taskId_, type, infoJson.dump());
@@ -379,8 +389,8 @@ int32_t UploadProxy::ProgressCallback(void *client, curl_off_t dltotal, curl_off
         return HTTP_FORCE_STOP;
     }
     REQUEST_HILOGI("ProgressCallback in dltotal: %{public}d, dlnow: %{public}d, ultotal: %{public}d, ulnow: %{public}d", dltotal, dlnow, ultotal, ulnow);
-    thiz->info_.progress.processed += ulnow;
-    thiz->info_.progress.totalProcessed += ulnow;
+    thiz->info_.progress.totalProcessed += (ulnow- thiz->info_.progress.processed);
+    thiz->info_.progress.processed = ulnow;    
     thiz->ReportInfo(false);
     thiz->Notify(EVENT_PROGRESS);
     REQUEST_HILOGI("ProgressCallback out");
@@ -435,7 +445,7 @@ size_t UploadProxy::ReadCallback(char *buffer, size_t size, size_t nitems, void 
     size_t readSize = 0;
     std::mutex mutexlock;
     std::unique_lock<std::mutex> lock(mutexlock);
-    int64_t maxReadSize = thiz->info_.progress.sizes[index] - thiz->info_.progress.totalProcessed;
+    int64_t maxReadSize = thiz->info_.progress.sizes[index] - thiz->info_.progress.processed;
     if (maxReadSize > size * nitems) {
         maxReadSize = size * nitems;
     }

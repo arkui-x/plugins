@@ -54,7 +54,7 @@ const char METHOD_STOP_TASK[] = "stop";
 const char SIGNATURE_STOP_TASK[] = "(J)V";
 
 const char METHOD_REMOVE_TASK[] = "remove";
-const char SIGNATURE_REMOVE_TASK[] = "(J)V";
+const char SIGNATURE_REMOVE_TASK[] = "(J)J";
 
 const char METHOD_GET_MIME[] = "getMimeType";
 const char SIGNATURE_GET_MIME[] = "(J)Ljava/lang/String;";
@@ -71,6 +71,8 @@ const char SIGNATURE_SEARCH_TASK[] = "(Ljava/lang/String;)[J";
 const char METHOD_REPORT_INFO[] = "reportTaskInfo";
 const char SIGNATURE_REPORT_INFO[] = "(Ljava/lang/String;)V";
 
+const char METHOD_REPORT_STORAGE_PATH[] = "getDefaultStoragePath";
+const char SIGNATURE_REPORT_STORAGE_PATH[] = "()Ljava/lang/String;";
 struct {
     jmethodID createTask;
     jmethodID startTask;
@@ -83,6 +85,7 @@ struct {
     jmethodID touchTask;
     jmethodID searchTask;
     jmethodID reportTaskInfo;
+    jmethodID getDefaultStoragePath;
     jobject globalRef;
 } g_pluginClass;
 
@@ -195,6 +198,9 @@ void TaskManagerJni::NativeInit(JNIEnv *env, jobject jobj)
 
     g_pluginClass.reportTaskInfo = env->GetMethodID(cls, METHOD_REPORT_INFO, SIGNATURE_REPORT_INFO);
     CHECK_NULL_VOID(g_pluginClass.reportTaskInfo);
+
+    g_pluginClass.getDefaultStoragePath = env->GetMethodID(cls, METHOD_REPORT_STORAGE_PATH, SIGNATURE_REPORT_STORAGE_PATH);
+    CHECK_NULL_VOID(g_pluginClass.getDefaultStoragePath);
     env->DeleteLocalRef(cls);
 }
 
@@ -321,6 +327,13 @@ int32_t TaskManagerJni::Stop(int64_t taskId)
         env->ExceptionClear();
         return E_SERVICE_ERROR;
     }
+
+    std::unique_lock<std::mutex> lock(mutex_);
+    auto it = uploadProxyList_.find(taskId);
+    if (it != uploadProxyList_.end() && it->second != nullptr) {
+        it->second->Stop();
+    }
+    
     REQUEST_HILOGI("TaskManagerJni JNI: execute stop success.");
     return E_OK;
 }
@@ -332,20 +345,25 @@ int32_t TaskManagerJni::Remove(int64_t taskId)
     CHECK_NULL_RETURN(env, E_SERVICE_ERROR);
     CHECK_NULL_RETURN(g_pluginClass.globalRef, E_SERVICE_ERROR);
     CHECK_NULL_RETURN(g_pluginClass.removeTask, E_SERVICE_ERROR);
-
-    env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.removeTask, taskId);
-    if (env->ExceptionCheck()) {
-        REQUEST_HILOGE("remove task has exception");
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-        return E_SERVICE_ERROR;
+    if (env->CallLongMethod(g_pluginClass.globalRef, g_pluginClass.removeTask, taskId) != 0) {  
+        if (env->ExceptionCheck()) {
+            REQUEST_HILOGE("remove task has exception");
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            return E_SERVICE_ERROR;
+        }
+        else{
+            return E_TASK_NOT_FOUND;
+        }
     }
+
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = uploadProxyList_.find(taskId);
     if (it != uploadProxyList_.end() && it->second != nullptr) {
         it->second->Remove();
         uploadProxyList_.erase(it);
     }
+
     REQUEST_HILOGI("TaskManagerJni JNI: execute remove success.");
     return E_OK;
 }
@@ -472,9 +490,31 @@ int32_t TaskManagerJni::ReportTaskInfo(const TaskInfo &info)
     return E_OK;
 }
 
+int32_t TaskManagerJni::GetDefaultStoragePath(std::string& path)
+{
+    REQUEST_HILOGI("TaskManagerJni JNI: Report default storage path start");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, E_SERVICE_ERROR);
+    CHECK_NULL_RETURN(g_pluginClass.globalRef, E_SERVICE_ERROR);
+    CHECK_NULL_RETURN(g_pluginClass.getDefaultStoragePath, E_SERVICE_ERROR);
+
+    jstring jpath =
+    static_cast<jstring>(env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.getDefaultStoragePath));
+    if (env->ExceptionCheck()) {
+        REQUEST_HILOGE("report default storage has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return E_SERVICE_ERROR;
+    }
+    path = JavaStringToString(env, jpath);
+
+    REQUEST_HILOGI("TaskManagerJni JNI: ReportDefaultStoragePath end. path: %{public}s", path.c_str());
+    return E_OK;
+}
+
 void TaskManagerJni::UploadCb(int64_t taskId, const std::string &type, const std::string &params)
 {
-    REQUEST_HILOGI("TaskManagerJni JNI: UploadCb");
+    REQUEST_HILOGI("TaskManagerJni JNI: UploadCb params: %{public}s", params.c_str());
     TaskNotifyManager::Get().SendNotify(RequestUtils::GetEventType(taskId, type), params);
 }
 

@@ -130,6 +130,7 @@ napi_value JsTask::Stop(napi_env env, napi_callback_info info)
 
 napi_value JsTask::On(napi_env env, napi_callback_info info)
 {
+    REQUEST_HILOGI("On callback object");
     JsParam jsParam;
     ExceptionError err = ParseOnOffParameters(env, info, true, jsParam);
     if (err.code != E_OK) {
@@ -169,6 +170,7 @@ napi_value JsTask::On(napi_env env, napi_callback_info info)
 
 napi_value JsTask::Off(napi_env env, napi_callback_info info)
 {
+    REQUEST_HILOGI("Off callback object");
     JsParam jsParam;
     ExceptionError err = ParseOnOffParameters(env, info, false, jsParam);
     if (err.code != E_OK) {
@@ -445,6 +447,7 @@ int32_t JsTask::RemoveExec(const std::shared_ptr<ExecContext> &context)
     if (ret == E_OK) {
         context->boolRes = true;
     }
+    REQUEST_HILOGI("RemoveExec ret: %{public}d", ret);
     return ret;
 }
 

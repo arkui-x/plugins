@@ -32,6 +32,7 @@ public:
     virtual ~UploadProxy();
     bool Start(UploadCallback callback) override;
     bool Remove() override;
+    bool Stop() override;
 
 private:
     void Exec();

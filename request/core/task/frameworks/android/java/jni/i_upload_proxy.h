@@ -26,6 +26,7 @@ public:
     virtual ~IUploadProxy() = default;
     virtual bool Start(UploadCallback callback) = 0;
     virtual bool Remove() = 0;
+    virtual bool Stop() = 0;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_UPLOAD_PROXY_H
