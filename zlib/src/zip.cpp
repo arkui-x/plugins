@@ -45,7 +45,6 @@ using WriterFactory = std::function<std::unique_ptr<WriterDelegate>(FilePath&, F
 const std::string SEPARATOR = "/";
 const char HIDDEN_SEPARATOR = '.';
 const std::string ZIP = ".zip";
-const std::int32_t ZIP_SIZE = 4;
 
 struct UnzipParam {
     FilterCallback filterCB = nullptr;
@@ -264,19 +263,13 @@ bool Unzip(const std::string& srcFile, const std::string& destFile, OPTIONS opti
         zlibCallbackInfo->OnZipUnZipFinish(ERR_ZLIB_DEST_FILE_DISABLED);
         return false;
     }
-    if (srcFileDir.Value().size() == 0 || srcFileDir.Value().size() <= ZIP_SIZE) {
+    if (srcFileDir.Value().size() == 0) {
         LOGI("Unzip called fail, srcFile isn't Exist.");
         zlibCallbackInfo->OnZipUnZipFinish(ERR_ZLIB_SRC_FILE_DISABLED);
         return false;
     }
-    if (srcFileDir.Value().substr(srcFileDir.Value().size() - ZIP_SIZE, ZIP_SIZE) == ZIP) {
-        if (!FilePath::PathIsValid(srcFileDir)) {
-            LOGI("Unzip called fail, srcFile isn't Exist.");
-            zlibCallbackInfo->OnZipUnZipFinish(ERR_ZLIB_SRC_FILE_DISABLED);
-            return false;
-        }
-    } else {
-        LOGI("Unzip called fail, The file format of srcFile is incorrect .");
+    if (!FilePath::PathIsValid(srcFileDir)) {
+        LOGI("Unzip called fail, srcFile isn't Exist.");
         zlibCallbackInfo->OnZipUnZipFinish(ERR_ZLIB_SRC_FILE_DISABLED);
         return false;
     }
