@@ -34,7 +34,7 @@ ITask *TaskManager::Create(const Config &config)
     }
     auto newTask = adapter_->Create(config);
     if (newTask == nullptr) {
-        REQUEST_HILOGE("create task failed taskId:%{public}ld.", newTask->GetId());
+        REQUEST_HILOGE("create task failed");
         return nullptr;
     }
     return newTask;
@@ -68,6 +68,12 @@ int32_t TaskManager::GetTaskInfo(int64_t taskId, const std::string &token, TaskI
 int32_t TaskManager::Search(const Filter &filter, std::vector<std::string> &taskIdList)
 {
     REQUEST_HILOGI("Search Task");
+    REQUEST_HILOGI("filter before: %{public}lld", filter.before);
+    REQUEST_HILOGI("filter after: %{public}lld", filter.after);
+    REQUEST_HILOGI("filter state: %{public}d", static_cast<int32_t>(filter.state));
+    REQUEST_HILOGI("filter state: %{public}d", static_cast<int32_t>(filter.action));
+    REQUEST_HILOGI("filter state: %{public}d", static_cast<int32_t>(filter.mode));
+
     if (adapter_ == nullptr) {
         REQUEST_HILOGE("TaskManager invalid adapter");
         return E_SERVICE_ERROR;
