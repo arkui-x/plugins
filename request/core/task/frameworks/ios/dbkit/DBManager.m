@@ -184,32 +184,30 @@ static DBManager *instance;
 
     NSString *strFilter = @"";
     if (filter.before > 0) {
-        if (strFilter.length > 0) {
-            [strFilter stringByAppendingString:@" AND "];
-        }
-        [strFilter stringByAppendingFormat:@"ctime<%lld ", filter.before];
+        strFilter = [strFilter stringByAppendingFormat:@"ctime<%lld ", filter.before];
     }
     if (filter.after > 0) {
         if (strFilter.length > 0) {
-            [strFilter stringByAppendingString:@" AND "];
+            strFilter = [strFilter stringByAppendingString:@" AND "];
         }
-        [strFilter stringByAppendingFormat:@"ctime>%lld ", filter.after];
+        strFilter = [strFilter stringByAppendingFormat:@"ctime>%lld ", filter.after];
     }
     if (filter.action == 0 || filter.action == 1) {
         if (strFilter.length > 0) {
-            [strFilter stringByAppendingString:@" AND "];
+            strFilter = [strFilter stringByAppendingString:@" AND "];
         }
-        [strFilter stringByAppendingFormat:@"action1=%d ", filter.action];
+        strFilter = [strFilter stringByAppendingFormat:@"action1=%d ", filter.action];
     }
-    if (filter.mode == 0 || filter.mode == 1) {
+    if (filter.mode == 0) {
         if (strFilter.length > 0) {
-            [strFilter stringByAppendingString:@" AND "];
+            strFilter = [strFilter stringByAppendingString:@" AND "];
         }
-        [strFilter stringByAppendingFormat:@"mode=%d ", filter.mode];
+        strFilter = [strFilter stringByAppendingFormat:@"mode=%d ", filter.mode];
     }
     NSString *strSql = @"SELECT tid FROM Task";
+    NSLog(@"queryWithFilter, strFilter:%@", strFilter);
     if (strFilter.length > 0) {
-        [strSql stringByAppendingFormat:@" WHERE %@", strFilter];
+        strSql = [strSql stringByAppendingFormat:@" WHERE %@", strFilter];
     }
     const char *sql = [strSql UTF8String];
     NSLog(@"queryWithFilter, sql:%s", sql);

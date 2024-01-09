@@ -66,6 +66,8 @@ public:
             }
             exec_(this);
         };
+        int32_t retCode = E_OK;
+
     protected:
         friend class AsyncCall;
         InputAction input_ = nullptr;

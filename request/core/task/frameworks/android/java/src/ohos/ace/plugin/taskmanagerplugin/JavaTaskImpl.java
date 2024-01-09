@@ -18,10 +18,12 @@ package ohos.ace.plugin.taskmanagerplugin;
 import static ohos.ace.plugin.taskmanagerplugin.IConstant.TAG;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -140,7 +142,7 @@ public class JavaTaskImpl {
         }
     }
 
-    public void remove(long taskId) {
+    public long remove(long taskId) {
         Log.i(TAG, "remove: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
@@ -151,7 +153,7 @@ public class JavaTaskImpl {
         }
         if (taskInfo == null) {
             Log.e(TAG, "remove: task info is null");
-            return;
+            return -1;
         }
         if (taskInfo.getAction() == Action.DOWNLOAD) {
             mDownloadImpl.removeDownload(taskInfo);
@@ -159,6 +161,7 @@ public class JavaTaskImpl {
             Log.e(TAG, "remove: action is not download:" + taskInfo.getAction());
         }
         mDownloadImpl.sendRemoveCallback(taskInfo);
+        return 0;
     }
 
     public String getMimeType(long taskId) {
@@ -258,6 +261,15 @@ public class JavaTaskImpl {
         }
         Log.i(TAG, "search result: " + Arrays.toString(taskIdArray));
         return taskIdArray;
+    }
+
+    public String getDefaultStoragePath() {
+        Log.i(TAG, "getDefaultStoragePath in");
+        File file = mContext.getFilesDir();
+        if (file != null) {
+            return file.getAbsolutePath();
+        }
+        return "";
     }
 
     public static void updateTaskInfo(TaskInfo taskInfo) {

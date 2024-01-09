@@ -23,7 +23,6 @@
 
 namespace OHOS::Plugin::Request {
 struct TaskContext : public AsyncCall::Context {
-    int32_t result = E_OK;
     Version version = Version::API9;
 };
 

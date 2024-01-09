@@ -158,6 +158,7 @@ void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, 
             if (error.code != -1011) { // NSURLErrorBadServerResponse
                 isSuspendByNetwork_ = false;
             }
+            info_.progress.state = State::FAILED;
             callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
         }
 

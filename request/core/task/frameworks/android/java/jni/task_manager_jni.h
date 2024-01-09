@@ -36,7 +36,7 @@ public:
 
     static void NativeInit(JNIEnv* env, jobject jobj);
     static void OnRequestCallback(JNIEnv *env, jobject obj, jlong taskId, jstring type, jstring info);
-
+  
     int64_t Create(const Config &config);
     int32_t Start(int64_t taskId);
     int32_t Pause(int64_t taskId);
@@ -48,6 +48,7 @@ public:
     int32_t Touch(int64_t taskId, const std::string &token, TaskInfo &info);
     int32_t Search(const Filter &filter, std::vector<std::string> &taskList);
     int32_t ReportTaskInfo(const TaskInfo &info);
+    int32_t GetDefaultStoragePath(std::string& path);
 
 private:
     TaskManagerJni();

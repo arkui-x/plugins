@@ -14,6 +14,7 @@
  */
 
 #import "IosTaskConfig.h"
+#include <time.h>
 #import "IosTaskFilter.h"
 #import "Constants.h"
 
@@ -92,9 +93,12 @@
     IosTaskProgress *progress = [[IosTaskProgress alloc] init];
     progress.state = StateInitialized;
     info.progress = [progress toJsonString];
+    struct timespec ts;  
+    clock_gettime(CLOCK_REALTIME, &ts);  
+    long long milliseconds = (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
     NSTimeInterval current = [[NSDate date] timeIntervalSince1970];
-    info.ctime = current;
-    info.mtime = current;
+    info.ctime = milliseconds;
+    info.mtime = milliseconds;
     info.faults = FaultsOthers;
     info.reason = @"";
     info.taskStates = @"";

@@ -32,6 +32,7 @@ public:
     int32_t Pause(int64_t taskId) override;
     int32_t Resume(int64_t taskId) override;
     int32_t Stop(int64_t taskId) override;
+    int32_t GetDefaultStoragePath(std::string& path) override;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_TASK_MANAGER_ADP_ANDROID_H

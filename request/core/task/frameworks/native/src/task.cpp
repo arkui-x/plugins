@@ -18,6 +18,7 @@
 #include "request_utils.h"
 #include "task_manager.h"
 #include "task_notify_manager.h"
+#include <unistd.h>
 
 namespace OHOS::Plugin::Request {
 Task::Task(const Config &config, std::shared_ptr<ITaskAdp> taskAdp) : ITask(config), adapter_(taskAdp)
@@ -28,6 +29,12 @@ Task::Task(const Config &config, std::shared_ptr<ITaskAdp> taskAdp) : ITask(conf
 Task::~Task()
 {
     REQUEST_HILOGI("free task [%{public}ld]", GetId());
+    for (auto &file : config_.files) {
+        if (file.fd >= 0) {
+            close(file.fd);
+            file.fd = 0;
+        }
+    }
     for (auto &it : notifyMap_) {
         TaskNotifyManager::Get().RemoveNotify(RequestUtils::GetEventType(GetId(), it.first));
     }

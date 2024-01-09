@@ -35,6 +35,7 @@ public:
     int32_t Pause(int64_t taskId) override;
     int32_t Resume(int64_t taskId) override;
     int32_t Stop(int64_t taskId) override;
+    int32_t GetDefaultStoragePath(std::string& path) override;
 
 private:
     std::mutex mutex_;

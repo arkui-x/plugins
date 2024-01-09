@@ -95,10 +95,10 @@ napi_value NapiTask::JsMain(napi_env env, napi_callback_info info, Version versi
         return napi_ok;
     };
     auto exec = [context](AsyncCall::Context *ctx) {
-        context->result = AutoStart(context->task, context->version);
+        context->retCode = AutoStart(context->task, context->version);
     };
     auto output = [context](napi_env env, napi_value *result) -> napi_status {
-        if (result == nullptr || context->result != E_OK) {
+        if (result == nullptr || context->retCode != E_OK) {
             return napi_generic_failure;
         }
         napi_status status = napi_get_reference_value(env, context->taskRef, result);
@@ -217,14 +217,14 @@ napi_value NapiTask::Remove(napi_env env, napi_callback_info info)
         return napi_ok;
     };
     auto output = [context](napi_env env, napi_value *result) -> napi_status {
-        if (context->result != E_OK) {
+        if (context->retCode != E_OK) {
             return napi_generic_failure;
         }
         context->res = true;
         return NapiUtils::Convert2JSValue(env, context->res, *result);
     };
     auto exec = [context](AsyncCall::Context *ctx) {
-        context->result = TaskManager::Get().Remove(context->tid);
+        context->retCode = TaskManager::Get().Remove(context->tid);
     };
     context->SetAction(input, output);
     AsyncCall asyncCall(env, info, context);
@@ -284,14 +284,14 @@ napi_value NapiTask::TouchInner(napi_env env, napi_callback_info info, AsyncCall
 {
     context->version = Version::API10;
     auto output = [context](napi_env env, napi_value *result) -> napi_status {
-        if (context->result != E_OK) {
+        if (context->retCode != E_OK) {
             return napi_generic_failure;
         }
         *result = NapiUtils::Convert2JSValue(env, context->taskInfo);
         return napi_ok;
     };
     auto exec = [context](AsyncCall::Context *ctx) {
-        context->result = TaskManager::Get().GetTaskInfo(context->tid, context->token, context->taskInfo);
+        context->retCode = TaskManager::Get().GetTaskInfo(context->tid, context->token, context->taskInfo);
     };
     context->SetAction(input, output);
     AsyncCall asyncCall(env, info, context);
@@ -439,14 +439,14 @@ napi_value NapiTask::Search(napi_env env, napi_callback_info info)
         return napi_ok;
     };
     auto output = [context](napi_env env, napi_value *result) -> napi_status {
-        if (context->result != E_OK) {
+        if (context->retCode != E_OK) {
             return napi_generic_failure;
         }
         *result = NapiUtils::Convert2JSValue(env, context->tids);
         return napi_ok;
     };
     auto exec = [context](AsyncCall::Context *ctx) {
-        context->result = TaskManager::Get().Search(context->filter, context->tids);
+        context->retCode = TaskManager::Get().Search(context->filter, context->tids);
     };
     context->SetAction(input, output);
     AsyncCall asyncCall(env, info, context);

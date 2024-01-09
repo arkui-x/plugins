@@ -47,12 +47,7 @@ int32_t TaskManager::Remove(int64_t taskId)
         REQUEST_HILOGE("TaskManager invalid adapter");
         return E_SERVICE_ERROR;
     }
-    auto ret = adapter_->Remove(taskId);
-    if (ret != E_OK) {
-        REQUEST_HILOGE("fail to remove task");
-        return E_SERVICE_ERROR;
-    }
-    return E_OK;
+    return adapter_->Remove(taskId);
 }
 
 int32_t TaskManager::GetTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info)
@@ -80,6 +75,21 @@ int32_t TaskManager::Search(const Filter &filter, std::vector<std::string> &task
     auto ret = adapter_->Search(filter, taskIdList);
     if (ret != E_OK) {
         REQUEST_HILOGE("fail to search task");
+        return E_SERVICE_ERROR;
+    }
+    return E_OK;
+}
+
+int32_t TaskManager::GetDefaultStoragePath(std::string& path)
+{
+    REQUEST_HILOGI("get default storage path");
+    if (adapter_ == nullptr) {
+        REQUEST_HILOGE("TaskManager invalid adapter");
+        return E_SERVICE_ERROR;
+    }
+    auto ret = adapter_->GetDefaultStoragePath(path);
+    if (ret != E_OK) {
+        REQUEST_HILOGE("fail to get default storage path");
         return E_SERVICE_ERROR;
     }
     return E_OK;
