@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface DBManager : NSObject
 + (DBManager *)shareManager;
 
-- (BOOL)initDb;
+- (BOOL)initDB;
 - (int64_t)insert:(IosTaskInfo *)taskInfo;
 - (NSArray *)queryAll;
 - (IosTaskInfo *)queryWithTaskId:(int64_t)taskId;

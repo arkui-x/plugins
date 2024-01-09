@@ -48,23 +48,23 @@
 }
 
 - (void)initWithDictionary:(NSDictionary *)jsonDict {
-    self.action = jsonDict[@"action"];
+    self.action = [jsonDict[@"action"] intValue];
     self.url = jsonDict[@"url"];
-    self.version = jsonDict[@"version"];
-    self.mode = jsonDict[@"mode"];
-    self.network = jsonDict[@"network"];
-    self.index = jsonDict[@"index"];
-    self.begins = jsonDict[@"begins"];
-    self.ends = jsonDict[@"ends"];
-    self.priority = jsonDict[@"priority"];
-    self.overwrite = jsonDict[@"overwrite"];
-    self.metered = jsonDict[@"metered"];
-    self.roaming = jsonDict[@"roaming"];
-    self.retry = jsonDict[@"retry"];
-    self.redirect = jsonDict[@"redirect"];
-    self.gauge = jsonDict[@"gauge"];
-    self.precise = jsonDict[@"precise"];
-    self.background = jsonDict[@"background"];
+    self.version = [jsonDict[@"version"] intValue];
+    self.mode = [jsonDict[@"mode"] intValue];
+    self.network = [jsonDict[@"network"] intValue];
+    self.index = [jsonDict[@"index"] intValue];
+    self.begins = [jsonDict[@"begins"] intValue];
+    self.ends = [jsonDict[@"ends"] intValue];
+    self.priority = [jsonDict[@"priority"] intValue];
+    self.overwrite = [jsonDict[@"overwrite"] boolValue];
+    self.metered = [jsonDict[@"metered"] boolValue];
+    self.roaming = [jsonDict[@"roaming"] boolValue];
+    self.retry = [jsonDict[@"retry"] boolValue];
+    self.redirect = [jsonDict[@"redirect"] boolValue];
+    self.gauge = [jsonDict[@"gauge"] boolValue];
+    self.precise = [jsonDict[@"precise"] boolValue];
+    self.background = [jsonDict[@"background"] boolValue];
     self.title = jsonDict[@"title"];
     self.saveas = jsonDict[@"saveas"];
     self.realPath = jsonDict[@"realPath"];
@@ -96,7 +96,6 @@
     struct timespec ts;  
     clock_gettime(CLOCK_REALTIME, &ts);  
     long long milliseconds = (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-    NSTimeInterval current = [[NSDate date] timeIntervalSince1970];
     info.ctime = milliseconds;
     info.mtime = milliseconds;
     info.faults = FaultsOthers;

@@ -31,7 +31,7 @@ int64_t IosTaskDao::CreateTask(const Config &config)
 {
     REQUEST_HILOGI("CreateTask enter");
 
-    if (![[DBManager shareManager] initDb]) {
+    if (![[DBManager shareManager] initDB]) {
         REQUEST_HILOGE("Failed to init database");
         return INVALID_TASK_ID;
     }

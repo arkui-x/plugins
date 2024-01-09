@@ -39,11 +39,18 @@ static DBManager *instance;
     instance = nil;
 }
 
-- (BOOL)initDb {
+- (BOOL)initDB {
     // 获得沙盒中的数据库文件名
     dbPath_ = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]
         stringByAppendingPathComponent:@"task.db"];
-    if (![self openDb]) {
+    
+    sqlite3_shutdown();
+    if (sqlite3_config(SQLITE_CONFIG_SERIALIZED) != SQLITE_OK) {
+        NSLog(@"Failed to sqlite3_config serialized");
+    }
+    sqlite3_initialize();
+    
+    if (![self openDB]) {
         return NO;
     }
     const char *sql = "CREATE TABLE IF NOT EXISTS Task (tid INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -73,7 +80,7 @@ static DBManager *instance;
 
 - (int64_t)insert:(IosTaskInfo *)taskInfo {
     NSLog(@"insert db");
-    if (![self openDb]) {
+    if (![self openDB]) {
         return -1;
     }
     const char *sql = "INSERT INTO Task (saveas, url, data, title, description, action1, "
@@ -81,7 +88,7 @@ static DBManager *instance;
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"Failed to execute sqlite3_prepare_v2, %@", sqlite3_errmsg(db_));
+        NSLog(@"Failed to execute sqlite3_prepare_v2");
         return -1;
     }
     sqlite3_bind_text(stmt, 1, [taskInfo.saveas UTF8String], -1, NULL);
@@ -111,7 +118,7 @@ static DBManager *instance;
 - (NSArray *)queryAll {
     NSLog(@"queryAll");
 
-    if (![self openDb]) {
+    if (![self openDB]) {
         return nil;
     }
     const char *sql = "SELECT * FROM Task;";
@@ -129,7 +136,7 @@ static DBManager *instance;
 - (IosTaskInfo *)queryWithTaskId:(int64_t)taskId {
     NSLog(@"queryWithTaskId, taskId:%lld", taskId);
 
-    if (![self openDb]) {
+    if (![self openDB]) {
         return nil;
     }
     const char *sql = "SELECT * FROM Task WHERE tid=?;";
@@ -152,7 +159,7 @@ static DBManager *instance;
 - (IosTaskInfo *)queryWithToken:(NSString *)token taskId:(int64_t)taskId {
     NSLog(@"queryWithToken, taskId:%lld, token:%@", taskId, token);
 
-    if (![self openDb]) {
+    if (![self openDB]) {
         return nil;
     }
     const char *sql = "SELECT * FROM Task WHERE tid=? AND token=?;";
@@ -178,7 +185,7 @@ static DBManager *instance;
     if (!filter) {
         return nil;
     }
-    if (![self openDb]) {
+    if (![self openDB]) {
         return nil;
     }
 
@@ -232,7 +239,8 @@ static DBManager *instance;
     if (!taskInfo) {
         return NO;
     }
-    if (![self openDb]) {
+
+    if (![self openDB]) {
         return NO;
     }
 
@@ -275,7 +283,7 @@ static DBManager *instance;
 - (BOOL)remove:(int64_t)taskId {
     NSLog(@"remove, taskId:%lld", taskId);
 
-    if (![self openDb]) {
+    if (![self openDB]) {
         return NO;
     }
     const char *sql = "DELETE FROM Task WHERE tid=?;";
@@ -299,7 +307,10 @@ static DBManager *instance;
 
 #pragma mark - Private Methods
 
-- (BOOL)openDb {
+- (BOOL)openDB {
+    if (db_) {
+        return YES;
+    }
     if (sqlite3_open([dbPath_ UTF8String], &db_) != SQLITE_OK) {
         NSLog(@"Failed to open database, %@", sqlite3_errmsg(db_));
         sqlite3_close(db_);
