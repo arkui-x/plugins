@@ -269,7 +269,7 @@ napi_value JsTask::Exec(napi_env env, napi_callback_info info, const std::string
         return ParseInputParameters(env, argc, self, context);
     };
     auto output = [context, execType](napi_env env, napi_value *result) -> napi_status {
-        if (context->result != E_OK) {
+        if (context->retCode != E_OK) {
             return napi_generic_failure;
         }
         return GetResult(env, context, execType, *result);
@@ -277,7 +277,7 @@ napi_value JsTask::Exec(napi_env env, napi_callback_info info, const std::string
     auto exec = [context, execType](AsyncCall::Context *ctx) {
         auto handle = functionMap_.find(execType);
         if (handle != functionMap_.end()) {
-            context->result = handle->second(context);
+            context->retCode = handle->second(context);
         }
     };
 

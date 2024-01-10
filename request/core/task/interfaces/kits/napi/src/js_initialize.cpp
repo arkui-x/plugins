@@ -587,13 +587,28 @@ void JsInitialize::InterceptData(const std::string &str, const std::string &in, 
 bool JsInitialize::Convert2FileSpec(napi_env env, napi_value jsValue, const std::string &name, FileSpec &file)
 {
     REQUEST_HILOGI("Convert2FileSpec in");
+
     file.name = name;
-    file.uri = NapiUtils::Convert2String(env, jsValue, "path");
-    if (file.uri.empty()) {
-        return false;
-    }
     file.filename = NapiUtils::Convert2String(env, jsValue, "filename");
     file.type = NapiUtils::Convert2String(env, jsValue, "mimetype");
+
+    std::string defaultStoragePath;
+    TaskManager::Get().GetDefaultStoragePath(defaultStoragePath);
+    file.uri = NapiUtils::Convert2String(env, jsValue, "path");
+    if (file.uri.empty() || file.uri == "./" || file.uri == ".") {
+        file.uri = defaultStoragePath + "/" + file.filename;
+    }
+    else {
+        if ((file.uri.length() > 2) && (file.uri[0] == '.') && (file.uri[1] == '/')) {
+            file.uri = defaultStoragePath + std::string(file.uri, 1);
+        }
+        else if (file.uri[0] != '/') {
+        file.uri = defaultStoragePath + "/" + file.uri;
+        }
+    }
+
+    REQUEST_HILOGI("Convert2FileSpec file name: %{public}s fileName: %{public}s uri: %{public}s", 
+    file.name.c_str(), file.filename.c_str(), file.uri.c_str());
     return true;
 }
 

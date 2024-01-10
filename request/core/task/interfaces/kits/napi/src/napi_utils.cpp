@@ -483,10 +483,10 @@ napi_value CreateBusinessError(napi_env env, ExceptionErrorCode errorCode, const
     napi_value codeValue = nullptr;
     napi_value message = nullptr;
     auto iter = ErrorCodeToMsg.find(errorCode);
-    std::string errCode = std::to_string(errorCode);
+    // std::string errCode = std::to_string(errorCode);
     std::string strMsg = (iter != ErrorCodeToMsg.end() ? iter->second : "") + msg;
     NAPI_CALL(env, napi_create_string_utf8(env, strMsg.c_str(), strMsg.length(), &message));
-    NAPI_CALL(env, napi_create_string_utf8(env, errCode.c_str(), errCode.length(), &codeValue));
+    NAPI_CALL(env, napi_create_int32(env, errorCode, &codeValue));
     NAPI_CALL(env, napi_create_error(env, codeValue, message, &result));
     return result;
 }

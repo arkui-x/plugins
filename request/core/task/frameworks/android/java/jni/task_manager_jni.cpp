@@ -407,7 +407,7 @@ int32_t TaskManagerJni::Show(int64_t taskId, TaskInfo &info)
     auto infoJson = Json::parse(JavaStringToString(env, taskInfo).c_str(), nullptr, false);
     if (infoJson.is_null() || infoJson.is_discarded()) {
         REQUEST_HILOGE("invalid json of task info");
-        return E_SERVICE_ERROR;
+        return E_TASK_NOT_FOUND;
     }
     info = infoJson.get<TaskInfo>();
     REQUEST_HILOGI("TaskManagerJni JNI: execute show task success.");
@@ -434,7 +434,7 @@ int32_t TaskManagerJni::Touch(int64_t taskId, const std::string &token, TaskInfo
     auto infoJson = Json::parse(JavaStringToString(env, taskInfo).c_str(), nullptr, false);
     if (infoJson.is_null() || infoJson.is_discarded()) {
         REQUEST_HILOGE("invalid json of task info");
-        return E_SERVICE_ERROR;
+        return E_TASK_NOT_FOUND;
     }
     info = infoJson.get<TaskInfo>();
     REQUEST_HILOGI("TaskManagerJni JNI: execute touch task success.");

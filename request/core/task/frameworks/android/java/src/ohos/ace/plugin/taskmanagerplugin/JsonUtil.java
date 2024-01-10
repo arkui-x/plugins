@@ -38,7 +38,7 @@ public class JsonUtil {
      * @return Config
      */
     public static Config jsonToConfig(String configJson) {
-        if (configJson == null) {
+        if (configJson == null || configJson.isEmpty()) {
             return null;
         }
         Config config = null;
@@ -211,7 +211,7 @@ public class JsonUtil {
     }
 
     public static TaskState convertJsonToTaskState(String jsonTaskState) {
-        if (jsonTaskState == null) {
+        if (jsonTaskState == null || jsonTaskState.isEmpty()) {
             return null;
         }
         try {
@@ -539,7 +539,7 @@ public class JsonUtil {
 
     public static List<FormItem> jsonToFormList(String json) {
         List<FormItem> formItems = new ArrayList<>();
-        if (json == null) {
+        if (json == null || json.isEmpty()) {
             return formItems;
         }
         try {
