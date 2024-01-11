@@ -55,7 +55,6 @@ private:
     };
     enum { BOOL_RES, STR_RES, INFO_RES };
     struct ExecContext : public AsyncCall::Context {
-        int32_t result = E_OK;
         ITask *task = nullptr;
         bool boolRes = false;
         std::string strRes = "";
