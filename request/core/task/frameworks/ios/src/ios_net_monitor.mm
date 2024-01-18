@@ -62,7 +62,7 @@ void IosNetMonitor::RemoveObserver(IosNetMonitorObserver *observer)
 void IosNetMonitor::StartMonitoring()
 {
     [[OHNetStatusMonitor sharedMonitor] setNetStatusChangeBlock:^(OHNetStatus status) {
-        REQUEST_HILOGI("Reachability: %{public}s", [OHStringFromNetworkReachabilityStatus(status) UTF8String]);
+        REQUEST_HILOGI("Reachability: %{public}s", OHStringFromNetworkReachabilityStatus(status).UTF8String);
         switch (status) {
             case OHNetStatusReachableViaWiFi: {
                 networkType_ = NETWORK_WIFI;

@@ -18,19 +18,17 @@ package ohos.ace.plugin.taskmanagerplugin;
 import static ohos.ace.plugin.taskmanagerplugin.IConstant.TAG;
 
 import android.content.Context;
-import android.os.Build;
-import android.os.Environment;
+import android.graphics.drawable.Icon;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.function.Supplier;
-import java.util.Arrays;
 
 public class JavaTaskImpl {
     private DownloadImpl mDownloadImpl;
@@ -194,6 +192,7 @@ public class JavaTaskImpl {
     }
 
     public void reportTaskInfo(String taskInfoJson) {
+        Log.i(TAG, "reportTaskInfo: " + taskInfoJson);
         TaskInfo taskInfo = JsonUtil.jsonToTaskInfo(taskInfoJson);
         if (taskInfo == null) {
             Log.i(TAG, "reportTaskInfo: task info is null");
@@ -204,6 +203,7 @@ public class JavaTaskImpl {
 
     public String show(long taskId) {
         Log.i(TAG, "show: " + taskId);
+        mDownloadImpl.postQueryProgressByTid(taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
@@ -227,6 +227,7 @@ public class JavaTaskImpl {
 
     public String touch(long taskId, String token) {
         Log.i(TAG, "touch: " + taskId);
+        mDownloadImpl.postQueryProgressByTid(taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.queryByToken(mContext, taskId, token));
         TaskInfo taskInfo = null;
         try {
@@ -246,6 +247,7 @@ public class JavaTaskImpl {
 
     public long[] search(String filterJson) {
         Log.i(TAG, "search: " + filterJson);
+        mDownloadImpl.postQueryProgress();
         List<Long> taskIdList = new ArrayList<>();
         Filter filter = JsonUtil.jsonToFilter(filterJson);
         CompletableFuture<List<Long>> future = CompletableFuture.supplyAsync(() -> TaskDao.queryByFilter(mContext, filter));
@@ -264,8 +266,7 @@ public class JavaTaskImpl {
     }
 
     public String getDefaultStoragePath() {
-        Log.i(TAG, "getDefaultStoragePath in");
-        File file = mContext.getFilesDir();
+        File file = mContext.getCacheDir();
         if (file != null) {
             return file.getAbsolutePath();
         }
@@ -273,13 +274,27 @@ public class JavaTaskImpl {
     }
 
     public static void updateTaskInfo(TaskInfo taskInfo) {
-        Executors.newCachedThreadPool().submit(() -> TaskDao.update(mContext, taskInfo));
+        TaskDao.update(mContext, taskInfo);
+    }
+
+    public void jniInit() {
+        Log.i(TAG, "jniInit: ");
+        if (!IConstant.isAndroidDebug) {
+            nativeInit();
+        }
+    }
+
+    public void jniOnRequestCallback(long taskId, String eventType, String taskInfoJson) {
+        Log.i(TAG, "jniOnRequestCallback: taskId:" + taskId + ",eventType:" + eventType + ",taskInfoJson:" + taskInfoJson);
+        if (!IConstant.isAndroidDebug) {
+            onRequestCallback(taskId, eventType, taskInfoJson);
+        }
     }
 
     /**
      * Register the initialization method of the plugin for the plugin constructor to call
      */
-    protected native void nativeInit();
+    private native void nativeInit();
 
-    public native void onRequestCallback(long taskId, String eventType, String taskInfoJson);
+    private native void onRequestCallback(long taskId, String eventType, String taskInfoJson);
 }

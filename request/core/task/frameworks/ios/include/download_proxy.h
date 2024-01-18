@@ -34,13 +34,18 @@ public:
     int32_t Stop(int64_t taskId) override;
 
 private:
+    void InitTaskInfo(const Config &config, TaskInfo &info);
     void PushNotification(BOOL isFailed);
     void CompletionHandler(NSURLResponse *response, NSURL *filePath, NSError *error);
     void PushNotification(NSString *fileName, NSValue *result);
     void ReportMimeType(NSURLResponse *response);
     void OnCompletedCallback();
     void OnProgressCallback(NSProgress *downloadProgress);
-    void GetFileSize(const std::string &fileUrl);
+    void OnFailedCallback();
+    void OnPauseCallback();
+    bool CheckUrl(const std::string &strUrl);
+    void SetSizes(int64_t fileSize);
+    void GetFileSize(const std::string &downloadUrl);
 
 private:
     Config config_;
@@ -48,10 +53,10 @@ private:
     OHSessionManager *sessionCtrl_ = nil;
     NSURLSessionDownloadTask *downloadTask_ = nil;
     NSData *resumeData_ = nil;
-    bool isSuspendByNetwork_ = false;
     bool isMimeReported_ = false;
     OnRequestCallback callback_ = nullptr;
     int64_t taskId_ = INVALID_TASK_ID;
+    int64_t downloadTotalBytes_ = 0;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_DOWNLOAD_PROXY_H

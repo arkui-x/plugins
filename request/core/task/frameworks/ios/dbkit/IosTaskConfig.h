@@ -29,7 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) int index;
 @property (nonatomic, assign) int begins;
 @property (nonatomic, assign) int ends;
-@property (nonatomic, assign) int priority;
 @property (nonatomic, assign) bool overwrite;
 @property (nonatomic, assign) bool metered;
 @property (nonatomic, assign) bool roaming;

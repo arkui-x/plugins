@@ -30,7 +30,7 @@ enum class Action : uint32_t {
 };
 
 enum class Mode : uint32_t {
-    FOREGROUND,
+    FOREGROUND = 1,
     ANY,
 };
 
@@ -387,6 +387,8 @@ static constexpr const char *EVENT_FAIL = "fail";
 static constexpr const char *METHOD_GET = "GET";
 static constexpr const char *METHOD_PUT = "PUT";
 static constexpr const char *METHOD_POST = "POST";
+
+static const std::string SANDBOX_CACHE_PATH = "internal://cache";
 } // namespace OHOS::Plugin::Request
 
 #endif // PLUGINS_REQUEST_CONSTANT_H

@@ -52,17 +52,12 @@ int32_t TaskManager::Remove(int64_t taskId)
 
 int32_t TaskManager::GetTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info)
 {
-    REQUEST_HILOGI("Get Task Info: [%{public}ld]", taskId);
+    REQUEST_HILOGI("Get Task Info: [%{public}ld], token: %{public}s", taskId, token.c_str());
     if (adapter_ == nullptr) {
         REQUEST_HILOGE("TaskManager invalid adapter");
         return E_SERVICE_ERROR;
     }
-    auto ret = adapter_->GetTaskInfo(taskId, token, info);
-    if (ret != E_OK) {
-        REQUEST_HILOGE("fail to get task info");
-        return E_SERVICE_ERROR;
-    }
-    return E_OK;
+    return adapter_->GetTaskInfo(taskId, token, info);
 }
 
 int32_t TaskManager::Search(const Filter &filter, std::vector<std::string> &taskIdList)
@@ -71,8 +66,8 @@ int32_t TaskManager::Search(const Filter &filter, std::vector<std::string> &task
     REQUEST_HILOGI("filter before: %{public}lld", filter.before);
     REQUEST_HILOGI("filter after: %{public}lld", filter.after);
     REQUEST_HILOGI("filter state: %{public}d", static_cast<int32_t>(filter.state));
-    REQUEST_HILOGI("filter state: %{public}d", static_cast<int32_t>(filter.action));
-    REQUEST_HILOGI("filter state: %{public}d", static_cast<int32_t>(filter.mode));
+    REQUEST_HILOGI("filter action: %{public}d", static_cast<int32_t>(filter.action));
+    REQUEST_HILOGI("filter mode: %{public}d", static_cast<int32_t>(filter.mode));
 
     if (adapter_ == nullptr) {
         REQUEST_HILOGE("TaskManager invalid adapter");

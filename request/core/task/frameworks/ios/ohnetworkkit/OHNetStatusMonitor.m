@@ -111,7 +111,7 @@ static void OHNetworkReachabilityReleaseCallback(const void *info) {
 
 + (instancetype)monitorForDomain:(NSString *)domain {
     SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault,
-        [domain UTF8String]);
+        domain.UTF8String);
     OHNetStatusMonitor *monitor = [[self alloc] initWithReachability:reachability];
     CFRelease(reachability);
     return monitor;

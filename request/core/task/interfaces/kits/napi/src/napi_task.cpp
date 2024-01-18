@@ -91,6 +91,10 @@ napi_value NapiTask::JsMain(napi_env env, napi_callback_info info, Version versi
             return napi_generic_failure;
         }
         napi_unwrap(env, jsTask, reinterpret_cast<void **>(&context->task));
+        if (context->task == nullptr) {
+            REQUEST_HILOGE("Get c++ task failed");
+            return napi_generic_failure;
+        }
         napi_create_reference(env, jsTask, 1, &(context->taskRef));
         return napi_ok;
     };
@@ -210,11 +214,7 @@ napi_value NapiTask::Remove(napi_env env, napi_callback_info info)
     auto context = std::make_shared<RemoveContext>();
     context->version = Version::API10;
     auto input = [context](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
-        if (!ParseTid(env, argc, argv, context->tid)) {
-            NapiUtils::ThrowError(env, E_PARAMETER_CHECK, "Parse tid fail!");
-            return napi_invalid_arg;
-        }
-        return napi_ok;
+        return ParseTid(env, argc, argv, context->tid) ? napi_ok : napi_invalid_arg;
     };
     auto output = [context](napi_env env, napi_value *result) -> napi_status {
         if (context->retCode != E_OK) {
@@ -255,11 +255,7 @@ napi_value NapiTask::Show(napi_env env, napi_callback_info info)
     REQUEST_HILOGI("JsShow in");
     auto context = std::make_shared<TouchContext>();
     auto input = [context](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
-        if (!ParseTid(env, argc, argv, context->tid)) {
-            NapiUtils::ThrowError(env, E_PARAMETER_CHECK, "Parse tid fail!");
-            return napi_invalid_arg;
-        }
-        return napi_ok;
+        return ParseTid(env, argc, argv, context->tid) ? napi_ok : napi_invalid_arg;
     };
     return TouchInner(env, info, std::move(input), std::move(context));
 }
@@ -269,12 +265,7 @@ napi_value NapiTask::Touch(napi_env env, napi_callback_info info)
     REQUEST_HILOGI("JsTouch in");
     auto context = std::make_shared<TouchContext>();
     auto input = [context](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
-        bool ret = ParseTouch(env, argc, argv, context);
-        if (!ret) {
-            NapiUtils::ThrowError(env, E_PARAMETER_CHECK, "Parse tid or token fail!");
-            return napi_invalid_arg;
-        }
-        return napi_ok;
+        return ParseTouch(env, argc, argv, context) ? napi_ok : napi_invalid_arg;
     };
     return TouchInner(env, info, std::move(input), std::move(context));
 }
@@ -324,7 +315,6 @@ bool NapiTask::ParseTouch(napi_env env, size_t argc, napi_value *argv, std::shar
         return false;
     }
     context->token = token.data();
-    memset_s(token.data(), token.size(), 0, token.size());
     return true;
 }
 
@@ -431,12 +421,7 @@ napi_value NapiTask::Search(napi_env env, napi_callback_info info)
     auto context = std::make_shared<SearchContext>();
     context->version = Version::API10;
     auto input = [context](napi_env env, size_t argc, napi_value *argv, napi_value self) -> napi_status {
-        bool ret = ParseSearch(env, argc, argv, context->filter);
-        if (!ret) {
-            NapiUtils::ThrowError(env, E_PARAMETER_CHECK, "Parse filter fail!");
-            return napi_invalid_arg;
-        }
-        return napi_ok;
+        return ParseSearch(env, argc, argv, context->filter) ? napi_ok : napi_invalid_arg;
     };
     auto output = [context](napi_env env, napi_value *result) -> napi_status {
         if (context->retCode != E_OK) {

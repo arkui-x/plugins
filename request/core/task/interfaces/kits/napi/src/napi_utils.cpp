@@ -362,7 +362,6 @@ napi_value Convert2JSValue(napi_env env, TaskInfo &taskInfo)
     napi_set_named_property(env, value, "mimeType", Convert2JSValue(env, taskInfo.mimeType));
     napi_set_named_property(env, value, "progress", Convert2JSValue(env, taskInfo.progress));
     napi_set_named_property(env, value, "gauge", Convert2JSValue(env, taskInfo.gauge));
-    napi_set_named_property(env, value, "priority", Convert2JSValue(env, taskInfo.priority));
     napi_set_named_property(env, value, "ctime", Convert2JSValue(env, taskInfo.ctime));
     napi_set_named_property(env, value, "mtime", Convert2JSValue(env, taskInfo.mtime));
     napi_set_named_property(env, value, "retry", Convert2JSValue(env, taskInfo.retry));
@@ -466,14 +465,18 @@ std::string Convert2String(napi_env env, napi_value object, const std::string &p
     return Convert2String(env, value);
 }
 
-void ThrowError(napi_env env, ExceptionErrorCode code, const std::string &msg)
+void ThrowError(napi_env env, ExceptionErrorCode errorCode, const std::string &errMsg)
 {
-    std::string errorCode = std::to_string(code);
-    auto iter = ErrorCodeToMsg.find(code);
-    std::string strMsg = (iter != ErrorCodeToMsg.end() ? iter->second : "") + ": " + msg;
-    napi_status status = napi_throw_error(env, errorCode.c_str(), strMsg.c_str());
-    if (status != napi_ok) {
-        REQUEST_HILOGE("Failed to napi_throw_error");
+    napi_value businessError = nullptr;
+    napi_value codeValue = nullptr;
+    napi_value message = nullptr;
+    napi_create_int32(env, errorCode, &codeValue);
+    napi_create_string_utf8(env, errMsg.c_str(), errMsg.length(), &message);
+    napi_create_error(env, nullptr, message, &businessError);
+    napi_set_named_property(env, businessError, "code", codeValue);
+    napi_status throwStatus = napi_throw(env, businessError);
+    if (throwStatus != napi_ok) {
+        REQUEST_HILOGE("Failed to throw an exception, %{public}d, code = %{public}s", throwStatus, errMsg.c_str());
     }
 }
 
@@ -483,11 +486,11 @@ napi_value CreateBusinessError(napi_env env, ExceptionErrorCode errorCode, const
     napi_value codeValue = nullptr;
     napi_value message = nullptr;
     auto iter = ErrorCodeToMsg.find(errorCode);
-    // std::string errCode = std::to_string(errorCode);
-    std::string strMsg = (iter != ErrorCodeToMsg.end() ? iter->second : "") + msg;
+    std::string strMsg = iter != ErrorCodeToMsg.end() ? iter->second : "general error";
     NAPI_CALL(env, napi_create_string_utf8(env, strMsg.c_str(), strMsg.length(), &message));
     NAPI_CALL(env, napi_create_int32(env, errorCode, &codeValue));
-    NAPI_CALL(env, napi_create_error(env, codeValue, message, &result));
+    NAPI_CALL(env, napi_create_error(env, nullptr, message, &result));
+    napi_set_named_property(env, result, "code", codeValue);
     return result;
 }
 

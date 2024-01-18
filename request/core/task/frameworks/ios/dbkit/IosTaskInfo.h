@@ -33,12 +33,36 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) NSString *mimeType;
 @property (nonatomic, assign) int state;
 @property (nullable, nonatomic, copy) NSString *progress;
-@property (nonatomic) int64_t ctime;
-@property (nonatomic) int64_t mtime;
-@property (nonatomic) int faults;
+@property (nonatomic, assign) int64_t ctime;
+@property (nonatomic, assign) int64_t mtime;
+@property (nonatomic, assign) int faults;
 @property (nullable, nonatomic, copy) NSString *reason;
 @property (nullable, nonatomic, copy) NSString *taskStates;
+@property (nonatomic, assign) int downloadId;
 @property (nullable, nonatomic, copy) NSString *token;
+@property (nonatomic, assign) bool roaming;
+@property (nonatomic, assign) bool metered;
+@property (nonatomic, assign) int network;
+@property (nullable, nonatomic, copy) NSString *headers;
+@property (nonatomic, assign) int version;
+@property (nonatomic, assign) int index;
+@property (nonatomic, assign) int64_t begins;
+@property (nonatomic, assign) int64_t ends;
+@property (nonatomic, assign) bool overwrite;
+@property (nonatomic, assign) bool retry;
+@property (nonatomic, assign) bool redirect;
+@property (nonatomic, assign) bool gauge;
+@property (nonatomic, assign) bool precise;
+@property (nonatomic, assign) bool background;
+@property (nullable, nonatomic, copy) NSString *method;
+@property (nullable, nonatomic, copy) NSString *forms;
+@property (nullable, nonatomic, copy) NSString *files;
+@property (nullable, nonatomic, copy) NSString *bodyFds;
+@property (nullable, nonatomic, copy) NSString *bodyFileNames;
+@property (nonatomic, assign) int tries;
+@property (nonatomic, assign) int code;
+@property (nonatomic, assign) bool withSystem;
+@property (nullable, nonatomic, copy) NSString *extras;
 @end
 
 NS_ASSUME_NONNULL_END

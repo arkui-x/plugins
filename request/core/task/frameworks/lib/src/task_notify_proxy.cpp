@@ -20,13 +20,13 @@
 namespace OHOS::Plugin::Request {
 TaskNotifyProxy::TaskNotifyProxy(std::shared_ptr<TaskNotifyInterface> listener)
 {
-    listenerSet_.emplace(listener);
+    listenerList_.emplace_back(listener);
 }
 
 TaskNotifyProxy::~TaskNotifyProxy()
 {
     std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-    listenerSet_.clear();
+    listenerList_.clear();
 }
 
 int32_t TaskNotifyProxy::AddSubListener(std::shared_ptr<TaskNotifyInterface> listener)
@@ -37,12 +37,8 @@ int32_t TaskNotifyProxy::AddSubListener(std::shared_ptr<TaskNotifyInterface> lis
     }
 
     std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-    auto it = listenerSet_.find(listener);
-    if (it != listenerSet_.end()) {
-        REQUEST_HILOGE("duplicate listener");
-        return E_PARAMETER_CHECK;
-    }
-    listenerSet_.emplace(listener);
+
+    listenerList_.emplace_back(listener);
     return E_OK;
 }
 
@@ -54,25 +50,28 @@ int32_t TaskNotifyProxy::RemoveSubListener(std::shared_ptr<TaskNotifyInterface> 
     }
 
     std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-    auto it = listenerSet_.find(listener);
-    if (it == listenerSet_.end()) {
-        REQUEST_HILOGE("invalid listener");
-        return E_PARAMETER_CHECK;
+    auto it = listenerList_.begin();
+    while (it != listenerList_.end()) {
+        if (*it == listener) {
+            it = listenerList_.erase(it);
+            return E_OK;
+        }
+        it++;
     }
-    listenerSet_.erase(it);
-    return E_OK;
+    REQUEST_HILOGE("invalid listener");
+    return E_PARAMETER_CHECK;
 }
 
 size_t TaskNotifyProxy::Size()
 {
     std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-    return listenerSet_.size();
+    return listenerList_.size();
 }
 
 void TaskNotifyProxy::OnCallback(const std::string &params)
 {
     std::lock_guard<std::recursive_mutex> autoLock(mutex_);
-    for (auto &listener : listenerSet_) {
+    for (auto &listener : listenerList_) {
         if (listener != nullptr) {
             listener->OnCallback(params);
         }

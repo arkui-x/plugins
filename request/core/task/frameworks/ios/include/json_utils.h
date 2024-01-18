@@ -25,11 +25,18 @@ public:
     JsonUtils() = default;
     virtual ~JsonUtils() = default;
 
+    static NSString *CStringToNSString(const std::string &str);
     static std::string TaskInfoToJsonString(const TaskInfo &info);
     static std::string ConfigToJsonString(const Config &config);
     static std::string ProgressToJsonString(const Progress &progress);
-    static std::string TaskStateToJsonStirng(const TaskState &state);
+    static std::string TaskStatesToJsonStirng(const std::vector<TaskState> &taskStates);
+    static std::string FilesToJsonStirng(const std::vector<FileSpec> &files);
+
     static void JsonStringToProgress(const std::string &jsonProgress, Progress &progress);
+    static void JsonStringToFiles(const std::string &jsonFiles, std::vector<FileSpec> &files);
+    static void JsonStringToForms(const std::string &jsonForms, std::vector<FormItem> &forms);
+    static void JsonStringToExtras(const std::string &jsonExtras, std::map<std::string, std::string> &extras);
+    static void JsonStringToTaskStates(const std::string &jsonTaskStates, std::vector<TaskState> &taskStates);
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_IOS_JSON_UTILS_H

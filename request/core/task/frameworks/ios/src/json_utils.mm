@@ -18,20 +18,29 @@
 
 namespace OHOS::Plugin::Request {
 using namespace std;
+
+NSString *JsonUtils::CStringToNSString(const string &str)
+{
+    if (str.c_str() != nullptr) {
+        return [NSString stringWithUTF8String:str.c_str()];
+    }
+    return @"";
+}
+
 string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
 {
-    NSMutableDictionary * dict = [NSMutableDictionary dictionary];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:[NSNumber numberWithInteger:(int)info.version] forKey:@"version"];
-    [dict setValue:[NSString stringWithUTF8String:info.url.c_str()] forKey:@"url"];
-    [dict setValue:[NSString stringWithUTF8String:info.data.c_str()] forKey:@"data"];
+    [dict setValue:CStringToNSString(info.url) forKey:@"url"];
+    [dict setValue:CStringToNSString(info.data) forKey:@"data"];
     // files
     NSMutableArray *filesArr = [NSMutableArray array];
     for (auto &file : info.files) {
         NSMutableDictionary *dictFile = [NSMutableDictionary dictionary];
-        [dictFile setValue:[NSString stringWithUTF8String:file.name.c_str()] forKey:@"name"];
-        [dictFile setValue:[NSString stringWithUTF8String:file.uri.c_str()] forKey:@"uri"];
-        [dictFile setValue:[NSString stringWithUTF8String:file.filename.c_str()] forKey:@"filename"];
-        [dictFile setValue:[NSString stringWithUTF8String:file.type.c_str()] forKey:@"type"];
+        [dictFile setValue:CStringToNSString(file.name) forKey:@"name"];
+        [dictFile setValue:CStringToNSString(file.uri) forKey:@"uri"];
+        [dictFile setValue:CStringToNSString(file.filename) forKey:@"filename"];
+        [dictFile setValue:CStringToNSString(file.type) forKey:@"type"];
         [dictFile setValue:[NSNumber numberWithInteger:file.fd] forKey:@"fd"];
         [filesArr addObject:dictFile];
     }
@@ -40,17 +49,17 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
     NSMutableArray *formsArr = [NSMutableArray array];
     for (auto &form : info.forms) {
         NSMutableDictionary *dictForm = [NSMutableDictionary dictionary];
-        [dictForm setValue:[NSString stringWithUTF8String:form.name.c_str()] forKey:@"name"];
-        [dictForm setValue:[NSString stringWithUTF8String:form.value.c_str()] forKey:@"value"];
+        [dictForm setValue:CStringToNSString(form.name) forKey:@"name"];
+        [dictForm setValue:CStringToNSString(form.value) forKey:@"value"];
         [formsArr addObject:dictForm];
     }
     [dict setObject:formsArr forKey:@"forms"];
-    [dict setValue:[NSString stringWithUTF8String:info.tid.c_str()] forKey:@"tid"];
-    [dict setValue:[NSString stringWithUTF8String:info.title.c_str()] forKey:@"title"];
-    [dict setValue:[NSString stringWithUTF8String:info.description.c_str()] forKey:@"desc"];
+    [dict setValue:CStringToNSString(info.tid) forKey:@"tid"];
+    [dict setValue:CStringToNSString(info.title) forKey:@"title"];
+    [dict setValue:CStringToNSString(info.description) forKey:@"desc"];
     [dict setValue:[NSNumber numberWithInteger:(int)info.action] forKey:@"action"];
     [dict setValue:[NSNumber numberWithInteger:(int)info.mode] forKey:@"mode"];
-    [dict setValue:[NSString stringWithUTF8String:info.mimeType.c_str()] forKey:@"mimeType"];
+    [dict setValue:CStringToNSString(info.mimeType) forKey:@"mimeType"];
     // progress
     NSMutableDictionary *dictProgress = [NSMutableDictionary dictionary];
     [dictProgress setValue:[NSNumber numberWithInteger:(int)info.progress.state] forKey:@"state"];
@@ -64,8 +73,8 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
     [dictProgress setObject:sizesArr forKey:@"sizes"];
     NSMutableDictionary *dictExtras = [NSMutableDictionary dictionary];
     for (auto it = info.progress.extras.begin(); it != info.progress.extras.end(); it++) {
-        NSString *key = [NSString stringWithUTF8String:it->first.c_str()];
-        NSString *value = [NSString stringWithUTF8String:it->second.c_str()];
+        NSString *key = CStringToNSString(it->first);
+        NSString *value = CStringToNSString(it->second);
         [dictExtras setValue:value forKey:key];
     }
     [dictProgress setObject:dictExtras forKey:@"extras"];
@@ -82,13 +91,12 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
     [dict setValue:[NSNumber numberWithInteger:info.tries] forKey:@"tries"];
     [dict setValue:[NSNumber numberWithInteger:(int)info.faults] forKey:@"faults"];
     [dict setValue:[NSNumber numberWithInteger:info.code] forKey:@"code"];
-    [dict setValue:[NSString stringWithUTF8String:info.reason.c_str()] forKey:@"reason"];
+    [dict setValue:CStringToNSString(info.reason) forKey:@"reason"];
     [dict setValue:[NSNumber numberWithInteger:info.withSystem] forKey:@"withSystem"];
-    [dict setValue:[NSNumber numberWithInteger:info.priority] forKey:@"priority"];
     NSMutableDictionary *dictInfoExtras = [NSMutableDictionary dictionary];
     for (auto it = info.extras.begin(); it != info.extras.end(); it++) {
-        NSString *key = [NSString stringWithUTF8String:it->first.c_str()];
-        NSString *value = [NSString stringWithUTF8String:it->second.c_str()];
+        NSString *key = CStringToNSString(it->first);
+        NSString *value = CStringToNSString(it->second);
         [dictInfoExtras setValue:value forKey:key];
     }
     [dict setObject:dictInfoExtras forKey:@"extras"];
@@ -96,9 +104,9 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
     NSMutableArray *taskStatesArr = [NSMutableArray array];
     for (auto &state : info.taskStates) {
         NSMutableDictionary *dictState = [NSMutableDictionary dictionary];
-        [dictState setValue:[NSString stringWithUTF8String:state.path.c_str()] forKey:@"path"];
+        [dictState setValue:CStringToNSString(state.path) forKey:@"path"];
         [dictState setValue:[NSNumber numberWithInteger:state.responseCode] forKey:@"responseCode"];
-        [dictState setValue:[NSString stringWithUTF8String:state.message.c_str()] forKey:@"message"];
+        [dictState setValue:CStringToNSString(state.message) forKey:@"message"];
         [taskStatesArr addObject:dictState];
     }
     [dict setObject:taskStatesArr forKey:@"taskStates"];
@@ -107,25 +115,24 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
         error:&error];
     if (!jsonData) {
-        REQUEST_HILOGE("Failed to translate TaskInfo dictionary to string");
+        NSLog(@"Failed to translate TaskInfo dictionary to string");
         return "";
     }
     NSString *strInfo = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    return [strInfo UTF8String];
+    return strInfo.UTF8String;
 }
 
 string JsonUtils::ConfigToJsonString(const Config &config)
 {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:[NSNumber numberWithInteger:(int)config.action] forKey: @"action"];
-    [dict setValue:[NSString stringWithUTF8String:config.url.c_str()] forKey: @"url"];
+    [dict setValue:CStringToNSString(config.url) forKey: @"url"];
     [dict setValue:[NSNumber numberWithInteger:(int)config.version] forKey: @"version"];
     [dict setValue:[NSNumber numberWithInteger:(int)config.mode] forKey: @"mode"];
     [dict setValue:[NSNumber numberWithInteger:(int)config.network] forKey: @"network"];
     [dict setValue:[NSNumber numberWithInteger:config.index] forKey: @"index"];
     [dict setValue:[NSNumber numberWithInteger:config.begins] forKey: @"begins"];
     [dict setValue:[NSNumber numberWithInteger:config.ends] forKey: @"ends"];
-    [dict setValue:[NSNumber numberWithInteger:config.priority] forKey: @"priority"];
     [dict setValue:[NSNumber numberWithInteger:config.overwrite] forKey: @"overwrite"];
     [dict setValue:[NSNumber numberWithInteger:config.metered] forKey: @"metered"];
     [dict setValue:[NSNumber numberWithInteger:config.roaming] forKey: @"roaming"];
@@ -134,17 +141,17 @@ string JsonUtils::ConfigToJsonString(const Config &config)
     [dict setValue:[NSNumber numberWithInteger:config.gauge] forKey: @"gauge"];
     [dict setValue:[NSNumber numberWithInteger:config.precise] forKey: @"precise"];
     [dict setValue:[NSNumber numberWithInteger:config.background] forKey: @"background"];
-    [dict setValue:[NSString stringWithUTF8String:config.title.c_str()] forKey: @"title"];
-    [dict setValue:[NSString stringWithUTF8String:config.saveas.c_str()] forKey: @"saveas"];
-    [dict setValue:[NSString stringWithUTF8String:config.method.c_str()] forKey: @"method"];
-    [dict setValue:[NSString stringWithUTF8String:config.data.c_str()] forKey: @"token"];
-    [dict setValue:[NSString stringWithUTF8String:config.description.c_str()] forKey: @"desc"];
-    [dict setValue:[NSString stringWithUTF8String:config.data.c_str()] forKey: @"data"];
+    [dict setValue:CStringToNSString(config.title) forKey: @"title"];
+    [dict setValue:CStringToNSString(config.saveas) forKey: @"saveas"];
+    [dict setValue:CStringToNSString(config.method) forKey: @"method"];
+    [dict setValue:CStringToNSString(config.token) forKey: @"token"];
+    [dict setValue:CStringToNSString(config.description) forKey: @"desc"];
+    [dict setValue:CStringToNSString(config.data) forKey: @"data"];
     // headers
     NSMutableDictionary *dictHeaders = [NSMutableDictionary dictionary];
     for (auto it = config.headers.begin(); it != config.headers.end(); it++) {
-        NSString *key = [NSString stringWithUTF8String:it->first.c_str()];
-        NSString *value = [NSString stringWithUTF8String:it->second.c_str()];
+        NSString *key = CStringToNSString(it->first);
+        NSString *value = CStringToNSString(it->second);
         [dictHeaders setValue:value forKey:key];
     }
     [dict setObject:dictHeaders forKey:@"headers"];
@@ -152,8 +159,8 @@ string JsonUtils::ConfigToJsonString(const Config &config)
     NSMutableArray *arrForms = [NSMutableArray array];
     for (auto &form : config.forms) {
         NSDictionary *dictFrom = @{
-            @"name":[NSString stringWithUTF8String:form.name.c_str()],
-            @"value":[NSString stringWithUTF8String:form.value.c_str()]
+            @"name":CStringToNSString(form.name),
+            @"value":CStringToNSString(form.value)
         };
         [arrForms addObject:dictFrom];
     }
@@ -162,10 +169,10 @@ string JsonUtils::ConfigToJsonString(const Config &config)
     NSMutableArray *arrFiles = [NSMutableArray array];
     for (auto &file : config.files) {
         NSDictionary *dictFile = @{
-            @"name":[NSString stringWithUTF8String:file.name.c_str()],
-            @"uri":[NSString stringWithUTF8String:file.uri.c_str()],
-            @"filename":[NSString stringWithUTF8String:file.filename.c_str()],
-            @"type":[NSString stringWithUTF8String:file.type.c_str()],
+            @"name":CStringToNSString(file.name),
+            @"uri":CStringToNSString(file.uri),
+            @"filename":CStringToNSString(file.filename),
+            @"type":CStringToNSString(file.type),
             @"fd":[NSNumber numberWithInteger:file.fd]
         };
         [arrFiles addObject:dictFile];
@@ -180,14 +187,14 @@ string JsonUtils::ConfigToJsonString(const Config &config)
     // bodyFileNames
     NSMutableArray *arrBodyFileNames = [NSMutableArray array];
     for (auto &name : config.bodyFileNames) {
-        [arrBodyFileNames addObject:[NSString stringWithUTF8String:name.c_str()]];
+        [arrBodyFileNames addObject:CStringToNSString(name)];
     }
     [dict setObject:arrBodyFileNames forKey:@"bodyFileNames"];
     // extras
     NSMutableDictionary *dictExtras = [NSMutableDictionary dictionary];
     for (auto it = config.extras.begin(); it != config.extras.end(); it++) {
-        NSString *key = [NSString stringWithUTF8String:it->first.c_str()];
-        NSString *value = [NSString stringWithUTF8String:it->second.c_str()];
+        NSString *key = CStringToNSString(it->first);
+        NSString *value = CStringToNSString(it->second);
         [dictExtras setValue:value forKey:key];
     }
     [dict setObject:dictExtras forKey:@"extras"];
@@ -196,11 +203,11 @@ string JsonUtils::ConfigToJsonString(const Config &config)
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
         error:&error];
     if (!jsonData) {
-        REQUEST_HILOGE("Failed to translate Config dictionary to string");
+        NSLog(@"Failed to translate Config dictionary to string");
         return "";
     }
     NSString *strConfig = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    return [strConfig UTF8String];
+    return strConfig.UTF8String;
 }
 
 string JsonUtils::ProgressToJsonString(const Progress &progress)
@@ -214,10 +221,11 @@ string JsonUtils::ProgressToJsonString(const Progress &progress)
     for (auto &size : progress.sizes) {
         [arrSizes addObject:[NSNumber numberWithInteger:size]];
     }
+    [dict setObject:arrSizes forKey:@"sizes"];
     NSMutableDictionary *dictExtras = [NSMutableDictionary dictionary];
     for (auto it = progress.extras.begin(); it != progress.extras.end(); ++it) {
-        NSString *key = [NSString stringWithUTF8String:it->first.c_str()];
-        NSString *value = [NSString stringWithUTF8String:it->second.c_str()];
+        NSString *key = CStringToNSString(it->first);
+        NSString *value = CStringToNSString(it->second);
         [dictExtras setValue:value forKey:key];
     }
     [dict setObject:dictExtras forKey:@"extras"];
@@ -232,40 +240,68 @@ string JsonUtils::ProgressToJsonString(const Progress &progress)
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
         error:&error];
     if (!jsonData) {
-        REQUEST_HILOGE("Failed to translate progress dictionary to string");
+        NSLog(@"Failed to translate progress dictionary to string");
         return "";
     }
     NSString *strProgress = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    return [strProgress UTF8String];
+    return strProgress.UTF8String;
 }
 
-string JsonUtils::TaskStateToJsonStirng(const TaskState &state)
+string JsonUtils::TaskStatesToJsonStirng(const std::vector<TaskState> &taskStates)
 {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setValue:[NSString stringWithUTF8String:state.path.c_str()] forKey:@"path"];
-    [dict setValue:[NSNumber numberWithInt:state.responseCode] forKey:@"responseCode"];
-    [dict setValue:[NSString stringWithUTF8String:state.message.c_str()] forKey:@"message"];
+    NSMutableArray *array = [NSMutableArray array];
+    for (auto &state : taskStates) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        [dict setValue:CStringToNSString(state.path) forKey:@"path"];
+        [dict setValue:[NSNumber numberWithInt:state.responseCode] forKey:@"responseCode"];
+        [dict setValue:CStringToNSString(state.message) forKey:@"message"];
+        [array addObject:dict];
+    }
 
-    NSError *error;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:array options:NSJSONWritingPrettyPrinted
         error:&error];
     if (!jsonData) {
-        REQUEST_HILOGE("Failed to translate progress dictionary to string");
+        NSLog(@"failed to translate taskStates array to string");
         return "";
     }
     NSString *strTaskState = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    return [strTaskState UTF8String];
+    return strTaskState.UTF8String;
+}
+
+std::string JsonUtils::FilesToJsonStirng(const std::vector<FileSpec> &files)
+{
+    NSMutableArray *array = [NSMutableArray array];
+    for (auto &file : files) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        [dict setValue:CStringToNSString(file.filename) forKey:@"filename"];
+        [dict setValue:CStringToNSString(file.name) forKey:@"name"];
+        [dict setValue:CStringToNSString(file.uri) forKey:@"uri"];
+        [dict setValue:CStringToNSString(file.type) forKey:@"type"];
+        [dict setValue:[NSNumber numberWithInt:file.fd] forKey:@"fd"];
+        [array addObject:dict];
+    }
+
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:array options:NSJSONWritingPrettyPrinted
+        error:&error];
+    if (!jsonData) {
+        NSLog(@"failed to translate taskStates array to string");
+        return "";
+    }
+    NSString *strFiles = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    return strFiles.UTF8String;
 }
 
 void JsonUtils::JsonStringToProgress(const string &jsonProgress, Progress &progress)
 {
-    NSString * jsonString = [NSString stringWithUTF8String:jsonProgress.c_str()];
+    NSString *jsonString = CStringToNSString(jsonProgress);
     NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
     NSError *error;
     NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
         error:&error];
     if (dict == nil) {
-        REQUEST_HILOGE("failed to get progress dict");
+        NSLog(@"failed to get progress dict");
         return;
     }
     progress.state = static_cast<State>([dict[@"state"] intValue]);
@@ -280,10 +316,9 @@ void JsonUtils::JsonStringToProgress(const string &jsonProgress, Progress &progr
     }
     NSDictionary *dictExtras = dict[@"extras"];
     if (dictExtras != nil) {
-        for(id item in dictExtras) {
-            string key = [item UTF8String];
-            string value = [dictExtras[item] UTF8String];
-            progress.extras.emplace(make_pair(key, value));
+        for (id key in dictExtras) {
+            string value = [dictExtras[key] UTF8String];
+            progress.extras.emplace(make_pair([key UTF8String], value));
         }
     }
     NSArray *bodyBytesArr = dict[@"bodyBytes"];
@@ -293,4 +328,84 @@ void JsonUtils::JsonStringToProgress(const string &jsonProgress, Progress &progr
         }
     }
 }
+
+void JsonUtils::JsonStringToFiles(const string &jsonFiles, vector<FileSpec> &files)
+{
+    NSLog(@"JsonStringToFiles jsonFiles:%s", jsonFiles.c_str());
+    NSString *jsonString = CStringToNSString(jsonFiles);
+    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error;
+    NSArray *array = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
+        error:&error];
+    if (array == nil) {
+        NSLog(@"failed to get files array");
+        return;
+    }
+    for (id dictFile : array) {
+        FileSpec file;
+        file.name = [dictFile[@"name"] UTF8String];
+        file.uri = [dictFile[@"uri"] UTF8String];
+        file.filename = [dictFile[@"filename"] UTF8String];
+        file.type = [dictFile[@"type"] UTF8String];
+        file.fd = [dictFile[@"fd"] intValue];
+        files.emplace_back(file);
+    }
+}
+
+void JsonUtils::JsonStringToForms(const string &jsonForms, vector<FormItem> &forms)
+{
+    NSString *jsonString = CStringToNSString(jsonForms);
+    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error;
+    NSArray *array = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
+        error:&error];
+    if (array == nil) {
+        NSLog(@"failed to get forms array");
+        return;
+    }
+    for (id dictForm : array) {
+        FormItem form;
+        form.name = [dictForm[@"name"] UTF8String];
+        form.value = [dictForm[@"value"] UTF8String];
+        forms.emplace_back(form);
+    }
+}
+
+void JsonUtils::JsonStringToExtras(const string &jsonExtras, map<string, string> &extras)
+{
+    NSString *jsonString = CStringToNSString(jsonExtras);
+    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error;
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
+        error:&error];
+    if (dict == nil) {
+        NSLog(@"failed to get extras dictionary");
+        return;
+    }
+    for (id key in dict) {
+        string value = [dict[key] UTF8String];
+        extras.emplace(make_pair([key UTF8String], value));
+    }
+}
+
+void JsonUtils::JsonStringToTaskStates(const string &jsonTaskStates, vector<TaskState> &taskStates)
+{
+    NSString *jsonString = CStringToNSString(jsonTaskStates);
+    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error;
+    NSArray *array = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
+        error:&error];
+    if (array == nil) {
+        NSLog(@"failed to get taskStates array");
+        return;
+    }
+    for (id dictTaskState : array) {
+        TaskState taskState;
+        taskState.path = [dictTaskState[@"path"] UTF8String];
+        taskState.responseCode = [dictTaskState[@"responseCode"] intValue];
+        taskState.message = [dictTaskState[@"message"] UTF8String];
+        taskStates.emplace_back(taskState);
+    }
+}
+
 }

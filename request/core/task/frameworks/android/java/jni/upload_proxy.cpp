@@ -100,10 +100,12 @@ uint32_t UploadProxy::ExecInner()
         if (UploadOneFile(info_.progress.index, file) != E_OK) {
             return E_SERVICE_ERROR;
         }
-        info_.progress.extras.clear();
-        info_.progress.bodyBytes.clear();
-        info_.progress.index++;
-        info_.progress.processed = 0;
+        if (info_.progress.index < info_.progress.sizes.size()) {
+            info_.progress.extras.clear();
+            info_.progress.bodyBytes.clear();
+            info_.progress.index++;
+            info_.progress.processed = 0;
+        }
         ReportInfo(false);
     }
     REQUEST_HILOGI("upload end");
@@ -170,7 +172,7 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
         REQUEST_HILOGI("fileName = %{public}s", file.filename.c_str());
         TaskState state;
         state.path = file.filename;
-        state.responseCode = E_SERVICE_ERROR;
+        state.responseCode = E_OK;
         if (file.uri == "") {
             state.responseCode = E_FILE_PATH;
         }
@@ -180,15 +182,20 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
         state.message = GetCodeMessage(state.responseCode);
         if (file.fd > 0) {
             int64_t fileSize = lseek(file.fd, 0, SEEK_END);
-            if (config.begins > 0) {
+
+            bool isFirstFile = false;
+            if (info.progress.sizes.size() + 1 == info.progress.index) {
+                isFirstFile = true;
+            }
+            if (config.begins > 0 && isFirstFile) {
                 fileSize -= config.begins;
             }
-            if (config.ends > 0) {
-                fileSize = config.ends - config.begins;
+            if (config.ends > 0 && isFirstFile) {
+                fileSize = config.ends - config.begins + 1;
             }
             info.progress.sizes.emplace_back(fileSize);
             int64_t offset = 0;
-            if (info.progress.index == config.index && config.begins > 0) {
+            if (config.begins > 0 && isFirstFile) {
                 offset = config.begins;
             }
             lseek(file.fd, offset, SEEK_SET);
@@ -207,6 +214,7 @@ void UploadProxy::ChangeState(State state)
     if (state == State::FAILED) {
         Notify(EVENT_FAILED);
     } else if (state == State::COMPLETED) {
+        Notify(EVENT_PROGRESS);
         Notify(EVENT_COMPLETED);
     }
 }
@@ -298,6 +306,8 @@ void UploadProxy::SetHttpPut(CURL *curl, const FileSpec &file, int64_t fileSize)
 
 int32_t UploadProxy::UploadOneFile(uint32_t index, const FileSpec &file)
 {
+    std::lock_guard<std::mutex> guard(curlMutex_);
+
     CURLM *curlMulti = curl_multi_init();
     CURL *curl = curl_easy_init();
     curl_mime *mime = nullptr;
@@ -348,7 +358,7 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
 
         int32_t respCode = 0;
         curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE, &respCode);
-        if (respCode != HTTP_SUCCESS) {
+        if (respCode != HTTP_SUCCESS && respCode != HTTP_PARTIAL_SUCCESS) {
             REQUEST_HILOGE("upload fail http error %{public}d", respCode);
             return E_SERVICE_ERROR;
         }
@@ -388,9 +398,8 @@ int32_t UploadProxy::ProgressCallback(void *client, curl_off_t dltotal, curl_off
         REQUEST_HILOGI("upload task has been removed");
         return HTTP_FORCE_STOP;
     }
-    REQUEST_HILOGI("ProgressCallback in dltotal: %{public}d, dlnow: %{public}d, ultotal: %{public}d, ulnow: %{public}d", dltotal, dlnow, ultotal, ulnow);
-    thiz->info_.progress.totalProcessed += (ulnow- thiz->info_.progress.processed);
-    thiz->info_.progress.processed = ulnow;    
+    REQUEST_HILOGI("ProgressCallback in dltotal: %{public}zu, dlnow: %{public}zu, ultotal: %{public}zu, ulnow: %{public}zu", 
+        dltotal, dlnow, ultotal, ulnow);
     thiz->ReportInfo(false);
     thiz->Notify(EVENT_PROGRESS);
     REQUEST_HILOGI("ProgressCallback out");
@@ -452,6 +461,8 @@ size_t UploadProxy::ReadCallback(char *buffer, size_t size, size_t nitems, void 
     auto readTask = [&] {
         std::unique_lock<std::mutex> readlock(mutexlock);
         readSize = read(file.fd, buffer, maxReadSize);
+		thiz->info_.progress.processed += readSize;
+		thiz->info_.progress.totalProcessed += readSize;
         condition.notify_one();
     };
 

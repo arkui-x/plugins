@@ -15,6 +15,7 @@
 
 #include "ios_adapter.h"
 #include "download_proxy.h"
+#include "json_utils.h"
 #include "log.h"
 #include "plugin_utils.h"
 #include "request_utils.h"
@@ -36,7 +37,7 @@ IosAdapter::~IosAdapter()
 
 void RequestCallback(int64_t taskId, std::string eventType, std::string infoParam)
 {
-    REQUEST_HILOGI("RequestCallback taskId: %{public}lld, eventType:%{public}s, infoParam:%{public}s",
+    NSLog(@"RequestCallback taskId: %lld, eventType:%s, infoParam:%s",
         taskId, eventType.c_str(), infoParam.c_str());
     TaskNotifyManager::Get().SendNotify(RequestUtils::GetEventType(taskId, eventType), infoParam);
 }
@@ -45,13 +46,13 @@ ITask *IosAdapter::Create(const Config &config)
 {
     auto task = new (std::nothrow) Task(config, shared_from_this());
     if (task == nullptr) {
-        REQUEST_HILOGE("fail to allocate memory for task");
+        NSLog(@"fail to allocate memory for task");
         return nullptr;
     }
 
     int64_t taskId = IosTaskDao::CreateTask(config);
     if (taskId == INVALID_TASK_ID) {
-        REQUEST_HILOGE("fail to create ios task");
+        NSLog(@"fail to create ios task");
         return nullptr;
     }
 
@@ -62,40 +63,42 @@ ITask *IosAdapter::Create(const Config &config)
         proxy = std::make_shared<DownloadProxy>(taskId, config, RequestCallback);
     }
     if (proxy == nullptr) {
-        REQUEST_HILOGE("fail to allocate memory for task proxy");
+        NSLog(@"fail to allocate memory for task proxy");
         return nullptr;
     }
 
     std::unique_lock<std::mutex> lock(mutex_);
     taskList_.emplace(taskId, proxy);
     task->SetId(taskId);
-    REQUEST_HILOGI("Succeed to creat ios task, taskId:%{public}p", (void*)&taskList_);
-    REQUEST_HILOGI("Succeed to creat ios task, taskId:%{public}lld", taskId);
+    NSLog(@"Succeed to creat ios task, taskId:%lld", taskId);
     return task;
 }
 
 int32_t IosAdapter::Remove(int64_t taskId)
 {
-    REQUEST_HILOGI("Remove task, taskId:%{public}lld", taskId);
+    NSLog(@"Remove task, taskId:%lld", taskId);
+    Stop(taskId);
+
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
-        REQUEST_HILOGE("invalid task id");
-        return E_SERVICE_ERROR;
+        NSLog(@"invalid task id");
+        return E_TASK_NOT_FOUND;
     }
-    REQUEST_HILOGI("Remove ios taskList address, :%{public}p", (void*)&taskList_);
     taskList_.erase(it);
-    REQUEST_HILOGI("Remove ios taskList erase success");
 
-
+    TaskInfo info;
+    GetTaskInfo(taskId, "", info);
     int32_t result = IosTaskDao::RemoveTask(taskId);
-    REQUEST_HILOGI("remove task: %{public}d", result);
+    NSLog(@"remove task: %d", result);
+    RequestCallback(taskId, EVENT_REMOVE, JsonUtils::TaskInfoToJsonString(info));
+	
     return result;
 }
 
 int32_t IosAdapter::GetTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info)
 {
-    REQUEST_HILOGI("IosAdapter::GetTaskInfo, taskId:%{public}lld, token:%{public}s", taskId, token.c_str());
+    NSLog(@"IosAdapter::GetTaskInfo, taskId:%lld, token:%s", taskId, token.c_str());
     return IosTaskDao::QueryTaskInfo(taskId, token, info);
 }
 
@@ -106,66 +109,67 @@ int32_t IosAdapter::Search(const Filter &filter, std::vector<std::string> &taskI
 
 int32_t IosAdapter::Start(int64_t taskId)
 {
-    REQUEST_HILOGI("Start taskId: %{public}lld", taskId);
+    NSLog(@"ios adapter start taskId:%lld", taskId);
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
-        REQUEST_HILOGE("invalid task id");
+        NSLog(@"invalid task id");
         return E_SERVICE_ERROR;
     }
     auto result = it->second->Start(taskId);
-    REQUEST_HILOGI("start task, result:%{public}d", result);
+    NSLog(@"ios adapter start result:%d", result);
     return result;
 }
 
 int32_t IosAdapter::Pause(int64_t taskId)
 {
+    NSLog(@"ios adapter pause enter");
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
-        REQUEST_HILOGE("invalid task id");
+        NSLog(@"invalid task id");
         return E_SERVICE_ERROR;
     }
     auto result = it->second->Pause(taskId);
-    REQUEST_HILOGI("pause task: %{public}d", result);
+    NSLog(@"ios adapter pause result:%d", result);
     return result;
 }
 
 int32_t IosAdapter::Resume(int64_t taskId)
 {
+    NSLog(@"ios adapter resume enter");
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
-        REQUEST_HILOGE("invalid task id");
+        NSLog(@"invalid task id");
         return E_SERVICE_ERROR;
     }
     auto result = it->second->Resume(taskId);
-    REQUEST_HILOGI("resume task: %{public}d", result);
+    NSLog(@"ios adapter resume result:%d", result);
     return result;
 }
 
 int32_t IosAdapter::Stop(int64_t taskId)
 {
+    NSLog(@"ios adapter stop enter");
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
-        REQUEST_HILOGE("invalid task id");
+        NSLog(@"invalid task id");
         return E_SERVICE_ERROR;
     }
     auto result = it->second->Stop(taskId);
-    REQUEST_HILOGI("stop task: %{public}d", result);
+    NSLog(@"ios adapter stop result:%d", result);
     return result;
 }
 
 int32_t IosAdapter::GetDefaultStoragePath(std::string& path)
 {
-    REQUEST_HILOGI("get default storage path in");
-
+    NSLog(@"ios adapter GetDefaultStoragePath enter");
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
     NSString *cachesDir = [paths objectAtIndex:0];
-    path = std::string([cachesDir UTF8String]);
-
-    REQUEST_HILOGI("default storage path is %{public}s", path.c_str());
+    path = cachesDir.UTF8String;
+    NSLog(@"ios adapter GetDefaultStoragePath path:%s", path.c_str());
     return E_OK;
 }
 } // namespace OHOS::Plugin::Request

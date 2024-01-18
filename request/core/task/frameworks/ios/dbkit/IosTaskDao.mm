@@ -29,19 +29,18 @@ IosTaskDao::~IosTaskDao()
 
 int64_t IosTaskDao::CreateTask(const Config &config)
 {
-    REQUEST_HILOGI("CreateTask enter");
-
+    NSLog(@"CreateTask enter");
     if (![[DBManager shareManager] initDB]) {
-        REQUEST_HILOGE("Failed to init database");
+        NSLog(@"failed to init database");
         return INVALID_TASK_ID;
     }
 
     std::string strConfig = JsonUtils::ConfigToJsonString(config);
-    NSString *jsonConfig = [NSString stringWithUTF8String:strConfig.c_str()];
-    REQUEST_HILOGI("jsonConfig:%{public}s", strConfig.c_str());
+    NSString *jsonConfig = JsonUtils::CStringToNSString(strConfig);
+    NSLog(@"CreateTask, jsonConfig:%@", jsonConfig);
     IosTaskConfig *taskConfig = [IosTaskConfig initWithJsonString:jsonConfig];
     if (taskConfig == nil) {
-        REQUEST_HILOGI("Failed to create task, config is nil");
+        NSLog(@"failed to create task, config is nil");
         return INVALID_TASK_ID;
     }
 
@@ -50,53 +49,62 @@ int64_t IosTaskDao::CreateTask(const Config &config)
 
 int32_t IosTaskDao::RemoveTask(int64_t taskId)
 {
-    REQUEST_HILOGE("RemoveTask start taskid: %{public}lld", taskId);
+    NSLog(@"RemoveTask taskid: %lld", taskId);
     if (![[DBManager shareManager] remove:taskId]) {
-       REQUEST_HILOGE("RemoveTask error");     
+       NSLog(@"RemoveTask error");     
         return E_SERVICE_ERROR;
     }
-    REQUEST_HILOGE("RemoveTask end");
+    NSLog(@"RemoveTask end");
     return E_OK;
 }
 
 int32_t IosTaskDao::QueryTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info)
 {
-    REQUEST_HILOGI("QueryTaskInfo, taskId:%{public}lld, token:%{public}s", taskId, token.c_str());
+    NSLog(@"QueryTaskInfo, taskId:%lld, token:%s", taskId, token.c_str());
     if (taskId < 1) {
-        return E_SERVICE_ERROR;
+        return E_TASK_NOT_FOUND;
     }
     IosTaskInfo *taskInfo = nil;
     if (!token.empty()) {
-        NSString *strToken = [NSString stringWithUTF8String:token.c_str()];
+        NSString *strToken = JsonUtils::CStringToNSString(token);
         taskInfo = [[DBManager shareManager] queryWithToken:strToken taskId:taskId];
     } else {
         taskInfo = [[DBManager shareManager] queryWithTaskId:taskId];
     }
-    if (taskInfo != nil) {
-        info.tid = std::to_string(taskInfo.tid);
-        info.url = [taskInfo.url UTF8String];
-        info.data = [taskInfo.data UTF8String];
-        info.title = [taskInfo.title UTF8String];
-        info.description = [taskInfo.desc UTF8String];
-        info.action = static_cast<Action>(taskInfo.action);
-        info.mode = static_cast<Mode>(taskInfo.mode);
-        info.mimeType = [taskInfo.mimeType UTF8String];
-        info.ctime = taskInfo.ctime;
-        info.mtime = taskInfo.mtime;
-        info.faults = static_cast<Faults>(taskInfo.faults);
-        info.reason = [taskInfo.reason UTF8String];
-        // info.taskStates = [taskInfo.taskState UTF8String];
-        JsonUtils::JsonStringToProgress([taskInfo.progress UTF8String], info.progress);
-        return E_OK;
+    if (taskInfo == nil) {
+        NSLog(@"failed to query task info");
+        return E_TASK_NOT_FOUND;
     }
-
-    REQUEST_HILOGE("failed to query task info");
-    return E_SERVICE_ERROR;
+    info.tid = std::to_string(taskInfo.tid);
+    info.url = taskInfo.url.UTF8String;
+    info.data = taskInfo.data.UTF8String;
+    info.title = taskInfo.title.UTF8String;
+    info.description = taskInfo.desc.UTF8String;
+    info.action = static_cast<Action>(taskInfo.action);
+    info.mode = static_cast<Mode>(taskInfo.mode);
+    info.mimeType = taskInfo.mimeType.UTF8String;
+    info.ctime = taskInfo.ctime;
+    info.mtime = taskInfo.mtime;
+    info.faults = static_cast<Faults>(taskInfo.faults);
+    info.reason = taskInfo.reason.UTF8String;
+    NSLog(@"QueryTaskInfo progress:%@", taskInfo.progress);
+    JsonUtils::JsonStringToProgress(taskInfo.progress.UTF8String, info.progress);
+    info.version = static_cast<Version>(taskInfo.version);
+    JsonUtils::JsonStringToFiles(taskInfo.files.UTF8String, info.files);
+    JsonUtils::JsonStringToForms(taskInfo.forms.UTF8String, info.forms);
+    info.gauge = taskInfo.gauge;
+    info.retry = taskInfo.retry;
+    info.code = static_cast<Reason>(taskInfo.code);
+    info.withSystem = taskInfo.withSystem;
+    JsonUtils::JsonStringToExtras(taskInfo.extras.UTF8String, info.extras);
+    JsonUtils::JsonStringToTaskStates(taskInfo.taskStates.UTF8String, info.taskStates);
+    NSLog(@"QueryTaskInfo end");
+    return E_OK;
 }
 
 int32_t IosTaskDao::Search(const Filter &filter, std::vector<std::string> &taskIdList)
 {
-    REQUEST_HILOGI("IosTaskDao::Search enter");
+    NSLog(@"Search enter");
     IosTaskFilter *taskFilter = [[IosTaskFilter alloc] init];
     taskFilter.before = filter.before;
     taskFilter.after = filter.after;
@@ -105,8 +113,7 @@ int32_t IosTaskDao::Search(const Filter &filter, std::vector<std::string> &taskI
     taskFilter.mode = static_cast<int>(filter.mode);
     NSArray *taskIds = [[DBManager shareManager] queryWithFilter:taskFilter];
     for (id taskId in taskIds) {
-        std::string strTaskId = [[taskId stringValue] UTF8String];
-        REQUEST_HILOGI("queryWithFilter, strTaskId:%{public}s", strTaskId.c_str());
+        std::string strTaskId = [taskId stringValue].UTF8String;
         taskIdList.emplace_back(strTaskId);
     }
     return E_OK;
@@ -114,30 +121,35 @@ int32_t IosTaskDao::Search(const Filter &filter, std::vector<std::string> &taskI
 
 int32_t IosTaskDao::UpdateDB(const TaskInfo &info, const Config &config)
 {
-    REQUEST_HILOGI("IosTaskDao::UpdateDB enter");
+    NSLog(@"UpdateDB enter");
     IosTaskInfo *taskInfo = [[IosTaskInfo alloc] init];
     taskInfo.tid = std::stoll(info.tid);
-    taskInfo.saveas = [NSString stringWithUTF8String:config.saveas.c_str()];
-    taskInfo.url = [NSString stringWithUTF8String:info.url.c_str()];
-    taskInfo.data = [NSString stringWithUTF8String:info.data.c_str()];
-    taskInfo.title = [NSString stringWithUTF8String:info.title.c_str()];
-    taskInfo.desc = [NSString stringWithUTF8String:info.description.c_str()];
-    taskInfo.action = static_cast<int>(config.action);
-    taskInfo.mode = static_cast<int>(config.mode);
-    taskInfo.mimeType = [NSString stringWithUTF8String:info.mimeType.c_str()];
+    taskInfo.saveas = JsonUtils::CStringToNSString(config.saveas);
+    taskInfo.url = JsonUtils::CStringToNSString(info.url);
+    taskInfo.data = JsonUtils::CStringToNSString(info.data);
+    taskInfo.title = JsonUtils::CStringToNSString(info.title);
+    taskInfo.desc = JsonUtils::CStringToNSString(info.description);
+    taskInfo.action = static_cast<int>(info.action);
+    taskInfo.mode = static_cast<int>(info.mode);
+    taskInfo.mimeType = JsonUtils::CStringToNSString(info.mimeType);
     taskInfo.state = 0;
-    taskInfo.progress = [NSString stringWithUTF8String:JsonUtils::ProgressToJsonString(info.progress).c_str()];
+    taskInfo.progress = JsonUtils::CStringToNSString(JsonUtils::ProgressToJsonString(info.progress).c_str());
     taskInfo.ctime = info.ctime;
     taskInfo.mtime = info.mtime;
     taskInfo.faults = static_cast<int>(info.faults);
-    taskInfo.reason = [NSString stringWithUTF8String:info.reason.c_str()];
-    taskInfo.taskStates = @"";
-    taskInfo.token = [NSString stringWithUTF8String:config.token.c_str()];
+    taskInfo.reason = JsonUtils::CStringToNSString(info.reason);
+    taskInfo.taskStates = JsonUtils::CStringToNSString(JsonUtils::TaskStatesToJsonStirng(info.taskStates).c_str());
+    taskInfo.downloadId = 0;
+    taskInfo.token = JsonUtils::CStringToNSString(config.token);
+    taskInfo.version = static_cast<int>(info.version);
+    taskInfo.files = JsonUtils::CStringToNSString(JsonUtils::FilesToJsonStirng(info.files).c_str());
+    taskInfo.code = info.code;
 
     if (![[DBManager shareManager] update:taskInfo]) {
-        REQUEST_HILOGE("failed to UpdateDB");
+        NSLog(@"failed to UpdateDB");
         return E_SERVICE_ERROR;
     }
+    NSLog(@"UpdateDB end");
     return E_OK;
 }
 

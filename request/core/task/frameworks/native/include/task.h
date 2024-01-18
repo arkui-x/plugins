@@ -30,6 +30,7 @@ public:
     explicit Task(const Config &config, std::shared_ptr<ITaskAdp> taskAdp);
     ~Task() override;
     int32_t Start() override;
+    bool IsStarted() override;
     int32_t Pause() override;
     int32_t Resume() override;
     int32_t Stop() override;
@@ -39,6 +40,7 @@ public:
 protected:
     std::shared_ptr<ITaskAdp> adapter_ = nullptr;
     std::map<std::string, std::shared_ptr<TaskNotifyProxy>> notifyMap_ {};
+    bool isStarted_ = false;
 };
 } // namespace OHOS::Plugin::Request
 

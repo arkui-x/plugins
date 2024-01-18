@@ -27,7 +27,7 @@ class UploadProxy final : public ITaskAdp {
 public:
     UploadProxy(int64_t taskId, const Config &config, OnRequestCallback callback);
     virtual ~UploadProxy();
-    static int64_t GetFileSize(NSURL *filePath);
+
     int32_t Start(int64_t taskId) override;
     int32_t Pause(int64_t taskId) override;
     int32_t Resume(int64_t taskId) override;
@@ -35,14 +35,20 @@ public:
 
 private:
     void InitTaskInfo(const Config &config, TaskInfo &info);
-    void PutUpdate(const std::string &method);
-    void PostUpdate(const std::string &method);
-    void ParseHeader(const std::string &header, std::string &key, std::string &value);
-    void PutCompletionHandler(NSURLResponse *response, id responseObject, NSError *error);
-    void PostCompletionHandler(NSURLResponse *response, id responseObject, NSError *error);
+    void PutUpload(const std::string &method);
+    void PostUpload(const std::string &method);
+    void PutCompletionHandler(NSURLResponse *response, NSError *error);
+    void PostCompletionHandler(NSURLResponse *response, NSError *error);
     void ResumePutTask();
-    void OnProgressCallback(NSProgress *uploadProgress);
+    void OnProgressCallback(NSProgress *progress);
+    void OnCompletedCallback();
+    void OnFailedCallback();
     void ChangeState(State state);
+    int64_t GetTotalFileSize() const;
+    NSString *GetUploadPartFile(const FileSpec &file);
+    void PartUpload(const std::string &method);
+    void SetMultipartStreamFilePath(const FileSpec &file, OHMultipartFormStream *multipartStream, NSString *filePath);
+    void GetExtras(NSURLResponse *response);
 
 private:
     Config config_;
@@ -50,12 +56,9 @@ private:
     OHSessionManager *sessionCtrl_ = nil;
     NSURLSessionUploadTask *uploadTask_ = nil;
     std::vector<NSURLSessionUploadTask *> putUploadTaskList_ {};
-    int64_t putCompletedUnitCount_ = 0;
-    int64_t putTotalUnitCount_ = 0;
     bool putHasError_ = false;
     int putRspCount_ = 0;
     int putFileCount_ = 0;
-    std::mutex mutex_;
     OnRequestCallback callback_ = nullptr;
     int64_t taskId_ = INVALID_TASK_ID;
 };

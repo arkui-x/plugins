@@ -18,4 +18,6 @@ package ohos.ace.plugin.taskmanagerplugin;
 public interface IConstant {
     String TAG = "RequestAndroid";
     long FAILED_VALUE = -1;
+
+    boolean isAndroidDebug = false;
 }
