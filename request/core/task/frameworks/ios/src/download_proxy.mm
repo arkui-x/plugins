@@ -14,11 +14,10 @@
  */
 
 #include "download_proxy.h"
-#include <thread>
 #import  <UIKit/UIKit.h>
-#include "log.h"
 #import "ios_certificate_utils.h"
 #import "json_utils.h"
+#include "request_utils.h"
 
 namespace OHOS::Plugin::Request {
 using namespace std;
@@ -36,10 +35,13 @@ DownloadProxy::DownloadProxy(int64_t taskId, const Config &config, OnRequestCall
 {
     NSLog(@"DownloadProxy allocated, taskId:%lld", taskId);
     InitTaskInfo(config, info_);
+    IosNetMonitor::SharedInstance()->AddObserver(this);
 }
 
 DownloadProxy::~DownloadProxy()
 {
+    NSLog(@"DownloadProxy freed, taskId:%lld", taskId_);
+    IosNetMonitor::SharedInstance()->RemoveObserver(this);
     sessionCtrl_ = nil;
     downloadTask_ = nil;
     resumeData_ = nil;
@@ -273,12 +275,11 @@ void DownloadProxy::PushNotification(NSString *fileName, NSValue *result)
 void DownloadProxy::ReportMimeType(NSURLResponse *response)
 {
     isMimeReported_ = true;
-    NSString *mimeType = [response MIMEType];
-    if ([mimeType length] == 0) {
-        NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
-        mimeType = [resp valueForHTTPHeaderField:@"Content-Type"];
+    NSString *mimeType = response.MIMEType;
+    if (mimeType.length == 0) {
+        mimeType = [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Content-Type"];
     }
-    NSLog(@"download, response:%@, mimeType:%@", [response description], mimeType);
+    NSLog(@"download, response:%@, mimeType:%@", response.description, mimeType);
     if (mimeType.length > 0) {
         info_.mimeType = mimeType.UTF8String;
         IosTaskDao::UpdateDB(info_, config_);
@@ -290,6 +291,7 @@ void DownloadProxy::OnCompletedCallback()
     NSLog(@"download OnCompletedCallback");
     if (callback_ != nullptr) {
         info_.progress.state = State::COMPLETED;
+        callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
         IosTaskDao::UpdateDB(info_, config_);
     }
@@ -298,15 +300,21 @@ void DownloadProxy::OnCompletedCallback()
 void DownloadProxy::OnProgressCallback(NSProgress *progress)
 {
     NSLog(@"download OnProgressCallback");
-    if (callback_ != nullptr && progress != nil) {
-        info_.progress.state = State::RUNNING;
-        info_.progress.processed = progress.completedUnitCount;
-        info_.progress.totalProcessed = downloadTotalBytes_;
-        if (progress.fractionCompleted == 1.0) {
-            info_.progress.state = State::COMPLETED;
-        }
+    if (callback_ == nullptr || progress == nil) {
+        return;
+    }
+    info_.progress.state = State::RUNNING;
+    info_.progress.processed = progress.completedUnitCount;
+    info_.progress.totalProcessed = downloadTotalBytes_;
+    if (progress.fractionCompleted == 1.0) {
+        info_.progress.state = State::COMPLETED;
+    }
+    IosTaskDao::UpdateDB(info_, config_);
+
+    int64_t now = RequestUtils::GetTimeNow();
+    if (now - currentTime_ >= REPORT_INFO_INTERVAL) {
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
-        IosTaskDao::UpdateDB(info_, config_);
+        currentTime_ = now;
     }
 }
 
@@ -351,6 +359,34 @@ void DownloadProxy::GetFileSize(const string &downloadUrl)
         SetSizes(data.length);
         NSLog(@"download file size is %lld", data.length);
     });
+}
+
+// IosNetMonitorObserver
+void DownloadProxy::NetworkStatusChanged(NetworkType netType)
+{
+    NSLog(@"DownloadProxy::NetworkStatusChanged, netType:%d", netType);
+    if (netType == NETWORK_WIFI) {
+        ReachableViaWiFi();
+    } else if (netType == NETWORK_MOBILE) {
+        ReachableViaWWAN();
+    } else if (netType == NETWORK_INVALID) {
+        NotReachable();
+    }
+}
+
+void DownloadProxy::ReachableViaWiFi()
+{
+    NSLog(@"DownloadProxy::ReachableViaWiFi enter");
+}
+
+void DownloadProxy::ReachableViaWWAN()
+{
+    NSLog(@"DownloadProxy::ReachableViaWWAN enter");
+}
+
+void DownloadProxy::NotReachable()
+{
+    NSLog(@"DownloadProxy::NotReachable enter");
 }
 
 } // namespace OHOS::Plugin::Request

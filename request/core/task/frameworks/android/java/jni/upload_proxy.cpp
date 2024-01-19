@@ -389,7 +389,7 @@ void UploadProxy::ClearCurlResource(CURLM *curlMulti, CURL *curl, curl_mime *mim
 int32_t UploadProxy::ProgressCallback(void *client, curl_off_t dltotal, curl_off_t dlnow,
     curl_off_t ultotal, curl_off_t ulnow)
 {
-    REQUEST_HILOGI("ProgressCallback in ");
+    REQUEST_HILOGI("ProgressCallback in ultotal: %{public}zu, ulnow: %{public}zu", ultotal, ulnow);
     auto thiz = static_cast<UploadProxy*>(client);
     if (thiz == nullptr) {
         return 0;
@@ -397,12 +397,13 @@ int32_t UploadProxy::ProgressCallback(void *client, curl_off_t dltotal, curl_off
     if (thiz->isAbort_) {
         REQUEST_HILOGI("upload task has been removed");
         return HTTP_FORCE_STOP;
-    }
-    REQUEST_HILOGI("ProgressCallback in dltotal: %{public}zu, dlnow: %{public}zu, ultotal: %{public}zu, ulnow: %{public}zu", 
-        dltotal, dlnow, ultotal, ulnow);
+    }   
     thiz->ReportInfo(false);
-    thiz->Notify(EVENT_PROGRESS);
-    REQUEST_HILOGI("ProgressCallback out");
+    int64_t now = RequestUtils::GetTimeNow();
+    if (now - thiz->currentTime_ >= REPORT_INFO_INTERVAL) {
+        thiz->Notify(EVENT_PROGRESS);
+        thiz->currentTime_ = now;
+    }    
     return 0;
 }
 
@@ -442,7 +443,6 @@ size_t UploadProxy::HeaderCallback(char *buffer, size_t size, size_t nitems, voi
 
 size_t UploadProxy::ReadCallback(char *buffer, size_t size, size_t nitems, void *arg)
 {
-    REQUEST_HILOGI("size is %{public}zu, nitems is %{public}zu.", size, nitems);
     auto thiz = static_cast<UploadProxy*>(arg);
     if (thiz == nullptr || thiz->isAbort_) {
         return CURL_READFUNC_ABORT;
@@ -481,7 +481,7 @@ void UploadProxy::ReportInfo(bool isChangeState)
 {
     bool ignore = !isChangeState;
     int64_t now = RequestUtils::GetTimeNow();
-    if (now - reportTime_ > REPORT_INFO_INTERVAL) {
+    if (now - reportTime_ >= REPORT_INFO_INTERVAL) {
         ignore = false;
         reportTime_ = now;
     }

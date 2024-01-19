@@ -16,6 +16,7 @@
 #include "upload_proxy.h"
 #include <stdio.h>
 #include <numeric>
+#include "constant.h"
 #include "log.h"
 #import "ios_certificate_utils.h"
 #import "json_utils.h"
@@ -107,6 +108,7 @@ int32_t UploadProxy::Stop(int64_t taskId)
     if (uploadTask_ != nil) {
         [uploadTask_ cancel];
     }
+    ChangeState(State::STOPPED);
     return E_OK;
 }
 
@@ -167,11 +169,7 @@ void UploadProxy::PutUpload(const string &method)
 
 void UploadProxy::PutCompletionHandler(NSURLResponse *response, NSError *error)
 {
-    if (error != nil) {
-        putHasError_ = true;
-    }
     putRspCount_++;
-
     GetExtras(response);
 
     // all responded
@@ -180,15 +178,11 @@ void UploadProxy::PutCompletionHandler(NSURLResponse *response, NSError *error)
         for (const auto& file: config_.files) {
             TaskState taskState;
             taskState.path = file.filename;
-            if (putHasError_) {
-                taskState.responseCode = E_SERVICE_ERROR;
-            } else {
-                taskState.responseCode = E_OK;
-            }
+            taskState.responseCode = (error != nil) ? E_SERVICE_ERROR : E_OK;
             taskState.message = GetCodeMessage(taskState.responseCode);
             taskStateList.push_back(taskState);
         }
-        if (putHasError_) {
+        if (error != nil) {
             NSLog(@"upload PUT failed, error: %s", [error description].UTF8String);
             ChangeState(State::FAILED);
         } else {
@@ -380,15 +374,10 @@ void UploadProxy::PostCompletionHandler(NSURLResponse *response, NSError *error)
     for (const auto& file: config_.files) {
         TaskState taskState;
         taskState.path = file.filename;
-        if (error != nil) {
-            taskState.responseCode = E_SERVICE_ERROR;
-        } else {
-            taskState.responseCode = E_OK;
-        }
+        taskState.responseCode = (error != nil) ? E_SERVICE_ERROR : E_OK;
         taskState.message = GetCodeMessage(taskState.responseCode);
         taskStateList.push_back(taskState);
     }
-
     GetExtras(response);
 
     if (error != nil) {
@@ -480,6 +469,7 @@ void UploadProxy::ChangeState(State state)
     if (state == State::FAILED) {
         callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
     } else if (state == State::COMPLETED) {
+        callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
     }
 }
@@ -487,18 +477,24 @@ void UploadProxy::ChangeState(State state)
 void UploadProxy::OnProgressCallback(NSProgress *progress)
 {
     NSLog(@"upload OnProgressCallback");
-    if (progress != nil && callback_ != nullptr) {
-        info_.progress.processed = progress.completedUnitCount;
-        info_.progress.state = State::RUNNING;
-        info_.progress.totalProcessed = GetTotalFileSize();
-        if (progress.fractionCompleted == 1.0) {
-            info_.progress.state = State::COMPLETED;
-            if (info_.progress.processed != GetTotalFileSize()) {
-                info_.progress.processed = GetTotalFileSize();
-            }
+    if (progress == nil || callback_ == nullptr) {
+        return;
+    }
+    info_.progress.processed = progress.completedUnitCount;
+    info_.progress.state = State::RUNNING;
+    info_.progress.totalProcessed = GetTotalFileSize();
+    if (progress.fractionCompleted == 1.0) {
+        info_.progress.state = State::COMPLETED;
+        if (info_.progress.processed != GetTotalFileSize()) {
+            info_.progress.processed = GetTotalFileSize();
         }
+    }
+    IosTaskDao::UpdateDB(info_, config_);
+
+    int64_t now = RequestUtils::GetTimeNow();
+    if (now - currentTime_ >= REPORT_INFO_INTERVAL) {
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
-        IosTaskDao::UpdateDB(info_, config_);
+        currentTime_ = now;
     }
 }
 
