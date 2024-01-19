@@ -36,7 +36,6 @@
         return nil;
     }
     NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    NSLog(@"IosTaskProgress, jsonStr:%@", jsonStr);
     return jsonStr;
 }
 - (NSArray *)sizes {
@@ -75,7 +74,6 @@
         return nil;
     }
     NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    NSLog(@"IosTaskState, jsonStr:%@", jsonStr);
     return jsonStr;
 }
 @end

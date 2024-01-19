@@ -30,8 +30,10 @@ public:
     std::string GetTid() const { return std::to_string(taskId_); }
     Version GetVersion() const { return config_.version; }
     Action GetAction() const { return config_.action; }
+    std::string GetToken() const { return config_.token; }
 
     virtual int32_t Start() = 0;
+    virtual bool IsStarted() = 0;
     virtual int32_t Pause() = 0;
     virtual int32_t Resume() = 0;
     virtual int32_t Stop() = 0;

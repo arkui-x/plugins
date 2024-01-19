@@ -19,8 +19,8 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <set>
 #include <string>
+#include <vector>
 #include "i_task_notify.h"
 
 namespace OHOS::Plugin::Request {
@@ -35,7 +35,7 @@ public:
 
 private:
     std::recursive_mutex mutex_;
-    std::set<std::shared_ptr<TaskNotifyInterface>> listenerSet_ {};
+    std::vector<std::shared_ptr<TaskNotifyInterface>> listenerList_ {};
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_TASK_NOTIFY_PROXY_H

@@ -54,6 +54,7 @@ private:
     static int64_t ParseEnds(napi_env env, napi_value jsConfig);
     static int64_t ParseBegins(napi_env env, napi_value jsConfig);
     static uint32_t ParsePriority(napi_env env, napi_value jsConfig);
+    static Mode ParseMode(napi_env env, napi_value jsConfig);
     static std::map<std::string, std::string> ParseMap(napi_env env, napi_value jsConfig,
         const std::string &propertyName);
 
@@ -69,6 +70,7 @@ private:
     static ExceptionError GetFD(const std::string &path, const Config &config, int32_t &fd);
     static void InterceptData(const std::string &str, const std::string &in, std::string &out);
     static void CheckPartialDownload(Config &config);
+    static void CheckFileUri(const Config &config, FileSpec &file);
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_JS_INITIALIZE_H

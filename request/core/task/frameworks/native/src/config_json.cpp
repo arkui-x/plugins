@@ -60,7 +60,6 @@ void to_json(Json &json, const Config &config)
         {JSON_INDEX, config.index},
         {JSON_BEGINS, config.begins},
         {JSON_ENDS, config.ends},
-        {JSON_PRIORITY, config.priority},
         {JSON_OVERWRITE, config.overwrite},
         {JSON_METERED, config.metered},
         {JSON_ROAMING, config.roaming},

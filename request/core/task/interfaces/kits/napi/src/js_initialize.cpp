@@ -48,7 +48,6 @@ napi_value JsInitialize::Initialize(napi_env env, napi_callback_info info, Versi
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &self, nullptr));
     int32_t number = NapiUtils::TWO_ARG;
     if (static_cast<int32_t>(argc) < number) {
-        NapiUtils::ThrowError(env, E_PARAMETER_CHECK, "invalid parameter count");
         return nullptr;
     }
 
@@ -56,8 +55,6 @@ napi_value JsInitialize::Initialize(napi_env env, napi_callback_info info, Versi
     config.version = version;
     ExceptionError err = InitParam(env, argv, config);
     if (err.code != E_OK) {
-        REQUEST_HILOGE("err.code : %{public}d, err.errInfo :  %{public}s", err.code, err.errInfo.c_str());
-        NapiUtils::ThrowError(env, err.code, err.errInfo);
         return nullptr;
     }
     auto *task = TaskManager::Get().Create(config);
@@ -110,12 +107,31 @@ ExceptionError JsInitialize::InitParam(napi_env env, napi_value* argv, Config &c
 
 void JsInitialize::CheckPartialDownload(Config &config)
 {
-    if (config.begins > 0 || config.ends > 0) {
-        std::string rangeValue = "bytes=" + std::to_string(config.begins) + "-";
-        if (config.ends > 0) {
-            rangeValue += std::to_string(config.ends);
+    if (config.action == Action::DOWNLOAD) {
+        if (config.begins > 0 || config.ends > 0) {
+            std::string rangeValue = "bytes=" + std::to_string(config.begins) + "-";
+            if (config.ends > 0) {
+                rangeValue += std::to_string(config.ends);
+            }
+            config.headers.emplace("Range", rangeValue);
         }
-        config.headers.emplace("Range", rangeValue);
+    }
+}
+
+void JsInitialize::CheckFileUri(const Config &config, FileSpec &file)
+{
+    if (config.action == Action::UPLOAD) {
+        REQUEST_HILOGI("CheckFileUri upload file.uri:%{public}s", file.uri.c_str());
+        if (file.uri.length() > SANDBOX_CACHE_PATH.length()) {
+            size_t pos = SANDBOX_CACHE_PATH.length();
+            std::string prefix = file.uri.substr(0, pos);
+            if (prefix == SANDBOX_CACHE_PATH) {
+                std::string cacheDir;
+                TaskManager::Get().GetDefaultStoragePath(cacheDir);
+                file.uri = cacheDir + file.uri.substr(pos);
+                REQUEST_HILOGI("CheckFileUri result file.uri:%{public}s", file.uri.c_str());
+            }
+        }
     }
 }
 
@@ -127,6 +143,7 @@ ExceptionError JsInitialize::CheckFilePath(Config &config)
         config.files.emplace_back(file);
     }
     for (auto &file : config.files) {
+        CheckFileUri(config, file);
         if (file.filename.empty()) {
             InterceptData("/", file.uri, file.filename);
         }
@@ -252,7 +269,7 @@ bool JsInitialize::ParseConfig(napi_env env, napi_value jsConfig, Config &config
     config.priority = ParsePriority(env, jsConfig);
     config.begins = ParseBegins(env, jsConfig);
     config.ends = ParseEnds(env, jsConfig);
-    config.mode = static_cast<Mode>(NapiUtils::Convert2Uint32(env, jsConfig, "mode"));
+    config.mode = ParseMode(env, jsConfig);
     if (config.mode != Mode::FOREGROUND) {
         REQUEST_HILOGE("only support foreground task");
         return false;
@@ -294,11 +311,9 @@ bool JsInitialize::ParseToken(napi_env env, napi_value jsConfig, Config &config)
     size_t len = 0;
     napi_status status = napi_get_value_string_utf8(env, value, token.data(), token.size(), &len);
     if (status != napi_ok || len < TOKEN_MIN_BYTES || len > TOKEN_MAX_BYTES) {
-        memset_s(token.data(), token.size(), 0, token.size());
         return false;
     }
     config.token = token.data();
-    memset_s(token.data(), token.size(), 0, token.size());
     return true;
 }
 
@@ -377,6 +392,14 @@ uint32_t JsInitialize::ParsePriority(napi_env env, napi_value jsConfig)
         return 0;
     }
     return NapiUtils::Convert2Uint32(env, jsConfig, "priority");
+}
+
+Mode JsInitialize::ParseMode(napi_env env, napi_value jsConfig)
+{
+    if (!NapiUtils::HasNamedProperty(env, jsConfig, "mode")) {
+        return Mode::FOREGROUND;
+    }
+    return static_cast<Mode>(NapiUtils::Convert2Uint32(env, jsConfig, "mode"));
 }
 
 bool JsInitialize::ParseDescription(napi_env env, napi_value jsConfig, std::string &description)

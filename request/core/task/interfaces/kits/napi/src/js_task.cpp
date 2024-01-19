@@ -185,7 +185,7 @@ napi_value JsTask::Off(napi_env env, napi_callback_info info)
         REQUEST_HILOGE("no callback object");
         return nullptr;
     }
-
+    
     if (jsParam.callback == nullptr) {
         jsParam.task->RemoveListener(jsParam.type, nullptr);
     } else {
@@ -196,6 +196,7 @@ napi_value JsTask::Off(napi_env env, napi_callback_info info)
             }
         }
     }
+    listenerMap_.erase(it);
     return nullptr;
 }
 
@@ -317,9 +318,9 @@ int32_t JsTask::StartExec(const std::shared_ptr<ExecContext> &context)
     }
 
     TaskInfo info;
-    auto ret = TaskManager::Get().GetTaskInfo(context->task->GetId(), "", info);
+    auto ret = TaskManager::Get().GetTaskInfo(context->task->GetId(), context->task->GetToken(), info);
     if (ret != E_OK || info.progress.state != State::INITIALIZED) {
-        REQUEST_HILOGE("StartExec: get task info error. ret: %{public}d  state: %{public}d", ret, info.progress.state);
+        REQUEST_HILOGE("StartExec ret: %{public}d  state: %{public}d", ret, info.progress.state);
         return E_TASK_STATE;
     }
 
@@ -338,8 +339,15 @@ int32_t JsTask::StopExec(const std::shared_ptr<ExecContext> &context)
 
     TaskInfo info;
     auto ret = TaskManager::Get().GetTaskInfo(context->task->GetId(), "", info);
-    if (ret != E_OK || info.progress.state != State::RUNNING) {
-        REQUEST_HILOGE("StopExec: get task info error. ret: %{public}d  state: %{public}d", ret, info.progress.state);
+    bool isStarted = context->task->IsStarted();
+    if (isStarted && info.progress.state == State::INITIALIZED) {
+        info.progress.state = State::RUNNING;
+    }
+    if (ret != E_OK || 
+        !(info.progress.state == State::WAITING || 
+        info.progress.state == State::RUNNING ||
+        info.progress.state == State::RETRYING)) {
+        REQUEST_HILOGE("StopExec ret: %{public}d  state: %{public}d", ret, info.progress.state);
         return E_TASK_STATE;
     }
 
@@ -362,7 +370,7 @@ int32_t JsTask::PauseExec(const std::shared_ptr<ExecContext> &context)
      !(info.progress.state == State::INITIALIZED || 
      info.progress.state == State::WAITING || 
      info.progress.state == State::RUNNING)) {
-        REQUEST_HILOGE("PauseExec: get task info error. ret: %{public}d  state: %{public}d", ret, info.progress.state);
+        REQUEST_HILOGE("PauseExec ret: %{public}d  state: %{public}d", ret, info.progress.state);
         return E_TASK_STATE;
     }
 
@@ -456,7 +464,13 @@ int32_t JsTask::ResumeExec(const std::shared_ptr<ExecContext> &context)
     if (context == nullptr || context->task == nullptr) {
         return E_PARAMETER_CHECK;
     }
-    auto ret = context->task->Resume();
+    TaskInfo info;
+    auto ret = TaskManager::Get().GetTaskInfo(context->task->GetId(), "", info);
+    if (ret != E_OK || info.progress.state != State::PAUSED) {
+        REQUEST_HILOGE("ResumeExec %{public}d  state: %{public}d", ret, info.progress.state);
+        return E_TASK_STATE;
+    }
+    ret = context->task->Resume();
     if (ret == E_OK) {
         context->boolRes = true;
     }

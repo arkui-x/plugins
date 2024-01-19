@@ -249,7 +249,7 @@ public class JsonUtil {
         }
         try {
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("tid", taskInfo.getTid());
+            jsonObj.put("tid", String.valueOf(taskInfo.getTid()));
             jsonObj.put("saveas", taskInfo.getSaveas());
             jsonObj.put("url", taskInfo.getUrl());
             jsonObj.put("data", taskInfo.getData());
@@ -295,7 +295,7 @@ public class JsonUtil {
             jsonObj.put("tries", taskInfo.getTries());
             jsonObj.put("code", taskInfo.getCode());
             jsonObj.put("withSystem", taskInfo.isWithSystem());
-            jsonObj.put("priority", taskInfo.getPriority());
+//            jsonObj.put("priority", taskInfo.getPriority());
             jsonObj.put("extras", taskInfo.getExtras());
             // Progress
             Progress progress = taskInfo.getProgress();

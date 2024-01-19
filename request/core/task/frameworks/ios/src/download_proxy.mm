@@ -34,7 +34,8 @@ static string GetFileName(const string &fileName)
 DownloadProxy::DownloadProxy(int64_t taskId, const Config &config, OnRequestCallback callback)
     : config_(config), callback_(callback)
 {
-    REQUEST_HILOGI("DownloadProxy allocated");
+    NSLog(@"DownloadProxy allocated, taskId:%lld", taskId);
+    InitTaskInfo(config, info_);
 }
 
 DownloadProxy::~DownloadProxy()
@@ -44,16 +45,94 @@ DownloadProxy::~DownloadProxy()
     resumeData_ = nil;
 }
 
+void DownloadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
+{
+    info.version = config.version;
+    info.url = config.url;
+    info.data = config.data;
+    info.files = config.files;
+    info.forms = config.forms;
+    info.tid = std::to_string(taskId_);
+    info.title = config.title;
+    info.description = config.description;
+    info.action = config.action;
+    info.mode = config.mode;
+    info.mimeType = "";
+    info.gauge = config.gauge;
+    info.retry = false;
+    info.tries = 0;
+    info.faults = Faults::OTHERS;
+    info.code = Reason::REASON_OK;
+    info.reason = "";
+    info.withSystem = false;
+    info.extras = config.extras;
+    info.progress.index = config.index;
+    if (info.progress.index == 0) {
+        info.progress.index = 1;
+    }
+    info.progress.processed = 0;
+    info.progress.totalProcessed = 0;
+    for (auto &file : config.files) {
+        TaskState state;
+        state.path = file.filename;
+        state.responseCode = E_OK;
+        if (file.uri == "") {
+            state.responseCode = E_FILE_PATH;
+        }
+        if (file.filename == "" || file.fd < 0) {
+            state.responseCode = E_FILE_IO;
+        }
+        if (file.fd > 0) {
+            int64_t fileSize = lseek(file.fd, 0, SEEK_END);
+            if (config.begins > 0) {
+                fileSize -= config.begins;
+            }
+            if (config.ends > 0) {
+                fileSize = config.ends - config.begins;
+            }
+            SetSizes(fileSize);
+            int64_t offset = 0;
+            if (info.progress.index == config.index && config.begins > 0) {
+                offset = config.begins;
+            }
+            lseek(file.fd, offset, SEEK_SET);
+        }
+        info.taskStates.emplace_back(state);
+    }
+}
+
+bool DownloadProxy::CheckUrl(const string &strUrl)
+{
+    NSURL *url = [NSURL URLWithString:JsonUtils::CStringToNSString(strUrl)];
+    NSURLRequest *request = [NSURLRequest requestWithURL:url];  
+    NSURLResponse *response = nil;  
+    NSError *error = nil;  
+    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];  
+    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {  
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;  
+        return httpResponse.statusCode == 200;
+    }
+    return false;
+}
+
 int32_t DownloadProxy::Start(int64_t taskId)
 {
-    REQUEST_HILOGI("Start, taskId:%{public}lld", taskId);
+    NSLog(@"start download, taskId:%lld, config_.saveas:%s", taskId, config_.saveas.c_str());
     taskId_ = taskId;
     IosTaskDao::QueryTaskInfo(taskId, "", info_);
+
     GetFileSize(config_.url);
+    if (!CheckUrl(config_.url)) {
+        NSLog(@"invalid download url:%s", config_.url.c_str());
+        info_.progress.totalProcessed = -1;
+        downloadTotalBytes_ = -1;
+        OnFailedCallback();
+        return E_OK;
+    }
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        REQUEST_HILOGI("Start download");
-        NSString *urlStr = [NSString stringWithUTF8String:config_.url.c_str()];
+        NSLog(@"start download");
+        NSString *urlStr = JsonUtils::CStringToNSString(config_.url);
         NSURL *url = [NSURL URLWithString:urlStr];
         NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
         sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
@@ -62,59 +141,59 @@ int32_t DownloadProxy::Start(int64_t taskId)
         }
         auto headerMap = config_.headers;
         for (const auto &header: headerMap) {
-            NSString *key = [NSString stringWithUTF8String:header.first.c_str()];
-            NSString *value = [NSString stringWithUTF8String:header.second.c_str()];
+            NSString *key = JsonUtils::CStringToNSString(header.first);
+            NSString *value = JsonUtils::CStringToNSString(header.second);
             [request setValue:value forHTTPHeaderField:key];
         }
-
         downloadTask_ = [sessionCtrl_ downloadWithRequest:request
-                                            progressBlock:^(NSProgress *downloadProgress) {
-            OnProgressCallback(downloadProgress);
+                                            progressBlock:^(NSProgress *progress) {
+            NSLog(@"downloading, progress:%@", progress);
+            OnProgressCallback(progress);
             if (!isMimeReported_) {
                 ReportMimeType([downloadTask_ response]);
             }
-        } destination:^NSURL * _Nullable(NSURLResponse * response, NSURL * temporaryURL) {
-            NSString *filePath = [NSString stringWithUTF8String:config_.saveas.c_str()];
+        } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
+            NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
+            NSLog(@"download filePath:%@", filePath);
             NSURL *destPath = [NSURL fileURLWithPath:filePath];
+            NSLog(@"download destPath:%@", destPath);
             return destPath;
-        } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
-            REQUEST_HILOGI("downloadTask CompletionHandler start");           
+        } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {        
             CompletionHandler(response, filePath, error);
         }];
         [downloadTask_ resume];
-        REQUEST_HILOGI("downloadTask resume");
+        NSLog(@"downloadTask resume");
     });
     return E_OK;
 }
 
 int32_t DownloadProxy::Pause(int64_t taskId)
 {
-    REQUEST_HILOGI("Pause download, taskId:%{public}lld", taskId);
-    // isSuspendByNetwork_ = isSuspendByNetwork;
+    NSLog(@"Pause download, taskId:%lld", taskId);
     if (downloadTask_.state == NSURLSessionTaskStateRunning) {
         [downloadTask_ cancelByProducingResumeData:^(NSData *resumeData) {
             if (resumeData != nil) {
                 resumeData_ = resumeData;
             }
         }];
+        OnPauseCallback();
     }
     return E_OK;
 }
 
 int32_t DownloadProxy::Resume(int64_t taskId)
 {
-    REQUEST_HILOGI("Restore download");
+    NSLog(@"Resume download, taskId:%lld", taskId);
     if (resumeData_ == nil) {
-        REQUEST_HILOGI("restore download, because resumeData is nil, download from begin.");
+        NSLog(@"restore download, because resumeData is nil, download from begin.");
         return Start(taskId);
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-
         [sessionCtrl_ downloadTaskWithResumeData:resumeData_
                                    progressBlock:^(NSProgress *downloadProgress) {
             OnProgressCallback(downloadProgress);
         } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
-            NSString *filePath = [NSString stringWithUTF8String:config_.saveas.c_str()];
+            NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
             NSURL *destPath = [NSURL URLWithString:filePath];
             return destPath;
         } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
@@ -127,7 +206,7 @@ int32_t DownloadProxy::Resume(int64_t taskId)
 
 int32_t DownloadProxy::Stop(int64_t taskId)
 {
-    REQUEST_HILOGI("Stop enter");
+    NSLog(@"Stop download, taskId:%lld", taskId);
     if (downloadTask_ != nil) {
         [downloadTask_ cancel];
     }
@@ -136,41 +215,35 @@ int32_t DownloadProxy::Stop(int64_t taskId)
 
 void DownloadProxy::PushNotification(BOOL isFailed)
 {
-    REQUEST_HILOGI("Push Notification");
-    NSString *file = [NSString stringWithUTF8String:GetFileName(config_.url).c_str()];
+    NSLog(@"push notification");
+    NSString *file = JsonUtils::CStringToNSString(GetFileName(config_.url));
     NSValue *result = [NSValue value:&isFailed withObjCType:@encode(BOOL)];
     PushNotification(file, result);
 }
 
 void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, NSError *error)
 {
-    
+    NSLog(@"CompletionHandler, filePath:%@", filePath);
     if (!isMimeReported_) {
         ReportMimeType(response);
     }
     if (error == nil) {
-        REQUEST_HILOGI("success download file to: %{public}s", [[filePath description] UTF8String]);
+        NSLog(@"success download file to: %@", [filePath description]);
         OnCompletedCallback();
-    } else {
-        REQUEST_HILOGI("failed download file to: %{public}s, error:%{public}s, error_code:%{public}ld",
-            [[filePath description] UTF8String], [[error description] UTF8String], error.code);
-        if (callback_ != nullptr) {
-            if (error.code != -1011) { // NSURLErrorBadServerResponse
-                isSuspendByNetwork_ = false;
-            }
-            info_.progress.state = State::FAILED;
-            callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
-        }
+    } else {        
+        NSLog(@"failed download file to: %s, error:%s, error_code:%ld",
+            [filePath description].UTF8String, [error description].UTF8String, error.code);
+        OnFailedCallback();
 
         // check can be resume?
         NSData *resumeData = [[error userInfo] objectForKey:NSURLSessionDownloadTaskResumeData];
         if (resumeData != nil) {
-            REQUEST_HILOGI("Download failed, but has resumeData");
+            NSLog(@"download failed, but has resumeData");
             resumeData_ = resumeData;
         }
     }
 
-    REQUEST_HILOGI("isBackground: %{public}d", config_.background);
+    NSLog(@"isBackground: %d", config_.background);
     // Allow download background task notifications.
     if (config_.background) {
         PushNotification(error != nil);
@@ -205,39 +278,16 @@ void DownloadProxy::ReportMimeType(NSURLResponse *response)
         NSHTTPURLResponse *resp = (NSHTTPURLResponse *)response;
         mimeType = [resp valueForHTTPHeaderField:@"Content-Type"];
     }
-    REQUEST_HILOGI("download, response:%{public}s, mimeType:%{public}s", [[response description] UTF8String], [mimeType UTF8String]);
-    if ([mimeType length] > 0 && callback_ != nullptr) {
-        // callback->SetMimeType([mimeType UTF8String]);
-    }
-}
-
-void DownloadProxy::GetFileSize(const string &fileUrl)
-{
-    NSString *urlString = [NSString stringWithUTF8String:fileUrl.c_str()];
-    NSURL *url = [NSURL URLWithString:urlString];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-    [request setHTTPMethod:@"HEAD"];
-
-    NSURLResponse *response;
-    NSError *error;
-    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-
-    if (error) {
-        REQUEST_HILOGE("Failed to get file size");
-        return;
-    }
-    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        NSDictionary *headers = [httpResponse allHeaderFields];
-        NSString *contentLength = [headers objectForKey:@"Content-Length"];
-        int64_t fileSize = [contentLength integerValue];
-        REQUEST_HILOGE("download file size is %{public}lld", fileSize);
-        info_.progress.sizes.emplace_back(fileSize);
+    NSLog(@"download, response:%@, mimeType:%@", [response description], mimeType);
+    if (mimeType.length > 0) {
+        info_.mimeType = mimeType.UTF8String;
+        IosTaskDao::UpdateDB(info_, config_);
     }
 }
 
 void DownloadProxy::OnCompletedCallback()
 {
+    NSLog(@"download OnCompletedCallback");
     if (callback_ != nullptr) {
         info_.progress.state = State::COMPLETED;
         callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
@@ -245,15 +295,62 @@ void DownloadProxy::OnCompletedCallback()
     }
 }
 
-void DownloadProxy::OnProgressCallback(NSProgress *downloadProgress)
+void DownloadProxy::OnProgressCallback(NSProgress *progress)
 {
-    if (callback_ != nullptr && downloadProgress != nil) {
+    NSLog(@"download OnProgressCallback");
+    if (callback_ != nullptr && progress != nil) {
         info_.progress.state = State::RUNNING;
-        info_.progress.processed = downloadProgress.completedUnitCount;
-        info_.progress.totalProcessed = downloadProgress.totalUnitCount;
+        info_.progress.processed = progress.completedUnitCount;
+        info_.progress.totalProcessed = downloadTotalBytes_;
+        if (progress.fractionCompleted == 1.0) {
+            info_.progress.state = State::COMPLETED;
+        }
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         IosTaskDao::UpdateDB(info_, config_);
     }
+}
+
+void DownloadProxy::OnFailedCallback()
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {  
+        if (callback_ != nullptr) {
+            info_.progress.state = State::FAILED;
+            info_.code = Reason::OTHERS_ERROR;
+            SetSizes(downloadTotalBytes_);
+            NSLog(@"download OnFailedCallback start");
+            callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
+            IosTaskDao::UpdateDB(info_, config_);
+        }
+    });
+}
+
+void DownloadProxy::OnPauseCallback()
+{
+    NSLog(@"download OnPauseCallback");
+    if (callback_ != nullptr) {
+        info_.progress.state = State::PAUSED;
+        SetSizes(downloadTotalBytes_);
+        callback_(taskId_, EVENT_PAUSE, JsonUtils::TaskInfoToJsonString(info_));
+        IosTaskDao::UpdateDB(info_, config_);
+    }
+}
+
+void DownloadProxy::SetSizes(int64_t fileSize)
+{
+    NSLog(@"SetSizes fileSize:%lld", fileSize);
+    info_.progress.sizes.clear();
+    info_.progress.sizes.emplace_back(fileSize);
+}
+
+void DownloadProxy::GetFileSize(const string &downloadUrl)
+{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSURL *url = [NSURL URLWithString:JsonUtils::CStringToNSString(downloadUrl)];
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        downloadTotalBytes_ = data.length;
+        SetSizes(data.length);
+        NSLog(@"download file size is %lld", data.length);
+    });
 }
 
 } // namespace OHOS::Plugin::Request

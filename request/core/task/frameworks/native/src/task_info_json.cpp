@@ -41,7 +41,6 @@ const std::string JSON_FAULTS = "faults";
 const std::string JSON_CODE = "code";
 const std::string JSON_REASON = "reason";
 const std::string JSON_WITH_SYSTEM = "withSystem";
-const std::string JSON_PRIORITY = "priority";
 const std::string JSON_EXTRAS = "extras";
 const std::string JSON_TASK_STATES = "taskStates";
 
@@ -69,7 +68,6 @@ void to_json(Json &json, const TaskInfo &taskInfo)
                 {JSON_CODE, taskInfo.code},
                 {JSON_REASON, taskInfo.reason},
                 {JSON_WITH_SYSTEM, taskInfo.withSystem},
-                {JSON_PRIORITY, taskInfo.priority},
                 {JSON_EXTRAS, taskInfo.extras},
                 {JSON_TASK_STATES, taskInfo.taskStates}});
 }
@@ -138,9 +136,6 @@ void from_json(const Json &json, TaskInfo &taskInfo)
     }
     if (json.find(JSON_WITH_SYSTEM) != json.end() && json[JSON_WITH_SYSTEM].is_boolean()) {
         json.at(JSON_WITH_SYSTEM).get_to(taskInfo.withSystem);
-    }
-    if (json.find(JSON_PRIORITY) != json.end() && json[JSON_PRIORITY].is_number()) {
-        json.at(JSON_PRIORITY).get_to(taskInfo.priority);
     }
     if (json.find(JSON_EXTRAS) != json.end() && json[JSON_EXTRAS].is_object()) {
         json.at(JSON_EXTRAS).get_to(taskInfo.extras);

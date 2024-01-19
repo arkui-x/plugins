@@ -50,7 +50,13 @@ int32_t Task::Start()
         REQUEST_HILOGE("fail to start task");
         return E_SERVICE_ERROR;
     }
+    isStarted_ = true;
     return E_OK;
+}
+
+bool Task::IsStarted()
+{
+    return isStarted_;
 }
 
 int32_t Task::Pause()
@@ -89,6 +95,7 @@ int32_t Task::Stop()
         REQUEST_HILOGE("fail to stop task");
         return E_SERVICE_ERROR;
     }
+    isStarted_ = false;
     return E_OK;
 }
 
