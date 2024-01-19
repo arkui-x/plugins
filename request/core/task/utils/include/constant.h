@@ -373,6 +373,7 @@ constexpr int REQUEST_PARAMS_NUM = 2;
 constexpr size_t MIN_HEADER_LENGTH = sizeof(std::string) * 2;
 
 static constexpr int64_t INVALID_TASK_ID = -1;
+static constexpr int32_t REPORT_INFO_INTERVAL = 1000;
 
 static constexpr const char *EVENT_COMPLETED = "completed";
 static constexpr const char *EVENT_FAILED = "failed";

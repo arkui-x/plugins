@@ -61,6 +61,7 @@ private:
     int putFileCount_ = 0;
     OnRequestCallback callback_ = nullptr;
     int64_t taskId_ = INVALID_TASK_ID;
+    int64_t currentTime_ = 0;
 };
 } // namespace OHOS::Plugin::Request
 

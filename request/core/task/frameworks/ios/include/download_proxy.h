@@ -21,9 +21,10 @@
 #include "constant.h"
 #import "OHNetworkKit.h"
 #import "IosTaskDao.h"
+#import "ios_net_monitor.h"
 
 namespace OHOS::Plugin::Request {
-class DownloadProxy final : public ITaskAdp {
+class DownloadProxy final : public ITaskAdp, public IosNetMonitorObserver {
 public:
     DownloadProxy(int64_t taskId, const Config &config, OnRequestCallback callback);
     virtual ~DownloadProxy();
@@ -32,6 +33,15 @@ public:
     int32_t Pause(int64_t taskId) override;
     int32_t Resume(int64_t taskId) override;
     int32_t Stop(int64_t taskId) override;
+
+public:
+    // IosNetMonitorObserver
+    void NetworkStatusChanged(NetworkType netType) override;
+
+private:
+    void ReachableViaWiFi();
+    void ReachableViaWWAN();
+    void NotReachable();
 
 private:
     void InitTaskInfo(const Config &config, TaskInfo &info);
@@ -57,6 +67,7 @@ private:
     OnRequestCallback callback_ = nullptr;
     int64_t taskId_ = INVALID_TASK_ID;
     int64_t downloadTotalBytes_ = 0;
+    int64_t currentTime_ = 0;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_DOWNLOAD_PROXY_H
