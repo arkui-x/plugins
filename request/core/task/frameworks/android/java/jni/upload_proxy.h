@@ -73,12 +73,12 @@ private:
     std::string responseHead_ = "";
     struct curl_slist *list_ = nullptr;
     int64_t reportTime_ = 0;
+    int64_t currentTime_ = 0;
     std::mutex curlMutex_;
     static constexpr int32_t HTTP_SUCCESS = 200;
     static constexpr int32_t HTTP_PARTIAL_SUCCESS = 206;
     static constexpr int32_t TRANS_TIMEOUT_MS = 30 * 1000;
     static constexpr int32_t READFILE_TIMEOUT_MS = 30 * 1000;
-    static constexpr int32_t REPORT_INFO_INTERVAL = 1000;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_UPLOAD_PROXY_H

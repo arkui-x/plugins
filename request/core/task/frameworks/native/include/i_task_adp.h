@@ -17,6 +17,7 @@
 #define PLUGINS_REQUEST_I_TASK_ADP_H
 
 #include <cstdint>
+#include <string>
 
 namespace OHOS::Plugin::Request {
 using OnRequestCallback = void(*)(int64_t, std::string, std::string);

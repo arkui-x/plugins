@@ -60,6 +60,7 @@ ohos_source_set("task_ios") {
   sources = [
     "src/download_proxy.mm",
     "src/ios_adapter.mm",
+    "src/ios_net_monitor.mm",
     "src/json_utils.mm",
     "src/upload_proxy.mm",
   ]
@@ -70,14 +71,14 @@ ohos_source_set("task_ios") {
 
   configs = [
     ":task_ios_config",
-    "$ace_root:ace_config"
+    "$ace_root:ace_config",
   ]
 
   deps = [
     "$plugin_interfaces_path/native:plugin_log",
-    "//plugins/interfaces/native:ace_plugin_util_ios",
-    "$rq_task_path/frameworks/ios/ohnetworkkit:ios_ohnetworkkit",
     "$rq_task_path/frameworks/ios/dbkit:ios_dbkit",
+    "$rq_task_path/frameworks/ios/ohnetworkkit:ios_ohnetworkkit",
+    "//plugins/interfaces/native:ace_plugin_util_ios",
   ]
 
   defines += [
