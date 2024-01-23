@@ -272,10 +272,10 @@ struct ExceptionError {
 
 struct DownloadInfo {
     uint32_t downloadId {0};
-    DownloadErrorCode failedReason {DownloadErrorCode::ERROR_UNKNOWN};
+    DownloadErrorCode failedReason {static_cast<DownloadErrorCode>(0)};
     std::string fileName {""};
     std::string filePath {""};
-    PausedReason pausedReason {PausedReason::PAUSED_UNKNOWN};
+    PausedReason pausedReason {static_cast<PausedReason>(0)};
     DownloadStatus status {DownloadStatus::SESSION_UNKNOWN};
     std::string url {""};
     std::string downloadTitle {""};
