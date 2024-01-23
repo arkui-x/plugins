@@ -16,8 +16,6 @@
 #ifndef PLUGINS_REQUEST_UPLOAD_PROXY_H
 #define PLUGINS_REQUEST_UPLOAD_PROXY_H
 
-#include <mutex>
-#include "constant.h"
 #include "i_task_adp.h"
 #import "OHNetworkKit.h"
 #include "IosTaskDao.h"
@@ -56,7 +54,6 @@ private:
     OHSessionManager *sessionCtrl_ = nil;
     NSURLSessionUploadTask *uploadTask_ = nil;
     std::vector<NSURLSessionUploadTask *> putUploadTaskList_ {};
-    bool putHasError_ = false;
     int putRspCount_ = 0;
     int putFileCount_ = 0;
     OnRequestCallback callback_ = nullptr;

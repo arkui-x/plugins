@@ -16,6 +16,7 @@
 #include "upload_proxy.h"
 #include <stdio.h>
 #include <numeric>
+#include "constant.h"
 #include "log.h"
 #import "ios_certificate_utils.h"
 #import "json_utils.h"
@@ -168,11 +169,7 @@ void UploadProxy::PutUpload(const string &method)
 
 void UploadProxy::PutCompletionHandler(NSURLResponse *response, NSError *error)
 {
-    if (error != nil) {
-        putHasError_ = true;
-    }
     putRspCount_++;
-
     GetExtras(response);
 
     // all responded
@@ -181,15 +178,11 @@ void UploadProxy::PutCompletionHandler(NSURLResponse *response, NSError *error)
         for (const auto& file: config_.files) {
             TaskState taskState;
             taskState.path = file.filename;
-            if (putHasError_) {
-                taskState.responseCode = E_SERVICE_ERROR;
-            } else {
-                taskState.responseCode = E_OK;
-            }
+            taskState.responseCode = (error != nil) ? E_SERVICE_ERROR : E_OK;
             taskState.message = GetCodeMessage(taskState.responseCode);
             taskStateList.push_back(taskState);
         }
-        if (putHasError_) {
+        if (error != nil) {
             NSLog(@"upload PUT failed, error: %s", [error description].UTF8String);
             ChangeState(State::FAILED);
         } else {
@@ -381,15 +374,10 @@ void UploadProxy::PostCompletionHandler(NSURLResponse *response, NSError *error)
     for (const auto& file: config_.files) {
         TaskState taskState;
         taskState.path = file.filename;
-        if (error != nil) {
-            taskState.responseCode = E_SERVICE_ERROR;
-        } else {
-            taskState.responseCode = E_OK;
-        }
+        taskState.responseCode = (error != nil) ? E_SERVICE_ERROR : E_OK;
         taskState.message = GetCodeMessage(taskState.responseCode);
         taskStateList.push_back(taskState);
     }
-
     GetExtras(response);
 
     if (error != nil) {
