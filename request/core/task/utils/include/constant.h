@@ -272,10 +272,10 @@ struct ExceptionError {
 
 struct DownloadInfo {
     uint32_t downloadId {0};
-    DownloadErrorCode failedReason {static_cast<DownloadErrorCode>(0)};
+    DownloadErrorCode failedReason {DownloadErrorCode::ERROR_CANNOT_RESUME};
     std::string fileName {""};
     std::string filePath {""};
-    PausedReason pausedReason {static_cast<PausedReason>(0)};
+    PausedReason pausedReason {PausedReason::PAUSED_QUEUED_FOR_WIFI};
     DownloadStatus status {DownloadStatus::SESSION_UNKNOWN};
     std::string url {""};
     std::string downloadTitle {""};
