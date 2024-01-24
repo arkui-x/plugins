@@ -67,7 +67,7 @@ socket_include = [
   "$NETSTACK_NAPI_ROOT/socket/socket_exec/include",
   "$NETSTACK_NAPI_ROOT/socket/socket_module/include",
   "$NETSTACK_NAPI_ROOT/socket/task_queue/include",
-  "//plugins/hilog/include",
+  "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   "//plugins/interfaces",
   "//plugins/net/socket",
   "//third_party/bounds_checking_function/include",
