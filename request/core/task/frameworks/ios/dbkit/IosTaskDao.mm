@@ -87,7 +87,6 @@ int32_t IosTaskDao::QueryTaskInfo(int64_t taskId, const std::string &token, Task
     info.mtime = taskInfo.mtime;
     info.faults = static_cast<Faults>(taskInfo.faults);
     info.reason = taskInfo.reason.UTF8String;
-    NSLog(@"QueryTaskInfo progress:%@", taskInfo.progress);
     JsonUtils::JsonStringToProgress(taskInfo.progress.UTF8String, info.progress);
     info.version = static_cast<Version>(taskInfo.version);
     JsonUtils::JsonStringToFiles(taskInfo.files.UTF8String, info.files);

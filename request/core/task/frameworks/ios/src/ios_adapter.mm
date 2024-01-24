@@ -15,9 +15,8 @@
 
 #include "ios_adapter.h"
 #include "download_proxy.h"
+#include "IosTaskDao.h"
 #include "json_utils.h"
-#include "log.h"
-#include "plugin_utils.h"
 #include "request_utils.h"
 #include "task.h"
 #include "task_notify_manager.h"
@@ -76,8 +75,11 @@ ITask *IosAdapter::Create(const Config &config)
 
 int32_t IosAdapter::Remove(int64_t taskId)
 {
-    NSLog(@"Remove task, taskId:%lld", taskId);
-    Stop(taskId);
+    NSLog(@"IosAdapter::Remove, taskId:%lld", taskId);
+    auto result = Stop(taskId);
+    if (result != E_OK) {
+        NSLog(@"IosAdapter::Remove, stop failed");
+    }
 
     std::unique_lock<std::mutex> lock(mutex_);
     auto it = taskList_.find(taskId);
@@ -85,14 +87,20 @@ int32_t IosAdapter::Remove(int64_t taskId)
         NSLog(@"invalid task id");
         return E_TASK_NOT_FOUND;
     }
-    taskList_.erase(it);
 
     TaskInfo info;
-    GetTaskInfo(taskId, "", info);
-    int32_t result = IosTaskDao::RemoveTask(taskId);
-    NSLog(@"remove task: %d", result);
+    result = GetTaskInfo(taskId, "", info);
+    if (result != E_OK) {
+        NSLog(@"IosAdapter::Remove, GetTaskInfo failed");
+    }
+    result = IosTaskDao::RemoveTask(taskId);
+    if (result != E_OK) {
+        NSLog(@"IosAdapter::Remove, remove task failed");
+    }
     RequestCallback(taskId, EVENT_REMOVE, JsonUtils::TaskInfoToJsonString(info));
-	
+    taskList_.erase(it);
+
+    NSLog(@"IosAdapter::Remove, end");
     return result;
 }
 
@@ -114,7 +122,7 @@ int32_t IosAdapter::Start(int64_t taskId)
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
         NSLog(@"invalid task id");
-        return E_SERVICE_ERROR;
+        return E_TASK_NOT_FOUND;
     }
     auto result = it->second->Start(taskId);
     NSLog(@"ios adapter start result:%d", result);
@@ -128,7 +136,7 @@ int32_t IosAdapter::Pause(int64_t taskId)
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
         NSLog(@"invalid task id");
-        return E_SERVICE_ERROR;
+        return E_TASK_NOT_FOUND;
     }
     auto result = it->second->Pause(taskId);
     NSLog(@"ios adapter pause result:%d", result);
@@ -142,7 +150,7 @@ int32_t IosAdapter::Resume(int64_t taskId)
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
         NSLog(@"invalid task id");
-        return E_SERVICE_ERROR;
+        return E_TASK_NOT_FOUND;
     }
     auto result = it->second->Resume(taskId);
     NSLog(@"ios adapter resume result:%d", result);
@@ -156,7 +164,7 @@ int32_t IosAdapter::Stop(int64_t taskId)
     auto it = taskList_.find(taskId);
     if (it == taskList_.end() || it->second == nullptr) {
         NSLog(@"invalid task id");
-        return E_SERVICE_ERROR;
+        return E_TASK_NOT_FOUND;
     }
     auto result = it->second->Stop(taskId);
     NSLog(@"ios adapter stop result:%d", result);

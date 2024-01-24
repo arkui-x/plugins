@@ -16,11 +16,9 @@
 #ifndef PLUGINS_REQUEST_DOWNLOAD_PROXY_H
 #define PLUGINS_REQUEST_DOWNLOAD_PROXY_H
 
-#include <mutex>
 #include "i_task_adp.h"
 #include "constant.h"
 #import "OHNetworkKit.h"
-#import "IosTaskDao.h"
 #import "ios_net_monitor.h"
 
 namespace OHOS::Plugin::Request {

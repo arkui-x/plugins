@@ -232,7 +232,7 @@ static DBManager *instance;
         NSLog(@"queryWithToken ok, tasks.count:%ld", tasks.count);
         return [tasks firstObject];
     }
-    NSLog(@"queryWithToken faild");
+    NSLog(@"queryWithToken failed");
     return nil;
 }
 

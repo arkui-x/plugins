@@ -16,6 +16,7 @@
 #include "download_proxy.h"
 #import  <UIKit/UIKit.h>
 #import "ios_certificate_utils.h"
+#import "IosTaskDao.h"
 #import "json_utils.h"
 #include "request_utils.h"
 

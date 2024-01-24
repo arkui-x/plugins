@@ -14,11 +14,8 @@
  */
  
 #include "upload_proxy.h"
-#include <stdio.h>
-#include <numeric>
-#include "constant.h"
-#include "log.h"
 #import "ios_certificate_utils.h"
+#import "IosTaskDao.h"
 #import "json_utils.h"
 #include "request_utils.h"
 
@@ -62,7 +59,7 @@ UploadProxy::~UploadProxy()
             }
         }
         putUploadTaskList_.clear();
-    }    
+    }
     sessionCtrl_ = nil;
 }
 
@@ -107,6 +104,13 @@ int32_t UploadProxy::Stop(int64_t taskId)
     NSLog(@"UploadProxy::Stop enter");
     if (uploadTask_ != nil) {
         [uploadTask_ cancel];
+    } else {
+        // for PUT method
+        for (auto &task : putUploadTaskList_) {
+            if (task != nil) {
+                [task cancel];
+            }
+        }
     }
     ChangeState(State::STOPPED);
     return E_OK;
