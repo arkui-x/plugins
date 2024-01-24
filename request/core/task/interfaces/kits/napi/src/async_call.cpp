@@ -37,12 +37,10 @@ AsyncCall::AsyncCall(napi_env env, napi_callback_info info, std::shared_ptr<Cont
         }
     }
     napi_status status = (*context)(env, argc, argv, self);
-    context_->ctx = std::move(context);
-    context_->type = type;
-    napi_create_reference(env, self, 1, &context_->self);
-
-    if (status != napi_ok) {
-        context_->ctx->retCode = E_PARAMETER_CHECK;
+    if (status == napi_ok) {
+        context_->ctx = std::move(context);
+        context_->type = type;
+        napi_create_reference(env, self, 1, &context_->self);
     }
     REQUEST_HILOGI("input result:%{public}d", static_cast<int32_t>(status));
 }
@@ -62,9 +60,8 @@ napi_value AsyncCall::Call(napi_env env, Context::ExecAction exec)
         REQUEST_HILOGI("context_ is null");
         return nullptr;
     }
-
-    if (context_->ctx == nullptr) {
-        REQUEST_HILOGI("context_->ctx is null");
+    if ((context_ == nullptr) || (context_->ctx == nullptr)) {
+        REQUEST_HILOGI("context_ or context_->ctx is null");
         return nullptr;
     }
     REQUEST_HILOGI("async call exec");
@@ -108,29 +105,15 @@ void AsyncCall::OnExecute(napi_env env, void *data)
 {
     REQUEST_HILOGI("run the async runnable");
     AsyncContext *context = reinterpret_cast<AsyncContext *>(data);
-    if (context == nullptr || context->ctx == nullptr) {
-        REQUEST_HILOGE("invalid js environment");
-        return;
-    }
-    if (context->ctx->retCode == E_OK) {
-        context->ctx->Exec();
-    }
+    context->ctx->Exec();
 }
 
 void AsyncCall::OnComplete(napi_env env, napi_status status, void *data)
 {
     REQUEST_HILOGI("run the js callback function");
     AsyncContext *context = reinterpret_cast<AsyncContext *>(data);
-    if (context == nullptr || context->ctx == nullptr) {
-        REQUEST_HILOGE("invalid js environment");
-        return;
-    }
     napi_value output = nullptr;
-    napi_status runStatus = napi_generic_failure;
-    if (context->ctx->retCode == E_OK) {
-        runStatus = (*context->ctx)(env, &output);
-    }
-    
+    napi_status runStatus = (*context->ctx)(env, &output);
     napi_value result[ARG_BUTT] = { 0 };
     if (status == napi_ok && runStatus == napi_ok) {
         napi_get_null(env, &result[ARG_ERROR]);
