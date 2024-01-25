@@ -18,7 +18,6 @@ package ohos.ace.plugin.taskmanagerplugin;
 import static ohos.ace.plugin.taskmanagerplugin.IConstant.TAG;
 
 import android.content.Context;
-import android.graphics.drawable.Icon;
 import android.text.TextUtils;
 import android.util.Log;
 

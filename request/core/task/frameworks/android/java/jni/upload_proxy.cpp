@@ -45,7 +45,6 @@ static std::string GetCodeMessage(uint32_t code)
 
 UploadProxy::UploadProxy(int64_t taskId, const Config &config) : taskId_(taskId), config_(config)
 {
-    InitTaskInfo(config_, info_);
 }
 
 UploadProxy::~UploadProxy()
@@ -62,6 +61,7 @@ bool UploadProxy::Start(UploadCallback callback)
     std::lock_guard<std::mutex> guard(mutex_);
     callback_ = callback;
     BuildHeaderData(config_);
+    InitTaskInfo(config_, info_);
     auto uploadThread = std::make_unique<std::thread>(&UploadProxy::Exec, this);
     uploadThread->detach();
     return true;
