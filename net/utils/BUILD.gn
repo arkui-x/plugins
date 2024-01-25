@@ -23,11 +23,11 @@ ohos_source_set("netstack_utils") {
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/include",
     "$SUBSYSTEM_DIR/netstack/utils/common_utils/include",
     "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/http/http_module/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//commonlibrary/c_utils/base/include",
     "//third_party/bounds_checking_function/include",
     "//third_party/curl/include",
     "//third_party/jsoncpp/include",
-    "//plugins/hilog/include",
     "//plugins/interfaces",
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
   ]
@@ -62,7 +62,7 @@ config("plugin_util_config") {
     "//third_party/bounds_checking_function/include",
     "//third_party/curl/include",
     "//third_party/jsoncpp/include",
-    "//plugins/hilog/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//plugins/interfaces",
   ]
 }

@@ -32,7 +32,7 @@ websocket_include = [
   "$NETSTACK_NAPI_ROOT/websocket/constant/include",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/include",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_module/include",
-  "//plugins/hilog/include",
+  "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   "//plugins/interfaces",
   "//plugins/net/websocket",
   "//third_party/bounds_checking_function/include",
