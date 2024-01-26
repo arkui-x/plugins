@@ -204,18 +204,7 @@ public class DownloadImpl {
             }
             request.setAllowedOverMetered(config.isMetered());
         }
-
-        switch (config.getNetwork()) {
-            case Network.WIFI:
-                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
-                break;
-            case Network.CELLULAR:
-                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE);
-                break;
-            case Network.ANY:
-                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
-                break;
-        }
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
         request.setTitle(config.getTitle());
         String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(config.getUrl()));
         request.setMimeType(mimeType);
@@ -385,6 +374,7 @@ public class DownloadImpl {
                 } else {
                     stopQueryProgress(queryRunnable);
                     removeDownload(queryRunnable.taskInfo);
+                    sendFailCallback(queryRunnable.taskInfo, Reason.OTHERS_ERROR);
                 }
                 break;
             case DownloadManager.STATUS_RUNNING:
@@ -583,13 +573,23 @@ public class DownloadImpl {
         try {
             URL url = new URL(urlString);
             URLConnection connection = url.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.connect();
-            Log.i(TAG, "canMakeRequest success");
-            return true;
+            HttpURLConnection httpConnection = (HttpURLConnection) connection;
+            httpConnection.setConnectTimeout(5000);
+            httpConnection.connect();
+
+            int responseCode = httpConnection.getResponseCode();
+            Log.i(TAG, "Response Code: " + responseCode);
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                Log.i(TAG, "canMakeRequest success");
+                return true;
+            } else {
+                Log.i(TAG, "canMakeRequest failed with response code: " + responseCode);
+                return false;
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.i(TAG, "canMakeRequest failed");
+            Log.i(TAG, "canMakeRequest failed due to exception");
             return false;
         }
     }
@@ -628,9 +628,8 @@ public class DownloadImpl {
     public void sendRemoveCallback(TaskInfo taskInfo) {
         Progress progress = taskInfo.getProgress();
         progress.setState(State.REMOVED);
+        TaskDao.delete(context, taskInfo.getTid());
         mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.REMOVE, JsonUtil.convertTaskInfoToJson(taskInfo));
-        Executors.newCachedThreadPool().submit(() -> TaskDao.delete(context, taskInfo.getTid()));
-
     }
 
     private boolean statusIsFinish(int status) {

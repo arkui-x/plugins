@@ -14,7 +14,6 @@
  */
 
 #include "json_utils.h"
-#include "log.h"
 
 namespace OHOS::Plugin::Request {
 using namespace std;

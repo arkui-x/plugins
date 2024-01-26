@@ -16,9 +16,9 @@
 #ifndef PLUGINS_REQUEST_UPLOAD_PROXY_H
 #define PLUGINS_REQUEST_UPLOAD_PROXY_H
 
+#include "constant.h"
 #include "i_task_adp.h"
 #import "OHNetworkKit.h"
-#include "IosTaskDao.h"
 
 namespace OHOS::Plugin::Request {
 class UploadProxy final : public ITaskAdp {

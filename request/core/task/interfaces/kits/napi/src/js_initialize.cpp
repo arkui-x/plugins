@@ -48,6 +48,7 @@ napi_value JsInitialize::Initialize(napi_env env, napi_callback_info info, Versi
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &self, nullptr));
     int32_t number = NapiUtils::TWO_ARG;
     if (static_cast<int32_t>(argc) < number) {
+        NapiUtils::ThrowError(env, E_PARAMETER_CHECK, "invalid parameter count");
         return nullptr;
     }
 
@@ -55,6 +56,7 @@ napi_value JsInitialize::Initialize(napi_env env, napi_callback_info info, Versi
     config.version = version;
     ExceptionError err = InitParam(env, argv, config);
     if (err.code != E_OK) {
+        NapiUtils::ThrowError(env, err.code, err.errInfo);
         return nullptr;
     }
     auto *task = TaskManager::Get().Create(config);
@@ -212,6 +214,7 @@ ExceptionError JsInitialize::GetFD(const std::string &path, const Config &config
     } else {
         if (config.action == Action::UPLOAD) {
             ExceptionErrorCode code = config.version == Version::API10 ? E_FILE_IO : E_FILE_PATH;
+            REQUEST_HILOGI("Failed to open file errno path: %{public}s", path.c_str());
             return { .code = code, .errInfo = "Failed to open file errno " + std::to_string(errno) };
         }
         fd = open(path.c_str(), O_CREAT | O_RDWR, FILE_PERMISSION);

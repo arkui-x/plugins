@@ -14,7 +14,6 @@
  */
 
 #include "ios_net_monitor.h"
-#include <mutex>
 #include "log.h"
 #import "OHNetworkKit.h"
 
