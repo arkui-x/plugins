@@ -88,6 +88,7 @@ bool UploadProxy::Stop()
 void UploadProxy::Exec()
 {
     uint32_t ret = ExecInner();
+    REQUEST_HILOGI("ExecInner: %{public}d", ret);
     auto newState = ret == E_OK ? State::COMPLETED :  State::FAILED;
     ChangeState(newState);
 }
@@ -306,6 +307,7 @@ void UploadProxy::SetHttpPut(CURL *curl, const FileSpec &file, int64_t fileSize)
 
 int32_t UploadProxy::UploadOneFile(uint32_t index, const FileSpec &file)
 {
+    int32_t errorCode = ExceptionErrorCode::E_OK;
     std::lock_guard<std::mutex> guard(curlMutex_);
 
     CURLM *curlMulti = curl_multi_init();
@@ -313,6 +315,7 @@ int32_t UploadProxy::UploadOneFile(uint32_t index, const FileSpec &file)
     curl_mime *mime = nullptr;
     do {
         if (curlMulti == nullptr || curl == nullptr) {
+            errorCode = ExceptionErrorCode::E_SERVICE_ERROR;
             break;
         }
         SetCurlOpt(curl, config_);
@@ -328,19 +331,20 @@ int32_t UploadProxy::UploadOneFile(uint32_t index, const FileSpec &file)
         do {
             int numfds = 0;
             if (curl_multi_wait(curlMulti, nullptr, 0, TRANS_TIMEOUT_MS, &numfds) != CURLM_OK) {
+                errorCode = ExceptionErrorCode::E_SERVICE_ERROR;
                 break;
             }
             curl_multi_perform(curlMulti, &isRuning);
         } while (isRuning);
         REQUEST_HILOGI("isRuning = %{public}d", isRuning);
         if (!isRuning) {
-            auto code = CheckUploadStatus(curlMulti);
-            info_.taskStates[index - 1].responseCode = code;
-            info_.taskStates[index - 1].message = GetCodeMessage(code);
+            errorCode = CheckUploadStatus(curlMulti);
+            info_.taskStates[index - 1].responseCode = errorCode;
+            info_.taskStates[index - 1].message = GetCodeMessage(errorCode);
         }
     } while (0);
     ClearCurlResource(curlMulti, curl, mime);
-    return E_OK;
+    return errorCode;
 }
 
 int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)

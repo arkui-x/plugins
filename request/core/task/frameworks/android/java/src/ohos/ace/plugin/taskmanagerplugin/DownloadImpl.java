@@ -352,8 +352,8 @@ public class DownloadImpl {
         Progress progress = queryRunnable.taskInfo.getProgress();
         switch (downloadStatus) {
             case DownloadManager.STATUS_PAUSED:
-                if (progress.getState() != State.FAILED && !statusIsFinish(progress.getState())) {
-                    progress.setState(State.FAILED);
+                if (progress.getState() != State.PAUSED && !statusIsFinish(progress.getState())) {
+                    progress.setState(State.PAUSED);
                     queryRunnable.taskInfo.setReason(getPausedReason(bytesAndStatus[DOWNLOAD_COLUMN_REASON]));
                     queryRunnable.taskInfo.setCode(getReasonCodeByReason(queryRunnable.taskInfo.getReason()));
                     int[] downloadBytes = getDownloadBytes(queryRunnable.taskInfo.getDownloadId());
@@ -361,10 +361,9 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
-                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PAUSE, 
+                        JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     TaskDao.update(context, queryRunnable.taskInfo);
-                    stopQueryProgress(queryRunnable);
-                    removeDownload(queryRunnable.taskInfo);
                 }
                 break;
             case DownloadManager.STATUS_PENDING:
