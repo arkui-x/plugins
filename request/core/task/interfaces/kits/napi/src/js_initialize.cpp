@@ -258,13 +258,17 @@ bool JsInitialize::ParseConfig(napi_env env, napi_value jsConfig, Config &config
         errInfo = "Exceeding maximum length";
         return false;
     }
-    ParseMethod(env, jsConfig, config);
+    if (!ParseMethod(env, jsConfig, config)) {
+        errInfo = "API10 download not support POST method";
+        return false;
+    }
+
     ParseSaveas(env, jsConfig, config);
     ParseRoaming(env, jsConfig, config);
     ParseRedirect(env, jsConfig, config.redirect);
     ParseNetwork(env, jsConfig, config.network);
     ParseRetry(env, jsConfig, config.retry);
-
+    
     config.overwrite = NapiUtils::Convert2Boolean(env, jsConfig, "overwrite");
     config.metered = NapiUtils::Convert2Boolean(env, jsConfig, "metered");
     config.gauge = NapiUtils::Convert2Boolean(env, jsConfig, "gauge");
@@ -456,14 +460,18 @@ bool JsInitialize::ParseTitle(napi_env env, napi_value jsConfig, Config &config)
     return true;
 }
 
-void JsInitialize::ParseMethod(napi_env env, napi_value jsConfig, Config &config)
+bool JsInitialize::ParseMethod(napi_env env, napi_value jsConfig, Config &config)
 {
+    std::string method = NapiUtils::Convert2String(env, jsConfig, "method");
     if (config.version == Version::API10) {
+        if (config.action == Action::DOWNLOAD && method == "POST") {
+            REQUEST_HILOGE("ParseMethod error, API10 download not support POST");
+            return false;
+        }
         config.method = config.action == Action::UPLOAD ? "PUT" : "GET";
     } else {
         config.method = "POST";
     }
-    std::string method = NapiUtils::Convert2String(env, jsConfig, "method");
     if (!method.empty()) {
         transform(method.begin(), method.end(), method.begin(), ::toupper);
         if (config.action == Action::UPLOAD && (method == "POST" || method == "PUT")) {
@@ -473,6 +481,7 @@ void JsInitialize::ParseMethod(napi_env env, napi_value jsConfig, Config &config
             config.method = method;
         }
     }
+    return true;
 }
 
 bool JsInitialize::ParseData(napi_env env, napi_value jsConfig, Config &config)
@@ -670,6 +679,7 @@ bool JsInitialize::ParseConfigV9(napi_env env, napi_value jsConfig, Config &conf
         return false;
     }
     ParseTitle(env, jsConfig, config);
+    config.overwrite = true;
     return true;
 }
 

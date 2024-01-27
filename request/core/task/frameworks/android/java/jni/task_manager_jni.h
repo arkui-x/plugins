@@ -57,7 +57,7 @@ private:
     std::string GetRealPath(const Config &config);
     std::string GetPackageName(const std::string &sandBoxPath, const std::string &prefix);
     std::string GetUserId(const std::string &sandBoxPath, const std::string &prefix);
-    static void HandleComplete(const std::string &params);
+    static bool HandleComplete(const std::string &params);
 
 private:
     std::mutex mutex_;

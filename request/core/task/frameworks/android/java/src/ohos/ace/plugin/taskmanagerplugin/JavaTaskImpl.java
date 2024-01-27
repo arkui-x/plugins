@@ -197,7 +197,7 @@ public class JavaTaskImpl {
             Log.i(TAG, "reportTaskInfo: task info is null");
             return;
         }
-        JavaTaskImpl.updateTaskInfo(taskInfo);
+        TaskDao.update(mContext, taskInfo, false);
     }
 
     public String show(long taskId) {
@@ -270,10 +270,6 @@ public class JavaTaskImpl {
             return file.getAbsolutePath();
         }
         return "";
-    }
-
-    public static void updateTaskInfo(TaskInfo taskInfo) {
-        TaskDao.update(mContext, taskInfo);
     }
 
     public void jniInit() {

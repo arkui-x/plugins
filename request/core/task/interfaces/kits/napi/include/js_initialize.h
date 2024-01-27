@@ -44,7 +44,7 @@ private:
     static bool ParseName(napi_env env, napi_value jsVal, std::string &name);
     static bool ParseTitle(napi_env env, napi_value jsConfig, Config &config);
     static void ParseNetwork(napi_env env, napi_value jsConfig, Network &network);
-    static void ParseMethod(napi_env env, napi_value jsConfig, Config &config);
+    static bool ParseMethod(napi_env env, napi_value jsConfig, Config &config);
     static void ParseRedirect(napi_env env, napi_value jsConfig, bool &redirect);
     static void ParseRoaming(napi_env env, napi_value jsConfig, Config &config);
     static void ParseRetry(napi_env env, napi_value jsConfig, bool &retry);

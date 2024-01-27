@@ -23,7 +23,7 @@
 #include "upload_proxy.h"
 
 namespace OHOS::Plugin::Request {
-std::map<int64_t, std::shared_ptr<ITaskAdp>> IosAdapter::taskList_ = {};
+
 
 std::shared_ptr<ITaskManagerAdp> ITaskManagerAdp::Get()
 {

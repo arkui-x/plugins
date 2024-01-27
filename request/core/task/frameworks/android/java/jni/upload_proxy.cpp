@@ -45,6 +45,8 @@ static std::string GetCodeMessage(uint32_t code)
 
 UploadProxy::UploadProxy(int64_t taskId, const Config &config) : taskId_(taskId), config_(config)
 {
+    BuildHeaderData(config_);
+    InitTaskInfo(config_, info_);
 }
 
 UploadProxy::~UploadProxy()
@@ -60,8 +62,6 @@ bool UploadProxy::Start(UploadCallback callback)
     REQUEST_HILOGI("upload start");
     std::lock_guard<std::mutex> guard(mutex_);
     callback_ = callback;
-    BuildHeaderData(config_);
-    InitTaskInfo(config_, info_);
     auto uploadThread = std::make_unique<std::thread>(&UploadProxy::Exec, this);
     uploadThread->detach();
     return true;
@@ -82,6 +82,7 @@ bool UploadProxy::Stop()
     std::lock_guard<std::mutex> guard(mutex_);
     ChangeState(State::STOPPED);
     isAbort_ = true;
+    isStopped_ = true;
     return true;
 }
 
@@ -208,12 +209,14 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
 
 void UploadProxy::ChangeState(State state)
 {
-    REQUEST_HILOGI("current state: %{public}d", static_cast<int32_t>(state));
+    REQUEST_HILOGI("current state: %{public}d, isStopped_: %{public}d", static_cast<int32_t>(state), isStopped_);
     info_.progress.state = state;
     info_.mtime = RequestUtils::GetTimeNow();
     ReportInfo(true);
     if (state == State::FAILED) {
-        Notify(EVENT_FAILED);
+        if (!isStopped_) {
+            Notify(EVENT_FAILED);
+        } 
     } else if (state == State::COMPLETED) {
         Notify(EVENT_PROGRESS);
         Notify(EVENT_COMPLETED);
@@ -366,6 +369,7 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
             REQUEST_HILOGE("upload fail http error %{public}d", respCode);
             return E_SERVICE_ERROR;
         }
+        REQUEST_HILOGI("upload file resCode: %{public}d", respCode);
         msg = curl_multi_info_read(curlMulti, &msgsLeft);
     }
     return E_OK;

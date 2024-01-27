@@ -396,7 +396,6 @@ static DBManager *instance;
         taskInfo.mode = sqlite3_column_int(stmt, 7);
         taskInfo.mimeType = [NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, 8)];
         taskInfo.progress = [NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, 9)];
-        NSLog(@"getQueryResult, taskInfo.progress:%@", taskInfo.progress);
         taskInfo.ctime = sqlite3_column_int64(stmt, 10);
         taskInfo.mtime = sqlite3_column_int64(stmt, 11);
         taskInfo.faults = sqlite3_column_int(stmt, 12);

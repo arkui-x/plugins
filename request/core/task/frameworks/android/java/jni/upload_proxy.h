@@ -70,6 +70,7 @@ private:
     TaskInfo info_ {};
     std::mutex mutex_;
     bool isAbort_ = false;
+    bool isStopped_ = false;
     std::string responseHead_ = "";
     struct curl_slist *list_ = nullptr;
     int64_t reportTime_ = 0;

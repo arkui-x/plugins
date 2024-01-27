@@ -347,7 +347,7 @@ public class TaskDao {
         return taskIds;
     }
 
-    public static void update(Context context, TaskInfo taskInfo) {
+    public static void update(Context context, TaskInfo taskInfo, boolean isSaveToken) {
         Log.i(TAG, "update: " + JsonUtil.convertTaskInfoToJson(taskInfo));
         initDb(context);
         ContentValues values = new ContentValues();
@@ -365,7 +365,9 @@ public class TaskDao {
         values.put("faults", taskInfo.getFaults());
         values.put("reason", taskInfo.getReason());
         values.put("downloadId", taskInfo.getDownloadId());
-        values.put("token", taskInfo.getToken());
+        if (isSaveToken) {
+            values.put("token", taskInfo.getToken());
+        }
         values.put("taskStates", JsonUtil.convertTaskStateToJson(taskInfo.getTaskStates()));
         values.put("version", taskInfo.getVersion());
         values.put("files", JsonUtil.convertFileSpecToJson(taskInfo.getFiles()));

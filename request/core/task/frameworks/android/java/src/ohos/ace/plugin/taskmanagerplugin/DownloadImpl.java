@@ -246,11 +246,11 @@ public class DownloadImpl {
         }
         progress.setState(State.RUNNING);
         taskInfo.setProgress(progress);
-        JavaTaskImpl.updateTaskInfo(taskInfo);
         if (downloadId != 0) {
             taskInfo.setDownloadId(downloadId);
             startQueryProgress(taskInfo);
         }
+        TaskDao.update(context, taskInfo, true);
     }
 
     /**
@@ -352,18 +352,31 @@ public class DownloadImpl {
         Progress progress = queryRunnable.taskInfo.getProgress();
         switch (downloadStatus) {
             case DownloadManager.STATUS_PAUSED:
+                Log.i(TAG, "query download status, download STATUS_PAUSED: " + DownloadManager.STATUS_PAUSED);
                 if (progress.getState() != State.PAUSED && !statusIsFinish(progress.getState())) {
-                    progress.setState(State.PAUSED);
                     queryRunnable.taskInfo.setReason(getPausedReason(bytesAndStatus[DOWNLOAD_COLUMN_REASON]));
                     queryRunnable.taskInfo.setCode(getReasonCodeByReason(queryRunnable.taskInfo.getReason()));
+                    String eventType = EventType.PAUSE;
+                    if (bytesAndStatus[DOWNLOAD_COLUMN_REASON] == DownloadManager.PAUSED_WAITING_FOR_NETWORK &&
+                            queryRunnable.taskInfo.getVersion() == Version.API10) {
+                        progress.setState(State.FAILED);
+                        eventType = EventType.FAILED;
+                    } else {
+                        progress.setState(State.PAUSED);
+                        eventType = EventType.PAUSE;
+                    }
                     int[] downloadBytes = getDownloadBytes(queryRunnable.taskInfo.getDownloadId());
                     progress.setProcessed(downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
-                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PAUSE, 
-                        JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
-                    TaskDao.update(context, queryRunnable.taskInfo);
+                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), eventType,
+                            JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+                    TaskDao.update(context, queryRunnable.taskInfo, true);
+                    if (progress.getState() == State.FAILED) {
+                        removeDownload(queryRunnable.taskInfo);
+                        stopQueryProgress(queryRunnable);
+                    }
                 }
                 break;
             case DownloadManager.STATUS_PENDING:
@@ -385,7 +398,7 @@ public class DownloadImpl {
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
-                    TaskDao.update(context, queryRunnable.taskInfo);
+                    TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
                 break;
             case DownloadManager.STATUS_SUCCESSFUL:
@@ -398,7 +411,7 @@ public class DownloadImpl {
                     progress.setSizes(sizes);
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.COMPLETED, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
-                    TaskDao.update(context, queryRunnable.taskInfo);
+                    TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
                 stopQueryProgress(queryRunnable);
                 break;
@@ -413,7 +426,7 @@ public class DownloadImpl {
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
-                    TaskDao.update(context, queryRunnable.taskInfo);
+                    TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
                 stopQueryProgress(queryRunnable);
                 break;
@@ -428,6 +441,7 @@ public class DownloadImpl {
      * query download progress
      */
     public void queryProgress(QueryRunnable queryRunnable) {
+        Log.i(TAG, "queryProgress: tid:" + queryRunnable.taskInfo.getTid() + ",downloadId:" + queryRunnable.taskInfo.getDownloadId());
         int[] bytesAndStatus = new int[]{ARRAY_INIT_VAL, ARRAY_INIT_VAL, 0, 0};
 
         // begin to query status
@@ -460,6 +474,16 @@ public class DownloadImpl {
         queryRunnable.setDownloading(false);
         handle.removeCallbacks(queryRunnable);
         queryRunnables.remove(queryRunnable);
+    }
+
+    public void stopQueryProgress(TaskInfo taskInfo) {
+        for (QueryRunnable qr :
+                queryRunnables) {
+            if (qr.taskInfo.getTid() == taskInfo.getTid()) {
+                stopQueryProgress(qr);
+                break;
+            }
+        }
     }
 
     public void postQueryProgressByTid(long tid) {
@@ -524,7 +548,8 @@ public class DownloadImpl {
      * pause download
      */
     public void pauseDownload(TaskInfo taskInfo) {
-        Log.i(TAG, "execute pauseDownload, taskId: " + taskInfo.getTid());
+        Log.i(TAG, "execute pauseDownload, taskId: " + taskInfo.getTid() + ",downloadId:" + taskInfo.getDownloadId());
+        stopQueryProgress(taskInfo);
         ContentResolver contentResolver = context.getContentResolver();
         ContentValues contentValues = new ContentValues();
         int updateRows = 0;
@@ -532,9 +557,11 @@ public class DownloadImpl {
         contentValues.put("status", PAUSE_BY_USER_STATUS); // PAUSED_BY_USER
         try {
             updateRows = contentResolver.update(ContentUris.withAppendedId(Uri.parse("content://downloads/my_downloads"), taskInfo.getDownloadId()), contentValues, null, null);
+            Log.i(TAG, "pauseDownload: updateRows:" + updateRows);
         } catch (IllegalArgumentException error) {
             Log.e(TAG, "Failed to update control for downloading");
         }
+        startQueryProgress(taskInfo);
     }
 
     /**
@@ -545,8 +572,9 @@ public class DownloadImpl {
      */
     public void resumeDownload(TaskInfo taskInfo) {
         boolean result = false;
-        Log.i(TAG, "execute resumeDownload");
+        Log.i(TAG, "execute resumeDownload,tid:" + taskInfo.getTid() + ",downloadId:" + taskInfo.getDownloadId());
         if (!isSupportBreakpoint(taskInfo.getUrl())) {
+            stopQueryProgress(taskInfo);
             startDownload(taskInfo);
             result = true;
         } else {
@@ -597,10 +625,24 @@ public class DownloadImpl {
         Progress progress = taskInfo.getProgress();
         if (progress.getState() != State.FAILED && !statusIsFinish(progress.getState())) {
             progress.setState(State.FAILED);
+            List<Long> sizes = new ArrayList<>();
+            sizes.add(-1L);
+            progress.setSizes(sizes);
             taskInfo.setReason(reason);
             taskInfo.setCode(getReasonCodeByReason(taskInfo.getReason()));
-            mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(taskInfo));
-            JavaTaskImpl.updateTaskInfo(taskInfo);
+            TaskDao.update(context, taskInfo, true);
+            if (taskInfo.getVersion() == Version.API9) {
+                Executors.newCachedThreadPool().submit(() -> {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(taskInfo));
+                });
+            } else {
+                mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(taskInfo));
+            }
         }
     }
 
@@ -610,9 +652,9 @@ public class DownloadImpl {
             progress.setState(State.STOPPED);
             taskInfo.setReason(Reason.USER_OPERATION);
             taskInfo.setCode(getReasonCodeByReason(taskInfo.getReason()));
-            mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.COMPLETED, JsonUtil.convertTaskInfoToJson(taskInfo));
-            JavaTaskImpl.updateTaskInfo(taskInfo);
+            TaskDao.update(context, taskInfo, true);
         }
+        stopQueryProgress(taskInfo);
     }
 
     private void sendResumeCallback(TaskInfo taskInfo) {
@@ -620,7 +662,7 @@ public class DownloadImpl {
         if (progress.getState() != State.RUNNING && !statusIsFinish(progress.getState())) {
             progress.setState(State.RUNNING);
             mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.RESUME, JsonUtil.convertTaskInfoToJson(taskInfo));
-            JavaTaskImpl.updateTaskInfo(taskInfo);
+            TaskDao.update(context, taskInfo, true);
         }
     }
 
@@ -629,6 +671,7 @@ public class DownloadImpl {
         progress.setState(State.REMOVED);
         TaskDao.delete(context, taskInfo.getTid());
         mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.REMOVE, JsonUtil.convertTaskInfoToJson(taskInfo));
+        stopQueryProgress(taskInfo);
     }
 
     private boolean statusIsFinish(int status) {

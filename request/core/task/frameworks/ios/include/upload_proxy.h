@@ -37,7 +37,6 @@ private:
     void PostUpload(const std::string &method);
     void PutCompletionHandler(NSURLResponse *response, NSError *error);
     void PostCompletionHandler(NSURLResponse *response, NSError *error);
-    void ResumePutTask();
     void OnProgressCallback(NSProgress *progress);
     void OnCompletedCallback();
     void OnFailedCallback();

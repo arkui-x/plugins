@@ -20,7 +20,6 @@
 #include <memory>
 #include "i_task_manager_adp.h"
 #include "i_task_adp.h"
-#import "IosTaskDao.h"
 
 namespace OHOS::Plugin::Request {
 class IosAdapter : public ITaskManagerAdp, public ITaskAdp,
@@ -39,7 +38,7 @@ public:
 
 private:
     std::mutex mutex_;
-    static std::map<int64_t, std::shared_ptr<ITaskAdp>> taskList_;
+    std::map<int64_t, std::shared_ptr<ITaskAdp>> taskList_;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_IOS_ADAPTER_H
