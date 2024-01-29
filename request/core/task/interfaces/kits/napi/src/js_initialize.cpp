@@ -679,7 +679,6 @@ bool JsInitialize::ParseConfigV9(napi_env env, napi_value jsConfig, Config &conf
         return false;
     }
     ParseTitle(env, jsConfig, config);
-    config.overwrite = true;
     return true;
 }
 

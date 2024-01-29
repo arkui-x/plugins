@@ -118,6 +118,7 @@ static DBManager *instance;
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
+        sqlite3_finalize(stmt);
         return -1;
     }
     sqlite3_bind_text(stmt, 1, taskInfo.saveas.UTF8String, -1, NULL);
@@ -162,11 +163,11 @@ static DBManager *instance;
     
     if (sqlite3_step(stmt) != SQLITE_DONE) {  
         NSLog(@"failed to insert record: %s", sqlite3_errmsg(db_));
+        sqlite3_finalize(stmt);
         return -1;
     }
     int64_t tid = sqlite3_last_insert_rowid(db_); // 获取最后插入的记录的主键值 
     NSLog(@"insert db ok, tid:%lld", tid);
-    NSLog(@"insert db, ctime:%lld", taskInfo.ctime);
     return tid;
 }
 

@@ -32,7 +32,7 @@ static string GetFileName(const string &fileName)
 }
 
 DownloadProxy::DownloadProxy(int64_t taskId, const Config &config, OnRequestCallback callback)
-    : config_(config), callback_(callback)
+    : taskId_(taskId), config_(config), callback_(callback)
 {
     NSLog(@"DownloadProxy allocated, taskId:%lld", taskId);
     InitTaskInfo(config, info_);
@@ -106,13 +106,14 @@ void DownloadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
 
 bool DownloadProxy::CheckUrl(const string &strUrl)
 {
+    NSLog(@"DownloadProxy::CheckUrl, strUrl:%s", strUrl.c_str());
     NSURL *url = [NSURL URLWithString:JsonUtils::CStringToNSString(strUrl)];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];  
     NSURLResponse *response = nil;  
     NSError *error = nil;  
-    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];  
-    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {  
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;  
+    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error]; 
+    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         return httpResponse.statusCode == 200;
     }
     return false;
@@ -121,52 +122,52 @@ bool DownloadProxy::CheckUrl(const string &strUrl)
 int32_t DownloadProxy::Start(int64_t taskId)
 {
     NSLog(@"start download, taskId:%lld, config_.saveas:%s", taskId, config_.saveas.c_str());
-    taskId_ = taskId;
-    IosTaskDao::QueryTaskInfo(taskId, "", info_);
-
-    GetFileSize(config_.url);
-    if (!CheckUrl(config_.url)) {
-        NSLog(@"invalid download url:%s", config_.url.c_str());
-        info_.progress.totalProcessed = -1;
-        downloadTotalBytes_ = -1;
-        OnFailedCallback();
-        return E_OK;
-    }
-
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSLog(@"start download");
-        NSString *urlStr = JsonUtils::CStringToNSString(config_.url);
-        NSURL *url = [NSURL URLWithString:urlStr];
-        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-        sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
-        if ([url.scheme compare:@"https"] == NSOrderedSame) {
-            OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
+    @autoreleasepool {
+        if (!CheckUrl(config_.url)) {
+            NSLog(@"invalid download url:%s", config_.url.c_str());
+            info_.progress.totalProcessed = -1;
+            downloadTotalBytes_ = -1;
+            OnFailedCallback();
+            return E_OK;
         }
-        auto headerMap = config_.headers;
-        for (const auto &header: headerMap) {
-            NSString *key = JsonUtils::CStringToNSString(header.first);
-            NSString *value = JsonUtils::CStringToNSString(header.second);
-            [request setValue:value forHTTPHeaderField:key];
-        }
-        downloadTask_ = [sessionCtrl_ downloadWithRequest:request
-                                            progressBlock:^(NSProgress *progress) {
-            NSLog(@"downloading, progress:%@", progress);
-            OnProgressCallback(progress);
-            if (!isMimeReported_) {
-                ReportMimeType([downloadTask_ response]);
+
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            NSLog(@"start download");
+            NSString *urlStr = JsonUtils::CStringToNSString(config_.url);
+            NSURL *url = [NSURL URLWithString:urlStr];
+            NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+            sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
+            if ([url.scheme compare:@"https"] == NSOrderedSame) {
+                OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
             }
-        } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
-            NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
-            NSLog(@"download filePath:%@", filePath);
-            NSURL *destPath = [NSURL fileURLWithPath:filePath];
-            NSLog(@"download destPath:%@", destPath);
-            return destPath;
-        } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {        
-            CompletionHandler(response, filePath, error);
-        }];
-        [downloadTask_ resume];
-        NSLog(@"downloadTask resume");
-    });
+            auto headerMap = config_.headers;
+            for (const auto &header: headerMap) {
+                NSString *key = JsonUtils::CStringToNSString(header.first);
+                NSString *value = JsonUtils::CStringToNSString(header.second);
+                [request setValue:value forHTTPHeaderField:key];
+            }
+            downloadTask_ = [sessionCtrl_ downloadWithRequest:request
+                                                progressBlock:^(NSProgress *progress) {
+                NSLog(@"downloading, progress:%@", progress);
+                OnProgressCallback(progress);
+                if (!isMimeReported_) {
+                    ReportMimeType([downloadTask_ response]);
+                }
+            } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
+                NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
+                NSLog(@"download filePath:%@", filePath);
+                NSURL *destPath = [NSURL fileURLWithPath:filePath];
+                NSLog(@"download destPath:%@", destPath);
+                return destPath;
+            } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {        
+                CompletionHandler(response, filePath, error);
+            }];
+            [downloadTask_ resume];
+            NSLog(@"downloadTask resume");
+        });
+        info_.progress.state = State::RUNNING;
+        IosTaskDao::UpdateDB(info_, config_);
+    }
     return E_OK;
 }
 
@@ -292,6 +293,9 @@ void DownloadProxy::OnCompletedCallback()
     NSLog(@"download OnCompletedCallback");
     if (callback_ != nullptr) {
         info_.progress.state = State::COMPLETED;
+        info_.progress.totalProcessed = info_.progress.processed;
+        downloadTotalBytes_ = info_.progress.processed;
+        SetSizes(downloadTotalBytes_);
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
         IosTaskDao::UpdateDB(info_, config_);
@@ -304,14 +308,10 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
     if (callback_ == nullptr || progress == nil) {
         return;
     }
-    info_.progress.state = State::RUNNING;
     info_.progress.processed = progress.completedUnitCount;
-    info_.progress.totalProcessed = downloadTotalBytes_;
     if (progress.fractionCompleted == 1.0) {
         info_.progress.state = State::COMPLETED;
     }
-    IosTaskDao::UpdateDB(info_, config_);
-
     int64_t now = RequestUtils::GetTimeNow();
     if (now - currentTime_ >= REPORT_INFO_INTERVAL) {
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
@@ -349,17 +349,6 @@ void DownloadProxy::SetSizes(int64_t fileSize)
     NSLog(@"SetSizes fileSize:%lld", fileSize);
     info_.progress.sizes.clear();
     info_.progress.sizes.emplace_back(fileSize);
-}
-
-void DownloadProxy::GetFileSize(const string &downloadUrl)
-{
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSURL *url = [NSURL URLWithString:JsonUtils::CStringToNSString(downloadUrl)];
-        NSData *data = [NSData dataWithContentsOfURL:url];
-        downloadTotalBytes_ = data.length;
-        SetSizes(data.length);
-        NSLog(@"download file size is %lld", data.length);
-    });
 }
 
 // IosNetMonitorObserver

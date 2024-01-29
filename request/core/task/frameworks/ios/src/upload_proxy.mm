@@ -29,7 +29,6 @@ static string GetCodeMessage(uint32_t code)
         {E_FILE_IO, "failed to get file"},
         {E_SERVICE_ERROR,  "upload failed"},
     };
-
     for (const auto &it : codeMap) {
         if (static_cast<uint32_t>(it.first) == code) {
             return it.second;
@@ -42,6 +41,7 @@ UploadProxy::UploadProxy(int64_t taskId, const Config &config, OnRequestCallback
     : taskId_(taskId), config_(config), callback_(callback)
 {
     NSLog(@"UploadProxy allocated, taskId:%lld", taskId);
+    InitTaskInfo(config_, info_);
 }
 
 UploadProxy::~UploadProxy()
@@ -66,8 +66,6 @@ UploadProxy::~UploadProxy()
 int32_t UploadProxy::Start(int64_t taskId)
 {
     NSLog(@"UploadProxy::Start, taskId:%lld", taskId);
-    IosTaskDao::QueryTaskInfo(taskId, "", info_);
-    InitTaskInfo(config_, info_);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         string method = !config_.method.empty() ? config_.method : "POST"; // default: POST
         NSLog(@"upload method:%s", method.c_str());
@@ -473,7 +471,6 @@ void UploadProxy::OnProgressCallback(NSProgress *progress)
         return;
     }
     info_.progress.processed = progress.completedUnitCount;
-    info_.progress.state = State::RUNNING;
     info_.progress.totalProcessed = GetTotalFileSize();
     if (progress.fractionCompleted == 1.0) {
         info_.progress.state = State::COMPLETED;
@@ -481,8 +478,6 @@ void UploadProxy::OnProgressCallback(NSProgress *progress)
             info_.progress.processed = GetTotalFileSize();
         }
     }
-    IosTaskDao::UpdateDB(info_, config_);
-
     int64_t now = RequestUtils::GetTimeNow();
     if (now - currentTime_ >= REPORT_INFO_INTERVAL) {
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
