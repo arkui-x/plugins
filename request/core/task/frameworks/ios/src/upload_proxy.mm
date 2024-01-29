@@ -110,6 +110,7 @@ int32_t UploadProxy::Stop(int64_t taskId)
         }
     }
     ChangeState(State::STOPPED);
+    isStopped_ = true;
     return E_OK;
 }
 
@@ -489,14 +490,16 @@ void UploadProxy::OnCompletedCallback()
 {
     NSLog(@"upload OnCompletedCallback");
     ChangeState(State::COMPLETED);
-    IosTaskDao::UpdateDB(info_, config_);
+    IosTaskDao::UpdateDB(info_);
 }
 
 void UploadProxy::OnFailedCallback()
 {
     NSLog(@"upload OnFailedCallback");
-    ChangeState(State::FAILED);
-    IosTaskDao::UpdateDB(info_, config_);
+    if (!isStopped_) {
+        ChangeState(State::FAILED);
+        IosTaskDao::UpdateDB(info_);
+    }
 }
 
 void UploadProxy::GetExtras(NSURLResponse *response)

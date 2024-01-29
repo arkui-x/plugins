@@ -58,6 +58,7 @@ private:
     OnRequestCallback callback_ = nullptr;
     int64_t taskId_ = INVALID_TASK_ID;
     int64_t currentTime_ = 0;
+    bool isStopped_ = false;
 };
 } // namespace OHOS::Plugin::Request
 

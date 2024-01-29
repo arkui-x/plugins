@@ -91,12 +91,9 @@ int32_t IosAdapter::Remove(int64_t taskId)
     if (result != E_OK) {
         NSLog(@"IosAdapter::Remove, GetTaskInfo failed");
     }
-    result = IosTaskDao::RemoveTask(taskId);
-    if (result != E_OK) {
-        NSLog(@"IosAdapter::Remove, remove task failed");
-    }
+    info.progress.state = State::REMOVED;
+    IosTaskDao::UpdateDB(info);
     RequestCallback(taskId, EVENT_REMOVE, JsonUtils::TaskInfoToJsonString(info));
-
     NSLog(@"IosAdapter::Remove, end");
     return result;
 }

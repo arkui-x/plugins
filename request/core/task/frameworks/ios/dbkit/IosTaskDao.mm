@@ -118,13 +118,12 @@ int32_t IosTaskDao::Search(const Filter &filter, std::vector<std::string> &taskI
     return E_OK;
 }
 
-int32_t IosTaskDao::UpdateDB(const TaskInfo &info, const Config &config)
+int32_t IosTaskDao::UpdateDB(const TaskInfo &info)
 {
     NSLog(@"UpdateDB enter");
     @autoreleasepool {
         IosTaskInfo *taskInfo = [[IosTaskInfo alloc] init];
         taskInfo.tid = std::stoll(info.tid);
-        taskInfo.saveas = JsonUtils::CStringToNSString(config.saveas);
         taskInfo.url = JsonUtils::CStringToNSString(info.url);
         taskInfo.data = JsonUtils::CStringToNSString(info.data);
         taskInfo.title = JsonUtils::CStringToNSString(info.title);
@@ -140,7 +139,6 @@ int32_t IosTaskDao::UpdateDB(const TaskInfo &info, const Config &config)
         taskInfo.reason = JsonUtils::CStringToNSString(info.reason);
         taskInfo.taskStates = JsonUtils::CStringToNSString(JsonUtils::TaskStatesToJsonStirng(info.taskStates).c_str());
         taskInfo.downloadId = 0;
-        taskInfo.token = JsonUtils::CStringToNSString(config.token);
         taskInfo.version = static_cast<int>(info.version);
         taskInfo.files = JsonUtils::CStringToNSString(JsonUtils::FilesToJsonStirng(info.files).c_str());
         taskInfo.code = info.code;

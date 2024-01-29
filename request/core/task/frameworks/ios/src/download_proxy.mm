@@ -166,7 +166,7 @@ int32_t DownloadProxy::Start(int64_t taskId)
             NSLog(@"downloadTask resume");
         });
         info_.progress.state = State::RUNNING;
-        IosTaskDao::UpdateDB(info_, config_);
+        IosTaskDao::UpdateDB(info_);
     }
     return E_OK;
 }
@@ -214,6 +214,7 @@ int32_t DownloadProxy::Stop(int64_t taskId)
     if (downloadTask_ != nil) {
         [downloadTask_ cancel];
     }
+    isStopped_ = true;
     return E_OK;
 }
 
@@ -284,7 +285,7 @@ void DownloadProxy::ReportMimeType(NSURLResponse *response)
     NSLog(@"download, response:%@, mimeType:%@", response.description, mimeType);
     if (mimeType.length > 0) {
         info_.mimeType = mimeType.UTF8String;
-        IosTaskDao::UpdateDB(info_, config_);
+        IosTaskDao::UpdateDB(info_);
     }
 }
 
@@ -298,7 +299,7 @@ void DownloadProxy::OnCompletedCallback()
         SetSizes(downloadTotalBytes_);
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
-        IosTaskDao::UpdateDB(info_, config_);
+        IosTaskDao::UpdateDB(info_);
     }
 }
 
@@ -321,6 +322,10 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
 
 void DownloadProxy::OnFailedCallback()
 {
+    if (isStopped_) {
+        NSLog(@"download OnFailedCallback task is stopped");
+        return;
+    }
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {  
         if (callback_ != nullptr) {
             info_.progress.state = State::FAILED;
@@ -328,7 +333,7 @@ void DownloadProxy::OnFailedCallback()
             SetSizes(downloadTotalBytes_);
             NSLog(@"download OnFailedCallback start");
             callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
-            IosTaskDao::UpdateDB(info_, config_);
+            IosTaskDao::UpdateDB(info_);
         }
     });
 }
@@ -340,7 +345,7 @@ void DownloadProxy::OnPauseCallback()
         info_.progress.state = State::PAUSED;
         SetSizes(downloadTotalBytes_);
         callback_(taskId_, EVENT_PAUSE, JsonUtils::TaskInfoToJsonString(info_));
-        IosTaskDao::UpdateDB(info_, config_);
+        IosTaskDao::UpdateDB(info_);
     }
 }
 

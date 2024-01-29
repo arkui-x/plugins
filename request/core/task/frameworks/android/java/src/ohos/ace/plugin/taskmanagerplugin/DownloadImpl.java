@@ -669,7 +669,7 @@ public class DownloadImpl {
     public void sendRemoveCallback(TaskInfo taskInfo) {
         Progress progress = taskInfo.getProgress();
         progress.setState(State.REMOVED);
-        TaskDao.delete(context, taskInfo.getTid());
+        TaskDao.update(context,taskInfo,true);
         mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.REMOVE, JsonUtil.convertTaskInfoToJson(taskInfo));
         stopQueryProgress(taskInfo);
     }

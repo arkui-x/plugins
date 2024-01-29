@@ -181,6 +181,7 @@ static DBManager *instance;
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
+        [self releaseStmt:stmt];
         return nil;
     }
     NSMutableArray *tasks = [self getQueryResult:stmt];
@@ -199,6 +200,7 @@ static DBManager *instance;
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
+        [self releaseStmt:stmt];
         return nil;
     }
     sqlite3_bind_int64(stmt, 1, taskId);
@@ -222,6 +224,7 @@ static DBManager *instance;
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
+        [self releaseStmt:stmt];
         return nil;
     }
     sqlite3_bind_int64(stmt, 1, taskId);
@@ -278,6 +281,7 @@ static DBManager *instance;
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
+        [self releaseStmt:stmt];
         return nil;
     }
 
@@ -302,34 +306,33 @@ static DBManager *instance;
         return NO;
     }
 
-    const char *sql = "UPDATE Task SET saveas=?, url=?, data=?, title=?, description=?, "
+    const char *sql = "UPDATE Task SET url=?, data=?, title=?, description=?, "
         "action1=?, mode=?, mimeType=?, progress=?, ctime=?, mtime=?, faults=?, "
-        "reason=?, downloadId=?, token=?, taskStates=?, version=?, files=?, code=? WHERE tid =?;";
+        "reason=?, downloadId=?, taskStates=?, version=?, files=?, code=? WHERE tid =?;";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
+        [self releaseStmt:stmt];
         return NO;
     }
-    sqlite3_bind_text(stmt, 1, taskInfo.saveas.UTF8String, -1, NULL);
-    sqlite3_bind_text(stmt, 2, taskInfo.url.UTF8String, -1, NULL);
-    sqlite3_bind_text(stmt, 3, taskInfo.data.UTF8String, -1, NULL);
-    sqlite3_bind_text(stmt, 4, taskInfo.title.UTF8String, -1, NULL);
-    sqlite3_bind_text(stmt, 5, taskInfo.desc.UTF8String, -1, NULL);
-    sqlite3_bind_int(stmt, 6, taskInfo.action);
-    sqlite3_bind_int(stmt, 7, taskInfo.mode);
-    sqlite3_bind_text(stmt, 8, taskInfo.mimeType.UTF8String, -1, NULL);
-    sqlite3_bind_text(stmt, 9, taskInfo.progress.UTF8String, -1, NULL);
-    sqlite3_bind_int64(stmt, 10, taskInfo.ctime);
-    sqlite3_bind_int64(stmt, 11, taskInfo.mtime);
-    sqlite3_bind_int(stmt, 12, taskInfo.faults);
-    sqlite3_bind_text(stmt, 13, taskInfo.reason.UTF8String, -1, NULL);
-    sqlite3_bind_int(stmt, 14, taskInfo.downloadId);
-    sqlite3_bind_text(stmt, 15, taskInfo.token.UTF8String, -1, NULL);
-    sqlite3_bind_text(stmt, 16, taskInfo.taskStates.UTF8String, -1, NULL);
-    sqlite3_bind_int(stmt, 17, taskInfo.version);
-    sqlite3_bind_text(stmt, 18, taskInfo.files.UTF8String, -1, NULL);
-    sqlite3_bind_int(stmt, 19, taskInfo.code);
-    sqlite3_bind_int64(stmt, 20, taskInfo.tid);
+    sqlite3_bind_text(stmt, 1, taskInfo.url.UTF8String, -1, NULL);
+    sqlite3_bind_text(stmt, 2, taskInfo.data.UTF8String, -1, NULL);
+    sqlite3_bind_text(stmt, 3, taskInfo.title.UTF8String, -1, NULL);
+    sqlite3_bind_text(stmt, 4, taskInfo.desc.UTF8String, -1, NULL);
+    sqlite3_bind_int(stmt, 5, taskInfo.action);
+    sqlite3_bind_int(stmt, 6, taskInfo.mode);
+    sqlite3_bind_text(stmt, 7, taskInfo.mimeType.UTF8String, -1, NULL);
+    sqlite3_bind_text(stmt, 8, taskInfo.progress.UTF8String, -1, NULL);
+    sqlite3_bind_int64(stmt, 9, taskInfo.ctime);
+    sqlite3_bind_int64(stmt, 10, taskInfo.mtime);
+    sqlite3_bind_int(stmt, 11, taskInfo.faults);
+    sqlite3_bind_text(stmt, 12, taskInfo.reason.UTF8String, -1, NULL);
+    sqlite3_bind_int(stmt, 13, taskInfo.downloadId);
+    sqlite3_bind_text(stmt, 14, taskInfo.taskStates.UTF8String, -1, NULL);
+    sqlite3_bind_int(stmt, 15, taskInfo.version);
+    sqlite3_bind_text(stmt, 16, taskInfo.files.UTF8String, -1, NULL);
+    sqlite3_bind_int(stmt, 17, taskInfo.code);
+    sqlite3_bind_int64(stmt, 18, taskInfo.tid);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         NSLog(@"failed to update database");
@@ -349,9 +352,9 @@ static DBManager *instance;
     }
     const char *sql = "DELETE FROM Task WHERE tid=?;";
     sqlite3_stmt *stmt = NULL;
-
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
+        [self releaseStmt:stmt];
         return NO;
     }
     sqlite3_bind_int64(stmt, 1, taskId);
