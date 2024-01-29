@@ -294,9 +294,11 @@ void DownloadProxy::OnCompletedCallback()
     NSLog(@"download OnCompletedCallback");
     if (callback_ != nullptr) {
         info_.progress.state = State::COMPLETED;
-        info_.progress.totalProcessed = info_.progress.processed;
-        downloadTotalBytes_ = info_.progress.processed;
-        SetSizes(downloadTotalBytes_);
+        if (downloadTotalBytes_ == -1) {
+	    info_.progress.totalProcessed = info_.progress.processed;
+            downloadTotalBytes_ = info_.progress.processed;
+            SetSizes(downloadTotalBytes_);
+        }
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
         IosTaskDao::UpdateDB(info_);
@@ -310,6 +312,8 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
         return;
     }
     info_.progress.processed = progress.completedUnitCount;
+    info_.progress.totalProcessed = progress.totalUnitCount;
+    downloadTotalBytes_ = progress.totalUnitCount;
     if (progress.fractionCompleted == 1.0) {
         info_.progress.state = State::COMPLETED;
     }
@@ -317,6 +321,7 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
     if (now - currentTime_ >= REPORT_INFO_INTERVAL) {
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         currentTime_ = now;
+        IosTaskDao::UpdateDB(info_);
     }
 }
 

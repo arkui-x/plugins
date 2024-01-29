@@ -483,6 +483,7 @@ void UploadProxy::OnProgressCallback(NSProgress *progress)
     if (now - currentTime_ >= REPORT_INFO_INTERVAL) {
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         currentTime_ = now;
+        IosTaskDao::UpdateDB(info_);
     }
 }
 

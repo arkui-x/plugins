@@ -363,6 +363,7 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
         }
         if (msg->data.result != CURLE_OK) {
             REQUEST_HILOGE("upload fail curl error %{public}d", msg->data.result);
+            info_.progress.processed = 0;
             return E_SERVICE_ERROR;
         }
 
@@ -370,6 +371,7 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
         curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE, &respCode);
         if (respCode != HTTP_SUCCESS && respCode != HTTP_PARTIAL_SUCCESS) {
             REQUEST_HILOGE("upload fail http error %{public}d", respCode);
+            info_.progress.processed = 0;
             return E_SERVICE_ERROR;
         }
         REQUEST_HILOGI("upload file resCode: %{public}d", respCode);
