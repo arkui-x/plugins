@@ -295,7 +295,7 @@ void DownloadProxy::OnCompletedCallback()
     if (callback_ != nullptr) {
         info_.progress.state = State::COMPLETED;
         if (downloadTotalBytes_ == -1) {
-	    info_.progress.totalProcessed = info_.progress.processed;
+            info_.progress.totalProcessed = info_.progress.processed;
             downloadTotalBytes_ = info_.progress.processed;
             SetSizes(downloadTotalBytes_);
         }
@@ -314,6 +314,7 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
     info_.progress.processed = progress.completedUnitCount;
     info_.progress.totalProcessed = progress.totalUnitCount;
     downloadTotalBytes_ = progress.totalUnitCount;
+    SetSizes(downloadTotalBytes_);
     if (progress.fractionCompleted == 1.0) {
         info_.progress.state = State::COMPLETED;
     }

@@ -20,7 +20,7 @@
 #include <string>
 
 namespace OHOS::Plugin::Request {
-using OnRequestCallback = void(*)(int64_t, std::string, std::string);
+using OnRequestCallback = void(*)(int64_t, const std::string &, const std::string &);
 class ITaskAdp {
 public:
     virtual ~ITaskAdp() = default;

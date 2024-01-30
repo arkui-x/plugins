@@ -100,9 +100,6 @@ uint32_t UploadProxy::ExecInner()
     for (auto &file : config_.files) {
         REQUEST_HILOGI("upload file: %{public}s, index: %{public}u", file.filename.c_str(), info_.progress.index);
         if (UploadOneFile(info_.progress.index, file) != E_OK) {
-            if (info_.progress.index > 1) {
-                info_.progress.sizes[info_.progress.index - 1] = -1;
-            }
             return E_SERVICE_ERROR;
         }
         if (info_.progress.index < info_.progress.sizes.size()) {
