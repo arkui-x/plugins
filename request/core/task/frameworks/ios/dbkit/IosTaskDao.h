@@ -29,7 +29,7 @@ public:
     static int32_t RemoveTask(int64_t taskId);
     static int32_t QueryTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info);
     static int32_t Search(const Filter &filter, std::vector<std::string> &taskIdList);
-    static int32_t UpdateDB(const TaskInfo &info, const Config &config);
+    static int32_t UpdateDB(const TaskInfo &info);
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_IOS_TASKADAPTER_H

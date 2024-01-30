@@ -22,7 +22,10 @@ TaskManager& TaskManager::Get()
 {
     static TaskManager instance;
     std::lock_guard<std::recursive_mutex> autoLock(instance.mutex_);
-    instance.adapter_ = ITaskManagerAdp::Get();
+    if (instance.adapter_ == nullptr) {
+        REQUEST_HILOGI("TaskManager new");
+        instance.adapter_ = ITaskManagerAdp::Get();
+    }
     return instance;
 }
 

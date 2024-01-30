@@ -209,8 +209,10 @@ void TaskManagerJni::OnRequestCallback(JNIEnv *env, jobject obj, jlong taskId, j
     REQUEST_HILOGI("TaskManagerJni JNI: OnRequestDataCallback");
     auto eventType = JavaStringToString(env, type);
     auto infoParam = JavaStringToString(env, info);
-    if (eventType == EVENT_COMPLETED || eventType == EVENT_FAILED) {
-        HandleComplete(infoParam);
+    if (eventType == EVENT_COMPLETED) {
+        if (!HandleComplete(infoParam)) {
+            eventType = EVENT_FAILED;
+        }
     }
     TaskNotifyManager::Get().SendNotify(RequestUtils::GetEventType(taskId, eventType), infoParam);
     REQUEST_HILOGI("TaskManagerJni JNI: OnRequestDataCallback end");
@@ -568,12 +570,12 @@ std::string TaskManagerJni::GetPackageName(const std::string &sandBoxPath, const
 const std::string JSON_SAVEAS = "saveas";
 const std::string JSON_FILES = "files";
 
-void TaskManagerJni::HandleComplete(const std::string &params)
+bool TaskManagerJni::HandleComplete(const std::string &params)
 {
     auto infoJson = nlohmann::json::parse(params.c_str(), nullptr, false);
     if (infoJson.is_null() || infoJson.is_discarded()) {
         REQUEST_HILOGE("invalid json of task info");
-        return;
+        return false;
     }
 
     std::string saveas = "";
@@ -582,16 +584,17 @@ void TaskManagerJni::HandleComplete(const std::string &params)
     }
     auto info = infoJson.get<TaskInfo>();
     REQUEST_HILOGI("saveas = %{public}s", saveas.c_str());
-    REQUEST_HILOGI("files.size() = %{public}zu", info.files.size());
+    REQUEST_HILOGI("info.files[0].uri = %{public}s", info.files[0].uri.c_str());
     if (!info.files.empty() && saveas != info.files[0].uri) {
         std::string copyFile = "cp " + saveas + " " + info.files[0].uri;
         std::string removeFile = "rm -rf " + saveas;
         if (system(copyFile.c_str()) != 0) {
             REQUEST_HILOGE("%s failed", copyFile.c_str());
             system(removeFile.c_str());
-            return;
+            return false;
         }
         system(removeFile.c_str());
     }
+    return true;
 }
 } // namespace OHOS::Plugin::Request

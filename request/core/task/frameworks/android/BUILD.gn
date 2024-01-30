@@ -37,6 +37,7 @@ java_library("task_android_java") {
     "java/src/ohos/ace/plugin/taskmanagerplugin/TaskState.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/FileSpec.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/FormItem.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Version.java",
   ]
   subsystem_name = "plugins"
   part_name = "request"

@@ -29,7 +29,6 @@ static string GetCodeMessage(uint32_t code)
         {E_FILE_IO, "failed to get file"},
         {E_SERVICE_ERROR,  "upload failed"},
     };
-
     for (const auto &it : codeMap) {
         if (static_cast<uint32_t>(it.first) == code) {
             return it.second;
@@ -39,14 +38,15 @@ static string GetCodeMessage(uint32_t code)
 }
 
 UploadProxy::UploadProxy(int64_t taskId, const Config &config, OnRequestCallback callback)
-    : config_(config), callback_(callback)
+    : taskId_(taskId), config_(config), callback_(callback)
 {
-    NSLog(@"UploadProxy allocated");
+    NSLog(@"UploadProxy allocated, taskId:%lld", taskId);
+    InitTaskInfo(config_, info_);
 }
 
 UploadProxy::~UploadProxy()
 {
-    NSLog(@"UploadProxy freed");
+    NSLog(@"UploadProxy freed, taskId:%lld", taskId_);
     if (uploadTask_ != nil) {
         [uploadTask_ cancel];
         uploadTask_ = nil;
@@ -65,10 +65,7 @@ UploadProxy::~UploadProxy()
 
 int32_t UploadProxy::Start(int64_t taskId)
 {
-    NSLog(@"UploadProxy::Start enter");
-    taskId_ = taskId;
-    IosTaskDao::QueryTaskInfo(taskId, "", info_);
-    InitTaskInfo(config_, info_);
+    NSLog(@"UploadProxy::Start, taskId:%lld", taskId);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         string method = !config_.method.empty() ? config_.method : "POST"; // default: POST
         NSLog(@"upload method:%s", method.c_str());
@@ -89,19 +86,19 @@ int32_t UploadProxy::Start(int64_t taskId)
 
 int32_t UploadProxy::Pause(int64_t taskId)
 {
-    NSLog(@"UploadProxy::Pause enter");
+    NSLog(@"UploadProxy::Pause, taskId:%lld", taskId);
     return E_OK;
 }
 
 int32_t UploadProxy::Resume(int64_t taskId)
 {
-    NSLog(@"UploadProxy::Resume enter");
+    NSLog(@"UploadProxy::Resume, taskId:%lld", taskId);
     return E_OK;
 }
 
 int32_t UploadProxy::Stop(int64_t taskId)
 {
-    NSLog(@"UploadProxy::Stop enter");
+    NSLog(@"UploadProxy::Stop, taskId:%lld", taskId);
     if (uploadTask_ != nil) {
         [uploadTask_ cancel];
     } else {
@@ -113,6 +110,7 @@ int32_t UploadProxy::Stop(int64_t taskId)
         }
     }
     ChangeState(State::STOPPED);
+    isStopped_ = true;
     return E_OK;
 }
 
@@ -137,9 +135,9 @@ void UploadProxy::PutUpload(const string &method)
     NSString *methodStr = JsonUtils::CStringToNSString(method);
     if ([url hasPrefix:@"https"]) {
         OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
-        NSLog(@"is https upload");
+        NSLog(@"it is https upload");
     } else {
-        NSLog(@"is http upload");
+        NSLog(@"it is http upload");
     }
 
     for (const auto& file : config_.files) {
@@ -165,10 +163,9 @@ void UploadProxy::PutUpload(const string &method)
         } completion:^(NSURLResponse *response, id responseObject, NSError *error) {
             PutCompletionHandler(response, error);
         }];
-
+        [task resume];
         putUploadTaskList_.push_back(task);
     }
-    ResumePutTask();
 }
 
 void UploadProxy::PutCompletionHandler(NSURLResponse *response, NSError *error)
@@ -192,16 +189,6 @@ void UploadProxy::PutCompletionHandler(NSURLResponse *response, NSError *error)
         } else {
             NSLog(@"upload completed, response: %s", [response description].UTF8String);
             ChangeState(State::COMPLETED);
-        }
-    }
-}
-
-void UploadProxy::ResumePutTask()
-{
-    NSLog(@"UploadProxy::ResumePutTask enter");
-    for (auto &task : putUploadTaskList_) {
-        if (task != nil) {
-            [task resume];
         }
     }
 }
@@ -246,7 +233,7 @@ void UploadProxy::SetMultipartStreamFilePath(const FileSpec &file, OHMultipartFo
 void UploadProxy::PartUpload(const string &method)
 {
     NSLog(@"UploadProxy::PartUpload enter");
-    if (config_.files.size() < 1) {
+    if (config_.files.empty()) {
         return;
     }
     NSString *partFilePath = GetUploadPartFile(config_.files[0]);
@@ -485,7 +472,6 @@ void UploadProxy::OnProgressCallback(NSProgress *progress)
         return;
     }
     info_.progress.processed = progress.completedUnitCount;
-    info_.progress.state = State::RUNNING;
     info_.progress.totalProcessed = GetTotalFileSize();
     if (progress.fractionCompleted == 1.0) {
         info_.progress.state = State::COMPLETED;
@@ -493,12 +479,11 @@ void UploadProxy::OnProgressCallback(NSProgress *progress)
             info_.progress.processed = GetTotalFileSize();
         }
     }
-    IosTaskDao::UpdateDB(info_, config_);
-
     int64_t now = RequestUtils::GetTimeNow();
     if (now - currentTime_ >= REPORT_INFO_INTERVAL) {
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         currentTime_ = now;
+        IosTaskDao::UpdateDB(info_);
     }
 }
 
@@ -506,14 +491,16 @@ void UploadProxy::OnCompletedCallback()
 {
     NSLog(@"upload OnCompletedCallback");
     ChangeState(State::COMPLETED);
-    IosTaskDao::UpdateDB(info_, config_);
+    IosTaskDao::UpdateDB(info_);
 }
 
 void UploadProxy::OnFailedCallback()
 {
     NSLog(@"upload OnFailedCallback");
-    ChangeState(State::FAILED);
-    IosTaskDao::UpdateDB(info_, config_);
+    if (!isStopped_) {
+        ChangeState(State::FAILED);
+        IosTaskDao::UpdateDB(info_);
+    }
 }
 
 void UploadProxy::GetExtras(NSURLResponse *response)

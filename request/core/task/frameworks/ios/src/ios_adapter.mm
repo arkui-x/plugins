@@ -23,8 +23,6 @@
 #include "upload_proxy.h"
 
 namespace OHOS::Plugin::Request {
-std::map<int64_t, std::shared_ptr<ITaskAdp>> IosAdapter::taskList_ = {};
-
 std::shared_ptr<ITaskManagerAdp> ITaskManagerAdp::Get()
 {
     return std::make_shared<IosAdapter>();
@@ -93,13 +91,9 @@ int32_t IosAdapter::Remove(int64_t taskId)
     if (result != E_OK) {
         NSLog(@"IosAdapter::Remove, GetTaskInfo failed");
     }
-    result = IosTaskDao::RemoveTask(taskId);
-    if (result != E_OK) {
-        NSLog(@"IosAdapter::Remove, remove task failed");
-    }
+    info.progress.state = State::REMOVED;
+    IosTaskDao::UpdateDB(info);
     RequestCallback(taskId, EVENT_REMOVE, JsonUtils::TaskInfoToJsonString(info));
-    taskList_.erase(it);
-
     NSLog(@"IosAdapter::Remove, end");
     return result;
 }

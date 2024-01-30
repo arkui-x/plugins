@@ -37,7 +37,6 @@ private:
     void PostUpload(const std::string &method);
     void PutCompletionHandler(NSURLResponse *response, NSError *error);
     void PostCompletionHandler(NSURLResponse *response, NSError *error);
-    void ResumePutTask();
     void OnProgressCallback(NSProgress *progress);
     void OnCompletedCallback();
     void OnFailedCallback();
@@ -59,6 +58,7 @@ private:
     OnRequestCallback callback_ = nullptr;
     int64_t taskId_ = INVALID_TASK_ID;
     int64_t currentTime_ = 0;
+    bool isStopped_ = false;
 };
 } // namespace OHOS::Plugin::Request
 
