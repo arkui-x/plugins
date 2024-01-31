@@ -76,6 +76,7 @@ private:
     int64_t reportTime_ = 0;
     int64_t currentTime_ = 0;
     std::mutex curlMutex_;
+    std::mutex responseMutex_;
     static constexpr int32_t HTTP_SUCCESS = 200;
     static constexpr int32_t HTTP_PARTIAL_SUCCESS = 206;
     static constexpr int32_t TRANS_TIMEOUT_MS = 30 * 1000;

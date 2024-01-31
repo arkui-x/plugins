@@ -91,22 +91,22 @@ void UploadProxy::Exec()
     uint32_t ret = ExecInner();
     REQUEST_HILOGI("ExecInner: %{public}d", ret);
     auto newState = ret == E_OK ? State::COMPLETED :  State::FAILED;
-    ChangeState(newState);
+    if (info_.progress.state != State::STOPPED) {
+        ChangeState(newState);
+    }
 }
 
 uint32_t UploadProxy::ExecInner()
 {
     ChangeState(State::RUNNING);
-    for (auto &file : config_.files) {
-        REQUEST_HILOGI("upload file: %{public}s, index: %{public}u", file.filename.c_str(), info_.progress.index);
-        if (UploadOneFile(info_.progress.index, file) != E_OK) {
+    for (size_t i = 0; i < config_.files.size(); i++) {
+        REQUEST_HILOGI("upload file: %{public}s", config_.files[i].filename.c_str());
+        info_.progress.extras.clear();
+        info_.progress.bodyBytes.clear();
+        info_.progress.processed = 0;
+        info_.progress.index = i;
+        if (UploadOneFile(info_.progress.index, config_.files[i]) != E_OK) {
             return E_SERVICE_ERROR;
-        }
-        if (info_.progress.index < info_.progress.sizes.size()) {
-            info_.progress.extras.clear();
-            info_.progress.bodyBytes.clear();
-            info_.progress.index++;
-            info_.progress.processed = 0;
         }
         ReportInfo(false);
     }
@@ -165,39 +165,30 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
     info.priority = 0;
     info.extras = config.extras;
     info.progress.index = config.index;
-    if (info.progress.index == 0) {
-        info.progress.index = 1;
-    }
     info.progress.processed = 0;
     info.progress.totalProcessed = 0;
-    for (auto &file : config.files) {
-        REQUEST_HILOGI("fileName = %{public}s", file.filename.c_str());
+    for(auto i = 0; i < config.files.size(); i++){
+        auto file = config.files[i];
         TaskState state;
         state.path = file.filename;
         state.responseCode = E_OK;
-        if (file.uri == "") {
+        if (file.uri.empty()) {
             state.responseCode = E_FILE_PATH;
         }
-        if (file.filename == "" || file.fd < 0) {
+        if (file.filename.empty() || file.fd < 0) {
             state.responseCode = E_FILE_IO;
         }
         state.message = GetCodeMessage(state.responseCode);
         if (file.fd > 0) {
             int64_t fileSize = lseek(file.fd, 0, SEEK_END);
-
-            bool isFirstFile = false;
-            if (info.progress.sizes.size() + 1 == info.progress.index) {
-                isFirstFile = true;
-            }
-            if (config.begins > 0 && isFirstFile) {
-                fileSize -= config.begins;
-            }
-            if (config.ends > 0 && isFirstFile) {
+            if (i == config.index && config.begins >= 0 && config.ends >= 0) {
+                REQUEST_HILOGI("partial upload: %{public}u, begins %{public}lld, ends %{public}lld",
+                config.index, config.begins, config.ends);
                 fileSize = config.ends - config.begins + 1;
             }
             info.progress.sizes.emplace_back(fileSize);
             int64_t offset = 0;
-            if (config.begins > 0 && isFirstFile) {
+            if (config.begins > 0) {
                 offset = config.begins;
             }
             lseek(file.fd, offset, SEEK_SET);
@@ -323,10 +314,10 @@ int32_t UploadProxy::UploadOneFile(uint32_t index, const FileSpec &file)
         }
         SetCurlOpt(curl, config_);
         if (config_.method == METHOD_PUT) {
-            SetHttpPut(curl, file, info_.progress.sizes[index - 1]);
+            SetHttpPut(curl, file, info_.progress.sizes[index]);
         } else {
             mime = curl_mime_init(curl);
-            SetMimePost(curl, mime, file, info_.progress.sizes[index - 1]);
+            SetMimePost(curl, mime, file, info_.progress.sizes[index]);
         }
         curl_multi_add_handle(curlMulti, curl);
         int isRuning = 0;
@@ -342,8 +333,8 @@ int32_t UploadProxy::UploadOneFile(uint32_t index, const FileSpec &file)
         REQUEST_HILOGI("isRuning = %{public}d", isRuning);
         if (!isRuning) {
             errorCode = CheckUploadStatus(curlMulti);
-            info_.taskStates[index - 1].responseCode = errorCode;
-            info_.taskStates[index - 1].message = GetCodeMessage(errorCode);
+            info_.taskStates[index].responseCode = errorCode;
+            info_.taskStates[index].message = GetCodeMessage(errorCode);
         }
     } while (0);
     ClearCurlResource(curlMulti, curl, mime);
@@ -355,6 +346,7 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
     int msgsLeft = 0;
     CURLMsg *msg = curl_multi_info_read(curlMulti, &msgsLeft);
     while (msg != nullptr) {
+        std::lock_guard<std::mutex> guard(responseMutex_);
         if (msg->msg != CURLMSG_DONE) {
             continue;
         }
@@ -366,12 +358,14 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
 
         int32_t respCode = 0;
         curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE, &respCode);
+        REQUEST_HILOGI("upload http code: %{public}d", respCode);
         if (respCode != HTTP_SUCCESS && respCode != HTTP_PARTIAL_SUCCESS) {
             REQUEST_HILOGE("upload fail http error %{public}d", respCode);
             info_.progress.processed = 0;
             return E_SERVICE_ERROR;
+        } else if (respCode == HTTP_PARTIAL_SUCCESS) {
+            ChangeState(State::FAILED);
         }
-        REQUEST_HILOGI("upload file resCode: %{public}d", respCode);
         msg = curl_multi_info_read(curlMulti, &msgsLeft);
     }
     return E_OK;
@@ -399,7 +393,6 @@ void UploadProxy::ClearCurlResource(CURLM *curlMulti, CURL *curl, curl_mime *mim
 int32_t UploadProxy::ProgressCallback(void *client, curl_off_t dltotal, curl_off_t dlnow,
     curl_off_t ultotal, curl_off_t ulnow)
 {
-    REQUEST_HILOGI("ProgressCallback in ultotal: %{public}zu, ulnow: %{public}zu", ultotal, ulnow);
     auto thiz = static_cast<UploadProxy*>(client);
     if (thiz == nullptr) {
         return 0;
@@ -458,7 +451,7 @@ size_t UploadProxy::ReadCallback(char *buffer, size_t size, size_t nitems, void 
         return CURL_READFUNC_ABORT;
     }
 
-    uint32_t index = thiz->info_.progress.index - 1;
+    uint32_t index = thiz->info_.progress.index;
     FileSpec file = thiz->config_.files[index];
     std::condition_variable condition;
     size_t readSize = 0;
@@ -471,8 +464,8 @@ size_t UploadProxy::ReadCallback(char *buffer, size_t size, size_t nitems, void 
     auto readTask = [&] {
         std::unique_lock<std::mutex> readlock(mutexlock);
         readSize = read(file.fd, buffer, maxReadSize);
-		thiz->info_.progress.processed += readSize;
-		thiz->info_.progress.totalProcessed += readSize;
+        thiz->info_.progress.processed += readSize;
+        thiz->info_.progress.totalProcessed += readSize;
         condition.notify_one();
     };
 
