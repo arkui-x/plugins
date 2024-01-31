@@ -32,7 +32,7 @@ IosAdapter::~IosAdapter()
 {
 }
 
-void RequestCallback(int64_t taskId, std::string eventType, std::string infoParam)
+void RequestCallback(int64_t taskId, const std::string &eventType, const std::string &infoParam)
 {
     NSLog(@"RequestCallback taskId: %lld, eventType:%s, infoParam:%s",
         taskId, eventType.c_str(), infoParam.c_str());
