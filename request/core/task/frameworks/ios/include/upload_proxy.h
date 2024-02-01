@@ -33,28 +33,31 @@ public:
 
 private:
     void InitTaskInfo(const Config &config, TaskInfo &info);
-    void PutUpload(const std::string &method);
-    void PostUpload(const std::string &method);
-    void PutCompletionHandler(NSURLResponse *response, NSError *error);
-    void PostCompletionHandler(NSURLResponse *response, NSError *error);
-    void OnProgressCallback(NSProgress *progress);
+    void PutUpload();
+    void PostUpload();
+    void CompletionHandler(NSURLResponse *response, NSError *error);
+    void OnProgressCallback(NSProgress *progress, int32_t index);
     void OnCompletedCallback();
     void OnFailedCallback();
     void ChangeState(State state);
     int64_t GetTotalFileSize() const;
     NSString *GetUploadPartFile(const FileSpec &file);
-    void PartUpload(const std::string &method);
-    void SetMultipartStreamFilePath(const FileSpec &file, OHMultipartFormStream *multipartStream, NSString *filePath);
     void GetExtras(NSURLResponse *response);
+    void PartPostUpload(NSURL *baseUrl, NSMutableDictionary *headers);
+    void PostUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers);
+    void PartPostUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers);
+    void RemoveFile(NSString *filePath);
+    void PartPutUpload(NSURL *baseUrl, NSMutableDictionary *headers);
+    void PutUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers);
+    void PartPutUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers);
 
 private:
     Config config_;
     TaskInfo info_;
     OHSessionManager *sessionCtrl_ = nil;
-    NSURLSessionUploadTask *uploadTask_ = nil;
-    std::vector<NSURLSessionUploadTask *> putUploadTaskList_ {};
-    int putRspCount_ = 0;
-    int putFileCount_ = 0;
+    std::vector<NSURLSessionUploadTask *> uploadTaskList_ {};
+    int respCount_ = 0;
+    int fileCount_ = 0;
     OnRequestCallback callback_ = nullptr;
     int64_t taskId_ = INVALID_TASK_ID;
     int64_t currentTime_ = 0;

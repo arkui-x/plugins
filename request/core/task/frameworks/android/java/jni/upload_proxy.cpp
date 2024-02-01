@@ -359,12 +359,12 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
         int32_t respCode = 0;
         curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE, &respCode);
         REQUEST_HILOGI("upload http code: %{public}d", respCode);
-        if (respCode != HTTP_SUCCESS && respCode != HTTP_PARTIAL_SUCCESS) {
+        if (respCode != HTTP_SUCCESS) {
             REQUEST_HILOGE("upload fail http error %{public}d", respCode);
-            info_.progress.processed = 0;
+             if (respCode != HTTP_PARTIAL_SUCCESS) {
+                info_.progress.processed = 0;
+            }
             return E_SERVICE_ERROR;
-        } else if (respCode == HTTP_PARTIAL_SUCCESS) {
-            ChangeState(State::FAILED);
         }
         msg = curl_multi_info_read(curlMulti, &msgsLeft);
     }

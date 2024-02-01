@@ -345,7 +345,6 @@ void JsonUtils::JsonStringToProgress(const string &jsonProgress, Progress &progr
 void JsonUtils::JsonStringToFiles(const string &jsonFiles, vector<FileSpec> &files)
 {
     @autoreleasepool {
-        NSLog(@"JsonStringToFiles jsonFiles:%s", jsonFiles.c_str());
         NSString *jsonString = CStringToNSString(jsonFiles);
         NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
         NSError *error;
