@@ -115,6 +115,8 @@ private:
 
     static double GetTimingFromCurl(CURL *handle, CURLINFO info);
 
+    static void CacheCurlPerformanceTiming(CURL *handle, RequestContext *context);
+
     static void RunThread();
 
     static void SendRequest();
@@ -140,6 +142,8 @@ private:
                                   void *curl, RequestContext *context);
 
     static void AddRequestInfo();
+
+    static bool IsContextDeleted(RequestContext *context);
 
     struct RequestInfo {
         RequestInfo() = delete;
