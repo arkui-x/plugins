@@ -87,7 +87,7 @@ template("plugin_i18n_static") {
     ]
 
     sources = [
-      "//third_party/icu/ohos_icu4j/data/lite/icudt69l_dat.S",
+      "//third_party/icu/ohos_icu4j/data/lite/icudt72l_dat.S",
       "framework/character.cpp",
       "framework/error_util.cpp",
       "framework/i18n_break_iterator.cpp",
