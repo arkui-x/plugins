@@ -59,9 +59,9 @@ static constexpr int CURL_TIMEOUT_MS = 50;
 static constexpr int CONDITION_TIMEOUT_S = 3600;
 static constexpr int CURL_MAX_WAIT_MSECS = 10;
 static constexpr int CURL_HANDLE_NUM = 10;
-static constexpr const int EVENT_PARAM_ZERO = 0;
-static constexpr const int EVENT_PARAM_ONE = 1;
-static constexpr const int EVENT_PARAM_TWO = 2;
+static constexpr const uint32_t EVENT_PARAM_ZERO = 0;
+static constexpr const uint32_t EVENT_PARAM_ONE = 1;
+static constexpr const uint32_t EVENT_PARAM_TWO = 2;
 static constexpr const char *TLS12_SECURITY_CIPHER_SUITE = R"(DEFAULT:!CBC:!eNULL:!EXPORT)";
 
 #ifdef HTTP_PROXY_ENABLE
@@ -212,7 +212,11 @@ bool HttpExec::RequestWithoutCache(RequestContext *context)
     std::vector<std::string> vec;
     std::for_each(context->options.GetHeader().begin(), context->options.GetHeader().end(),
                   [&vec](const std::pair<std::string, std::string> &p) {
-                      vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second);
+                      if (!p.second.empty()) {
+                          vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second);
+                      } else {
+                          vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_BLANK_SEPARATOR);
+                      }
                   });
     context->SetCurlHeaderList(MakeHeaders(vec));
 
@@ -280,6 +284,35 @@ bool HttpExec::GetCurlDataFromHandle(CURL *handle, RequestContext *context, CURL
     return true;
 }
 
+double HttpExec::GetTimingFromCurl(CURL *handle, CURLINFO info)
+{
+    time_t timing;
+    CURLcode result = curl_easy_getinfo(handle, info, &timing);
+    if (result != CURLE_OK) {
+        NETSTACK_LOGE("Failed to get timing: %{public}d, %{public}s", info, curl_easy_strerror(result));
+        return 0;
+    }
+    return Timing::TimeUtils::Microseconds2Milliseconds(timing);
+}
+
+void HttpExec::CacheCurlPerformanceTiming(CURL *handle, RequestContext *context)
+{
+    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_DNS_TIMING,
+                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_NAMELOOKUP_TIME_T));
+    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_TCP_TIMING,
+                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_CONNECT_TIME_T));
+    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_TLS_TIMING,
+                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_APPCONNECT_TIME_T));
+    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_FIRST_SEND_TIMING,
+                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_PRETRANSFER_TIME_T));
+    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_FIRST_RECEIVE_TIMING,
+                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_STARTTRANSFER_TIME_T));
+    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_TOTAL_FINISH_TIMING,
+                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_TOTAL_TIME_T));
+    context->CachePerformanceTimingItem(HttpConstant::RESPONSE_REDIRECT_TIMING,
+                                        HttpExec::GetTimingFromCurl(handle, CURLINFO_REDIRECT_TIME_T));
+}
+
 void HttpExec::HandleCurlData(CURLMsg *msg)
 {
     if (msg == nullptr) {
@@ -305,6 +338,7 @@ void HttpExec::HandleCurlData(CURLMsg *msg)
     }
     NETSTACK_LOGI("priority = %{public}d", context->options.GetPriority());
     context->SetExecOK(GetCurlDataFromHandle(handle, context, msg->msg, msg->data.result));
+    CacheCurlPerformanceTiming(handle, context);
     if (context->IsExecOK()) {
         CacheProxy proxy(context->options);
         proxy.WriteResponseToCache(context->response);
@@ -494,6 +528,23 @@ void HttpExec::AddRequestInfo()
     }
 }
 
+bool HttpExec::IsContextDeleted(RequestContext *context)
+{
+    if (context == nullptr) {
+        return true;
+    }
+    {
+        std::lock_guard<std::mutex> lockGuard(HttpExec::staticContextSet_.mutexForContextVec);
+        auto it = std::find(HttpExec::staticContextSet_.contextSet.begin(),
+                            HttpExec::staticContextSet_.contextSet.end(), context);
+        if (it == HttpExec::staticContextSet_.contextSet.end()) {
+            NETSTACK_LOGI("context has been deleted in libuv thread");
+            return true;
+        }
+    }
+    return false;
+}
+
 void HttpExec::RunThread()
 {
     while (staticVariable_.runThread && staticVariable_.curlMulti != nullptr) {
@@ -635,10 +686,10 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
         NETSTACK_LOGD("Set CURLOPT_PROXY: %{public}s:%{public}d, %{public}s", host.c_str(), port, exclusions.c_str());
         NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXY, host.c_str(), context);
         NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXYPORT, port, context);
-        if (!exclusions.empty()) {
-            NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_NOPROXY, exclusions.c_str(), context);
-        }
-        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXYTYPE, CURLPROXY_HTTP, context);
+        auto curlTunnelValue = (url.find("https://") != std::string::npos) ? 1L : 0L;
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTPPROXYTUNNEL, curlTunnelValue, context);
+        auto proxyType = (host.find("https://") != std::string::npos) ? CURLPROXY_HTTPS : CURLPROXY_HTTP;
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXYTYPE, proxyType, context);
     }
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2, context);
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_CIPHER_LIST, TLS12_SECURITY_CIPHER_SUITE, context);
@@ -731,7 +782,6 @@ size_t HttpExec::OnWritingMemoryBody(const void *data, size_t size, size_t memBy
 {
     auto context = static_cast<RequestContext *>(userData);
     if (context == nullptr) {
-        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
         return 0;
     }
     if (context->GetManager()->IsEventDestroy()) {
@@ -826,7 +876,6 @@ size_t HttpExec::OnWritingMemoryHeader(const void *data, size_t size, size_t mem
 {
     auto context = static_cast<RequestContext *>(userData);
     if (context == nullptr) {
-        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_HEADER_TIMING);
         return 0;
     }
     if (context->GetManager()->IsEventDestroy()) {
@@ -844,7 +893,8 @@ size_t HttpExec::OnWritingMemoryHeader(const void *data, size_t size, size_t mem
         if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
             auto headerMap = new std::map<std::string, std::string>(MakeHeaderWithSetCookie(context));
             context->GetManager()->EmitByUv(ON_HEADER_RECEIVE, headerMap, ResponseHeaderCallback);
-            context->GetManager()->EmitByUv(ON_HEADERS_RECEIVE, headerMap, ResponseHeaderCallback);
+            auto headersMap = new std::map<std::string, std::string>(MakeHeaderWithSetCookie(context));
+            context->GetManager()->EmitByUv(ON_HEADERS_RECEIVE, headersMap, ResponseHeaderCallback);
         }
     }
     context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_HEADER_TIMING);
@@ -880,17 +930,8 @@ void HttpExec::OnDataReceive(napi_env env, napi_status status, void *data)
 void HttpExec::OnDataProgress(napi_env env, napi_status status, void *data)
 {
     auto context = static_cast<RequestContext *>(data);
-    if (context == nullptr) {
+    if (IsContextDeleted(context)) {
         return;
-    }
-    {
-        std::lock_guard lockGuard(HttpExec::staticContextSet_.mutexForContextVec);
-        auto it = std::find(HttpExec::staticContextSet_.contextSet.begin(),
-                            HttpExec::staticContextSet_.contextSet.end(), context);
-        if (it == HttpExec::staticContextSet_.contextSet.end()) {
-            NETSTACK_LOGI("context has benn deleted in libuv thread");
-            return;
-        }
     }
     auto progress = NapiUtils::CreateObject(context->GetEnv());
     if (NapiUtils::GetValueType(context->GetEnv(), progress) == napi_undefined) {
@@ -908,7 +949,7 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void *data)
 void HttpExec::OnDataUploadProgress(napi_env env, napi_status status, void *data)
 {
     auto context = static_cast<RequestContext *>(data);
-    if (context == nullptr) {
+    if (IsContextDeleted(context)) {
         NETSTACK_LOGD("[OnDataUploadProgress] context is null.");
         return;
     }
@@ -917,7 +958,7 @@ void HttpExec::OnDataUploadProgress(napi_env env, napi_status status, void *data
         NETSTACK_LOGD("[OnDataUploadProgress] napi_undefined.");
         return;
     }
-    NapiUtils::SetUint32Property(context->GetEnv(), progress, "uploadSize",
+    NapiUtils::SetUint32Property(context->GetEnv(), progress, "sendSize",
                                  static_cast<uint32_t>(context->GetUlLen().nLen));
     NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
                                  static_cast<uint32_t>(context->GetUlLen().tLen));
@@ -1116,12 +1157,16 @@ bool HttpExec::SetMultiPartOption(CURL *curl, RequestContext *context)
         return true;
     }
     auto multiPartDataList = context->options.GetMultiPartDataList();
+    if (multiPartDataList.empty()) {
+        return true;
+    }
     curl_mime *multipart = curl_mime_init(curl);
     if (multipart == nullptr) {
         return false;
     }
     context->SetMultipart(multipart);
     curl_mimepart *part = nullptr;
+    bool hasData = false;
     for (auto &multiFormData : multiPartDataList) {
         if (multiFormData.name.empty()) {
             continue;
@@ -1133,8 +1178,11 @@ bool HttpExec::SetMultiPartOption(CURL *curl, RequestContext *context)
         }
         part = curl_mime_addpart(multipart);
         SetFormDataOption(multiFormData, part, curl, context);
+        hasData = true;
     }
-    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_MIMEPOST, multipart, context);
+    if (hasData) {
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_MIMEPOST, multipart, context);
+    }
     return true;
 }
 
