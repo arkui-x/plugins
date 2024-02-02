@@ -355,6 +355,10 @@ bool JsInitialize::ParseAction(napi_env env, napi_value jsConfig, Action &action
 
 void JsInitialize::ParseSaveas(napi_env env, napi_value jsConfig, Config &config)
 {
+    if (config.action == Action::UPLOAD) {
+        REQUEST_HILOGI("action is upload");
+        return;
+    }
     config.saveas = NapiUtils::Convert2String(env, jsConfig, "saveas");
     std::string defaultStoragePath;
     TaskManager::Get().GetDefaultStoragePath(defaultStoragePath);
@@ -372,7 +376,7 @@ void JsInitialize::ParseSaveas(napi_env env, napi_value jsConfig, Config &config
         }
     }
 
-    REQUEST_HILOGI("ParseSaveas end: %{public}s", config.saveas.c_str());
+    REQUEST_HILOGI("ParseSaveas: %{public}s", config.saveas.c_str());
 }
 
 int64_t JsInitialize::ParseBegins(napi_env env, napi_value jsConfig)

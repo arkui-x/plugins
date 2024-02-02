@@ -69,10 +69,7 @@ void DownloadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
     info.reason = "";
     info.withSystem = false;
     info.extras = config.extras;
-    info.progress.index = config.index;
-    if (info.progress.index == 0) {
-        info.progress.index = 1;
-    }
+    info.progress.index = 0;
     info.progress.processed = 0;
     info.progress.totalProcessed = 0;
     for (auto &file : config.files) {

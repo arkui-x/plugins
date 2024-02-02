@@ -47,40 +47,32 @@ UploadProxy::UploadProxy(int64_t taskId, const Config &config, OnRequestCallback
 UploadProxy::~UploadProxy()
 {
     NSLog(@"UploadProxy freed, taskId:%lld", taskId_);
-    if (uploadTask_ != nil) {
-        [uploadTask_ cancel];
-        uploadTask_ = nil;
-    } else {
-        // for PUT method
-        for (auto &task : putUploadTaskList_) {
-            if (task != nil) {
-                [task cancel];
-                task = nil;
-            }
+    for (auto &task : uploadTaskList_) {
+        if (task != nil) {
+            [task cancel];
+            task = nil;
         }
-        putUploadTaskList_.clear();
     }
+    uploadTaskList_.clear();
     sessionCtrl_ = nil;
 }
 
 int32_t UploadProxy::Start(int64_t taskId)
 {
     NSLog(@"UploadProxy::Start, taskId:%lld", taskId);
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        string method = !config_.method.empty() ? config_.method : "POST"; // default: POST
-        NSLog(@"upload method:%s", method.c_str());
-        if (method == "POST") {
-            PostUpload(method);
-        } else if (method == "PUT") {
-            PutUpload(method);
-        } else {
-            NSLog(@"unsupport method: %s, accept: POST or PUT", method.c_str());
-        }
-    });
-    info_.progress.extras.clear();
-    info_.progress.bodyBytes.clear();
-    info_.progress.index++;
-    info_.progress.totalProcessed = 0;
+    @autoreleasepool {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            string method = !config_.method.empty() ? config_.method : "POST"; // default: POST
+            NSLog(@"upload method:%s", method.c_str());
+            if (method == "POST") {
+                PostUpload();
+            } else if (method == "PUT") {
+                PutUpload();
+            } else {
+                NSLog(@"unsupport method: %s, accept: POST or PUT", method.c_str());
+            }
+        });
+    }
     return E_OK;
 }
 
@@ -99,14 +91,9 @@ int32_t UploadProxy::Resume(int64_t taskId)
 int32_t UploadProxy::Stop(int64_t taskId)
 {
     NSLog(@"UploadProxy::Stop, taskId:%lld", taskId);
-    if (uploadTask_ != nil) {
-        [uploadTask_ cancel];
-    } else {
-        // for PUT method
-        for (auto &task : putUploadTaskList_) {
-            if (task != nil) {
-                [task cancel];
-            }
+    for (auto &task : uploadTaskList_) {
+        if (task != nil) {
+            [task cancel];
         }
     }
     ChangeState(State::STOPPED);
@@ -114,7 +101,77 @@ int32_t UploadProxy::Stop(int64_t taskId)
     return E_OK;
 }
 
-void UploadProxy::PutUpload(const string &method)
+void UploadProxy::PartPutUpload(NSURL *baseUrl, NSMutableDictionary *headers)
+{
+    NSLog(@"UploadProxy::PartPutUpload enter, config.index:%d", config_.index);
+    uint32_t index = config_.index;
+    if (config_.files.empty() || index >= config_.files.size()) {
+        return;
+    }
+    NSString *partFilePath = GetUploadPartFile(config_.files[index]);
+    if (!partFilePath) {
+        NSLog(@"PartPutUpload invalid part file path");
+        return;
+    }
+
+    for (int32_t i = 0; i < config_.files.size(); ++i) {
+        if (i == index) {
+            PartPutUploadFile(config_.files[i], i, partFilePath, baseUrl, headers);
+        } else {
+            PutUploadFile(config_.files[i], i, baseUrl, headers);
+        }
+        fileCount_++;
+    }
+}
+
+void UploadProxy::PartPutUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers)
+{
+    NSLog(@"UploadProxy::PartPutUploadFile enter, index:%d", index);
+    NSString *fileName = JsonUtils::CStringToNSString(file.filename);
+    NSURL *localPath = [NSURL fileURLWithPath:partFilePath];
+    NSLog(@"PutUploadFile upload localPath:%s", [localPath description].UTF8String);
+    NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:dstUrl];
+    request.HTTPMethod = @"PUT";
+    [request setAllHTTPHeaderFields:headers];
+    
+    NSURLSessionUploadTask *task = [sessionCtrl_ uploadWithRequest:request
+                                                            fromFile:localPath
+                                                        progressBlock:^(NSProgress *progress) {
+        NSLog(@"PutUploadFile uploading, progress:%@", progress);
+        OnProgressCallback(progress, index);
+    } completion:^(NSURLResponse *response, id responseObject, NSError *error) {
+        CompletionHandler(response, error);
+        RemoveFile(partFilePath);
+    }];
+    [task resume];
+    uploadTaskList_.push_back(task);
+}
+
+void UploadProxy::PutUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers)
+{
+    NSString *filePath = JsonUtils::CStringToNSString(file.uri);
+    NSString *fileName = JsonUtils::CStringToNSString(file.filename);
+    NSURL *localPath = [NSURL fileURLWithPath:filePath];
+    NSLog(@"PutUploadFile upload localPath:%s", [localPath description].UTF8String);
+    NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:dstUrl];
+    request.HTTPMethod = @"PUT";
+    [request setAllHTTPHeaderFields:headers];
+    
+    NSURLSessionUploadTask *task = [sessionCtrl_ uploadWithRequest:request
+                                                            fromFile:localPath
+                                                        progressBlock:^(NSProgress *progress) {
+        NSLog(@"PutUploadFile uploading, progress:%@", progress);
+        OnProgressCallback(progress, index);
+    } completion:^(NSURLResponse *response, id responseObject, NSError *error) {
+        CompletionHandler(response, error);
+    }];
+    [task resume];
+    uploadTaskList_.push_back(task);
+}
+
+void UploadProxy::PutUpload()
 {
     NSLog(@"UploadProxy::PutUpload enter");
     NSString *url = JsonUtils::CStringToNSString(config_.url);
@@ -132,64 +189,20 @@ void UploadProxy::PutUpload(const string &method)
         [headers setValue:JsonUtils::CStringToNSString(it->first)
             forKey:JsonUtils::CStringToNSString(it->second)];
     }
-    NSString *methodStr = JsonUtils::CStringToNSString(method);
     if ([url hasPrefix:@"https"]) {
         OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
-        NSLog(@"it is https upload");
+        NSLog(@"PutUpload it is https upload");
     } else {
-        NSLog(@"it is http upload");
+        NSLog(@"PutUpload it is http upload");
     }
 
-    for (const auto& file : config_.files) {
-        NSString *filePath = JsonUtils::CStringToNSString(file.uri);
-        NSString *name = JsonUtils::CStringToNSString(!file.name.empty() ? file.name : "file"); // default: file
-        NSString *fileName = JsonUtils::CStringToNSString(file.filename);
-        if (!filePath) {
-            continue;
-        }
-        NSURL *localPath = [NSURL fileURLWithPath:filePath];
-        NSLog(@"upload name:%s, localPath:%s", name.UTF8String, [localPath description].UTF8String);
-        putFileCount_++;
-        NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
-        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:dstUrl];
-        request.HTTPMethod = methodStr;
-        [request setAllHTTPHeaderFields:headers];
-        
-        NSURLSessionUploadTask *task = [sessionCtrl_ uploadWithRequest:request
-                                                              fromFile:localPath
-                                                         progressBlock:^(NSProgress *progress) {
-            NSLog(@"uploading, progress:%@", progress);
-            OnProgressCallback(progress);
-        } completion:^(NSURLResponse *response, id responseObject, NSError *error) {
-            PutCompletionHandler(response, error);
-        }];
-        [task resume];
-        putUploadTaskList_.push_back(task);
+    if (config_.ends > 0) {
+        PartPutUpload(baseUrl, headers);
+        return;
     }
-}
-
-void UploadProxy::PutCompletionHandler(NSURLResponse *response, NSError *error)
-{
-    putRspCount_++;
-    GetExtras(response);
-
-    // all responded
-    if (putRspCount_ == putFileCount_) {
-        vector<TaskState> taskStateList;
-        for (const auto& file: config_.files) {
-            TaskState taskState;
-            taskState.path = file.filename;
-            taskState.responseCode = (error != nil) ? E_SERVICE_ERROR : E_OK;
-            taskState.message = GetCodeMessage(taskState.responseCode);
-            taskStateList.push_back(taskState);
-        }
-        if (error != nil) {
-            NSLog(@"upload PUT failed, error: %s", [error description].UTF8String);
-            ChangeState(State::FAILED);
-        } else {
-            NSLog(@"upload completed, response: %s", [response description].UTF8String);
-            ChangeState(State::COMPLETED);
-        }
+    for (int32_t i = 0; i < config_.files.size(); ++i) {
+        PutUploadFile(config_.files[i], i, baseUrl, headers);
+        fileCount_++;
     }
 }
 
@@ -218,88 +231,67 @@ NSString *UploadProxy::GetUploadPartFile(const FileSpec &file)
     return partFilePath;
 }
 
-void UploadProxy::SetMultipartStreamFilePath(const FileSpec &file, OHMultipartFormStream *multipartStream, NSString *filePath)
+void UploadProxy::PartPostUpload(NSURL *baseUrl, NSMutableDictionary *headers)
 {
-    NSString *name = JsonUtils::CStringToNSString(!file.name.empty() ? file.name : "file"); // default: file
-    NSString *fileName = JsonUtils::CStringToNSString(file.filename);
-    NSURL *localPath = [NSURL fileURLWithPath:filePath];
-    NSLog(@"upload name:%s, localPath:%s", name.UTF8String, [localPath description].UTF8String);
-    [multipartStream appendWithFilePath:localPath
-                                fileName:fileName
-                                fieldName:name
-                                mimeType:@"application/octet-stream"];
+    NSLog(@"UploadProxy::PartPostUpload enter, config.index:%d", config_.index);
+    uint32_t index = config_.index;
+    if (config_.files.empty() || index >= config_.files.size()) {
+        return;
+    }
+    NSString *partFilePath = GetUploadPartFile(config_.files[index]);
+    if (!partFilePath) {
+        NSLog(@"PartPostUpload invalid part file path");
+        return;
+    }
+
+    for (int32_t i = 0; i < config_.files.size(); ++i) {
+        if (i == index) {
+            PartPostUploadFile(config_.files[i], i, partFilePath, baseUrl, headers);
+        } else {
+            PostUploadFile(config_.files[i], i, baseUrl, headers);
+        }
+        fileCount_++;
+    }
 }
 
-void UploadProxy::PartUpload(const string &method)
+void UploadProxy::PartPostUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers)
 {
-    NSLog(@"UploadProxy::PartUpload enter");
-    if (config_.files.empty()) {
-        return;
-    }
-    NSString *partFilePath = GetUploadPartFile(config_.files[0]);
-    if (!partFilePath) {
-        NSLog(@"PartUpload invalid part file path");
-        return;
-    }
-
-    NSString *url = JsonUtils::CStringToNSString(config_.url);
-    if (!url) {
-        NSLog(@"PartUpload invalid url");
-        return;
-    }
-    NSURL *baseUrl = [NSURL URLWithString:url];
-    sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
-    
-    NSMutableDictionary *headers = [[NSMutableDictionary alloc] init];
-    for (auto it = config_.headers.begin(); it != config_.headers.end(); it++) {
-        [headers setValue:JsonUtils::CStringToNSString(it->second)
-                   forKey:JsonUtils::CStringToNSString(it->first)];
-    }
-    if ([url hasPrefix:@"https"]) {
-        OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
-        NSLog(@"is https upload");
-    } else {
-        NSLog(@"is http upload");
-    }
-    NSLog(@"PartUpload headers:%@", headers);
-    NSMutableURLRequest *request = [OHMultipartFormStream requestWithURL:baseUrl 
-                                                                  method:JsonUtils::CStringToNSString(method) 
-                                                              parameters:headers
-                                                     multipartFormStream:^(OHMultipartFormStream *multipartStream) {
+     NSMutableURLRequest *request = [OHMultipartFormStream requestWithURL:baseUrl 
+                                                                    method:@"POST"
+                                                                parameters:headers
+                                                        multipartFormStream:^(OHMultipartFormStream * multipartStream) {
         // name-value of form data
-        for (const auto& formDt : config_.forms) {
+        for (const auto &formDt : config_.forms) {
             NSData *data = [NSData dataWithBytes:formDt.value.c_str() length:formDt.value.size()];
             [multipartStream appendWithFormData:data name:JsonUtils::CStringToNSString(formDt.name)];
         }
-
-        NSLog(@"PartUpload partFilePath:%@", partFilePath);
-        FileSpec file = config_.files[0];
-        SetMultipartStreamFilePath(file, multipartStream, partFilePath);
-        for (int i = 1; i < config_.files.size(); ++i) {
-            FileSpec file = config_.files[i];
-            SetMultipartStreamFilePath(file, multipartStream, JsonUtils::CStringToNSString(file.uri));
-        }
+        NSLog(@"PartPostUploadFile partFilePath:%@", partFilePath);
+        NSString *fieldName = JsonUtils::CStringToNSString(!file.name.empty() ? file.name : "file"); // default: file
+        NSString *fileName = JsonUtils::CStringToNSString(file.filename);
+        NSURL *localPath = [NSURL fileURLWithPath:partFilePath];
+        NSLog(@"PartPostUploadFile upload fieldName:%s, localPath:%s", fieldName.UTF8String, [localPath description].UTF8String);
+        [multipartStream appendWithFilePath:localPath
+                                fileName:fileName
+                                fieldName:fieldName
+                                mimeType:@"application/octet-stream"];
     }];
 
-    uploadTask_ = [sessionCtrl_ uploadWithStreamRequest:request
-                                          progressBlock:^(NSProgress *progress) {
-        NSLog(@"uploading, progress:%@", progress);
-        OnProgressCallback(progress);
+    NSURLSessionUploadTask *task = [sessionCtrl_ uploadWithStreamRequest:request
+                                                           progressBlock:^(NSProgress *progress) {
+        NSLog(@"PartPostUploadFile uploading, progress:%@", progress);
+        OnProgressCallback(progress, index);
     } completion:^(NSURLResponse *response, id responseObject, NSError *error) {
-        [[NSFileManager defaultManager] removeItemAtPath:partFilePath error:nil]; 
-        PostCompletionHandler(response, error);
+        CompletionHandler(response, error);
+        RemoveFile(partFilePath);
     }];
-    [uploadTask_ resume];
+    [task resume];
+    uploadTaskList_.emplace_back(task);
+    NSLog(@"PartPostUploadFile upload task resume");
 }
 
-void UploadProxy::PostUpload(const string &method)
+void UploadProxy::PostUpload()
 {
-    NSLog(@"UploadProxy::PostUpload enter");
-    if (config_.ends > 0) {
-        PartUpload(method);
-        return;
-    }
-
+    NSLog(@"UploadProxy::PostUpload");
     NSString *url = JsonUtils::CStringToNSString(config_.url);
     if (!url) {
         NSLog(@"PostUpload invalid url");
@@ -320,47 +312,58 @@ void UploadProxy::PostUpload(const string &method)
         NSLog(@"is http upload");
     }
     NSLog(@"PostUpload headers:%@", headers);
+
+    if (config_.ends > 0) {
+        PartPostUpload(baseUrl, headers);
+        return;
+    }
+    for (int32_t i = 0; i < config_.files.size(); ++i) {
+        PostUploadFile(config_.files[i], i, baseUrl, headers);
+        fileCount_++;
+    }
+}
+
+void UploadProxy::PostUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers)
+{
+    NSLog(@"UploadProxy::PostUploadFile()");
     NSMutableURLRequest *request = [OHMultipartFormStream requestWithURL:baseUrl 
-                                                                  method:JsonUtils::CStringToNSString(method) 
-                                                              parameters:headers
-                                                     multipartFormStream:^(OHMultipartFormStream * multipartStream) {
+                                                                    method:@"POST"
+                                                                parameters:headers
+                                                        multipartFormStream:^(OHMultipartFormStream *multipartStream) {
         // name-value of form data
         for (const auto& formDt : config_.forms) {
             NSData *data = [NSData dataWithBytes:formDt.value.c_str() length:formDt.value.size()];
             [multipartStream appendWithFormData:data name:JsonUtils::CStringToNSString(formDt.name)];
         }
-        for (const auto& file : config_.files) {
-            NSString *filePath = JsonUtils::CStringToNSString(file.uri);
-            if (!filePath) {
-                NSLog(@"PostUpload invalid file path");
-                continue;
-            }
-            NSLog(@"PostUpload filePath:%@", filePath);
-            NSString *fieldName = JsonUtils::CStringToNSString(!file.name.empty() ? file.name : "file"); // default: file
-            NSString *fileName = JsonUtils::CStringToNSString(file.filename);
-            NSURL *localPath = [NSURL fileURLWithPath:filePath];
-            NSLog(@"upload fieldName:%s, localPath:%s", fieldName.UTF8String, [localPath description].UTF8String);
-            [multipartStream appendWithFilePath:localPath
-                                       fileName:fileName
-                                      fieldName:fieldName
-                                       mimeType:@"application/octet-stream"];
-        }
+        NSString *filePath = JsonUtils::CStringToNSString(file.uri);
+        NSLog(@"PostUploadFile filePath:%@", filePath);
+        NSString *fieldName = JsonUtils::CStringToNSString(!file.name.empty() ? file.name : "file"); // default: file
+        NSString *fileName = JsonUtils::CStringToNSString(file.filename);
+        NSURL *localPath = [NSURL fileURLWithPath:filePath];
+        NSLog(@"PostUploadFile upload fieldName:%s, localPath:%s", fieldName.UTF8String, [localPath description].UTF8String);
+        [multipartStream appendWithFilePath:localPath
+                                fileName:fileName
+                                fieldName:fieldName
+                                mimeType:@"application/octet-stream"];
     }];
 
-    uploadTask_ = [sessionCtrl_ uploadWithStreamRequest:request
-                                          progressBlock:^(NSProgress *progress) {
-        NSLog(@"uploading, progress:%@", progress);
-        OnProgressCallback(progress);
+    NSURLSessionUploadTask *task = [sessionCtrl_ uploadWithStreamRequest:request
+                                                           progressBlock:^(NSProgress *progress) {
+        NSLog(@"PostUploadFile uploading, progress:%@", progress);
+        OnProgressCallback(progress, index);
     } completion:^(NSURLResponse *response, id responseObject, NSError *error) {
-        PostCompletionHandler(response, error);
+        CompletionHandler(response, error);
     }];
-    [uploadTask_ resume];
-    NSLog(@"upload task resume");
+    [task resume];
+    uploadTaskList_.emplace_back(task);
+    NSLog(@"PostUpload upload task resume");
 }
 
-void UploadProxy::PostCompletionHandler(NSURLResponse *response, NSError *error)
+void UploadProxy::CompletionHandler(NSURLResponse *response, NSError *error)
 {
-    NSLog(@"UploadProxy::PostCompletionHandler enter");
+    NSLog(@"UploadProxy::CompletionHandler, response:%@", [response description]);
+    respCount_++;
+
     vector<TaskState> taskStateList;
     for (const auto& file: config_.files) {
         TaskState taskState;
@@ -370,13 +373,38 @@ void UploadProxy::PostCompletionHandler(NSURLResponse *response, NSError *error)
         taskStateList.push_back(taskState);
     }
     GetExtras(response);
-
+    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+        NSLog(@"UploadProxy::CompletionHandler, statusCode:%d", httpResponse.statusCode);
+        if (httpResponse.statusCode == 206) {
+            ChangeState(State::FAILED);
+            for (auto &task : uploadTaskList_) {
+                if (task != nil) {
+                    [task cancel];
+                }
+            }
+            return;
+        }
+    }
     if (error != nil) {
-        NSLog(@"upload failed. Error: %s", [error description].UTF8String);
-        OnFailedCallback();
+        NSLog(@"upload failed, error: %@", [error description]);
+        ChangeState(State::FAILED);
+        for (auto &task : uploadTaskList_) {
+            if (task != nil) {
+                [task cancel];
+            }
+        }
     } else {
-        NSLog(@"upload completed. response:%s", [response description].UTF8String);
-        OnCompletedCallback();
+         // all responsed
+        if (respCount_ == fileCount_) {
+            if (error != nil) {
+                NSLog(@"upload failed, error: %@", [error description]);
+                ChangeState(State::FAILED);
+            } else {
+                NSLog(@"upload completed. response:%@", [response description]);
+                ChangeState(State::COMPLETED);
+            }
+        }
     }
 }
 
@@ -404,37 +432,37 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
     info.reason = "";
     info.withSystem = false;
     info.extras = config.extras;
-    info.progress.index = config.index;
-    if (info.progress.index == 0) {
-        info.progress.index = 1;
-    }
+    info.progress.index = 0;
     info.progress.processed = 0;
     info.progress.totalProcessed = 0;
-    for (auto &file : config.files) {
+    for (int32_t i = 0; i < config.files.size(); ++i) {
+        auto file = config.files[i];
         TaskState state;
         state.path = file.filename;
         state.responseCode = E_OK;
-        if (file.uri == "") {
+        if (file.uri.empty()) {
             state.responseCode = E_FILE_PATH;
         }
-        if (file.filename == "" || file.fd < 0) {
+        if (file.filename.empty() || file.fd < 0) {
             state.responseCode = E_FILE_IO;
         }
         state.message = GetCodeMessage(state.responseCode);
         if (file.fd > 0) {
             int64_t fileSize = lseek(file.fd, 0, SEEK_END);
-            if (config.begins > 0) {
-                fileSize -= config.begins;
-            }
-            if (config.ends > 0) {
-                fileSize = config.ends - config.begins;
+            if (i == config.index) {
+                if (config.begins > 0) {
+                    fileSize -= config.begins;
+                }
+                if (config.ends > 0) {
+                    fileSize = config.ends - config.begins;
+                }
+                int64_t offset = 0;
+                if (config.begins > 0) {
+                    offset = config.begins;
+                }
+                lseek(file.fd, offset, SEEK_SET);
             }
             info.progress.sizes.emplace_back(fileSize);
-            int64_t offset = 0;
-            if (info.progress.index == config.index && config.begins > 0) {
-                offset = config.begins;
-            }
-            lseek(file.fd, offset, SEEK_SET);
         }
         info.taskStates.emplace_back(state);
     }
@@ -465,14 +493,20 @@ void UploadProxy::ChangeState(State state)
     }
 }
 
-void UploadProxy::OnProgressCallback(NSProgress *progress)
+void UploadProxy::OnProgressCallback(NSProgress *progress, int32_t index)
 {
-    NSLog(@"upload OnProgressCallback");
+    NSLog(@"upload OnProgressCallback, index:%d", index);
     if (progress == nil || callback_ == nullptr) {
         return;
     }
+    info_.progress.index = index;
     info_.progress.processed = progress.completedUnitCount;
-    info_.progress.totalProcessed = GetTotalFileSize();
+    info_.progress.totalProcessed = 0;
+    for (int32_t i = 0; i < index - 1; ++i) {
+        info_.progress.totalProcessed += info_.progress.sizes[i];
+    }
+    info_.progress.totalProcessed += progress.completedUnitCount;
+
     if (progress.fractionCompleted == 1.0) {
         info_.progress.state = State::COMPLETED;
         if (info_.progress.processed != GetTotalFileSize()) {
@@ -490,6 +524,7 @@ void UploadProxy::OnProgressCallback(NSProgress *progress)
 void UploadProxy::OnCompletedCallback()
 {
     NSLog(@"upload OnCompletedCallback");
+    info_.progress.index = info_.progress.sizes.size() - 1;
     ChangeState(State::COMPLETED);
     IosTaskDao::UpdateDB(info_);
 }
@@ -510,6 +545,15 @@ void UploadProxy::GetExtras(NSURLResponse *response)
     for (NSString *key in allHeader.allKeys) {
         NSString *value = [allHeader objectForKey:key];
         info_.progress.extras.emplace(key.UTF8String, value.UTF8String);
+    }
+}
+
+void UploadProxy::RemoveFile(NSString *filePath)
+{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL fileExists = [fileManager fileExistsAtPath:filePath];
+    if (fileExists) {
+        [fileManager removeItemAtPath:filePath error:nil];
     }
 }
 
