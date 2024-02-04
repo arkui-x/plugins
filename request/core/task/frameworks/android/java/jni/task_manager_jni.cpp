@@ -577,17 +577,15 @@ bool TaskManagerJni::HandleComplete(const std::string &params)
         REQUEST_HILOGE("invalid json of task info");
         return false;
     }
-
     std::string saveas = "";
     if (infoJson.find(JSON_SAVEAS) != infoJson.end() && infoJson[JSON_SAVEAS].is_string()) {
         infoJson.at(JSON_SAVEAS).get_to(saveas);
     }
     auto info = infoJson.get<TaskInfo>();
-    REQUEST_HILOGI("saveas = %{public}s", saveas.c_str());
-    REQUEST_HILOGI("info.files[0].uri = %{public}s", info.files[0].uri.c_str());
     if (!info.files.empty() && saveas != info.files[0].uri) {
         std::string copyFile = "cp " + saveas + " " + info.files[0].uri;
         std::string removeFile = "rm -rf " + saveas;
+        REQUEST_HILOGI("copyFile = %{public}s", copyFile.c_str());
         if (system(copyFile.c_str()) != 0) {
             REQUEST_HILOGE("%s failed", copyFile.c_str());
             system(removeFile.c_str());

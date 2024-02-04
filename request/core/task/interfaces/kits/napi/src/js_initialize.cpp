@@ -451,10 +451,10 @@ bool JsInitialize::ParseUrl(napi_env env, napi_value jsConfig, std::string &url)
 bool JsInitialize::ParseTitle(napi_env env, napi_value jsConfig, Config &config)
 {
     config.title = NapiUtils::Convert2String(env, jsConfig, "title");
-    if (config.version == Version::API10 && config.title.size() > TITLE_MAXIMUM) {
+    if (config.title.size() > TITLE_MAXIMUM) {
         return false;
     }
-    if (config.version == Version::API10 && config.title.empty()) {
+    if (config.title.empty()) {
         config.title = config.action == Action::UPLOAD ? "upload" : "download";
     }
     return true;
