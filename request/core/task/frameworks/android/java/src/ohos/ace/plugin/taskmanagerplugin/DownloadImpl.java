@@ -66,7 +66,7 @@ public class DownloadImpl {
     private static final int NETWORK_INVALID = 0;
     private static final int NETWORK_WIFI = 1;
     private static final int NETWORK_MOBILE = 2;
-
+    private boolean isIgnoreStatus = false;
     private final Context context;
     private DownloadManager.Request request;
     private DownloadManager downloadManager;
@@ -390,7 +390,7 @@ public class DownloadImpl {
                 }
                 break;
             case DownloadManager.STATUS_RUNNING:
-                if (!statusIsFinish(progress.getState())) {
+                if (!statusIsFinish(progress.getState()) && !isIgnoreStatus) {
                     progress.setState(State.RUNNING);
                     int[] downloadBytes = getDownloadBytes(queryRunnable.taskInfo.getDownloadId());
                     progress.setProcessed(downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
@@ -400,6 +400,8 @@ public class DownloadImpl {
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
+                Log.i(TAG, "isIgnoreStatus:" + isIgnoreStatus);
+                isIgnoreStatus = false;
                 break;
             case DownloadManager.STATUS_SUCCESSFUL:
                 if (!statusIsFinish(progress.getState())) {
@@ -492,6 +494,7 @@ public class DownloadImpl {
         for (QueryRunnable item : queryRunnables) {
             if (item.taskInfo.getTid() == tid) {
                 handle.removeCallbacks(item);
+                isIgnoreStatus = true;
                 handle.post(item);
                 return;
             }
