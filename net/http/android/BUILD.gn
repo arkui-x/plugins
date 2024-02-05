@@ -25,7 +25,6 @@ ohos_source_set("net_http_android") {
   sources += [ "http_exec.cpp" ]
 
   deps = [
-    "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//plugins/interfaces/native:plugin_log",
     "//plugins/net/utils:net_utils_android",
