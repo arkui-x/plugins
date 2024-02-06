@@ -37,7 +37,7 @@ config("task_ios_config") {
 }
 
 config("task_ios_public_config") {
-  visibility = []
+  visibility = [ ":*" ]
   include_dirs = [
     "$ace_napi",
     "$ace_napi/interfaces/kits",

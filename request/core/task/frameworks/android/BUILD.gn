@@ -58,7 +58,7 @@ config("task_android_config") {
 }
 
 config("task_android_public_config") {
-  visibility = []
+  visibility = [ ":*" ]
   include_dirs = [
     "$ace_root/frameworks/base/utils",
     "$third_party_path/curl/include",
