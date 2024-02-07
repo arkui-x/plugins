@@ -59,7 +59,7 @@ common_plugin_libs = [
   "console",
   "web/webview",
   "zlib",
-  "security/cryptoFramework",
+  "security/cryptoframework",
   "security/cert",
 ]
 

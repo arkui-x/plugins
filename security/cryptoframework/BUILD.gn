@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
-template("plugin_cryptoFramework_static") {
+template("plugin_cryptoframework_static") {
   forward_variables_from(invoker, "*")
 
   ohos_source_set(target_name) {
@@ -55,18 +55,18 @@ template("plugin_cryptoFramework_static") {
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${target_os}",
       "//plugins/libs/securec:sec_${target_os}",
-      "//plugins/security/cryptoFramework/common:crypto_plugin_common",
-      "//plugins/security/cryptoFramework/frameworks:crypto_framework_lib",
+      "//plugins/security/cryptoframework/common:crypto_plugin_common",
+      "//plugins/security/cryptoframework/frameworks:crypto_framework_lib",
     ]
 
     subsystem_name = "plugins"
-    part_name = "cryptoFramework"
+    part_name = "cryptoframework"
   }
 }
 
 foreach(item, ace_platforms) {
-  plugin_cryptoFramework_static(
-      "security_cryptoFramework_static_" + item.name) {
+  plugin_cryptoframework_static(
+      "security_cryptoframework_static_" + item.name) {
     platform = item.name
 
     defines = []
