@@ -21,7 +21,7 @@ config("task_lib_config") {
 }
 
 config("task_lib_public_config") {
-  visibility = []
+  visibility = [ ":*" ]
   include_dirs = [
     "$ace_root/frameworks/base/utils",
     "$third_party_path/node/src",

@@ -29,6 +29,7 @@ template("plugin_net_connection_static") {
     sources += utils_source
 
     deps = [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
       "//foundation/graphic/graphic_2d/rosen/modules/platform:ipc_core",
       "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",

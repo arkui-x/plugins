@@ -21,7 +21,7 @@ config("task_interfaces_config") {
 }
 
 config("task_interfaces_public_config") {
-  visibility = []
+  visibility = [ ":*" ]
   include_dirs = [
     "$third_party_path/node/src",
     "//third_party/bounds_checking_function/include",
