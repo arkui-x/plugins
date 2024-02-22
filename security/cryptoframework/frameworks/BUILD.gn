@@ -27,7 +27,7 @@ config("framework_config") {
 
 ohos_source_set("crypto_framework_lib") {
   subsystem_name = "plugins"
-  part_name = "cryptoFramework"
+  part_name = "cryptoframework"
   public_configs = [ ":framework_config" ]
   include_dirs = [
     "//commonlibrary/c_utils/base/include",
@@ -45,8 +45,8 @@ ohos_source_set("crypto_framework_lib") {
   ]
 
   deps = [
-    "//plugins/security/cryptoFramework/common:crypto_plugin_common",
-    "//plugins/security/cryptoFramework/plugin:crypto_openssl_plugin_lib",
+    "//plugins/security/cryptoframework/common:crypto_plugin_common",
+    "//plugins/security/cryptoframework/plugin:crypto_openssl_plugin_lib",
     "//plugins/libs/securec:sec_${target_os}",
   ]
 
