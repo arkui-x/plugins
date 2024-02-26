@@ -617,7 +617,7 @@ napi_value I18nAddon::GetTransliteratorInstance(napi_env env, napi_callback_info
     napi_value constructor = nullptr;
     napi_status status = napi_get_reference_value(env, *g_transConstructor, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Failed to create reference at GetCalendar");
+        HiLog::Error(LABEL, "Failed to create reference at GetTransliterator");
         return nullptr;
     }
     napi_value result = nullptr;
@@ -1371,7 +1371,6 @@ napi_value I18nAddon::CalendarConstructor(napi_env env, napi_callback_info info)
     napi_valuetype valueType = napi_valuetype::napi_undefined;
     napi_typeof(env, argv[0], &valueType);
     if (valueType != napi_valuetype::napi_string) {
-        napi_throw_type_error(env, nullptr, "Parameter type does not match");
         return nullptr;
     }
     int32_t code = 0;
@@ -1439,7 +1438,7 @@ napi_value I18nAddon::GetCalendar(napi_env env, napi_callback_info info)
         HiLog::Error(LABEL, "Failed to create reference at GetCalendar");
         return nullptr;
     }
-    if (argc > 1) {
+    if (argc < FUNC_ARGS_COUNT) {
         status = napi_create_string_utf8(env, "", NAPI_AUTO_LENGTH, argv + 1);
         if (status != napi_ok) {
             return nullptr;
@@ -3156,7 +3155,7 @@ napi_value I18nAddon::I18nNormalizerConstructor(napi_env env, napi_callback_info
     if (status != napi_ok) {
         return nullptr;
     }
-    if (argc < FUNC_ARGS_COUNT - 1) {
+    if (argc == 0) {
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
@@ -3201,7 +3200,7 @@ napi_value I18nAddon::Normalize(napi_env env, napi_callback_info info)
     if (status != napi_ok) {
         return nullptr;
     }
-    if (argc < FUNC_ARGS_COUNT - 1) {
+    if (argc == 0) {
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
