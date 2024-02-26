@@ -1439,7 +1439,7 @@ napi_value I18nAddon::GetCalendar(napi_env env, napi_callback_info info)
         HiLog::Error(LABEL, "Failed to create reference at GetCalendar");
         return nullptr;
     }
-    if (!argv[1]) {
+    if (argc > 1) {
         status = napi_create_string_utf8(env, "", NAPI_AUTO_LENGTH, argv + 1);
         if (status != napi_ok) {
             return nullptr;
@@ -2240,7 +2240,7 @@ napi_value I18nAddon::Next(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int value = 1;
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv[0], &valueType);
         if (valueType != napi_valuetype::napi_number) {
@@ -2412,7 +2412,7 @@ napi_value I18nAddon::IndexUtilConstructor(napi_env env, napi_callback_info info
         return nullptr;
     }
     std::string localeTag = "";
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv[0], &valueType);
         if (valueType != napi_valuetype::napi_string) {
@@ -2684,7 +2684,7 @@ napi_value I18nAddon::I18nTimeZoneConstructor(napi_env env, napi_callback_info i
     }
     std::string zoneID = "";
     napi_valuetype valueType = napi_valuetype::napi_undefined;
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_typeof(env, argv[0], &valueType);
         if (valueType != napi_valuetype::napi_string) {
             return nullptr;
@@ -2695,7 +2695,7 @@ napi_value I18nAddon::I18nTimeZoneConstructor(napi_env env, napi_callback_info i
             return nullptr;
         }
     }
-    if (argv[1] == nullptr) {
+    if (argc < FUNC_ARGS_COUNT) {
         return nullptr;
     }
     napi_typeof(env, argv[1], &valueType);
@@ -2728,7 +2728,7 @@ napi_value I18nAddon::GetI18nTimeZone(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (argv[0] == nullptr) {
+    if (argc == 0) {
         napi_create_string_utf8(env, "", NAPI_AUTO_LENGTH, &argv[0]);
     }
     return StaticGetTimeZone(env, argv, true);
@@ -2875,7 +2875,7 @@ napi_value I18nAddon::GetOffset(napi_env env, napi_callback_info info)
     }
 
     double date = 0;
-    if (argv[0]) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv[0], &valueType);
         if (valueType != napi_valuetype::napi_number) {
