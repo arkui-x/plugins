@@ -1577,6 +1577,9 @@ void I18nAddon::SetField(napi_env env, napi_value value, UCalendarDateFields fie
     int32_t val = 0;
     napi_valuetype valueType = napi_valuetype::napi_undefined;
     napi_typeof(env, value, &valueType);
+    if (valueType == napi_valuetype::napi_undefined) {
+        return;
+    }
     if (valueType != napi_valuetype::napi_number) {
         napi_throw_type_error(env, nullptr, "Parameter type does not match");
         return;
