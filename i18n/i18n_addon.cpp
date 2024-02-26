@@ -533,7 +533,7 @@ napi_value I18nAddon::Transform(napi_env env, napi_callback_info info)
         HiLog::Error(LABEL, "Get Transliterator object failed");
         return nullptr;
     }
-    if (!argv[0]) {
+    if (argc == 0) {
         return nullptr;
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
@@ -1542,7 +1542,7 @@ napi_value I18nAddon::SetTime(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (!argv[0]) {
+    if (argc == 0) {
         return nullptr;
     }
     I18nAddon *obj = nullptr;
@@ -1935,7 +1935,7 @@ napi_value I18nAddon::IsWeekend(napi_env env, napi_callback_info info)
             HiLog::Error(LABEL, "Get calendar object failed");
             break;
         }
-        if (!argv[0]) {
+        if (argc == 0) {
             isWeekEnd = obj->calendar_->IsWeekend();
         } else {
             napi_value funcGetDateInfo = nullptr;
@@ -2125,7 +2125,7 @@ napi_value I18nAddon::GetLineInstance(napi_env env, napi_callback_info info)
         HiLog::Error(LABEL, "Failed to create reference at GetLineInstance");
         return nullptr;
     }
-    if (!argv[0]) {
+    if (argc == 0) {
         return nullptr;
     }
     napi_value result = nullptr;
@@ -2279,7 +2279,7 @@ napi_value I18nAddon::SetText(napi_env env, napi_callback_info info)
         HiLog::Error(LABEL, "Get BreakIterator object failed");
         return nullptr;
     }
-    if (!argv[0]) {
+    if (argc == 0) {
         return nullptr;
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
@@ -2341,7 +2341,7 @@ napi_value I18nAddon::Following(napi_env env, napi_callback_info info)
         HiLog::Error(LABEL, "Get BreakIterator object failed");
         return nullptr;
     }
-    if (!argv[0]) {
+    if (argc == 0) {
         return nullptr;
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
@@ -2379,7 +2379,7 @@ napi_value I18nAddon::IsBoundary(napi_env env, napi_callback_info info)
         HiLog::Error(LABEL, "Get BreakIterator object failed");
         return nullptr;
     }
-    if (!argv[0]) {
+    if (argc == 0) {
         return nullptr;
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
@@ -2478,7 +2478,7 @@ napi_value I18nAddon::GetIndexUtil(napi_env env, napi_callback_info info)
         return nullptr;
     }
     napi_value result = nullptr;
-    if (!argv[0]) {
+    if (argc == 0) {
         status = napi_new_instance(env, constructor, 0, argv, &result);
     } else {
         status = napi_new_instance(env, constructor, 1, argv, &result);
