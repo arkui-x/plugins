@@ -965,7 +965,7 @@ napi_value I18nAddon::GetDisplayLanguageImpl(napi_env env, napi_callback_info in
     if (status != napi_ok) {
         return nullptr;
     }
-    if (argv[1] == nullptr) {
+    if (argc < FUNC_ARGS_COUNT) {
         HiLog::Error(LABEL, "Missing parameter");
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, throwError);
         return nullptr;
@@ -1027,7 +1027,7 @@ napi_value I18nAddon::GetDisplayCountryImpl(napi_env env, napi_callback_info inf
     if (status != napi_ok) {
         return nullptr;
     }
-    if (argv[1] == nullptr) {
+    if (argc < FUNC_ARGS_COUNT) {
         HiLog::Error(LABEL, "Missing parameter");
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, throwError);
         return nullptr;
@@ -3156,7 +3156,7 @@ napi_value I18nAddon::I18nNormalizerConstructor(napi_env env, napi_callback_info
     if (status != napi_ok) {
         return nullptr;
     }
-    if (argv[0] == nullptr) {
+    if (argc < FUNC_ARGS_COUNT - 1) {
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
@@ -3201,7 +3201,7 @@ napi_value I18nAddon::Normalize(napi_env env, napi_callback_info info)
     if (status != napi_ok) {
         return nullptr;
     }
-    if (argv[0] == nullptr) {
+    if (argc < FUNC_ARGS_COUNT - 1) {
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
