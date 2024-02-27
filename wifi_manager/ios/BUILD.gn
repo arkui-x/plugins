@@ -30,7 +30,10 @@ ohos_source_set("wifi_manager_ios") {
     "-fobjc-arc",
     "-O0",
   ]
-  frameworks = [ "SystemConfiguration.framework","NetworkExtension.framework" ]
+  frameworks = [
+    "SystemConfiguration.framework",
+    "NetworkExtension.framework",
+  ]
   defines = [ "IOS_PLATFORM" ]
 
   cflags_objcc = cflags_objc

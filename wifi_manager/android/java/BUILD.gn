@@ -14,10 +14,12 @@
 import("//build/ohos.gni")
 
 java_library("wifi_manager_android_java") {
-  java_files = [ "src/ohos/ace/plugin/wifimanager/WifiDevicePlugin.java",
-  "src/ohos/ace/plugin/wifimanager/WifiDeviceUtils.java",
-  "src/ohos/ace/plugin/wifimanager/WifiBroadcastReceiver.java",
-  "src/ohos/ace/plugin/wifimanager/WifiBroadcastInterface.java" ]
+  java_files = [ 
+    "src/ohos/ace/plugin/wifimanager/WifiDevicePlugin.java",
+    "src/ohos/ace/plugin/wifimanager/WifiDeviceUtils.java",
+    "src/ohos/ace/plugin/wifimanager/WifiBroadcastReceiver.java",
+    "src/ohos/ace/plugin/wifimanager/WifiBroadcastInterface.java",
+  ]
   subsystem_name = "plugins"
   part_name = "wifi_manager"
 }
