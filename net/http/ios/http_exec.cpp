@@ -24,6 +24,7 @@
 #include "base64_utils.h"
 #include "cache_proxy.h"
 #include "constant.h"
+#include "curl_slist.h"
 #include "event_list.h"
 #include "http_async_work.h"
 #include "http_exec_ios_iml.h"

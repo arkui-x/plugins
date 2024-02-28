@@ -19,6 +19,7 @@ ohos_source_set("net_http_ios") {
 
   sources = http_sources
   sources += [
+    "curl_slist.cpp",
     "http_exec.cpp",
     "http_exec_ios_iml.mm",
     "http_ios_constant.h",
@@ -29,7 +30,6 @@ ohos_source_set("net_http_ios") {
     "//plugins/interfaces/native:ace_plugin_util_ios",
     "//plugins/interfaces/native:plugin_log",
     "//plugins/net/utils:net_utils_ios",
-    "//third_party/curl:curl_shared",
   ]
 
   cflags_objc = [
