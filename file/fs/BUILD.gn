@@ -79,7 +79,7 @@ template("plugin_fs_static") {
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
-      "//third_party/libuv:uv_static",
+      "//plugins/libs/uv:uv_${target_os}",
     ]
 
     use_exceptions = true

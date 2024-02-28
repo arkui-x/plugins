@@ -46,10 +46,9 @@ ohos_source_set("netstack_utils") {
   ]
 
   deps = [
-    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
     "//plugins/libs/jsoncpp:jsoncpp_${target_os}",
     "//plugins/libs/napi:napi_${target_os}",
-    "//third_party/libuv:uv_static",
+    "//plugins/libs/uv:uv_${target_os}",
   ]
 }
 

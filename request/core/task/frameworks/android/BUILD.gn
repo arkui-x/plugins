@@ -90,7 +90,7 @@ ohos_source_set("task_android") {
     ":task_java",
     "$plugin_interfaces_path/native:plugin_log",
     "$rq_task_path/frameworks/lib:task_lib",
-    "$third_party_path/curl:curl",
+    "$third_party_path/curl:curl_shared",
     "//plugins/interfaces/native:ace_plugin_util_android",
   ]
 
