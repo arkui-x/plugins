@@ -61,6 +61,7 @@ common_plugin_libs = [
   "zlib",
   "security/cryptoframework",
   "security/cert",
+  "events/emitter",
 ]
 
 template("plugin_lib") {
