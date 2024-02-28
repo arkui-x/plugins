@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package ohos.ace.plugin.wifimanager;
 
 import android.content.Context;
@@ -20,6 +35,9 @@ public class WifiDeviceUtils {
     private WifiManager mWifiManager;
 
     public WifiDeviceUtils(Context mContext) {
+        if (mContext == null){
+            return;
+        }
         this.mContext = mContext;
         mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
     }
@@ -28,6 +46,9 @@ public class WifiDeviceUtils {
      * 获取链接WIFI的信息
      */
     public String getWifiInfo() {
+        if (mWifiManager == null){
+            return "";
+        }
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo == null) {
             return "";
@@ -78,7 +99,10 @@ public class WifiDeviceUtils {
      * 获取WIFI链接状态
      */
     public boolean getIsConnected() {
-        boolean isConnected = false;
+        if (mContext == null){
+            return false;
+        }
+
         // 获取网络连接管理器
         ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -89,13 +113,11 @@ public class WifiDeviceUtils {
             // 根据NetworkInfo.getTypeName()判断当前网络
             String name = info.getTypeName();
             if (name.equals("WIFI")) {
-                isConnected = true;
+                return true;
             } else {
-                isConnected = false;
+                return false;
             }
-        } else {
-            isConnected = false;
         }
-        return isConnected;
+        return false;
     }
 }

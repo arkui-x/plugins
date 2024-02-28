@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package ohos.ace.plugin.wifimanager;
 
 import android.content.BroadcastReceiver;
@@ -60,22 +75,24 @@ public class WifiBroadcastReceiver {
         public void onReceive(Context context, Intent intent) {
             // 当前接受到的广播的标识(行动/意图)
             String action = intent.getAction();
-            if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-                if (info != null && info.isAvailable()) {
-                    String name = info.getTypeName();
-                    if (mWifiInterface != null) {
-                        if (name.equals("WIFI")) {
-                            mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_LINK);
-                        } else {
-                            mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
-                        }
-                    }
+            if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                return;
+            }
+            ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+            if (info != null && info.isAvailable()) {
+                String name = info.getTypeName();
+                if (mWifiInterface == null) {
+                    return;
+                }
+                if (name.equals("WIFI")) {
+                    mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_LINK);
                 } else {
-                    if (mWifiInterface != null) {
-                        mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
-                    }
+                    mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
+                }
+            } else {
+                if (mWifiInterface != null) {
+                    mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
                 }
             }
         }
@@ -109,32 +126,28 @@ public class WifiBroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (mWifiInterface == null) {
+                return;
+            }
             int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0);
             switch (wifiState) {
                 case WifiManager.WIFI_STATE_DISABLED:
-                    if (mWifiInterface != null) {
-                        mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_DISABLED);
-                    }
+                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_DISABLED);
                     break;
                 case WifiManager.WIFI_STATE_DISABLING:
-                    if (mWifiInterface != null) {
-                        mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_DISABLING);
-                    }
+                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_DISABLING);
                     break;
                 case WifiManager.WIFI_STATE_ENABLED:
-                    if (mWifiInterface != null) {
-                        mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_ENABLED);
-                    }
+                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_ENABLED);
                     break;
                 case WifiManager.WIFI_STATE_ENABLING:
-                    if (mWifiInterface != null) {
-                        mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_ENABLING);
-                    }
+                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_ENABLING);
                     break;
                 case WifiManager.WIFI_STATE_UNKNOWN:
-                    if (mWifiInterface != null) {
-                        mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_UNKNOWN);
-                    }
+                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_UNKNOWN);
+                    break;
+                default:
+                    Log.e(LOG_TAG, "WifiBroadcastReceiver wifiState invalid parameter");
                     break;
             }
         }

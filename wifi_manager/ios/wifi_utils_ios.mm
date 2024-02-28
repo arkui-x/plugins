@@ -64,6 +64,7 @@ typedef enum : NSInteger {
         NSDictionary *networkInfo = (__bridge id)dicRef;
         if (networkInfo == nil) {
             NSLog(@"wifi_utils_ios GetLinkedInfo oc CNCopyCurrentNetworkInfo nil");
+            continue;
         }
         NSString *ocssid = nil;
         NSString *ocbssid = nil;
@@ -121,8 +122,8 @@ typedef enum : NSInteger {
     struct ifaddrs *interfaces;
     int success = getifaddrs(&interfaces);
     if(!success){
-        for( struct ifaddrs *interface = interfaces; interface; interface = interface->ifa_next) {
-            if ( (interface->ifa_flags & IFF_UP) == IFF_UP ) {
+        for(struct ifaddrs *interface = interfaces; interface; interface = interface->ifa_next) {
+            if((interface->ifa_flags & IFF_UP) == IFF_UP) {
                 [cset addObject:[NSString stringWithUTF8String:interface->ifa_name]];
             }
         }
@@ -146,22 +147,14 @@ typedef enum : NSInteger {
 
     // 获取状态
     NetworkStatus netState = [self currentReachabilityStatus:reachability];
-
-    BOOL isSystemWifiConnect = NO;
-    if (netState == ReachableViaWiFi) {
-        isSystemWifiConnect = YES;
-    } else {
-        isSystemWifiConnect = NO;
-    }
-    return isSystemWifiConnect;
+    return netState == ReachableViaWiFi ? YES : NO;
 }
 
 - (NetworkStatus)currentReachabilityStatus:(SCNetworkReachabilityRef)_reachabilityRef {
     NSAssert(_reachabilityRef != NULL, @"currentNetworkStatus called with NULL SCNetworkReachabilityRef");
     NetworkStatus returnValue = NotReachable;
     SCNetworkReachabilityFlags flags;
-    if (SCNetworkReachabilityGetFlags(_reachabilityRef, &flags))
-    {
+    if (SCNetworkReachabilityGetFlags(_reachabilityRef, &flags)) {
         returnValue = [self networkStatusForFlags:flags];
     }
     return returnValue;
@@ -209,7 +202,7 @@ typedef enum : NSInteger {
                 activityInt = 0;
             }
             NSLog(@"wifi_utils_ios on oc wifiStateChange First with activity %d",activityInt);
-            OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt );
+            OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt);
         }
         if ((isget && self.isWifiActivity) || (!isget && !self.isWifiActivity)) {
             // 未变化
@@ -223,7 +216,7 @@ typedef enum : NSInteger {
                 activityInt = 0;
             }
             NSLog(@"wifi_utils_ios on oc wifiStateChange with activity %d",activityInt);
-            OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt );
+            OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt);
         }
     }];
 }
@@ -274,22 +267,6 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     }
     NSLog(@"wifi_utils_ios on oc wifiConnectionChange with connected %d",connectedInt);
     OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiConnectionChange", connectedInt);
-}
-
-// 获取周围扫描wifi列表
-- (void)getWifiList {
-    dispatch_semaphore_t getLinkSemaphore = dispatch_semaphore_create(1);
-    dispatch_semaphore_wait(getLinkSemaphore, DISPATCH_TIME_FOREVER);
-    dispatch_queue_t queue = dispatch_queue_create("com.huawei.hotspotHelper", 0);
-    [NEHotspotHelper registerWithOptions:nil queue:queue handler:^(NEHotspotHelperCommand * _Nonnull cmd) {
-        if (cmd.commandType == kNEHotspotHelperCommandTypeFilterScanList) {
-            for (NEHotspotNetwork *network in cmd.networkList) {
-                NSLog(@"ssid = %@",network.SSID);
-                
-            }
-        }
-        dispatch_semaphore_signal(getLinkSemaphore);
-    }];
 }
 
 @end
