@@ -24,8 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 #define INVALID_NETWORK_ID (-1)
 
 enum class SupplicantState {
@@ -163,7 +162,6 @@ struct WifiLinkedInfo {
         isAncoConnected = false;
     }
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif

@@ -16,8 +16,7 @@
 #ifndef OHOS_WIFI_ERRCODE_H
 #define OHOS_WIFI_ERRCODE_H
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 /* Wifi errcode defines */
 enum ErrCode {
     WIFI_OPT_SUCCESS = 0,             /* successfully */
@@ -44,7 +43,6 @@ enum ErrCode {
     WIFI_OPT_NON_SYSTEMAPP,           /* not system app denied */
     WIFI_OPT_ENTERPRISE_DENIED = 203, /* mdm forbidden */
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif // OHOS_WIFI_ERRCODE_H

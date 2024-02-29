@@ -28,8 +28,7 @@
 #include "wifi_msg.h"
 #include "wifi_napi_utils.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 napi_value IsWifiActive(napi_env env, napi_callback_info info);
 napi_value GetLinkedInfo(napi_env env, napi_callback_info info);
 napi_value On(napi_env env, napi_callback_info cbinfo);
@@ -48,7 +47,6 @@ public:
 
     virtual ~LinkedInfoAsyncContext() {}
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif // WIFI_NAPI_DEVICE_H_

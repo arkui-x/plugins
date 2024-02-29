@@ -19,11 +19,9 @@
 #include "plugins/wifi_manager/wifi_callback.h"
 #include "plugins/wifi_manager/wifi_device.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 void WifiReceiveCallback::ReceiveCallback(const std::string& key, int code)
 {
     WifiCallback::GetInstance().SendCallback(key, code);
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

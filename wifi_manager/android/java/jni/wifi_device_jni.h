@@ -24,8 +24,7 @@
 #include "plugins/wifi_manager/wifi_errcode.h"
 #include "plugins/wifi_manager/wifi_msg.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 class WiFiDeviceJni final {
 public:
     WiFiDeviceJni() = default;
@@ -47,7 +46,6 @@ public:
 private:
     void JavaWifiLinkedInfoToOh(const std::string& event, WifiLinkedInfo& info);
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif

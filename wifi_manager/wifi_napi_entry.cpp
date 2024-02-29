@@ -21,8 +21,7 @@
 #include "plugins/wifi_manager/android/java/jni/wifi_device_jni.h"
 #endif
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 #ifdef ANDROID_PLATFORM
 static void WifiManagerPluginJniRegister()
 {
@@ -59,5 +58,4 @@ extern "C" __attribute__((constructor)) void RegisterModule(void)
 #endif
     napi_module_register(&wifiJsModule);
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

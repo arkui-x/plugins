@@ -26,8 +26,7 @@
 #include "plugins/interfaces/native/plugin_utils.h"
 #include "nlohmann/json.hpp"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 namespace {
 const char WIFIMANAGER_CLASS_NAME[] = "ohos/ace/plugin/wifimanager/WifiDevicePlugin";
 static const JNINativeMethod METHODS[] = {
@@ -252,5 +251,4 @@ void WiFiDeviceJni::NativeReceiveCallback(JNIEnv* env, jobject jobj, jstring key
     LOGI("WiFiDeviceJni JNI: NativeReceiveCallback skey is %s code is %d", skey.c_str(), nativecode);
     WifiReceiveCallback::ReceiveCallback(skey, nativecode);
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

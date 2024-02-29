@@ -24,8 +24,7 @@
 #include "wifi_msg.h"
 #include "wifi_napi_utils.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 class WifiDevice {
 public:
     static std::shared_ptr<WifiDevice> GetInstance(int systemAbilityId, int instId = 0);
@@ -35,7 +34,6 @@ public:
     virtual ErrCode On(const std::string& key) = 0;
     virtual ErrCode Off(const std::string& key) = 0;
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif // OHOS_WIFI_DEVICE_H

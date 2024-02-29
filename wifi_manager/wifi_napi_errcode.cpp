@@ -19,8 +19,7 @@
 #include "wifi_napi_errcode.h"
 #include "wifi_errcode.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 static std::map<int32_t, int32_t> errCodeMap = {
     { ErrCode::WIFI_OPT_SUCCESS, WifiNapiErrCode::WIFI_ERRCODE_SUCCESS },
     { ErrCode::WIFI_OPT_FAILED, WifiNapiErrCode::WIFI_ERRCODE_OPERATION_FAILED },
@@ -190,5 +189,4 @@ void HandleSyncErrCode(const napi_env& env, int32_t errCode, int32_t sysCap)
         napi_throw_error(env, std::to_string(errCodeInfo).c_str(), errMsg.c_str());
     }
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

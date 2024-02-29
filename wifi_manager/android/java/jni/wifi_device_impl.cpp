@@ -22,8 +22,7 @@
 #include "wifi_device_impl.h"
 #include "wifi_device_jni.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 std::shared_ptr<WifiDevice> WifiDevice::GetInstance(int systemAbilityId, int instId)
 {
     return std::make_shared<WifiDeviceImpl>();
@@ -53,5 +52,4 @@ ErrCode WifiDeviceImpl::Off(const std::string& key)
 {
     return WiFiDeviceJni::GetInstance().Off(key);
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

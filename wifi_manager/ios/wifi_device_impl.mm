@@ -20,8 +20,7 @@
 #import "wifi_utils_ios.h"
 #include "wifi_callback.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 std::shared_ptr<WifiDevice> WifiDevice::GetInstance(int systemAbilityId, int instId) {
     return std::make_shared<WifiDeviceImpl>();
 }
@@ -52,5 +51,4 @@ ErrCode WifiDeviceImpl::Off(const std::string& key) {
     [[wifi_utils_ios shareManager] offChange:ocKey];
     return ErrCode::WIFI_OPT_SUCCESS;
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

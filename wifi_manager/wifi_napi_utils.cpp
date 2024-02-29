@@ -18,8 +18,7 @@
 #include "wifi_napi_utils.h"
 #include "wifi_napi_errcode.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 TraceFuncCall::TraceFuncCall(const std::string funcName) : m_funcName(funcName)
 {
     if (m_isTrace) {
@@ -221,5 +220,4 @@ napi_value DoAsyncWork(const napi_env& env, AsyncContext* asyncContext, const si
         return promise;
     }
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

@@ -18,8 +18,7 @@
 
 #include "wifi_device.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 class WifiDeviceImpl : public WifiDevice {
 public:
     WifiDeviceImpl() = default;
@@ -30,7 +29,6 @@ public:
     virtual ErrCode On(const std::string& key) override;
     virtual ErrCode Off(const std::string& key) override;
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif // PLUGINS_WIFI_MANAGER_IOS_WIFI_DEVICE_IMPL_H

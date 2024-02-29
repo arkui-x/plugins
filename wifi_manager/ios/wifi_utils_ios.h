@@ -34,7 +34,7 @@ using LinkedInfo = OHOS::Plugin::WifiLinkedInfo;
 + (instancetype)shareManager;
 
 /**
- * Obtain connection wifi information
+ * Get WiFi switch status
  * 
  * @param info Obtained current connection wifi information
  * @return Result and error code

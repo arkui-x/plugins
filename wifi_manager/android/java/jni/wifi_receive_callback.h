@@ -18,13 +18,11 @@
 
 #include <string>
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 class WifiReceiveCallback {
 public:
     static void ReceiveCallback(const std::string& key, int code);
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif // PLUGINS_WIFI_MANAGER_ANDROID_JAVA_JNI_WIFI_RECEIVE_CALLBACK_H

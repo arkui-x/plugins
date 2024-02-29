@@ -18,8 +18,7 @@
 #include "log.h"
 #include "wifi_callback.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 constexpr uint32_t INVALID_REF_COUNT = 0xff;
 void UvQueueWorkOnReceive(uv_work_t* work, int status)
 {
@@ -42,7 +41,6 @@ void UvQueueWorkOnReceive(uv_work_t* work, int status)
     delete wifiCallbackWorker;
     wifiCallbackWorker = nullptr;
     delete work;
-    work = nullptr;
 }
 
 WifiCallback::WifiCallback()
@@ -192,7 +190,7 @@ bool WifiCallback::HashExitCallback(const napi_env& env, napi_value callback, co
     return false;
 }
 
-bool WifiCallback::IsWifiRegister(const std::string& name)
+bool WifiCallback::HasWifiRegister(const std::string& name)
 {
     auto iter = maps_.find(name);
     if (iter == maps_.end()) {
@@ -200,5 +198,4 @@ bool WifiCallback::IsWifiRegister(const std::string& name)
     }
     return iter->second.size() == 0 ? false : true;
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

@@ -26,8 +26,7 @@
 #include "wifi_msg.h"
 #include "wifi_napi_utils.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 class WifiCallback {
 public:
     WifiCallback(const WifiCallback& commonEvent) = delete;
@@ -41,7 +40,7 @@ public:
     void SendCallback(const std::string& key, int code);
     void RegisterCallback(const napi_env &env, napi_value callback, const std::string& name);
     void UnRegisterCallback(const napi_env &env, napi_value callback, const std::string& name);
-    bool IsWifiRegister(const std::string& name);
+    bool HasWifiRegister(const std::string& name);
 
 private:
     WifiCallback();
@@ -53,7 +52,6 @@ private:
     std::map<std::string, std::vector<RegObj>> maps_;
     std::mutex mutex_;
 };
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif

@@ -21,8 +21,7 @@
 #include "wifi_napi_errcode.h"
 #include "wifi_napi_utils.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 static const std::string BUSINESS_ERROR_PROPERTY_CODE = "code";
 static const std::string BUSINESS_ERROR_PROPERTY_MESSAGE = "message";
 static const std::string BUSINESS_ERROR_PROPERTY_DATA = "data";
@@ -113,7 +112,6 @@ void HandlePromiseErrCode(const napi_env& env, const AsyncContext& info);
  */
 void HandleSyncErrCode(const napi_env& env, int32_t errCode, int32_t sysCap);
 #endif
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif

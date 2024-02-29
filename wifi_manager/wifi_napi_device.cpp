@@ -22,8 +22,7 @@
 #include "wifi_device.h"
 #include "wifi_napi_errcode.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 std::shared_ptr<WifiDevice> wifiDevicePtr = WifiDevice::GetInstance(0);
 
 static std::set<std::string> g_supportEventList = {
@@ -167,7 +166,7 @@ napi_value On(napi_env env, napi_callback_info cbinfo)
         return nullptr;
     }
 
-    bool isWifiRegister = WifiCallback::GetInstance().IsWifiRegister(type);
+    bool isWifiRegister = WifiCallback::GetInstance().HasWifiRegister(type);
     WifiCallback::GetInstance().RegisterCallback(env, argv[1], type);
 
     if (!isWifiRegister) {
@@ -228,7 +227,7 @@ napi_value Off(napi_env env, napi_callback_info cbinfo)
         return nullptr;
     }
     WifiCallback::GetInstance().UnRegisterCallback(env, argv[1], type);
-    bool isWifiRegister = WifiCallback::GetInstance().IsWifiRegister(type);
+    bool isWifiRegister = WifiCallback::GetInstance().HasWifiRegister(type);
 
     if (!isWifiRegister) {
         ErrCode ret = wifiDevicePtr->Off(type);
@@ -242,5 +241,4 @@ napi_value Off(napi_env env, napi_callback_info cbinfo)
     napi_get_undefined(env, &result);
     return result;
 }
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin

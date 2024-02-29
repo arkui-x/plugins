@@ -22,8 +22,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
-namespace OHOS {
-namespace Plugin {
+namespace OHOS::Plugin {
 static const std::int32_t SYSCAP_WIFI_STA = 2500000;
 static const int32_t WIFI_NAPI_MAX_PARA = 2;
 
@@ -130,7 +129,6 @@ napi_status SetValueUnsignedInt32(const napi_env& env, const char* fieldStr, con
 napi_status SetValueBool(const napi_env& env, const char* fieldStr, const bool boolValue, napi_value& result);
 napi_value DoAsyncWork(const napi_env& env, AsyncContext* asyncContext, const size_t argc, const napi_value* argv,
     const size_t nonCallbackArgNum);
-} // namespace Plugin
-} // namespace OHOS
+} // namespace OHOS::Plugin
 
 #endif
