@@ -13,10 +13,9 @@
  * limitations under the License.
  */
 
-#include "wifi_napi_device.h"
-
 #include <new>
 
+#include "wifi_napi_device.h"
 #include "inner_api/plugin_utils_napi.h"
 #include "log.h"
 #include "wifi_callback.h"

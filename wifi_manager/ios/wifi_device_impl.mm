@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-#include "wifi_device_impl.h"
-
 #include <cstring>
 
 #include "log.h"
+#include "wifi_device_impl.h"
 #import "wifi_utils_ios.h"
 #include "wifi_callback.h"
 

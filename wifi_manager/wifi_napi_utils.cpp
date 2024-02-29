@@ -13,10 +13,9 @@
  * limitations under the License.
  */
 
-#include "wifi_napi_utils.h"
-
 #include "log.h"
 #include "securec.h"
+#include "wifi_napi_utils.h"
 #include "wifi_napi_errcode.h"
 
 namespace OHOS {

@@ -15,6 +15,8 @@
 
 package ohos.ace.plugin.wifimanager;
 
+import static ohos.ace.plugin.wifimanager.WifiBroadcastInterface.TAG;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
@@ -22,11 +24,27 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 public class WifiDevicePlugin implements WifiBroadcastInterface{
-    private static final String LOG_TAG = "WifiDevicePlugin";
- 
     private static final String WIFI_STATE_CHANGE = "wifiStateChange";
 
     private static final String WIFI_CONNECTION_CHANGE = "wifiConnectionChange";
+    
+    // 0-not active
+    private static final int WIFI_SWITCH_NOT_ACTIVE = 0;
+
+    // 1-Active
+    private static final int WIFI_SWITCH_ACTIVE = 1;
+
+    // 2-activating
+    private static final int WIFI_SWITCH_ACTIVATING = 2;
+
+    // 3-Deactivating
+    private static final int WIFI_SWITCH_DEACTIVATING = 3;
+
+    // 0-Disconnected
+    private static final int WIFI_CONNECT_DISCONNECTED = 0;
+ 
+    // 1-Connected
+    private static final int WIFI_CONNECT_CONNECTED = 1;
 
     private Context context;
 
@@ -40,11 +58,11 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
      * @param context context of the application
      */
     public WifiDevicePlugin(Context context) {
-        if (context != null) {
-            this.context = context;
-        } else {
-            Log.e(LOG_TAG, "context is null");
+        if (context == null) {
+            Log.e(TAG, "context is null");
+            return;
         }
+        this.context = context;
         nativeInit();
         mWifiDeviceUtils = new WifiDeviceUtils(context);
         mWifiReceiver = new WifiBroadcastReceiver(context, this);
@@ -57,11 +75,11 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
      * @param isNativeInit call nativeInit or not
      */
     public WifiDevicePlugin(Context context, boolean isNativeInit) {
-        if (context != null) {
-            this.context = context;
-        } else {
-            Log.e(LOG_TAG, "parameter context is null");
+        if (context == null) {
+            Log.e(TAG, "parameter context is null");
+            return;
         }
+        this.context = context;
         if (isNativeInit) {
             nativeInit();
         }
@@ -71,7 +89,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
 
     protected native void nativeInit();
 
-    // 当触发事件时调用此方法
+    // Call this method when an event is triggered
     protected native void nativeReceiveCallback(String key, long code);
 
     public String getLinkedInfo() {
@@ -100,97 +118,83 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
         try{
             isConnectedWifi = mWifiDeviceUtils.getIsConnected();
         } catch (Exception exception) {
-            Log.e(LOG_TAG, "isConnected exception");
+            Log.e(TAG, "getIsConnected exception");
         }
         return isConnectedWifi;
     }
     
     public void on(String value) {
         try{
-            if (TextUtils.equals(value, WIFI_STATE_CHANGE)) { // 查询WLAN是否已使能
-              if (mWifiReceiver == null) {
-                    mWifiReceiver = new WifiBroadcastReceiver(context, this);
-                }
+            if (mWifiReceiver == null) {
+                  mWifiReceiver = new WifiBroadcastReceiver(context, this);
+              }
+            if (TextUtils.equals(value, WIFI_STATE_CHANGE)) {
                 mWifiReceiver.registerSwitchReceiver();
-            } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) { // 查询WLAN是否已连接
-                if (mWifiReceiver == null) {
-                    mWifiReceiver = new WifiBroadcastReceiver(context, this);
-                }
+            } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) {
                 mWifiReceiver.registerConnectReceiver();
             } else {
-                Log.e(LOG_TAG, "on is invalid");
+                Log.e(TAG, "on is invalid value: " + value);
             }
         } catch (Exception exception) {
-            Log.e(LOG_TAG, "on exception");
+            Log.e(TAG, "on exception");
         }
     }
     
     public void off(String value) {
         try{
+            if (mWifiReceiver == null) {
+                mWifiReceiver = new WifiBroadcastReceiver(context, this);
+            }
             if (TextUtils.equals(value, WIFI_STATE_CHANGE)) {
-                if (mWifiReceiver == null) {
-                    mWifiReceiver = new WifiBroadcastReceiver(context, this);
-                }
                 mWifiReceiver.unRegisterSwitchReceiver();
             } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) {
-                if (mWifiReceiver == null) {
-                    mWifiReceiver = new WifiBroadcastReceiver(context, this);
-                }
                 mWifiReceiver.unRegisterConnectReceiver();
             } else {
-                Log.e(LOG_TAG, "off is invalid");
+                Log.e(TAG, "off is invalid value: " + value);
             }
         } catch (Exception exception) {
-            Log.e(LOG_TAG, "off exception");
+            Log.e(TAG, "off exception");
         }
     }
 
     /**
-     * 监听wifi开关状态变化
-     *
+     * Monitor changes in WiFi switch status
      */
     @Override
     public void wifiSwitchState(int state) {
         switch (state) {
             case WifiBroadcastInterface.WIFI_STATE_DISABLED:
-                // 0-未激活
-                nativeReceiveCallback(WIFI_STATE_CHANGE, 0);
+                nativeReceiveCallback(WIFI_STATE_CHANGE, WIFI_SWITCH_NOT_ACTIVE);
                 break;
             case WifiBroadcastInterface.WIFI_STATE_DISABLING:
-                // 3-去激活中
-                nativeReceiveCallback(WIFI_STATE_CHANGE, 3);
+                nativeReceiveCallback(WIFI_STATE_CHANGE, WIFI_SWITCH_DEACTIVATING);
                 break;
             case WifiBroadcastInterface.WIFI_STATE_ENABLED:
-                // 1-已激活
-                nativeReceiveCallback(WIFI_STATE_CHANGE, 1);
+                nativeReceiveCallback(WIFI_STATE_CHANGE, WIFI_SWITCH_ACTIVE);
                 break;
             case WifiBroadcastInterface.WIFI_STATE_ENABLING:
-                // 2-激活中
-                nativeReceiveCallback(WIFI_STATE_CHANGE, 2);
+                nativeReceiveCallback(WIFI_STATE_CHANGE, WIFI_SWITCH_ACTIVATING);
                 break;
             default:
-                Log.e(LOG_TAG, "WifiDevicePlugins wifiSwitchState invalid parameter");
+                Log.e(TAG, "WifiDevicePlugins wifiSwitchState invalid parameter state: " + state);
                 break;
         }
     }
 
     /**
-     * 监听wifi连接状态
-     *
+     * Monitor WiFi connection status
      */
     @Override
     public void wifiConnectState(int state) {
         switch (state) {
             case WifiBroadcastInterface.WIFI_STATE_DISCONNECT:
-                // 0-已断开
-                nativeReceiveCallback(WIFI_CONNECTION_CHANGE, 0);
+                nativeReceiveCallback(WIFI_CONNECTION_CHANGE, WIFI_CONNECT_DISCONNECTED);
                 break;
-            case WifiBroadcastInterface.WIFI_STATE_LINK:
-                // 1-已连接
-                nativeReceiveCallback(WIFI_CONNECTION_CHANGE, 1);
+            case WifiBroadcastInterface.WIFI_STATE_LINKED:
+                nativeReceiveCallback(WIFI_CONNECTION_CHANGE, WIFI_CONNECT_CONNECTED);
                 break;
             default:
-                Log.e(LOG_TAG, "WifiDevicePlugins wifiConnectionChange invalid parameter");
+                Log.e(TAG, "WifiDevicePlugins wifiConnectionChange invalid parameter state: " + state);
                 break;
         }
     }

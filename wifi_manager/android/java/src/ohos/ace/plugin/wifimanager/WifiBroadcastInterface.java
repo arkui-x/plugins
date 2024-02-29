@@ -16,25 +16,27 @@
  package ohos.ace.plugin.wifimanager;
 
  public interface WifiBroadcastInterface {
-    // 0-已断开
+    String TAG = "WifiManagerAndroid";
+    
+    // 0-Disconnected
     int WIFI_STATE_DISCONNECT = 0;
 
-    // 1-已连接
-    int WIFI_STATE_LINK = 1;
+    // 1-Connected
+    int WIFI_STATE_LINKED = 1;
 
-    // 正在打开WiFi
+    // Opening WiFi
     int WIFI_STATE_ENABLING = 2;
 
-    // WiFi已打开
+    // WiFi turned on
     int WIFI_STATE_ENABLED = 3;
 
-    // 正在关闭WiFi
+    // Closing WiFi
     int WIFI_STATE_DISABLING = 0;
 
-    // WiFi已关闭
+    // WiFi turned off
     int WIFI_STATE_DISABLED = 1;
 
-    // WiFi状态未知
+    // WiFi status unknown
     int WIFI_STATE_UNKNOWN = 4;
 
     void wifiConnectState(int state);

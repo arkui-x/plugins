@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-#include "wifi_callback.h"
-
 #include <uv.h>
 
 #include "log.h"
+#include "wifi_callback.h"
 
 namespace OHOS {
 namespace Plugin {

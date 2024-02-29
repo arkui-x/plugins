@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-#include "wifi_napi_errcode.h"
-
 #include <map>
 
 #include "log.h"
+#include "wifi_napi_errcode.h"
 #include "wifi_errcode.h"
 
 namespace OHOS {

@@ -15,6 +15,8 @@
 
 package ohos.ace.plugin.wifimanager;
 
+import static ohos.ace.plugin.wifimanager.WifiBroadcastInterface.TAG;
+
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -28,22 +30,22 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class WifiDeviceUtils {
-    private static final String LOG_TAG = "WifiDeviceUtils";
+    public static final String NETWORKINFO_TYPE_NAME = "WIFI";
 
-    private Context mContext;
+    private Context context;
  
     private WifiManager mWifiManager;
 
-    public WifiDeviceUtils(Context mContext) {
-        if (mContext == null){
+    public WifiDeviceUtils(Context context) {
+        if (context == null){
             return;
         }
-        this.mContext = mContext;
-        mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+        this.context = context;
+        mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
     }
 
     /**
-     * 获取链接WIFI的信息
+     * Obtain information on the WIFI link
      */
     public String getWifiInfo() {
         if (mWifiManager == null){
@@ -63,8 +65,6 @@ public class WifiDeviceUtils {
         int linkSpeed = wifiInfo.getLinkSpeed();
         int frequency = wifiInfo.getFrequency();
         boolean isHidden = wifiInfo.getHiddenSSID();
-        String macAddress = wifiInfo.getMacAddress();
-        int ipAddress = wifiInfo.getIpAddress();
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("ssid", ssid);
@@ -76,47 +76,37 @@ public class WifiDeviceUtils {
             jsonObject.put("isHidden", isHidden);
             return jsonObject.toString();
         } catch (JSONException exception) {
-            Log.e(LOG_TAG, "WifiDeviceUtils JSONException");
+            Log.e(TAG, "WifiDeviceUtils JSONException");
         }
         return "";
     }
 
     /**
-     * 判断WiFi开关是否打开状态
+     * Check if the WiFi switch is turned on
      */
     public boolean getWifiActive() {
         if (mWifiManager == null) {
-            Log.e(LOG_TAG, "WifiDeviceUtils mWifiManager is null");
+            Log.e(TAG, "WifiDeviceUtils mWifiManager is null");
             return false;
         }
-        if (mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED) { // 3
-            return true;
-        }
-        return false;
+        return mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED;
     }
     
     /**
-     * 获取WIFI链接状态
+     * Get WIFI link status
      */
     public boolean getIsConnected() {
-        if (mContext == null){
+        if (context == null){
             return false;
         }
 
-        // 获取网络连接管理器
-        ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        // Get Network Connection Manager
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        // 获取当前网络状态信息
+        // Obtain current network status information
         NetworkInfo info = connectivityManager.getActiveNetworkInfo();
         if (info != null && info.isAvailable()) {
-            // 当NetworkInfo不为空且是可用的情况下，获取当前网络的Type状态
-            // 根据NetworkInfo.getTypeName()判断当前网络
-            String name = info.getTypeName();
-            if (name.equals("WIFI")) {
-                return true;
-            } else {
-                return false;
-            }
+            return info.getTypeName().equals(NETWORKINFO_TYPE_NAME);
         }
         return false;
     }

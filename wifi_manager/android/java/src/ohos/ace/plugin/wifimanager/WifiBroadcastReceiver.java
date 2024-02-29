@@ -15,6 +15,8 @@
 
 package ohos.ace.plugin.wifimanager;
 
+import static ohos.ace.plugin.wifimanager.WifiBroadcastInterface.TAG;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,15 +25,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
+import ohos.ace.plugin.wifimanager.WifiBroadcastReceiver.WifiConnectReceiver;
 
 /**
- * 监听wifi的开关状态与网络连接状态的广播
+ * Monitor the broadcast of the on/off status and network connection status of WiFi
  */
-
 public class WifiBroadcastReceiver {
-    private static final String LOG_TAG = "WifiBroadcastReceiver";
-
-    private Context mContext;
+    private Context context;
 
     private WifiConnectReceiver mWifiConnectReceiver;
 
@@ -39,117 +39,102 @@ public class WifiBroadcastReceiver {
 
     private WifiBroadcastInterface mWifiInterface;
 
-    public WifiBroadcastReceiver(Context mContext, WifiBroadcastInterface mWifiInterface) {
-        this.mContext = mContext;
+    public WifiBroadcastReceiver(Context context, WifiBroadcastInterface mWifiInterface) {
+        this.context = context;
         this.mWifiInterface = mWifiInterface;
     }
 
 
     /**
-     * wifi链接状态注册监听广播
+     * WiFi link status registration listening broadcast
      */
     public void registerConnectReceiver() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         mWifiConnectReceiver = new WifiConnectReceiver();
-        mContext.registerReceiver(mWifiConnectReceiver, filter);
-        Log.i(LOG_TAG, "registerConnectReceiver");
+        context.registerReceiver(mWifiConnectReceiver, filter);
+        Log.i(TAG, "registerConnectReceiver");
     }
 
     /**
-     * wifi链接状态取消注册监听广播
+     * Unregistration of WiFi link status for listening to broadcasts
      */
     public void unRegisterConnectReceiver() {
-        if (mWifiConnectReceiver != null) {
-            mContext.unregisterReceiver(mWifiConnectReceiver);
-            Log.i(LOG_TAG, "unRegisterConnectReceiver");
+        if (mWifiConnectReceiver == null) {
+            Log.e(TAG, "mWifiConnectReceiver is null");
         }
+        context.unregisterReceiver(mWifiConnectReceiver);
+        Log.i(TAG, "unRegisterConnectReceiver");
     }
 
     /**
-     * wifi链接状态的监听广播
+     * Listening and broadcasting of WiFi link status
      */
     class WifiConnectReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            // 当前接受到的广播的标识(行动/意图)
+            // The identification (action/intention) of the currently received broadcast
             String action = intent.getAction();
             if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                Log.e(TAG, "WifiConnectReceiver action is not CONNECTIVITY_ACTION");
                 return;
             }
-            ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (mWifiInterface == null) {
+                Log.e(TAG, "WifiConnectReceiver mWifiInterface is null");
+                return;
+            }
+            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo info = connectivityManager.getActiveNetworkInfo();
             if (info != null && info.isAvailable()) {
                 String name = info.getTypeName();
-                if (mWifiInterface == null) {
-                    return;
-                }
-                if (name.equals("WIFI")) {
-                    mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_LINK);
+                if (name.equals(WifiDeviceUtils.NETWORKINFO_TYPE_NAME)) {
+                    mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_LINKED);
                 } else {
                     mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
                 }
             } else {
-                if (mWifiInterface != null) {
-                    mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
-                }
+                mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
             }
         }
     }
 
     /**
-     * wifi开关状态的注册广播
+     * Registration broadcast of WiFi switch status
      */
     public void registerSwitchReceiver() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         mWifiSwitchReceiver = new WifiSwitchBroadcastReceiver();
-        mContext.registerReceiver(mWifiSwitchReceiver, filter);
-        Log.i(LOG_TAG, "registerSwitchReceiver");
+        context.registerReceiver(mWifiSwitchReceiver, filter);
+        Log.i(TAG, "registerSwitchReceiver");
     }
 
     /**
-     * wifi开关状态的取消注册广播
+     * Unregistration broadcast of WiFi switch status
      */
     public void unRegisterSwitchReceiver() {
-        if (mWifiSwitchReceiver != null) {
-            mContext.unregisterReceiver(mWifiSwitchReceiver);
-            Log.i(LOG_TAG, "unRegisterSwitchReceiver");
+        if (mWifiSwitchReceiver == null) {
+            Log.e(TAG, "mWifiSwitchReceiver is null");
         }
+        context.unregisterReceiver(mWifiSwitchReceiver);
+        Log.i(TAG, "unRegisterSwitchReceiver");
     }
 
     /**
-     * wifi开关状态的监听广播
+     * Monitoring and broadcasting of WiFi switch status
      */
     class WifiSwitchBroadcastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
             if (mWifiInterface == null) {
+                Log.e(TAG, "WifiSwitchBroadcastReceiver mWifiInterface is null");
                 return;
             }
             int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0);
-            switch (wifiState) {
-                case WifiManager.WIFI_STATE_DISABLED:
-                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_DISABLED);
-                    break;
-                case WifiManager.WIFI_STATE_DISABLING:
-                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_DISABLING);
-                    break;
-                case WifiManager.WIFI_STATE_ENABLED:
-                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_ENABLED);
-                    break;
-                case WifiManager.WIFI_STATE_ENABLING:
-                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_ENABLING);
-                    break;
-                case WifiManager.WIFI_STATE_UNKNOWN:
-                    mWifiInterface.wifiSwitchState(WifiBroadcastInterface.WIFI_STATE_UNKNOWN);
-                    break;
-                default:
-                    Log.e(LOG_TAG, "WifiBroadcastReceiver wifiState invalid parameter");
-                    break;
-            }
+            Log.e(TAG, "WifiSwitchBroadcastReceiver wifiState: " + wifiState);
+            mWifiInterface.wifiSwitchState(wifiState);
         }
     }
 }

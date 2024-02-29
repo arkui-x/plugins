@@ -13,10 +13,9 @@
  * limitations under the License.
  */
 
-#include "wifi_receive_callback.h"
-
 #include "log.h"
 
+#include "wifi_receive_callback.h"
 #include "plugins/wifi_manager/wifi_callback.h"
 #include "plugins/wifi_manager/wifi_device.h"
 

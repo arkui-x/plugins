@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-#include "wifi_device_jni.h"
 
 #include <codecvt>
 #include <jni.h>
 #include <locale>
 
 #include "log.h"
+#include "wifi_device_jni.h"
 #include "wifi_receive_callback.h"
 
 #include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"

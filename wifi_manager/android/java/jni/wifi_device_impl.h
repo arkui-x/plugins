@@ -16,8 +16,6 @@
 #ifndef PLUGINS_WIFI_MANAGER_ANDROID_JAVA_JNI_WIFI_DEVICE_IMPL_H
 #define PLUGINS_WIFI_MANAGER_ANDROID_JAVA_JNI_WIFI_DEVICE_IMPL_H
 
-#include <mutex>
-
 #include "plugins/wifi_manager/wifi_device.h"
 
 namespace OHOS {

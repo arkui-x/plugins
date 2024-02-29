@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-#include "wifi_device_impl.h"
-
 #include <cstring>
 
 #include <map>
+#include <mutex>
 #include "log.h"
+
+#include "wifi_device_impl.h"
 #include "wifi_device_jni.h"
 
 namespace OHOS {
