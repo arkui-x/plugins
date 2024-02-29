@@ -29,40 +29,45 @@ using LinkedInfo = OHOS::Plugin::WifiLinkedInfo;
 @interface wifi_utils_ios : NSObject
 
 /**
- * 单例方法
+ * Single instance method
  */
 + (instancetype)shareManager;
 
 /**
- * 获取连接wifi信息
- * @param info 获取到的当前连接wifi信息
- * @return 结果以及错误码
+ * Obtain connection wifi information
+ * 
+ * @param info Obtained current connection wifi information
+ * @return Result and error code
  */
 - (WifiErrCode)getLinkedInfo:(LinkedInfo*)info;
 
 /**
- * 获取wifi开关状态
- * @param bActive 获取到的开关状态
- * @return 结果以及错误码
+ * Get WiFi switch status
+ * 
+ * @param bActive Obtained switch status
+ * @return Result and error code
  */
 - (WifiErrCode)isWifiActive:(bool*)bActive;
 
 /**
- * 获取wifi连接状态
- * @param isConnected 获取到的wifi连接状态
- * @return 结果以及错误码
+ * Get WiFi connection status
+ * 
+ * @param isConnected Obtained WiFi connection status
+ * @return Result and error code
  */
 - (WifiErrCode)isConnected:(bool*)isConnected;
 
 /**
- * 启动监听
- * @param key 监听的类型 wifiStateChange、wifiConnectionChange
+ * lsnrctl start
+ * 
+ * @param key Type of listening wifiStateChange、wifiConnectionChange
  */
 - (void)onChange:(NSString *)key;
 
 /**
- * 取消监听
- * @param key 监听的类型 wifiStateChange、wifiConnectionChange
+ * Cancel listening
+ * 
+ * @param key Type of listening wifiStateChange、wifiConnectionChange
  */
 - (void)offChange:(NSString *)key;
 

@@ -16,14 +16,14 @@
 #import "wifi_utils_ios.h"
 #include "wifi_callback.h"
 
-// 获取当前连接wifi引入
+// Get the current connection WiFi introduction
 #import <SystemConfiguration/CaptiveNetwork.h>
 
-// 获取当前wifi开关引入
+// Obtain the current WiFi switch introduction
 #import <ifaddrs.h>
 #import <net/if.h>
 
-// Reachable引入，检测网络连接状态变化，Reachability类库
+// Introduction of Reachable, detection of changes in network connection status, Reachability class library
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <netinet/in.h>
 typedef enum : NSInteger {
@@ -32,7 +32,7 @@ typedef enum : NSInteger {
     ReachableViaWWAN
 } NetworkStatus;
 
-// 获取wifi列表引入
+// Get WiFi list introduction
 #import <NetworkExtension/NetworkExtension.h>
 
 @interface wifi_utils_ios()
@@ -44,7 +44,7 @@ typedef enum : NSInteger {
 @end
 
 @implementation wifi_utils_ios {
-    // 监听wifi连接状态使用
+    // Listening for WiFi connection status usage
     SCNetworkReachabilityRef reachabilityOnConnect;
 }
 
@@ -132,7 +132,7 @@ typedef enum : NSInteger {
 }
 
 - (BOOL)isSystemWifiConnected {
-    // 初始化SCNetworkReachabilityRef
+    // initialization SCNetworkReachabilityRef
     struct sockaddr_in zeroAddress;
     bzero(&zeroAddress, sizeof(zeroAddress));
     zeroAddress.sin_len = sizeof(zeroAddress);
@@ -145,7 +145,7 @@ typedef enum : NSInteger {
         return NO;
     }
 
-    // 获取状态
+    // Get Status
     NetworkStatus netState = [self currentReachabilityStatus:reachability];
     return netState == ReachableViaWiFi ? YES : NO;
 }
@@ -205,9 +205,9 @@ typedef enum : NSInteger {
             OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt);
         }
         if ((isget && self.isWifiActivity) || (!isget && !self.isWifiActivity)) {
-            // 未变化
+            // Unchanged
         } else {
-            // 有变化
+            // There are changes
             self.isWifiActivity = isget;
             int activityInt = 0;
             if (isget) {
@@ -230,7 +230,7 @@ typedef enum : NSInteger {
 }
 
 - (void)listenWifiConnect {
-    // 设置网络检测的站点
+    // Set up sites for network detection
     NSString *remoteHostName = @"www.apple.com";
     reachabilityOnConnect = SCNetworkReachabilityCreateWithName(NULL, [remoteHostName UTF8String]);
     if (reachabilityOnConnect == NULL) {
@@ -260,7 +260,7 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     NetworkStatus netStatus = [noteObject currentReachabilityStatus:target];
     int connectedInt = 0;
     if (netStatus == ReachableViaWiFi) {
-       //成功运行
+       // Successfully run
         connectedInt = 1;
     } else {
         connectedInt = 0;
