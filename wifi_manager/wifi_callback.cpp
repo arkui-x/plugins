@@ -21,11 +21,10 @@
 namespace OHOS {
 namespace Plugin {
 constexpr uint32_t INVALID_REF_COUNT = 0xff;
-const std::string WIFI_STATE_CHANGE = "wifiStateChange";
-const std::string WIFI_CONNECTION_CHANGE = "wifiConnectionChange";
 void UvQueueWorkOnReceive(uv_work_t* work, int status)
 {
     if (work == nullptr || work->data == nullptr) {
+        LOGE("UvQueueWorkOnReceive work or work->data is nullptr");
         return;
     }
     WifiCallbackWorker* wifiCallbackWorker = reinterpret_cast<WifiCallbackWorker*>(work->data);
@@ -43,6 +42,7 @@ void UvQueueWorkOnReceive(uv_work_t* work, int status)
     delete wifiCallbackWorker;
     wifiCallbackWorker = nullptr;
     delete work;
+    work = nullptr;
 }
 
 WifiCallback::WifiCallback()
@@ -50,8 +50,8 @@ WifiCallback::WifiCallback()
     maps_.clear();
     std::vector<RegObj> wifiStateChangeVector = {};
     std::vector<RegObj> wifiConnectionChangeVector = {};
-    maps_[WIFI_STATE_CHANGE] = wifiStateChangeVector;
-    maps_[WIFI_CONNECTION_CHANGE] = wifiConnectionChangeVector;
+    maps_[EVENT_STA_POWER_STATE_CHANGE] = wifiStateChangeVector;
+    maps_[EVENT_STA_CONN_STATE_CHANGE] = wifiConnectionChangeVector;
 }
 
 void WifiCallback::SendCallback(const std::string& key, int code)
