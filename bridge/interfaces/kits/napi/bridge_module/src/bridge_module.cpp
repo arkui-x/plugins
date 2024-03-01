@@ -437,7 +437,7 @@ napi_value BridgeModule::BridgeObject::SetMessageListener(napi_env env, napi_cal
     return PluginUtilsNApi::CreateUndefined(env);
 }
 
-napi_value BridgeModule::CallMethodWithCallBackInnter(napi_env env, napi_callback_info info)
+napi_value BridgeModule::CallMethodWithCallBackInner(napi_env env, napi_callback_info info)
 {
     napi_value thisVal = nullptr;
     size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
@@ -445,19 +445,19 @@ napi_value BridgeModule::CallMethodWithCallBackInnter(napi_env env, napi_callbac
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
     if (argc < PluginUtilsNApi::ARG_NUM_2 || argc > PluginUtilsNApi::MAX_ARG_NUM) {
-        LOGE("BridgeObject::CallMethodWithCallBackInnter: Method parameter error.");
+        LOGE("BridgeObject::CallMethodWithCallBackInner: Method parameter error.");
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
     Bridge* bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
-        LOGE("BridgeObject::CallMethodWithCallBackInnter: Failed to obtain the Bridge object.");
+        LOGE("BridgeObject::CallMethodWithCallBackInner: Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
     auto methodData = MethodData::CreateMethodData(env, bridge->GetCodecType());
     if (!methodData->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
-        LOGE("BridgeObject::CallMethodWithCallBackInnter: Parsing the method name failed.");
+        LOGE("BridgeObject::CallMethodWithCallBackInner: Parsing the method name failed.");
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
@@ -470,7 +470,7 @@ napi_value BridgeModule::CallMethodWithCallBackInnter(napi_env env, napi_callbac
         ret = methodData->GetParamsByRecord(PluginUtilsNApi::ARG_NUM_0, nullptr);
     }
     if (!ret) {
-        LOGE("BridgeObject::CallMethodWithCallBackInnter: Parsing the method parameters failed.");
+        LOGE("BridgeObject::CallMethodWithCallBackInner: Parsing the method parameters failed.");
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
@@ -518,7 +518,7 @@ napi_value BridgeModule::BridgeObject::CallMethodWithCallBack(napi_env env, napi
     callback->GetPromise(false);
 
     RegisterMethodInner(env, thisVal, methodData, callback);
-    auto result = CallMethodWithCallBackInnter(env, info);
+    auto result = CallMethodWithCallBackInner(env, info);
     return result;
 }
 
