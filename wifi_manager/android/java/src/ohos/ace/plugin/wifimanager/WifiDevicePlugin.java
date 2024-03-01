@@ -29,22 +29,22 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
     private static final String WIFI_CONNECTION_CHANGE = "wifiConnectionChange";
     
     // 0-not active
-    private static final int WIFI_SWITCH_NOT_ACTIVE = 0;
+    private static final long WIFI_SWITCH_NOT_ACTIVE = 0;
 
     // 1-Active
-    private static final int WIFI_SWITCH_ACTIVE = 1;
+    private static final long WIFI_SWITCH_ACTIVE = 1;
 
     // 2-activating
-    private static final int WIFI_SWITCH_ACTIVATING = 2;
+    private static final long WIFI_SWITCH_ACTIVATING = 2;
 
     // 3-Deactivating
-    private static final int WIFI_SWITCH_DEACTIVATING = 3;
+    private static final long WIFI_SWITCH_DEACTIVATING = 3;
 
     // 0-Disconnected
-    private static final int WIFI_CONNECT_DISCONNECTED = 0;
+    private static final long WIFI_CONNECT_DISCONNECTED = 0;
  
     // 1-Connected
-    private static final int WIFI_CONNECT_CONNECTED = 1;
+    private static final long WIFI_CONNECT_CONNECTED = 1;
 
     private Context context;
 

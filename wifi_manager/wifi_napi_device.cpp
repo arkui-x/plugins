@@ -78,7 +78,7 @@ napi_value GetLinkedInfo(napi_env env, napi_callback_info info)
     asyncContext->executeFunc = [&](void* data) -> void {
         LinkedInfoAsyncContext* context = static_cast<LinkedInfoAsyncContext*>(data);
         TRACE_FUNC_CALL_NAME("wifiDevicePtr->GetLinkedInfo");
-        context->errorCode = WifiDevice::GetInstance(0)->GetLinkedInfo(context->linkedInfo);
+        context->errorCode = wifiDevicePtr->GetLinkedInfo(context->linkedInfo);
     };
 
     asyncContext->completeFunc = [&](void* data) -> void {
@@ -98,7 +98,7 @@ napi_value IsWifiActive(napi_env env, napi_callback_info info)
     TRACE_FUNC_CALL;
     WIFI_NAPI_ASSERT(env, wifiDevicePtr != nullptr, WIFI_OPT_FAILED, SYSCAP_WIFI_STA);
     bool activeStatus = false;
-    ErrCode ret = WifiDevice::GetInstance(0)->IsWifiActive(activeStatus);
+    ErrCode ret = wifiDevicePtr->IsWifiActive(activeStatus);
     if (ret != WIFI_OPT_SUCCESS) {
         LOGE("Get wifi active status fail: %{public}d", ret);
         WIFI_NAPI_ASSERT(env, ret == WIFI_OPT_SUCCESS, ret, SYSCAP_WIFI_STA);
