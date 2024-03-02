@@ -62,6 +62,7 @@ common_plugin_libs = [
   "security/cryptoframework",
   "security/cert",
   "events/emitter",
+  "wifi_manager",
 ]
 
 template("plugin_lib") {
