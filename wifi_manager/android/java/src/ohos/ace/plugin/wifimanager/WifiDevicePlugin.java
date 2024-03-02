@@ -59,32 +59,13 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
      */
     public WifiDevicePlugin(Context context) {
         if (context == null) {
-            Log.e(TAG, "context is null");
+            Log.e(TAG, " WifiDevicePlugin context is null");
             return;
         }
         this.context = context;
         nativeInit();
         mWifiDeviceUtils = new WifiDeviceUtils(context);
         mWifiReceiver = new WifiBroadcastReceiver(context, this);
-    }
-
-    /**
-     * WifiDevicePlugin
-     *
-     * @param context context of the application
-     * @param isNativeInit call nativeInit or not
-     */
-    public WifiDevicePlugin(Context context, boolean isNativeInit) {
-        if (context == null) {
-            Log.e(TAG, "parameter context is null");
-            return;
-        }
-        this.context = context;
-        if (isNativeInit) {
-            nativeInit();
-        }
-        mWifiDeviceUtils = new WifiDeviceUtils(this.context);
-        mWifiReceiver = new WifiBroadcastReceiver(this.context, this);
     }
 
     protected native void nativeInit();
@@ -96,11 +77,11 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
         if (mWifiDeviceUtils == null) {
             mWifiDeviceUtils = new WifiDeviceUtils(context);
         }
-        String wifiInfo_json = "";
+        String wifiInfoJson = "";
         if (mWifiDeviceUtils.getWifiActive()) {
-            wifiInfo_json = mWifiDeviceUtils.getWifiInfo();
+            wifiInfoJson = mWifiDeviceUtils.getWifiInfo();
         }
-        return wifiInfo_json;
+        return wifiInfoJson;
     }
 
     public boolean isWifiActive() {
@@ -141,19 +122,15 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
     }
     
     public void off(String value) {
-        try{
-            if (mWifiReceiver == null) {
-                mWifiReceiver = new WifiBroadcastReceiver(context, this);
-            }
-            if (TextUtils.equals(value, WIFI_STATE_CHANGE)) {
-                mWifiReceiver.unRegisterSwitchReceiver();
-            } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) {
-                mWifiReceiver.unRegisterConnectReceiver();
-            } else {
-                Log.e(TAG, "off is invalid value: " + value);
-            }
-        } catch (Exception exception) {
-            Log.e(TAG, "off exception");
+        if (mWifiReceiver == null) {
+            mWifiReceiver = new WifiBroadcastReceiver(context, this);
+        }
+        if (TextUtils.equals(value, WIFI_STATE_CHANGE)) {
+            mWifiReceiver.unRegisterSwitchReceiver();
+        } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) {
+            mWifiReceiver.unRegisterConnectReceiver();
+        } else {
+            Log.e(TAG, "off is invalid value: " + value);
         }
     }
 
@@ -194,7 +171,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
                 nativeReceiveCallback(WIFI_CONNECTION_CHANGE, WIFI_CONNECT_CONNECTED);
                 break;
             default:
-                Log.e(TAG, "WifiDevicePlugins wifiConnectionChange invalid parameter state: " + state);
+                Log.e(TAG, "WifiDevicePlugins wifiConnectState invalid parameter state: " + state);
                 break;
         }
     }

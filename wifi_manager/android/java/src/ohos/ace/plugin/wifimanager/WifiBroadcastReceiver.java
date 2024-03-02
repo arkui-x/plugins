@@ -53,7 +53,6 @@ public class WifiBroadcastReceiver {
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         mWifiConnectReceiver = new WifiConnectReceiver();
         context.registerReceiver(mWifiConnectReceiver, filter);
-        Log.i(TAG, "registerConnectReceiver");
     }
 
     /**
@@ -64,7 +63,6 @@ public class WifiBroadcastReceiver {
             Log.e(TAG, "mWifiConnectReceiver is null");
         }
         context.unregisterReceiver(mWifiConnectReceiver);
-        Log.i(TAG, "unRegisterConnectReceiver");
     }
 
     /**
@@ -73,22 +71,26 @@ public class WifiBroadcastReceiver {
     class WifiConnectReceiver extends BroadcastReceiver {
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, Intent safeIntent) {
             // The identification (action/intention) of the currently received broadcast
-            String action = intent.getAction();
+            if (mWifiInterface == null || context == null || safeIntent == null) {
+                Log.e(TAG, "WifiConnectReceiver onReceive parameter is null");
+                return;
+            }
+            String action = safeIntent.getAction();
             if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
                 Log.e(TAG, "WifiConnectReceiver action is not CONNECTIVITY_ACTION");
                 return;
             }
-            if (mWifiInterface == null) {
-                Log.e(TAG, "WifiConnectReceiver mWifiInterface is null");
+            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager == null) {
+                Log.e(TAG, "WifiConnectReceiver connectivityManager is null");
                 return;
             }
-            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo info = connectivityManager.getActiveNetworkInfo();
             if (info != null && info.isAvailable()) {
-                String name = info.getTypeName();
-                if (name.equals(WifiDeviceUtils.NETWORKINFO_TYPE_NAME)) {
+                String typeName = info.getTypeName();
+                if (typeName.equals(WifiDeviceUtils.NETWORKINFO_TYPE_NAME)) {
                     mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_LINKED);
                 } else {
                     mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
@@ -107,7 +109,6 @@ public class WifiBroadcastReceiver {
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         mWifiSwitchReceiver = new WifiSwitchBroadcastReceiver();
         context.registerReceiver(mWifiSwitchReceiver, filter);
-        Log.i(TAG, "registerSwitchReceiver");
     }
 
     /**
@@ -118,7 +119,6 @@ public class WifiBroadcastReceiver {
             Log.e(TAG, "mWifiSwitchReceiver is null");
         }
         context.unregisterReceiver(mWifiSwitchReceiver);
-        Log.i(TAG, "unRegisterSwitchReceiver");
     }
 
     /**
@@ -127,14 +127,12 @@ public class WifiBroadcastReceiver {
     class WifiSwitchBroadcastReceiver extends BroadcastReceiver {
 
         @Override
-        public void onReceive(Context context, Intent intent) {
-            if (mWifiInterface == null) {
-                Log.e(TAG, "WifiSwitchBroadcastReceiver mWifiInterface is null");
+        public void onReceive(Context context, Intent safeIntent) {
+            if (mWifiInterface == null || context == null || safeIntent == null) {
+                Log.e(TAG, "WifiSwitchBroadcastReceiver onReceive parameter is null");
                 return;
             }
-            int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0);
-            Log.e(TAG, "WifiSwitchBroadcastReceiver wifiState: " + wifiState);
-            mWifiInterface.wifiSwitchState(wifiState);
+            mWifiInterface.wifiSwitchState(safeIntent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0));
         }
     }
 }

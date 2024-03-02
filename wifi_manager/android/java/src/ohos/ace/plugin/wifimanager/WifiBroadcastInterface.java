@@ -36,9 +36,6 @@
     // WiFi turned off
     int WIFI_STATE_DISABLED = 1;
 
-    // WiFi status unknown
-    int WIFI_STATE_UNKNOWN = 4;
-
     void wifiConnectState(int state);
     void wifiSwitchState(int state);
     

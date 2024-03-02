@@ -38,6 +38,7 @@ public class WifiDeviceUtils {
 
     public WifiDeviceUtils(Context context) {
         if (context == null){
+            Log.e(TAG, "WifiDeviceUtils context is null");
             return;
         }
         this.context = context;
@@ -48,11 +49,13 @@ public class WifiDeviceUtils {
      * Obtain information on the WIFI link
      */
     public String getWifiInfo() {
-        if (mWifiManager == null){
+        if (mWifiManager == null) {
+            Log.e(TAG, "WifiDeviceUtils getWifiInfo mWifiManager is null");
             return "";
         }
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo == null) {
+            Log.e(TAG, "WifiDeviceUtils getWifiInfo wifiInfo is null");
             return "";
         }
         String ssid = wifiInfo.getSSID();
@@ -76,7 +79,7 @@ public class WifiDeviceUtils {
             jsonObject.put("isHidden", isHidden);
             return jsonObject.toString();
         } catch (JSONException exception) {
-            Log.e(TAG, "WifiDeviceUtils JSONException");
+            Log.e(TAG, "WifiDeviceUtils getWifiInfo jsonObject.put JSONException");
         }
         return "";
     }
@@ -96,12 +99,17 @@ public class WifiDeviceUtils {
      * Get WIFI link status
      */
     public boolean getIsConnected() {
-        if (context == null){
+        if (context == null) {
+            Log.e(TAG, "WifiDeviceUtils getIsConnected context is null");
             return false;
         }
 
         // Get Network Connection Manager
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            Log.e(TAG, "WifiDeviceUtils getIsConnected connectivityManager is null");
+            return false;
+        }
 
         // Obtain current network status information
         NetworkInfo info = connectivityManager.getActiveNetworkInfo();

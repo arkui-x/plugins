@@ -142,7 +142,6 @@ ErrCode WiFiDeviceJni::GetLinkedInfo(WifiLinkedInfo& info)
     }
     std::string jsonobject = JavaStringToString(env, jinfo);
     JavaWifiLinkedInfoToOh(jsonobject, info);
-    LOGI("WiFiDeviceJni JNI: call GetLinkedInfo has success");
     return ErrCode::WIFI_OPT_SUCCESS;
 }
 
@@ -162,7 +161,6 @@ ErrCode WiFiDeviceJni::IsWifiActive(bool& bActive)
         return ErrCode::WIFI_OPT_FAILED;
     }
     bActive = jisWfifActibe == JNI_TRUE ? true : false;
-    LOGI("WiFiDeviceJni JNI: call IsWifiActive has success");
     return ErrCode::WIFI_OPT_SUCCESS;
 }
 
@@ -182,7 +180,6 @@ ErrCode WiFiDeviceJni::IsConnected(bool& isConnected)
         return ErrCode::WIFI_OPT_FAILED;
     }
     isConnected = jisConnected == JNI_TRUE ? true : false;
-    LOGI("WiFiDeviceJni JNI: call IsConnected has success");
     return ErrCode::WIFI_OPT_SUCCESS;
 }
 

@@ -82,16 +82,12 @@ typedef enum : NSInteger {
 }
 
 - (WifiErrCode)isWifiActive:(bool*)bActive {
-    BOOL isNowWifiActive = [self isSystemWifiActive];
-    NSLog(@"wifi_utils_ios IsWifiActive oc get active is %d",isNowWifiActive);
-    *bActive = isNowWifiActive;
+    *bActive = [self isSystemWifiActive];
     return WifiErrCode::WIFI_OPT_SUCCESS;
 }
 
 - (WifiErrCode)isConnected:(bool*)isConnected {
-    BOOL isConnectedNow = [self isSystemWifiConnected];
-    NSLog(@"wifi_utils_ios IsConnected oc get finish with %d",isConnectedNow);
-    *isConnected = isConnectedNow;
+    *isConnected = [self isSystemWifiConnected];
     return WifiErrCode::WIFI_OPT_SUCCESS;
 }
 
@@ -139,8 +135,7 @@ typedef enum : NSInteger {
     zeroAddress.sin_family = AF_INET;
     const struct sockaddr * hostAddress = (const struct sockaddr *) &zeroAddress;
     SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault, hostAddress);
-    if (reachability == NULL)
-    {
+    if (reachability == NULL) {
         NSLog(@"wifi_utils_ios IsConnected oc isSystemWifiConnected create SCNetworkReachabilityRef fail");
         return NO;
     }
@@ -201,7 +196,6 @@ typedef enum : NSInteger {
             } else {
                 activityInt = 0;
             }
-            NSLog(@"wifi_utils_ios on oc wifiStateChange First with activity %d",activityInt);
             OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt);
         }
         if ((isget && self.isWifiActivity) || (!isget && !self.isWifiActivity)) {
@@ -215,7 +209,6 @@ typedef enum : NSInteger {
             } else {
                 activityInt = 0;
             }
-            NSLog(@"wifi_utils_ios on oc wifiStateChange with activity %d",activityInt);
             OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt);
         }
     }];
@@ -225,7 +218,6 @@ typedef enum : NSInteger {
     if (self.stateTimer) {
         [self.stateTimer invalidate];
         self.stateTimer = nil;
-        NSLog(@"wifi_utils_ios off oc wifiStateChange success");
     }
 }
 
@@ -249,7 +241,6 @@ typedef enum : NSInteger {
     if (reachabilityOnConnect != NULL) {
         SCNetworkReachabilityUnscheduleFromRunLoop(reachabilityOnConnect, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
         reachabilityOnConnect = NULL;
-        NSLog(@"wifi_utils_ios off oc wifiConnectionChange success");
     }
 }
 
@@ -265,7 +256,6 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     } else {
         connectedInt = 0;
     }
-    NSLog(@"wifi_utils_ios on oc wifiConnectionChange with connected %d",connectedInt);
     OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiConnectionChange", connectedInt);
 }
 
