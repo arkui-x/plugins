@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +14,10 @@
  */
 
 package ohos.ace.plugin.abilityaccessctrl;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 
 import android.app.Activity;
 import android.content.Context;
@@ -69,16 +73,39 @@ public class AbilityAccessCtrl {
         Log.i(LOG_TAG, "AbilityAccessCtrl: request from java");
         Log.i(LOG_TAG, "AbilityAccessCtrl: request  " + permissions.length);
         Activity activity = getActivity();
-        activity.requestPermissions(permissions, 1);
+        if (activity != null) {
+            activity.requestPermissions(permissions, 1);
+        }
     }
 
     private Activity getActivity() {
-        Context context = mContext;
-        while (!(context instanceof Activity) && context instanceof ContextWrapper) {
-            context = ((ContextWrapper) context).getBaseContext();
-        }
-        if (context instanceof Activity) {
-            return (Activity) context;
+        try {
+            Class activityThreadClass = Class.forName("android.app.ActivityThread");
+            Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
+            Field mActivities = activityThreadClass.getDeclaredField("mActivities");
+            mActivities.setAccessible(true);
+            Map activitiesMap = (Map) mActivities.get(activityThread);
+            for (Object activityClientRecord : activitiesMap.values()) {
+                Class activityClientRecordClass = activityClientRecord.getClass();
+                Field paused = activityClientRecordClass.getDeclaredField("paused");
+                paused.setAccessible(true);
+                if (!paused.getBoolean(activityClientRecord)) {
+                    Field activityField = activityClientRecordClass.getDeclaredField("activity");
+                    activityField.setAccessible(true);
+                    Activity activity = (Activity) activityField.get(activityClientRecord);
+                    return activity;
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
         return null;
     }
