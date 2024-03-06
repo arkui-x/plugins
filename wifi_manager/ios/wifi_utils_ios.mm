@@ -53,6 +53,7 @@ typedef enum : NSInteger {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _manager = [[wifi_utils_ios alloc] init];
+        _manager.isWifiActivityFirst = YES;
     });
     return _manager;
 }
@@ -184,6 +185,7 @@ typedef enum : NSInteger {
     if (self.stateTimer) {
         [self.stateTimer invalidate];
         self.stateTimer = nil;
+        self.isWifiActivityFirst = YES;
     }
     self.stateTimer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
         BOOL isget = [self isSystemWifiActive];
@@ -218,6 +220,7 @@ typedef enum : NSInteger {
     if (self.stateTimer) {
         [self.stateTimer invalidate];
         self.stateTimer = nil;
+        self.isWifiActivityFirst = YES;
     }
 }
 
