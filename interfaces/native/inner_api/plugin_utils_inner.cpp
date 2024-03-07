@@ -82,15 +82,11 @@ void PluginUtilsInner::RunTaskOnPlatform(const Task& task)
             LOGE("RunTaskOnPlatform eventRunner is nullptr");
             return;
         }
-#ifdef ANDROID_PLATFORM
-        RunTaskOnEvent(task, eventRunner);
-#else
         if (eventRunner->IsCurrentRunnerThread()) {
             task();
         } else {
             RunTaskOnEvent(task, eventRunner);
         }
-#endif
     }
 }
 
