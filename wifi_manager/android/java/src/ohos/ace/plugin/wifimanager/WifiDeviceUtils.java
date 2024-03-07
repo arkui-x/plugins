@@ -70,8 +70,8 @@ public class WifiDeviceUtils {
         boolean isHidden = wifiInfo.getHiddenSSID();
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("ssid", ssid);
-            jsonObject.put("bssid", bssid);
+            jsonObject.put("ssid", ssid == null ? "" : ssid);
+            jsonObject.put("bssid", bssid == null ? "" : bssid);
             jsonObject.put("networkId", networkId);
             jsonObject.put("rssi", rssi);
             jsonObject.put("linkSpeed", linkSpeed);
