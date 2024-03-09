@@ -16,9 +16,10 @@
 
 #include <filesystem>
 #include <sys/stat.h>
-#include "hilog/log.h"
+
 #include "locale_config.h"
 #include "locale_info.h"
+#include "log.h"
 #include "map"
 #include "set"
 #include "string"
@@ -35,9 +36,6 @@
 namespace OHOS {
 namespace Global {
 namespace I18n {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, 0xD001E00, "I18nJs" };
-using namespace OHOS::HiviewDFX;
-
 const char *I18nTimeZone::DEFAULT_TIMEZONE = "GMT";
 
 std::set<std::string> I18nTimeZone::availableIDs {};
@@ -155,6 +153,6 @@ std::set<std::string> I18nTimeZone::GetAvailableIDs(I18nErrorCode &errorCode)
     // cross modify
     return availableIDs;
 }
-}
-}
-}
+}  // namespace I18n
+}  // namespace Global
+}  // namespace OHOS

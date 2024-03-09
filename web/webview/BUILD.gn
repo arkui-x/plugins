@@ -26,7 +26,6 @@ template("plugin_web_webview_static") {
     include_dirs = web_include
     include_dirs += [
       "//commomlibrary/c_utils/base/include",
-      "//plugins/hilog/include",
       "//plugins/interfaces/native",
     ]
 

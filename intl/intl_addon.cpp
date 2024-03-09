@@ -18,8 +18,8 @@
 #include <vector>
 #include <set>
 
-#include "hilog/log.h"
 #include "icu_data.h"
+#include "log.h"
 #include "node_api.h"
 #include "plugin_utils.h"
 
@@ -30,8 +30,6 @@
 namespace OHOS {
 namespace Global {
 namespace I18n {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, 0xD001E00, "IntlJs" };
-using namespace OHOS::HiviewDFX;
 static thread_local napi_ref *g_constructor = nullptr;
 
 IntlAddon::IntlAddon() : env_(nullptr) {}
@@ -79,23 +77,23 @@ napi_value IntlAddon::InitLocale(napi_env env, napi_value exports)
     status = napi_define_class(env, "Locale", NAPI_AUTO_LENGTH, LocaleConstructor, nullptr,
         sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Define class failed when InitLocale");
+        LOGE("Define class failed when InitLocale");
         return nullptr;
     }
 
     status = napi_set_named_property(env, exports, "Locale", constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Set property failed when InitLocale");
+        LOGE("Set property failed when InitLocale");
         return nullptr;
     }
     g_constructor = new (std::nothrow) napi_ref;
     if (!g_constructor) {
-        HiLog::Error(LABEL, "Failed to create ref at init");
+        LOGE("Failed to create ref at init");
         return nullptr;
     }
     status = napi_create_reference(env, constructor, 1, g_constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Failed to create reference at init");
+        LOGE("Failed to create reference at init");
         return nullptr;
     }
     return exports;
@@ -114,13 +112,13 @@ napi_value IntlAddon::InitDateTimeFormat(napi_env env, napi_value exports)
     status = napi_define_class(env, "DateTimeFormat", NAPI_AUTO_LENGTH, DateTimeFormatConstructor, nullptr,
         sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Define class failed when InitDateTimeFormat");
+        LOGE("Define class failed when InitDateTimeFormat");
         return nullptr;
     }
 
     status = napi_set_named_property(env, exports, "DateTimeFormat", constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Set property failed when InitDateTimeFormat");
+        LOGE("Set property failed when InitDateTimeFormat");
         return nullptr;
     }
     return exports;
@@ -139,13 +137,13 @@ napi_value IntlAddon::InitRelativeTimeFormat(napi_env env, napi_value exports)
     status = napi_define_class(env, "RelativeTimeFormat", NAPI_AUTO_LENGTH, RelativeTimeFormatConstructor, nullptr,
         sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Define class failed when InitRelativeTimeFormat");
+        LOGE("Define class failed when InitRelativeTimeFormat");
         return nullptr;
     }
 
     status = napi_set_named_property(env, exports, "RelativeTimeFormat", constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Set property failed when InitRelativeTimeFormat");
+        LOGE("Set property failed when InitRelativeTimeFormat");
         return nullptr;
     }
     return exports;
@@ -163,13 +161,13 @@ napi_value IntlAddon::InitNumberFormat(napi_env env, napi_value exports)
     status = napi_define_class(env, "NumberFormat", NAPI_AUTO_LENGTH, NumberFormatConstructor, nullptr,
         sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Define class failed when InitNumberFormat");
+        LOGE("Define class failed when InitNumberFormat");
         return nullptr;
     }
 
     status = napi_set_named_property(env, exports, "NumberFormat", constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Set property failed when InitNumberFormat");
+        LOGE("Set property failed when InitNumberFormat");
         return nullptr;
     }
     return exports;
@@ -182,7 +180,7 @@ void GetOptionValue(napi_env env, napi_value options, const std::string &optionN
     napi_valuetype type = napi_undefined;
     napi_status status = napi_typeof(env, options, &type);
     if (status != napi_ok && type != napi_object) {
-        HiLog::Error(LABEL, "Get option failed, option is not an object");
+        LOGE("Get option failed, option is not an object");
         return;
     }
     bool hasProperty = false;
@@ -209,7 +207,7 @@ void GetIntegerOptionValue(napi_env env, napi_value options, const std::string &
     napi_valuetype type = napi_undefined;
     napi_status status = napi_typeof(env, options, &type);
     if (status != napi_ok && type != napi_object) {
-        HiLog::Error(LABEL, "Set option failed, option is not an object");
+        LOGE("Set option failed, option is not an object");
         return;
     }
     bool hasProperty = false;
@@ -233,7 +231,7 @@ void GetBoolOptionValue(napi_env env, napi_value options, const std::string &opt
     napi_valuetype type = napi_undefined;
     napi_status status = napi_typeof(env, options, &type);
     if (status != napi_ok && type != napi_object) {
-        HiLog::Error(LABEL, "Set option failed, option is not an object");
+        LOGE("Set option failed, option is not an object");
         return;
     }
     bool hasProperty = false;
@@ -293,13 +291,13 @@ std::string GetLocaleTag(napi_env env, napi_value argv)
         size_t len = 0;
         napi_status status = napi_get_value_string_utf8(env, argv, nullptr, 0, &len);
         if (status != napi_ok) {
-            HiLog::Error(LABEL, "Get locale tag length failed");
+            LOGE("Get locale tag length failed");
             return "";
         }
         buf.resize(len + 1);
         status = napi_get_value_string_utf8(env, argv, buf.data(), len + 1, &len);
         if (status != napi_ok) {
-            HiLog::Error(LABEL, "Get locale tag failed");
+            LOGE("Get locale tag failed");
             return "";
         }
         localeTag = buf.data();
@@ -335,7 +333,7 @@ napi_value IntlAddon::LocaleConstructor(napi_env env, napi_callback_info info)
     status =
         napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()), IntlAddon::Destructor, nullptr, nullptr);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Wrap IntlAddon failed");
+        LOGE("Wrap IntlAddon failed");
         return nullptr;
     }
     if (!obj->InitLocaleContext(env, info, localeTag, map)) {
@@ -351,7 +349,7 @@ bool IntlAddon::InitLocaleContext(napi_env env, napi_callback_info info, const s
     napi_value global = nullptr;
     napi_status status = napi_get_global(env, &global);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get global failed");
+        LOGE("Get global failed");
         return false;
     }
     env_ = env;
@@ -365,13 +363,13 @@ void GetLocaleTags(napi_env env, napi_value rawLocaleTag, std::vector<std::strin
     size_t len = 0;
     napi_status status = napi_get_value_string_utf8(env, rawLocaleTag, nullptr, 0, &len);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get locale tag length failed");
+        LOGE("Get locale tag length failed");
         return;
     }
     std::vector<char> buf(len + 1);
     status = napi_get_value_string_utf8(env, rawLocaleTag, buf.data(), len + 1, &len);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get locale tag failed");
+        LOGE("Get locale tag failed");
         return;
     }
     localeTags.push_back(buf.data());
@@ -414,11 +412,11 @@ napi_value IntlAddon::DateTimeFormatConstructor(napi_env env, napi_callback_info
     status =
         napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()), IntlAddon::Destructor, nullptr, nullptr);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Wrap IntlAddon failed");
+        LOGE("Wrap IntlAddon failed");
         return nullptr;
     }
     if (!obj->InitDateTimeFormatContext(env, info, localeTags, map)) {
-        HiLog::Error(LABEL, "Init DateTimeFormat failed");
+        LOGE("Init DateTimeFormat failed");
         return nullptr;
     }
     obj.release();
@@ -431,7 +429,7 @@ bool IntlAddon::InitDateTimeFormatContext(napi_env env, napi_callback_info info,
     napi_value global = nullptr;
     napi_status status = napi_get_global(env, &global);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get global failed");
+        LOGE("Get global failed");
         return false;
     }
     env_ = env;
@@ -477,11 +475,11 @@ napi_value IntlAddon::RelativeTimeFormatConstructor(napi_env env, napi_callback_
     status =
         napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()), IntlAddon::Destructor, nullptr, nullptr);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Wrap IntlAddon failed");
+        LOGE("Wrap IntlAddon failed");
         return nullptr;
     }
     if (!obj->InitRelativeTimeFormatContext(env, info, localeTags, map)) {
-        HiLog::Error(LABEL, "Init RelativeTimeFormat failed");
+        LOGE("Init RelativeTimeFormat failed");
         return nullptr;
     }
     obj.release();
@@ -512,14 +510,14 @@ napi_value IntlAddon::FormatDateTime(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->datefmt_) {
-        HiLog::Error(LABEL, "Get DateTimeFormat object failed");
+        LOGE("Get DateTimeFormat object failed");
         return nullptr;
     }
     std::string value = obj->datefmt_->Format(milliseconds);
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create format string failed");
+        LOGE("Create format string failed");
         return nullptr;
     }
     return result;
@@ -533,7 +531,7 @@ napi_value IntlAddon::FormatDateTimeRange(napi_env env, napi_callback_info info)
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
     if (argv[0] == nullptr || argv[1] == nullptr) {
-        HiLog::Error(LABEL, "Parameter wrong");
+        LOGE("Parameter wrong");
         return nullptr;
     }
     int64_t firstMilliseconds = GetMilliseconds(env, argv, 0);
@@ -544,14 +542,14 @@ napi_value IntlAddon::FormatDateTimeRange(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->datefmt_) {
-        HiLog::Error(LABEL, "Get DateTimeFormat object failed");
+        LOGE("Get DateTimeFormat object failed");
         return nullptr;
     }
     std::string value = obj->datefmt_->FormatRange(firstMilliseconds, secondMilliseconds);
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create format string failed");
+        LOGE("Create format string failed");
         return nullptr;
     }
     return result;
@@ -617,11 +615,11 @@ napi_value IntlAddon::NumberFormatConstructor(napi_env env, napi_callback_info i
     status =
         napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()), IntlAddon::Destructor, nullptr, nullptr);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Wrap IntlAddon failed");
+        LOGE("Wrap IntlAddon failed");
         return nullptr;
     }
     if (!obj->InitNumberFormatContext(env, info, localeTags, map)) {
-        HiLog::Error(LABEL, "Init NumberFormat failed");
+        LOGE("Init NumberFormat failed");
         return nullptr;
     }
     obj.release();
@@ -634,7 +632,7 @@ bool IntlAddon::InitNumberFormatContext(napi_env env, napi_callback_info info, s
     napi_value global = nullptr;
     napi_status status = napi_get_global(env, &global);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get global failed");
+        LOGE("Get global failed");
         return false;
     }
     env_ = env;
@@ -648,19 +646,19 @@ int64_t IntlAddon::GetMilliseconds(napi_env env, napi_value *argv, int index)
     napi_value funcGetDateInfo = nullptr;
     napi_status status = napi_get_named_property(env, argv[index], "getTime", &funcGetDateInfo);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get Milliseconds property failed");
+        LOGE("Get Milliseconds property failed");
         return -1;
     }
     napi_value ret_value = nullptr;
     status = napi_call_function(env, argv[index], funcGetDateInfo, 0, nullptr, &ret_value);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get Milliseconds function failed");
+        LOGE("Get Milliseconds function failed");
         return -1;
     }
     int64_t milliseconds = 0;
     status = napi_get_value_int64(env, ret_value, &milliseconds);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get Milliseconds failed");
+        LOGE("Get Milliseconds failed");
         return -1;
     }
     return milliseconds;
@@ -677,7 +675,7 @@ napi_value IntlAddon::GetLanguage(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetLanguage();
@@ -685,7 +683,7 @@ napi_value IntlAddon::GetLanguage(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create language string failed");
+        LOGE("Create language string failed");
         return nullptr;
     }
     return result;
@@ -702,7 +700,7 @@ napi_value IntlAddon::GetScript(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetScript();
@@ -710,7 +708,7 @@ napi_value IntlAddon::GetScript(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create script string failed");
+        LOGE("Create script string failed");
         return nullptr;
     }
     return result;
@@ -727,7 +725,7 @@ napi_value IntlAddon::GetRegion(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetRegion();
@@ -735,7 +733,7 @@ napi_value IntlAddon::GetRegion(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create region string failed");
+        LOGE("Create region string failed");
         return nullptr;
     }
     return result;
@@ -752,7 +750,7 @@ napi_value IntlAddon::GetBaseName(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetBaseName();
@@ -760,7 +758,7 @@ napi_value IntlAddon::GetBaseName(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create base name string failed");
+        LOGE("Create base name string failed");
         return nullptr;
     }
     return result;
@@ -777,7 +775,7 @@ napi_value IntlAddon::GetCalendar(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetCalendar();
@@ -785,7 +783,7 @@ napi_value IntlAddon::GetCalendar(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create base name string failed");
+        LOGE("Create base name string failed");
         return nullptr;
     }
     return result;
@@ -802,7 +800,7 @@ napi_value IntlAddon::GetCollation(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetCollation();
@@ -810,7 +808,7 @@ napi_value IntlAddon::GetCollation(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create base name string failed");
+        LOGE("Create base name string failed");
         return nullptr;
     }
     return result;
@@ -827,7 +825,7 @@ napi_value IntlAddon::GetHourCycle(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetHourCycle();
@@ -835,7 +833,7 @@ napi_value IntlAddon::GetHourCycle(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create base name string failed");
+        LOGE("Create base name string failed");
         return nullptr;
     }
     return result;
@@ -852,7 +850,7 @@ napi_value IntlAddon::GetNumberingSystem(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetNumberingSystem();
@@ -860,7 +858,7 @@ napi_value IntlAddon::GetNumberingSystem(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create base name string failed");
+        LOGE("Create base name string failed");
         return nullptr;
     }
     return result;
@@ -877,7 +875,7 @@ napi_value IntlAddon::GetNumeric(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetNumeric();
@@ -885,7 +883,7 @@ napi_value IntlAddon::GetNumeric(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_get_boolean(env, optionBoolValue, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create numeric boolean value failed");
+        LOGE("Create numeric boolean value failed");
         return nullptr;
     }
     return result;
@@ -902,14 +900,14 @@ napi_value IntlAddon::GetCaseFirst(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->GetCaseFirst();
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create caseFirst string failed");
+        LOGE("Create caseFirst string failed");
         return nullptr;
     }
     return result;
@@ -926,7 +924,7 @@ napi_value IntlAddon::ToString(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string value = obj->locale_->ToString();
@@ -934,7 +932,7 @@ napi_value IntlAddon::ToString(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create language string failed");
+        LOGE("Create language string failed");
         return nullptr;
     }
     return result;
@@ -951,7 +949,7 @@ napi_value IntlAddon::Maximize(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string localeTag = obj->locale_->Maximize();
@@ -959,19 +957,19 @@ napi_value IntlAddon::Maximize(napi_env env, napi_callback_info info)
     napi_value constructor = nullptr;
     status = napi_get_reference_value(env, *g_constructor, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get locale constructor reference failed");
+        LOGE("Get locale constructor reference failed");
         return nullptr;
     }
     napi_value result = nullptr;
     napi_value arg = nullptr;
     status = napi_create_string_utf8(env, localeTag.c_str(), NAPI_AUTO_LENGTH, &arg);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create localeTag string failed");
+        LOGE("Create localeTag string failed");
         return nullptr;
     }
     status = napi_new_instance(env, constructor, 1, &arg, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create new locale instance failed");
+        LOGE("Create new locale instance failed");
         return nullptr;
     }
     return result;
@@ -988,7 +986,7 @@ napi_value IntlAddon::Minimize(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->locale_) {
-        HiLog::Error(LABEL, "Get Locale object failed");
+        LOGE("Get Locale object failed");
         return nullptr;
     }
     std::string localeTag = obj->locale_->Minimize();
@@ -996,19 +994,19 @@ napi_value IntlAddon::Minimize(napi_env env, napi_callback_info info)
     napi_value constructor = nullptr;
     status = napi_get_reference_value(env, *g_constructor, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get locale constructor reference failed");
+        LOGE("Get locale constructor reference failed");
         return nullptr;
     }
     napi_value result = nullptr;
     napi_value arg = nullptr;
     status = napi_create_string_utf8(env, localeTag.c_str(), NAPI_AUTO_LENGTH, &arg);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create localeTag string failed");
+        LOGE("Create localeTag string failed");
         return nullptr;
     }
     status = napi_new_instance(env, constructor, 1, &arg, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create new locale instance failed");
+        LOGE("Create new locale instance failed");
         return nullptr;
     }
     return result;
@@ -1072,7 +1070,7 @@ napi_value IntlAddon::GetRelativeTimeResolvedOptions(napi_env env, napi_callback
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->relativetimefmt_) {
-        HiLog::Error(LABEL, "Get RelativeTimeFormat object failed");
+        LOGE("Get RelativeTimeFormat object failed");
         return nullptr;
     }
     napi_value result = nullptr;
@@ -1097,7 +1095,7 @@ napi_value IntlAddon::GetDateTimeResolvedOptions(napi_env env, napi_callback_inf
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->datefmt_) {
-        HiLog::Error(LABEL, "Get DateTimeFormat object failed");
+        LOGE("Get DateTimeFormat object failed");
         return nullptr;
     }
     napi_value result = nullptr;
@@ -1138,7 +1136,7 @@ napi_value IntlAddon::GetNumberResolvedOptions(napi_env env, napi_callback_info 
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->numberfmt_) {
-        HiLog::Error(LABEL, "Get NumberFormat object failed");
+        LOGE("Get NumberFormat object failed");
         return nullptr;
     }
     napi_value result = nullptr;
@@ -1179,14 +1177,14 @@ napi_value IntlAddon::FormatNumber(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->numberfmt_) {
-        HiLog::Error(LABEL, "Get NumberFormat object failed");
+        LOGE("Get NumberFormat object failed");
         return nullptr;
     }
     std::string value = obj->numberfmt_->Format(number);
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create format string failed");
+        LOGE("Create format string failed");
         return nullptr;
     }
     return result;
@@ -1199,7 +1197,7 @@ void GetCollatorLocaleMatcher(napi_env env, napi_value options, std::map<std::st
     if (it != map.end()) {
         std::string localeMatcher = it->second;
         if (localeMatcher != "lookup" && localeMatcher != "best fit") {
-            HiLog::Error(LABEL, "invalid localeMatcher");
+            LOGE("invalid localeMatcher");
             return;
         }
     } else {
@@ -1214,7 +1212,7 @@ void GetCollatorUsage(napi_env env, napi_value options, std::map<std::string, st
     if (it != map.end()) {
         std::string usage = it->second;
         if (usage != "sort" && usage != "search") {
-            HiLog::Error(LABEL, "invalid usage");
+            LOGE("invalid usage");
             return;
         }
     } else {
@@ -1229,7 +1227,7 @@ void GetCollatorSensitivity(napi_env env, napi_value options, std::map<std::stri
     if (it != map.end()) {
         std::string sensitivity = it->second;
         if (sensitivity != "base" && sensitivity != "accent" && sensitivity != "case" && sensitivity != "variant") {
-            HiLog::Error(LABEL, "invalid sensitivity");
+            LOGE("invalid sensitivity");
             return;
         }
     } else {
@@ -1244,7 +1242,7 @@ void GetCollatorIgnorePunctuation(napi_env env, napi_value options, std::map<std
     if (it != map.end()) {
         std::string ignorePunctuation = it->second;
         if (ignorePunctuation != "true" && ignorePunctuation != "false") {
-            HiLog::Error(LABEL, "invalid ignorePunctuation");
+            LOGE("invalid ignorePunctuation");
             return;
         }
     } else {
@@ -1259,7 +1257,7 @@ void GetCollatorNumeric(napi_env env, napi_value options, std::map<std::string, 
     if (it != map.end()) {
         std::string numeric = it->second;
         if (numeric != "true" && numeric != "false") {
-            HiLog::Error(LABEL, "invalid numeric");
+            LOGE("invalid numeric");
             return;
         }
     }
@@ -1272,7 +1270,7 @@ void GetCollatorCaseFirst(napi_env env, napi_value options, std::map<std::string
     if (it != map.end()) {
         std::string caseFirst = it->second;
         if (caseFirst != "upper" && caseFirst != "lower" && caseFirst != "false") {
-            HiLog::Error(LABEL, "invalid caseFirst");
+            LOGE("invalid caseFirst");
             return;
         }
     }
@@ -1330,13 +1328,13 @@ napi_value IntlAddon::InitCollator(napi_env env, napi_value exports)
     status = napi_define_class(env, "Collator", NAPI_AUTO_LENGTH, CollatorConstructor, nullptr,
         sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Define class failed when InitCollator");
+        LOGE("Define class failed when InitCollator");
         return nullptr;
     }
 
     status = napi_set_named_property(env, exports, "Collator", constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Set property failed when InitCollator");
+        LOGE("Set property failed when InitCollator");
         return nullptr;
     }
     return exports;
@@ -1379,11 +1377,11 @@ napi_value IntlAddon::CollatorConstructor(napi_env env, napi_callback_info info)
     status =
         napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()), IntlAddon::Destructor, nullptr, nullptr);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Wrap IntlAddon failed");
+        LOGE("Wrap IntlAddon failed");
         return nullptr;
     }
     if (!obj->InitCollatorContext(env, info, localeTags, map)) {
-        HiLog::Error(LABEL, "Init DateTimeFormat failed");
+        LOGE("Init DateTimeFormat failed");
         return nullptr;
     }
     obj.release();
@@ -1396,7 +1394,7 @@ bool IntlAddon::InitCollatorContext(napi_env env, napi_callback_info info, std::
     napi_value global = nullptr;
     napi_status status = napi_get_global(env, &global);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get global failed");
+        LOGE("Get global failed");
         return false;
     }
     env_ = env;
@@ -1416,13 +1414,13 @@ bool GetStringParameter(napi_env env, napi_value value, std::vector<char> &buf)
     size_t len = 0;
     napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &len);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get first length failed");
+        LOGE("Get first length failed");
         return false;
     }
     buf.resize(len + 1);
     status = napi_get_value_string_utf8(env, value, buf.data(), len + 1, &len);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get first failed");
+        LOGE("Get first failed");
         return false;
     }
 
@@ -1440,7 +1438,7 @@ napi_value IntlAddon::FormatRelativeTime(napi_env env, napi_callback_info info)
     double number;
     status = napi_get_value_double(env, argv[0], &number);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get number failed");
+        LOGE("Get number failed");
         return nullptr;
     }
     std::vector<char> unit;
@@ -1450,14 +1448,14 @@ napi_value IntlAddon::FormatRelativeTime(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->relativetimefmt_) {
-        HiLog::Error(LABEL, "Get RelativeTimeFormat object failed");
+        LOGE("Get RelativeTimeFormat object failed");
         return nullptr;
     }
     std::string value = obj->relativetimefmt_->Format(number, unit.data());
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create format string failed");
+        LOGE("Create format string failed");
         return nullptr;
     }
     return result;
@@ -1470,13 +1468,13 @@ void IntlAddon::FillInArrayElement(napi_env env, napi_value &result, napi_status
         napi_value value = nullptr;
         status = napi_create_string_utf8(env, timeVector[i][1].c_str(), NAPI_AUTO_LENGTH, &value);
         if (status != napi_ok) {
-            HiLog::Error(LABEL, "Failed to create string item.");
+            LOGE("Failed to create string item.");
             return;
         }
         napi_value type = nullptr;
         status = napi_create_string_utf8(env, timeVector[i][0].c_str(), NAPI_AUTO_LENGTH, &type);
         if (status != napi_ok) {
-            HiLog::Error(LABEL, "Failed to create string item.");
+            LOGE("Failed to create string item.");
             return;
         }
         napi_value unit = nullptr;
@@ -1484,7 +1482,7 @@ void IntlAddon::FillInArrayElement(napi_env env, napi_value &result, napi_status
         if (timeVector[i].size() > unitIndex) {
             status = napi_create_string_utf8(env, timeVector[i][unitIndex].c_str(), NAPI_AUTO_LENGTH, &unit);
             if (status != napi_ok) {
-                HiLog::Error(LABEL, "Failed to create string item.");
+                LOGE("Failed to create string item.");
                 return;
             }
         } else {
@@ -1493,7 +1491,7 @@ void IntlAddon::FillInArrayElement(napi_env env, napi_value &result, napi_status
         napi_value formatInfo;
         status = napi_create_object(env, &formatInfo);
         if (status != napi_ok) {
-            HiLog::Error(LABEL, "Failed to create format info object.");
+            LOGE("Failed to create format info object.");
             return;
         }
         napi_set_named_property(env, formatInfo, "type", type);
@@ -1501,7 +1499,7 @@ void IntlAddon::FillInArrayElement(napi_env env, napi_value &result, napi_status
         napi_set_named_property(env, formatInfo, "unit", unit);
         status = napi_set_element(env, result, i, formatInfo);
         if (status != napi_ok) {
-            HiLog::Error(LABEL, "Failed to set array item");
+            LOGE("Failed to set array item");
             return;
         }
     }
@@ -1523,7 +1521,7 @@ napi_value IntlAddon::FormatToParts(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->relativetimefmt_) {
-        HiLog::Error(LABEL, "Get RelativeTimeFormat object failed");
+        LOGE("Get RelativeTimeFormat object failed");
         return nullptr;
     }
     std::vector<std::vector<std::string>> timeVector;
@@ -1531,7 +1529,7 @@ napi_value IntlAddon::FormatToParts(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_array_with_length(env, timeVector.size(), &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Failed to create array");
+        LOGE("Failed to create array");
         return nullptr;
     }
     FillInArrayElement(env, result, status, timeVector);
@@ -1559,7 +1557,7 @@ napi_value IntlAddon::CompareString(napi_env env, napi_callback_info info)
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->collator_) {
-        HiLog::Error(LABEL, "Get Collator object failed");
+        LOGE("Get Collator object failed");
         return nullptr;
     }
 
@@ -1567,7 +1565,7 @@ napi_value IntlAddon::CompareString(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_int32(env, compareResult, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Create compare result failed");
+        LOGE("Create compare result failed");
         return nullptr;
     }
 
@@ -1585,7 +1583,7 @@ napi_value IntlAddon::GetCollatorResolvedOptions(napi_env env, napi_callback_inf
     IntlAddon *obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->collator_) {
-        HiLog::Error(LABEL, "Get Collator object failed");
+        LOGE("Get Collator object failed");
         return nullptr;
     }
     napi_value result = nullptr;
@@ -1610,7 +1608,7 @@ void GetPluralRulesType(napi_env env, napi_value options, std::map<std::string, 
     if (it != map.end()) {
         std::string type = it->second;
         if (type != "cardinal" && type != "ordinal") {
-            HiLog::Error(LABEL, "invalid type");
+            LOGE("invalid type");
             return;
         }
     } else {
@@ -1626,7 +1624,7 @@ void GetPluralRulesInteger(napi_env env, napi_value options, std::map<std::strin
         std::string minimumIntegerDigits = it->second;
         int n = std::stoi(minimumIntegerDigits);
         if (n < 1 || n > 21) {  // the valid range of minimumIntegerDigits is [1, 21]
-            HiLog::Error(LABEL, "invalid minimumIntegerDigits");
+            LOGE("invalid minimumIntegerDigits");
             return;
         }
     } else {
@@ -1642,7 +1640,7 @@ void GetPluralRulesFractions(napi_env env, napi_value options, std::map<std::str
         std::string minimumFractionDigits = it->second;
         int n = std::stoi(minimumFractionDigits);
         if (n < 0 || n > 20) {  // the valid range of minimumFractionDigits is [0, 20]
-            HiLog::Error(LABEL, "invalid minimumFractionDigits");
+            LOGE("invalid minimumFractionDigits");
             return;
         }
     }
@@ -1653,7 +1651,7 @@ void GetPluralRulesFractions(napi_env env, napi_value options, std::map<std::str
         std::string maximumFractionDigits = it->second;
         int n = std::stoi(maximumFractionDigits);
         if (n < 0 || n > 20) {  // the valid range of maximumFractionDigits is [0, 20]
-            HiLog::Error(LABEL, "invalid maximumFractionDigits");
+            LOGE("invalid maximumFractionDigits");
             return;
         }
     }
@@ -1669,7 +1667,7 @@ void GetPluralRulesSignificant(napi_env env, napi_value options, std::map<std::s
         int minSignificantInt = std::stoi(minSignificantStr);
         // the valid range of minSignificantInt is [1, 21]
         if (minSignificantInt < 1 || minSignificantInt > 21) {
-            HiLog::Error(LABEL, "invalid minimumSignificantDigits");
+            LOGE("invalid minimumSignificantDigits");
             return;
         }
         minSignificant = minSignificantInt;
@@ -1684,7 +1682,7 @@ void GetPluralRulesSignificant(napi_env env, napi_value options, std::map<std::s
         int maxSignificant = std::stoi(maxSignificantStr);
         // the valid range of minSignificant is [minSignificant, 21]
         if (maxSignificant < minSignificant || maxSignificant > 21) {
-            HiLog::Error(LABEL, "invalid maximumSignificantDigits");
+            LOGE("invalid maximumSignificantDigits");
             return;
         }
     }
@@ -1710,13 +1708,13 @@ napi_value IntlAddon::InitPluralRules(napi_env env, napi_value exports)
     status = napi_define_class(env, "PluralRules", NAPI_AUTO_LENGTH, PluralRulesConstructor, nullptr,
         sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Define class failed when InitPluralRules");
+        LOGE("Define class failed when InitPluralRules");
         return nullptr;
     }
 
     status = napi_set_named_property(env, exports, "PluralRules", constructor);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Set property failed when InitPluralRules");
+        LOGE("Set property failed when InitPluralRules");
         return nullptr;
     }
     return exports;
@@ -1759,11 +1757,11 @@ napi_value IntlAddon::PluralRulesConstructor(napi_env env, napi_callback_info in
     status =
         napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()), IntlAddon::Destructor, nullptr, nullptr);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Wrap IntlAddon failed");
+        LOGE("Wrap IntlAddon failed");
         return nullptr;
     }
     if (!obj->InitPluralRulesContext(env, info, localeTags, map)) {
-        HiLog::Error(LABEL, "Init DateTimeFormat failed");
+        LOGE("Init DateTimeFormat failed");
         return nullptr;
     }
     obj.release();
@@ -1776,7 +1774,7 @@ bool IntlAddon::InitPluralRulesContext(napi_env env, napi_callback_info info, st
     napi_value global = nullptr;
     napi_status status = napi_get_global(env, &global);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get global failed");
+        LOGE("Get global failed");
         return false;
     }
     env_ = env;
@@ -1802,14 +1800,14 @@ napi_value IntlAddon::Select(napi_env env, napi_callback_info info)
     double number = 0;
     napi_status status = napi_get_value_double(env, argv[0], &number);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "Get number failed");
+        LOGE("Get number failed");
         return nullptr;
     }
 
     IntlAddon *obj = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->pluralrules_) {
-        HiLog::Error(LABEL, "Get PluralRules object failed");
+        LOGE("Get PluralRules object failed");
         return nullptr;
     }
 
@@ -1817,7 +1815,7 @@ napi_value IntlAddon::Select(napi_env env, napi_callback_info info)
     napi_value result = nullptr;
     status = napi_create_string_utf8(env, res.c_str(), NAPI_AUTO_LENGTH, &result);
     if (status != napi_ok) {
-        HiLog::Error(LABEL, "get select result failed");
+        LOGE("get select result failed");
         return nullptr;
     }
     return result;

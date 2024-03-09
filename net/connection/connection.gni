@@ -55,7 +55,6 @@ connection_include = [
   "$INNERKITS_ROOT/netconnclient/include/proxy",
   "$INNERKITS_ROOT/netconnclient/include",
   "$INNERKITS_ROOT/include",
-  "//plugins/hilog/include",
   "//plugins/net/connection",
   "//plugins/net",
   "//plugins/net/connection/android/java/jni",

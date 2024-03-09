@@ -15,12 +15,7 @@
 
 #include "plugins/interfaces/native/log.h"
 
-[[maybe_unused]] static void StripFormatString(const std::string& prefix, std::string& str)
-{
-    for (auto pos = str.find(prefix, 0); pos != std::string::npos; pos = str.find(prefix, pos)) {
-        str.erase(pos, prefix.size());
-    }
-}
+#include "base/log/log.h"
 
 LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
 {
@@ -30,38 +25,28 @@ LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, ...)
     va_end(args);
 }
 
-#if defined(ANDROID_PLATFORM)
-#include <android/log.h>
-
-constexpr int32_t LOG_LEVEL[] = { ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR,
-    ANDROID_LOG_FATAL };
-
 LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args)
 {
-    std::string newFmt(fmt);
-    StripFormatString("{public}", newFmt);
-    StripFormatString("{private}", newFmt);
-    __android_log_vprint(LOG_LEVEL[static_cast<int>(level)], PLUGIN_LOG_TAG, newFmt.c_str(), args);
-}
-
-#elif defined(IOS_PLATFORM)
-#include <securec.h>
-
-constexpr uint32_t MAX_BUFFER_SIZE = 4096;
-
-LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args)
-{
-    std::string newFmt(fmt);
-    StripFormatString("{public}", newFmt);
-    StripFormatString("{private}", newFmt);
-    char buf[MAX_BUFFER_SIZE] = { '\0' };
-    int ret = vsnprintf_s(buf, sizeof(buf), sizeof(buf) - 1, newFmt.c_str(), args);
-    if (ret < 0) {
-        return;
+    OHOS::Ace::LogLevel aceLevel;
+    switch (level) {
+        case LogLevel::Debug:
+            aceLevel = OHOS::Ace::LogLevel::DEBUG;
+            break;
+        case LogLevel::Info:
+            aceLevel = OHOS::Ace::LogLevel::INFO;
+            break;
+        case LogLevel::Warn:
+            aceLevel = OHOS::Ace::LogLevel::WARN;
+            break;
+        case LogLevel::Error:
+            aceLevel = OHOS::Ace::LogLevel::ERROR;
+            break;
+        case LogLevel::Fatal:
+            aceLevel = OHOS::Ace::LogLevel::FATAL;
+            break;
+        default:
+            aceLevel = OHOS::Ace::LogLevel::DEBUG;
+            break;
     }
-    printf("%s\r\n", buf);
-    fflush(stdout);
+    OHOS::Ace::LogWrapper::PrintLog(OHOS::Ace::LogDomain::JS_APP, aceLevel, OHOS::Ace::AceLogTag::DEFAULT, fmt, args);
 }
-#else
-LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args) {}
-#endif
