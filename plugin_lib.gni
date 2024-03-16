@@ -25,6 +25,7 @@ common_plugin_libs = [
   "hitrace_meter",
   "i18n",
   "intl",
+  "multimedia/media",
   "net/connection",
   "net/http",
   "net/socket",
