@@ -319,6 +319,16 @@ public:
     {
         return GSERROR_NOT_SUPPORT;
     }
+
+    GSError AttachBufferToQueue(sptr<SurfaceBuffer>& buffer) override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
+
+    GSError DetachBufferFromQueue(sptr<SurfaceBuffer>& buffer) override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
 private:
     uint64_t queueId_ = 0;
     int32_t instanceId_ = -1;
