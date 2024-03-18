@@ -58,7 +58,7 @@ static const char METHOD_RESET[] = "reset";
 static const char METHOD_RELEASE[] = "release";
 static const char METHOD_SEAK_TO[] = "seekTo";
 static const char METHOD_SET_VOLUME[] = "setVolume";
-static const char METHOD_GET_TRACKINFO_INT[] = "getTrackInfoInt";
+static const char METHOD_GET_TRACKINDEX[] = "getTrackIndex";
 static const char METHOD_GET_TRACKINFO_STRING[] = "getTrackInfoString";
 static const char METHOD_SET_DATASOURCE[] = "setDataSource";
 static const char METHOD_SET_DATASOURCE_WITH_URL[] = "setDataSourceWithUrl";
@@ -88,7 +88,7 @@ static const char SIGNATURE_SET_DATESOURCE_FD[] = "(JLjava/lang/String;JJ)V";
 static const char SIGNATURE_SET_LOOPING[] = "(JZ)V";
 static const char SIGNATURE_GET_CURRENT_POSITION[] = "(J)I";
 static const char SIGNATURE_GET_TRACK_STR[] = "(JILjava/lang/String;)Ljava/lang/String;";
-static const char SIGNATURE_GET_TRACK_INT[] = "(JILjava/lang/String;)I";
+static const char SIGNATURE_GET_TRACK_INDEX[] = "(JI)I";
 static const char SIGNATURE_REGISTER_NET_CONN_CALLBACK[] = "(J[I)V";
 static const char SIGNATURE_UNREGISTER_NET_CONN_CALLBACK[] = "(J)V";
 static const char SIGNATURE_IS_DEFAULT_NETWORK_ACTIVE[] = "()Z";
@@ -98,8 +98,7 @@ static const int TRACK_TYPE_AUDIO = 2;
 static const int TRACK_TYPE_SUBTITLE = 4;
 
 static const std::string TRACK_KEYS[] = {
-    "track_index",
-    "track_type",
+    "codec_mime",
     "duration",
     "bitrate",
     "width",
@@ -121,7 +120,7 @@ struct {
     jmethodID release;
     jmethodID seekTo;
     jmethodID setVolume;
-    jmethodID getTrackInfoInt;
+    jmethodID getTrackIndex;
     jmethodID getTrackInfoString;
     jmethodID setDataSource;
     jmethodID setDataSourceWithUrl;
@@ -213,8 +212,8 @@ void PlayerJni::NativeInit(JNIEnv *env, jobject jobj)
     g_playerpluginClass.setVolume = env->GetMethodID(cls, METHOD_SET_VOLUME, SIGNATURE_SET_VOLUME);
     CHECK_AND_RETURN(g_playerpluginClass.setVolume != nullptr);
 
-    g_playerpluginClass.getTrackInfoInt = env->GetMethodID(cls, METHOD_GET_TRACKINFO_INT, SIGNATURE_GET_TRACK_INT);
-    CHECK_AND_RETURN(g_playerpluginClass.getTrackInfoInt != nullptr);
+    g_playerpluginClass.getTrackIndex = env->GetMethodID(cls, METHOD_GET_TRACKINDEX, SIGNATURE_GET_TRACK_INDEX);
+    CHECK_AND_RETURN(g_playerpluginClass.getTrackIndex != nullptr);
 
     g_playerpluginClass.getTrackInfoString = env->GetMethodID(cls, METHOD_GET_TRACKINFO_STRING, SIGNATURE_GET_TRACK_STR);
     CHECK_AND_RETURN(g_playerpluginClass.getTrackInfoString != nullptr);
@@ -529,7 +528,7 @@ int32_t PlayerJni::GetSpeed(long key, Media::PlaybackRateMode &mode)
     CHECK_AND_RETURN_RET(g_playerpluginClass.getPlaybackParams != nullptr, Media::MSERR_SERVICE_DIED);
 
     jlong playerId = (jlong)key;
-    jint value = env->CallFloatMethod(g_playerpluginClass.globalRef,
+    jint value = env->CallIntMethod(g_playerpluginClass.globalRef,
         g_playerpluginClass.getPlaybackParams, playerId);
     if (env->ExceptionCheck()) {
         MEDIA_LOGE("PlayerJni JNI: call SetSpeed has exception");
@@ -654,10 +653,25 @@ int32_t PlayerJni::GetTrackInfo(long key, std::vector<Media::Format> &Track, int
     CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
     CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
     CHECK_AND_RETURN_RET(g_playerpluginClass.getTrackInfoString != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.getTrackIndex != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    jint index = env->CallIntMethod(g_playerpluginClass.globalRef,
+        g_playerpluginClass.getTrackIndex, playerId, (jint)type);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call getTrackIndex has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+
+    if ((int)index < 0) {
+        return Media::MSERR_OK;
+    }
 
     Media::Format infoBody;
     infoBody.PutIntValue("track_type", type);
-    jlong playerId = (jlong)key;
+    infoBody.PutIntValue("track_index", (int)index);
     for (const auto &str : TRACK_KEYS) {
         jstring value = (jstring)env->CallObjectMethod(g_playerpluginClass.globalRef,
             g_playerpluginClass.getTrackInfoString, playerId, (jint)type, StringToJavaString(env, str));
