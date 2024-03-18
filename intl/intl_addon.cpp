@@ -281,11 +281,10 @@ std::string GetLocaleTag(napi_env env, napi_value argv)
 {
     std::string localeTag = "";
     std::vector<char> buf;
-    if (argc > 0) {
+    if (argv != nullptr) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv, &valueType);
         if (valueType != napi_valuetype::napi_string) {
-            napi_throw_type_error(env, nullptr, "Parameter type does not match");
             return "";
         }
         size_t len = 0;
