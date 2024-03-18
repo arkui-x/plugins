@@ -281,7 +281,7 @@ std::string GetLocaleTag(napi_env env, napi_value argv)
 {
     std::string localeTag = "";
     std::vector<char> buf;
-    if (argv != nullptr) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv, &valueType);
         if (valueType != napi_valuetype::napi_string) {
