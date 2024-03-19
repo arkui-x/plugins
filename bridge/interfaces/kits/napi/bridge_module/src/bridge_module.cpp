@@ -210,12 +210,12 @@ void BridgeModule::SendMessageInner(napi_env env, napi_value thisVal, std::share
 }
 
 void BridgeModule::SetMessageListenerInner(
-    napi_env env, napi_value thisVal, std::shared_ptr<MethodData> onMessagecallback)
+    napi_env env, napi_value thisVal, std::shared_ptr<MethodData> onMessageCallback)
 {
     Bridge* bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
-        onMessagecallback->SetBridgeName(bridge->GetBridgeName());
-        bridge->SetMessageListener(onMessagecallback);
+        onMessageCallback->SetBridgeName(bridge->GetBridgeName());
+        bridge->SetMessageListener(onMessageCallback);
     } else {
         LOGE("SetMessageListenerInner:Failed to obtain the Bridge object.");
     }

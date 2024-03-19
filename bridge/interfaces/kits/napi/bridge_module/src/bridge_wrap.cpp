@@ -17,7 +17,7 @@
 #include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
 
 namespace OHOS::Plugin::Bridge {
-static constexpr const char* BRIDGENAME_ID_SEP = "$";
+static constexpr const char* BRIDGE_NAME_ID_SEP = "$";
 
 BridgeWrap& BridgeWrap::GetInstance()
 {
@@ -98,7 +98,7 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
 std::string BridgeWrap::GetBridgeNameWithID(const std::string& bridgeName, int32_t instanceId)
 {
     std::string bridgeNameWithId(bridgeName);
-    bridgeNameWithId.append(BRIDGENAME_ID_SEP);
+    bridgeNameWithId.append(BRIDGE_NAME_ID_SEP);
     bridgeNameWithId.append(std::to_string(instanceId));
     return bridgeNameWithId;
 }

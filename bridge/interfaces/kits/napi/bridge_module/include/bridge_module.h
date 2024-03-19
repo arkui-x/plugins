@@ -59,7 +59,7 @@ private:
     static void UnRegisterMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> callback);
     static void SendMessageInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> callback);
     static void SetMessageListenerInner(napi_env env, napi_value thisVal,
-        std::shared_ptr<MethodData> onMessagecallback);
+        std::shared_ptr<MethodData> onMessageCallback);
     static napi_value InitCodecType(napi_env env);
     static napi_value CallMethodWithCallBackInner(napi_env env, napi_callback_info info);
 };
