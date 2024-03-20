@@ -15,7 +15,13 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#ifdef PLATFORM_IOS
+#include <pthread.h>
+#include <mm_malloc.h>
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #include "task_queue.h"
 #include "media_log.h"
 #include "media_errors.h"
@@ -147,10 +153,22 @@ __attribute__((no_sanitize("cfi"))) void TaskQueue::CancelNotExecutedTaskLocked(
 __attribute__((no_sanitize("cfi"))) void TaskQueue::TaskProcessor()
 {
     constexpr uint32_t nameSizeMax = 15;
+#ifdef PLATFORM_IOS
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+    tid_ = tid;
+#else
     tid_ = gettid();
+#endif
     MEDIA_LOGI("Enter TaskProcessor [%{public}s], tid_: (%{public}d)", name_.c_str(), tid_);
+#ifdef PLATFORM_IOS
+    pthread_setname_np(name_.substr(0, nameSizeMax).c_str());
+#else
     pthread_setname_np(pthread_self(), name_.substr(0, nameSizeMax).c_str());
+#endif
+#ifndef PLATFORM_IOS
     (void)mallopt(-1003, 0);
+#endif
     while (true) {
         std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait(lock, [this] { return isExit_ || !taskList_.empty(); });
@@ -167,21 +185,14 @@ __attribute__((no_sanitize("cfi"))) void TaskQueue::TaskProcessor()
             (void)cond_.wait_for(lock, std::chrono::nanoseconds(diff));
             continue;
         }
-        isTaskExecuting_ = true;
         lock.unlock();
 
         if (item.task_ == nullptr || item.task_->IsCanceled()) {
             MEDIA_LOGD("task is nullptr or task canceled. [%{public}s]", name_.c_str());
-            lock.lock();
-            isTaskExecuting_ = false;
-            lock.unlock();
             continue;
         }
 
         item.task_->Execute();
-        lock.lock();
-        isTaskExecuting_ = false;
-        lock.unlock();
         if (item.task_->GetAttribute().periodicTimeUs_ == UINT64_MAX) {
             continue;
         }
@@ -190,7 +201,9 @@ __attribute__((no_sanitize("cfi"))) void TaskQueue::TaskProcessor()
             MEDIA_LOGW("enqueue periodic task failed:%d, why? [%{public}s]", res, name_.c_str());
         }
     }
+#ifndef PLATFORM_IOS
     (void)mallopt(-1002, 0);
+#endif
     MEDIA_LOGI("Leave TaskProcessor [%{public}s]", name_.c_str());
 }
 

@@ -69,6 +69,8 @@ utils_source = [
   "//foundation/resourceschedule/qos_manager/services/src/qos_interface.cpp",
   "//foundation/resourceschedule/qos_manager/qos/qos.cpp",
   "//foundation/multimedia/audio_framework/services/audio_service/client/src/audio_device_descriptor.cpp",
+  "//plugins/multimedia/media/mock/message_parcel.cpp",
+  "//plugins/multimedia/media/mock/recorder_profiles_impl.cpp",
 ]
 
 media_include = [
@@ -80,6 +82,7 @@ media_include = [
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/metadatahelper",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/common",
   "$PLAYER_FRAMEWORK_DIR/services/utils/include",
+  "//plugins/multimedia/media",
   "//plugins/multimedia/media/player",
   "//plugins/multimedia/media/recorder",
   "//plugins/multimedia/media/metadatahelper",
@@ -87,6 +90,7 @@ media_include = [
   "//plugins/multimedia/media/mock",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/soundpool/include",
   "//plugins/multimedia/media/android/java/jni",
+  "//plugins/multimedia/media/android/java",
   "$PLAYER_FRAMEWORK_DIR/services/services/engine_intf",
 ]
 

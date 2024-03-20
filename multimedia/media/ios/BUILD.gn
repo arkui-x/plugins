@@ -18,15 +18,23 @@ import("//plugins/multimedia/media/media.gni")
 ohos_source_set("media_ios") {
   include_dirs = utils_include
   include_dirs += media_include
-  include_dirs += [ "//plugins/multimedia/media/ios" ]
+  include_dirs += [
+    "//plugins/multimedia/media/ios",
+    "//plugins/multimedia/media/ios/avmetadatahelper",
+    "//plugins/multimedia/media/ios/player",
+    "//plugins/multimedia/media/ios/recorder",
+    "//foundation/arkui/ace_engine/adapter/ios/entrance",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
+  ]
 
   sources = [
-    "avmetadatahelper_adapter.mm",
-    "avmetadatahelper_impl.mm",
-    "player_adapter.mm",
-    "player_impl.mm",
-    "recorder_adapter.mm",
-    "recorder_impl.mm",
+    "avmetadatahelper/avmetadatahelper_adapter.mm",
+    "avmetadatahelper/avmetadatahelper_impl.mm",
+    "player/player_adapter.mm",
+    "player/player_impl.mm",
+    "recorder/audio_recorder.mm",
+    "recorder/recorder_adapter.mm",
+    "recorder/recorder_impl.mm",
   ]
 
   defines = [ "IOS_PLATFORM" ]
@@ -40,6 +48,7 @@ ohos_source_set("media_ios") {
   cflags_objc = [
     "-fvisibility=default",
     "-fobjc-weak",
+    "-fobjc-arc",
   ]
 
   cflags_objcc = cflags_objc
@@ -48,7 +57,12 @@ ohos_source_set("media_ios") {
     "//plugins/libs/napi:napi_ios",
   ]
 
-  frameworks = [ "SystemConfiguration.framework" ]
+  frameworks = [
+    "SystemConfiguration.framework",
+    "CoreMedia.framework",
+    "CoreGraphics.framework",
+    "MobileCoreServices.framework",
+  ]
 
   subsystem_name = "plugins"
   part_name = "multimedia_media"

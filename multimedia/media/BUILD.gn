@@ -37,6 +37,7 @@ template("plugin_multimedia_media_static") {
 
     deps = [
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${platform}",
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
       "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:plugin_log",
@@ -50,6 +51,7 @@ template("plugin_multimedia_media_static") {
       ]
     } else if (platform == "ios") {
       deps += [ "ios:media_ios" ]
+      defines += [ "PLATFORM_IOS" ]
     }
 
     subsystem_name = "plugins"
