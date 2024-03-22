@@ -43,10 +43,11 @@ import java.lang.Runnable;
 public class PlayerPlugin {
     private static final String LOG_TAG = "PlayerPlugin";
 
-    private Map<Long, MediaPlayer> mediaPlayerMap;
+    private volatile Map<Long, MediaPlayer> mediaPlayerMap;
     private Map<Long, MediaDataSourceImpl> mediaDataSourceMap;
 
     public static final int PLAYER_INFO_TYPE_SPEEDDONE = 2;
+    public static final int PLAYER_INFO_TYPE_BITRATEDONE = 3;
     public static final int PLAYER_INFO_TYPE_EOS = 4;
     public static final int PLAYER_INFO_TYPE_STATE_CHANGE = 5;
     public static final int PLAYER_INFO_TYPE_POSITION_UPDATE = 6;
@@ -63,6 +64,8 @@ public class PlayerPlugin {
     public static final int PLAYER_STATE_RELEASED = 9;
 
     public static final int PLAYER_TIME_UPDATE_TIME_DELAY = 100;
+    private static final String PLAYER_TRACK_CODEC_MIME = "codec_mime";
+    private static final int PLAYER_CODEC_MIME_LENGTH = 5;
     /**
      * PlayerPlugin
      *
@@ -98,6 +101,7 @@ public class PlayerPlugin {
             if (key != 0) {
                 nativeOnInfo(key, PLAYER_INFO_TYPE_EOS, 0);
                 nativeOnInfo(key, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_PLAYBACK_COMPLETE);
+                nativeOnInfo(key, PLAYER_INFO_TYPE_POSITION_UPDATE, mp.getDuration());
             }
         }
     }
@@ -355,6 +359,7 @@ public class PlayerPlugin {
         if (mp == null) {
             return;
         }
+        mediaPlayerMap.remove(id);
         mp.release();
         notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_RELEASED);
     }
@@ -376,19 +381,21 @@ public class PlayerPlugin {
         nativeOnVolumnChanged(id, leftVolume);
     }
 
-    public int getTrackInfoInt(long id, int type, String key) {
+    public int getTrackIndex(long id, int type) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
-            return 0;
+            return -1;
         }
-        for (MediaPlayer.TrackInfo info : mp.getTrackInfo()) {
-            if (info.getTrackType() == type) {
-                if (info.getFormat() != null) {
-                    return info.getFormat().getInteger(key);
-                }
-            }
+        return mp.getSelectedTrack(type);
+    }
+
+    private String getTrackMime(MediaPlayer.TrackInfo info) {
+        String str = info.toString();
+        if (str.indexOf("mime=") != -1) {
+            String subStr = str.substring(str.indexOf("mime="));
+            return subStr.substring(PLAYER_CODEC_MIME_LENGTH, subStr.indexOf(","));
         }
-        return 0;
+        return "unknow";
     }
 
     public String getTrackInfoString(long id, int type, String key) {
@@ -398,6 +405,9 @@ public class PlayerPlugin {
         }
         for (MediaPlayer.TrackInfo info : mp.getTrackInfo()) {
             if (info.getTrackType() == type) {
+                if (key.equals(PLAYER_TRACK_CODEC_MIME)) {
+                    return getTrackMime(info);
+                }
                 if (info.getFormat() != null) {
                     return info.getFormat().getString(key);
                 }
@@ -566,6 +576,7 @@ public class PlayerPlugin {
             if (info.getTrackType() == MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_VIDEO) {
                 if (info.getFormat() != null) {
                     info.getFormat().setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+                    notifyInfo(id, PLAYER_INFO_TYPE_BITRATEDONE, bitrate);
                 }
                 return;
             }

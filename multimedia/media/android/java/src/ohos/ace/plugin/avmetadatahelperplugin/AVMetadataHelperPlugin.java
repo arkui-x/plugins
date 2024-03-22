@@ -197,20 +197,35 @@ public class AVMetadataHelperPlugin {
         notifyInfo(key, HELPER_CALL_DONE);
     }
 
+    public int getEmbeddedPictureSize(long key) {
+        MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
+        if (metadataRetriever == null) {
+            Log.e("LOG_TAG", "MediaMetadataRetriever is not created, getEmbeddedPicture.");
+            return -1;
+        }
+        byte[] pic = metadataRetriever.getEmbeddedPicture();
+        if (pic == null) {
+            notifyInfo(key, HELPER_CALL_DONE);
+            return -1;
+        } else {
+            return pic.length;
+        }
+    }
+
     /**
      * Finds the optional graphic or album/cover art associated associated with the data source..
      *
      * @param key The key of the MediaMetadataRetriever.
      * @return void
      */
-    public byte[] getEmbeddedPicture(long key) {
+    public void getEmbeddedPicture(long key, byte[] pic) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
             Log.e("LOG_TAG", "MediaMetadataRetriever is not created, getEmbeddedPicture.");
-            return null;
+            return;
         }
+        pic = metadataRetriever.getEmbeddedPicture();
         notifyInfo(key, HELPER_CALL_DONE);
-        return metadataRetriever.getEmbeddedPicture();
     }
 
     /**

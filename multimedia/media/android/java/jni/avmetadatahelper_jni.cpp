@@ -42,6 +42,7 @@ static const char METHOD_SET_DATA_SOURCE_WITH_DATA_SOURCE[] = "setDataSource";
 static const char METHOD_EXTRACT_METADATA[] = "extractMetadata";
 static const char METHOD_EXTRACT_METADATA_DONE[] = "extractMetadataDone";
 static const char METHOD_GET_EMBEDDED_PICTURE[] = "getEmbeddedPicture";
+static const char METHOD_GET_EMBEDDED_PICTURE_SIZE[] = "getEmbeddedPictureSize";
 static const char METHOD_CREATE_METADATA_RETRIEVER[] = "createMetadataRetriever";
 static const char METHOD_RELEASE_METADATA_RETRIEVER[] = "releaseMetadataRetriever";
 static const char METHOD_RELEASE[] = "release";
@@ -50,7 +51,8 @@ static const char SIGNATURE_SET_DATA_SOURCE_WITH_FD[] = "(JLjava/lang/String;JJ)
 static const char SIGNATURE_SET_DATA_SOURCE_WITH_DATA_SOURCE[] = "(J)V";
 static const char SIGNATURE_EXTRACT_METADATA[] = "(JI)Ljava/lang/String;";
 static const char SIGNATURE_EXTRACT_METADATA_DONE[] = "(J)V";
-static const char SIGNATURE_GET_EMBEDDED_PICTURE[] = "(J)[B";
+static const char SIGNATURE_GET_EMBEDDED_PICTURE[] = "(J[B)V";
+static const char SIGNATURE_GET_EMBEDDED_PICTURE_SIZE[] = "(J)I";
 static const char SIGNATURE_CREATE_METADATA_RETRIEVER[] = "(J)V";
 static const char SIGNATURE_RELEASE_METADATA_RETRIEVER[] = "(J)V";
 static const char SIGNATURE_RELEASE[] = "(J)V";
@@ -61,6 +63,7 @@ struct {
     jmethodID extractMetadata;
     jmethodID extractMetadataDone;
     jmethodID getEmbeddedPicture;
+    jmethodID getEmbeddedPictureSize;
     jmethodID createMetadataRetriever;
     jmethodID releaseMetadataRetriever;
     jmethodID release;
@@ -122,6 +125,10 @@ void AVMetadataHelperJni::NativeInit(JNIEnv *env, jobject jobj)
     g_avmetadataHelperPluginClass.getEmbeddedPicture = env->GetMethodID(
         cls, METHOD_GET_EMBEDDED_PICTURE, SIGNATURE_GET_EMBEDDED_PICTURE);
     CHECK_NULL_VOID(g_avmetadataHelperPluginClass.getEmbeddedPicture);
+
+    g_avmetadataHelperPluginClass.getEmbeddedPictureSize = env->GetMethodID(
+        cls, METHOD_GET_EMBEDDED_PICTURE_SIZE, SIGNATURE_GET_EMBEDDED_PICTURE_SIZE);
+    CHECK_NULL_VOID(g_avmetadataHelperPluginClass.getEmbeddedPictureSize);
 
     g_avmetadataHelperPluginClass.createMetadataRetriever = env->GetMethodID(
         cls, METHOD_CREATE_METADATA_RETRIEVER, SIGNATURE_CREATE_METADATA_RETRIEVER);
@@ -323,9 +330,10 @@ std::shared_ptr<Media::AVSharedMemory> AVMetadataHelperJni::FetchArtPicture(long
     CHECK_NULL_RETURN(env, nullptr);
     CHECK_NULL_RETURN(g_avmetadataHelperPluginClass.globalRef,  nullptr);
     CHECK_NULL_RETURN(g_avmetadataHelperPluginClass.getEmbeddedPicture, nullptr);
+    CHECK_NULL_RETURN(g_avmetadataHelperPluginClass.getEmbeddedPictureSize, nullptr);
 
-    jobject jmem = env->CallObjectMethod(
-        g_avmetadataHelperPluginClass.globalRef, g_avmetadataHelperPluginClass.getEmbeddedPicture,
+    jint picSize = env->CallIntMethod(
+        g_avmetadataHelperPluginClass.globalRef, g_avmetadataHelperPluginClass.getEmbeddedPictureSize,
         (jlong)key);
     if (env->ExceptionCheck()) {
         LOGE("AVMetadataHelperJni JNI: call FetchArtPicture has exception");
@@ -334,16 +342,29 @@ std::shared_ptr<Media::AVSharedMemory> AVMetadataHelperJni::FetchArtPicture(long
         return nullptr;
     }
 
-    if (jmem == nullptr) {
+    if ((int) picSize < 0) {
+        LOGE("AVMetadataHelperJni JNI: FetchArtPicture no picture");
         return nullptr;
     }
 
-    jint len = env->GetArrayLength((jbyteArray)jmem);
+    jbyteArray jarr = env->NewByteArray((jsize)picSize);
+    env->CallVoidMethod(
+        g_avmetadataHelperPluginClass.globalRef, g_avmetadataHelperPluginClass.getEmbeddedPicture,
+        (jlong)key, jarr);
+    if (env->ExceptionCheck()) {
+        LOGE("AVMetadataHelperJni JNI: call FetchArtPicture has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return nullptr;
+    }
+
+    jint len = env->GetArrayLength(jarr);
 
     std::shared_ptr<Media::MockAVSharedMemory> dataSrc_ptr =
         std::make_shared<Media::MockAVSharedMemory>((int)len, Media::AVSharedMemory::Flags::FLAGS_READ_WRITE);
 
-    env->SetByteArrayRegion((jbyteArray)jmem, 0, len, reinterpret_cast<jbyte*>(dataSrc_ptr->GetBase()));
+    env->GetByteArrayRegion(jarr, 0, len, reinterpret_cast<jbyte*>(dataSrc_ptr->GetBase()));
+    env->ReleaseByteArrayElements(jarr, nullptr, 0);
 
     return dataSrc_ptr;
 }
