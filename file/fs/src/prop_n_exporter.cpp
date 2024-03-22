@@ -31,6 +31,7 @@
 #include "filemgmt_libn.h"
 #include "fsync.h"
 #include "listfile.h"
+#include "lseek.h"
 #include "lstat.h"
 #include "mkdtemp.h"
 #include "move.h"
@@ -39,6 +40,7 @@
 #include "rename.h"
 #include "rmdirent.h"
 #include "stat.h"
+#include "utimes.h"
 #include "truncate.h"
 
 namespace OHOS {
@@ -588,6 +590,7 @@ bool PropNExporter::Export()
             NVal::DeclareNapiFunction("fsyncSync", Fsync::Sync),
             NVal::DeclareNapiFunction("listFile", ListFile::Async),
             NVal::DeclareNapiFunction("listFileSync", ListFile::Sync),
+            NVal::DeclareNapiFunction("lseek", Lseek::Sync),
             NVal::DeclareNapiFunction("lstat", Lstat::Async),
             NVal::DeclareNapiFunction("lstatSync", Lstat::Sync),
             NVal::DeclareNapiFunction("mkdir", Mkdir),
@@ -612,6 +615,7 @@ bool PropNExporter::Export()
             NVal::DeclareNapiFunction("truncateSync", Truncate::Sync),
             NVal::DeclareNapiFunction("unlink", Unlink),
             NVal::DeclareNapiFunction("unlinkSync", UnlinkSync),
+            NVal::DeclareNapiFunction("utimes", Utimes::Sync),
             NVal::DeclareNapiFunction("write", Write),
             NVal::DeclareNapiFunction("writeSync", WriteSync),
         });
