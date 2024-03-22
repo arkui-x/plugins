@@ -32,6 +32,10 @@ template("plugin_multimedia_media_static") {
     include_dirs = media_include
     include_dirs += utils_include
 
+    if (is_arkui_x) {
+      include_dirs += [ "//foundation/multimedia/player_framework/frameworks/js/avscreen_capture", ]
+    }
+
     sources = media_source
     sources += utils_source
 
