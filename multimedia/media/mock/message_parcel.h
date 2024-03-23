@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,20 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef TOKENID_KIT_H
-#define TOKENID_KIT_H
 
-#include <cstdint>
+#ifndef MOCK_NATIVE_INCLUDE_MESSAGE_PARCEL_H
+#define MOCK_NATIVE_INCLUDE_MESSAGE_PARCEL_H
+#include <string>
+#include "parcel.h"
 
 namespace OHOS {
-namespace Security {
-namespace AccessToken {
-class TokenIdKit {
+class IRemoteObject;
+class MessageParcel : public Parcel {
 public:
-    static bool IsSystemAppByFullTokenID(uint64_t tokenId);
-    static uint64_t GetRenderTokenID(uint64_t tokenId);
+    MessageParcel();
+    ~MessageParcel();
+    bool WriteFileDescriptor(int fd) { return false; }
+    int  ReadFileDescriptor() { return 0; }
+    size_t GetRawDataCapacity() const { return 0; }
+    bool Append(MessageParcel &data) { return false; }
 };
-} // namespace AccessToken
-} // namespace Security
 } // namespace OHOS
-#endif // TOKENID_KIT_H
+#endif // MOCK_NATIVE_INCLUDE_MESSAGE_PARCEL_H

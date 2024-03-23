@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "recorder_profiles_impl.h"
+#include "mock/recorder_profiles_impl.h"
 #include "media_log.h"
 #include "media_errors.h"
 
@@ -48,34 +48,6 @@ RecorderProfilesImpl::RecorderProfilesImpl()
 RecorderProfilesImpl::~RecorderProfilesImpl()
 {
     MEDIA_LOGD("RecorderProfilesImpl:0x%{public}06" PRIXPTR " Instances destroy", FAKE_POINTER(this));
-}
-
-bool RecorderProfilesImpl::IsAudioRecorderConfigSupported(const AudioRecorderProfile &profile)
-{
-    return false;
-}
-
-bool RecorderProfilesImpl::HasVideoRecorderProfile(int32_t sourceId, int32_t qualityLevel)
-{
-    return false;
-}
-
-std::vector<std::shared_ptr<AudioRecorderCaps>> RecorderProfilesImpl::GetAudioRecorderCaps()
-{
-    std::vector<std::shared_ptr<AudioRecorderCaps>> audioRecorderCapsArray;
-    return audioRecorderCapsArray;
-}
-
-std::vector<std::shared_ptr<VideoRecorderCaps>> RecorderProfilesImpl::GetVideoRecorderCaps()
-{
-    std::vector<std::shared_ptr<VideoRecorderCaps>> videoRecorderCapsArray;
-    return videoRecorderCapsArray;
-}
-
-std::shared_ptr<VideoRecorderProfile> RecorderProfilesImpl::GetVideoRecorderProfile(int32_t sourceId,
-    int32_t qualityLevel)
-{
-    return nullptr;
 }
 }  // namespace Media
 }  // namespace OHOS

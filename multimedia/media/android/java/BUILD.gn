@@ -47,7 +47,6 @@ ohos_source_set("media_android_jni") {
     "jni/recorder_jni.cpp",
     "player_impl.cpp",
     "recorder_impl.cpp",
-    "recorder_profiles_impl.cpp",
   ]
 
   defines = [

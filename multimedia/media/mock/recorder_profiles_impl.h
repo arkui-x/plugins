@@ -24,11 +24,28 @@ namespace Media {
 class RecorderProfilesImpl : public RecorderProfiles, public NoCopyable {
 public:
     ~RecorderProfilesImpl();
-    bool IsAudioRecorderConfigSupported(const AudioRecorderProfile &profile) override;
-    bool HasVideoRecorderProfile(int32_t sourceId, int32_t qualityLevel) override;
-    std::vector<std::shared_ptr<AudioRecorderCaps>> GetAudioRecorderCaps() override;
-    std::vector<std::shared_ptr<VideoRecorderCaps>> GetVideoRecorderCaps() override;
-    std::shared_ptr<VideoRecorderProfile> GetVideoRecorderProfile(int32_t sourceId, int32_t qualityLevel) override;
+    bool IsAudioRecorderConfigSupported(const AudioRecorderProfile &profile) override
+    {
+        return false;
+    }
+    bool HasVideoRecorderProfile(int32_t sourceId, int32_t qualityLevel) override
+    {
+        return false;
+    }
+    std::vector<std::shared_ptr<AudioRecorderCaps>> GetAudioRecorderCaps() override
+    {
+        std::vector<std::shared_ptr<AudioRecorderCaps>> audioRecorderCapsArray;
+        return audioRecorderCapsArray;
+    }
+    std::vector<std::shared_ptr<VideoRecorderCaps>> GetVideoRecorderCaps() override
+    {
+        std::vector<std::shared_ptr<VideoRecorderCaps>> videoRecorderCapsArray;
+        return videoRecorderCapsArray;
+    }
+    std::shared_ptr<VideoRecorderProfile> GetVideoRecorderProfile(int32_t sourceId, int32_t qualityLevel) override
+    {
+        return nullptr;
+    }
     static RecorderProfiles& GetInstance();
 
 private:
