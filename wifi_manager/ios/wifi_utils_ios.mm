@@ -19,10 +19,6 @@
 // Get the current connection WiFi introduction
 #import <SystemConfiguration/CaptiveNetwork.h>
 
-// Obtain the current WiFi switch introduction
-#import <ifaddrs.h>
-#import <net/if.h>
-
 // Introduction of Reachable, detection of changes in network connection status, Reachability class library
 #import <SystemConfiguration/SystemConfiguration.h>
 #import <netinet/in.h>
@@ -37,10 +33,6 @@ typedef enum : NSInteger {
 
 @interface wifi_utils_ios()
 
-@property  BOOL isWifiActivity;
-@property  BOOL isWifiActivityFirst;
-@property (strong,nonatomic) NSTimer *stateTimer;
-
 @end
 
 @implementation wifi_utils_ios {
@@ -53,7 +45,6 @@ typedef enum : NSInteger {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _manager = [[wifi_utils_ios alloc] init];
-        _manager.isWifiActivityFirst = YES;
     });
     return _manager;
 }
@@ -83,8 +74,7 @@ typedef enum : NSInteger {
 }
 
 - (WifiErrCode)isWifiActive:(bool*)bActive {
-    *bActive = [self isSystemWifiActive];
-    return WifiErrCode::WIFI_OPT_SUCCESS;
+    return WifiErrCode::WIFI_OPT_NOT_SUPPORTED;
 }
 
 - (WifiErrCode)isConnected:(bool*)isConnected {
@@ -93,10 +83,7 @@ typedef enum : NSInteger {
 }
 
 - (void)onChange:(NSString *)key {
-    NSString *inKey = key;
-    if ([inKey isEqualToString: @"wifiStateChange"]) {
-        [self listenWifiActive];
-    } else if ([inKey isEqualToString: @"wifiConnectionChange"]) {
+    if ([key isEqualToString: @"wifiConnectionChange"]) {
         [self listenWifiConnect];
     } else {
         NSLog(@"wifi_utils_ios on oc in type fail");
@@ -104,28 +91,11 @@ typedef enum : NSInteger {
 }
 
 - (void)offChange:(NSString *)key {
-    NSString *inKey = key;
-    if ([inKey isEqualToString:@"wifiStateChange"]) {
-        [self unListenWifiActive];
-    } else if([inKey isEqualToString:@"wifiConnectionChange"]) {
+    if([key isEqualToString:@"wifiConnectionChange"]) {
         [self unListenWifiConnect];
     } else {
         NSLog(@"wifi_utils_ios off oc in type fail");
     }
-}
-
-- (BOOL)isSystemWifiActive {
-    NSCountedSet * cset = [NSCountedSet new];
-    struct ifaddrs *interfaces;
-    int success = getifaddrs(&interfaces);
-    if(!success){
-        for(struct ifaddrs *interface = interfaces; interface; interface = interface->ifa_next) {
-            if((interface->ifa_flags & IFF_UP) == IFF_UP) {
-                [cset addObject:[NSString stringWithUTF8String:interface->ifa_name]];
-            }
-        }
-    }
-    return [cset countForObject:@"awdl0"] > 1 ? YES : NO;
 }
 
 - (BOOL)isSystemWifiConnected {
@@ -179,49 +149,6 @@ typedef enum : NSInteger {
         returnValue = ReachableViaWWAN;
     }
     return returnValue;
-}
-
-- (void)listenWifiActive {
-    if (self.stateTimer) {
-        [self.stateTimer invalidate];
-        self.stateTimer = nil;
-        self.isWifiActivityFirst = YES;
-    }
-    self.stateTimer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
-        BOOL isget = [self isSystemWifiActive];
-        if (self.isWifiActivityFirst) {
-            self.isWifiActivityFirst = NO;
-            self.isWifiActivity = isget;
-            int activityInt = 0;
-            if (isget) {
-                activityInt = 1;
-            } else {
-                activityInt = 0;
-            }
-            OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt);
-        }
-        if ((isget && self.isWifiActivity) || (!isget && !self.isWifiActivity)) {
-            // Unchanged
-        } else {
-            // There are changes
-            self.isWifiActivity = isget;
-            int activityInt = 0;
-            if (isget) {
-                activityInt = 1;
-            } else {
-                activityInt = 0;
-            }
-            OHOS::Plugin::WifiCallback::GetInstance().SendCallback("wifiStateChange", activityInt);
-        }
-    }];
-}
-
-- (void)unListenWifiActive {
-    if (self.stateTimer) {
-        [self.stateTimer invalidate];
-        self.stateTimer = nil;
-        self.isWifiActivityFirst = YES;
-    }
 }
 
 - (void)listenWifiConnect {
