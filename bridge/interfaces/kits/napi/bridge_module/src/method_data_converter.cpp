@@ -26,8 +26,8 @@ static constexpr double DOUBLE_MIN_VALUE = 0.00001;
 
 CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_value value)
 {
-    bool isArraryBuffer = PluginUtilsNApi::IsArrayBuffer(env, value);
-    if (isArraryBuffer) {
+    bool isArrayBuffer = PluginUtilsNApi::IsArrayBuffer(env, value);
+    if (isArrayBuffer) {
         std::vector<uint8_t> vector;
         PluginUtilsNApi::GetArrayBuffer(env, value, vector);
         return CodecableValue(vector);
