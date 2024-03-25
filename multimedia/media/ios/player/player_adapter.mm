@@ -75,6 +75,8 @@
     }
     if (self.avPlayer) {
         NSLog(@"Successfully created a AVPlayer!");
+        self.avPlayer.audiovisualBackgroundPlaybackPolicy =
+            AVPlayerAudiovisualBackgroundPlaybackPolicyContinuesIfPossible;
     }
     self->speed_ = 0.0;
     self->playerState_ = OHOS::Media::PLAYER_INITIALIZED;
@@ -161,6 +163,7 @@
     }
     [self notifyDurationUpdate];
     [self notifyVideoSize];
+    [self notifyCurrentTime];
     self->playerState_ = OHOS::Media::PLAYER_PREPARED;
     [self performSelectorInBackground:@selector(notifyStateChange:) withObject:[NSNumber numberWithBool:YES]];
 }
@@ -577,7 +580,7 @@
         [self play];
     }
     if (self->playerCb_) {
-        self->playerCb_->OnInfo(OHOS::Media::INFO_TYPE_EOS, isLoop, format);
+        self->playerCb_->OnInfo(OHOS::Media::INFO_TYPE_EOS, hasLoop, format);
     }
 }
 
@@ -586,6 +589,9 @@
     OHOS::Media::Format format;
     Float64 seconds = CMTimeGetSeconds(self.avPlayer.currentTime);
     int32_t time = seconds * MICROSECOND_CONVERSION_INT;
+    if (time < 0) {
+        time = 0;
+    }
     if (self->playerCb_) {
         self->playerCb_->OnInfo(OHOS::Media::INFO_TYPE_POSITION_UPDATE, time, format);
     }

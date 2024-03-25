@@ -165,9 +165,6 @@
     {
         [self->avCaptureSession_ addOutput:self->movieFileOutput_];
         AVCaptureConnection *videoConnection = [self->movieFileOutput_ connectionWithMediaType:AVMediaTypeVideo];
-        if ([videoConnection isVideoRotationAngleSupported:self.videoRotationAngle]) {
-            videoConnection.videoRotationAngle = self.videoRotationAngle;
-        }
         [self->movieFileOutput_ setOutputSettings:self.videoSettings forConnection:videoConnection];
         AVCaptureConnection *audioConnection = [self->movieFileOutput_ connectionWithMediaType:AVMediaTypeAudio];
         [self->movieFileOutput_ setOutputSettings:self.audioSettings forConnection:audioConnection];
