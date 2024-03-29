@@ -120,14 +120,14 @@
         return nullptr;
     }
 
-    NSData *nsjpegData = UIImageJPEGRepresentation(thumbImg, COMPRESSIBILITY_FACTOR);
-    if (!nsjpegData) {
-        NSLog(@"fetchArtPicture nsjpegData is nil!");
+    NSData *nsPngData = UIImagePNGRepresentation(thumbImg);
+    if (!nsPngData) {
+        NSLog(@"fetchArtPicture nsPngData is nil!");
         return nullptr;
     }
 
-    const uint8_t *buff = (uint8_t *)nsjpegData.bytes;
-    int32_t size = (int32_t)nsjpegData.length;
+    const uint8_t *buff = (uint8_t *)nsPngData.bytes;
+    int32_t size = (int32_t)nsPngData.length;
 
     NSLog(@"fetchArtPicture size:%d", size);
     std::shared_ptr<OHOS::Media::MockAVSharedMemory> memory =

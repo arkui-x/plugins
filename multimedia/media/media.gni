@@ -66,8 +66,6 @@ utils_source = [
   "$PLAYER_FRAMEWORK_DIR/services/utils/player_xcollie.cpp",
   "//plugins/multimedia/media/mock/media_dfx.cpp",
   "//plugins/multimedia/media/mock/task_queue.cpp",
-  "//foundation/resourceschedule/qos_manager/services/src/qos_interface.cpp",
-  "//foundation/resourceschedule/qos_manager/qos/qos.cpp",
   "//foundation/multimedia/audio_framework/services/audio_service/client/src/audio_device_descriptor.cpp",
   "//plugins/multimedia/media/mock/message_parcel.cpp",
   "//plugins/multimedia/media/mock/recorder_profiles_impl.cpp",

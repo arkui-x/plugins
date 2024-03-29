@@ -48,11 +48,19 @@ template("plugin_multimedia_media_static") {
     ]
 
     if (platform == "android") {
+      sources += [
+        "//foundation/resourceschedule/qos_manager/qos/qos.cpp",
+        "//foundation/resourceschedule/qos_manager/services/src/qos_interface.cpp",
+      ]
       deps += [
         "android/java:media_android_jni",
         "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
       ]
     } else if (platform == "ios") {
+      sources += [
+        "//plugins/multimedia/media/mock/qos.cpp",
+        "//plugins/multimedia/media/mock/qos_interface.cpp",
+      ]
       deps += [ "ios:media_ios" ]
       defines += [ "PLATFORM_IOS" ]
     }

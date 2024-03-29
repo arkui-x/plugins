@@ -26,8 +26,7 @@
     NSURL *url_;
 }
 
-#define FIRST_FRAME_TIME 1.0
-#define COMPRESSIBILITY_FACTOR 0.5
+#define FIRST_FRAME_TIME 0.0
 #define TRANSFORM_1 1.0
 enum {
     FIRST_FRAME_TIME_SCALE = 600,
