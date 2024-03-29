@@ -26,6 +26,7 @@ common_plugin_libs = [
   "i18n",
   "intl",
   "multimedia/media",
+  "multimedia/audio",
   "net/connection",
   "net/http",
   "net/socket",
