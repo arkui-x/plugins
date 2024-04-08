@@ -69,7 +69,6 @@ public:
     static void Finalize(long rendererPtr);
 
 private:
-    static DeviceInfo GetDeviceInfo(jobject jDeviceInfo);
     static void UnregisterRendererPositionCallback(long rendererPtr);
     static void UnregisterPeriodPositionCallback(long rendererPtr);
     static void UnregisterDeviceChangeCallback(long rendererPtr);

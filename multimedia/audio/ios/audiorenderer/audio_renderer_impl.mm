@@ -18,12 +18,14 @@
 #include "audio_errors.h"
 #include "format_convert_util.h"
 #import "audio_renderer_impl.h"
+#import "audio_manager_impl.h"
 
 #define QUEUE_BUFFER_SIZE 2
 #define MIN_STREAM_VOLUME 0.0
 #define MAX_STREAM_VOLUME 1.0
-#define WRITE_BUFFER_TIMEOUT_IN_MS 200 // ms
+#define WRITE_BUFFER_TIMEOUT_IN_MS 200
 #define MIN_BUFFER_SIZE 20000
+#define ALLOC_BUFFER_SIZE 200000
 
 #pragma mark - AudioRendererImpl implementation
 @implementation AudioRendererImpl
@@ -40,6 +42,7 @@
     std::mutex writeBufferLock_;
     std::condition_variable writeThreadCv_;
     bool isWrited_;
+    OHOS::AudioStandard::InterruptMode interruptMode_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererCallback> stateCallback_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererWriteCallback> writeCallback_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererDeviceChangeCallback> deviceCallback_;
@@ -93,12 +96,18 @@
 
     playState_ = OHOS::AudioStandard::RENDERER_PREPARED;
     isWrited_ = false;
+    interruptMode_ = OHOS::AudioStandard::SHARE_MODE;
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
-    if ([audioSession.category isEqualToString:AVAudioSessionCategorySoloAmbient]) {
-        NSLog(@"old category = %@",audioSession.category);
-        [audioSession setCategory:AVAudioSessionCategoryAmbient error:nil];
-        NSLog(@"new category = %@",audioSession.category);
-        [audioSession setActive:YES error:nil];
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        if ([managerImpl getAllInterruptMode] == OHOS::AudioStandard::SHARE_MODE &&
+            [audioSession.category isEqualToString:AVAudioSessionCategorySoloAmbient]) {
+            NSLog(@"old category = %@",audioSession.category);
+            [audioSession setCategory:AVAudioSessionCategoryAmbient error:nil];
+            NSLog(@"new category = %@",audioSession.category);
+            [audioSession setActive:YES error:nil];
+            [managerImpl updateCategory:audioSession.category options:audioSession.categoryOptions];
+        }
     }
 
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -201,6 +210,11 @@
         ConvertDeviceChangeReasonToOh(reason, changeReason);
         deviceWithInfoCallback_->OnOutputDeviceChange(deviceInfo, changeReason);
     }
+
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        [managerImpl updateRendererChangeInfos];
+    }
 }
 
 - (void)handleAudioSessionInterruption:(NSNotification *)notification
@@ -234,7 +248,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     }
 
     for (int i = 0; i < QUEUE_BUFFER_SIZE; i++) {
-        status = AudioQueueAllocateBuffer(audioQueue_, MIN_BUFFER_SIZE * 10, &audioQueueBuffers_[i]);
+        status = AudioQueueAllocateBuffer(audioQueue_, ALLOC_BUFFER_SIZE, &audioQueueBuffers_[i]);
         if (status != noErr) {
             NSLog(@"Failed to AudioQueueAllocateBuffer: i = %d, status = %d", i, status);
         }
@@ -313,8 +327,14 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     NSLog(@"transferState oldState = %d, newState = %d", playState_, playState);
     OHOS::AudioStandard::RendererState oldState = playState_;
     playState_ = playState;
-    if (stateCallback_ && oldState != playState_) {
-        stateCallback_->OnStateChange(playState);
+    if (oldState != playState_) {
+        if (stateCallback_) {
+            stateCallback_->OnStateChange(playState);
+        }
+        AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+        if (managerImpl) {
+            [managerImpl updateRendererChangeInfos];
+        }
     }
 }
 
@@ -353,7 +373,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
             NSLog(@"State of stream is not running. Illegal state:%d", playState_);
             return false;
         }
-	
+
         OSStatus status = AudioQueueStop(audioQueue_, true);
         if (status != noErr) {
             NSLog(@"Failed to AudioQueueStop: status = %d", status);
@@ -437,7 +457,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
             NSLog(@"Failed to AudioQueueStop: %d", status);
             return false;
         }
-        for (int i =0; i <QUEUE_BUFFER_SIZE; i++) {
+        for (int i = 0; i < QUEUE_BUFFER_SIZE; i++) {
             status = AudioQueueFreeBuffer(audioQueue_, audioQueueBuffers_[i]);
             if (status != noErr) {
                 NSLog(@"Failed to AudioQueueFreeBuffer: i = %d, status = %d", i, status);
@@ -455,8 +475,8 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                name:AVAudioSessionRouteChangeNotification
-                                                object:audioSession];
+                                            name:AVAudioSessionRouteChangeNotification
+                                            object:audioSession];
     deviceCallback_ = nil;
     deviceWithInfoCallback_ = nil;
 
@@ -472,7 +492,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
         NSLog(@"Failed to AudioQueueGetCurrentTime: status = %d", status);
         return false;
     }
-    time.time.tv_nsec = timeStamp.mSampleTime * 1000000000 / audioDescription_.mSampleRate;
+    time.time.tv_nsec = timeStamp.mSampleTime * SEC_TO_NANOSECOND / audioDescription_.mSampleRate;
     time.time.tv_sec = 0;
     NSLog(@"tv_nsec = %lu", time.time.tv_nsec);
     return true;
@@ -554,7 +574,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
             deviceInfo.displayName = std::string([portDescription.UID UTF8String]);
             NSLog(@"portType = %@, portName = %@, UID = %@", portDescription.portType, portDescription.portName,
                 portDescription.UID);
-            NSLog(@"channels=%lu",[portDescription.channels count]);
+            NSLog(@"channels = %lu",[portDescription.channels count]);
             for (AVAudioSessionChannelDescription *channelDescription in portDescription.channels) {
                 deviceInfo.channelMasks |= channelDescription.channelLabel;
                 NSLog(@"channelName = %@, channelNumber = %lu, owningPortUID = %@, channelLabel = %u",
@@ -573,8 +593,8 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
 - (int32_t)setVolumeWithRamp:(float)volume rampTime:(int32_t)duration
 {
-    NSLog(@"setVolumeWithRamp: volume = %f, duration(sec) = %d", volume, duration / 1000);
-    OSStatus status = AudioQueueSetParameter(audioQueue_, kAudioQueueParam_VolumeRampTime, duration / 1000);
+    NSLog(@"setVolumeWithRamp: volume = %f, duration(sec) = %d", volume, duration / SEC_TO_MILLISECOND);
+    OSStatus status = AudioQueueSetParameter(audioQueue_, kAudioQueueParam_VolumeRampTime, duration / SEC_TO_MILLISECOND);
     if (status != noErr) {
         NSLog(@"Failed to AudioQueueSetParameter kAudioQueueParam_VolumeRampTime: status = %d", status);
         return ConvertErrorToOh(status);
@@ -598,6 +618,11 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
             [audioSession setCategory:AVAudioSessionCategoryAmbient error:nil];
             NSLog(@"new category = %@",audioSession.category);
             [audioSession setActive:YES error:nil];
+            interruptMode_ = mode;
+            AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+            if (managerImpl) {
+                [managerImpl updateCategory:audioSession.category options:audioSession.categoryOptions];
+            }
         }
     } else if (mode == OHOS::AudioStandard::INDEPENDENT_MODE) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
@@ -606,7 +631,17 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
             [audioSession setCategory:AVAudioSessionCategorySoloAmbient error:nil];
             NSLog(@"new category = %@",audioSession.category);
             [audioSession setActive:YES error:nil];
+            interruptMode_ = mode;
+            AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+            if (managerImpl) {
+                [managerImpl updateCategory:audioSession.category options:audioSession.categoryOptions];
+            }
         }
     }
+}
+
+- (OHOS::AudioStandard::InterruptMode)getInterruptMode
+{
+    return interruptMode_;
 }
 @end

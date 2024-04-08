@@ -16,6 +16,7 @@
 #include <mutex>
 #include "format_convert_util.h"
 #import "audio_capturer_impl.h"
+#import "audio_manager_impl.h"
 
 #define BUFFER_SIZE 20000
 
@@ -61,7 +62,7 @@
 }
 
 - (void)initWithSampleRate:(const OHOS::AudioStandard::AudioCapturerOptions)capturerOptions
-{ 
+{
     capturerOptions_ = capturerOptions;
     recordState_ = OHOS::AudioStandard::CAPTURER_NEW;
     ConvertStreamInfoFromOh(capturerOptions.streamInfo, audioDescription_);
@@ -77,10 +78,14 @@
     [self SetupAudioQueue];
     audioSession_ = [AVAudioSession sharedInstance];
     [audioSession_ setCategory:AVAudioSessionCategoryPlayAndRecord
-                    mode:AVAudioSessionModeDefault
-                    options:AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionDefaultToSpeaker
-                    error:nil];
+                withOptions:AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionDefaultToSpeaker
+                error:nil];
     [audioSession_ setActive:YES error:nil];
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        [managerImpl updateCategory:audioSession_.category options:audioSession_.categoryOptions];
+    }
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                             selector:@selector(handleRouteChange:)
                                             name:AVAudioSessionRouteChangeNotification
@@ -165,10 +170,16 @@ static void AudioRecordAQInputCallback(
     OHOS::AudioStandard::CapturerState oldState = recordState_;
     recordState_ = recordState;
 
-    if (stateCallback_ && oldState != recordState_) {
-        stateCallback_->OnStateChange(recordState);
+    if (oldState != recordState_) {
+        if (stateCallback_) {
+            stateCallback_->OnStateChange(recordState);
+        }
+        AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+        if (managerImpl) {
+            [managerImpl updateCapturerChangeInfos];
+        }
     }
-    
+
     if (deviceWithInfoCallback_) {
         OHOS::AudioStandard::AudioCapturerChangeInfo changeInfo;
         [self getCurrentCapturerChangeInfo: changeInfo];
@@ -298,7 +309,7 @@ static void AudioRecordAQInputCallback(
         return false;
     }
     NSLog(@"AudioTimeStamp is %f",avTimeStamp.mSampleTime);
-    timestamp.time.tv_nsec = avTimeStamp.mSampleTime * 1000000000 / audioDescription_.mSampleRate;
+    timestamp.time.tv_nsec = avTimeStamp.mSampleTime * SEC_TO_NANOSECOND / audioDescription_.mSampleRate;
     timestamp.time.tv_sec = 0;
     return true;
 }
@@ -414,6 +425,11 @@ static void AudioRecordAQInputCallback(
         OHOS::AudioStandard::AudioCapturerChangeInfo changeInfo;
         [self getCurrentCapturerChangeInfo: changeInfo];
         deviceWithInfoCallback_->OnStateChange(changeInfo);
+    }
+
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        [managerImpl updateCapturerChangeInfos];
     }
 }
 @end

@@ -79,7 +79,6 @@ private:
         capturerInfoChangeObserver_;
     static std::map<long, AudioStandard::CapturerState> capturerStateMap_;
     static void UnsetRecordPositionUpdateListener(long capturerPtr);
-    static AudioStandard::DeviceInfo GetDeviceInfo(jobject jDeviceInfo);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_MULTIMEDIA_AUDIO_AUDIO_CAPTURER_ANDROID_JAVA_JNI_AUDIO_CAPTURER_JNI_H

@@ -14,10 +14,10 @@
  */
 
 #include "audio_capturer.h"
-
 #include "audio_capturer_private.h"
 #include "audio_errors.h"
 #include "audio_log.h"
+#import "audio_manager_impl.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -25,7 +25,10 @@ namespace AudioStandard {
 AudioCapturer::~AudioCapturer() = default;
 AudioCapturerPrivate::~AudioCapturerPrivate()
 {
-    [capturerImpl_ release];
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        [managerImpl removeCapturer:capturerImpl_];
+    }
 }
 
 std::unique_ptr<AudioCapturer> AudioCapturer::Create(AudioStreamType audioStreamType)
@@ -78,6 +81,11 @@ void AudioCapturerPrivate::CreateAudioRecord(const AudioCapturerOptions &capture
 {
     capturerImpl_ = [[AudioCapturerImpl alloc] init];
     [capturerImpl_ initWithSampleRate: capturerOptions];
+
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        [managerImpl addCapturer:capturerImpl_];
+    }
 }
 
 int32_t AudioCapturerPrivate::CheckParams(const AudioCapturerOptions &capturerOptions)

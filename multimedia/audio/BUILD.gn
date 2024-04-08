@@ -28,7 +28,7 @@ template("plugin_audio_static") {
 
     sources = audio_sources
     sources += [
-      "//plugins/multimedia/audio/android/audio_convert_util.cpp",
+      "audio_utils.cpp",
       "napi_audio_entry.cpp",
     ]
 
@@ -44,14 +44,20 @@ template("plugin_audio_static") {
     external_deps = []
 
     if (platform == "android") {
+      sources += [
+        "//plugins/multimedia/audio/android/audio_common_jni.cpp",
+        "//plugins/multimedia/audio/android/audio_convert_util.cpp",
+      ]
       deps += [
         "android/audiocapturer/java:audio_capturer_android_jni",
+        "android/audiomanager/java:audio_manager_android_jni",
         "android/audiorenderer/java:audio_renderer_android_jni",
       ]
     } else if (platform == "ios") {
       sources += [ "//plugins/multimedia/audio/ios/format_convert_util.mm" ]
       deps += [
         "ios/audiocapturer:audio_capturer_ios",
+        "ios/audiomanager:audio_manager_ios",
         "ios/audiorenderer:audio_renderer_ios",
       ]
     }

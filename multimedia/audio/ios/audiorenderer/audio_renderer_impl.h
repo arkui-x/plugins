@@ -41,6 +41,7 @@
 - (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::DeviceInfo &)deviceInfo;
 - (int32_t)setVolumeWithRamp:(float)volume rampTime:(int32_t)duration;
 - (void)setInterruptMode:(OHOS::AudioStandard::InterruptMode)mode;
+- (OHOS::AudioStandard::InterruptMode)getInterruptMode;
 - (void)initWithSampleRate:(const OHOS::AudioStandard::AudioRendererOptions &)rendererOptions;
 - (int32_t)getRendererInfo:(OHOS::AudioStandard::AudioRendererInfo &)rendererInfo;
 - (int32_t)getStreamInfo:(OHOS::AudioStandard::AudioStreamInfo &)streamInfo;

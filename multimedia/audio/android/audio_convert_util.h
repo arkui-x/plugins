@@ -133,6 +133,41 @@ enum DualMonoMode {
     DUAL_MONO_MODE_RR = 0x00000003,
 };
 
+enum AudioMode {
+    MODE_NORMAL = 0x00000000,
+    MODE_RINGTONE = 0x00000001,
+    MODE_IN_CALL = 0x00000002,
+    MODE_IN_COMMUNICATION = 0x00000003,
+    MODE_CALL_SCREENING = 0x00000004,
+    MODE_CALL_REDIRECT = 0x00000005,
+    MODE_COMMUNICATION_REDIRECT =0x00000006,
+};
+
+enum StreamType {
+    STREAM_INVALID = -1,
+    STREAM_VOICE_CALL = 0x00000000,
+    STREAM_SYSTEM = 0x00000001,
+    STREAM_RING = 0x00000002,
+    STREAM_MUSIC = 0x00000003,
+    STREAM_ALARM = 0x00000004,
+    STREAM_NOTIFICATION = 0x00000005,
+    STREAM_DTMF = 0x00000008,
+    STREAM_ACCESSIBILITY = 0x0000000a,
+};
+
+enum RingerMode {
+    RINGER_MODE_SILENT = 0x00000000,
+    RINGER_MODE_VIBRATE = 0x00000001,
+    RINGER_MODE_NORMAL = 0x00000002,
+};
+
+enum AudioDeviceFlags {
+    GET_DEVICES_INVALID = -1,
+    GET_DEVICES_INPUTS = 0x00000001,
+    GET_DEVICES_OUTPUTS = 0x00000002,
+    GET_DEVICES_ALL = 0x00000003,
+};
+
 struct AudioUsage
 {
     AudioAttributesUsage usage_an;
@@ -147,11 +182,16 @@ void ConvertAudioUsageToOh(AudioAttributesUsage usage, AudioAttributesContenType
 AudioFormatChannelLayoutIn ConvertCapturerAudioChannelLayoutToAn(AudioChannelLayout layoutOh);
 CapturePolicy ConvertPrivacyTypeToAn(AudioPrivacyType privacyOh);
 int32_t ConvertChannelCountToLayout(AudioChannel channelCount);
+AudioDeviceType ConvertActiveDeviceTypeToAn(ActiveDeviceType deviceType);
 DeviceType ConvertDeviceTypeToOh(AudioDeviceType deviceType);
 AudioSourceType ConvertSourceTypeToAn(SourceType sourceTypeOh);
 SourceType ConvertSourceTypeToOh(AudioSourceType sourceTypeAn);
 DualMonoMode ConvertBlendModeToAn(ChannelBlendMode blendModeOh);
 bool IsPCMFormat(int32_t encode);
-
+AudioScene ConvertSceneToOh(AudioMode modeAn);
+StreamType ConvertVolumeTypeToAn(AudioVolumeType typeOh);
+AudioRingerMode ConvertRingerModeToOh(RingerMode modeAn);
+AudioDeviceType ConvertDeviceTypeToAn(DeviceType deviceType);
+AudioDeviceFlags ConvertDeviceFlagToAn(DeviceFlag flag);
 } // namespace OHOS::Plugin
 #endif // PLUGINS_MULTIMEDIA_AUDIO_AUDIO_UTIL_H

@@ -19,6 +19,9 @@
 #include "audio_info.h"
 #import <AVFoundation/AVFoundation.h>
 
+#define SEC_TO_NANOSECOND 1000000000
+#define SEC_TO_MILLISECOND 1000
+
 struct AudioInterruption {
     NSInteger interruptionType;
     NSInteger interruptionReason;
