@@ -28,6 +28,12 @@ template("plugin_hilog_static") {
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "//third_party/bounds_checking_function/include",
     ]
+    if (is_arkui_x) {
+      include_dirs += [
+        "//base/hiviewdfx/hilog/interfaces/js/kits/napi/src/hilog/include/context",
+        "//base/hiviewdfx/hilog/interfaces/js/kits/napi/src/common/napi",
+      ]
+    }
     sources = [
       "${HILOG_NAPI_ROOT_DIR}/src/common/napi/n_class.cpp",
       "${HILOG_NAPI_ROOT_DIR}/src/common/napi/n_func_arg.cpp",

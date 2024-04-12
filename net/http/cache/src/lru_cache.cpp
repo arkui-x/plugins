@@ -138,56 +138,55 @@ void LRUCache::MergeOtherCache(const LRUCache& other)
     }
 }
 
-Json::Value LRUCache::WriteCacheToJsonValue()
+cJSON* LRUCache::WriteCacheToJsonValue()
 {
-    Json::Value root;
+    cJSON* root = cJSON_CreateObject();
 
     int index = 0;
     {
         // set mutex in min scope
         std::lock_guard<std::mutex> guard(mutex_);
         for (const auto &node : nodeList_) {
-            root[node.key] = Json::Value();
+            cJSON *nodeKey = cJSON_CreateObject();
             for (const auto &p : node.value) {
-                root[node.key][p.first] = p.second;
+                cJSON_AddItemToObject(nodeKey, p.first.c_str(), cJSON_CreateString(p.second.c_str()));
             }
-            root[node.key][LRU_INDEX] = std::to_string(index);
+            cJSON_AddItemToObject(nodeKey, LRU_INDEX, cJSON_CreateString(std::to_string(index).c_str()));
             ++index;
+            cJSON_AddItemToObject(root, node.key.c_str(), nodeKey);
         }
     }
+    NETSTACK_LOGD("root = %{public}s", cJSON_PrintUnformatted(root));
     return root;
 }
 
-void LRUCache::ReadCacheFromJsonValue(const Json::Value& root)
+void LRUCache::ReadCacheFromJsonValue(const cJSON* root)
 {
     std::vector<Node> nodeVec;
-    for (auto it = root.begin(); it != root.end(); ++it) {
-        if (!it.key().isString()) {
+    for (uint32_t i = 0; i < cJSON_GetArraySize(root); i++) {
+        cJSON *keyItem = cJSON_GetArrayItem(root, i);
+        if (keyItem == nullptr || !cJSON_IsObject(keyItem)) {
             continue;
         }
-        Json::Value value = root[it.key().asString()];
-        if (!value.isObject()) {
-            continue;
-        }
-
+        std::string key = keyItem->string;
+        NETSTACK_LOGD("key: %{public}s", key.c_str());
         std::unordered_map<std::string, std::string> m;
-        for (auto innerIt = value.begin(); innerIt != value.end(); ++innerIt) {
-            if (!innerIt.key().isString()) {
+        for (uint32_t j = 0; j < cJSON_GetArraySize(keyItem); j++) {
+            cJSON *valueItem = cJSON_GetArrayItem(keyItem, j);
+            if (valueItem == nullptr) {
+                NETSTACK_LOGD("valueItem is null");
                 continue;
             }
-            Json::Value innerValue = root[it.key().asString()][innerIt.key().asString()];
-            if (!innerValue.isString()) {
-                continue;
-            }
-
-            m[innerIt.key().asString()] = innerValue.asString();
+            std::string valueKey = valueItem->string;
+            m[valueKey] = cJSON_GetStringValue(valueItem);
+            NETSTACK_LOGD("m[%{public}s]: %{public}s", valueKey.c_str(), m[valueKey].c_str());
         }
 
         if (m.find(LRU_INDEX) != m.end()) {
-            nodeVec.emplace_back(it.key().asString(), m);
+            nodeVec.emplace_back(key, m);
         }
     }
-    std::sort(nodeVec.begin(), nodeVec.end(), [](Node& a, Node& b) {
+    std::sort(nodeVec.begin(), nodeVec.end(), [](Node &a, Node &b) {
         return std::strtol(a.value[LRU_INDEX].c_str(), nullptr, DECIMAL_BASE) >
                std::strtol(b.value[LRU_INDEX].c_str(), nullptr, DECIMAL_BASE);
     });
