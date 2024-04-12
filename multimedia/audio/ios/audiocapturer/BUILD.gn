@@ -20,6 +20,8 @@ ohos_source_set("audio_capturer_ios") {
   include_dirs += [
     ".",
     "..",
+    "../audiorenderer",
+    "../audiomanager",
   ]
 
   sources = [
@@ -38,6 +40,7 @@ ohos_source_set("audio_capturer_ios") {
   cflags_objc = [
     "-fvisibility=default",
     "-fobjc-weak",
+    "-fobjc-arc",
   ]
 
   cflags_objcc = cflags_objc

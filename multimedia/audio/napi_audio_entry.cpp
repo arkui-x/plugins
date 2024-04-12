@@ -14,13 +14,21 @@
  */
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#include "napi_audio_capturer.h"
 #include "napi_audio_enum.h"
 #include "napi_audio_renderer.h"
+#include "napi_audio_capturer.h"
+#include "napi_audio_manager.h"
+#include "napi_audio_routing_manager.h"
+#include "napi_audio_stream_manager.h"
+#include "napi_audio_volume_group_manager.h"
+#include "napi_audio_volume_manager.h"
+#include "napi_audio_interrupt_manager.h"
+#include "napi_audio_spatialization_manager.h"
 
 #ifdef ANDROID_PLATFORM
 #include "audiocapturer/java/jni/audio_capturer_jni.h"
 #include "audiorenderer/java/jni/audio_renderer_jni.h"
+#include "audiomanager/java/jni/audio_manager_jni.h"
 #include "plugin_utils.h"
 #endif
 
@@ -32,6 +40,13 @@ static napi_value Init(napi_env env, napi_value exports)
     NapiAudioEnum::Init(env, exports);
     NapiAudioRenderer::Init(env, exports);
     NapiAudioCapturer::Init(env, exports);
+    NapiAudioStreamMgr::Init(env, exports);
+    NapiAudioRoutingManager::Init(env, exports);
+    NapiAudioVolumeGroupManager::Init(env, exports);
+    NapiAudioVolumeManager::Init(env, exports);
+    NapiAudioInterruptManager::Init(env, exports);
+    NapiAudioSpatializationManager::Init(env, exports);
+    NapiAudioManager::Init(env, exports);
     return exports;
 }
 
@@ -52,6 +67,8 @@ static void AudioJniRegister()
     ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::AudioRendererJni::Register, className);
     const char className2[] = "ohos.ace.plugin.audiocapturer.AudioCapturerPlugin";
     ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::AudioCapturerJni::Register, className2);
+    const char className3[] = "ohos.ace.plugin.audiomanager.AudioManagerPlugin";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::AudioManagerJni::Register, className3);
 }
 #endif
 

@@ -19,6 +19,7 @@
 #include <locale>
 #include <securec.h>
 
+#include "audio_common_jni.h"
 #include "audio_convert_util.h"
 #include "audio_errors.h"
 #include "inner_api/plugin_utils_inner.h"
@@ -220,8 +221,10 @@ void AudioRendererJni::NativeOnRoutingChanged(JNIEnv* env, jobject jobj, jlong r
     long key = static_cast<long>(rendererPtr);
     auto iter = deviceChangeObserver_.find(key);
     if (iter != deviceChangeObserver_.end()) {
-        DeviceInfo deviceInfo = GetDeviceInfo(jDeviceInfo);
-        (iter->second)->OnStateChange(deviceInfo);
+        DeviceInfo deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+        if (deviceInfo.deviceRole == OUTPUT_DEVICE) {
+            (iter->second)->OnStateChange(deviceInfo);
+        }
     }
 }
 
@@ -467,10 +470,7 @@ int32_t AudioRendererJni::SetVolume(long rendererPtr, float volume)
         return ERROR;
     }
 
-    if (result != SUCCESS) {
-        return ERR_OPERATION_FAILED;
-    }
-    return SUCCESS;
+    return result != SUCCESS ? ERR_OPERATION_FAILED : SUCCESS;
 }
 
 float AudioRendererJni::GetMinVolume(long rendererPtr)
@@ -533,121 +533,6 @@ uint32_t AudioRendererJni::GetUnderrunCount(long rendererPtr)
     return count;
 }
 
-DeviceInfo AudioRendererJni::GetDeviceInfo(jobject jDeviceInfo)
-{
-    DeviceInfo deviceInfo;
-    auto env = ARKUI_X_Plugin_GetJniEnv();
-    CHECK_NULL_RETURN(env, deviceInfo);
-
-    jclass jDeviceInfoCls = env->FindClass("android/media/AudioDeviceInfo");
-    // Device role
-    jmethodID jIsSourceId = env->GetMethodID(jDeviceInfoCls, "isSource", "()Z");
-    jboolean isSource = env->CallBooleanMethod(jDeviceInfo, jIsSourceId);
-    jmethodID jIsSinkId = env->GetMethodID(jDeviceInfoCls, "isSink", "()Z");
-    jboolean isSink = env->CallBooleanMethod(jDeviceInfo, jIsSinkId);
-    if (isSource && !isSink) {
-        LOGD("this is input device.");
-        return deviceInfo;
-    } 
-    deviceInfo.deviceRole = OUTPUT_DEVICE;
-    LOGD("AudioRendererJni::GetDeviceInfo before convert:isSource:%{public}d, isSink:%{public}d;\
-        after convert:deviceRole:%{public}d",
-        isSource, isSink, deviceInfo.deviceRole);
-    // Device type
-    jmethodID jGetTypeId = env->GetMethodID(jDeviceInfoCls, "getType", "()I");
-    jint deviceType = env->CallIntMethod(jDeviceInfo, jGetTypeId);
-    deviceInfo.deviceType = ConvertDeviceTypeToOh(static_cast<AudioDeviceType>(deviceType));
-    LOGD("AudioRendererJni::GetDeviceInfo before convert:deviceType:%{public}d; after convert:deviceType:%{public}d",
-        deviceType, deviceInfo.deviceType);
-    // id
-    jmethodID jGetDeivceId = env->GetMethodID(jDeviceInfoCls, "getId", "()I");
-    jint deviceId = env->CallIntMethod(jDeviceInfo, jGetDeivceId);
-    deviceInfo.deviceId = deviceId;
-    // device name
-    jmethodID jGetNameId = env->GetMethodID(jDeviceInfoCls, "getProductName", "()Ljava/lang/CharSequence;");
-    jobject jCharName = env->CallObjectMethod(jDeviceInfo, jGetNameId);
-    jclass jCharSeqCls = env->FindClass("java/lang/CharSequence");
-    jmethodID jToStringId = env->GetMethodID(jCharSeqCls, "toString", "()Ljava/lang/String;");
-    jstring jName = static_cast<jstring>(env->CallObjectMethod(jCharName, jToStringId));
-    const char* deviceName = env->GetStringUTFChars(jName, NULL);
-    if (deviceName) {
-        deviceInfo.deviceName = deviceName;
-        env->ReleaseStringUTFChars(jName, deviceName);
-    }
-    env->DeleteLocalRef(jName);
-    env->DeleteLocalRef(jCharSeqCls);
-    env->DeleteLocalRef(jCharName);
-    // address
-    jmethodID jGetAddressId = env->GetMethodID(jDeviceInfoCls, "getAddress", "()Ljava/lang/String;");
-    jstring jAddress = static_cast<jstring>(env->CallObjectMethod(jDeviceInfo, jGetAddressId));
-    const char* macAddress = env->GetStringUTFChars(jAddress, NULL);
-    if (macAddress) {
-        deviceInfo.macAddress = macAddress;
-        env->ReleaseStringUTFChars(jAddress, macAddress);
-    }
-    env->DeleteLocalRef(jAddress);
-    // sample rates
-    jmethodID jGetSampleRatesId = env->GetMethodID(jDeviceInfoCls, "getSampleRates", "()[I");
-    jintArray jSampleRates = static_cast<jintArray>(env->CallObjectMethod(jDeviceInfo, jGetSampleRatesId));
-    int32_t* sampleRates = env->GetIntArrayElements(jSampleRates, NULL);
-    if (sampleRates) {
-        int32_t sampleRateSize = env->GetArrayLength(jSampleRates);
-        deviceInfo.audioStreamInfo.samplingRate.clear();
-        for (int32_t i = 0; i < sampleRateSize; i++) {
-            LOGD("AudioRendererJni::GetDeviceInfo sampleRates[%{public}d]:%{public}d", i, sampleRates[i]);
-            deviceInfo.audioStreamInfo.samplingRate.insert(static_cast<AudioSamplingRate>(sampleRates[i]));
-        }
-        env->ReleaseIntArrayElements(jSampleRates, sampleRates, 0);
-    }
-    env->DeleteLocalRef(jSampleRates);
-    // channel counts
-    jmethodID jGetChannelCntId = env->GetMethodID(jDeviceInfoCls, "getChannelCounts", "()[I");
-    jintArray jChannelCounts = static_cast<jintArray>(env->CallObjectMethod(jDeviceInfo, jGetChannelCntId));
-    int32_t* channelCnts = env->GetIntArrayElements(jChannelCounts, NULL);
-    if (channelCnts) {
-        int32_t channelCntSize = env->GetArrayLength(jChannelCounts);
-        deviceInfo.audioStreamInfo.channels.clear();
-        for (int32_t i = 0; i < channelCntSize; i++) {
-            LOGD("AudioRendererJni::GetDeviceInfo channelCnts[%{public}d]:%{public}d", i, channelCnts[i]);
-            deviceInfo.audioStreamInfo.channels.insert(static_cast<AudioChannel>(channelCnts[i]));
-        }
-        env->ReleaseIntArrayElements(jChannelCounts, channelCnts, 0);
-    }
-    env->DeleteLocalRef(jChannelCounts);
-    // channel masks
-    jmethodID jGetChannelMaskId = env->GetMethodID(jDeviceInfoCls, "getChannelMasks", "()[I");
-    jintArray jChannelMasks = static_cast<jintArray>(env->CallObjectMethod(jDeviceInfo, jGetChannelMaskId));
-    int32_t* channelMasks = env->GetIntArrayElements(jChannelMasks, NULL);
-    if (channelMasks) {
-        int32_t channelMaskSize = env->GetArrayLength(jChannelMasks);
-        if (channelMaskSize > 0) {
-            deviceInfo.channelMasks = channelMasks[0];
-        }
-        env->ReleaseIntArrayElements(jChannelMasks, channelMasks, 0);
-    }
-    env->DeleteLocalRef(jChannelMasks);
-    // Encodings
-    jmethodID jGetEncodingId = env->GetMethodID(jDeviceInfoCls, "getEncodings", "()[I");
-    jintArray jEncodings = static_cast<jintArray>(env->CallObjectMethod(jDeviceInfo, jGetEncodingId));
-    int32_t* encodings = env->GetIntArrayElements(jEncodings, NULL);
-    if (encodings) {
-        int32_t encodingSize = env->GetArrayLength(jEncodings);
-        deviceInfo.audioStreamInfo.encoding = AudioEncodingType::ENCODING_INVALID;
-        for (int32_t i = 0; i < encodingSize; i++) {
-            LOGD("AudioRendererJni::GetDeviceInfo encodings[%{public}d]:%{public}d", i, encodings[i]);
-            if (IsPCMFormat(encodings[i])) {
-                deviceInfo.audioStreamInfo.encoding = AudioEncodingType::ENCODING_PCM;
-                break;
-            }
-        }
-        env->ReleaseIntArrayElements(jEncodings, encodings, 0);
-    }
-    env->DeleteLocalRef(jEncodings);
-    env->DeleteLocalRef(jDeviceInfoCls);
-
-    return deviceInfo;
-}
-
 int32_t AudioRendererJni::GetCurrentOutputDevices(long rendererPtr, DeviceInfo& deviceInfo)
 {
     LOGD("AudioRendererJni::GetCurrentOutputDevices rendererPtr:%{public}ld", rendererPtr);
@@ -664,7 +549,10 @@ int32_t AudioRendererJni::GetCurrentOutputDevices(long rendererPtr, DeviceInfo& 
         env->ExceptionClear();
         return ERROR;
     }
-    deviceInfo = GetDeviceInfo(jDeviceInfo);
+    DeviceInfo deviceInfoTmp = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+    if (deviceInfoTmp.deviceRole == OUTPUT_DEVICE) {
+        deviceInfo = deviceInfoTmp;
+    }
     env->DeleteLocalRef(jDeviceInfo);
     return SUCCESS;
 }
@@ -827,10 +715,7 @@ int32_t AudioRendererJni::SetDualMonoMode(long rendererPtr, ChannelBlendMode ble
         env->ExceptionClear();
         return ERROR;
     }
-    if (!result) {
-        return ERROR;
-    }
-    return SUCCESS;
+    return result ? SUCCESS : ERROR;
 }
 
 int32_t AudioRendererJni::SetNotificationMarkerPosition(long rendererPtr, int64_t markPosition)
@@ -850,10 +735,7 @@ int32_t AudioRendererJni::SetNotificationMarkerPosition(long rendererPtr, int64_
         env->ExceptionClear();
         return ERROR;
     }
-    if (result != SUCCESS) {
-        return ERR_OPERATION_FAILED;
-    }
-    return SUCCESS;
+    return result != SUCCESS ? ERR_OPERATION_FAILED : SUCCESS;
 }
 
 int32_t AudioRendererJni::SetRendererPositionUpdateListener(
@@ -910,10 +792,7 @@ int32_t AudioRendererJni::SetPositionNotificationPeriod(long rendererPtr, int64_
         env->ExceptionClear();
         return ERROR;
     }
-    if (result != SUCCESS) {
-        return ERR_OPERATION_FAILED;
-    }
-    return SUCCESS;
+    return result != SUCCESS ? ERR_OPERATION_FAILED : SUCCESS;
 }
 
 int32_t AudioRendererJni::SetPeriodPositionUpdateListener(

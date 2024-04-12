@@ -190,6 +190,21 @@ int32_t ConvertChannelCountToLayout(AudioChannel channelCount)
     return CHANNEL_OUT_DEFAULT;
 }
 
+AudioDeviceType ConvertActiveDeviceTypeToAn(ActiveDeviceType deviceType)
+{
+    static const std::map<ActiveDeviceType, AudioDeviceType> table = {
+        { BLUETOOTH_SCO, TYPE_BLUETOOTH_SCO},
+        { EARPIECE, TYPE_BUILTIN_EARPIECE},
+        { SPEAKER, TYPE_BUILTIN_SPEAKER},
+    };
+
+    auto it = table.find(deviceType);
+    if (it != table.end()) {
+        return it->second;
+    }
+    return TYPE_UNKNOWN;
+}
+
 DeviceType ConvertDeviceTypeToOh(AudioDeviceType deviceType)
 {
     static const std::map<AudioDeviceType, DeviceType> table = {
@@ -290,5 +305,100 @@ bool IsPCMFormat(int32_t encode)
         return true;
     }
     return false;
+}
+
+AudioScene ConvertSceneToOh(AudioMode modeAn)
+{
+    static const std::map<AudioMode, AudioScene> table = {
+        { MODE_NORMAL, AUDIO_SCENE_DEFAULT },
+        { MODE_RINGTONE, AUDIO_SCENE_RINGING },
+        { MODE_IN_CALL, AUDIO_SCENE_PHONE_CALL },
+        { MODE_IN_COMMUNICATION, AUDIO_SCENE_PHONE_CHAT },
+        { MODE_CALL_SCREENING, AUDIO_SCENE_INVALID },
+        { MODE_CALL_REDIRECT, AUDIO_SCENE_INVALID },
+        { MODE_COMMUNICATION_REDIRECT, AUDIO_SCENE_INVALID },
+    };
+
+    auto it = table.find(modeAn);
+    if (it != table.end()) {
+        return it->second;
+    }
+    return AUDIO_SCENE_INVALID;
+}
+
+StreamType ConvertVolumeTypeToAn(AudioVolumeType typeOh)
+{
+    static const std::map<AudioVolumeType, StreamType> table = {
+        { AudioVolumeType::STREAM_VOICE_CALL, StreamType::STREAM_VOICE_CALL },
+        { AudioVolumeType::STREAM_RING, StreamType::STREAM_RING },
+        { AudioVolumeType::STREAM_MUSIC, StreamType::STREAM_MUSIC },
+        { AudioVolumeType::STREAM_ALARM, StreamType::STREAM_ALARM },
+        { AudioVolumeType::STREAM_ACCESSIBILITY, StreamType::STREAM_ACCESSIBILITY },
+        { AudioVolumeType::STREAM_VOICE_ASSISTANT, StreamType::STREAM_INVALID },
+    };
+
+    auto it = table.find(typeOh);
+    if (it != table.end()) {
+        return it->second;
+    }
+    return StreamType::STREAM_INVALID;
+}
+
+AudioRingerMode ConvertRingerModeToOh(RingerMode modeAn)
+{
+    static const std::map<RingerMode, AudioRingerMode> table = {
+        { RingerMode::RINGER_MODE_SILENT, AudioRingerMode::RINGER_MODE_SILENT },
+        { RingerMode::RINGER_MODE_VIBRATE, AudioRingerMode::RINGER_MODE_VIBRATE },
+        { RingerMode::RINGER_MODE_NORMAL, AudioRingerMode::RINGER_MODE_NORMAL },
+    };
+
+    auto it = table.find(modeAn);
+    if (it != table.end()) {
+        return it->second;
+    }
+    return AudioRingerMode::RINGER_MODE_NORMAL;
+}
+
+AudioDeviceType ConvertDeviceTypeToAn(DeviceType deviceType)
+{
+    static const std::map<DeviceType, AudioDeviceType> table = {
+        { DEVICE_TYPE_NONE, TYPE_UNKNOWN },
+        { DEVICE_TYPE_INVALID, TYPE_UNKNOWN },
+        { DEVICE_TYPE_EARPIECE, TYPE_BUILTIN_EARPIECE },
+        { DEVICE_TYPE_SPEAKER, TYPE_BUILTIN_SPEAKER },
+        { DEVICE_TYPE_WIRED_HEADSET, TYPE_WIRED_HEADSET },
+        { DEVICE_TYPE_WIRED_HEADPHONES, TYPE_WIRED_HEADPHONES },
+        { DEVICE_TYPE_BLUETOOTH_SCO, TYPE_BLUETOOTH_SCO },
+        { DEVICE_TYPE_BLUETOOTH_A2DP, TYPE_BLUETOOTH_A2DP },
+        { DEVICE_TYPE_MIC, TYPE_BUILTIN_MIC },
+        { DEVICE_TYPE_WAKEUP, TYPE_UNKNOWN },
+        { DEVICE_TYPE_USB_HEADSET, TYPE_USB_HEADSET },
+        { DEVICE_TYPE_USB_ARM_HEADSET, TYPE_UNKNOWN },
+        { DEVICE_TYPE_FILE_SINK, TYPE_UNKNOWN },
+        { DEVICE_TYPE_FILE_SOURCE, TYPE_UNKNOWN },
+        { DEVICE_TYPE_EXTERN_CABLE, TYPE_UNKNOWN },
+        { DEVICE_TYPE_DEFAULT, TYPE_UNKNOWN },
+    };
+
+    auto it = table.find(deviceType);
+    if (it != table.end()) {
+        return it->second;
+    }
+    return TYPE_UNKNOWN;
+}
+
+AudioDeviceFlags ConvertDeviceFlagToAn(DeviceFlag flag)
+{
+    static const std::map<DeviceFlag, AudioDeviceFlags> table = {
+        { OUTPUT_DEVICES_FLAG, GET_DEVICES_OUTPUTS },
+        { INPUT_DEVICES_FLAG, GET_DEVICES_INPUTS },
+        { ALL_DEVICES_FLAG, GET_DEVICES_ALL },
+    };
+
+    auto it = table.find(flag);
+    if (it != table.end()) {
+        return it->second;
+    }
+    return GET_DEVICES_INVALID;
 }
 } // namespace OHOS::Plugin

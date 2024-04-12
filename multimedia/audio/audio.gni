@@ -35,6 +35,8 @@ plugins_audio_include = [
   "$WORK_DIR/audiocapturer/callback",
   "$WORK_DIR/audiorenderer",
   "$WORK_DIR/audiorenderer/callback",
+  "$WORK_DIR/audiomanager",
+  "$WORK_DIR/audiomanager/callback",
   "$WORK_DIR/common",
   "//plugins/interfaces",
   "//plugins/interfaces/native",

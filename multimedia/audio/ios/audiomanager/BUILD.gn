@@ -14,19 +14,23 @@
 import("//build/ohos.gni")
 import("//plugins/multimedia/audio/audio.gni")
 
-ohos_source_set("audio_renderer_ios") {
+ohos_source_set("audio_manager_ios") {
   include_dirs = plugins_audio_utils_include
   include_dirs += plugins_audio_include
   include_dirs += [
     ".",
     "..",
+    "../audiorenderer",
     "../audiocapturer",
-    "../audiomanager",
   ]
 
   sources = [
-    "audio_renderer.mm",
-    "audio_renderer_impl.mm",
+    "audio_group_manager.mm",
+    "audio_manager_impl.mm",
+    "audio_routing_manager.mm",
+    "audio_spatialization_manager.mm",
+    "audio_stream_manager.mm",
+    "audio_system_manager.mm",
   ]
 
   defines = [ "IOS_PLATFORM" ]
@@ -49,11 +53,8 @@ ohos_source_set("audio_renderer_ios") {
     "//plugins/libs/napi:napi_ios",
   ]
 
-  frameworks = [
-    "SystemConfiguration.framework",
-    "AudioToolbox.framework",
-  ]
+  frameworks = [ "SystemConfiguration.framework" ]
 
   subsystem_name = "plugins"
-  part_name = "multimedia_audio_audiorenderer"
+  part_name = "multimedia_audio_audiomanager"
 }

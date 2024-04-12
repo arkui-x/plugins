@@ -16,6 +16,7 @@
 #include "audio_renderer_private.h"
 #include "audio_log.h"
 #include "audio_errors.h"
+#import "audio_manager_impl.h"
 
 namespace OHOS {
 namespace AudioStandard {
@@ -23,7 +24,10 @@ namespace AudioStandard {
 AudioRenderer::~AudioRenderer() = default;
 AudioRendererPrivate::~AudioRendererPrivate()
 {
-    [rendererImpl_ release];
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        [managerImpl removeRenderer:rendererImpl_];
+    }
 }
 
 int32_t AudioRenderer::CheckMaxRendererInstances()
@@ -78,6 +82,11 @@ void AudioRendererPrivate::CreateAudioTrack(const AudioRendererOptions &renderer
 {
     rendererImpl_ = [[AudioRendererImpl alloc] init];
     [rendererImpl_ initWithSampleRate: rendererOptions];
+
+    AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
+    if (managerImpl) {
+        [managerImpl addRenderer:rendererImpl_];
+    }
 }
 
 int32_t AudioRendererPrivate::CheckParams(const AudioRendererOptions &rendererOptions)
