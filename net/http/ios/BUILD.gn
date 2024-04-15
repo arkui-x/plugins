@@ -16,6 +16,7 @@ import("//plugins/net/http/http.gni")
 ohos_source_set("net_http_ios") {
   include_dirs = http_include
   include_dirs += utils_include
+  include_dirs += [ "//third_party/cJSON" ]
 
   sources = http_sources
   sources += [

@@ -257,5 +257,10 @@ int32_t PlayerImpl::SetDecryptConfig(const sptr<DrmStandard::IMediaKeySessionSer
     return MSERR_OK;
 }
 #endif
+
+int32_t PlayerImpl::SetMediaSource(const std::shared_ptr<AVMediaSource> &mediaSource, AVPlayStrategy strategy)
+{
+    return MSERR_UNSUPPORT;
+}
 } // namespace Media
 } // namespace OHOS

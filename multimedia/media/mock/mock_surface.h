@@ -145,12 +145,12 @@ public:
     {
         return -1;
     }
-    GSError SetDefaultUsage(uint32_t usage) override
+    GSError SetDefaultUsage(uint64_t usage) override
     {
         return GSERROR_NOT_SUPPORT;
     }
 
-    uint32_t GetDefaultUsage() override
+    uint64_t GetDefaultUsage() override
     {
         return -1;
     }
@@ -329,6 +329,17 @@ public:
     {
         return GSERROR_NOT_SUPPORT;
     }
+
+    GraphicTransformType GetTransformHint() const override
+    {
+        return GraphicTransformType::GRAPHIC_ROTATE_BUTT;
+    }
+
+    GSError SetTransformHint(GraphicTransformType transformHint) override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
+    
 private:
     uint64_t queueId_ = 0;
     int32_t instanceId_ = -1;

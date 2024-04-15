@@ -87,6 +87,7 @@ public:
         return emptyVector;
     }
     int32_t SetCaptureSilentState(bool state) override { return 0; }
+    uint32_t GetOverflowCount() override { return 0; }
 
 private:
     std::shared_ptr<AudioCapturerImpl> capturerImpl_ = nullptr;

@@ -20,6 +20,7 @@ ohos_source_set("net_http_android") {
     "//foundation/arkui/ace_engine/frameworks",
     "//foundation/arkui/ace_engine",
   ]
+  include_dirs += [ "//third_party/cJSON" ]
 
   sources = http_sources
   sources += [ "http_exec.cpp" ]

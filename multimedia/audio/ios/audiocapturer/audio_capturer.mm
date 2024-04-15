@@ -344,6 +344,11 @@ int32_t AudioCapturerPrivate::SetCaptureSilentState(bool state)
     return 0;
 }
 
+uint32_t AudioCapturerPrivate::GetOverflowCount()
+{
+    return 0;
+}
+
 std::vector<sptr<MicrophoneDescriptor>> AudioCapturerPrivate::GetCurrentMicrophones() const
 {
     std::vector<sptr<MicrophoneDescriptor>> emptyVector;

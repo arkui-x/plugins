@@ -31,6 +31,7 @@ ohos_source_set("netstack_utils") {
     "//plugins/interfaces",
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
   ]
+  include_dirs += [ "//third_party/cJSON" ]
 
   defines = [ "ENABLE_EVENT_HANDLER" ]
 
