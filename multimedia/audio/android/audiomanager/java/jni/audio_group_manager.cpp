@@ -143,5 +143,11 @@ float AudioGroupManager::GetSystemVolumeInDb(AudioVolumeType volumeType, int32_t
 {
     return Plugin::AudioManagerJni::GetSystemVolumeInDb(volumeType, volumeLevel, deviceType);
 }
+
+float AudioGroupManager::GetMaxAmplitude(const int32_t deviceId)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return 0.0f;
+}
 } // namespace AudioStandard
 } // namespace OHOS
