@@ -92,6 +92,11 @@ int32_t RecorderImpl::RecorderImpl::SetVideoIsHdr(int32_t sourceId, bool isHdr)
     return Plugin::RecorderJni::SetVideoIsHdr(long(this), isHdr);
 }
 
+int32_t RecorderImpl::RecorderImpl::SetVideoEnableTemporalScale(int32_t sourceId, bool enableTemporalScale)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::SetCaptureRate(int32_t sourceId, double fps)
 {
     return MSERR_OK;
