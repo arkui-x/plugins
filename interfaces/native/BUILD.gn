@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//foundation/appframework/ability/ability_runtime/ability_runtime.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
 ohos_source_set("plugin_log") {
@@ -110,4 +111,37 @@ foreach(item, ace_platforms) {
     subsystem_name = "plugins"
     part_name = "plugin_utils"
   }
+}
+
+config("napi_common_public_config") {
+  include_dirs = [
+    "./",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want",
+  ]
+}
+
+ohos_source_set("napi_common") {
+  public_configs = [
+    ":napi_common_public_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/jsruntime:jsruntime_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/hilog:ability_cross_platform_hilog_config",
+  ]
+
+  sources = [
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/js/napi/napi_common/napi_common_util.cpp",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/js/napi/napi_common/napi_common_want.cpp",
+  ]
+
+  deps = [ "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:cross_platform_want" ]
+
+  deps += [ "//plugins/libs/napi:napi_${target_os}" ]
+
+  if (target_os == "android") {
+    defines = [ "ANDROID_PLATFORM" ]
+  } else if (target_os == "ios") {
+    defines = [ "IOS_PLATFORM" ]
+  }
+
+  subsystem_name = "ability"
+  part_name = "ability_runtime"
 }

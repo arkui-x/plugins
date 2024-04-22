@@ -65,6 +65,7 @@ common_plugin_libs = [
   "security/cert",
   "events/emitter",
   "wifi_manager",
+  "notification_manager",
 ]
 
 template("plugin_lib") {
