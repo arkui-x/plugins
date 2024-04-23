@@ -77,6 +77,14 @@ public:
      * @return Returns the list of lines included in this notification.
      */
     std::vector<std::string> GetAllLines() const;
+	
+	    /**
+     * @brief Converts a NotificationMultiLineContent object into a Json.
+     *
+     * @param jsonObject Indicates the Json object.
+     * @return Returns true if succeed; returns false otherwise.
+     */
+    virtual bool ToJson(nlohmann::json &jsonObject) const override;
 
 private:
     /**

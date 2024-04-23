@@ -50,5 +50,12 @@ std::string NotificationBasicContent::GetTitle() const
 {
     return title_;
 }
+bool NotificationBasicContent::ToJson(nlohmann::json &jsonObject) const
+{
+    jsonObject["text"]           = text_;
+    jsonObject["title"]          = title_;
+    jsonObject["additionalText"] = additionalText_;
+    return true;
+}
 }  // namespace Notification
 }  // namespace OHOS

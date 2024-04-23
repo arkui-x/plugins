@@ -19,9 +19,11 @@
 #include <string>
 #include <vector>
 
+#include "notification_json_convert.h"
+
 namespace OHOS {
 namespace Notification {
-class NotificationBasicContent {
+class NotificationBasicContent : public NotificationJsonConvertionBase {
 public:
     virtual ~NotificationBasicContent();
 
@@ -68,6 +70,14 @@ public:
      * @return Returns the title of the notification.
      */
     virtual std::string GetTitle() const;
+
+    /**
+     * @brief Converts a NotificationBasicContent object into a Json.
+     *
+     * @param jsonObject Indicates the Json object.
+     * @return Returns true if succeed; returns false otherwise.
+     */
+    virtual bool ToJson(nlohmann::json& jsonObject) const override;
 
 protected:
     NotificationBasicContent() = default;

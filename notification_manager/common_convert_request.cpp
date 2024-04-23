@@ -50,12 +50,20 @@ napi_value Common::GetNotificationRequestByBool(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LOGD("enter");
+    // isOngoing?: boolean
+    if (GetNotificationIsOngoing(env, value, request) == nullptr) {
+        return nullptr;
+    }
     // tapDismissed?: boolean
     if (GetNotificationtapDismissed(env, value, request) == nullptr) {
         return nullptr;
     }
     // isAlertOnce?: boolean
     if (GetNotificationIsAlertOnce(env, value, request) == nullptr) {
+        return nullptr;
+    }
+    // isStopwatch?: boolean
+    if (GetNotificationIsStopwatch(env, value, request) == nullptr) {
         return nullptr;
     }
     // isCountDown?: boolean
@@ -115,10 +123,34 @@ napi_value Common::GetNotificationId(const napi_env &env, const napi_value &valu
         }
         napi_get_value_int32(env, result, &notificationId);
         request.SetNotificationId(notificationId);
-        LOGI("notificationId = %{public}d", notificationId);
+        LOGD("notificationId = %{public}d", notificationId);
     } else {
-        LOGI("default notificationId = 0");
+        LOGD("default notificationId = 0");
         request.SetNotificationId(0);
+    }
+
+    return NapiGetNull(env);
+}
+
+napi_value Common::GetNotificationIsOngoing(const napi_env& env, const napi_value& value, NotificationRequest& request)
+{
+    LOGD("enter");
+
+    napi_valuetype valuetype = napi_undefined;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    bool isOngoing = false;
+
+    NAPI_CALL(env, napi_has_named_property(env, value, "isOngoing", &hasProperty));
+    if (hasProperty) {
+        napi_get_named_property(env, value, "isOngoing", &result);
+        NAPI_CALL(env, napi_typeof(env, result, &valuetype));
+        if (valuetype != napi_boolean) {
+            LOGE("Wrong argument type. Bool expected.");
+            return nullptr;
+        }
+        napi_get_value_bool(env, result, &isOngoing);
+        request.SetInProgress(isOngoing);
     }
 
     return NapiGetNull(env);
@@ -219,6 +251,31 @@ napi_value Common::GetNotificationIsAlertOnce(
         }
         napi_get_value_bool(env, result, &isAlertOnce);
         request.SetAlertOneTime(isAlertOnce);
+    }
+
+    return NapiGetNull(env);
+}
+
+napi_value Common::GetNotificationIsStopwatch(
+    const napi_env &env, const napi_value &value, NotificationRequest &request)
+{
+    LOGD("enter");
+
+    napi_valuetype valuetype = napi_undefined;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    bool isStopwatch = false;
+
+    NAPI_CALL(env, napi_has_named_property(env, value, "isStopwatch", &hasProperty));
+    if (hasProperty) {
+        napi_get_named_property(env, value, "isStopwatch", &result);
+        NAPI_CALL(env, napi_typeof(env, result, &valuetype));
+        if (valuetype != napi_boolean) {
+            LOGE("Wrong argument type. Bool expected.");
+            return nullptr;
+        }
+        napi_get_value_bool(env, result, &isStopwatch);
+        request.SetShowStopwatch(isStopwatch);
     }
 
     return NapiGetNull(env);

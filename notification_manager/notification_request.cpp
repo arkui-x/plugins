@@ -45,6 +45,16 @@ NotificationRequest &NotificationRequest::operator=(const NotificationRequest &o
 NotificationRequest::~NotificationRequest()
 {}
 
+bool NotificationRequest::IsInProgress() const
+{
+    return inProgress_;
+}
+
+void NotificationRequest::SetInProgress(bool isOngoing)
+{
+    inProgress_ = isOngoing;
+}
+
 void NotificationRequest::SetBadgeNumber(uint32_t number)
 {
     badgeNumber_ = number;
@@ -157,6 +167,46 @@ void NotificationRequest::SetTapDismissed(bool isDismissed)
     tapDismissed_ = isDismissed;
 }
 
+bool NotificationRequest::ToJson(nlohmann::json &jsonObject) const
+{
+    jsonObject["version"]         = 1;
+
+    jsonObject["id"]              = notificationId_;
+    jsonObject["deliveryTime"]    = deliveryTime_;
+    jsonObject["autoDeletedTime"] = autoDeletedTime_;
+    jsonObject["notificationContentType"] = static_cast<int32_t>(notificationContentType_);
+
+    jsonObject["showDeliveryTime"] = showDeliveryTime_;
+    jsonObject["tapDismissed"]     = tapDismissed_;
+    jsonObject["isOngoing"]        = inProgress_;
+    jsonObject["isAlertOnce"]      = alertOneTime_;
+    jsonObject["isStopwatch"]      = showStopwatch_;
+    jsonObject["isCountdown"]      = isCountdown_;
+    jsonObject["badgeNumber"]     = badgeNumber_;
+    
+
+    if (!ConvertObjectsToJson(jsonObject)) {
+        LOGE("Cannot convert objects to JSON");
+        return false;
+    }
+
+    return true;
+}
+
+bool NotificationRequest::ConvertObjectsToJson(nlohmann::json &jsonObject) const
+{
+    nlohmann::json contentObj;
+    if (notificationContent_) {
+        if (!NotificationJsonConverter::ConvertToJson(notificationContent_.get(), contentObj)) {
+            LOGE("Cannot convert notificationContent to JSON");
+            return false;
+        }
+    }
+    jsonObject["content"] = contentObj;
+    return true;
+}
+
+
 int64_t NotificationRequest::GetNowSysTime()
 {
     std::chrono::time_point<std::chrono::system_clock> nowSys = std::chrono::system_clock::now();
@@ -182,6 +232,7 @@ void NotificationRequest::CopyOther(const NotificationRequest &other)
     this->alertOneTime_ = other.alertOneTime_;
     this->showStopwatch_ = other.showStopwatch_;
     this->isCountdown_ = other.isCountdown_;
+    this->inProgress_ = other.inProgress_;
     this->notificationContent_ = other.notificationContent_;
 }
 }  // namespace Notification

@@ -25,6 +25,14 @@ public:
     NotificationNormalContent() = default;
 
     ~NotificationNormalContent() = default;
+	
+	 /**
+     * @brief Converts a NotificationNormalContent object into a Json.
+     *
+     * @param jsonObject Indicates the Json object.
+     * @return Returns true if succeed; returns false otherwise.
+     */
+    bool ToJson(nlohmann::json &jsonObject) const override;
 };
 }  // namespace Notification
 }  // namespace OHOS

@@ -63,5 +63,25 @@ std::shared_ptr<NotificationBasicContent> NotificationContent::GetNotificationCo
 {
     return content_;
 }
+
+bool NotificationContent::ToJson(nlohmann::json &jsonObject) const
+{
+    jsonObject["contentType"] = static_cast<int32_t>(contentType_);
+    jsonObject["notificationContentType"] = static_cast<int32_t>(contentType_);
+
+    if (!content_) {
+        LOGE("Invalid content. Cannot convert to JSON.");
+        return false;
+    }
+
+    nlohmann::json contentObj;
+    if (!NotificationJsonConverter::ConvertToJson(content_.get(), contentObj)) {
+        LOGE("Cannot convert content to JSON");
+        return false;
+    }
+    jsonObject["content"] = contentObj;
+
+    return true;
+}
 }  // namespace Notification
 }  // namespace OHOS

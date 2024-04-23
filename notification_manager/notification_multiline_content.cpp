@@ -58,5 +58,19 @@ std::vector<std::string> NotificationMultiLineContent::GetAllLines() const
     return allLines_;
 }
 
+bool NotificationMultiLineContent::ToJson(nlohmann::json &jsonObject) const
+{
+    if (!NotificationBasicContent::ToJson(jsonObject)) {
+        LOGE("Cannot convert basicContent to JSON");
+        return false;
+    }
+
+    jsonObject["expandedTitle"] = expandedTitle_;
+    jsonObject["briefText"]     = briefText_;
+    jsonObject["allLines"]      = nlohmann::json(allLines_);
+
+    return true;
+}
+
 }  // namespace Notification
 }  // namespace OHOS

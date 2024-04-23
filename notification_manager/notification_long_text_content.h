@@ -81,6 +81,14 @@ public:
      */
     std::string GetLongText() const;
 
+    /**
+     * @brief Converts a NotificationLongTextContent object into a Json.
+     *
+     * @param jsonObject Indicates the Json object.
+     * @return Returns true if succeed; returns false otherwise.
+     */
+    bool ToJson(nlohmann::json& jsonObject) const override;
+
 private:
     /**
      * the maximum length of longtext is 1024 characters.

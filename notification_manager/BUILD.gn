@@ -25,6 +25,7 @@ template("plugin_notification_manager_static") {
       "//plugins/interfaces/native",
       "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/js/napi/napi_common",
       "//plugins/notification_manager",
+      "//third_party/json/include",
     ]
 
     sources = [
@@ -51,15 +52,13 @@ template("plugin_notification_manager_static") {
     deps = [
       "//commonlibrary/c_utils/base:utilsbase",
       "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/napi_base_context:napi_base_context",
-      "//plugins/i18n:i18n_static_${platform}",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/interfaces/native:napi_common",
       "//plugins/interfaces/native:plugin_log",
     ]
 
     if (platform == "android") {
-      # deps += [ "android/java:notification_manager_android_jni" ]
-      sources += [ "//plugins/notification_manager/android/java/jni/notification_manager_impl.cpp" ]
+      deps += [ "android/java:notification_manager_android_jni" ]
     } else if (platform == "ios") {
       deps += [ "ios:notification_manager_ios" ]
     }

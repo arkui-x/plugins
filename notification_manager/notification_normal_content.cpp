@@ -22,6 +22,9 @@
 
 namespace OHOS {
 namespace Notification {
-
+bool NotificationNormalContent::ToJson(nlohmann::json &jsonObject) const
+{
+    return NotificationBasicContent::ToJson(jsonObject);
+}
 }  // namespace Notification
 }  // namespace OHOS

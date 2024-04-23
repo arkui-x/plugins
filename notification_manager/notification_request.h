@@ -53,6 +53,22 @@ public:
     virtual ~NotificationRequest();
 
     /**
+     * @brief Checks whether this notification is in progress.
+     *
+     * @return Returns true if this notification is in progress; returns false otherwise.
+     */
+    bool IsInProgress() const;
+
+    /**
+     * @brief Sets whether this notification is in progress.
+     * Users cannot directly dismiss notifications in progress because
+     * they usually contain some ongoing background services such as music playback.
+     *
+     * @param isOngoing Specifies whether this notification is in progress.
+     */
+    void SetInProgress(bool isOngoing);
+
+    /**
      * @brief Sets the number to be displayed for this notification.
      *
      * @param number Indicates the number to set.
@@ -225,6 +241,14 @@ public:
      */
     void SetTapDismissed(bool isDismissed);
 
+    /**
+     * @brief Converts a NotificationRequest object into a Json.
+     *
+     * @param jsonObject Indicates the Json object.
+     * @return Returns true if succeed; returns false otherwise.
+     */
+    bool ToJson(nlohmann::json& jsonObject) const;
+
 private:
 
     /**
@@ -234,8 +258,10 @@ private:
      */
     int64_t GetNowSysTime();
 
-    void CopyBase(const NotificationRequest &other);
-    void CopyOther(const NotificationRequest &other);
+    void CopyBase(const NotificationRequest& other);
+    void CopyOther(const NotificationRequest& other);
+
+    bool ConvertObjectsToJson(nlohmann::json& jsonObject) const;
 
 private:
     int32_t notificationId_ {0};
@@ -245,12 +271,12 @@ private:
     int64_t autoDeletedTime_ {-1};
     NotificationContent::Type notificationContentType_ {NotificationContent::Type::NONE};
 
-    bool showDeliveryTime_ {false};
-    bool tapDismissed_ {true};
-    bool alertOneTime_ {false};
-    bool showStopwatch_ {false};
-    bool isCountdown_ {false};
-
+    bool showDeliveryTime_ { false };
+    bool tapDismissed_ { true };
+    bool alertOneTime_ { false };
+    bool showStopwatch_ { false };
+    bool isCountdown_ { false };
+    bool inProgress_ { false };
     std::shared_ptr<NotificationContent> notificationContent_ {};
 };
 }  // namespace Notification

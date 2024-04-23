@@ -65,5 +65,18 @@ std::string NotificationLongTextContent::GetLongText() const
 {
     return longText_;
 }
+bool NotificationLongTextContent::ToJson(nlohmann::json &jsonObject) const
+{
+    if (!NotificationBasicContent::ToJson(jsonObject)) {
+        LOGE("Cannot convert basicContent to JSON");
+        return false;
+    }
+
+    jsonObject["longText"]      = longText_;
+    jsonObject["expandedTitle"] = expandedTitle_;
+    jsonObject["briefText"]     = briefText_;
+
+    return true;
+}
 }  // namespace Notification
 }  // namespace OHOS

@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace Notification {
-class NotificationContent {
+class NotificationContent : public NotificationJsonConvertionBase {
 public:
     enum class Type {
         /**
@@ -133,6 +133,14 @@ public:
      * NotificationMediaContent.
      */
     std::shared_ptr<NotificationBasicContent> GetNotificationContent() const;
+
+    /**
+     * @brief Converts a NotificationContent object into a Json.
+     *
+     * @param jsonObject Indicates the Json object.
+     * @return Returns true if succeed; returns false otherwise.
+     */
+    bool ToJson(nlohmann::json &jsonObject) const override;
 
 private:
     NotificationContent() = default;

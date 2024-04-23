@@ -17,12 +17,16 @@
 
 #include "constant.h"
 #include "js_runtime_utils.h"
-#include "napi/native_api.h"
 #include "log.h"
+#include "napi/native_api.h"
 #include "napi_cancel.h"
 #include "napi_display_badge.h"
 #include "napi_enable_notification.h"
 #include "napi_publish.h"
+#ifdef ANDROID_PLATFORM
+#include "plugin_utils.h"
+#include "android/java/jni/notification_jni.h"
+#endif
 
 namespace OHOS {
 namespace NotificationNapi {
@@ -41,7 +45,7 @@ napi_value NotificationManagerInit(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isNotificationEnabled", NapiIsNotificationEnabled),
         DECLARE_NAPI_FUNCTION("setBadgeNumber", NapiSetBadgeNumber),
         DECLARE_NAPI_FUNCTION("requestEnableNotification", NapiRequestEnableNotification),
-};
+    };
 
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
 
@@ -57,18 +61,30 @@ static napi_value Init(napi_env env, napi_value exports)
      * Propertise define
      */
     NotificationManagerInit(env, exports);
+
     ConstantInit(env, exports);
 
     return exports;
 }
+#ifdef ANDROID_PLATFORM
+static void NotificationManagerPluginJniRegister()
+{
+    const char className[] = "ohos.ace.plugin.notificationmanager.NotificationPlugin";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&OHOS::Notification::NotificationJni::Register, className);
+}
+#endif
 
 /*
  * Module register function
  */
 __attribute__((constructor)) void RegisterModule(void)
 {
+    LOGD("RegisterModule notification");
+#ifdef ANDROID_PLATFORM
+    NotificationManagerPluginJniRegister();
+#endif
     napi_module_register(&_module_manager);
 }
 EXTERN_C_END
-}  // namespace NotificationNapi
-}  // namespace OHOS
+} // namespace NotificationNapi
+} // namespace OHOS

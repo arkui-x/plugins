@@ -417,7 +417,7 @@ napi_value Common::GetNotificationMultiLineContentLines(const napi_env &env, con
         }
         NAPI_CALL(env, napi_get_value_string_utf8(env, line, str, STR_MAX_SIZE - 1, &strLen));
         multiLineContent->AddSingleLine(str);
-        LOGI("multiLine: lines : addSingleLine = %{public}s", str);
+        LOGD("multiLine: lines : addSingleLine = %{public}s", str);
     }
 
     return NapiGetNull(env);

@@ -204,6 +204,17 @@ public:
     static napi_value GetNotificationId(const napi_env &env, const napi_value &value, NotificationRequest &request);
 
     /**
+     * @brief Gets the isOngoing flag of NotificationRequest object from specified js object
+     *
+     * @param env Indicates the environment that the API is invoked under
+     * @param value Indicates a js object to be converted
+     * @param request Indicates a NotificationRequest object from specified js object
+     * @return Returns the null object if success, returns the null value otherwise
+     */
+    static napi_value GetNotificationIsOngoing(
+        const napi_env& env, const napi_value& value, NotificationRequest& request);
+
+    /**
      * @brief Gets the delivery time of NotificationRequest object from specified js object
      *
      * @param env Indicates the environment that the API is invoked under
@@ -245,7 +256,19 @@ public:
      * @return Returns the null object if success, returns the null value otherwise
      */
     static napi_value GetNotificationIsAlertOnce(
+    
         const napi_env &env, const napi_value &value, NotificationRequest &request);
+		
+	/**
+     * @brief Gets the isStopwatch flag of NotificationRequest object from specified js object
+     *
+     * @param env Indicates the environment that the API is invoked under
+     * @param value Indicates a js object to be converted
+     * @param request Indicates a NotificationRequest object from specified js object
+     * @return Returns the null object if success, returns the null value otherwise
+     */
+    static napi_value GetNotificationIsStopwatch(
+        const napi_env& env, const napi_value& value, NotificationRequest& request);
 
     /**
      * @brief Gets the isCountDown flag of NotificationRequest object from specified js object
