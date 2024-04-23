@@ -15,7 +15,11 @@ import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 
 ohos_source_set("notification_manager_ios") {
-  include_dirs = [ "//plugins/notification_manager" ]
+  defines = [ "JSON_NOEXCEPTION" ]
+  include_dirs = [
+    "//plugins/notification_manager",
+    "//third_party/json/include",
+  ]
 
   sources = [
     "notification_manager_impl.mm",
