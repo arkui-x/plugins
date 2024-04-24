@@ -80,19 +80,9 @@
 }
 
 - (ErrorCode)SetBadgeNumber:(int32_t)badgeNumber {
-    if (@available(iOS 16.0, *)) {
-        [UNUserNotificationCenter.currentNotificationCenter setBadgeCount:badgeNumber withCompletionHandler:^(NSError * _Nullable error) {
-            if (error && error.code) {
-                NSLog(@"SetBadgeNumber error, errorCode is %ld", (long)error.code);
-            } else {
-                NSLog(@"SetBadgeNumber success");
-            }
-        }];
-    } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [UIApplication sharedApplication].applicationIconBadgeNumber = badgeNumber;
-        });
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [UIApplication sharedApplication].applicationIconBadgeNumber = badgeNumber;
+    });
     return ErrorCode::ERR_ANS_OK;
 }
 
