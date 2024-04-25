@@ -78,7 +78,7 @@ public:
      */
     std::vector<std::string> GetAllLines() const;
 	
-	    /**
+	/**
      * @brief Converts a NotificationMultiLineContent object into a Json.
      *
      * @param jsonObject Indicates the Json object.

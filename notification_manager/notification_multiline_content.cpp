@@ -65,9 +65,9 @@ bool NotificationMultiLineContent::ToJson(nlohmann::json &jsonObject) const
         return false;
     }
 
-    jsonObject["expandedTitle"] = expandedTitle_;
-    jsonObject["briefText"]     = briefText_;
-    jsonObject["allLines"]      = nlohmann::json(allLines_);
+    jsonObject["expandedTitle"] = GetExpandedTitle();
+    jsonObject["briefText"]     = GetBriefText();
+    jsonObject["allLines"]      = nlohmann::json(GetAllLines());
 
     return true;
 }

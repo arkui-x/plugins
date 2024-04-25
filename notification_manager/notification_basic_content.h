@@ -28,22 +28,6 @@ public:
     virtual ~NotificationBasicContent();
 
     /**
-     * @brief Sets the additional text to be included in a notification.
-     * The additional text is mainly a supplement to the notification text set by calling setText(std::string).
-     * The font of the additional text is smaller than the notification text and is displayed in a separate line.
-     *
-     * @param text Indicates the additional text to be included.
-     */
-    virtual void SetAdditionalText(const std::string &additionalText);
-
-    /**
-     * @brief Obtains the additional text of a notification specified by calling setAdditionalText(std::string).
-     *
-     * @return Returns the additional text of the notification.
-     */
-    virtual std::string GetAdditionalText() const;
-
-    /**
      * @brief Sets the text to be included in a notification.
      *
      * @param text Indicates the text to be included.
@@ -85,7 +69,6 @@ protected:
 protected:
     std::string text_ {};
     std::string title_ {};
-    std::string additionalText_ {};
 };
 }  // namespace Notification
 }  // namespace OHOS

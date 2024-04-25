@@ -22,28 +22,6 @@
 
 namespace OHOS {
 namespace NotificationNapi {
-const char *Common::GetPropertyNameByContentType(ContentType type)
-{
-    switch (type) {
-        case ContentType::NOTIFICATION_CONTENT_BASIC_TEXT: // normal?: NotificationBasicContent
-            return "normal";
-        case ContentType::NOTIFICATION_CONTENT_LONG_TEXT: // longText?: NotificationLongTextContent
-            return "longText";
-        case ContentType::NOTIFICATION_CONTENT_PICTURE: // picture?: NotificationPictureContent
-            return "picture";
-        case ContentType::NOTIFICATION_CONTENT_CONVERSATION: // conversation?: NotificationConversationalContent
-            return "conversation";
-        case ContentType::NOTIFICATION_CONTENT_MULTILINE: // multiLine?: NotificationMultiLineContent
-            return "multiLine";
-        case ContentType::NOTIFICATION_CONTENT_LOCAL_LIVE_VIEW: // systemLiveView?: NotificationLocalLiveViewContent
-            return "systemLiveView";
-        case ContentType::NOTIFICATION_CONTENT_LIVE_VIEW: // liveView?: NotificationLiveViewContent
-            return "liveView";
-        default:
-            LOGE("ContentType is does not exist");
-            return "null";
-    }
-}
 
 napi_value Common::GetNotificationContent(const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
@@ -126,7 +104,6 @@ napi_value Common::GetNotificationBasicContentDetailed(
 {
     LOGD("enter");
 
-    bool hasProperty = false;
     char str[STR_MAX_SIZE] = {0};
     size_t strLen = 0;
 
@@ -157,19 +134,6 @@ napi_value Common::GetNotificationBasicContentDetailed(
     }
     basicContent->SetText(str);
     LOGD("normal::text = %{public}s", str);
-
-    // additionalText?: string
-    NAPI_CALL(env, napi_has_named_property(env, contentResult, "additionalText", &hasProperty));
-    if (hasProperty) {
-        value = AppExecFwk::GetPropertyValueByPropertyName(env, contentResult, "additionalText", napi_string);
-        if (value == nullptr) {
-            LOGE("Failed to get additionalText from js.");
-            return nullptr;
-        }
-        NAPI_CALL(env, napi_get_value_string_utf8(env, value, str, STR_MAX_SIZE - 1, &strLen));
-        basicContent->SetAdditionalText(str);
-        LOGI("normal::additionalText = %{public}s", str);
-    }
 
     return NapiGetNull(env);
 }

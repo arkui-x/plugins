@@ -42,15 +42,6 @@ public:
      * @return Returns true if success, returns false otherwise
      */
     static bool ContentTypeJSToC(const ContentType &inType, NotificationContent::Type &outType);
-
-    /**
-     * @brief Converts content type from native to js
-     *
-     * @param inType Indicates a NotificationContent object
-     * @param outType Indicates a js ContentType object
-     * @return Returns true if success, returns false otherwise
-     */
-    static bool ContentTypeCToJS(const NotificationContent::Type &inType, ContentType &outType);
 };
 }
 }

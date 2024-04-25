@@ -72,9 +72,9 @@ bool NotificationLongTextContent::ToJson(nlohmann::json &jsonObject) const
         return false;
     }
 
-    jsonObject["longText"]      = longText_;
-    jsonObject["expandedTitle"] = expandedTitle_;
-    jsonObject["briefText"]     = briefText_;
+    jsonObject["longText"]      = GetLongText();
+    jsonObject["expandedTitle"] = GetExpandedTitle();
+    jsonObject["briefText"]     = GetBriefText();
 
     return true;
 }

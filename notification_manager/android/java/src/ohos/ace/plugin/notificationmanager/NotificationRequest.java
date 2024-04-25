@@ -41,7 +41,6 @@ public class NotificationRequest {
     public static class NotificationBasicContent {
         public String title;
         public String text;
-        public String additionalText;
     }
 
     public static class NotificationLongTextContent extends NotificationBasicContent {

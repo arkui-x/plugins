@@ -46,6 +46,17 @@ napi_value Common::GetNotificationRequestByNumber(
     return NapiGetNull(env);
 }
 
+napi_value Common::GetNotificationRequestByString(
+    const napi_env &env, const napi_value &value, NotificationRequest &request)
+{
+    LOGD("enter");
+    // groupName?: string
+    if (GetNotificationGroupName(env, value, request) == nullptr) {
+        return nullptr;
+    }
+    return NapiGetNull(env);
+}
+
 napi_value Common::GetNotificationRequestByBool(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
@@ -93,6 +104,9 @@ napi_value Common::GetNotificationRequest(const napi_env &env, const napi_value 
 {
     LOGD("enter");
     if (!GetNotificationRequestByNumber(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationRequestByString(env, value, request)) {
         return nullptr;
     }
     if (!GetNotificationRequestByBool(env, value, request)) {
@@ -201,6 +215,31 @@ napi_value Common::GetNotificationtapDismissed(
         }
         napi_get_value_bool(env, result, &tapDismissed);
         request.SetTapDismissed(tapDismissed);
+    }
+
+    return NapiGetNull(env);
+}
+
+napi_value Common::GetNotificationGroupName(const napi_env &env, const napi_value &value, NotificationRequest &request)
+{
+    LOGD("enter");
+
+    napi_valuetype valuetype = napi_undefined;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    size_t strLen = 0;
+
+    NAPI_CALL(env, napi_has_named_property(env, value, "groupName", &hasProperty));
+    if (hasProperty) {
+        napi_get_named_property(env, value, "groupName", &result);
+        NAPI_CALL(env, napi_typeof(env, result, &valuetype));
+        if (valuetype != napi_string) {
+            LOGE("Wrong argument type. String expected.");
+            return nullptr;
+        }
+        char str[STR_MAX_SIZE] = {0};
+        NAPI_CALL(env, napi_get_value_string_utf8(env, result, str, STR_MAX_SIZE - 1, &strLen));
+        request.SetGroupName(str);
     }
 
     return NapiGetNull(env);

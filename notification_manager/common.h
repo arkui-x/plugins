@@ -53,14 +53,6 @@ class Common {
     ~Common();
 
 public:
-    /**
-     * @brief Gets a napi value that is used to represent specified bool value
-     *
-     * @param env Indicates the environment that the API is invoked under
-     * @param isValue Indicates a bool value
-     * @return Returns a napi value that is used to represent specified bool value
-     */
-    static napi_value NapiGetBoolean(napi_env env, const bool &isValue);
 
     /**
      * @brief Gets the napi value that is used to represent the null object
@@ -77,15 +69,6 @@ public:
      * @return Returns the napi value that is used to represent the undefined object
      */
     static napi_value NapiGetUndefined(napi_env env);
-
-    /**
-     * @brief Gets a napi value with specified error code for callback
-     *
-     * @param env Indicates the environment that the API is invoked under
-     * @param errCode Indicates specified err code
-     * @return Returns a napi value with specified error code for callback
-     */
-    static napi_value GetCallbackErrorValue(napi_env env, int32_t errCode);
 
     /**
      * @brief Pads the CallbackPromiseInfo struct
@@ -172,6 +155,17 @@ public:
         const napi_env &env, const napi_value &value, NotificationRequest &request);
 
     /**
+     * @brief Gets a NotificationRequest object by string type from specified js object
+     *
+     * @param env Indicates the environment that the API is invoked under
+     * @param value Indicates a js object to be converted
+     * @param request Indicates a NotificationRequest object from specified js object
+     * @return Returns the null object if success, returns the null value otherwise
+     */
+    static napi_value GetNotificationRequestByString(
+        const napi_env &env, const napi_value &value, NotificationRequest &request);
+
+    /**
      * @brief Gets a NotificationRequest object by bool type from specified js object
      *
      * @param env Indicates the environment that the API is invoked under
@@ -234,6 +228,17 @@ public:
      * @return Returns the null object if success, returns the null value otherwise
      */
     static napi_value GetNotificationtapDismissed(
+        const napi_env &env, const napi_value &value, NotificationRequest &request);
+
+    /**
+     * @brief Gets the group name of NotificationRequest object from specified js object
+     *
+     * @param env Indicates the environment that the API is invoked under
+     * @param value Indicates a js object to be converted
+     * @param request Indicates a NotificationRequest object from specified js object
+     * @return Returns the null object if success, returns the null value otherwise
+     */
+    static napi_value GetNotificationGroupName(
         const napi_env &env, const napi_value &value, NotificationRequest &request);
 
     /**
@@ -420,7 +425,6 @@ private:
     static const int32_t ONLY_CALLBACK_MAX_PARA = 1;
     static const int32_t ONLY_CALLBACK_MIN_PARA = 0;
     static std::mutex mutex_;
-    static const char *GetPropertyNameByContentType(ContentType type);
 };
 }  // namespace NotificationNapi
 }  // namespace OHOS

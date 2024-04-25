@@ -167,22 +167,33 @@ void NotificationRequest::SetTapDismissed(bool isDismissed)
     tapDismissed_ = isDismissed;
 }
 
+void NotificationRequest::SetGroupName(const std::string &groupName)
+{
+    groupName_ = groupName;
+}
+
+std::string NotificationRequest::GetGroupName() const
+{
+    return groupName_;
+}
+
 bool NotificationRequest::ToJson(nlohmann::json &jsonObject) const
 {
     jsonObject["version"]         = 1;
 
-    jsonObject["id"]              = notificationId_;
-    jsonObject["deliveryTime"]    = deliveryTime_;
-    jsonObject["autoDeletedTime"] = autoDeletedTime_;
-    jsonObject["notificationContentType"] = static_cast<int32_t>(notificationContentType_);
+    jsonObject["id"]              = GetNotificationId();
+    jsonObject["deliveryTime"]    = GetDeliveryTime();
+    jsonObject["autoDeletedTime"] = GetAutoDeletedTime();
+    jsonObject["notificationContentType"] = static_cast<int32_t>(GetNotificationType());
 
-    jsonObject["showDeliveryTime"] = showDeliveryTime_;
-    jsonObject["tapDismissed"]     = tapDismissed_;
-    jsonObject["isOngoing"]        = inProgress_;
-    jsonObject["isAlertOnce"]      = alertOneTime_;
-    jsonObject["isStopwatch"]      = showStopwatch_;
-    jsonObject["isCountdown"]      = isCountdown_;
-    jsonObject["badgeNumber"]     = badgeNumber_;
+    jsonObject["showDeliveryTime"] = IsShowDeliveryTime();
+    jsonObject["groupName"]        = GetGroupName();
+    jsonObject["tapDismissed"]     = IsTapDismissed();
+    jsonObject["isOngoing"]        = IsInProgress();
+    jsonObject["isAlertOnce"]      = IsAlertOneTime();
+    jsonObject["isStopwatch"]      = IsShowStopwatch();
+    jsonObject["isCountdown"]      = IsCountdownTimer();
+    jsonObject["badgeNumber"]      = GetBadgeNumber();
     
 
     if (!ConvertObjectsToJson(jsonObject)) {
@@ -196,7 +207,7 @@ bool NotificationRequest::ToJson(nlohmann::json &jsonObject) const
 bool NotificationRequest::ConvertObjectsToJson(nlohmann::json &jsonObject) const
 {
     nlohmann::json contentObj;
-    if (notificationContent_) {
+    if (GetContent()) {
         if (!NotificationJsonConverter::ConvertToJson(notificationContent_.get(), contentObj)) {
             LOGE("Cannot convert notificationContent to JSON");
             return false;
@@ -221,6 +232,7 @@ void NotificationRequest::CopyBase(const NotificationRequest &other)
     this->notificationId_ = other.notificationId_;
     this->badgeNumber_ = other.badgeNumber_;
     this->deliveryTime_ = other.deliveryTime_;
+    this->groupName_ = other.groupName_;
     this->autoDeletedTime_ = other.autoDeletedTime_;
     this->notificationContentType_ = other.notificationContentType_;
 }

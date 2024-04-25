@@ -206,6 +206,28 @@ public:
     void SetCountdownTimer(bool isCountDown);
 
     /**
+     * @brief Sets the group information for this notification.
+     * If no groups are set for notifications, all notifications from the same application will appear
+     * in the notification bar as one stack with the number of stacked notifications displayed.
+     * If notifications are grouped and there are multiple groups identified by different groupName,
+     * notifications with different groupName will appear in separate stacks.
+     * Note that one of the notifications in a group must be set as the overview of its group by calling
+     * setGroupOverview(bool), and other notifications are considered as child notifications.
+     * Otherwise, notifications will not be displayed as one group even if they are assigned the same groupName by
+     * calling setGroupName(string).
+     *
+     * @param groupName Specifies whether to set this notification as the group overview.
+     */
+    void SetGroupName(const std::string &groupName);
+
+    /**
+     * @brief Obtains the group information about this notification.
+     *
+     * @return Returns the group information about this notification.
+     */
+    std::string GetGroupName() const;
+
+    /**
      * @brief Checks whether the notification creation time is displayed as a stopwatch.
      *
      * @return Returns true if the time is displayed as a stopwatch; returns false otherwise.
@@ -269,6 +291,7 @@ private:
     int64_t deliveryTime_ {0};
 
     int64_t autoDeletedTime_ {-1};
+    std::string groupName_ {};
     NotificationContent::Type notificationContentType_ {NotificationContent::Type::NONE};
 
     bool showDeliveryTime_ { false };

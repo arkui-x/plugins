@@ -21,16 +21,6 @@ namespace Notification {
 NotificationBasicContent::~NotificationBasicContent()
 {}
 
-void NotificationBasicContent::SetAdditionalText(const std::string &additionalText)
-{
-    additionalText_ = additionalText;
-}
-
-std::string NotificationBasicContent::GetAdditionalText() const
-{
-    return additionalText_;
-}
-
 void NotificationBasicContent::SetText(const std::string &text)
 {
     text_ = text;
@@ -52,9 +42,8 @@ std::string NotificationBasicContent::GetTitle() const
 }
 bool NotificationBasicContent::ToJson(nlohmann::json &jsonObject) const
 {
-    jsonObject["text"]           = text_;
-    jsonObject["title"]          = title_;
-    jsonObject["additionalText"] = additionalText_;
+    jsonObject["text"] = GetText();
+    jsonObject["title"] = GetTitle();
     return true;
 }
 }  // namespace Notification

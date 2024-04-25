@@ -48,36 +48,5 @@ bool AnsEnumUtil::ContentTypeJSToC(const ContentType &inType, NotificationConten
     }
     return true;
 }
-
-bool AnsEnumUtil::ContentTypeCToJS(const NotificationContent::Type &inType, ContentType &outType)
-{
-    switch (inType) {
-        case NotificationContent::Type::BASIC_TEXT:
-            outType = ContentType::NOTIFICATION_CONTENT_BASIC_TEXT;
-            break;
-        case NotificationContent::Type::LONG_TEXT:
-            outType = ContentType::NOTIFICATION_CONTENT_LONG_TEXT;
-            break;
-        case NotificationContent::Type::MULTILINE:
-            outType = ContentType::NOTIFICATION_CONTENT_MULTILINE;
-            break;
-        case NotificationContent::Type::PICTURE:
-            outType = ContentType::NOTIFICATION_CONTENT_PICTURE;
-            break;
-        case NotificationContent::Type::CONVERSATION:
-            outType = ContentType::NOTIFICATION_CONTENT_CONVERSATION;
-            break;
-        case NotificationContent::Type::LOCAL_LIVE_VIEW:
-            outType = ContentType::NOTIFICATION_CONTENT_LOCAL_LIVE_VIEW;
-            break;
-        case NotificationContent::Type::LIVE_VIEW:
-            outType = ContentType::NOTIFICATION_CONTENT_LIVE_VIEW;
-            break;
-        default:
-            LOGE("ContentType %{public}d is an invalid value", inType);
-            return false;
-    }
-    return true;
-}
 }
 }

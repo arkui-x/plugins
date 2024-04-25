@@ -65,7 +65,6 @@ public class JsonUtils {
             NotificationRequest.NotificationLongTextContent longTextContent = new NotificationRequest.NotificationLongTextContent();
             longTextContent.title = contentObject.optString("title");
             longTextContent.text = contentObject.optString("text");
-            longTextContent.additionalText = contentObject.optString("additionalText");
 
             longTextContent.briefText = contentObject.optString("briefText");
             longTextContent.expandedTitle = contentObject.optString("expandedTitle");
@@ -77,7 +76,6 @@ public class JsonUtils {
             NotificationRequest.NotificationMultiLineContent linesTextContent = new NotificationRequest.NotificationMultiLineContent();
             linesTextContent.title = contentObject.optString("title");
             linesTextContent.text = contentObject.optString("text");
-            linesTextContent.additionalText = contentObject.optString("additionalText");
 
             linesTextContent.briefText = contentObject.optString("briefText");
             linesTextContent.expandedTitle = contentObject.optString("expandedTitle");
@@ -90,7 +88,6 @@ public class JsonUtils {
             NotificationRequest.NotificationPictureContent pictureContent = new NotificationRequest.NotificationPictureContent();
             pictureContent.title = contentObject.optString("title");
             pictureContent.text = contentObject.optString("text");
-            pictureContent.additionalText = contentObject.optString("additionalText");
 
             pictureContent.briefText = contentObject.optString("briefText");
             pictureContent.expandedTitle = contentObject.optString("expandedTitle");
@@ -102,7 +99,6 @@ public class JsonUtils {
         NotificationRequest.NotificationBasicContent content = new NotificationRequest.NotificationBasicContent();
         content.title = contentObject.optString("title");
         content.text = contentObject.optString("text");
-        content.additionalText = contentObject.optString("additionalText");
         return content;
     }
 

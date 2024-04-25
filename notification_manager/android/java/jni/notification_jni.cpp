@@ -162,7 +162,6 @@ ErrorCode NotificationJni::publish(const NotificationRequest& request)
         env->ExceptionClear();
         return ERR_ANS_SERVICE_NOT_CONNECTED;
     }
-    std::string jsonobject = JavaStringToString(env, jinfo);
     return ERR_ANS_OK;
 }
 

@@ -34,13 +34,11 @@ ohos_combine_jars("notification_manager_java") {
 }
 
 ohos_source_set("notification_manager_android_jni") {
-  include_dirs = [
-    "//third_party/json/include",
-  ]
+  include_dirs = [ "//third_party/json/include" ]
 
   sources = [
-    "jni/notification_jni.cpp",
     "jni/notification_impl.cpp",
+    "jni/notification_jni.cpp",
   ]
 
   defines = [ "ANDROID_PLATFORM" ]

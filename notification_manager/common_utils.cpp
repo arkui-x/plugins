@@ -46,13 +46,6 @@ static const std::unordered_map<int32_t, std::string> ERROR_CODE_MESSAGE {
 };
 }
 
-napi_value Common::NapiGetBoolean(napi_env env, const bool &isValue)
-{
-    napi_value result = nullptr;
-    napi_get_boolean(env, isValue, &result);
-    return result;
-}
-
 napi_value Common::NapiGetNull(napi_env env)
 {
     napi_value result = nullptr;
@@ -93,16 +86,6 @@ void Common::NapiThrow(napi_env env, int32_t errCode)
     LOGD("enter");
 
     napi_throw(env, CreateErrorValue(env, errCode, true));
-}
-
-napi_value Common::GetCallbackErrorValue(napi_env env, int32_t errCode)
-{
-    napi_value result = nullptr;
-    napi_value eCode = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, errCode, &eCode));
-    NAPI_CALL(env, napi_create_object(env, &result));
-    NAPI_CALL(env, napi_set_named_property(env, result, "code", eCode));
-    return result;
 }
 
 void Common::PaddingCallbackPromiseInfo(

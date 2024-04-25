@@ -66,8 +66,8 @@ std::shared_ptr<NotificationBasicContent> NotificationContent::GetNotificationCo
 
 bool NotificationContent::ToJson(nlohmann::json &jsonObject) const
 {
-    jsonObject["contentType"] = static_cast<int32_t>(contentType_);
-    jsonObject["notificationContentType"] = static_cast<int32_t>(contentType_);
+    jsonObject["contentType"] = static_cast<int32_t>(GetContentType());
+    jsonObject["notificationContentType"] = static_cast<int32_t>(GetContentType());
 
     if (!content_) {
         LOGE("Invalid content. Cannot convert to JSON.");
@@ -75,7 +75,7 @@ bool NotificationContent::ToJson(nlohmann::json &jsonObject) const
     }
 
     nlohmann::json contentObj;
-    if (!NotificationJsonConverter::ConvertToJson(content_.get(), contentObj)) {
+    if (!NotificationJsonConverter::ConvertToJson(GetNotificationContent().get(), contentObj)) {
         LOGE("Cannot convert content to JSON");
         return false;
     }

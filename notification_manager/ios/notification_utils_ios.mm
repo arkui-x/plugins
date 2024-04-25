@@ -16,6 +16,8 @@
 #import "notification_utils_ios.h"
 #import <UIKit/UIKit.h>
 
+#include <string.h>
+
 @interface notification_utils_ios()
 
 @end
@@ -56,7 +58,12 @@
         int32_t requestId = request->GetNotificationId();
         int32_t badgeNumber = request->GetBadgeNumber();
         if (badgeNumber >= 0) {
-            [self SetBadgeNumber:badgeNumber];
+            content.badge = [NSNumber numberWithInt:badgeNumber];
+        }
+
+        std::string groupName = request->GetGroupName();
+        if (!groupName.empty()) {
+            content.threadIdentifier = [NSString stringWithCString:groupName.c_str() encoding:NSUTF8StringEncoding];
         }
 
         UNNotificationRequest *uNNotificationRequest = [UNNotificationRequest requestWithIdentifier:[NSString stringWithFormat:@"%d", requestId]
