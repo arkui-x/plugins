@@ -35,10 +35,12 @@ ohos_source_set("certificate_openssl_plugin_lib") {
   sources = [
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/certificate_openssl_common.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_openssl_ex.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_validator_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_certificate_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_crl_entry_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_crl_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_distinguished_name_openssl.c",
   ]
 
   cflags = [
@@ -52,6 +54,7 @@ ohos_source_set("certificate_openssl_plugin_lib") {
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
     "//plugins/libs/securec:sec_${target_os}",
     "//third_party/openssl:libcrypto_shared",
+    "//third_party/openssl:libssl_shared",
   ]
 
   external_deps = [
