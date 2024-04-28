@@ -126,7 +126,7 @@ static void AsyncWorkRequestCallback(napi_env env, napi_status status, void *dat
     std::unique_ptr<RequestContext, decltype(&RequestContextDeleter)> context(static_cast<RequestContext *>(data),
                                                                               RequestContextDeleter);
     napi_value argv[EVENT_PARAM_TWO] = {nullptr};
-    if (context->IsParseOK() && context->IsExecOK()) {
+    if (context->IsParseOK() && context->IsExecOK() && context->GetErrorCode() == 0) {
         argv[EVENT_PARAM_ZERO] = NapiUtils::GetUndefined(env);
         argv[EVENT_PARAM_ONE] = HttpExec::RequestCallback(context.get());
         if (argv[EVENT_PARAM_ONE] == nullptr) {
@@ -457,10 +457,7 @@ size_t HttpExec::OnWritingMemoryHeader(const void* data, size_t size, void* user
 
     context->response.AppendRawHeader(data, size);
 
-    if (context->IsRequestInStream()) {
-        NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnHeaderReceive);
-        return size;
-    }
+    NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnHeaderReceive);
     context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_HEADER_TIMING);
     return size;
 }
