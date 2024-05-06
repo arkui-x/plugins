@@ -30,7 +30,10 @@ ohos_combine_jars("audio_manager_java") {
 ohos_source_set("audio_manager_android_jni") {
   include_dirs = plugins_audio_utils_include
   include_dirs += plugins_audio_include
-  include_dirs += [ "//plugins/multimedia/audio/android/audiomanager/java/jni" ]
+  include_dirs += [
+    "//plugins/multimedia/audio/android/audiomanager/java/jni",
+    "//commonlibrary/c_utils/base/include",
+  ]
 
   sources = [
     "jni/audio_group_manager.cpp",
