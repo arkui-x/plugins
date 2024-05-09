@@ -1,0 +1,88 @@
+# Copyright (C) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
+import("//build/ohos.gni")
+import("//commonlibrary/ets_utils/ets_utils_config.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/arkui/ace_engine/build/ace_gen_obj.gni")
+
+base_output_path = get_label_info(":picker_js", "target_out_dir")
+picker_obj_path = base_output_path + "/picker.o"
+
+es2abc_gen_abc("gen_picker_abc") {
+  extra_visibility = [ ":*" ]
+  src_js = rebase_path("picker.js")
+  dst_file = rebase_path(target_out_dir + "/picker.abc")
+  in_puts = [ "picker.js" ]
+  out_puts = [ target_out_dir + "/picker.abc" ]
+  extra_args = [ "--module" ]
+}
+
+abc_output_path = get_label_info(":picker_abc", "target_out_dir")
+
+gen_obj("picker_js") {
+  input = "picker.js"
+  if (use_mac || use_mingw_win || use_ios || use_linux) {
+    picker_obj_path = abc_output_path + "/picker.c"
+  } else {
+    picker_obj_path = abc_output_path + "/picker.o"
+  }
+  output = picker_obj_path
+  snapshot_dep = []
+}
+
+gen_obj("picker_abc") {
+  input = "$target_out_dir/picker.abc"
+  if (use_mac || use_mingw_win || use_ios || use_linux) {
+    picker_obj_path = abc_output_path + "/picker_abc.c"
+  } else {
+    picker_obj_path = abc_output_path + "/picker_abc.o"
+  }
+  output = picker_obj_path
+  snapshot_dep = [ ":gen_picker_abc" ]
+}
+
+ohos_source_set("file_picker_static") {
+  sources = [
+    "module_ohos_picker.cpp",
+    "napi_common.cpp",
+    "napi_document_view_picker.cpp",
+    "native_document_view_picker.cpp",
+  ]
+
+  include_dirs = [
+    "//third_party/node/src",
+    "$plugins_root/interfaces",
+    "$plugins_root/hilog/include",
+  ]
+
+  deps = [
+    ":gen_obj_src_picker_abc",
+    ":gen_obj_src_picker_js",
+    "$plugins_root/libs/napi:napi_${target_os}",
+    "$plugins_root/libs/securec:sec_${target_os}",
+    "//plugins/interfaces/native:ace_plugin_util_${target_os}",
+  ]
+
+  if (target_os == "ios") {
+    defines = [ "IOS_PLATFORM" ]
+    deps += [ "ios:filepicker_ios" ]
+  } else if (target_os == "android") {
+    defines = [ "ANDROID_PLATFORM" ]
+    deps += [ "android/java:filepicker_anroid_jni" ]
+  }
+
+  subsystem_name = "plugins"
+  part_name = "user_file_service"
+}
