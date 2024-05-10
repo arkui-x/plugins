@@ -225,10 +225,8 @@ static napi_value ParseArgsStartPhotoPicker(napi_env env, napi_callback_info inf
     constexpr size_t maxArgs = ARGS_TWO;
     CHECK_ARGS(env, MediaLibraryNapiUtils::AsyncContextSetObjectInfo(env, info, context, minArgs, maxArgs),
         JS_ERR_PARAMETER_INVALID);
-    
-    bool present = false;
+
     napi_value args = context->argv[ARGS_ZERO];
-    std::string argc0 = Plugin::PluginUtilsNApi::GetStringFromValueUtf8(env, args);
     napi_value MIMEType = MediaLibraryNapiUtils::GetPropertyValueByName(env, args, "MIMEType");
     if (MIMEType == nullptr) {
         MIMEType = Plugin::PluginUtilsNApi::CreateStringUtf8(env, ALL_MIME_TYPE);

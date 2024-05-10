@@ -79,8 +79,6 @@ napi_status MediaLibraryNapiUtils::HasCallback(napi_env env, const size_t argc, 
     return napi_ok;
 }
 
-
-
 template <class AsyncContext>
 napi_status MediaLibraryNapiUtils::AsyncContextSetObjectInfo(napi_env env, napi_callback_info info,
     AsyncContext &asyncContext, const size_t minArgs, const size_t maxArgs)

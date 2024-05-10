@@ -14,9 +14,7 @@
 import("//build/ohos.gni")
 
 java_library("photo_access_helper_android_java") {
-  java_files = [ 
-    "java/src/ohos/ace/plugin/photoaccesshelper/PhotoPlugin.java"
-     ]
+  java_files = [ "java/src/ohos/ace/plugin/photoaccesshelper/PhotoPlugin.java" ]
   subsystem_name = "plugins"
   part_name = "photo_access_helper"
 }
@@ -32,7 +30,7 @@ ohos_combine_jars("photo_access_helper_java") {
 ohos_source_set("photo_access_helper_android_jni") {
   sources = [
     "java/jni/photo_plugin_jni.cpp",
-    "photo_client_impl.cpp"
+    "photo_client_impl.cpp",
   ]
 
   defines = [ "ANDROID_PLATFORM" ]

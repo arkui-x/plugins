@@ -20,20 +20,20 @@ template("plugin_photo_access_helper_static") {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
-    sources = [ 
-      "native_module_ohos_photoaccess_helper.cpp",
+    sources = [
       "napi/src/medialibrary_napi_utils.cpp",
-      "napi/src/userfile_client.cpp",
       "napi/src/napi_error.cpp",
       "napi/src/photo_picker_napi.cpp",
-       ] 
-  include_dirs = [
+      "napi/src/userfile_client.cpp",
+      "native_module_ohos_photoaccess_helper.cpp",
+    ]
+    include_dirs = [
       "./napi/include",
-       "//third_party/json/include",
+      "//third_party/json/include",
     ]
     deps = [
-      "//plugins/libs/napi:napi_${target_os}",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
     ]
 
     if (platform == "android") {
@@ -46,7 +46,8 @@ template("plugin_photo_access_helper_static") {
 }
 
 foreach(item, ace_platforms) {
-  plugin_photo_access_helper_static("file_photo_access_helper_static_" + item.name) {
+  plugin_photo_access_helper_static(
+      "file_photo_access_helper_static_" + item.name) {
     platform = item.name
     defines = []
     cflags_cc = []
