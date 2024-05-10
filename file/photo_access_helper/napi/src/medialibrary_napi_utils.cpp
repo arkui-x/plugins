@@ -53,19 +53,6 @@ napi_status MediaLibraryNapiUtils::GetParamFunction(napi_env env, napi_value arg
     return napi_ok;
 }
 
-static napi_status GetParamStr(napi_env env, napi_value arg, const size_t size, string &result)
-{
-    size_t res = 0;
-    unique_ptr<char[]> buffer = make_unique<char[]>(size);
-    CHECK_COND_RET(buffer != nullptr, napi_invalid_arg, "Failed to alloc buffer for parameter");
-    napi_valuetype valueType = napi_undefined;
-    CHECK_STATUS_RET(napi_typeof(env, arg, &valueType), "Failed to get type");
-    CHECK_COND_RET(valueType == napi_string, napi_string_expected, "Type is not as expected string");
-    CHECK_STATUS_RET(napi_get_value_string_utf8(env, arg, buffer.get(), size, &res), "Failed to get string value");
-    result = string(buffer.get());
-    return napi_ok;
-}
-
 napi_status MediaLibraryNapiUtils::HasCallback(napi_env env, const size_t argc, const napi_value argv[],
     bool &isCallback)
 {

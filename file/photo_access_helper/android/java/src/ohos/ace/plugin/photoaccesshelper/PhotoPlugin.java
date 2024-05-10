@@ -58,9 +58,8 @@ public class PhotoPlugin {
         String packageName = activity.getPackageName();
         try {
             Class<?> delegate = Class.forName("ohos.stage.ability.adapter.StageActivityDelegate");
-            Class<?> callbackInterface = Class.forName("ohos.stage.ability.adapter.StageActivityDelegate$Callback");
+            Class<?> callbackInterface = Class.forName("ohos.stage.ability.adapter.StageActivityDelegate$IntentCallback");
             Method addIntentMethod = delegate.getMethod("addIntentCallback", callbackInterface);
-            Method removeIntentMethod = delegate.getMethod("removeIntentCallback", callbackInterface);
             if (mProxyInstance == null) {
                 mProxyInstance = Proxy.newProxyInstance(
                     callbackInterface.getClassLoader(),
