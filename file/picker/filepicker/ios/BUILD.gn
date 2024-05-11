@@ -12,26 +12,13 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//plugins/multimedia/audio/audio.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
 
-ohos_source_set("audio_manager_ios") {
-  include_dirs = plugins_audio_utils_include
-  include_dirs += plugins_audio_include
-  include_dirs += [
-    ".",
-    "..",
-    "../audiorenderer",
-    "../audiocapturer",
-    "//commonlibrary/c_utils/base/include",
-  ]
-
+ohos_source_set("filepicker_ios") {
   sources = [
-    "audio_group_manager.mm",
-    "audio_manager_impl.mm",
-    "audio_routing_manager.mm",
-    "audio_spatialization_manager.mm",
-    "audio_stream_manager.mm",
-    "audio_system_manager.mm",
+    "document_picker_impl.mm",
+    "ios_document_picker.m",
+    "ios_document_select_options.m",
   ]
 
   defines = [ "IOS_PLATFORM" ]
@@ -45,17 +32,12 @@ ohos_source_set("audio_manager_ios") {
   cflags_objc = [
     "-fvisibility=default",
     "-fobjc-weak",
-    "-fobjc-arc",
   ]
 
   cflags_objcc = cflags_objc
-  deps = [
-    "//plugins/interfaces/native:plugin_log",
-    "//plugins/libs/napi:napi_ios",
-  ]
 
-  frameworks = [ "SystemConfiguration.framework" ]
+  deps = [ "//plugins/interfaces/native:ace_plugin_util_ios" ]
 
   subsystem_name = "plugins"
-  part_name = "multimedia_audio_audiomanager"
+  part_name = "filepicker"
 }

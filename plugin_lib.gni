@@ -18,6 +18,7 @@ common_plugin_libs = [
   "bridge",
   "file/fs",
   "file/photo_access_helper",
+  "file/picker",
   "common_event_manager",
   "data/preferences",
   "data/relationalstore",

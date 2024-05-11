@@ -30,8 +30,10 @@ ohos_combine_jars("audio_renderer_java") {
 ohos_source_set("audio_renderer_android_jni") {
   include_dirs = plugins_audio_utils_include
   include_dirs += plugins_audio_include
-  include_dirs +=
-      [ "//plugins/multimedia/audio/android/audiorenderer/java/jni" ]
+  include_dirs += [
+    "//plugins/multimedia/audio/android/audiorenderer/java/jni",
+    "//commonlibrary/c_utils/base/include",
+  ]
 
   sources = [
     "jni/audio_renderer.cpp",

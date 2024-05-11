@@ -30,8 +30,10 @@ ohos_combine_jars("audio_capturer_java") {
 ohos_source_set("audio_capturer_android_jni") {
   include_dirs = plugins_audio_utils_include
   include_dirs += plugins_audio_include
-  include_dirs +=
-      [ "//plugins/multimedia/audio/android/audiocapturer/java/jni" ]
+  include_dirs += [
+    "//plugins/multimedia/audio/android/audiocapturer/java/jni",
+    "//commonlibrary/c_utils/base/include",
+  ]
 
   sources = [
     "jni/audio_capturer.cpp",
