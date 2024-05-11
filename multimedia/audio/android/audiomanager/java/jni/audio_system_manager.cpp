@@ -460,7 +460,7 @@ uint32_t AudioSystemManager::GetSinkLatencyFromXml() const
 }
 
 int32_t AudioSystemManager::UpdateStreamState(
-    const int32_t clientUid, StreamSetState streamSetState, AudioStreamType audioStreamType)
+    const int32_t clientUid, StreamSetState streamSetState, StreamUsage streamUsage)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -592,6 +592,12 @@ int32_t AudioSystemManager::UnsetDistributedRoutingRoleCallback(
 }
 
 int32_t AudioSystemManager::SetCallDeviceActive(ActiveDeviceType deviceType, bool flag, std::string address) const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::DisableSafeMediaVolume()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;

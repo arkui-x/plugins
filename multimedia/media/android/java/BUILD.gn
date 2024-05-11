@@ -32,8 +32,8 @@ ohos_combine_jars("media_java") {
 }
 
 ohos_source_set("media_android_jni") {
-  include_dirs = utils_include
-  include_dirs += media_include
+  include_dirs = media_include
+  include_dirs += utils_include
 
   include_dirs += [
     "//plugins/multimedia/media/android",

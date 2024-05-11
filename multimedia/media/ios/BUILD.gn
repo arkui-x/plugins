@@ -16,8 +16,8 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 import("//plugins/multimedia/media/media.gni")
 
 ohos_source_set("media_ios") {
-  include_dirs = utils_include
-  include_dirs += media_include
+  include_dirs = media_include
+  include_dirs += utils_include
   include_dirs += [
     "//plugins/multimedia/media/ios",
     "//plugins/multimedia/media/ios/avmetadatahelper",

@@ -376,5 +376,11 @@ int32_t AudioSystemManager::UnsetAvailableDeviceChangeCallback(AudioDeviceUsage 
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
     return ERR_NOT_SUPPORTED;
 }
+
+int32_t AudioSystemManager::DisableSafeMediaVolume()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS
