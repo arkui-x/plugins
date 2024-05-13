@@ -339,6 +339,18 @@ public:
     {
         return GSERROR_NOT_SUPPORT;
     }
+
+    void SetRequestWidthAndHeight(int32_t width, int32_t height) override {}
+
+    int32_t GetRequestWidth() override
+    {
+        return 0;
+    }
+
+    int32_t GetRequestHeight() override
+    {
+        return 0;
+    }
     
 private:
     uint64_t queueId_ = 0;

@@ -23,6 +23,7 @@ utils_include = [
   "//foundation/arkui/napi/interfaces/inner_api",
   "$MEDIA_PLAYER_ROOT/media_foundation/interface/inner_api",
   "$PLAYER_FRAMEWORK_DIR/interfaces/inner_api/native",
+  "//foundation/multimedia/av_codec/interfaces/inner_api/native",
   "$MEDIA_PLAYER_ROOT/media_foundation/interface/inner_api/meta",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/common",
   "$MEDIA_PLAYER_ROOT/media_foundation/interface/inner_api/common",

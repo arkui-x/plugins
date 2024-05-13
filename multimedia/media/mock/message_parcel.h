@@ -14,8 +14,8 @@
  */
 
 
-#ifndef MOCK_NATIVE_INCLUDE_MESSAGE_PARCEL_H
-#define MOCK_NATIVE_INCLUDE_MESSAGE_PARCEL_H
+#ifndef OHOS_IPC_MESSAGE_PARCEL_H
+#define OHOS_IPC_MESSAGE_PARCEL_H
 #include <string>
 #include "parcel.h"
 
@@ -31,4 +31,4 @@ public:
     bool Append(MessageParcel &data) { return false; }
 };
 } // namespace OHOS
-#endif // MOCK_NATIVE_INCLUDE_MESSAGE_PARCEL_H
+#endif // OHOS_IPC_MESSAGE_PARCEL_H
