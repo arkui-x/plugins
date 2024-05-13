@@ -42,6 +42,8 @@ ohos_source_set("net_http_ios") {
 
   defines = [ "IOS_PLATFORM" ]
 
+  frameworks = [ "Security.framework" ]
+
   cflags_objcc = cflags_objc
 
   subsystem_name = "plugins"

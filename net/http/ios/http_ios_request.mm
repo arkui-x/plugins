@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#import <Security/Security.h>
 #import "http_ios_constant.h"
 #import "http_ios_request.h"
 
@@ -244,17 +245,41 @@ NSString* PercentEscapedStringFromString(NSString* string) {
     completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential* _Nullable))completionHandler
 {
     if (challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust) {
-#if NO_SSL_CERTIFICATION
-        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
-#else
         NSURLCredential* credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
         if (credential) {
             completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
         } else {
             completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, credential);
         }
-
-#endif // NO_SSL_CERTIFICATION
+    } else if ([challenge.protectionSpace.authenticationMethod
+                isEqualToString:NSURLAuthenticationMethodClientCertificate]) {
+        NSData *p12Data = [NSData dataWithContentsOfFile:self.requestParam.ca];
+        if (p12Data) {
+            CFDataRef inP12Data = (__bridge CFDataRef)p12Data;
+            NSDictionary *options = @{(__bridge id)kSecImportExportPassphrase: self.requestParam.password};
+            CFArrayRef items = CFArrayCreate(NULL, 0, 0, NULL);
+            OSStatus status = SecPKCS12Import(inP12Data, (__bridge CFDictionaryRef)options, &items);
+            
+            if (status == errSecSuccess) {
+                CFDictionaryRef identityDict = (CFDictionaryRef)CFArrayGetValueAtIndex(items, 0);
+                SecIdentityRef identityRef = (SecIdentityRef)CFDictionaryGetValue(identityDict, kSecImportItemIdentity);
+                SecCertificateRef certificateRef;
+                SecIdentityCopyCertificate(identityRef, &certificateRef);
+                NSArray *certificates = @[(__bridge id)certificateRef];
+                NSURLCredential *credential = [NSURLCredential 
+                                               credentialWithIdentity:identityRef 
+                                               certificates:certificates 
+                                               persistence:NSURLCredentialPersistencePermanent];
+                completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
+                
+                CFRelease(certificateRef);
+            } else {
+                completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+            }
+            CFRelease(items);
+        } else {
+            completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+        }     
     } else {
         completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
     }

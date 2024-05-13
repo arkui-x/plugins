@@ -41,6 +41,7 @@ static constexpr int CONDITION_TIMEOUT_S = 3600;
 static constexpr const int EVENT_PARAM_ZERO = 0;
 static constexpr const int EVENT_PARAM_ONE = 1;
 static constexpr const int EVENT_PARAM_TWO = 2;
+static constexpr size_t MAX_LIMIT = 5 * 1024 * 1024;
 static constexpr const char *TLS12_SECURITY_CIPHER_SUITE = R"(DEFAULT:!CBC:!eNULL:!EXPORT)";
 
 HttpExec::StaticVariable HttpExec::staticVariable_;
@@ -56,20 +57,15 @@ napi_value HttpExec::RequestCallback(RequestContext *context)
 
 napi_value HttpExec::RequestInStreamCallback(RequestContext* context)
 {
-    return nullptr;
+    napi_value number = NapiUtils::CreateUint32(context->GetEnv(), context->response.GetResponseCode());
+    if (NapiUtils::GetValueType(context->GetEnv(), number) != napi_number) {
+        return nullptr;
+    }
+    return number;
 }
 
 static void RequestContextDeleter(RequestContext *context)
 {
-    std::lock_guard lockGuard(HttpExec::staticContextSet_.mutexForContextVec);
-    auto it = std::find(HttpExec::staticContextSet_.contextSet.begin(), HttpExec::staticContextSet_.contextSet.end(),
-                        context);
-    if (it == HttpExec::staticContextSet_.contextSet.end()) {
-        NETSTACK_LOGE("can't find request context in set");
-    } else {
-        HttpExec::staticContextSet_.contextSet.erase(it);
-    }
-
     context->DeleteReference();
     delete context;
     context = nullptr;
@@ -126,7 +122,7 @@ static void AsyncWorkRequestCallback(napi_env env, napi_status status, void *dat
     std::unique_ptr<RequestContext, decltype(&RequestContextDeleter)> context(static_cast<RequestContext *>(data),
                                                                               RequestContextDeleter);
     napi_value argv[EVENT_PARAM_TWO] = {nullptr};
-    if (context->IsParseOK() && context->IsExecOK() && context->GetErrorCode() == 0) {
+    if (context->IsParseOK() && context->IsExecOK()) {
         argv[EVENT_PARAM_ZERO] = NapiUtils::GetUndefined(env);
         argv[EVENT_PARAM_ONE] = HttpExec::RequestCallback(context.get());
         if (argv[EVENT_PARAM_ONE] == nullptr) {
@@ -160,9 +156,13 @@ bool HttpExec::RequestWithoutCache(RequestContext* context)
 {
     std::vector<std::string> vec;
     std::for_each(context->options.GetHeader().begin(), context->options.GetHeader().end(),
-        [&vec](const std::pair<std::string, std::string>& p) {
-            vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second);
-        });
+                  [&vec](const std::pair<std::string, std::string> &p) {
+                      if (!p.second.empty()) {
+                          vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_SEPARATOR + p.second);
+                      } else {
+                          vec.emplace_back(p.first + HttpConstant::HTTP_HEADER_BLANK_SEPARATOR);
+                      }
+                  });
     context->SetCurlHeaderList(MakeHeaders(vec));
 
     context->response.SetRequestTime(HttpTime::GetNowTimeGMT());
@@ -199,10 +199,13 @@ bool HttpExec::ExecRequest(RequestContext* context)
         context->SetErrorCode(NapiUtils::NETSTACK_NAPI_INTERNAL_ERROR);
         if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
             if (context->IsRequestInStream()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
-                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestInStreamCallback);
+                NapiUtils::CreateUvQueueWorkByModuleId(
+                    context->GetEnv(), std::bind(AsyncWorkRequestInStreamCallback, context->GetEnv(), napi_ok, context),
+                    context->GetModuleId());
             } else {
-                NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestCallback);
+                NapiUtils::CreateUvQueueWorkByModuleId(
+                    context->GetEnv(), std::bind(AsyncWorkRequestCallback, context->GetEnv(), napi_ok, context),
+                    context->GetModuleId());
             }
         }
         return false;
@@ -343,29 +346,20 @@ size_t HttpExec::OnWritingMemoryBody(const void* data, size_t size, void* userDa
 {
     auto context = static_cast<RequestContext*>(userData);
     if (context == nullptr) {
-        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
-        return 0;
-    }
-    if (context->GetManager()->IsEventDestroy()) {
-        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
         return 0;
     }
 
     if (context->IsRequestInStream()) {
         context->SetTempData(data, size);
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataReceive);
-        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
         return size;
     }
 
-    if (context->response.GetResult().size() > context->options.GetMaxLimit()) {
-        NETSTACK_LOGE("response data exceeds the maximum limit");
-        context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
+    if (context->response.GetResult().size() > MAX_LIMIT) {
         return 0;
     }
 
     context->response.AppendResult(data, size);
-    context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
     return size;
 }
 
@@ -528,8 +522,13 @@ void HttpExec::OnDataReceive(napi_env env, napi_status status, void* data)
         return;
     }
 
-    void* buffer = nullptr;
-    const auto& tempData = context->GetTempData();
+    void *buffer = nullptr;
+    auto tempData = context->GetTempData();
+    context->PopTempData();
+    if (tempData.empty()) {
+        NETSTACK_LOGI("[GetTempData] tempDate is empty!");
+        return;
+    }
     napi_value arrayBuffer = NapiUtils::CreateArrayBuffer(context->GetEnv(), tempData.size(), &buffer);
     if (buffer == nullptr || arrayBuffer == nullptr) {
         return;
@@ -559,16 +558,8 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void* data)
 {
     auto context = static_cast<RequestContext*>(data);
     if (context == nullptr) {
+        NETSTACK_LOGD("OnDataProgress context is null");
         return;
-    }
-    {
-        std::lock_guard lockGuard(HttpExec::staticContextSet_.mutexForContextVec);
-        auto it = std::find(HttpExec::staticContextSet_.contextSet.begin(),
-                            HttpExec::staticContextSet_.contextSet.end(), context);
-        if (it == HttpExec::staticContextSet_.contextSet.end()) {
-            NETSTACK_LOGI("context has benn deleted in libuv thread");
-            return;
-        }
     }
 
     auto progress = NapiUtils::CreateObject(context->GetEnv());
@@ -588,15 +579,15 @@ void HttpExec::OnDataUploadProgress(napi_env env, napi_status status, void *data
 {
     auto context = static_cast<RequestContext *>(data);
     if (context == nullptr) {
-        NETSTACK_LOGD("[OnDataUploadProgress] context is null.");
+        NETSTACK_LOGD("OnDataUploadProgress context is null");
         return;
     }
     auto progress = NapiUtils::CreateObject(context->GetEnv());
     if (NapiUtils::GetValueType(context->GetEnv(), progress) == napi_undefined) {
-        NETSTACK_LOGD("[OnDataUploadProgress] napi_undefined.");
+        NETSTACK_LOGD("OnDataUploadProgress napi_undefined");
         return;
     }
-    NapiUtils::SetUint32Property(context->GetEnv(), progress, "uploadSize",
+    NapiUtils::SetUint32Property(context->GetEnv(), progress, "sendSize",
                                  static_cast<uint32_t>(context->GetUlLen().nLen));
     NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
                                  static_cast<uint32_t>(context->GetUlLen().tLen));
@@ -606,19 +597,15 @@ void HttpExec::OnDataUploadProgress(napi_env env, napi_status status, void *data
 int HttpExec::ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
                                curl_off_t ulnow)
 {
-    auto context = static_cast<RequestContext *>(userData);
-    if (context == nullptr) {
+    (void)ultotal;
+    (void)ulnow;
+    auto context = static_cast<RequestContext*>(userData);
+    if (context == nullptr || !context->IsRequestInStream()) {
         return 0;
     }
     if (ultotal != 0 && ultotal >= ulnow && !context->CompareWithLastElement(ulnow, ultotal)) {
         context->SetUlLen(ulnow, ultotal);
         NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, OnDataUploadProgress);
-    }
-    if (!context->IsRequestInStream()) {
-        return 0;
-    }
-    if (context->GetManager()->IsEventDestroy()) {
-        return 0;
     }
     if (dltotal != 0) {
         context->SetDlLen(dlnow, dltotal);
