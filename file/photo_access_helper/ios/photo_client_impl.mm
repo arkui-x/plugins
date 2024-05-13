@@ -18,6 +18,8 @@
 #include "log.h"
 #include "plugins/file/photo_access_helper/napi/include/photo_picker_callback.h"
 
+#define RESULT_OK 0
+
 using namespace std;
 
 namespace OHOS {
@@ -39,9 +41,10 @@ void PhotoClientImpl::startPhotoPicker(std::string &type) {
        std::shared_ptr<OHOS::Media::PickerCallBack> photoPickerCallback
         = OHOS::Media::PhotoPickerCallback::pickerCallBack;
         if (photoPickerCallback != nullptr) {
-            photoPickerCallback->resultCode = 0;
+            photoPickerCallback->resultCode = RESULT_OK;
             photoPickerCallback->uris = uriNow;
             photoPickerCallback->ready = true;
+            photoPickerCallback->isOrigin = true;
         }
     }];
 }

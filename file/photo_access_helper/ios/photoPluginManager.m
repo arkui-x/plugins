@@ -24,6 +24,11 @@
 #import <PhotosUI/PhotosUI.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+#define PHOTO_PICKER_TYPE_IMAGE @"image/*"
+#define PHOTO_PICKER_TYPE_VIDEO @"video/*"
+#define PHOTO_PICKER_TYPE_IMAGE_VIDEO @"*/*"
+#define PHOTO_PICKER_BASE_PATH @"file://%@"
+
 @interface photoPluginManager()<UINavigationControllerDelegate,PHPickerViewControllerDelegate,UIImagePickerControllerDelegate>
 
 @property (nonatomic, copy) CallBack currentPhotoPickerResult;
@@ -42,7 +47,7 @@
 }
 
 -(void)startPhotoPickerIosWithType:(NSString *)type callBack:(CallBack)photoPickerResult {
-    if (photoPickerResult == NULL) {
+    if (photoPickerResult == NULL || type == NULL) {
         return;
     }
     self.currentPhotoPickerResult = photoPickerResult;
@@ -50,11 +55,11 @@
     if(@available(iOS 14, *)) {
         PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init];
         config.selectionLimit = 0;
-        if ([type isEqualToString:@"image/*"]) {
+        if ([type isEqualToString:PHOTO_PICKER_TYPE_IMAGE]) {
             config.filter = [PHPickerFilter imagesFilter];
-        } else if ([type isEqualToString:@"video/*"]) {
+        } else if ([type isEqualToString:PHOTO_PICKER_TYPE_VIDEO]) {
             config.filter = [PHPickerFilter videosFilter];
-        } else if ([type isEqualToString:@"*/*"]) {
+        } else if ([type isEqualToString:PHOTO_PICKER_TYPE_IMAGE_VIDEO]) {
             config.filter = [PHPickerFilter anyFilterMatchingSubfilters:@[PHPickerFilter.imagesFilter,PHPickerFilter.videosFilter]];
         } else {
             config.filter = [PHPickerFilter anyFilterMatchingSubfilters:@[PHPickerFilter.imagesFilter,PHPickerFilter.videosFilter]];
@@ -65,11 +70,11 @@
     } else {
         UIImagePickerController *imagePickerVC = [[UIImagePickerController alloc] init];
         imagePickerVC.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
-        if ([type isEqualToString:@"image/*"]) {
+        if ([type isEqualToString:PHOTO_PICKER_TYPE_IMAGE]) {
             imagePickerVC.mediaTypes = @[(NSString *)kUTTypeImage];
-        } else if ([type isEqualToString:@"video/*"]) {
+        } else if ([type isEqualToString:PHOTO_PICKER_TYPE_VIDEO]) {
             imagePickerVC.mediaTypes = @[(NSString *)kUTTypeMovie];
-        } else if ([type isEqualToString:@"*/*"]) {
+        } else if ([type isEqualToString:PHOTO_PICKER_TYPE_IMAGE_VIDEO]) {
             imagePickerVC.mediaTypes = @[(NSString *)kUTTypeMovie, (NSString *)kUTTypeImage];
         } else {
             imagePickerVC.mediaTypes = @[(NSString *)kUTTypeMovie, (NSString *)kUTTypeImage];
@@ -126,7 +131,7 @@
                     NSError *error;
                     [fileCoordinator coordinateReadingItemAtURL:url options:0 error:&error byAccessor:^(NSURL *newURL) {
                         if (!error) {
-                            NSString *urlString = [[NSString alloc] initWithFormat:@"file://%@",[url path]];
+                            NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[url path]];
                             // NSString *urlString = [url path];
                             [uriArray addObject:urlString];
                         }
@@ -152,7 +157,7 @@
                     NSError *error;
                     [fileCoordinator coordinateReadingItemAtURL:url options:0 error:&error byAccessor:^(NSURL *newURL) {
                         if (!error) {
-                            NSString *urlString = [[NSString alloc] initWithFormat:@"file://%@",[url path]];
+                            NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[url path]];
                             // NSString *urlString = [url path];
                             [uriArray addObject:urlString];
                         }
@@ -181,13 +186,13 @@
         // 选择视频
         NSURL *mediaUrl = [info objectForKey:UIImagePickerControllerMediaURL];
         if (mediaUrl) {
-            pickerUrlString = [[NSString alloc] initWithFormat:@"file://%@",[mediaUrl path]];
+            pickerUrlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[mediaUrl path]];
         }
     } else if ([info[UIImagePickerControllerMediaType] isEqualToString:(NSString *)kUTTypeImage]) {
         // 选择图片
         NSURL *imageUrl = [info objectForKey:UIImagePickerControllerImageURL];
         if (imageUrl) {
-            pickerUrlString = [[NSString alloc] initWithFormat:@"file://%@",[imageUrl path]];
+            pickerUrlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[imageUrl path]];
         }
     } else {
         // 类型错误
