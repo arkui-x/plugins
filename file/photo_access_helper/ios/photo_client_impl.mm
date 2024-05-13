@@ -38,8 +38,7 @@ void PhotoClientImpl::startPhotoPicker(std::string &type) {
             std::string cStringNow = [ocString UTF8String];
             uriNow.emplace_back(cStringNow);
         }
-       std::shared_ptr<OHOS::Media::PickerCallBack> photoPickerCallback
-        = OHOS::Media::PhotoPickerCallback::pickerCallBack;
+        std::shared_ptr<OHOS::Media::PickerCallBack> photoPickerCallback = OHOS::Media::PhotoPickerCallback::pickerCallBack;
         if (photoPickerCallback != nullptr) {
             photoPickerCallback->resultCode = RESULT_OK;
             photoPickerCallback->uris = uriNow;

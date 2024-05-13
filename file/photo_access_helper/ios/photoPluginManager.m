@@ -24,6 +24,7 @@
 #import <PhotosUI/PhotosUI.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+typedef void(^ReadURLCallBack)(NSURL* resultURL);
 #define PHOTO_PICKER_TYPE_IMAGE @"image/*"
 #define PHOTO_PICKER_TYPE_VIDEO @"video/*"
 #define PHOTO_PICKER_TYPE_IMAGE_VIDEO @"*/*"
@@ -123,56 +124,51 @@
         PHPickerResult *result = results[i];
         [result.itemProvider loadInPlaceFileRepresentationForTypeIdentifier:UTTypeMovie.identifier completionHandler:^(NSURL * _Nullable url, BOOL isInPlace, NSError * _Nullable error) {
             if(!error){
-                //处理图片资源
-                BOOL fileUrlAuthozied = [url startAccessingSecurityScopedResource];
-                if (fileUrlAuthozied) {
-                    // 通过文件协调工具来得到新的文件地址，以此得到文件保护功能
-                    NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
-                    NSError *error;
-                    [fileCoordinator coordinateReadingItemAtURL:url options:0 error:&error byAccessor:^(NSURL *newURL) {
-                        if (!error) {
-                            NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[url path]];
-                            // NSString *urlString = [url path];
-                            [uriArray addObject:urlString];
-                        }
-                        if (uriArray.count >= results.count) {
-                            self.currentPhotoPickerResult(uriArray, 0);
-                            return;
-                        }
-                    }];
-                    [url stopAccessingSecurityScopedResource];
-                } else {
-                    // 授权失败
-                    NSLog(@"PHPickerViewController didFinishPicking authorized fail");
-                }
+                [self readURL:url callBack:^(NSURL *resultURL) {
+                    if (resultURL) {
+                        NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[resultURL path]];
+                        [uriArray addObject:urlString];
+                    }
+                    if (uriArray.count >= results.count) {
+                        self.currentPhotoPickerResult(uriArray, 0);
+                        return;
+                    }
+                }];
             }
         }];
         [result.itemProvider loadInPlaceFileRepresentationForTypeIdentifier:UTTypeImage.identifier completionHandler:^(NSURL * _Nullable url, BOOL isInPlace, NSError * _Nullable error) {
             if (!error) {
-                //处理图片资源
-                BOOL fileUrlAuthozied = [url startAccessingSecurityScopedResource];
-                if (fileUrlAuthozied) {
-                    // 通过文件协调工具来得到新的文件地址，以此得到文件保护功能
-                    NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
-                    NSError *error;
-                    [fileCoordinator coordinateReadingItemAtURL:url options:0 error:&error byAccessor:^(NSURL *newURL) {
-                        if (!error) {
-                            NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[url path]];
-                            // NSString *urlString = [url path];
-                            [uriArray addObject:urlString];
-                        }
-                        if (uriArray.count >= results.count) {
-                            self.currentPhotoPickerResult(uriArray, 0);
-                            return;
-                        }
-                    }];
-                    [url stopAccessingSecurityScopedResource];
-                } else {
-                    // 授权失败
-                    NSLog(@"PHPickerViewController didFinishPicking authorized fail");
-                }
+                [self readURL:url callBack:^(NSURL *resultURL) {
+                    if (resultURL) {
+                        NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[resultURL path]];
+                        [uriArray addObject:urlString];
+                    }
+                    if (uriArray.count >= results.count) {
+                        self.currentPhotoPickerResult(uriArray, 0);
+                        return;
+                    }
+                }];
             }
         }];
+    }
+}
+
+- (void)readURL:(NSURL *)currentURL callBack:(ReadURLCallBack)readURLCallBack {
+    BOOL fileUrlAuthozied = [currentURL startAccessingSecurityScopedResource];
+    if (fileUrlAuthozied) {
+        NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
+        NSError *error;
+        [fileCoordinator coordinateReadingItemAtURL:currentURL options:0 error:&error byAccessor:^(NSURL *newURL) {
+            if (!error) {
+                readURLCallBack(newURL);
+            } else {
+                readURLCallBack(nil);
+            }
+        }];
+        [currentURL stopAccessingSecurityScopedResource];
+    } else {
+        readURLCallBack(nil);
+        NSLog(@"PHPickerViewController didFinishPicking authorized fail");
     }
 }
 
@@ -183,19 +179,16 @@
     NSString *pickerType = (NSString*)(info[UIImagePickerControllerMediaType]);
     NSString *pickerUrlString = @"";
     if ([info[UIImagePickerControllerMediaType] isEqualToString:(NSString *)kUTTypeMovie]) {
-        // 选择视频
         NSURL *mediaUrl = [info objectForKey:UIImagePickerControllerMediaURL];
         if (mediaUrl) {
             pickerUrlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[mediaUrl path]];
         }
     } else if ([info[UIImagePickerControllerMediaType] isEqualToString:(NSString *)kUTTypeImage]) {
-        // 选择图片
         NSURL *imageUrl = [info objectForKey:UIImagePickerControllerImageURL];
         if (imageUrl) {
             pickerUrlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[imageUrl path]];
         }
     } else {
-        // 类型错误
         NSLog(@"imagePickerController didFinishPickingMediaWithInfo type unknow");
     }
     if (pickerUrlString && ![@"" isEqualToString:pickerUrlString]) {
