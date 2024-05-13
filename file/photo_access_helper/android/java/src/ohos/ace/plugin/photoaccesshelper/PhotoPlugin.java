@@ -81,17 +81,6 @@ public class PhotoPlugin {
         }
     }
 
-    private void removeIntentCallback(Class<?> delegate, Class<?> callbackInterface) {
-        try {
-            Method removeIntentMethod = delegate.getMethod("removeIntentCallback", callbackInterface);
-            if (mProxyInstance != null) {
-                removeIntentMethod.invoke(null, mProxyInstance);
-            }
-        } catch (NoSuchMethodException |  InvocationTargetException | IllegalAccessException e) {
-            Log.e(TAG, "removeIntentCallback NoSuchMethodException");
-        }
-    }
-
     public void onResult(int requestCode, int resultCode, Intent data, Activity activity) {
         Log.i(TAG, "onResult enter requestCode is " + requestCode + ", " + resultCode);
 

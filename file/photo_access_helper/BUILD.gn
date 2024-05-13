@@ -38,6 +38,8 @@ template("plugin_photo_access_helper_static") {
 
     if (platform == "android") {
       deps += [ "./android:photo_access_helper_android_jni" ]
+    } else if (platform == "ios") {
+      deps += [ "./ios:photo_access_helper_ios" ]
     }
 
     subsystem_name = "plugins"
