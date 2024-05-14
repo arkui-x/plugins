@@ -13,27 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_KITS_JS_MEDIALIBRARY_INCLUDE_USER_PHOTO_CLIENT_H
-#define INTERFACES_KITS_JS_MEDIALIBRARY_INCLUDE_USER_PHOTO_CLIENT_H
+#ifndef PLUGINS_PHOTO_ACCESS_HELPER_PHOTO_CLIENT_IMPL_IOS_H
+#define PLUGINS_PHOTO_ACCESS_HELPER_PHOTO_CLIENT_IMPL_IOS_H
 
 #include <string>
 #include <vector>
-
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
+#include "plugins/file/photo_access_helper/napi/include/photo_client.h"
 
 namespace OHOS {
 namespace Media {
-#define EXPORT __attribute__ ((visibility ("default")))
-class PhotoClient {
+class PhotoClientImpl : public PhotoClient {
 public:
-    EXPORT PhotoClient() {}
-    EXPORT virtual ~PhotoClient() {}
-
-    static std::shared_ptr<PhotoClient> GetInstance();
-    virtual void startPhotoPicker(std::string &type) = 0;
+    void startPhotoPicker(std::string &type) override;
 };
 }
 }
 
-#endif // INTERFACES_KITS_JS_MEDIALIBRARY_INCLUDE_USER_PHOTO_CLIENT_H
+#endif // PLUGINS_PHOTO_ACCESS_HELPER_PHOTO_CLIENT_IMPL_IOS_H
