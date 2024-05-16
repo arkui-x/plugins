@@ -120,6 +120,10 @@ typedef void(^ReadURLCallBack)(NSURL* resultURL);
         return;
     }
     NSMutableArray *uriArray = [[NSMutableArray alloc] init];
+    if (results.count <= 0) {
+        self.currentPhotoPickerResult(uriArray, 0);
+        return;
+    }
     for (int i = 0; i < results.count; i++) {
         PHPickerResult *result = results[i];
         [result.itemProvider loadInPlaceFileRepresentationForTypeIdentifier:UTTypeMovie.identifier completionHandler:^(NSURL * _Nullable url, BOOL isInPlace, NSError * _Nullable error) {
@@ -198,6 +202,7 @@ typedef void(^ReadURLCallBack)(NSURL* resultURL);
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
     [picker dismissViewControllerAnimated:YES completion:nil];
+    self.currentPhotoPickerResult(@[],0);
 }
 
 @end
