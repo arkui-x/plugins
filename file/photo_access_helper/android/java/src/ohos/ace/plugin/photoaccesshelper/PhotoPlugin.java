@@ -25,9 +25,13 @@ public class PhotoPlugin {
 
     private static String IMAGE_PREFIX = "file://";
 
+    private static String EMPTY_STR = "";
+
     private Context mContext;
 
     private Object mProxyInstance = null;
+
+    private ContentResolver mResolver;
 
     public PhotoPlugin(Context context) {
         mContext = context;
@@ -40,7 +44,11 @@ public class PhotoPlugin {
             return;
         }
         Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType(type);
+        if ("*/*".equals(type)) {
+            intent.setType("image/*;video/*");
+        } else {
+            intent.setType(type);
+        }
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         Activity activity = getActivity();
         if (activity == null) {
@@ -81,17 +89,6 @@ public class PhotoPlugin {
         }
     }
 
-    private void removeIntentCallback(Class<?> delegate, Class<?> callbackInterface) {
-        try {
-            Method removeIntentMethod = delegate.getMethod("removeIntentCallback", callbackInterface);
-            if (mProxyInstance != null) {
-                removeIntentMethod.invoke(null, mProxyInstance);
-            }
-        } catch (NoSuchMethodException |  InvocationTargetException | IllegalAccessException e) {
-            Log.e(TAG, "removeIntentCallback NoSuchMethodException");
-        }
-    }
-
     public void onResult(int requestCode, int resultCode, Intent data, Activity activity) {
         Log.i(TAG, "onResult enter requestCode is " + requestCode + ", " + resultCode);
 
@@ -99,34 +96,58 @@ public class PhotoPlugin {
 
         List<String> rst = new ArrayList<>();
         int RESULT_OK = 0;
+        mResolver = activity.getContentResolver();
+        if (mResolver == null) {
+            onPickerResult(rst, RESULT_OK);
+            return;
+        }
         ClipData clipData = data.getClipData();
-        if (clipData == null) {
+        if (clipData == null || clipData.getItemCount() <= 0) {
+            rst = getIntentData(data);
             onPickerResult(rst, RESULT_OK);
             return;
         }
-        ContentResolver resolver = activity.getContentResolver();
         int count = clipData.getItemCount();
-        if (resolver == null || count <= 0) {
-            onPickerResult(rst, RESULT_OK);
-            return;
-        }
         for (int i = 0; i < count; i++) {
             Uri uri = clipData.getItemAt(i).getUri();
-            String[] columns = {MediaStore.MediaColumns.DATA};
-            Cursor cursor = resolver.query(uri, columns, null, null, null);
-            if (cursor == null) {
+            String imagePath = getImagePath(uri);
+            if (imagePath.equals(EMPTY_STR)) {
                 continue;
             }
-            cursor.moveToFirst();
-            int index = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
-            String relativePath = cursor.getString(index);
-            if (relativePath == null || relativePath.isEmpty()) {
-                continue;
-            }
-            String imagePath = IMAGE_PREFIX + relativePath;
             rst.add(imagePath);
         }
         onPickerResult(rst, RESULT_OK);
+    }
+
+    private List<String> getIntentData(Intent data) {
+        List<String> rst = new ArrayList<>();
+        Uri uri = data.getData();
+        if (uri != null) {
+            String imagePath = getImagePath(uri); 
+            if (!imagePath.equals(EMPTY_STR)) {
+                rst.add(imagePath);
+            }
+        }
+        return rst;
+    }
+
+    private String getImagePath(Uri uri) {
+        if (mResolver == null) {
+            return EMPTY_STR;
+        }
+        String[] columns = {MediaStore.MediaColumns.DATA};
+        Cursor cursor = mResolver.query(uri, columns, null, null, null);
+        if (cursor == null) {
+            return EMPTY_STR;
+        }
+        cursor.moveToFirst();
+        int index = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
+        String relativePath = cursor.getString(index);
+        if (relativePath == null || relativePath.isEmpty()) {
+            return EMPTY_STR;
+        }
+        String imagePath = IMAGE_PREFIX + relativePath;
+        return imagePath;
     }
 
     private boolean checkResult(int requestCode, int resultCode, Intent data) {
