@@ -61,7 +61,7 @@ public class BadgeUtils {
         }
         String manufacturer = Build.MANUFACTURER.toLowerCase();
         if (manufacturer.contains("huawei") || manufacturer.contains("honor")) {
-            setHWHonorBadge(count, context);
+            setHWOrHonorBadge(count, context);
         } else if (manufacturer.contains("samsung")) {
             setSamsungBadge(count, context);
         } else if (manufacturer.contains("oppo")) {
@@ -117,7 +117,7 @@ public class BadgeUtils {
         }
     }
 
-    private static void setHWHonorBadge(int count, Context context) {
+    private static void setHWOrHonorBadge(int count, Context context) {
         try {
             Bundle bunlde = new Bundle();
             bunlde.putString("package", context.getPackageName());
