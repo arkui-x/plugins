@@ -37,6 +37,7 @@
 #include "number_utypes.h"
 #include "locale_info.h"
 #include "measure_data.h"
+#include "relative_time_format.h"
 
 namespace OHOS {
 namespace Global {
@@ -84,6 +85,7 @@ private:
     std::string unitMeasSys;
     bool createSuccess = false;
     std::unique_ptr<LocaleInfo> localeInfo = nullptr;
+    std::unique_ptr<RelativeTimeFormat> relativeTimeFormat = nullptr;
     icu::number::LocalizedNumberFormatter numberFormat;
     icu::number::Notation notation = icu::number::Notation::simple();
     UNumberUnitWidth unitDisplay = UNumberUnitWidth::UNUM_UNIT_WIDTH_SHORT;
@@ -99,12 +101,18 @@ private:
     static std::unordered_map<std::string, UNumberSignDisplay> signAutoStyle;
     static std::unordered_map<std::string, UNumberSignDisplay> signAccountingStyle;
     static std::unordered_map<UMeasurementSystem, std::string> measurementSystem;
+    static std::unordered_map<std::string, UNumberUnitWidth> defaultUnitStyle;
+    static std::unordered_map<std::string, UNumberUnitWidth> defaultCurrencyStyle;
+    static std::map<std::string, std::string> RelativeTimeFormatConfigs;
+    void CreateRelativeTimeFormat(const std::string& locale);
     void ParseConfigs(std::map<std::string, std::string> &configs);
     void ParseDigitsConfigs(std::map<std::string, std::string> &configs);
     void GetDigitsResolvedOptions(std::map<std::string, std::string> &map);
     void InitProperties();
     void InitDigitsProperties();
     void SetUnit(std::string &preferredUnit);
+    void SetPrecisionWithByte(double number, const std::string& finalUnit);
+    void SetDefaultStyle();
 };
 } // namespace I18n
 } // namespace Global

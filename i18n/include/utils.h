@@ -17,12 +17,16 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
+#include <unicode/locid.h>
 
 namespace OHOS {
 namespace Global {
 namespace I18n {
 void Split(const std::string &src, const std::string &sep, std::vector<std::string> &dest);
 int32_t ConvertString2Int(const std::string &numberStr, int32_t& status);
+void GetAllValidLocalesTag(std::unordered_set<std::string>& allValidLocalesLanguageTag);
+bool IsValidLocaleTag(icu::Locale &locale);
 } // namespace I18n
 } // namespace Global
 } // namespace OHOS

@@ -21,12 +21,16 @@
 #include "i18n_calendar.h"
 #include "icu_data.h"
 #include "log.h"
+#include "locale_info.h"
+#include "locale_matcher.h"
+#include "napi_utils.h"
 #include "node_api.h"
 #include "plugin_utils.h"
 #include "unicode/locid.h"
 #include "unicode/datefmt.h"
 #include "unicode/smpdtfmt.h"
 #include "unicode/translit.h"
+#include "utils.h"
 
 #include "i18n_addon.h"
 
@@ -149,7 +153,8 @@ napi_value I18nAddon::CreateI18nUtilObject(napi_env env, napi_status &initStatus
         return nullptr;
     }
     napi_property_descriptor i18nUtilProperties[] = {
-        DECLARE_NAPI_FUNCTION("getDateOrder", GetDateOrder)
+        DECLARE_NAPI_FUNCTION("getDateOrder", GetDateOrder),
+        DECLARE_NAPI_FUNCTION("getBestMatchLocale", GetBestMatchLocale)
     };
     status = napi_define_properties(env, i18nUtil, sizeof(i18nUtilProperties) / sizeof(napi_property_descriptor),
         i18nUtilProperties);
@@ -351,6 +356,103 @@ napi_value I18nAddon::GetDateOrder(napi_env env, napi_callback_info info)
     return result;
 }
 
+LocaleInfo* ProcessJsParamLocale(napi_env env, napi_value argv)
+{
+    int32_t code = 0;
+    std::string localeTag = NAPIUtils::GetString(env, argv, code);
+    if (code != 0) {
+        LOGE("GetBestMatchLocale get param locale failed.");
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
+        return nullptr;
+    }
+    UErrorCode icuStatus = U_ZERO_ERROR;
+    icu::Locale locale = icu::Locale::forLanguageTag(localeTag.data(), icuStatus);
+    if (U_FAILURE(icuStatus) || !IsValidLocaleTag(locale)) {
+        LOGE("GetBestMatchLocale param locale Invalid.");
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, true);
+        return nullptr;
+    }
+    return new LocaleInfo(localeTag);
+}
+
+bool ProcessJsParamLocaleList(napi_env env, napi_value argv, std::vector<LocaleInfo*> &candidateLocales,
+    LocaleInfo *requestLocale)
+{
+    std::vector<std::string> localeTagList;
+    if (!NAPIUtils::GetStringArrayFromJsParam(env, argv, "localeList", localeTagList)) {
+        napi_throw_type_error(env, nullptr, "ProcessJsParamLocaleList: Failed to obtain the parameter.");
+        return false;
+    }
+    if (localeTagList.size() == 0) {
+        return true;
+    }
+    for (auto it = localeTagList.begin(); it != localeTagList.end(); ++it) {
+        UErrorCode icuStatus = U_ZERO_ERROR;
+        icu::Locale locale = icu::Locale::forLanguageTag(it->data(), icuStatus);
+        if (U_FAILURE(icuStatus) || !IsValidLocaleTag(locale)) {
+            LOGE("GetBestMatchLocale param localeList Invalid: %{public}s.", it->data());
+            ErrorUtil::NapiThrow(env, I18N_NOT_VALID, "locale of localeList", "a valid locale", true);
+            return false;
+        }
+        LocaleInfo *temp = new LocaleInfo(*it);
+        if (LocaleMatcher::Match(requestLocale, temp)) {
+            candidateLocales.push_back(temp);
+        } else {
+            delete temp;
+        }
+    }
+    return true;
+}
+
+void ReleaseParam(LocaleInfo *locale, std::vector<LocaleInfo*> &candidateLocales)
+{
+    delete locale;
+    for (auto it = candidateLocales.begin(); it != candidateLocales.end(); ++it) {
+        delete *it;
+    }
+}
+
+napi_value I18nAddon::GetBestMatchLocale(napi_env env, napi_callback_info info)
+{
+    size_t argc = 2;
+    napi_value argv[2] = { nullptr };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (status != napi_ok || argc < 2) { // 2 is the request param num.
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "locale or localeList", "", true);
+        return nullptr;
+    }
+    LocaleInfo *requestLocale = ProcessJsParamLocale(env, argv[0]);
+    if (requestLocale == nullptr) {
+        return nullptr;
+    }
+    std::vector<LocaleInfo*> candidateLocales;
+    bool isValidParam = ProcessJsParamLocaleList(env, argv[1], candidateLocales, requestLocale);
+    if (!isValidParam) {
+        ReleaseParam(requestLocale, candidateLocales);
+        return nullptr;
+    }
+    std::string bestMatchLocaleTag = "";
+    if (candidateLocales.size() > 0) {
+        LocaleInfo *bestMatch = candidateLocales[0];
+        for (size_t i = 1; i < candidateLocales.size(); ++i) {
+            if (LocaleMatcher::IsMoreSuitable(bestMatch, candidateLocales[i], requestLocale) < 0) {
+                bestMatch = candidateLocales[i];
+            }
+        }
+        bestMatchLocaleTag = bestMatch->ToString();
+    }
+    ReleaseParam(requestLocale, candidateLocales);
+    napi_value result = nullptr;
+    status = napi_create_string_utf8(env, bestMatchLocaleTag.c_str(), NAPI_AUTO_LENGTH, &result);
+    if (status != napi_ok) {
+        LOGE("Create format stirng failed.");
+        return nullptr;
+    }
+    return result;
+}
+
 std::string I18nAddon::ModifyOrder(std::string &pattern)
 {
     int order[3] = { 0 }; // total 3 elements 'y', 'M'/'L', 'd'
@@ -460,7 +562,7 @@ napi_value I18nAddon::TransliteratorConstructor(napi_env env, napi_callback_info
         return nullptr;
     }
     int32_t code = 0;
-    std::string idTag = GetString(env, argv[0], code);
+    std::string idTag = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -643,7 +745,7 @@ napi_value I18nAddon::IsDigitAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -674,7 +776,7 @@ napi_value I18nAddon::IsSpaceCharAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -705,7 +807,7 @@ napi_value I18nAddon::IsWhiteSpaceAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -736,7 +838,7 @@ napi_value I18nAddon::IsRTLCharacterAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -767,7 +869,7 @@ napi_value I18nAddon::IsIdeoGraphicAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -798,7 +900,7 @@ napi_value I18nAddon::IsLetterAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -829,7 +931,7 @@ napi_value I18nAddon::IsLowerCaseAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -860,7 +962,7 @@ napi_value I18nAddon::IsUpperCaseAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -891,7 +993,7 @@ napi_value I18nAddon::GetTypeAddon(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string character = GetString(env, argv[0], code);
+    std::string character = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -1295,23 +1397,35 @@ napi_value I18nAddon::FormatPhoneNumber(napi_env env, napi_callback_info info)
     return result;
 }
 
-std::string I18nAddon::GetString(napi_env &env, napi_value &value, int32_t &code)
+bool I18nAddon::GetStringArrayFromJsParam(
+    napi_env env, napi_value &jsArray, const std::string& valueName, std::vector<std::string> &strArray)
 {
-    size_t len = 0;
-    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &len);
-    if (status != napi_ok) {
-        LOGE("Get string failed");
-        code = 1;
-        return "";
+    if (jsArray == nullptr) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, valueName, "", true);
+        return false;
     }
-    std::vector<char> buf(len + 1);
-    status = napi_get_value_string_utf8(env, value, buf.data(), len + 1, &len);
+    bool isArray = false;
+    napi_status status = napi_is_array(env, jsArray, &isArray);
     if (status != napi_ok) {
-        LOGE("Create string failed");
-        code = 1;
-        return "";
+        return false;
+    } else if (!isArray) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, valueName, "an Array", true);
+        return false;
     }
-    return buf.data();
+    uint32_t arrayLength = 0;
+    napi_get_array_length(env, jsArray, &arrayLength);
+    napi_value element = nullptr;
+    int32_t code = 0;
+    for (uint32_t i = 0; i < arrayLength; ++i) {
+        napi_get_element(env, jsArray, i, &element);
+        std::string str = NAPIUtils::GetString(env, element, code);
+        if (code != 0) {
+            napi_throw_type_error(env, nullptr, "GetStringArrayFromJsParam: Failed to obtain the parameter.");
+            return false;
+        }
+        strArray.push_back(str);
+    }
+    return true;
 }
 
 napi_value I18nAddon::InitI18nCalendar(napi_env env, napi_value exports)
@@ -1372,7 +1486,7 @@ napi_value I18nAddon::CalendarConstructor(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string localeTag = GetString(env, argv[0], code);
+    std::string localeTag = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -1403,7 +1517,7 @@ CalendarType I18nAddon::GetCalendarType(napi_env env, napi_value value)
             return type;
         }
         int32_t code = 0;
-        std::string calendarType = GetString(env, value, code);
+        std::string calendarType = NAPIUtils::GetString(env, value, code);
         if (code) {
             return type;
         }
@@ -1866,7 +1980,7 @@ napi_value I18nAddon::GetDisplayName(napi_env env, napi_callback_info info)
         return nullptr;
     }
     int32_t code = 0;
-    std::string localeTag = GetString(env, argv[0], code);
+    std::string localeTag = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -1997,7 +2111,7 @@ napi_value I18nAddon::CompareDays(napi_env env, napi_callback_info info)
 
 std::string I18nAddon::GetAddField(napi_env &env, napi_value &value, int32_t &code)
 {
-    std::string field = GetString(env, value, code);
+    std::string field = NAPIUtils::GetString(env, value, code);
     if (code != 0) {
         LOGE("can't get string from js array param.");
         ErrorUtil::NapiThrow(env, I18N_NOT_VALID, true);
@@ -2054,7 +2168,7 @@ napi_value I18nAddon::BreakIteratorConstructor(napi_env env, napi_callback_info 
         return nullptr;
     }
     int32_t code = 0;
-    std::string localeTag = GetString(env, argv[0], code);
+    std::string localeTag = NAPIUtils::GetString(env, argv[0], code);
     if (code) {
         return nullptr;
     }
@@ -2690,7 +2804,7 @@ napi_value I18nAddon::I18nTimeZoneConstructor(napi_env env, napi_callback_info i
             return nullptr;
         }
         int32_t code = 0;
-        zoneID = GetString(env, argv[0], code);
+        zoneID = NAPIUtils::GetString(env, argv[0], code);
         if (code != 0) {
             return nullptr;
         }
@@ -3211,7 +3325,7 @@ napi_value I18nAddon::Normalize(napi_env env, napi_callback_info info)
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
     }
     int32_t code = 0;
-    std::string text = GetString(env, argv[0], code);
+    std::string text = NAPIUtils::GetString(env, argv[0], code);
     if (code != 0) {
         return nullptr;
     }
