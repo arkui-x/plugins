@@ -91,7 +91,6 @@ __attribute__((no_sanitize("cfi"))) napi_value NapiIsNotificationEnabled(napi_en
     napi_value promise = nullptr;
     Common::PaddingCallbackPromiseInfo(env, params.callback, asynccallbackinfo->info, promise);
     NotificationHelper::IsAllowedNotifySelf(static_cast<void*>(asynccallbackinfo), [](void* data, int32_t code, bool isEnable) {
-        LOGE("napiRequestEnableNotification callback is nullptr.");
         auto* asynccallbackinfo = static_cast<AsyncCallbackInfoIsEnable*>(data);
         asynccallbackinfo->info.errorCode = code;
         asynccallbackinfo->allowed = isEnable;

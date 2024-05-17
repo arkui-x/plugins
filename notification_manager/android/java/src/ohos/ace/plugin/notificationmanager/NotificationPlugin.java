@@ -80,14 +80,14 @@ public class NotificationPlugin {
         activity.requestPermissions(new String[] { PERMISSION }, 1);
     }
 
-    public boolean isHighVersion() {
+    public boolean isAPITiramisuLater() {
         // Build.VERSION_CODES.TIRAMISU
         Log.d(TAG, "isHighVersion version " + Build.VERSION.SDK_INT);
         return Build.VERSION.SDK_INT >= 33;
     }
 
     public boolean checkPermission() {
-        if (!isHighVersion()) {
+        if (!isAPITiramisuLater()) {
             return mManager.areNotificationsEnabled();
         }
         PackageManager pm = context.getPackageManager();
@@ -99,7 +99,6 @@ public class NotificationPlugin {
     }
 
     public void publish(String jsonString) {
-        Log.d(TAG, "publish:" + jsonString);
         if (TextUtils.isEmpty(jsonString)) {
             return;
         }
@@ -113,7 +112,7 @@ public class NotificationPlugin {
     }
 
     public void setBadgeNumber(int count) {
-        BadgeUtils.setBadgeNumber(count, context);
+        BadgeUtils.setBadgeNumber(context, count);
     }
 
     public void cancel(int id, String tag) {
@@ -132,7 +131,7 @@ public class NotificationPlugin {
         mBuilder = getBuilder();
         Notification notification = mBuilder.build();
         if (request.badgeNumber != null && request.badgeNumber >= 0) {
-            BadgeUtils.setBadgeNumber(request.badgeNumber, context, notification);
+            BadgeUtils.setBadgeNumber(context, request.badgeNumber, notification);
         }
 
         if (!TextUtils.isEmpty(request.label)) {
