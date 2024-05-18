@@ -41,7 +41,7 @@ static const char METHOD_CANCEL[] = "cancel";
 static const char METHOD_CANCEL_ALL[] = "cancelAll";
 static const char METHOD_SET_BADGE_NUMBER[] = "setBadgeNumber";
 static const char METHOD_REQUEST_ENABLE[] = "requestEnableNotification";
-static const char METHOD_IS_HIGH_VERSION[] = "isHighVersion";
+static const char METHOD_IS_HIGH_VERSION[] = "isAPITiramisuLater";
 static const char METHOD_CHECK_PERMISSION[] = "checkPermission";
 
 static const char SIGNATURE_PUBLISH_INFO[] = "(Ljava/lang/String;)V";

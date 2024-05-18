@@ -36,7 +36,7 @@ import java.util.List;
 public class BadgeUtils {
     private static final String TAG = BadgeUtils.class.getSimpleName();
 
-    public static void setBadgeNumber(int count, Context context, Notification notification) {
+    public static void setBadgeNumber(Context context, int count, Notification notification) {
         if (context == null) {
             return;
         }
@@ -45,7 +45,7 @@ public class BadgeUtils {
         if (manufacturer.contains("xiaomi")) {
             setXiaoMiBadge(count, context, notification);
         } else {
-            setBadgeNumber(count, context);
+            setBadgeNumber(context, count);
         }
     }
 
@@ -55,13 +55,13 @@ public class BadgeUtils {
      * @param count   badge number
      * @param context application context
      */
-    public static void setBadgeNumber(int count, Context context) {
+    public static void setBadgeNumber(Context context, int count) {
         if (context == null) {
             return;
         }
         String manufacturer = Build.MANUFACTURER.toLowerCase();
         if (manufacturer.contains("huawei") || manufacturer.contains("honor")) {
-            setHuaWeiBadge(count, context);
+            setHWOrHonorBadge(count, context);
         } else if (manufacturer.contains("samsung")) {
             setSamsungBadge(count, context);
         } else if (manufacturer.contains("oppo")) {
@@ -117,7 +117,7 @@ public class BadgeUtils {
         }
     }
 
-    private static void setHuaWeiBadge(int count, Context context) {
+    private static void setHWOrHonorBadge(int count, Context context) {
         try {
             Bundle bunlde = new Bundle();
             bunlde.putString("package", context.getPackageName());
