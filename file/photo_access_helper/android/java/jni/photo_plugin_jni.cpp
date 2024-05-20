@@ -125,7 +125,9 @@ void PhotoPluginJni::onPickerResult(JNIEnv* env, jobject thiz, jobject rst, jint
         LOGI("PhotoPluginJni: photoPickerCallback enter");
         photoPickerCallback->resultCode = errorCode;
         photoPickerCallback->uris = cppStringList;
-        photoPickerCallback->isOrigin = true;
+        if (!cppStringList.empty()) {
+            photoPickerCallback->isOrigin = true;
+        }
         photoPickerCallback->ready = true;
     }
 }
