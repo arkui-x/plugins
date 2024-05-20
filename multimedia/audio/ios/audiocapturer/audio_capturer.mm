@@ -107,6 +107,11 @@ int32_t AudioCapturerPrivate::CheckParams(const AudioCapturerOptions &capturerOp
     return SUCCESS;
 }
 
+int32_t AudioCapturerPrivate::UpdatePlaybackCaptureConfig(const AudioPlaybackCaptureConfig &config)
+{
+    return 0;
+}
+
 int32_t AudioCapturerPrivate::SetCapturerCallback(const std::shared_ptr<AudioCapturerCallback> &callback)
 {
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM, "input param is invalid");

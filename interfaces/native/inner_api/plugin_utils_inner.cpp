@@ -39,7 +39,7 @@ void PluginUtilsInner::RegisterPlugin(RegisterCallback callback, const std::stri
         if (taskExecutor->WillRunOnCurrentThread(OHOS::Ace::TaskExecutor::TaskType::PLATFORM)) {
            task();
         } else {
-            taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+            taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM, "ArkUI-XPluginUtilsInnerRegisterPlugin");
         }
     }
 #endif
@@ -75,7 +75,7 @@ void PluginUtilsInner::RunTaskOnPlatform(const Task& task)
 {
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (taskExecutor) {
-        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::PLATFORM, "ArkUI-XPluginUtilsInnerRunTaskOnPlatform");
     } else {
         auto eventRunner = AppExecFwk::EventRunner::Current();
         if (!eventRunner) {
@@ -103,7 +103,7 @@ void PluginUtilsInner::RunTaskOnJS(const Task& task)
 {
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (taskExecutor) {
-        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
+        taskExecutor->PostTask(task, OHOS::Ace::TaskExecutor::TaskType::JS, "ArkUI-XPluginUtilsInnerRunTaskOnJS");
     }
 }
 
@@ -111,7 +111,7 @@ void PluginUtilsInner::RunSyncTaskOnJS(const Task& task)
 {
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (taskExecutor) {
-        taskExecutor->PostSyncTask(task, OHOS::Ace::TaskExecutor::TaskType::JS);
+        taskExecutor->PostSyncTask(task, OHOS::Ace::TaskExecutor::TaskType::JS, "ArkUI-XPluginUtilsInnerRunSyncTaskOnJS");
     }
 }
 

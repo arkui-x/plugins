@@ -38,6 +38,7 @@ public:
     int32_t CheckParams(const AudioCapturerOptions& capturerOptions);
     int32_t GetFrameCount(uint32_t& frameCount) const override { return 0; }
     int32_t SetParams(const AudioCapturerParams params) override { return 0; }
+    int32_t UpdatePlaybackCaptureConfig(const AudioPlaybackCaptureConfig &config) override;
     int32_t SetCapturerCallback(const std::shared_ptr<AudioCapturerCallback>& callback) override;
     int32_t GetParams(AudioCapturerParams& params) const override { return 0; }
     int32_t GetCapturerInfo(AudioCapturerInfo& capturerInfo) const override;

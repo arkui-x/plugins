@@ -180,6 +180,16 @@ int32_t RecorderImpl::SetRecorderCallback(const std::shared_ptr<RecorderCallback
     return Plugin::RecorderJni::SetRecorderCallback(long(this), callback);
 }
 
+int32_t RecorderImpl::SetUserCustomInfo(Meta &userCustomInfo)
+{
+    return MSERR_OK;
+}
+
+int32_t RecorderImpl::SetGenre(std::string &genre)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::Prepare()
 {
     return Plugin::RecorderJni::Prepare((long)this);

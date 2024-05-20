@@ -224,6 +224,11 @@ std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchFrameAtTime(
     return nullptr;
 }
 
+std::shared_ptr<Meta> AVMetadataHelperImpl::GetAVMetadata()
+{
+    return nullptr;
+}
+
 void AVMetadataHelperImpl::Release()
 {
     CHECK_AND_RETURN_LOG(avMetadataHelperAdapter_ != nullptr, "avmetadatahelper service does not exist.");

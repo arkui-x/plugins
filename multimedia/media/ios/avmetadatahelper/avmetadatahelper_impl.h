@@ -33,6 +33,7 @@ public:
     std::unordered_map<int32_t, std::string> ResolveMetadata() override;
     std::shared_ptr<AVSharedMemory> FetchArtPicture() override;
     std::shared_ptr<PixelMap> FetchFrameAtTime(int64_t timeUs, int32_t option, const PixelMapParams &param) override;
+    std::shared_ptr<Meta> GetAVMetadata() override;
     void Release() override;
     int32_t Init();
     int32_t SetHelperCallback(const std::shared_ptr<HelperCallback> &callback) override;

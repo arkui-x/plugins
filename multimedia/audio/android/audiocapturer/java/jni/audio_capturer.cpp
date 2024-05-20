@@ -124,6 +124,11 @@ bool AudioCapturerPrivate::IsSamplingRateValid(uint32_t samplingRate)
     return isValidSamplingRate;
 }
 
+int32_t AudioCapturerPrivate::UpdatePlaybackCaptureConfig(const AudioPlaybackCaptureConfig &config)
+{
+    return 0;
+}
+
 int32_t AudioCapturerPrivate::SetCapturerCallback(const std::shared_ptr<AudioCapturerCallback>& callback)
 {
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::SetCapturerCallback");

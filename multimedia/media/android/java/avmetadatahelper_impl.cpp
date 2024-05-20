@@ -100,6 +100,11 @@ std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchFrameAtTime(
     return nullptr;
 }
 
+std::shared_ptr<Meta> AVMetadataHelperImpl::GetAVMetadata()
+{
+    return nullptr;
+}
+
 void AVMetadataHelperImpl::Release()
 {
     Plugin::AVMetadataHelperJni::Release((long)this);

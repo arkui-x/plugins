@@ -45,6 +45,7 @@ public:
     int32_t Enqueue(const BufferDesc &bufDesc)const override; 
     int32_t GetCurrentInputDevices(DeviceInfo &deviceInfo) const override;
     int32_t GetCurrentCapturerChangeInfo(AudioCapturerChangeInfo &changeInfo) const override;
+    int32_t UpdatePlaybackCaptureConfig(const AudioPlaybackCaptureConfig &config) override;
     int32_t SetCapturerCallback(const std::shared_ptr<AudioCapturerCallback> &callback) override;
     int32_t SetCapturerReadCallback(const std::shared_ptr<AudioCapturerReadCallback> &callback) override;
     int32_t SetAudioCapturerDeviceChangeCallback(
