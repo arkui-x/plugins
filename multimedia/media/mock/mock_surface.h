@@ -351,7 +351,33 @@ public:
     {
         return 0;
     }
-    
+
+    GSError SetSurfaceSourceType(OHSurfaceSource sourceType) override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
+
+    OHSurfaceSource GetSurfaceSourceType() const  override
+    {
+        return OH_SURFACE_SOURCE_DEFAULT;
+    }
+
+    GSError SetSurfaceAppFrameworkType(std::string appFrameworkType)  override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
+
+    std::string GetSurfaceAppFrameworkType() const override
+    {
+        return "";
+    }
+
+    void SetBufferHold(bool hold) override {}
+
+    GSError SetScalingMode(ScalingMode scalingMode)  override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
 private:
     uint64_t queueId_ = 0;
     int32_t instanceId_ = -1;

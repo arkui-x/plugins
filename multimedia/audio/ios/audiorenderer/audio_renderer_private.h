@@ -37,6 +37,7 @@ public:
     int32_t GetFrameCount(uint32_t &frameCount) const override;
     int32_t GetLatency(uint64_t &latency) const override;
     void SetAudioPrivacyType(AudioPrivacyType privacyType) override;
+    AudioPrivacyType GetAudioPrivacyType() override { return PRIVACY_TYPE_PRIVATE; };
     int32_t SetParams(const AudioRendererParams params) override;
     int32_t GetParams(AudioRendererParams &params) const override;
     int32_t GetRendererInfo(AudioRendererInfo &rendererInfo) const override;
@@ -86,6 +87,7 @@ public:
     int32_t SetParallelPlayFlag(bool parallelPlayFlag) override;
     int32_t SetLowPowerVolume(float volume) const override;
     float GetLowPowerVolume() const override;
+    int32_t SetOffloadAllowed(bool isAllowed) override;
     int32_t SetOffloadMode(int32_t state, bool isAppBack) const override;
     int32_t UnsetOffloadMode() const override;
     float GetSingleStreamVolume() const override;

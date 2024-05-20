@@ -72,6 +72,7 @@ public:
     int32_t GetFrameCount(uint32_t &frameCount) const override { return 0; }
     int32_t GetLatency(uint64_t &latency) const override { return ERR_NOT_SUPPORTED; }
     void SetAudioPrivacyType(AudioPrivacyType privacyType) override {};
+    AudioPrivacyType GetAudioPrivacyType() override { return PRIVACY_TYPE_PRIVATE; };
     int32_t SetParams(const AudioRendererParams params) override { return ERR_NOT_SUPPORTED; }
     int32_t GetParams(AudioRendererParams &params) const override { return ERR_NOT_SUPPORTED; }
     int32_t Write(uint8_t *pcmBuffer, size_t pcmSize, uint8_t *metaBuffer, size_t metaSize) override { return 0; }
@@ -96,6 +97,7 @@ public:
     int32_t SetParallelPlayFlag(bool parallelPlayFlag) override { return ERR_NOT_SUPPORTED; }
     int32_t SetLowPowerVolume(float volume) const override { return ERR_NOT_SUPPORTED; }
     float GetLowPowerVolume() const override { return 0.0f; }
+    int32_t SetOffloadAllowed(bool isAllowed) override { return ERR_NOT_SUPPORTED; }
     int32_t SetOffloadMode(int32_t state, bool isAppBack) const override { return ERR_NOT_SUPPORTED; }
     int32_t UnsetOffloadMode() const override { return ERR_NOT_SUPPORTED; }
     float GetSingleStreamVolume() const override { return 0.0f; }

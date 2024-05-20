@@ -224,6 +224,16 @@ int32_t RecorderImpl::SetRecorderCallback(const std::shared_ptr<RecorderCallback
     return MSERR_OK;
 }
 
+int32_t RecorderImpl::SetUserCustomInfo(Meta &userCustomInfo)
+{
+    return MSERR_OK;
+}
+
+int32_t RecorderImpl::SetGenre(std::string &genre)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::Prepare()
 {
     CHECK_AND_RETURN_RET_LOG(recorderAdapter_ != nullptr, MSERR_INVALID_OPERATION, "recorder adapter does not exist..");

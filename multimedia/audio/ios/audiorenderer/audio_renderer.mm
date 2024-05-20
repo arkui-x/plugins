@@ -369,6 +369,11 @@ float AudioRendererPrivate::GetLowPowerVolume() const
     return 0.0f;
 }
 
+int32_t AudioRendererPrivate::SetOffloadAllowed(bool isAllowed)
+{
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioRendererPrivate::SetOffloadMode(int32_t state, bool isAppBack) const
 {
     return ERR_NOT_SUPPORTED;

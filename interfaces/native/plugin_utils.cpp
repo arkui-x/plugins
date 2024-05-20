@@ -41,9 +41,9 @@ void ARKUI_X_Plugin_RunAsyncTask(ARKUI_X_Plugin_Task task, ARKUI_X_Plugin_Thread
     auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
     if (taskExecutor) {
         if (mode == ARKUI_X_PLUGIN_PLATFORM_THREAD) {
-            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::PLATFORM);
+            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::PLATFORM, "ArkUI-XPluginUtilsRunAsyncTaskPlatform");
         } else if (mode == ARKUI_X_PLUGIN_JS_THREAD) {
-            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::JS);
+            taskExecutor->PostTask([task]() { task(); }, OHOS::Ace::TaskExecutor::TaskType::JS, "ArkUI-XPluginUtilsRunAsyncTaskJs");
         } else {
             LOGE("The mode of thread is not support in the ARKUI_X_Plugin_RunAsyncTask method!");
         }

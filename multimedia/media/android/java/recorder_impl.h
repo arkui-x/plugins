@@ -49,6 +49,8 @@ public:
     void SetLocation(float latitude, float longitude) override;
     void SetOrientationHint(int32_t rotation) override;
     int32_t SetRecorderCallback(const std::shared_ptr<RecorderCallback> &callback) override;
+    int32_t SetUserCustomInfo(Meta &userCustomInfo) override;
+    int32_t SetGenre(std::string &genre) override;
     int32_t Prepare() override;
     int32_t Start() override;
     int32_t Pause() override;
