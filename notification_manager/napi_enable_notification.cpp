@@ -100,7 +100,6 @@ __attribute__((no_sanitize("cfi"))) napi_value NapiIsNotificationEnabled(napi_en
 
     bool isCallback = asynccallbackinfo->info.isCallback;
     if (isCallback) {
-        LOGD("napiIsNotificationEnabled callback is nullptr.");
         return Common::NapiGetNull(env);
     } else {
         return promise;
@@ -141,7 +140,6 @@ napi_value NapiRequestEnableNotification(napi_env env, napi_callback_info info)
     Common::PaddingCallbackPromiseInfo(env, params.callback, asynccallbackinfo->info, promise);
 
     NotificationHelper::RequestEnableNotification(static_cast<void*>(asynccallbackinfo), [](void* data, int32_t code) {
-        LOGE("napiRequestEnableNotification callback is nullptr.");
         auto* asynccallbackinfo = static_cast<AsyncCallbackInfoIsEnable*>(data);
         asynccallbackinfo->info.errorCode = code;
         NapiAsyncCompleteCallbackRequestEnableNotification(
@@ -150,7 +148,6 @@ napi_value NapiRequestEnableNotification(napi_env env, napi_callback_info info)
 
     bool isCallback = asynccallbackinfo->info.isCallback;
     if (isCallback) {
-        LOGD("napiRequestEnableNotification callback is nullptr.");
         return Common::NapiGetNull(env);
     } else {
         return promise;
