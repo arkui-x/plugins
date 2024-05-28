@@ -66,11 +66,11 @@ public:
     int32_t GetFrameCount(uint32_t& frameCount) const override;
     int32_t SetParams(const AudioCapturerParams params) override;
     int32_t SetBufferDuration(uint64_t bufferDuration) const override;
-    int32_t SetCaptureMode(AudioCaptureMode captureMode) const override;
+    int32_t SetCaptureMode(AudioCaptureMode captureMode) override;
     int32_t GetBufQueueState(BufferQueueState& bufState) const override;
     int32_t GetParams(AudioCapturerParams& params) const override;
     int32_t SetCaptureSilentState(bool state) override;
-    uint32_t GetOverflowCount() override;
+    uint32_t GetOverflowCount() const override;
     std::vector<sptr<MicrophoneDescriptor>> GetCurrentMicrophones() const override;
     int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) const override;
     int32_t RegisterAudioCapturerEventListener() override;

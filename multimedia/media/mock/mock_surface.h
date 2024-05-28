@@ -76,7 +76,7 @@ public:
         return GSERROR_NOT_SUPPORT;
     }
     GSError GetLastFlushedBuffer(sptr<SurfaceBuffer>& buffer,
-                                  sptr<SyncFence>& fence, float matrix[16]) override
+                                  sptr<SyncFence>& fence, float matrix[16], bool isUseNewMatrix = false) override
     {
         return GSERROR_NOT_SUPPORT;
     }
@@ -320,12 +320,12 @@ public:
         return GSERROR_NOT_SUPPORT;
     }
 
-    GSError AttachBufferToQueue(sptr<SurfaceBuffer>& buffer) override
+    GSError AttachBufferToQueue(sptr<SurfaceBuffer> buffer) override
     {
         return GSERROR_NOT_SUPPORT;
     }
 
-    GSError DetachBufferFromQueue(sptr<SurfaceBuffer>& buffer) override
+    GSError DetachBufferFromQueue(sptr<SurfaceBuffer> buffer) override
     {
         return GSERROR_NOT_SUPPORT;
     }
@@ -376,6 +376,18 @@ public:
 
     GSError SetScalingMode(ScalingMode scalingMode)  override
     {
+        return GSERROR_NOT_SUPPORT;
+    }
+
+    BufferRequestConfig* GetWindowConfig() override
+    {
+        return nullptr;
+    }
+    GSError SetHdrWhitePointBrightness(float brightness) override{
+       return GSERROR_NOT_SUPPORT;
+    }
+    
+    GSError SetSdrWhitePointBrightness(float brightness) override{
         return GSERROR_NOT_SUPPORT;
     }
 private:

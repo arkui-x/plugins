@@ -60,7 +60,7 @@ public:
         int64_t frameNumber, const std::shared_ptr<CapturerPeriodPositionCallback>& callback) override;
     void UnsetCapturerPeriodPositionCallback() override;
     int32_t SetBufferDuration(uint64_t bufferDuration) const override { return 0; }
-    int32_t SetCaptureMode(AudioCaptureMode captureMode) const override { return 0; }
+    int32_t SetCaptureMode(AudioCaptureMode captureMode) override { return 0; }
     AudioCaptureMode GetCaptureMode() const override { return CAPTURE_MODE_NORMAL; }
     int32_t SetCapturerReadCallback(const std::shared_ptr<AudioCapturerReadCallback>& callback) override;
     int32_t GetBufferDesc(BufferDesc& bufDesc) const override;
@@ -88,7 +88,7 @@ public:
         return emptyVector;
     }
     int32_t SetCaptureSilentState(bool state) override { return 0; }
-    uint32_t GetOverflowCount() override { return 0; }
+    uint32_t GetOverflowCount() const override { return 0; }
 
 private:
     std::shared_ptr<AudioCapturerImpl> capturerImpl_ = nullptr;

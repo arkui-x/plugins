@@ -86,7 +86,7 @@ public:
     int32_t SetRendererSamplingRate(uint32_t sampleRate) const override { return ERR_NOT_SUPPORTED; }
     uint32_t GetRendererSamplingRate() const override { return 0; }
     int32_t SetBufferDuration(uint64_t bufferDuration) const override { return ERR_NOT_SUPPORTED; }
-    int32_t SetRenderMode(AudioRenderMode renderMode) const override { return SUCCESS; }
+    int32_t SetRenderMode(AudioRenderMode renderMode) override { return SUCCESS; }
     AudioRenderMode GetRenderMode() const override { return RENDER_MODE_NORMAL; }
     int32_t SetRendererFirstFrameWritingCallback(
         const std::shared_ptr<AudioRendererFirstFrameWritingCallback> &callback) override { return ERR_NOT_SUPPORTED; }

@@ -27,6 +27,7 @@ template("plugin_multimedia_media_static") {
       "SUPPORT_VIDEO",
       "SUPPORT_METADATA",
       "SUPPORT_RECORDER_API9",
+      "CROSS_PLATFORM",
     ]
 
     include_dirs = media_include

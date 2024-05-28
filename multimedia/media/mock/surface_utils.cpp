@@ -44,7 +44,7 @@ sptr<Surface> SurfaceUtils::GetSurface(uint64_t uniqueId)
     return surface;
 }
 
-SurfaceError SurfaceUtils::Add(uint64_t uniqueId, const sptr<Surface> &surface)
+SurfaceError SurfaceUtils::Add(uint64_t uniqueId, const wptr<Surface> &surface)
 {
     std::lock_guard<std::mutex> lockGuard(mutex_);
     if (surface == nullptr) {

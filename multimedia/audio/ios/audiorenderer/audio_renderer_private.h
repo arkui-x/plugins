@@ -72,7 +72,7 @@ public:
         const std::shared_ptr<RendererPeriodPositionCallback> &callback) override;
     void UnsetRendererPeriodPositionCallback() override;
     int32_t SetBufferDuration(uint64_t bufferDuration) const override;
-    int32_t SetRenderMode(AudioRenderMode renderMode) const override;
+    int32_t SetRenderMode(AudioRenderMode renderMode) override;
     AudioRenderMode GetRenderMode() const override;
     int32_t SetRendererWriteCallback(const std::shared_ptr<AudioRendererWriteCallback> &callback) override;
     int32_t SetRendererFirstFrameWritingCallback(
