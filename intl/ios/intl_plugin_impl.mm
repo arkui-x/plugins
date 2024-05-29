@@ -42,4 +42,11 @@ std::string INTLPluginImpl::GetSystemTimezone()
     std::string result = std::string([origin UTF8String]);
     return result;
 }
+
+std::string INTLPluginImpl::GetDeviceType()
+{
+    NSString *origin = [[iOSINTLPlugin shareinstance] getDeviceType];
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
 } // namespace OHOS::Plugin

@@ -27,6 +27,7 @@ public:
     virtual bool Is24HourClock() = 0;
     virtual std::string GetSystemLocale();
     virtual std::string GetSystemTimezone();
+    virtual std::string GetDeviceType();
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_INTL_PLUGIN_INTL_PLUGIN_H
