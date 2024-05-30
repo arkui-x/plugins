@@ -329,7 +329,7 @@ int32_t AudioCapturerPrivate::SetBufferDuration(uint64_t bufferDuration) const
     return 0;
 }
 
-int32_t AudioCapturerPrivate::SetCaptureMode(AudioCaptureMode captureMode) const
+int32_t AudioCapturerPrivate::SetCaptureMode(AudioCaptureMode captureMode)
 {
     return 0;
 }
@@ -349,7 +349,7 @@ int32_t AudioCapturerPrivate::SetCaptureSilentState(bool state)
     return 0;
 }
 
-uint32_t AudioCapturerPrivate::GetOverflowCount()
+uint32_t AudioCapturerPrivate::GetOverflowCount() const
 {
     return 0;
 }

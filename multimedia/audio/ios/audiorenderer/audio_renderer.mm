@@ -301,7 +301,7 @@ int32_t AudioRendererPrivate::SetChannelBlendMode(ChannelBlendMode blendMode)
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioRendererPrivate::SetRenderMode(AudioRenderMode renderMode) const
+int32_t AudioRendererPrivate::SetRenderMode(AudioRenderMode renderMode)
 {
     return SUCCESS;
 }
