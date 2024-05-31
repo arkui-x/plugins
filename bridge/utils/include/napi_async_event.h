@@ -16,6 +16,7 @@
 #ifndef PLUGINS_BRIDGE_NAPI_ASYNC_EVENT_H
 #define PLUGINS_BRIDGE_NAPI_ASYNC_EVENT_H
 
+#include <deque>
 #include <functional>
 #include <memory>
 #include <string>
@@ -56,6 +57,8 @@ public:
 
     bool CreateCallback(napi_value callback);
     void DeleteCallback(void);
+    void DeleteRefData(void);
+    void DeleteRefErrorData(void);
     bool IsCallback(void);
     bool CreateAsyncWork(const std::string& asyncWorkName,
         AsyncWorkExecutor executor, AsyncWorkComplete callback);
@@ -78,9 +81,9 @@ private:
     napi_ref refErrorData_ = nullptr;
     int errorCode_ = 0;
     std::string methodParameter_;
-    std::tuple<uint8_t*, size_t> methodBuffer_;
     OnAsyncEventSuccess eventSuccess_ = nullptr;
     OnAsyncEventError eventError_ = nullptr;
+    std::deque<std::tuple<uint8_t*, size_t>> taskQueue_;
 
     void TriggerEventSuccess(napi_value result);
     void TriggerEventError(ErrorCode code);

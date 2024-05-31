@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace OHOS::Plugin::Bridge {
-enum class CodecableValueType {
+enum class CodecableType {
     T_NULL = 0,
     T_BOOL,
     T_INT32,
@@ -39,36 +39,50 @@ enum class CodecableValueType {
     T_COMPOSITE_LIST,
 };
 
+enum class CodecableIndex : uint8_t {
+    I_NULL = 0,
+    I_TRUE,
+    I_FALSE,
+    I_INT32,
+    I_INT64,
+    I_DOUBLE,
+    I_STRING,
+    I_LIST_UINT8,
+    I_LIST_BOOL,
+    I_LIST_INT32,
+    I_LIST_INT64,
+    I_LIST_DOUBLE,
+    I_LIST_STRING,
+    I_MAP,
+    I_COMPOSITE_LIST,
+};
+
 class CodecableValue;
 
 using CodecableList = std::vector<CodecableValue>;
 using CodecableMap = std::map<CodecableValue, CodecableValue>;
-using CodecableValueVariant = std::variant<std::monostate,                                      // index 0
-                                            bool,                                               // index 1
-                                            int32_t,                                            // index 2
-                                            int64_t,                                            // index 3
-                                            double,                                             // index 4
-                                            std::string,                                        // index 5
-                                            std::vector<uint8_t>,                               // index 6
-                                            std::vector<bool>,                                  // index 7
-                                            std::vector<int32_t>,                               // index 8
-                                            std::vector<int64_t>,                               // index 9
-                                            std::vector<double>,                                // index 10
-                                            std::vector<std::string>,                           // index 11
-                                            CodecableMap,                                       // index 12
-                                            CodecableList>;                                     // index 13  
+using CodecableVariant = std::variant<std::monostate,                                       // index 0
+                                        bool,                                               // index 1
+                                        int32_t,                                            // index 2
+                                        int64_t,                                            // index 3
+                                        double,                                             // index 4
+                                        std::string,                                        // index 5
+                                        std::vector<uint8_t>,                               // index 6
+                                        std::vector<bool>,                                  // index 7
+                                        std::vector<int32_t>,                               // index 8
+                                        std::vector<int64_t>,                               // index 9
+                                        std::vector<double>,                                // index 10
+                                        std::vector<std::string>,                           // index 11
+                                        CodecableMap,                                       // index 12
+                                        CodecableList>;                                     // index 13
 
-class CodecableValue : public CodecableValueVariant {
+class CodecableValue : public CodecableVariant {
 public:
-    using super = CodecableValueVariant;
-    using super::super;
-    using super::operator=;
+    using CodecableVariant::CodecableVariant;
+    using CodecableVariant::operator=;
 
     explicit CodecableValue() = default;
-    explicit CodecableValue(const char* string) : super(std::string(string)) {}
-    
-    template <class T>
-    constexpr explicit CodecableValue(T&& t) noexcept : super(t) {}
+    explicit CodecableValue(const char* string) : CodecableVariant(std::string(string)) {}
 
     CodecableValue& operator=(const char* other)
     {
@@ -76,15 +90,8 @@ public:
         return *this;
     }
 
-    bool IsNull() const { return std::holds_alternative<std::monostate>(*this); }
-
-    int64_t LongValue() const
-    {
-        if (std::holds_alternative<int32_t>(*this)) {
-            return std::get<int32_t>(*this);
-        }
-        return std::get<int64_t>(*this);
-    }
+    template <class T>
+    constexpr explicit CodecableValue(T&& t) noexcept : CodecableVariant(t) {}
 };
 } // namespace OHOS::Plugin::Bridge
 #endif 

@@ -30,11 +30,12 @@
 namespace OHOS::Plugin::Bridge {
 class Bridge {
 public:
-    Bridge(const std::string& bridgeName, const CodecType& type);
+    Bridge(const std::string& bridgeName, int32_t instanceId, const CodecType& type);
     ~Bridge();
 
-    static bool BridgeNameExists(const std::string& bridgeName);
+    static bool BridgeNameExists(const std::string& bridgeName, const int32_t instanceId);
     const std::string& GetBridgeName(void);
+    int32_t GetInstanceID(void);
     ErrorCode RegisterBridge(const std::string& bridgeName);
     void UnRegisterBridge(const std::string& bridgeName);
     void UnRegisterBridge(void);
@@ -57,6 +58,7 @@ public:
   
 private:
     std::string bridgeName_;
+    int32_t instanceId_;
     CodecType codecType_ = CodecType::JSON_CODEC;
     bool avaiable_ = false;
     bool terminate_ = false;

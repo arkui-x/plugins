@@ -46,7 +46,7 @@ std::unique_ptr<DecodeValue> BridgeJsonCodec::EncodeInner(const NapiRawValue& da
 
     Json json {};
     if (data.value != nullptr) {
-        json[MESSAGE_RESPONSE_RESULT] = NAPIUtils::PlatformPremers(data.env, data.value); 
+        json[MESSAGE_RESPONSE_RESULT] = NAPIUtils::PlatformPremers(data.env, data.value);
     } else if (data.isForError) {
         json[MESSAGE_RESPONSE_RESULT] = 0;
     } else {
@@ -70,33 +70,26 @@ std::unique_ptr<DecodeValue> BridgeJsonCodec::EncodeInner(const NapiRawValue& da
 std::unique_ptr<NapiRawValue> BridgeJsonCodec::DecodeInner(const DecodeValue& decodeValue) const
 {
     auto rawValue = std::make_unique<NapiRawValue>();
-    
+
     auto jsonObject = Json::parse(decodeValue.value, nullptr, false);
 
     auto it = jsonObject.find(MESSAGE_RESPONSE_ERROR_CODE);
     if (it != jsonObject.end()) {
-        rawValue->errorCode = NAPIUtils::NAPI_GetErrorCodeFromFson(
-            jsonObject.at(MESSAGE_RESPONSE_ERROR_CODE));
+        rawValue->errorCode = NAPIUtils::NAPI_GetErrorCodeFromFson(jsonObject.at(MESSAGE_RESPONSE_ERROR_CODE));
     }
 
     it = jsonObject.find(MESSAGE_RESPONSE_RESULT);
     Json resultJson;
     rawValue->value = NAPIUtils::NAPI_GetPremers(decodeValue.env, resultJson);
     if (it != jsonObject.end()) {
-        rawValue->value = NAPIUtils::NAPI_GetPremers(decodeValue.env,
-        jsonObject.at(MESSAGE_RESPONSE_RESULT));
+        rawValue->value = NAPIUtils::NAPI_GetPremers(decodeValue.env, jsonObject.at(MESSAGE_RESPONSE_RESULT));
     }
 
     it = jsonObject.find(MESSAGE_RESPONSE_ERROR_MESSAGE);
     if (it != jsonObject.end()) {
         rawValue->errorMessage = jsonObject.at(MESSAGE_RESPONSE_ERROR_MESSAGE).get<std::string>();
     }
-    
-    return std::move(rawValue);
-}
 
-std::string BridgeJsonCodec::ParseNullParams(const std::string& data) const
-{
-    return Json::parse(data, nullptr, false).dump();
+    return std::move(rawValue);
 }
 } // OHOS::Plugin::Bridge

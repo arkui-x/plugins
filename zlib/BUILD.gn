@@ -1,0 +1,81 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+template("plugin_zlib_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    include_dirs = [
+      "common",
+      "include",
+      "napi",
+      "//commonlibrary/c_utils/base/include",
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
+      "//foundation/multimedia/image_framework/mock/native/include/secure",
+      "//plugins/interfaces/native",
+      "//plugins/interfaces/native/inner_api",
+      "//third_party/zlib",
+    ]
+
+    sources = [
+      "//plugins/zlib/common/business_error.cpp",
+      "//plugins/zlib/common/napi_arg.cpp",
+      "//plugins/zlib/napi/napi_zlib.cpp",
+      "//plugins/zlib/napi/napi_zlib_common.cpp",
+      "//plugins/zlib/napi/native_module.cpp",
+      "//plugins/zlib/napi/zlib_callback_info.cpp",
+      "//plugins/zlib/src/file_path.cpp",
+      "//plugins/zlib/src/zip.cpp",
+      "//plugins/zlib/src/zip_internal.cpp",
+      "//plugins/zlib/src/zip_reader.cpp",
+      "//plugins/zlib/src/zip_utils.cpp",
+      "//plugins/zlib/src/zip_writer.cpp",
+    ]
+
+    deps = [
+      "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/zlib:zlib_${target_os}",
+    ]
+
+    subsystem_name = "plugins"
+    part_name = "zlib"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_zlib_static("zlib_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

@@ -1,0 +1,104 @@
+# Copyright (C) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//plugins/request/request.gni")
+
+java_library("task_android_java") {
+  java_files = [
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Action.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Config.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/DatabaseHelper.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/DownloadImpl.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/EventType.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Faults.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Filter.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/IConstant.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/JavaTaskImpl.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/JsonUtil.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Mode.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Network.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Progress.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Reason.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/State.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/TaskDao.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/TaskInfo.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/TaskState.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/FileSpec.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/FormItem.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Version.java",
+  ]
+  subsystem_name = "plugins"
+  part_name = "request"
+}
+
+ohos_combine_jars("task_java") {
+  deps = [ ":task_android_java" ]
+
+  subsystem_name = "plugins"
+  part_name = "request"
+  jar_path = "${root_out_dir}/plugins/request/ace_task_android.jar"
+}
+
+config("task_android_config") {
+  visibility = [ ":*" ]
+  include_dirs = [ "include" ]
+  cflags_cc = [ "-fexceptions" ]
+}
+
+config("task_android_public_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "$ace_root/frameworks/base/utils",
+    "$third_party_path/curl/include",
+    "$rq_utils_path",
+    "$utils_base_path/include",
+    "$rq_task_path/utils/include",
+    "$rq_task_path/frameworks/lib/include",
+    "$rq_task_path/frameworks/native/include",
+    "$rq_task_path/frameworks/android",
+    "$plugin_interfaces_path",
+    "//third_party/json/include",
+  ]
+}
+
+ohos_source_set("task_android") {
+  sources = [
+    "java/jni/task_manager_jni.cpp",
+    "java/jni/upload_proxy.cpp",
+    "src/android_adapter.cpp",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  configs = [ ":task_android_config" ]
+
+  public_configs = [ ":task_android_public_config" ]
+
+  deps = [
+    ":task_java",
+    "$plugin_interfaces_path/native:plugin_log",
+    "$rq_task_path/frameworks/lib:task_lib",
+    "$third_party_path/curl:curl",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+  ]
+
+  defines += [
+    "REQUEST_LOG_DOMAIN = 0xD001C00",
+    "REQUEST_LOG_TAG = \"RequestNative\"",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "request"
+}

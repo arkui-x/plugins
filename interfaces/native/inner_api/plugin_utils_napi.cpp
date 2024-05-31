@@ -136,7 +136,11 @@ bool PluginUtilsNApi::GetArrayBuffer(napi_env env, napi_value value, std::vector
 {
     bool bFlag = false;
     napi_is_arraybuffer(env, value, &bFlag);
-    if (bFlag) {
+
+    bool isDetached = false;
+    napi_is_detached_arraybuffer(env, value, &isDetached);
+
+    if (bFlag && !isDetached) {
         void* buffer = nullptr;
         size_t bufferSize = 0;
         if (napi_get_arraybuffer_info(env, value, &buffer, &bufferSize) == napi_ok) {
@@ -483,5 +487,20 @@ napi_status PluginUtilsNApi::SetEnumItem(napi_env env, napi_value object, const 
     NAPI_CALL_BASE(env, status = napi_set_property(env, object, itemValue, itemName), status);
 
     return napi_ok;
+}
+
+bool PluginUtilsNApi::DetachArrayBufferFromTypedArray(napi_env env, napi_value value)
+{
+    napi_value arrayBuffer;
+    bool isTypedArray = false;
+    NAPI_CALL_BASE(env, napi_is_typedarray(env, value, &isTypedArray), false);
+    if (isTypedArray) {
+        NAPI_CALL_BASE(
+            env, napi_get_typedarray_info(env, value, nullptr, nullptr, nullptr, &arrayBuffer, nullptr), false);
+        NAPI_CALL_BASE(env, napi_detach_arraybuffer(env, arrayBuffer), false);
+        return true;
+    } else {
+        return false;
+    }
 }
 } // namespace OHOS::Plugin

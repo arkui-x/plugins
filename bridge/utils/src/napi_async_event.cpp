@@ -14,6 +14,7 @@
  */
 
 #include "napi_async_event.h"
+#include "log.h"
 
 #include "napi_utils.h"
 #include "napi/native_api.h"
@@ -25,6 +26,8 @@ NAPIAsyncEvent::NAPIAsyncEvent(napi_env env) : env_(env) {}
 
 NAPIAsyncEvent::~NAPIAsyncEvent()
 {
+    DeleteRefData();
+    DeleteRefErrorData();
     DeleteCallback();
     DeleteAsyncWork();
     eventSuccess_ = nullptr;
@@ -76,8 +79,17 @@ napi_value NAPIAsyncEvent::GetData(void)
     return data_;
 }
 
+void NAPIAsyncEvent::DeleteRefData(void)
+{
+    if (refData_ != nullptr) {
+        PluginUtilsNApi::DeleteReference(env_, refData_);
+        refData_ = nullptr;
+    }
+}
+
 void NAPIAsyncEvent::SetRefData(napi_value data)
 {
+    DeleteRefData();
     refData_ = PluginUtilsNApi::CreateReference(env_, data);
 }
 
@@ -86,8 +98,17 @@ napi_value NAPIAsyncEvent::GetRefData(void)
     return PluginUtilsNApi::GetReference(env_, refData_);
 }
 
+void NAPIAsyncEvent::DeleteRefErrorData(void)
+{
+    if (refErrorData_ != nullptr) {
+        PluginUtilsNApi::DeleteReference(env_, refErrorData_);
+        refErrorData_ = nullptr;
+    }
+}
+
 void NAPIAsyncEvent::SetRefErrorData(napi_value data)
 {
+    DeleteRefErrorData();
     refErrorData_ = PluginUtilsNApi::CreateReference(env_, data);
 }
 
@@ -103,13 +124,18 @@ void NAPIAsyncEvent::SetMethodParameter(const std::string& jsonStr)
 
 void NAPIAsyncEvent::SetMethodParameter(uint8_t* data, size_t size)
 {
-    std::get<uint8_t*>(methodBuffer_) = data;
-    std::get<size_t>(methodBuffer_) = size;
+    std::tuple<uint8_t*, size_t> methodBuffer;
+    std::get<uint8_t*>(methodBuffer) = data;
+    std::get<size_t>(methodBuffer) = size; 
+    taskQueue_.push_back(methodBuffer);
 }
 
 std::tuple<uint8_t*, size_t> NAPIAsyncEvent::GetMethodParameter(void)
 {
-    return methodBuffer_;
+    std::tuple<uint8_t*, size_t> nextTask = taskQueue_.front();
+    taskQueue_.pop_front();
+
+    return nextTask;
 }
 
 bool NAPIAsyncEvent::CreateCallback(napi_value callback)
@@ -132,14 +158,6 @@ void NAPIAsyncEvent::DeleteCallback(void)
     if (callback_ != nullptr) {
         PluginUtilsNApi::DeleteReference(env_, callback_);
         callback_ = nullptr;
-    }
-    if (refData_ != nullptr) {
-        PluginUtilsNApi::DeleteReference(env_, refData_);
-        refData_ = nullptr;
-    }
-    if (refErrorData_ != nullptr) {
-        PluginUtilsNApi::DeleteReference(env_, refErrorData_);
-        refErrorData_ = nullptr;
     }
 }
 
@@ -280,5 +298,8 @@ void NAPIAsyncEvent::AsyncWorkMessage(void)
     napi_value data = GetRefData();
     result = PluginUtilsNApi::CallFunction(env_, PluginUtilsNApi::CreateUndefined(env_), callback, 1, &data);
     TriggerEventSuccess(result);
+    PluginUtilsNApi::DetachArrayBufferFromTypedArray(env_, data);
+    DeleteRefData();
+    DeleteRefErrorData();
 }
 } // namespace OHOS::Plugin::Bridge

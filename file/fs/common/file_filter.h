@@ -26,11 +26,6 @@ public:
     FileFilter() = default;
     ~FileFilter() = default;
 
-    FileFilter(std::vector<std::string> suffix, std::vector<std::string> displayName,
-        std::vector<std::string> mimeType, int64_t fileSizeOver,
-        double lastModifiedAfter, bool excludeMedia, bool hasFilter)
-        : suffix_(suffix), displayName_(displayName), mimeType_(mimeType), fileSizeOver_(fileSizeOver),
-        lastModifiedAfter_(lastModifiedAfter), excludeMedia_(excludeMedia), hasFilter_(hasFilter) {}
     explicit FileFilter(std::vector<std::string> suffix): suffix_(suffix) {}
     FileFilter(const FileFilter &filter) = default;
     FileFilter &operator=(const FileFilter& filter) = default;
@@ -105,6 +100,17 @@ public:
         return hasFilter_;
     }
 
+    void FilterClear()
+    {
+        this->suffix_.clear();
+        this->displayName_.clear();
+        this->mimeType_.clear();
+        this->fileSizeOver_ = 0;
+        this->lastModifiedAfter_ = 0;
+        this->excludeMedia_ = false;
+        this->hasFilter_ = false;
+    }
+
 private:
     std::vector<std::string> suffix_ = std::vector<std::string>();
     std::vector<std::string> displayName_ = std::vector<std::string>();
@@ -113,6 +119,62 @@ private:
     double lastModifiedAfter_ = 0;
     bool excludeMedia_ = false;
     bool hasFilter_ = false;
+};
+
+class FileFilterBuilder {
+public:
+    FileFilterBuilder() = default;
+    ~FileFilterBuilder() = default;
+
+    FileFilterBuilder& SetSuffix(const std::vector<std::string> &suffix)
+    {
+        fileFilter_.SetSuffix(suffix);
+        return *this;
+    }
+
+    FileFilterBuilder& SetDisplayName(const std::vector<std::string> &displayName)
+    {
+        fileFilter_.SetDisplayName(displayName);
+        return *this;
+    }
+
+    FileFilterBuilder& SetMimeType(const std::vector<std::string> &mimeType)
+    {
+        fileFilter_.SetMimeType(mimeType);
+        return *this;
+    }
+
+    FileFilterBuilder& SetFileSizeOver(const int64_t &fileSizeOver)
+    {
+        fileFilter_.SetFileSizeOver(fileSizeOver);
+        return *this;
+    }
+
+    FileFilterBuilder& SetLastModifiedAfter(const double &lastModifiedAfter)
+    {
+        fileFilter_.SetLastModifiedAfter(lastModifiedAfter);
+        return *this;
+    }
+
+    FileFilterBuilder& SetExcludeMedia(const bool &excludeMedia)
+    {
+        fileFilter_.SetExcludeMedia(excludeMedia);
+        return *this;
+    }
+
+    FileFilterBuilder& SetHasFilter(const bool &hasFilter)
+    {
+        fileFilter_.SetHasFilter(hasFilter);
+        return *this;
+    }
+
+    FileFilter Build()
+    {
+        return fileFilter_;
+    }
+
+private:
+    FileFilter fileFilter_;
 };
 } // namespace ModuleFileIO
 } // namespace FileManagement

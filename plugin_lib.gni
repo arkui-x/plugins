@@ -17,9 +17,11 @@ common_plugin_libs = [
   "ability_access_ctrl",
   "bridge",
   "file/fs",
+  "common_event_manager",
   "data/preferences",
   "data/relationalstore",
   "device_info",
+  "display",
   "hitrace_meter",
   "i18n",
   "intl",
@@ -29,7 +31,6 @@ common_plugin_libs = [
   "net/websocket",
   "worker",
   "request",
-  "resource_manager",
   "buffer",
   "convertxml",
   "process",
@@ -57,11 +58,10 @@ common_plugin_libs = [
   "timer",
   "console",
   "web/webview",
+  "zlib",
+  "security/cryptoframework",
+  "security/cert",
 ]
-
-if (target_os == "ios") {
-  common_plugin_libs += [ "ndk_raw_file" ]
-}
 
 template("plugin_lib") {
   forward_variables_from(invoker, "*")

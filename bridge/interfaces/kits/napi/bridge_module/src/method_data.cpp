@@ -23,6 +23,7 @@
 #include "method_data_converter.h"
 #include "napi/native_api.h"
 #include "napi_utils.h"
+
 #include "plugins/bridge/interfaces/kits/napi/bridge_module/include/method_id.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
@@ -32,9 +33,14 @@ namespace OHOS::Plugin::Bridge {
 static constexpr const char* JS_REGISTER_METHOD_NAME = "name";
 static constexpr const char* JS_REGISTER_METHOD_FUNCTION = "method";
 
+MethodData::MethodData(napi_env env, const CodecType& type) : env_(env), codecType_(type)
+{
+    instanceId_ = PluginUtilsInner::GetInstanceId();
+}
+
 std::shared_ptr<MethodData> MethodData::CreateMethodData(napi_env env, const CodecType& type)
 {
-    return std::make_shared<MethodData>(env, type);;
+    return std::make_shared<MethodData>(env, type);
 }
 
 MethodData::~MethodData()
@@ -46,6 +52,7 @@ const std::string& MethodData::GetBridgeName(void) const
 {
     return bridgeName_;
 }
+
 void MethodData::SetBridgeName(const std::string& bridgeName)
 {
     bridgeName_ = bridgeName;
@@ -55,6 +62,7 @@ void MethodData::SetMethodName(const std::string& methodName)
 {
     methodName_ = methodName;
 }
+
 const std::string& MethodData::GetMethodName(void) const
 {
     return methodName_;
@@ -154,7 +162,7 @@ bool MethodData::GetParamsByRecord(size_t argc, napi_value* arg)
         auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
         SetMethodParamName(encoded->value);
         return true;
-    } else if (codecType_ == CodecType::BINARY_CODEC) { 
+    } else if (codecType_ == CodecType::BINARY_CODEC) {
         const auto& codecableValue = MethodDataConverter::ConvertToCodecableValue(env_, argc, arg);
         auto encoded = BridgeBinaryCodec::GetInstance().Encode(codecableValue);
         if (!encoded || encoded->size() == 0) {
@@ -242,22 +250,23 @@ void MethodData::InitEventSuccessForMethod(void)
         return;
     }
 
-    auto event = [codecType = codecType_](napi_env env, const std::string& bridgeName,
-        const std::string& methodName, napi_value resultValue) {
+    auto event = [instanceId = instanceId_, codecType = codecType_](napi_env env, const std::string& bridgeName,
+                     const std::string& methodName, napi_value resultValue) {
         MethodResult result;
         result.SetErrorCode(0);
         result.SetMethodName(methodName);
         if (codecType == CodecType::JSON_CODEC) {
             result.ParseJSMethodResult(env, resultValue);
-            auto task = [platfromResult = result.GetResult(), bridgeName, methodName]() {
-                Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platfromResult);
+            auto task = [instanceId, platfromResult = result.GetResult(), bridgeName, methodName]() {
+                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platfromResult);
             };
             PluginUtilsInner::RunTaskOnPlatform(task);
         } else if (codecType == CodecType::BINARY_CODEC) {
             result.ParseJSMethodResultBinary(env, resultValue);
-            auto task = [resulthold = result.GetResultBinary(), bridgeName, methodName]() {
+            auto task = [instanceId, resulthold = result.GetResultBinary(), bridgeName, methodName]() {
                 std::unique_ptr<std::vector<uint8_t>> resultData { resulthold };
-                Ace::Platform::BridgeManager::JSSendMethodResultBinary(bridgeName, methodName, 0, "", std::move(resultData));
+                Ace::Platform::BridgeManager::JSSendMethodResultBinary(
+                    instanceId, bridgeName, methodName, 0, "", std::move(resultData));
             };
             PluginUtilsInner::RunTaskOnPlatform(task);
         }
@@ -272,22 +281,22 @@ void MethodData::InitEventErrorForMethod(void)
         return;
     }
 
-    auto event = [codecType = codecType_](napi_env env, const std::string& bridgeName,
-        const std::string& methodName, int errorCode) {
+    auto event = [instanceId = instanceId_, codecType = codecType_](
+                     napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
         MethodResult result;
         result.SetErrorCode(errorCode);
         result.SetMethodName(methodName);
         if (codecType == CodecType::JSON_CODEC) {
             result.ParseJSMethodResult(env, nullptr);
-            auto task = [platfromResult = result.GetResult(), bridgeName, methodName]() {
-                Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platfromResult);
+            auto task = [instanceId, platfromResult = result.GetResult(), bridgeName, methodName]() {
+                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platfromResult);
             };
             PluginUtilsInner::RunTaskOnPlatform(task);
         } else if (codecType == CodecType::BINARY_CODEC) {
-            auto task = [errorCode = result.GetErrorCode(), errorMessage = result.GetErrorMessage(),
-                bridgeName, methodName]() {
-                Ace::Platform::BridgeManager::JSSendMethodResultBinary(bridgeName,
-                    methodName, errorCode, errorMessage, nullptr);
+            auto task = [instanceId, errorCode = result.GetErrorCode(), errorMessage = result.GetErrorMessage(),
+                            bridgeName, methodName]() {
+                Ace::Platform::BridgeManager::JSSendMethodResultBinary(
+                    instanceId, bridgeName, methodName, errorCode, errorMessage, nullptr);
             };
             PluginUtilsInner::RunTaskOnPlatform(task);
         }
@@ -302,12 +311,12 @@ void MethodData::InitEventSuccessForMessage(void)
         return;
     }
 
-    auto event = [](napi_env env, const std::string& bridgeName,
-        const std::string& methodName, napi_value resultValue) {
+    auto event = [instanceId = instanceId_](napi_env env, const std::string& bridgeName, const std::string& methodName,
+                     napi_value resultValue) {
         NapiRawValue rawValue { .env = env, .value = resultValue };
         auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
-        auto task = [data = encoded->value, bridgeName]() {
-            Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
+        auto task = [instanceId, data = encoded->value, bridgeName]() {
+            Ace::Platform::BridgeManager::JSSendMessageResponse(instanceId, bridgeName, data);
         };
         PluginUtilsInner::RunTaskOnPlatform(task);
     };
@@ -321,11 +330,11 @@ void MethodData::InitEventErrorForMessage(void)
         return;
     }
 
-    auto event = []
-        (napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
-        auto data = BridgeJsonCodec::GetInstance().ParseNullParams("{}");
-        auto task = [data, bridgeName]() {
-            Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
+    auto event = [instanceId = instanceId_](
+                     napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
+        auto data = BridgeJsonCodec::ParseNullParams("{}");
+        auto task = [instanceId, data, bridgeName]() {
+            Ace::Platform::BridgeManager::JSSendMessageResponse(instanceId, bridgeName, data);
         };
         PluginUtilsInner::RunTaskOnPlatform(task);
     };
@@ -373,6 +382,26 @@ bool MethodData::GetJSRegisterMethodObject(napi_value object)
     return ret;
 }
 
+bool MethodData::GetJSRegisterMethodObjectCallBack(const std::string& arg, napi_value object)
+{
+    methodName_ = arg;
+    if (methodName_.empty()) {
+        LOGE("Bridge GetJSRegisterMethodObjectCallBack: methodName_ is empty.");
+        return false;
+    }
+    if (!CreateEvent(object, true)) {
+        LOGE("Bridge GetJSRegisterMethodObjectCallBack: Failed to create an event.");
+        return false;
+    }
+
+    bool ret = asyncEvent_->CreateCallback(object);
+    if (!ret) {
+        LOGE("Bridge GetJSRegisterMethodObjectCallBack: Failed to create the JS callback.");
+        ReleaseEvent();
+    }
+    return ret;
+}
+
 bool MethodData::SendMethodResult(const std::string& data, bool removeMethod)
 {
     if (asyncEvent_ == nullptr) {
@@ -400,11 +429,12 @@ bool MethodData::SendMethodResult(const std::string& data, bool removeMethod)
         };
     }
     std::string methodName = MethodID::FetchMethodName(methodName_);
-    return asyncEvent_->CreateAsyncWork(methodName, [](napi_env env, void* data) {}, jsCallback);
+    return asyncEvent_->CreateAsyncWork(
+        methodName, [](napi_env env, void* data) {}, jsCallback);
 }
 
-bool MethodData::SendMethodResultBinary(int errorCode,
-    const std::string& errorMessage, std::unique_ptr<Ace::Platform::BufferMapping> data, bool removeMethod)
+bool MethodData::SendMethodResultBinary(int errorCode, const std::string& errorMessage,
+    std::unique_ptr<Ace::Platform::BufferMapping> data, bool removeMethod)
 {
     if (asyncEvent_ == nullptr) {
         LOGE("SendMethodResultBinary: asyncEvent_ is null.");
@@ -431,7 +461,8 @@ bool MethodData::SendMethodResultBinary(int errorCode,
         };
     }
     std::string methodName = MethodID::FetchMethodName(methodName_);
-    return asyncEvent_->CreateAsyncWork(methodName, [](napi_env env, void* data) {}, jsCallback);
+    return asyncEvent_->CreateAsyncWork(
+        methodName, [](napi_env env, void* data) {}, jsCallback);
 }
 
 bool MethodData::SendMessageResponse(const std::string& data, bool removeMethod)
@@ -465,7 +496,8 @@ bool MethodData::SendMessageResponse(const std::string& data, bool removeMethod)
         };
     }
 
-    return asyncEvent_->CreateAsyncWork(methodName_, [](napi_env env, void* data) {}, jsCallback);
+    return asyncEvent_->CreateAsyncWork(
+        methodName_, [](napi_env env, void* data) {}, jsCallback);
 }
 
 void MethodData::PlatformCallMethod(const std::string& parameter)
@@ -477,8 +509,9 @@ void MethodData::PlatformCallMethod(const std::string& parameter)
         result.SetMethodName(methodName_);
         result.ParseJSMethodResult(env_, nullptr);
 
-        auto task = [platfromResult = result.GetResult(), bridgeName = this->bridgeName_, methodName = methodName_]() {
-            Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platfromResult);
+        auto task = [instanceId = instanceId_, platfromResult = result.GetResult(), bridgeName = bridgeName_,
+                        methodName = methodName_]() {
+            Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platfromResult);
         };
         PluginUtilsInner::RunTaskOnPlatform(task);
         return;
@@ -490,7 +523,8 @@ void MethodData::PlatformCallMethod(const std::string& parameter)
         NAPIAsyncEvent* event = static_cast<NAPIAsyncEvent*>(data);
         event->AsyncWorkCallMethod();
     };
-    asyncEvent_->CreateAsyncWork(methodName_, [](napi_env env, void* data) {}, jsCallback);
+    asyncEvent_->CreateAsyncWork(
+        methodName_, [](napi_env env, void* data) {}, jsCallback);
 }
 
 void MethodData::PlatformCallMethodBinary(std::unique_ptr<Ace::Platform::BufferMapping> data)
@@ -502,9 +536,9 @@ void MethodData::PlatformCallMethodBinary(std::unique_ptr<Ace::Platform::BufferM
         result.SetMethodName(methodName_);
 
         auto task = [errorCode = result.GetErrorCode(), errorMessage = result.GetErrorMessage(),
-            bridgeName = bridgeName_, methodName = methodName_]() {
-            Ace::Platform::BridgeManager::JSSendMethodResultBinary(bridgeName,
-                methodName, errorCode, errorMessage, nullptr);
+                        bridgeName = bridgeName_, methodName = methodName_, instanceId = instanceId_]() {
+            Ace::Platform::BridgeManager::JSSendMethodResultBinary(
+                instanceId, bridgeName, methodName, errorCode, errorMessage, nullptr);
         };
         PluginUtilsInner::RunTaskOnPlatform(task);
         return;
@@ -530,7 +564,8 @@ void MethodData::PlatformCallMethodBinary(std::unique_ptr<Ace::Platform::BufferM
         event->AsyncWorkCallMethod(argc, argv);
     };
 
-    asyncEvent_->CreateAsyncWork(methodName_, [](napi_env env, void* data) {}, jsCallback);
+    asyncEvent_->CreateAsyncWork(
+        methodName_, [](napi_env env, void* data) {}, jsCallback);
 }
 
 void MethodData::PlatformSendMessage(const std::string& data)
@@ -559,7 +594,7 @@ void MethodData::PlatformSendMessageBinary(std::unique_ptr<Ace::Platform::Buffer
         LOGE("PlatformSendMessageBinary: asyncEvent_ is null.");
         return;
     }
-    
+
     auto decoded = BridgeBinaryCodec::GetInstance().DecodeBuffer(data->GetMapping(), data->GetSize());
     napi_value binaryResult = MethodDataConverter::ConvertToNapiValue(env_, *decoded);
     asyncEvent_->SetRefData(binaryResult);
@@ -589,7 +624,8 @@ void MethodData::SendAsyncCallback(int errorCode, napi_value okArg)
         event->AsyncWorkCallback();
     };
 
-    bool ret = asyncEvent_->CreateAsyncWork(methodName_, [](napi_env env, void* data) {}, jsCallback);
+    bool ret = asyncEvent_->CreateAsyncWork(
+        methodName_, [](napi_env env, void* data) {}, jsCallback);
     if (!ret) {
         LOGE("SendAsyncCallback: Failed to call the JS callback.");
         ReleaseEvent();

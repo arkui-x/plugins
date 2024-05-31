@@ -37,8 +37,128 @@ ErrCode WebviewControllerAndroid::LoadUrl(
     return WebviewControllerJni::LoadUrl(webId_, url, httpHeaders);
 }
 
+ErrCode WebviewControllerAndroid::LoadData(const std::string& data, const std::string& mimeType, const std::string& encoding,
+    const std::string& baseUrl, const std::string& historyUrl)
+{
+    return WebviewControllerJni::LoadData(webId_, data, mimeType, encoding, baseUrl, historyUrl);
+}
+
+std::string WebviewControllerAndroid::GetUrl()
+{
+    return WebviewControllerJni::GetUrl(webId_);
+}
+
+bool WebviewControllerAndroid::AccessForward()
+{
+    return WebviewControllerJni::AccessForward(webId_);
+}
+
+bool WebviewControllerAndroid::AccessBackward()
+{
+    return WebviewControllerJni::AccessBackward(webId_);
+}
+
+ErrCode WebviewControllerAndroid::Forward()
+{
+    WebviewControllerJni::Forward(webId_);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerAndroid::Backward()
+{
+    WebviewControllerJni::Backward(webId_);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerAndroid::Refresh()
+{
+    WebviewControllerJni::Refresh(webId_);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerAndroid::ScrollTo(float x, float y)
+{
+    return WebviewControllerJni::ScrollTo(webId_, static_cast<int>(x), static_cast<int>(y));
+}
+
+ErrCode WebviewControllerAndroid::ScrollBy(float deltaX, float deltaY)
+{
+    return WebviewControllerJni::ScrollBy(webId_, static_cast<int>(deltaX), static_cast<int>(deltaY));
+}
+
+ErrCode WebviewControllerAndroid::Zoom(float factor)
+{
+    return WebviewControllerJni::Zoom(webId_, factor);;
+}
+
+ErrCode WebviewControllerAndroid::Stop()
+{
+    return WebviewControllerJni::Stop(webId_);
+}
+
+ErrCode WebviewControllerAndroid::SetCustomUserAgent(const std::string& userAgent)
+{
+    return WebviewControllerJni::SetCustomUserAgent(webId_, userAgent);
+}
+
+std::string WebviewControllerAndroid::GetCustomUserAgent()
+{
+    return WebviewControllerJni::GetCustomUserAgent(webId_);
+}
+
+ErrCode WebviewControllerAndroid::ClearHistory()
+{
+    return WebviewControllerJni::ClearHistory(webId_);
+}
+
+bool WebviewControllerAndroid::AccessStep(int32_t step)
+{
+    return WebviewControllerJni::AccessStep(webId_, step);
+}
+
 bool WebviewControllerAndroid::IsInit()
 {
     return webId_ != -1;
+}
+
+void WebviewControllerAndroid::EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId)
+{
+    WebviewControllerJni::EvaluateJavaScript(webId_, script, asyncCallbackInfoId);
+}
+
+std::shared_ptr<WebHistoryList> WebviewControllerAndroid::GetBackForwardEntries()
+{
+    return WebviewControllerJni::GetBackForwardEntries(webId_);
+}
+
+void WebviewControllerAndroid::RemoveCache(bool value)
+{
+    WebviewControllerJni::RemoveCache(webId_, value);
+}
+
+void WebviewControllerAndroid::BackOrForward(int32_t step)
+{
+    WebviewControllerJni::BackOrForward(webId_, step);
+}
+
+std::string WebviewControllerAndroid::GetTitle()
+{
+    return WebviewControllerJni::GetTitle(webId_);
+}
+
+int32_t WebviewControllerAndroid::GetPageHeight()
+{
+    return WebviewControllerJni::GetPageHeight(webId_);
+}
+
+void WebviewControllerAndroid::CreateWebMessagePorts(std::vector<std::string>& ports)
+{
+    WebviewControllerJni::CreateWebMessagePorts(webId_, ports);
+}
+
+void WebviewControllerAndroid::PostWebMessage(
+    std::string& message, std::vector<std::string>& ports,std::string& targetUrl)
+{
+    WebviewControllerJni::PostWebMessage(webId_, message, ports, targetUrl);
 }
 }

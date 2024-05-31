@@ -14,7 +14,7 @@
 
 namespace OHOS::Plugin::Bridge {
 namespace {
-    enum class CodecableType {
+enum class CodecableType {
     K_NULL = 0,
     K_TRUE,
     K_FALSE,
@@ -32,7 +32,8 @@ namespace {
     K_COMPOSITE_LIST,
 };
 
-CodecableType CovertCodecableTypeByValue(const CodecableValue& value) {
+CodecableType CovertCodecableTypeByValue(const CodecableValue& value)
+{
     switch (static_cast<CodecableValueType>(value.index())) {
         case CodecableValueType::T_NULL:
             return CodecableType::K_NULL;
@@ -99,7 +100,7 @@ CodecableValue BridgeSerializer::ReadValue(BridgeStreamReader* stream) const
         }
         default:
             LOGW("invaild type, can not read value from stream.");
-            break;   
+            break;
     }
     return CodecableValue();
 }
@@ -135,7 +136,7 @@ void BridgeSerializer::WriteValue(const CodecableValue& value, BridgeStreamWrite
         case CodecableValueType::T_LIST_BOOL: {
             WriteListBool(std::get<std::vector<bool>>(value), stream);
             break;
-        } 
+        }
         case CodecableValueType::T_LIST_INT32:
             WriteVector(std::get<std::vector<int32_t>>(value), stream);
             break;
@@ -228,7 +229,7 @@ CodecableValue BridgeSerializer::ReadString(BridgeStreamReader* stream) const
 size_t BridgeSerializer::ReadSize(BridgeStreamReader* stream) const
 {
     uint8_t byte = stream->ReadByte();
-    if (byte < 0xFF) {
+    if (byte < 0xFE) {
         return byte;
     } else if (byte == 0xFE) {
         uint16_t value = 0;
@@ -256,7 +257,7 @@ void BridgeSerializer::WriteSize(size_t size, BridgeStreamWriter* stream) const
     }
 }
 
-template <typename T>
+template<typename T>
 CodecableValue BridgeSerializer::ReadVector(BridgeStreamReader* stream) const
 {
     size_t size = ReadSize(stream);
@@ -270,7 +271,7 @@ CodecableValue BridgeSerializer::ReadVector(BridgeStreamReader* stream) const
     return CodecableValue(vector);
 }
 
-template <typename T>
+template<typename T>
 void BridgeSerializer::WriteVector(const std::vector<T>& vector, BridgeStreamWriter* stream) const
 {
     size_t count = vector.size();

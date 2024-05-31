@@ -35,15 +35,18 @@ public:
         int32_t ref_ = 0;
         Bridge* bridge_ = nullptr;
     };
-    static Bridge* CreateBridge(const std::string& bridgeName, const CodecType& codecType);
-    static void DeleteBridge(const std::string& bridgeName);
+    static BridgeWrap& GetInstance();
+    Bridge* CreateBridge(const std::string& bridgeName, const CodecType& codecType);
+    void DeleteBridge(const std::string& bridgeName, int32_t instanceId);
+    std::string GetBridgeNameWithID(const std::string& bridgeName, int32_t instanceId);
 private:
-    static std::map<std::string, std::shared_ptr<Data>> bridgeList_;
-    static std::mutex bridgeListLock_;
+    std::map<std::string, std::shared_ptr<Data>> *bridgeList_ = new std::map<std::string, std::shared_ptr<Data>>;
+    std::mutex *bridgeListLock_ = new std::mutex;
 
-    static std::shared_ptr<Data> findData(const std::string& bridgeName);
-    static Bridge* BuildBridge(const std::string& bridgeName, const CodecType& codecType);
-    static Bridge* CopyBridge(std::shared_ptr<Data> data);
+    std::shared_ptr<Data> findData(const std::string& bridgeNameWithID);
+    Bridge* BuildBridge(
+        const std::string& bridgeName, const CodecType& codecType, const std::string& dataKey, int32_t instanceId);
+    Bridge* CopyBridge(std::shared_ptr<Data> data);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif

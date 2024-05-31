@@ -24,7 +24,7 @@ using WritingBodyCallback = std::function<size_t(const void* data, size_t size, 
 
 using WritingHeaderCallback = std::function<size_t(const void* data, size_t size, void* userData)>;
 
-using ProgressCallback = std::function<int(long dltotal, long dlnow, long ultotal, long ulnow, void* userData)>;
+using ProgressCallback = std::function<int(void* userData, long dltotal, long dlnow, long ultotal, long ulnow)>;
 
 using SuccessCallback = std::function<bool(HttpResponse& httpResponse, void* userData)>;
 

@@ -23,19 +23,22 @@ template("plugin_request_static") {
     cflags_cc += invoker.cflags_cc
 
     include_dirs = [
-      "$rq_download_path/utils/include",
+      "$rq_task_path/interfaces/kits/napi/include",
+      "$rq_task_path/utils/include",
       "$rq_utils_path",
-      "$rq_download_path/frameworks/android",
       "$plugin_interfaces_path",
     ]
+
+    if (platform == "android") {
+      include_dirs += [ "$rq_task_path/frameworks/android" ]
+    }
 
     sources = [ "$rq_module_path/request_module.cpp" ]
 
     deps = [
       "$plugin_interfaces_path/native:ace_plugin_util_${platform}",
       "$plugin_interfaces_path/native:plugin_log",
-      "$rq_download_path/interfaces/kits/napi/download_single:downloadsingle",
-      "$rq_upload_path/interfaces/kits/napi:upload",
+      "$rq_task_path/interfaces/kits/napi:task_napi",
       "//plugins/libs/napi:napi_${target_os}",
     ]
 
@@ -44,7 +47,13 @@ template("plugin_request_static") {
       libs = [ "log" ]
     } else if (platform == "ios") {
       defines += [ "IOS_PLATFORM" ]
+      libs = [ "sqlite3" ]
     }
+
+    defines += [
+      "REQUEST_LOG_DOMAIN = 0xD001C00",
+      "REQUEST_LOG_TAG = \"RequestJs\"",
+    ]
 
     subsystem_name = "plugins"
     part_name = "request"

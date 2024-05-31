@@ -53,7 +53,6 @@ template("plugin_fs_static") {
 
     sources = libn_src
     sources += [
-      "$fs_dirs/src/mod_fs/class_file/file_n_exporter.cpp",
       "$fs_dirs/src/mod_fs/class_stat/stat_n_exporter.cpp",
       "$fs_dirs/src/mod_fs/common_func.cpp",
       "$fs_dirs/src/mod_fs/properties/close.cpp",
@@ -69,6 +68,7 @@ template("plugin_fs_static") {
       "$plugin_fs_dirs/common/fd_guard.cpp",
       "$plugin_fs_dirs/module.cpp",
       "$plugin_fs_dirs/src/copy_file.cpp",
+      "$plugin_fs_dirs/src/file_n_exporter.cpp",
       "$plugin_fs_dirs/src/mkdtemp.cpp",
       "$plugin_fs_dirs/src/move.cpp",
       "$plugin_fs_dirs/src/open.cpp",

@@ -15,6 +15,7 @@
 #ifndef OHOS_GLOBAL_I18N_CALENDAR_H
 #define OHOS_GLOBAL_I18N_CALENDAR_H
 
+#include <cmath>
 #include <cstdint>
 
 #include "iosfwd"
@@ -53,13 +54,17 @@ public:
     std::string GetTimeZone(void);
     void SetTimeZone(std::string timezoneId);
     int32_t Get(UCalendarDateFields field) const;
+    void Add(UCalendarDateFields field, int32_t amount);
     void SetMinimalDaysInFirstWeek(int32_t value);
     void SetFirstDayOfWeek(int32_t value);
+    UDate GetTimeInMillis(void);
     int32_t GetMinimalDaysInFirstWeek(void);
     int32_t GetFirstDayOfWeek(void);
     bool IsWeekend(int64_t date, UErrorCode &status);
     bool IsWeekend(void);
     std::string GetDisplayName(std::string &displayLocaleTag);
+    int32_t CompareDays(UDate date);
+
 private:
     icu::Calendar *calendar_;
     void InitCalendar(const icu::Locale &locale, CalendarType type);

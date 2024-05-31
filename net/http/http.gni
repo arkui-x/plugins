@@ -34,7 +34,7 @@ http_include = [
   "$NETSTACK_NAPI_ROOT/http/constant/include",
   "$NETSTACK_NAPI_ROOT/http/http_module/include",
   "$NETSTACK_NAPI_ROOT/http/options/include",
-  "//plugins/hilog/include",
+  "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   "//plugins/interfaces",
   "//plugins/net/http",
   "//plugins/net/http/android",

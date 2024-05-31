@@ -24,6 +24,7 @@
 #include "i18n_timezone.h"
 #include "index_util.h"
 #include "napi/native_node_api.h"
+#include "phone_number_format.h"
 #include "locale_config.h"
 
 namespace OHOS {
@@ -71,8 +72,14 @@ public:
     static napi_value InitUtil(napi_env env, napi_value exports);
     static napi_value System(napi_env env, napi_value exports);
     static napi_value InitI18nNormalizer(napi_env env, napi_value exports);
+    static napi_value InitPhoneNumberFormat(napi_env env, napi_value exports);
 
 private:
+    static napi_value PhoneNumberFormatConstructor(napi_env env, napi_callback_info info);
+    static napi_value IsValidPhoneNumber(napi_env env, napi_callback_info info);
+    static napi_value FormatPhoneNumber(napi_env env, napi_callback_info info);
+    bool InitPhoneNumberFormatContext(napi_env env, napi_callback_info info, const std::string &country,
+                                      const std::map<std::string, std::string> &options);
     static napi_value CalendarConstructor(napi_env env, napi_callback_info info);
     static napi_value BreakIteratorConstructor(napi_env env, napi_callback_info info);
     bool InitCalendarContext(napi_env env, napi_callback_info info, const std::string &localeTag, CalendarType type);
@@ -90,8 +97,12 @@ private:
     static napi_value SetMinimalDaysInFirstWeek(napi_env env, napi_callback_info info);
     static napi_value GetMinimalDaysInFirstWeek(napi_env env, napi_callback_info info);
     static napi_value Get(napi_env env, napi_callback_info info);
+    static napi_value Add(napi_env env, napi_callback_info info);
     static napi_value GetDisplayName(napi_env env, napi_callback_info info);
+    static napi_value GetTimeInMillis(napi_env env, napi_callback_info info);
     static napi_value IsWeekend(napi_env env, napi_callback_info info);
+    static std::string GetAddField(napi_env &env, napi_value &value, int32_t &code);
+    static napi_value CompareDays(napi_env env, napi_callback_info info);
     static CalendarType GetCalendarType(napi_env env, napi_value value);
     static napi_value GetLineInstance(napi_env env, napi_callback_info info);
     static napi_value Current(napi_env env, napi_callback_info info);
@@ -157,6 +168,7 @@ private:
     static const char *NORMALIZER_MODE_NFKD_NAME;
 
     napi_env env_;
+    std::unique_ptr<PhoneNumberFormat> phonenumberfmt_ = nullptr;
     std::unique_ptr<I18nCalendar> calendar_ = nullptr;
     std::unique_ptr<icu::Transliterator> transliterator_ = nullptr;
     std::unique_ptr<I18nBreakIterator> brkiter_ = nullptr;

@@ -34,6 +34,11 @@ template("plugin_web_webview_static") {
     sources += [
       "js_web_webview.cpp",
       "napi_parse_utils.cpp",
+      "web_cookie_manager.cpp",
+      "web_cookie_manager_callback.cpp",
+      "web_message_port.cpp",
+      "webview_async_work_callback.cpp",
+      "webview_controller.cpp",
     ]
 
     deps = [

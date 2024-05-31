@@ -19,6 +19,7 @@
 #include <set>
 
 #include "hilog/log.h"
+#include "icu_data.h"
 #include "node_api.h"
 #include "plugin_utils.h"
 
@@ -286,7 +287,6 @@ std::string GetLocaleTag(napi_env env, napi_value argv)
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv, &valueType);
         if (valueType != napi_valuetype::napi_string) {
-            napi_throw_type_error(env, nullptr, "Parameter type does not match");
             return "";
         }
         size_t len = 0;
@@ -321,7 +321,7 @@ napi_value IntlAddon::LocaleConstructor(napi_env env, napi_callback_info info)
     std::string localeTag = GetLocaleTag(env, argv[0]);
 
     std::map<std::string, std::string> map = {};
-    if (argv[1] != nullptr) {
+    if (argc > 1) {
         GetOptionValue(env, argv[1], "calendar", map);
         GetOptionValue(env, argv[1], "collation", map);
         GetOptionValue(env, argv[1], "hourCycle", map);
@@ -387,7 +387,7 @@ napi_value IntlAddon::DateTimeFormatConstructor(napi_env env, napi_callback_info
         return nullptr;
     }
     std::vector<std::string> localeTags;
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv[0], &valueType);
         bool isArray = false;
@@ -405,7 +405,7 @@ napi_value IntlAddon::DateTimeFormatConstructor(napi_env env, napi_callback_info
         }
     }
     std::map<std::string, std::string> map = {};
-    if (argv[1] != nullptr) {
+    if (argc > 1) {
         GetDateOptionValues(env, argv[1], map);
     }
     std::unique_ptr<IntlAddon> obj = nullptr;
@@ -450,7 +450,7 @@ napi_value IntlAddon::RelativeTimeFormatConstructor(napi_env env, napi_callback_
         return nullptr;
     }
     std::vector<std::string> localeTags;
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv[0], &valueType);
         bool isArray = false;
@@ -468,7 +468,7 @@ napi_value IntlAddon::RelativeTimeFormatConstructor(napi_env env, napi_callback_
         }
     }
     std::map<std::string, std::string> map = {};
-    if (argv[1] != nullptr) {
+    if (argc > 1) {
         GetRelativeTimeOptionValues(env, argv[1], map);
     }
     std::unique_ptr<IntlAddon> obj = nullptr;
@@ -531,7 +531,7 @@ napi_value IntlAddon::FormatDateTimeRange(napi_env env, napi_callback_info info)
     napi_value thisVar = nullptr;
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (argv[0] == nullptr || argv[1] == nullptr) {
+    if (argc < 2) {
         HiLog::Error(LABEL, "Parameter wrong");
         return nullptr;
     }
@@ -589,7 +589,7 @@ napi_value IntlAddon::NumberFormatConstructor(napi_env env, napi_callback_info i
         return nullptr;
     }
     std::vector<std::string> localeTags;
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv[0], &valueType);
         bool isArray = false;
@@ -608,7 +608,7 @@ napi_value IntlAddon::NumberFormatConstructor(napi_env env, napi_callback_info i
         }
     }
     std::map<std::string, std::string> map = {};
-    if (argv[1] != nullptr) {
+    if (argc > 1) {
         GetNumberOptionValues(env, argv[1], map);
     }
     std::unique_ptr<IntlAddon> obj = nullptr;
@@ -1352,7 +1352,7 @@ napi_value IntlAddon::CollatorConstructor(napi_env env, napi_callback_info info)
         return nullptr;
     }
     std::vector<std::string> localeTags;
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_valuetype valueType = napi_valuetype::napi_undefined;
         napi_typeof(env, argv[0], &valueType);
         bool isArray = false;
@@ -1370,7 +1370,7 @@ napi_value IntlAddon::CollatorConstructor(napi_env env, napi_callback_info info)
         }
     }
     std::map<std::string, std::string> map = {};
-    if (argv[1] != nullptr) {
+    if (argc > 1) {
         GetCollatorOptionValue(env, argv[1], map);
     }
     std::unique_ptr<IntlAddon> obj = nullptr;
@@ -1733,7 +1733,7 @@ napi_value IntlAddon::PluralRulesConstructor(napi_env env, napi_callback_info in
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
     std::vector<std::string> localeTags;
-    if (argv[0] != nullptr) {
+    if (argc > 0) {
         napi_typeof(env, argv[0], &valueType);
         bool isArray = false;
         napi_is_array(env, argv[0], &isArray);
@@ -1750,7 +1750,7 @@ napi_value IntlAddon::PluralRulesConstructor(napi_env env, napi_callback_info in
         }
     }
     std::map<std::string, std::string> map = {};
-    if (argv[1] != nullptr) {
+    if (argc > 1) {
         GetPluralRulesOptionValues(env, argv[1], map);
     }
     std::unique_ptr<IntlAddon> obj = nullptr;
@@ -1856,6 +1856,7 @@ extern "C" __attribute__((constructor)) void INTLPluginRegister()
     INTLPluginJniRegister();
 #endif
     napi_module_register(&g_intlModule);
+    InitIcuData();
 }
 } // namespace I18n
 } // namespace Global

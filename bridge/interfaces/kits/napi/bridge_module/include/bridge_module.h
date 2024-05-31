@@ -30,6 +30,7 @@ public:
         static constexpr const char* FUNCTION_UNREGISTER_METHOD = "unRegisterMethod";
         static constexpr const char* FUNCTION_SEND_MESSAGE = "sendMessage";
         static constexpr const char* FUNCTION_REGISTER_ON_MESSAGE = "setMessageListener";
+        static constexpr const char* FUNCTION_CALL_METHOD_CALLBACK = "callMethodWithCallback";
 
         static napi_value GetBridgeName(napi_env env, napi_callback_info info);
         static napi_value CallMethod(napi_env env, napi_callback_info info);
@@ -37,6 +38,7 @@ public:
         static napi_value UnRegisterMethod(napi_env env, napi_callback_info info);
         static napi_value SendMessage(napi_env env, napi_callback_info info);
         static napi_value SetMessageListener(napi_env env, napi_callback_info info);
+        static napi_value CallMethodWithCallBack(napi_env env, napi_callback_info info);
     };
 
     static constexpr const char* FUNCTION_CREATE_PLUGIN_BRIDGE = "createBridge";
@@ -59,6 +61,7 @@ private:
     static void SetMessageListenerInner(napi_env env, napi_value thisVal,
         std::shared_ptr<MethodData> onMessagecallback);
     static napi_value InitCodecType(napi_env env);
+    static napi_value CallMethodWithCallBackInnter(napi_env env, napi_callback_info info);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif
