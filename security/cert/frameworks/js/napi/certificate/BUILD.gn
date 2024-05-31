@@ -1,0 +1,80 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+ohos_source_set("cert") {
+  branch_protector_ret = "pac_ret"
+  subsystem_name = "plugins"
+  part_name = "security_cert"
+  configs = [ "../../../../config/build:coverage_flag_cc" ]
+  include_dirs = [
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/inc",
+    "//base/security/certificate_framework/frameworks/common/v1.0/inc",
+    "//commonlibrary/c_utils/base/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//third_party/bounds_checking_function/include",
+    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//base/security/crypto_framework/interfaces/innerkits/algorithm_parameter",
+    "//base/security/crypto_framework/interfaces/innerkits/common",
+    "//base/security/crypto_framework/interfaces/innerkits/crypto_operation",
+    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//foundation/arkui/napi/interfaces/kits",
+    "//third_party/node/src",
+    "//foundation/arkui/napi/interfaces/inner_api",
+    "//base/security/certificate_framework/interfaces/innerkits/certificate",
+    "//base/security/certificate_framework/interfaces/innerkits/include",
+    "//base/security/certificate_framework/interfaces/innerkits/common",
+  ]
+
+  cflags = [
+    "-DHILOG_ENABLE",
+    "-fPIC",
+    "-g3",
+  ]
+
+  sources = [
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_chain_validator.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_crl_collection.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_crl_common.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_extension.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_utils.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_certificate_init.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_common.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_key.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_object.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_pub_key.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_chain.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_chain_validate_params.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_chain_validate_result.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_cert_match_parameters.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_certificate.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl_entry.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl_match_parameters.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_trust_anchor.cpp",
+  ]
+
+  deps = [
+    "../../../core:certificate_framework_core",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+    "//plugins/libs/securec:sec_${target_os}",
+    "//plugins/security/cert/common:plugin_certificate_common",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "napi:ace_napi",
+  ]
+}
