@@ -28,7 +28,7 @@ AudioRoutingManager* AudioRoutingManager::GetInstance()
     return &audioRoutingManager;
 }
 
-uint32_t AudioRoutingManager::GetCallingPid()
+int32_t AudioRoutingManager::GetCallingPid()
 {
     return getpid();
 }

@@ -34,7 +34,7 @@ AudioSystemManager* AudioSystemManager::GetInstance()
     return &audioManager;
 }
 
-uint32_t AudioSystemManager::GetCallingPid()
+int32_t AudioSystemManager::GetCallingPid()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return 0;
