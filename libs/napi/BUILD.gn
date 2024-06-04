@@ -18,10 +18,7 @@ template("napi_deps") {
   forward_variables_from(invoker, "*")
 
   ohos_source_set(target_name) {
-    public_configs = [
-      "$ace_napi:ace_napi_config",
-      "$ace_napi:ace_napi_static_config",
-    ]
+    public_configs = [ "$ace_napi:ace_napi_config" ]
 
     if (defined(config.libace_target)) {
       deps = [ config.libace_target ]
