@@ -226,7 +226,21 @@ std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchFrameAtTime(
 
 std::shared_ptr<Meta> AVMetadataHelperImpl::GetAVMetadata()
 {
-    return nullptr;
+    auto meta = std::make_shared<Meta>();
+    auto metaMap = ResolveMetadata();
+    for (auto iter = metaMap.begin(); iter != metaMap.end(); iter++) {
+        auto it = g_MetadataCodeMap.find(iter->first);
+        const char* key = nullptr;
+        if (it != g_MetadataCodeMap.end()) {
+            key = it->second;
+        }
+        if (key == nullptr) {
+            continue;
+        }
+        std::string tag(key);
+        meta->SetData(tag, iter->second);
+    }
+    return meta;
 }
 
 void AVMetadataHelperImpl::Release()
