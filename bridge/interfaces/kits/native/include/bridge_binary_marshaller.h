@@ -64,7 +64,7 @@ public:
     void MarshallingAlign(uint8_t align)
     {
         if (uint8_t offset = byteBuffer_->size() % align; offset) {
-            int i = 0; 
+            int i = 0;
             while (i < align - offset) {
                 MarshallingByte(0);
                 ++i;
@@ -75,5 +75,5 @@ public:
 private:
     std::vector<uint8_t>* byteBuffer_;
 };
-} // OHOS::Plugin::Bridge 
+} // OHOS::Plugin::Bridge
 #endif

@@ -37,8 +37,12 @@ public:
     static std::string GetDisplayRegion(const std::string &region, const std::string &displayLocale,
         bool sentenceCase);
     static bool IsValidRegion(const std::string &region);
+    static bool IsValidLanguage(const std::string &language);
+    static bool IsValidTag(const std::string &tag);
+
 private:
-    static std::unique_ptr<Plugin::I18N> plugin; 
+    static constexpr uint32_t LANGUAGE_LEN = 2;
+    static std::unique_ptr<Plugin::I18N> plugin;
 };
 } // namespace I18n
 } // namespace Global

@@ -102,7 +102,8 @@ public:
     virtual void BackOrForward(int32_t step) = 0;
     virtual std::string GetTitle() = 0;
     virtual int32_t GetPageHeight() = 0;
-    virtual ErrCode ClearHistory() {
+    virtual ErrCode ClearHistory()
+    {
         return NWebError::NO_ERROR;
     }
     void SetWebId(int32_t webId)

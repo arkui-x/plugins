@@ -26,6 +26,8 @@
 #include "napi/native_node_api.h"
 #include "phone_number_format.h"
 #include "locale_config.h"
+#include "locale_info.h"
+#include "locale_matcher.h"
 
 namespace OHOS {
 namespace Global {
@@ -64,6 +66,7 @@ public:
     static napi_value InitI18nTimeZone(napi_env env, napi_value exports);
     static napi_value GetI18nTimeZone(napi_env env, napi_callback_info info);
     static napi_value GetDateOrder(napi_env env, napi_callback_info info);
+    static napi_value GetBestMatchLocale(napi_env env, napi_callback_info info);
     static napi_value InitTransliterator(napi_env env, napi_value exports);
     static napi_value GetTransliteratorInstance(napi_env env, napi_callback_info info);
     static napi_value GetAvailableIDs(napi_env env, napi_callback_info info);
@@ -90,6 +93,8 @@ private:
     void SetField(napi_env env, napi_value value, UCalendarDateFields field);
     static napi_value SetTime(napi_env env, napi_callback_info info);
     static std::string GetString(napi_env &env, napi_value &value, int32_t &code);
+    static bool GetStringArrayFromJsParam(
+        napi_env env, napi_value &jsArray, const std::string& valueName, std::vector<std::string> &strArray);
     static napi_value SetTimeZone(napi_env env, napi_callback_info info);
     static napi_value GetTimeZone(napi_env env, napi_callback_info info);
     static napi_value SetFirstDayOfWeek(napi_env env, napi_callback_info info);
@@ -157,7 +162,11 @@ private:
     static napi_value GetI18nNormalizerInstance(napi_env env, napi_callback_info info);
     static napi_value I18nNormalizerConstructor(napi_env env, napi_callback_info info);
     static napi_value Normalize(napi_env env, napi_callback_info info);
-
+    
+    static bool GetCountryNapiValueWithError(napi_env env, napi_value napiValue, size_t len, char* valueBuf,
+        std::string index);
+    static bool GetNapiStringValueWithError(napi_env env, napi_value napiValue, size_t len, char* valueBuf,
+        std::string index);
     static const int32_t NORMALIZER_MODE_NFC = 1;
     static const int32_t NORMALIZER_MODE_NFD = 2;
     static const int32_t NORMALIZER_MODE_NFKC = 3;

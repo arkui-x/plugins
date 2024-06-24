@@ -46,5 +46,5 @@ private:
     NetworkType networkType_ = NETWORK_INVALID;
     std::mutex mutex_;
 };
-} // namespace OHOS::Plugin::Request 
+} // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_IOS_NET_MONITOR_H

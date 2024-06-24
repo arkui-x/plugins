@@ -21,8 +21,7 @@
 #include <map>
 
 namespace OHOS::Plugin::Request {
-class RemoveNotify : public JsNotify
-{
+class RemoveNotify : public JsNotify {
 public:
     explicit RemoveNotify(napi_env env, napi_value cb, Version version, Action action);
     virtual ~RemoveNotify() = default;

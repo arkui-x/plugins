@@ -16,9 +16,14 @@
 package ohos.ace.plugin.intlplugin;
 
 import android.content.Context;
+import android.content.res.Configuration;
+import android.os.Build;
 import android.os.LocaleList;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.WindowManager;
 
 import java.util.Locale;
 import java.util.TimeZone;
@@ -30,6 +35,11 @@ import java.util.TimeZone;
  */
 public class INTLPlugin {
     private static final String LOG_TAG = "INTLPlugin";
+    private static final String DEVICE_TYPE_PHONES = "phones";
+    private static final String DEVICE_TYPE_TABLET = "tablet";
+    private static final int SQUARE = 2;
+    private static final int THRESHOLD_DP = 600;
+    private static final double THRESHOLD_INCH = 6.9;
     private Context mContext;
 
     /**
@@ -82,6 +92,63 @@ public class INTLPlugin {
      */
     public String getSystemTimezone() {
         return TimeZone.getDefault().getID();
+    }
+
+    /**
+     * Get device type.
+     *
+     * @return Device type.
+     */
+    public String getDeviceType() {
+        String deviceType = DEVICE_TYPE_PHONES;
+        if (mContext == null) {
+            Log.e(LOG_TAG, "The mContext is null, getDeviceType failed.");
+            return deviceType;
+        }
+
+        int minScreenWidth = mContext.getResources().getConfiguration().smallestScreenWidthDp;
+        if (minScreenWidth >= THRESHOLD_DP) {
+            deviceType = DEVICE_TYPE_TABLET;
+        } else {
+            deviceType = getDeviceTypeByPhysicalSize();
+        }
+        return deviceType;
+    }
+
+    private String getDeviceTypeByPhysicalSize() {
+        String deviceType = DEVICE_TYPE_PHONES;
+        if (mContext == null) {
+            Log.e(LOG_TAG, "The mContext is null, getDeviceTypeByPhysicalSize failed.");
+            return deviceType;
+        }
+
+        WindowManager windowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        if (windowManager == null) {
+            Log.e(LOG_TAG, "The mContext is null, getDeviceTypeByPhysicalSize failed.");
+            return deviceType;
+        }
+
+        Display display = windowManager.getDefaultDisplay();
+        if (display == null) {
+            Log.e(LOG_TAG, "The display is null, getDeviceTypeByPhysicalSize failed.");
+            return deviceType;
+        }
+
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            display.getRealMetrics(metrics);
+        } else {
+            display.getMetrics(metrics);
+        }
+
+        double width = metrics.widthPixels /  metrics.xdpi;
+        double height = metrics.heightPixels /  metrics.ydpi;
+        double diagonalSize = Math.sqrt(Math.pow(width, SQUARE) + Math.pow(height, SQUARE));
+
+        if (diagonalSize >= THRESHOLD_INCH) {
+            deviceType = DEVICE_TYPE_TABLET;
+        }
+        return deviceType;
     }
 
     /**

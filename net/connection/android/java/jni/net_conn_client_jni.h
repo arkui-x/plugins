@@ -31,10 +31,10 @@ public:
     static bool Register(void *env);
     // Called by Java
     static void NativeInit(JNIEnv *env, jobject jobj);
-    static void NativeOnAvailable(JNIEnv *env, jobject jthiz, jobject jNetWork, jlong jcallbackKey);
-    static void NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, jobject jNetWork, jobject jNetworkCapabilities,
-        jlong jcallbackKey);
-    static void NativeOnLost(JNIEnv *env, jobject jthiz, jobject jNetWork, jlong jcallbackKey);
+    static void NativeOnAvailable(JNIEnv *env, jobject jthiz, jlong jcallbackKey, jint networkId);
+    static void NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, jobject jNetworkCapabilities,
+        jlong jcallbackKey, jint networkId);
+    static void NativeOnLost(JNIEnv *env, jobject jthiz, jlong jcallbackKey, jint networkId);
     static void NativeOnUnavailable(JNIEnv *env, jobject jthiz, jlong jcallbackKey);
 
     // Called by C++

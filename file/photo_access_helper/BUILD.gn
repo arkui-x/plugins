@@ -1,0 +1,96 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+template("plugin_photo_access_helper_static") {
+  forward_variables_from(invoker, "*")
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    sources = [
+      "napi/album/src/photo_album.cpp",
+      "napi/album/src/photo_album_column.cpp",
+      "napi/album/src/photo_album_napi.cpp",
+      "napi/base/src/napi_error.cpp",
+      "napi/base/src/rdb_utils.cpp",
+      "napi/base/src/userfile_client.cpp",
+      "napi/photo/photopicker/src/photo_picker_napi.cpp",
+      "napi/photo/src/fetch_file_result_napi.cpp",
+      "napi/photo/src/fetch_result.cpp",
+      "napi/photo/src/file_asset.cpp",
+      "napi/photo/src/file_asset_napi.cpp",
+      "napi/photo/src/media_column.cpp",
+      "napi/photo/src/media_file_utils.cpp",
+      "napi/photo/src/media_library_napi.cpp",
+      "napi/photo/src/medialibrary_napi_utils.cpp",
+      "native_module_ohos_photoaccess_helper.cpp",
+    ]
+    include_dirs = [
+      "napi/base/include/",
+      "napi/album/include/",
+      "napi/photo/include/",
+      "napi/photo/photopicker/include/",
+      "//third_party/json/include",
+      "//commonlibrary/c_utils/base/include",
+      "//foundation/distributeddatamgr/relational_store/frameworks/native/rdb/include/",
+      "//foundation/distributeddatamgr/relational_store/interfaces/inner_api/appdatafwk/include/",
+      "//foundation/distributeddatamgr/relational_store/frameworks/native/rdb/mock/include/",
+    ]
+    deps = [
+      "//foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb:native_rdb",
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/libs/napi:napi_${target_os}",
+    ]
+
+    if (platform == "android") {
+      deps += [
+        "./android:photo_access_helper_android_jni",
+        "//foundation/arkui/ace_engine/adapter/android/build:data_datasharepredicates",
+      ]
+    } else if (platform == "ios") {
+      deps += [
+        "./ios:photo_access_helper_ios",
+        "//foundation/arkui/ace_engine/adapter/ios/build:data_datasharepredicates",
+      ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "file_photo_access_helper"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_photo_access_helper_static(
+      "file_photo_access_helper_static_" + item.name) {
+    platform = item.name
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

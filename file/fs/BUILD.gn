@@ -49,6 +49,8 @@ template("plugin_fs_static") {
       "$utils_dirs/common/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "//third_party/libuv/include",
+      "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
+      "//foundation/graphic/graphic_2d/rosen/modules/platform/utils",
     ]
 
     sources = libn_src
@@ -65,10 +67,12 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/properties/rmdirent.cpp",
       "$fs_dirs/src/mod_fs/properties/stat.cpp",
       "$fs_dirs/src/mod_fs/properties/truncate.cpp",
+      "$fs_dirs/src/mod_fs/properties/utimes.cpp",
       "$plugin_fs_dirs/common/fd_guard.cpp",
       "$plugin_fs_dirs/module.cpp",
       "$plugin_fs_dirs/src/copy_file.cpp",
       "$plugin_fs_dirs/src/file_n_exporter.cpp",
+      "$plugin_fs_dirs/src/lseek.cpp",
       "$plugin_fs_dirs/src/mkdtemp.cpp",
       "$plugin_fs_dirs/src/move.cpp",
       "$plugin_fs_dirs/src/open.cpp",
@@ -79,7 +83,7 @@ template("plugin_fs_static") {
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
-      "//third_party/libuv:uv_static",
+      "//plugins/libs/uv:uv_${target_os}",
     ]
 
     use_exceptions = true

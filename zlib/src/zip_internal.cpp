@@ -40,13 +40,13 @@ void* FdOpenFileFunc(void* opaque, const char* filename, int mode)
     FILE* file = nullptr;
     const char* mode_fopen = nullptr;
     uint32_t modeInner = static_cast<uint32_t>(mode);
-    if ((modeInner & ZLIB_FILEFUNC_MODE_READWRITEFILTER) == ZLIB_FILEFUNC_MODE_READ)
+    if ((modeInner & ZLIB_FILEFUNC_MODE_READWRITEFILTER) == ZLIB_FILEFUNC_MODE_READ) {
         mode_fopen = "rb";
-    else if (modeInner & ZLIB_FILEFUNC_MODE_EXISTING)
+    } else if (modeInner & ZLIB_FILEFUNC_MODE_EXISTING) {
         mode_fopen = "r+b";
-    else if (modeInner & ZLIB_FILEFUNC_MODE_CREATE)
+    } else if (modeInner & ZLIB_FILEFUNC_MODE_CREATE) {
         mode_fopen = "wb";
-
+    }
     if (mode_fopen != nullptr) {
         int fd = dup(*static_cast<int*>(opaque));
         if (fd != -1)
@@ -274,23 +274,23 @@ bool ZipOpenNewFileInZip(
     zip_fileinfo fileInfo = {};
     TimeToZipFileInfo(lastModifiedTime, fileInfo);
     if (ZIP_OK != zipOpenNewFileInZip4(zipFile,  // file
-                      strPath.c_str(),           // filename
-                      &fileInfo,                 // zip_fileinfo
-                      NULL,                      // extrafield_local,
-                      0u,                        // size_extrafield_local
-                      NULL,                      // extrafield_global
-                      0u,                        // size_extrafield_global
-                      NULL,                      // comment
-                      Z_DEFLATED,                // method
-                      (int)options.level,        // level:default Z_DEFAULT_COMPRESSION
-                      0,                         // raw
-                      -MAX_WBITS,                // windowBits
-                      (int)options.memLevel,     // memLevel: default DEF_MEM_LEVEL
-                      (int)options.strategy,     // strategy:default Z_DEFAULT_STRATEGY
-                      NULL,                      // password
-                      0,                         // crcForCrypting
-                      0,                         // versionMadeBy
-                      LANGUAGE_ENCODING_FLAG)) { // flagBase
+        strPath.c_str(),           // filename
+        &fileInfo,                 // zip_fileinfo
+        NULL,                      // extrafield_local,
+        0u,                        // size_extrafield_local
+        NULL,                      // extrafield_global
+        0u,                        // size_extrafield_global
+        NULL,                      // comment
+        Z_DEFLATED,                // method
+        (int)options.level,        // level:default Z_DEFAULT_COMPRESSION
+        0,                         // raw
+        -MAX_WBITS,                // windowBits
+        (int)options.memLevel,     // memLevel: default DEF_MEM_LEVEL
+        (int)options.strategy,     // strategy:default Z_DEFAULT_STRATEGY
+        NULL,                      // password
+        0,                         // crcForCrypting
+        0,                         // versionMadeBy
+        LANGUAGE_ENCODING_FLAG)) { // flagBase
         return false;
     }
     return true;

@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,15 +17,21 @@ ohos_source_set("net_http_android") {
   include_dirs = http_include
   include_dirs += utils_include
   include_dirs += [
+    "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/include",
     "//foundation/arkui/ace_engine/frameworks",
     "//foundation/arkui/ace_engine",
+    "//third_party/cJSON",
   ]
 
   sources = http_sources
-  sources += [ "http_exec.cpp" ]
+  sources += [
+    "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/disk_handler.cpp",
+    "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache_disk_handler.cpp",
+    "//plugins/net/http/cache/src/lru_cache.cpp",
+    "http_exec.cpp",
+  ]
 
   deps = [
-    "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//plugins/interfaces/native:plugin_log",
     "//plugins/net/utils:net_utils_android",

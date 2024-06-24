@@ -126,7 +126,7 @@ void NAPIAsyncEvent::SetMethodParameter(uint8_t* data, size_t size)
 {
     std::tuple<uint8_t*, size_t> methodBuffer;
     std::get<uint8_t*>(methodBuffer) = data;
-    std::get<size_t>(methodBuffer) = size; 
+    std::get<size_t>(methodBuffer) = size;
     taskQueue_.push_back(methodBuffer);
 }
 

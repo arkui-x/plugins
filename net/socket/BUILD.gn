@@ -106,7 +106,9 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/socket/options/src/udp_send_options.cpp",
   "$NETSTACK_NAPI_ROOT/socket/socket_exec/src/local_socket_exec.cpp",
   "$NETSTACK_NAPI_ROOT/socket/socket_exec/src/socket_exec.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/socket_exec/src/socket_extra_exec.cpp",
   "$NETSTACK_NAPI_ROOT/socket/socket_module/src/socket_module.cpp",
+  "$NETSTACK_NAPI_ROOT/tls/src/context/tls_init_context.cpp",
 ]
 
 utils_include = [
@@ -132,6 +134,10 @@ template("plugin_net_socket_static") {
     sources += tls_sources
     sources += tls_napi_sources
 
+    if (target_os == "ios") {
+      include_dirs += utils_include
+    }
+
     deps = [
       "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
@@ -140,10 +146,6 @@ template("plugin_net_socket_static") {
       "//third_party/openssl:libcrypto_shared",
       "//third_party/openssl:libssl_shared",
     ]
-
-    if (target_os == "ios") {
-      include_dirs += utils_include
-    }
 
     subsystem_name = "plugins"
     part_name = "net_socket"

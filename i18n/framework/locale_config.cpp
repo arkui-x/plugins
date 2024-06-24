@@ -16,11 +16,13 @@
 #include "locale_info.h"
 
 #include <string>
+#include <vector>
 
 #include "localebuilder.h"
 #include "locid.h"
 #include "ucase.h"
 #include "unistr.h"
+#include "utils.h"
 
 namespace OHOS {
 namespace Global {
@@ -138,6 +140,33 @@ bool LocaleConfig::IsValidRegion(const string &region)
     }
     for (size_t i = 0; i < LocaleInfo::REGION_LEN; ++i) {
         if ((region[i] > 'Z') || (region[i] < 'A')) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool LocaleConfig::IsValidTag(const std::string &tag)
+{
+    if (!tag.size()) {
+        return false;
+    }
+    std::vector<std::string> splits;
+    Split(tag, "-", splits);
+    if (!IsValidLanguage(splits[0])) {
+        return false;
+    }
+    return true;
+}
+
+bool LocaleConfig::IsValidLanguage(const std::string &language)
+{
+    std::string::size_type size = language.size();
+    if ((size != LANGUAGE_LEN) && (size != LANGUAGE_LEN + 1)) {
+        return false;
+    }
+    for (size_t i = 0; i < size; ++i) {
+        if ((language[i] > 'z') || (language[i] < 'a')) {
             return false;
         }
     }

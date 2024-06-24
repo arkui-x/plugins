@@ -1,0 +1,114 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+MEDIA_PLAYER_ROOT = "//foundation/multimedia"
+PLAYER_FRAMEWORK_DIR = "$MEDIA_PLAYER_ROOT/player_framework"
+
+utils_include = [
+  "$PLAYER_FRAMEWORK_DIR/interfaces/kits/js",
+  "//foundation/arkui/napi/interfaces/kits",
+  "//foundation/arkui/napi/interfaces/inner_api",
+  "$MEDIA_PLAYER_ROOT/media_foundation/interface/inner_api",
+  "$PLAYER_FRAMEWORK_DIR/interfaces/inner_api/native",
+  "//foundation/multimedia/av_codec/interfaces/inner_api/native",
+  "$MEDIA_PLAYER_ROOT/media_foundation/interface/inner_api/meta",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/common",
+  "$MEDIA_PLAYER_ROOT/media_foundation/interface/inner_api/common",
+  "//foundation/graphic/graphic_2d/interfaces/inner_api/surface",
+  "//foundation/graphic/graphic_surface/interfaces/inner_api/surface",
+  "//foundation/graphic/graphic_surface/surface/include",
+  "//commonlibrary/c_utils/base/include",
+  "$MEDIA_PLAYER_ROOT/media_foundation/interface/inner_api/common",
+  "//foundation/graphic/graphic_2d/interfaces/inner_api/common",
+  "$MEDIA_PLAYER_ROOT/audio_framework/interfaces/inner_api/native/audiocommon/include",
+  "$MEDIA_PLAYER_ROOT/audio_framework/interfaces/inner_api/native/audiomanager/include",
+  "$MEDIA_PLAYER_ROOT/audio_framework/frameworks/native/audiopolicy/include",
+  "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
+  "//foundation/graphic/graphic_2d/utils/buffer_handle/export",
+  "//foundation/graphic/graphic_2d/frameworks/surface/include",
+  "//foundation/graphic/graphic_2d/utils/color_manager/export",
+  "$PLAYER_FRAMEWORK_DIR/services/utils/include",
+  "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+
+  "//foundation/arkui/napi/utils",
+  "$MEDIA_PLAYER_ROOT/image_framework/mock/native/include/log",
+  "$MEDIA_PLAYER_ROOT/image_framework/interfaces/innerkits/include",
+  "$MEDIA_PLAYER_ROOT/image_framework/interfaces/kits/js/common/include",
+  "$PLAYER_FRAMEWORK_DIR/interfaces/inner_api/native/soundpool/include",
+  "$PLAYER_FRAMEWORK_DIR/services/include",
+  "//base/hiviewdfx/hilog/platform",
+  "//foundation/resourceschedule/qos_manager/include",
+  "//foundation/resourceschedule/qos_manager/interfaces/inner_api",
+  "//foundation/resourceschedule/qos_manager/services/include",
+  "//plugins",
+  "//plugins/interfaces/native/inner_api",
+  "//plugins/interfaces/native",
+  "//foundation/multimedia/media_foundation/interface/inner_api/buffer",
+  "//foundation/graphic/graphic_surface/interfaces/inner_api/utils",
+]
+
+utils_source = [
+  "$PLAYER_FRAMEWORK_DIR/frameworks/native/common/media_errors.cpp",
+  "//plugins/multimedia/media/mock/surface_utils.cpp",
+  "//foundation/multimedia/media_foundation/src/meta/any.cpp",
+  "//foundation/multimedia/media_foundation/src/meta/format.cpp",
+  "//foundation/multimedia/media_foundation/src/meta/media_source.cpp",
+  "//foundation/multimedia/media_foundation/src/meta/meta.cpp",
+  "//foundation/multimedia/media_foundation/src/buffer/avsharedmemory/avsharedmemorybase.cpp",
+  "$PLAYER_FRAMEWORK_DIR/services/utils/avdatasrcmemory.cpp",
+  "$PLAYER_FRAMEWORK_DIR/services/utils/player_xcollie.cpp",
+  "//plugins/multimedia/media/mock/media_dfx.cpp",
+  "//plugins/multimedia/media/mock/task_queue.cpp",
+  "//foundation/multimedia/audio_framework/services/audio_service/client/src/audio_device_descriptor.cpp",
+  "//plugins/multimedia/media/mock/message_parcel.cpp",
+  "//plugins/multimedia/media/mock/recorder_profiles_impl.cpp",
+]
+
+media_include = [
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/avplayer",
+  "$PLAYER_FRAMEWORK_DIR/interfaces/kits/js",
+  "$PLAYER_FRAMEWORK_DIR/interfaces/inner_api",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/avrecorder",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/recorder",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/metadatahelper",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/common",
+  "$PLAYER_FRAMEWORK_DIR/services/utils/include",
+  "//plugins/multimedia/media",
+  "//plugins/multimedia/media/player",
+  "//plugins/multimedia/media/recorder",
+  "//plugins/multimedia/media/metadatahelper",
+  "//third_party/libuv/include",
+  "//plugins/multimedia/media/mock",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/soundpool/include",
+  "//plugins/multimedia/media/android/java/jni",
+  "//plugins/multimedia/media/android/java",
+  "$PLAYER_FRAMEWORK_DIR/services/services/engine_intf",
+]
+
+media_source = [
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/media/media_enum_napi.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/avplayer/media_data_source_callback.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/avplayer/avplayer_callback.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/avplayer/avplayer_napi.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/avrecorder/avrecorder_callback.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/avrecorder/avrecorder_napi.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/mediasource/media_source_napi.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/metadatahelper/avmetadataextractor_napi.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/metadatahelper/avmetadatahelper_callback.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/metadatahelper/helper_data_source_callback.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/common/common_napi.cpp",
+  "native_module_ohos_media.cpp",
+]

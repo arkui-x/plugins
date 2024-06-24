@@ -124,7 +124,7 @@ void AsyncCall::OnComplete(napi_env env, napi_status status, void *data)
         }
     } else {
         result[ARG_ERROR] = NapiUtils::CreateBusinessError(env,
-                                static_cast<ExceptionErrorCode>(context->ctx->retCode), "service failed");
+            static_cast<ExceptionErrorCode>(context->ctx->retCode), "service failed");
         napi_get_undefined(env, &result[ARG_DATA]);
     }
     if (context->defer != nullptr) {

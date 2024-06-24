@@ -25,6 +25,7 @@ namespace Global {
 namespace I18n {
 // Common error code
 const int32_t I18N_NO_PERMISSION  = 201;          // The app don't have requested permission
+const int32_t I18N_NOT_SYSTEM_APP = 202;          // The app isn't a system app
 const int32_t I18N_NOT_FOUND     = 401;          // Input parameter is missing
 
 // I18N error code
@@ -35,6 +36,8 @@ const size_t FUNC_ARGS_COUNT = 2;    // Function input parameter count
 class ErrorUtil {
 public:
     static void NapiThrow(napi_env env, int32_t errCode, bool throwError);
+    static void NapiThrow(
+        napi_env env, int32_t errCode, const std::string& valueName, const std::string& valueContent, bool throwError);
 };
 } // namespace I18n
 } // namespace Global

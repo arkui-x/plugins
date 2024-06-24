@@ -45,11 +45,13 @@ private:
     void GetExtras(NSURLResponse *response);
     void PartPostUpload(NSURL *baseUrl, NSMutableDictionary *headers);
     void PostUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers);
-    void PartPostUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers);
+    void PartPostUploadFile(const FileSpec &file,
+        int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers);
     void RemoveFile(NSString *filePath);
     void PartPutUpload(NSURL *baseUrl, NSMutableDictionary *headers);
     void PutUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers);
-    void PartPutUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers);
+    void PartPutUploadFile(const FileSpec &file,
+        int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers);
 
 private:
     Config config_;

@@ -31,7 +31,8 @@ const char WEB_WEBVIEW_CLASS_NAME[] = "ohos/ace/adapter/capability/web/AceWebPlu
 static const JNINativeMethod METHODS[] = {
     { "nativeInit", "()V", reinterpret_cast<void*>(WebviewControllerJni::NativeInit) },
     { "onReceiveValue", "(Ljava/lang/String;J)V", reinterpret_cast<void*>(WebviewControllerJni::OnReceiveValue) },
-    { "onMessage", "(JLjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void*>(WebviewControllerJni::OnMessage) },
+    { "onMessage", "(JLjava/lang/String;Ljava/lang/String;)V",
+        reinterpret_cast<void*>(WebviewControllerJni::OnMessage) },
 };
 static const char METHOD_LOADURL[] = "loadUrl";
 
@@ -211,18 +212,24 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.zoom = env->GetMethodID(cls, METHOD_ZOOM, SIGNATURE_ZOOM);
     g_webWebviewClass.stop = env->GetMethodID(cls, METHOD_STOP, SIGNATURE_STOP);
     g_webWebviewClass.clearHistory = env->GetMethodID(cls, METHOD_CLEAR_HISTORY, SIGNATURE_CLEAR_HISTORY);
-    g_webWebviewClass.setCustomUserAgent = env->GetMethodID(cls, METHOD_SET_CUSTOM_USER_AGENT, SIGNATURE_SET_CUSTOM_USER_AGENT);
-    g_webWebviewClass.getCustomUserAgent = env->GetMethodID(cls, METHOD_GET_CUSTOM_USER_AGENT, SIGNATURE_GET_CUSTOM_USER_AGENT);
-    g_webWebviewClass.getBackForwardEntries = env->GetMethodID(cls, METHOD_GETBACKFORWARDENTRIES, SIGNATURE_GETBACKFORWARDENTRIES);
+    g_webWebviewClass.setCustomUserAgent = env->GetMethodID(cls,
+        METHOD_SET_CUSTOM_USER_AGENT, SIGNATURE_SET_CUSTOM_USER_AGENT);
+    g_webWebviewClass.getCustomUserAgent = env->GetMethodID(cls,
+        METHOD_GET_CUSTOM_USER_AGENT, SIGNATURE_GET_CUSTOM_USER_AGENT);
+    g_webWebviewClass.getBackForwardEntries = env->GetMethodID(cls,
+        METHOD_GETBACKFORWARDENTRIES, SIGNATURE_GETBACKFORWARDENTRIES);
     g_webWebviewClass.removeCache = env->GetMethodID(cls, METHOD_REMOVECACHE, SIGNATURE_REMOVECACHE);
     g_webWebviewClass.backOrForward = env->GetMethodID(cls, METHOD_BACKORFORWARD, SIGNATURE_BACKORFORWARD);
     g_webWebviewClass.getTitle = env->GetMethodID(cls, METHOD_GETTITLE, SIGNATURE_GETTITLE);
     g_webWebviewClass.getPageHeight = env->GetMethodID(cls, METHOD_GETPAGEHEIGHT, SIGNATURE_GETPAGEHEIGHT);
-    g_webWebviewClass.createWebMessagePorts = env->GetMethodID(cls, METHOD_CREATEWEBMESSAGEPORTS, SIGNATURE_CREATEWEBMESSAGEPORTS);
+    g_webWebviewClass.createWebMessagePorts = env->GetMethodID(cls,
+        METHOD_CREATEWEBMESSAGEPORTS, SIGNATURE_CREATEWEBMESSAGEPORTS);
     g_webWebviewClass.postWebMessage = env->GetMethodID(cls, METHOD_POSTWEBMESSAGE, SIGNATURE_POSTWEBMESSAGE);
-    g_webWebviewClass.closeWebMessagePort = env->GetMethodID(cls, METHOD_CLOSEWEBMESSAGEPORT, SIGNATURE_CLOSEWEBMESSAGEPORT);
+    g_webWebviewClass.closeWebMessagePort = env->GetMethodID(cls,
+        METHOD_CLOSEWEBMESSAGEPORT, SIGNATURE_CLOSEWEBMESSAGEPORT);
     g_webWebviewClass.postMessageEvent = env->GetMethodID(cls, METHOD_POSTMESSAGEEVENT, SIGNATURE_POSTMESSAGEEVENT);
-    g_webWebviewClass.onWebMessagePortEvent = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENT, SIGNATURE_ONWEBMESSAGEPORTEVENT);
+    g_webWebviewClass.onWebMessagePortEvent = env->GetMethodID(cls,
+        METHOD_ONWEBMESSAGEPORTEVENT, SIGNATURE_ONWEBMESSAGEPORTEVENT);
     env->DeleteLocalRef(cls);
 }
 
@@ -245,7 +252,7 @@ void WebviewControllerJni::OnReceiveValue(JNIEnv* env, jclass jcls, jstring jRes
     WebviewController::OnReceiveValue(result, nativeId);
 }
 
-ErrCode WebviewControllerJni::LoadUrl(int id, const std::string& url, 
+ErrCode WebviewControllerJni::LoadUrl(int id, const std::string& url,
     const std::map<std::string, std::string>& httpHeaders)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
@@ -290,8 +297,8 @@ ErrCode WebviewControllerJni::LoadUrl(int id, const std::string& url,
     return NO_ERROR;
 }
 
-ErrCode WebviewControllerJni::LoadData(int id, const std::string& data, const std::string& mimeType, const std::string& encoding,
-    const std::string& baseUrl, const std::string& historyUrl)
+ErrCode WebviewControllerJni::LoadData(int id, const std::string& data, const std::string& mimeType,
+    const std::string& encoding, const std::string& baseUrl, const std::string& historyUrl)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.loadData)) {
@@ -474,7 +481,8 @@ void WebviewControllerJni::EvaluateJavaScript(int id, const std::string& script,
 
     jstring JsName = env->NewStringUTF(script.c_str());
     CHECK_NULL_VOID(JsName);
-    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.evaluateJavascript, id, JsName, asyncCallbackInfoId);
+    env->CallVoidMethod(g_webWebviewClass.globalRef,
+        g_webWebviewClass.evaluateJavascript, id, JsName, asyncCallbackInfoId);
     env->DeleteLocalRef(JsName);
 }
 

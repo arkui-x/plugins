@@ -36,8 +36,8 @@ typedef NSURLRequest* _Nullable (^HTTPRequestWillRedirectionBlock)(NSURLSession*
 @property (nonatomic, strong) id bodyParam;
 @property (nonatomic, assign) NSInteger returnDataType;
 @property (nonatomic, strong) NSDictionary* headerJson;
-@property (nonatomic, assign) NSInteger readTimeout;
-@property (nonatomic, assign) NSInteger connectTimeout;
+@property (nonatomic, assign) NSTimeInterval readTimeout;
+@property (nonatomic, assign) NSTimeInterval connectTimeout;
 @property (nonatomic, assign) NSInteger httpVersion;
 @property (nonatomic, assign) NSInteger priority;
 @property (nonatomic, assign) NSUInteger usingHttpProxyType;
@@ -45,6 +45,10 @@ typedef NSURLRequest* _Nullable (^HTTPRequestWillRedirectionBlock)(NSURLSession*
 @property (nonatomic, assign) NSInteger proxyport;
 @property (nonatomic, copy) NSString* exclusionList;
 @property (nonatomic) void* context;
+@property (nonatomic, copy) NSString* ca;
+@property (nonatomic, copy) NSString* caType;
+@property (nonatomic, copy) NSString* key;
+@property (nonatomic, copy) NSString* password;
 @end
 
 @interface http_ios_request : NSObject

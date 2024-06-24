@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -27,7 +27,6 @@ ohos_source_set("netstack_utils") {
     "//commonlibrary/c_utils/base/include",
     "//third_party/bounds_checking_function/include",
     "//third_party/curl/include",
-    "//third_party/jsoncpp/include",
     "//plugins/interfaces",
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
   ]
@@ -40,16 +39,21 @@ ohos_source_set("netstack_utils") {
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_listener.cpp",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/event_manager.cpp",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/module_template.cpp",
-    "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/napi_utils.cpp",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/secure_char.cpp",
     "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/timing.cpp",
   ]
 
+  if (current_os == "ios") {
+    sources += [ "napi_utils.mm" ]
+    frameworks = [ "Foundation.framework" ]
+  } else {
+    include_dirs += [ "//third_party/cJSON" ]
+    sources += [ "$SUBSYSTEM_DIR/netstack/utils/napi_utils/src/napi_utils.cpp" ]
+  }
+
   deps = [
-    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
-    "//plugins/libs/jsoncpp:jsoncpp_${target_os}",
     "//plugins/libs/napi:napi_${target_os}",
-    "//third_party/libuv:uv_static",
+    "//plugins/libs/uv:uv_${target_os}",
   ]
 }
 
@@ -61,7 +65,6 @@ config("plugin_util_config") {
     "//commonlibrary/c_utils/base/include",
     "//third_party/bounds_checking_function/include",
     "//third_party/curl/include",
-    "//third_party/jsoncpp/include",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//plugins/interfaces",
   ]

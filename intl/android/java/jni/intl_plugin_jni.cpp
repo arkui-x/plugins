@@ -33,15 +33,18 @@ static const JNINativeMethod METHODS[] = {
 const char METHOD_IS24HOUR_CLOCK[] = "is24HourClock";
 const char METHOD_GET_SYSTEM_LOCALE[] = "getSystemLocale";
 const char METHOD_GET_SYSTEM_TIMEZONE[] = "getSystemTimezone";
+const char METHOD_GET_DEVICE_TYPE[] = "getDeviceType";
 
 const char SIGNATURE_IS24HOUR_CLOCK[] = "()Z";
 const char SIGNATURE_GET_SYSTEM_LOCALE[] = "()Ljava/lang/String;";
 const char SIGNATURE_GET_SYSTEM_TIMEZONE[] = "()Ljava/lang/String;";
+const char SIGNATURE_GET_DEVICE_TYPE[] = "()Ljava/lang/String;";
 
 struct {
     jmethodID is24HourClock;
     jmethodID getSystemLocale;
     jmethodID getSystemTimezone;
+    jmethodID getDeviceType;
     jobject globalRef;
 } g_pluginClass;
 } // namespace
@@ -77,6 +80,9 @@ void INTLPluginJni::NativeInit(JNIEnv* env, jobject jobj)
 
     g_pluginClass.getSystemTimezone = env->GetMethodID(cls, METHOD_GET_SYSTEM_TIMEZONE, SIGNATURE_GET_SYSTEM_TIMEZONE);
     CHECK_NULL_VOID(g_pluginClass.getSystemTimezone);
+
+    g_pluginClass.getDeviceType = env->GetMethodID(cls, METHOD_GET_DEVICE_TYPE, SIGNATURE_GET_DEVICE_TYPE);
+    CHECK_NULL_VOID(g_pluginClass.getDeviceType);
 
     env->DeleteLocalRef(cls);
 }
@@ -132,5 +138,26 @@ std::string INTLPluginJni::GetSystemTimezone()
     }
     std::string timezone = env->GetStringUTFChars(result, NULL);
     return timezone;
+}
+
+std::string INTLPluginJni::GetDeviceType()
+{
+    std::string result = "phones";
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getDeviceType)) {
+        LOGW("INTLPluginJni get none ptr error");
+        return "";
+    }
+    auto jString = static_cast<jstring>(env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.getDeviceType));
+    if (env->ExceptionCheck()) {
+        LOGE("INTL JNI: call getDeviceType failed");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    result = env->GetStringUTFChars(jString, NULL);
+    if (jString) {
+        env->DeleteLocalRef(jString);
+    }
+    return result;
 }
 } // namespace OHOS::Plugin

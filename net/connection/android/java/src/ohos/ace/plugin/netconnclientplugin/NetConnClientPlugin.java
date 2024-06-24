@@ -23,6 +23,8 @@ import android.net.Network;
 import android.net.NetworkRequest;
 import java.util.Map;
 import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * NetConnClientPlugin
@@ -80,7 +82,7 @@ public class NetConnClientPlugin {
         public void onAvailable(Network network) {
             super.onAvailable(network);
             long callbackKey = getCallbackKey(this);
-            nativeOnAvailable(network, callbackKey);
+            nativeOnAvailable(callbackKey, getNetworkId(network));
         }
 
         @Override
@@ -94,14 +96,33 @@ public class NetConnClientPlugin {
         public void onLost(Network network) {
             super.onLost(network);
             long callbackKey = getCallbackKey(this);
-            nativeOnLost(network, callbackKey);
+            nativeOnLost(callbackKey, getNetworkId(network));
         }
 
         @Override
         public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
             super.onCapabilitiesChanged(network, networkCapabilities);
             long callbackKey = getCallbackKey(this);
-            nativeOnCapabilitiesChanged(network, networkCapabilities, callbackKey);
+            nativeOnCapabilitiesChanged(networkCapabilities, callbackKey, getNetworkId(network));
+        }
+
+        private int getNetworkId(Network network) {
+            int networkId = 0;
+            try {
+                final Method method = Network.class.getMethod("getNetId");
+                if (method == null) {
+                    Log.e(LOG_TAG, "getNetId method is null");
+                    return networkId;
+                }
+                Object object = method.invoke(network);
+                if (object instanceof Integer) {
+                    networkId = (Integer) object;
+                }
+            } catch (NoSuchMethodError | NoSuchMethodException | InvocationTargetException |
+                     IllegalAccessException error) {
+                Log.e(LOG_TAG, "NoSuchMethodError");
+            }
+            return networkId;
         }
     };
 
@@ -220,31 +241,31 @@ public class NetConnClientPlugin {
     /**
      * Notify network is available
      *
-     * @param network Identifies a Network
      * @param callbackKey The key of the callback
+     * @param networkId The id of the network
      * @return void
      */
-    protected native void nativeOnAvailable(Network network, long callbackKey);
+    protected native void nativeOnAvailable(long callbackKey, int networkId);
 
     /**
      * Notify network capability changes.
      *
-     * @param network Identifies a Network.
      * @param networkCapabilities The capailities of the network.
      * @param callbackKey The key of the callback
+     * @param networkId The id of the network
      * @return void
      */
-    protected native void nativeOnCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities,
-        long callbackKey);
+    protected native void nativeOnCapabilitiesChanged(NetworkCapabilities networkCapabilities,
+        long callbackKey, int networkId);
 
     /**
      * Notify the network that it can be lost
      *
-     * @param network Identifies a Network
      * @param callbackKey The key of the callback
+     * @param networkId The id of the network
      * @return void
      */
-    protected native void nativeOnLost(Network network, long callbackKey);
+    protected native void nativeOnLost(long callbackKey, int networkId);
 
     /**
      * Notify network is unavailable

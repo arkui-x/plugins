@@ -14,10 +14,12 @@
  */
 
 #include "bridge_wrap.h"
+
+#include "bridge_manager.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
 
 namespace OHOS::Plugin::Bridge {
-static constexpr const char* BRIDGENAME_ID_SEP = "$";
+static constexpr const char* BRIDGE_NAME_ID_SEP = "$";
 
 BridgeWrap& BridgeWrap::GetInstance()
 {
@@ -62,18 +64,21 @@ Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data)
 Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
 {
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
-    int32_t instanceId = PluginUtilsInner::GetInstanceId();
+    int32_t instanceId = Ace::Platform::BridgeManager::GetCurrentInstanceId();
     std::string key(GetBridgeNameWithID(bridgeName, instanceId));
     auto data = findData(key);
     if (data == nullptr) {
+        LOGI("BuildBridge instanceId is %{public}d bridgeName is %{public}s,", instanceId, bridgeName.c_str());
         return BuildBridge(bridgeName, codecType, key, instanceId);
     }
+    LOGI("CopyBridge instanceId is %{public}d bridgeName is %{public}s,", instanceId, bridgeName.c_str());
     return CopyBridge(data);
 }
 
 void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
 {
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
+    LOGI("DeleteBridge instanceId is %{public}d bridgeName is %{public}s,", instanceId, bridgeName.c_str());
     std::string bridgeNameWithId = GetBridgeNameWithID(bridgeName, instanceId);
     auto data = findData(bridgeNameWithId);
     if (data == nullptr) {
@@ -98,7 +103,7 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
 std::string BridgeWrap::GetBridgeNameWithID(const std::string& bridgeName, int32_t instanceId)
 {
     std::string bridgeNameWithId(bridgeName);
-    bridgeNameWithId.append(BRIDGENAME_ID_SEP);
+    bridgeNameWithId.append(BRIDGE_NAME_ID_SEP);
     bridgeNameWithId.append(std::to_string(instanceId));
     return bridgeNameWithId;
 }

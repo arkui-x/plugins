@@ -23,6 +23,7 @@
 namespace OHOS::Plugin {
 static const std::string CAMERA_PERMISSION = "ohos.permission.CAMERA";
 static const std::string MICROPHONE_PERMISSION = "ohos.permission.MICROPHONE";
+static const std::string PHOTO_PERMISSION = "ohos.permission.READ_IMAGEVIDEO";
 
 std::unique_ptr<AbilityAccessCtrl> AbilityAccessCtrl::Create()
 {
@@ -38,6 +39,11 @@ bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
     }
     if (permission == MICROPHONE_PERMISSION) {
         bool res =  [[abilityAccessCtrlIOS shareinstance] CheckMicrophonePermission];
+        LOGI(" %{public}s check result %{public}d.", permission.c_str(), res);
+        return res;
+    }
+    if (permission == PHOTO_PERMISSION) {
+        bool res =  [[abilityAccessCtrlIOS shareinstance] CheckPhotoPermission];
         LOGI(" %{public}s check result %{public}d.", permission.c_str(), res);
         return res;
     }
@@ -81,6 +87,10 @@ void AbilityAccessCtrlImpl::RequestPermission(
     }
     if (permission == MICROPHONE_PERMISSION) {
         [[abilityAccessCtrlIOS shareinstance] RequestMicrophonePermission:func :cbInfo :isLast];
+        return;
+    }
+    if (permission == PHOTO_PERMISSION) {
+        [[abilityAccessCtrlIOS shareinstance] RequestPhotoPermission:func :cbInfo :isLast];
         return;
     }
     IosCallback(cbInfo, isLast, GrantResultType::INVALID_OPER);

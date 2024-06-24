@@ -21,5 +21,5 @@
 /**
  * convienient method to set icu data file directory to HW_DIRECTORY);
  */
-void InitIcuData( );
+void InitIcuData();
 #endif

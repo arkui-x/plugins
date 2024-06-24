@@ -22,11 +22,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 //common completion block
-typedef void (^OHTaskCompletionBlock)(NSURLResponse * _Nullable response, id _Nullable object,  NSError * _Nullable error);
+typedef void (^OHTaskCompletionBlock)(NSURLResponse * _Nullable response,
+    id _Nullable object,  NSError * _Nullable error);
 typedef void (^OHTaskProgressBlock)(NSProgress *progess);
 typedef NSURL * _Nullable (^OHDownloadDestination)(NSURLResponse *response, NSURL *temporaryURL);
-typedef void (^OHDownloadCompletionBlock)(NSURLResponse * _Nullable response, NSURL * _Nullable filepath, NSError * _Nullable error);
-
+typedef void (^OHDownloadCompletionBlock)(NSURLResponse * _Nullable response,
+    NSURL * _Nullable filepath, NSError * _Nullable error);
 
 @interface OHSessionManager : NSObject
 

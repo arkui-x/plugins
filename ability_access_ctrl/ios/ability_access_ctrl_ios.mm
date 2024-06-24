@@ -17,6 +17,7 @@
 #include "log.h"
 #import <AVFoundation/AVCaptureDevice.h>
 #import <AVFoundation/AVFoundation.h>
+#import <Photos/Photos.h>
 
 @implementation abilityAccessCtrlIOS
 
@@ -55,6 +56,24 @@
             return NO;
         }
         case AVAuthorizationStatusAuthorized: {
+            return YES;
+        }
+        default:
+            break;
+    }
+    return NO;
+}
+
+- (bool)checkPhotoPermission {
+    PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+    switch (status) {
+        case PHAuthorizationStatusNotDetermined:
+        case PHAuthorizationStatusRestricted:
+        case PHAuthorizationStatusDenied: {
+            return NO;
+        }
+        case PHAuthorizationStatusLimited:
+        case PHAuthorizationStatusAuthorized: {
             return YES;
         }
         default:
@@ -112,6 +131,48 @@
             return;
         }
         case AVAuthorizationStatusRestricted:
+        default:
+            break;
+    }
+    callback(data, isLast, GrantResultType::INVALID_OPER);
+    return;
+}
+
+-(void)RequestPhotoPermission: (IosCb)callback :(CallbackInfo*)data :(bool)isLast{
+    PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+    switch (status) {
+        case PHAuthorizationStatusNotDetermined: {
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    switch (status) {
+                        case PHAuthorizationStatusLimited:
+                        case PHAuthorizationStatusAuthorized: {
+                            callback(data, isLast, GrantResultType::GRANTED);
+                            return;
+                        }
+                        case PHAuthorizationStatusDenied: {
+                            callback(data, isLast, GrantResultType::DENIED_BY_USER);
+                            return;
+                        }
+                        case PHAuthorizationStatusRestricted:
+                        default:
+                            break;
+                    }
+                    callback(data, isLast, GrantResultType::INVALID_OPER);
+                });
+            }];
+            return;
+        }
+        case PHAuthorizationStatusLimited:
+        case PHAuthorizationStatusAuthorized: {
+            callback(data, isLast, GrantResultType::GRANTED);
+            return;
+        }
+        case PHAuthorizationStatusDenied: {
+            callback(data, isLast, GrantResultType::DENIED_BY_USER);
+            return;
+        }
+        case PHAuthorizationStatusRestricted:
         default:
             break;
     }

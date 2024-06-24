@@ -176,7 +176,7 @@ CodecableValue BridgePackager::UnMarshallingListString(BridgeBinaryUnmarshaller*
     std::vector<std::string> temp;
     temp.reserve(size);
     size_t i = 0;
-    while(i < size) {
+    while (i < size) {
         temp.push_back(std::get<std::string>(UnMarshallingString(pendingBuffer)));
         ++i;
     }
@@ -189,7 +189,7 @@ CodecableValue BridgePackager::UnMarshallingListBool(BridgeBinaryUnmarshaller* p
     std::vector<bool> temp;
     temp.reserve(size);
     size_t i = 0;
-    while(i < size) {
+    while (i < size) {
         uint8_t item = pendingBuffer->UnmarshallingByte();
         bool rawItem = (static_cast<CodecableIndex>(item) == CodecableIndex::I_TRUE);
         temp.push_back(rawItem);
@@ -269,7 +269,7 @@ CodecableValue BridgePackager::UnMarshallingMap(BridgeBinaryUnmarshaller* pendin
     size_t size = UnMarshallingSize(pendingBuffer);
     CodecableMap tempMap;
     size_t i = 0;
-    while(i < size) {
+    while (i < size) {
         auto first = UnMarshalling(pendingBuffer);
         auto second = UnMarshalling(pendingBuffer);
         tempMap.emplace(std::move(first), std::move(second));
@@ -322,8 +322,8 @@ CodecableValue BridgePackager::UnMarshallingCompositeList(BridgeBinaryUnmarshall
     size_t size = UnMarshallingSize(pendingBuffer);
     CodecableList list;
     list.reserve(size);
-    size_t i = 0; 
-    while(i < size) {
+    size_t i = 0;
+    while (i < size) {
         list.push_back(UnMarshalling(pendingBuffer));
         ++i;
     }

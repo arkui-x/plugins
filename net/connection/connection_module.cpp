@@ -162,6 +162,8 @@ napi_value ConnectionModule::InitConnectionModule(napi_env env, napi_value expor
     ModuleTemplate::DefineClass(env, exports, netConnectionFunctions, INTERFACE_NET_CONNECTION);
 
     InitProperties(env, exports);
+    NapiUtils::SetEnvValid(env);
+    napi_add_env_cleanup_hook(env, NapiUtils::HookForEnvCleanup, env);  
     return exports;
 }
 
@@ -173,7 +175,7 @@ void ConnectionModule::InitProperties(napi_env env, napi_value exports)
         DECLARE_NET_CAP(NET_CAPABILITY_INTERNET),
         DECLARE_NET_CAP(NET_CAPABILITY_NOT_VPN),
         DECLARE_NET_CAP(NET_CAPABILITY_VALIDATED),
-        DECLARE_NET_CAP(NET_CAPABILITY_CAPTIVE_PORTAL),
+        DECLARE_NET_CAP(NET_CAPABILITY_PORTAL),
         DECLARE_NET_CAP(NET_CAPABILITY_INTERNAL_DEFAULT),
     };
     napi_value caps = NapiUtils::CreateObject(env);
@@ -315,34 +317,6 @@ napi_value ConnectionModule::SetAppNet(napi_env env, napi_callback_info info)
     return ModuleTemplate::Interface<SetAppNetContext>(env, info, FUNCTION_SET_APP_NET, nullptr,
                                                     ConnectionAsyncWork::ExecSetAppNet,
                                                     ConnectionAsyncWork::SetAppNetCallback);
-}
-
-napi_value ConnectionModule::NetHandleInterface::GetAddressesByName(napi_env env, napi_callback_info info)
-{
-    return ModuleTemplate::Interface<GetAddressByNameContext>(
-        env, info, FUNCTION_GET_ADDRESSES_BY_NAME, nullptr,
-        ConnectionAsyncWork::NetHandleAsyncWork::ExecGetAddressesByName,
-        ConnectionAsyncWork::NetHandleAsyncWork::GetAddressesByNameCallback);
-}
-
-napi_value ConnectionModule::NetHandleInterface::GetAddressByName(napi_env env, napi_callback_info info)
-{
-    return ModuleTemplate::Interface<GetAddressByNameContext>(
-        env, info, FUNCTION_GET_ADDRESSES_BY_NAME, nullptr,
-        ConnectionAsyncWork::NetHandleAsyncWork::ExecGetAddressByName,
-        ConnectionAsyncWork::NetHandleAsyncWork::GetAddressByNameCallback);
-}
-
-napi_value ConnectionModule::NetHandleInterface::BindSocket(napi_env env, napi_callback_info info)
-{
-    return ModuleTemplate::Interface<BindSocketContext>(
-        env, info, FUNCTION_BIND_SOCKET,
-        [](napi_env theEnv, napi_value thisVal, BindSocketContext *context) -> bool {
-            context->netId_ = NapiUtils::GetInt32Property(theEnv, thisVal, PROPERTY_NET_ID);
-            return true;
-        },
-        ConnectionAsyncWork::NetHandleAsyncWork::ExecBindSocket,
-        ConnectionAsyncWork::NetHandleAsyncWork::BindSocketCallback);
 }
 
 napi_value ConnectionModule::NetConnectionInterface::On(napi_env env, napi_callback_info info)

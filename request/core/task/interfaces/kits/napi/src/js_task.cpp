@@ -150,8 +150,8 @@ napi_value JsTask::On(napi_env env, napi_callback_info info)
         }
     }
 
-    auto listener = CreateNotify(env, jsParam.type, jsParam.callback,
-                                 jsParam.task->GetVersion(), jsParam.task->GetAction());
+    auto listener = CreateNotify(env,
+        jsParam.type, jsParam.callback, jsParam.task->GetVersion(), jsParam.task->GetAction());
     if (listener == nullptr) {
         REQUEST_HILOGE("Create callback object fail");
         return nullptr;
@@ -343,8 +343,8 @@ int32_t JsTask::StopExec(const std::shared_ptr<ExecContext> &context)
     if (isStarted && info.progress.state == State::INITIALIZED) {
         info.progress.state = State::RUNNING;
     }
-    if (ret != E_OK || 
-        !(info.progress.state == State::WAITING || 
+    if (ret != E_OK ||
+        !(info.progress.state == State::WAITING ||
         info.progress.state == State::RUNNING ||
         info.progress.state == State::RETRYING)) {
         REQUEST_HILOGE("StopExec ret: %{public}d  state: %{public}d", ret, info.progress.state);
@@ -367,8 +367,8 @@ int32_t JsTask::PauseExec(const std::shared_ptr<ExecContext> &context)
     TaskInfo info;
     auto ret = TaskManager::Get().GetTaskInfo(context->task->GetId(), "", info);
     if (ret != E_OK ||
-     !(info.progress.state == State::INITIALIZED || 
-     info.progress.state == State::WAITING || 
+     !(info.progress.state == State::INITIALIZED ||
+     info.progress.state == State::WAITING ||
      info.progress.state == State::RUNNING)) {
         REQUEST_HILOGE("PauseExec ret: %{public}d  state: %{public}d", ret, info.progress.state);
         return E_TASK_STATE;

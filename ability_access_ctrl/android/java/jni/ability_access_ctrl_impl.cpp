@@ -22,11 +22,25 @@
 namespace OHOS::Plugin {
 static bool isInited = false;
 static std::map<std::string, std::string> g_permissionMap;
+static std::map<std::string, std::vector<std::string>> g_permissionMultipleMap;
 static void InitPermissionMap()
 {
     // add permission map
     g_permissionMap["ohos.permission.CAMERA"] = "android.permission.CAMERA";
     g_permissionMap["ohos.permission.MICROPHONE"] = "android.permission.RECORD_AUDIO";
+    g_permissionMap["ohos.permission.READ_IMAGEVIDEO"] = "android.permission.READ_EXTERNAL_STORAGE";
+    g_permissionMap["ohos.permission.WRITE_IMAGEVIDEO"] = "android.permission.WRITE_EXTERNAL_STORAGE";
+
+    // add bluetooth permission
+    std::vector<std::string> bluetoothPermission;
+    bluetoothPermission.emplace_back("android.permission.BLUETOOTH");
+    bluetoothPermission.emplace_back("android.permission.BLUETOOTH_ADMIN");
+    bluetoothPermission.emplace_back("android.permission.BLUETOOTH_ADVERTISE");
+    bluetoothPermission.emplace_back("android.permission.BLUETOOTH_CONNECT");
+    bluetoothPermission.emplace_back("android.permission.BLUETOOTH_SCAN");
+    bluetoothPermission.emplace_back("android.permission.ACCESS_FINE_LOCATION");
+    bluetoothPermission.emplace_back("android.permission.ACCESS_COARSE_LOCATION");
+    g_permissionMultipleMap.insert(std::make_pair("ohos.permission.ACCESS_BLUETOOTH", bluetoothPermission));
 }
 
 static bool OhPermissionToJava(const std::string& inPerm, std::string& outPerm)
@@ -36,6 +50,18 @@ static bool OhPermissionToJava(const std::string& inPerm, std::string& outPerm)
     if (it != g_permissionMap.end()) {
         outPerm = it->second;
         return true;
+    }
+    return false;
+}
+
+static bool OhPermissionToJava(const std::string& inPerm, std::vector<std::string>& outPerm)
+{
+    auto it = g_permissionMultipleMap.find(inPerm);
+    if (it != g_permissionMultipleMap.end()) {
+        if (it->second.size() > 0) {
+            outPerm = it->second;
+            return true;
+        }
     }
     return false;
 }
@@ -51,6 +77,49 @@ static bool JavaPermissionToOh(const std::string& inPerm, std::string& outPerm)
         }
     }
     return false;
+}
+
+static bool JavaMultiplePermissionToOh(const std::string& inPerm, std::string& outPerm)
+{
+    for (auto it = g_permissionMultipleMap.begin(); it != g_permissionMultipleMap.end(); it++) {
+        for (auto vIter = it->second.begin(); vIter != it->second.end(); vIter++) {
+            if (*vIter == inPerm) {
+                outPerm = it->first;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void QueryJavaPermissionToOh(
+    const std::vector<std::string>& perms, std::vector<std::string>& permList, std::vector<int>& grantResult)
+{
+    // 2: invalid operation, something is wrong or the app is not permmited to use the permission.
+    const int permissionResult = 2;
+    std::map<std::string, int> resultMap;
+    for (size_t i = 0; i < perms.size(); i++) {
+        std::string ohPerm;
+        if (JavaPermissionToOh(perms[i], ohPerm)) {
+            resultMap.insert(std::make_pair(ohPerm, grantResult[i]));
+        } else if (JavaMultiplePermissionToOh(perms[i], ohPerm)) {
+            auto iter = resultMap.find(ohPerm);
+            if (iter != resultMap.end()) {
+                iter->second = (iter->second == grantResult[i]) ? iter->second : permissionResult;
+                continue;
+            }
+            resultMap.insert(std::make_pair(ohPerm, grantResult[i]));
+        } else {
+            grantResult[i] = permissionResult;
+            resultMap.insert(std::make_pair(ohPerm, grantResult[i]));
+        }
+    }
+    permList.clear();
+    grantResult.clear();
+    for (auto iter = resultMap.begin(); iter != resultMap.end(); iter++) {
+        permList.emplace_back(iter->first);
+        grantResult.emplace_back(iter->second);
+    }
 }
 
 std::unique_ptr<AbilityAccessCtrl> AbilityAccessCtrl::Create()
@@ -78,13 +147,20 @@ void AbilityAccessCtrlImpl::RequestPermissions(
 {
     LOGI("AbilityAccessCtrlImpl Request called");
     std::vector<std::string> javaStrings;
+    std::vector<std::string> vJavaPerm;
     for (size_t i = 0; i < permissions.size(); i++) {
         std::string javaPerm;
-        if (!OhPermissionToJava(permissions[i], javaPerm)) {
-            LOGE("AbilityAccessCtrlImpl not found permisson(%{public}s) in map", permissions[i].c_str());
+        vJavaPerm.clear();
+        if (OhPermissionToJava(permissions[i], javaPerm)) {
+            LOGE("AbilityAccessCtrlImpl transfer permisson %{public}s -> %{public}s",
+                permissions[i].c_str(), javaPerm.c_str());
+        } else if (OhPermissionToJava(permissions[i], vJavaPerm)) {
+            for (auto it = vJavaPerm.begin(); it != vJavaPerm.end(); ++it) {
+                javaStrings.emplace_back(*it);
+            }
+            continue;
         } else {
-            LOGE(
-                "AbilityAccessCtrlImpl transfer permisson %{public}s -> %{public}s", permissions[i].c_str(), javaPerm.c_str());
+            LOGE("AbilityAccessCtrlImpl not found permisson(%{public}s) in map", permissions[i].c_str());
         }
         javaStrings.emplace_back(javaPerm);
     }
@@ -92,14 +168,7 @@ void AbilityAccessCtrlImpl::RequestPermissions(
         auto task = [callback, data](const std::vector<std::string> perms, const std::vector<int> result) {
             std::vector<std::string> permList;
             std::vector<int> grantResult = result;
-            for (size_t i = 0; i < perms.size(); i++) {
-                std::string ohPerm;
-                if (!JavaPermissionToOh(perms[i], ohPerm)) {
-                    // 2: invalid operation, something is wrong or the app is not permmited to use the permission.
-                    grantResult[i] = 2;
-                }
-                permList.emplace_back(ohPerm);
-            }
+            QueryJavaPermissionToOh(perms, permList, grantResult);
             callback(data, permList, grantResult);
         };
         PluginUtilsInner::JSRegisterGrantResult(task);

@@ -53,11 +53,21 @@ Note:If the text contains special characters, please escape them according to th
 -->
 <configuration>
     <oatconfig>
-        <licensefile></licensefile>
+		<policylist>
+			<policy name="projectPolicy" desc="">
+				<policyitem type="license" name="BSDStyleLicense" path=".*" desc="不影响兼容性"/>
+				<policyitem type="license" name="BSD-3-Clause" path=".*" desc="不影响兼容性"/>
+                <policyitem type="license" name="curl" path="net/http/ios/curl_slist.cpp" rule="may" group="defaultGroup" filefilter="defaultPolicyFilter" desc=""/>
+                <policyitem type="license" name="curl" path="net/http/ios/curl_slist.h" rule="may" group="defaultGroup" filefilter="defaultPolicyFilter" desc=""/>
+            </policy>
+		</policylist>
         <filefilterlist>
             <filefilter name="copyrightPolicyFilter" desc="Copyright文件头校验策略的过滤条件" >
                 <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/.*.h|.*.m|.*.mm" desc="import third-party AFNetworking files"/>
                 <filteritem type="filepath" name="net/connection/ios/.*.h|.*.mm|.*.txt" desc="import third-party Apple sample files"/>
+                <filteritem type="filepath" name="bridge/interfaces/kits/native/src/bridge_serializer.cpp" desc="keep the flutter src copyright"/>
+                <filteritem type="filepath" name="net/http/ios/curl_slist.cpp" desc="keep the curl src copyright"/>
+                <filteritem type="filepath" name="net/http/ios/curl_slist.h" desc="keep the curl src copyright"/>
             </filefilter>
             <filefilter name="defaultPolicyFilter" desc="License文件头校验策略的过滤条件" >
                 <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/LICENSE" desc="import third-party AFNetworking files"/>

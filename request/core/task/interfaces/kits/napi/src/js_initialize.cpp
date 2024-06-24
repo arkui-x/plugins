@@ -366,12 +366,10 @@ void JsInitialize::ParseSaveas(napi_env env, napi_value jsConfig, Config &config
         std::string fileName;
         InterceptData("/", config.url, fileName);
         config.saveas = defaultStoragePath + "/" + fileName;
-    }
-    else {
+    } else {
         if ((config.saveas.length() > 2) && (config.saveas[0] == '.') && (config.saveas[1] == '/')) {
             config.saveas = defaultStoragePath + std::string(config.saveas, 1);
-        }
-        else if (config.saveas[0] != '/') {
+        } else if (config.saveas[0] != '/') {
         config.saveas = defaultStoragePath + "/" + config.saveas;
         }
     }
@@ -627,18 +625,16 @@ bool JsInitialize::Convert2FileSpec(napi_env env, napi_value jsValue, const std:
     file.uri = NapiUtils::Convert2String(env, jsValue, "path");
     if (file.uri.empty() || file.uri == "./" || file.uri == ".") {
         file.uri = defaultStoragePath + "/" + file.filename;
-    }
-    else {
+    } else {
         if ((file.uri.length() > 2) && (file.uri[0] == '.') && (file.uri[1] == '/')) {
             file.uri = defaultStoragePath + std::string(file.uri, 1);
-        }
-        else if (file.uri[0] != '/') {
-        file.uri = defaultStoragePath + "/" + file.uri;
+        } else if (file.uri[0] != '/') {
+            file.uri = defaultStoragePath + "/" + file.uri;
         }
     }
 
-    REQUEST_HILOGI("Convert2FileSpec file name: %{public}s fileName: %{public}s uri: %{public}s", 
-    file.name.c_str(), file.filename.c_str(), file.uri.c_str());
+    REQUEST_HILOGI("Convert2FileSpec file name: %{public}s fileName: %{public}s uri: %{public}s",
+        file.name.c_str(), file.filename.c_str(), file.uri.c_str());
     return true;
 }
 

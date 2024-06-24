@@ -20,8 +20,7 @@
 #include <string>
 
 namespace OHOS::Plugin::Request {
-class ProgressNotify : public JsNotify
-{
+class ProgressNotify : public JsNotify {
 public:
     explicit ProgressNotify(napi_env env, napi_value cb, Version version, Action action);
     virtual ~ProgressNotify() = default;

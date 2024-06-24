@@ -20,8 +20,8 @@
 using namespace OHOS::NWebError;
 
 namespace OHOS::Plugin {
-WebMessagePortIOS::WebMessagePortIOS(int32_t webId, const std::string& portHandle) :
-    WebMessagePort(webId, portHandle) {}
+WebMessagePortIOS::WebMessagePortIOS(int32_t webId,
+    const std::string& portHandle) : WebMessagePort(webId, portHandle) {}
 
 void WebMessagePortIOS::ClosePort()
 {
@@ -39,7 +39,7 @@ ErrCode WebMessagePortIOS::PostMessageEvent(const std::string& webMessage)
 
 ErrCode WebMessagePortIOS::OnMessageEvent()
 {
-    onMessageEventOC(GetWebId(),GetPortHandle(),WebMessagePort::OnMessage);
+    onMessageEventOC(GetWebId(), GetPortHandle(), WebMessagePort::OnMessage);
     return NO_ERROR;
 }
 } // namespace OHOS::Plugin

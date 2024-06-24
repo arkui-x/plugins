@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <string>
 
-#include "connection_module.h"
+#include "net_handle_interface.h"
 #include "constant.h"
 #include "errorcode_convertor.h"
 #include "connection/net_conn_client.h"
@@ -45,16 +45,15 @@ napi_value ConnectionExec::CreateNetHandle(napi_env env, NetHandle *handle)
     }
 
     std::initializer_list<napi_property_descriptor> properties = {
-        DECLARE_NAPI_FUNCTION(ConnectionModule::NetHandleInterface::FUNCTION_GET_ADDRESSES_BY_NAME,
-                              ConnectionModule::NetHandleInterface::GetAddressesByName),
-        DECLARE_NAPI_FUNCTION(ConnectionModule::NetHandleInterface::FUNCTION_GET_ADDRESS_BY_NAME,
-                              ConnectionModule::NetHandleInterface::GetAddressByName),
-        DECLARE_NAPI_FUNCTION(ConnectionModule::NetHandleInterface::FUNCTION_BIND_SOCKET,
-                              ConnectionModule::NetHandleInterface::BindSocket),
+        DECLARE_NAPI_FUNCTION(NetHandleInterface::FUNCTION_GET_ADDRESSES_BY_NAME,
+                              NetHandleInterface::GetAddressesByName),
+        DECLARE_NAPI_FUNCTION(NetHandleInterface::FUNCTION_GET_ADDRESS_BY_NAME,
+                              NetHandleInterface::GetAddressByName),
+        DECLARE_NAPI_FUNCTION(NetHandleInterface::FUNCTION_BIND_SOCKET,
+                              NetHandleInterface::BindSocket),
     };
     NapiUtils::DefineProperties(env, netHandle, properties);
-    NapiUtils::SetUint32Property(env, netHandle, ConnectionModule::NetHandleInterface::PROPERTY_NET_ID,
-                                 handle->GetNetId());
+    NapiUtils::SetUint32Property(env, netHandle, NetHandleInterface::PROPERTY_NET_ID, handle->GetNetId());
     return netHandle;
 }
 

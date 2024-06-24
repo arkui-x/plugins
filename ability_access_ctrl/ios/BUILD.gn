@@ -26,6 +26,7 @@ ohos_source_set("ability_access_ctrl_ios") {
     defines += [ "_ARM64_" ]
   }
 
+  frameworks = [ "Photos.framework" ]
   configs = [ "$ace_root:ace_config" ]
 
   cflags_objc = [

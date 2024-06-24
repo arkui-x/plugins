@@ -200,7 +200,6 @@ ErrCode UnzipWithFilterAndWriters(const PlatformFile& srcFile, FilePath& destDir
                     LOGI("!!!directory_creator(%{private}s) Failed!!!.", entryPath.Value().c_str());
                     return ERR_ZLIB_DEST_FILE_DISABLED;
                 }
-
             } else {
                 std::unique_ptr<WriterDelegate> writer = writerFactory(destDir, entryPath);
                 if (!reader.ExtractCurrentEntry(writer.get(), std::numeric_limits<uint64_t>::max())) {

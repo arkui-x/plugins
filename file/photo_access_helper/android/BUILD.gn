@@ -1,0 +1,58 @@
+# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+java_library("photo_access_helper_android_java") {
+  java_files = [
+    "java/src/ohos/ace/plugin/photoaccesshelper/PhotoPlugin.java",
+    "java/src/ohos/ace/plugin/photoaccesshelper/AlbumValues.java",
+  ]
+  subsystem_name = "plugins"
+  part_name = "photo_access_helper"
+}
+
+ohos_combine_jars("photo_access_helper_java") {
+  deps = [ ":photo_access_helper_android_java" ]
+
+  subsystem_name = "plugins"
+  part_name = "photo_access_helper"
+  jar_path = "${root_out_dir}/plugins/file/ace_photo_access_helper_android.jar"
+}
+
+ohos_source_set("photo_access_helper_android_jni") {
+  sources = [
+    "album_result_set.cpp",
+    "java/jni/photo_cursor_jni.cpp",
+    "java/jni/photo_plugin_jni.cpp",
+    "photo_client_impl.cpp",
+    "photo_result_set.cpp",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  deps = [
+    ":photo_access_helper_java",
+    "//foundation/arkui/ace_engine/adapter/android/build:data_datasharepredicates",
+    "//foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb:native_rdb",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+  ]
+
+  include_dirs = [
+    "//plugins/file/photo_access_helper/napi/base/include/",
+    "//third_party/json/include",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "photo_access_helper"
+}

@@ -21,8 +21,7 @@
 #include <map>
 
 namespace OHOS::Plugin::Request {
-class PauseNotify : public JsNotify
-{
+class PauseNotify : public JsNotify {
 public:
     explicit PauseNotify(napi_env env, napi_value cb, Version version, Action action);
     virtual ~PauseNotify() = default;

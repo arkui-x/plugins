@@ -71,10 +71,21 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
 
     requestParam.headerJson = headerDic;
     requestParam.priority = requestOptions.GetPriority();
-    requestParam.readTimeout = requestOptions.GetReadTimeout();
-    requestParam.connectTimeout = requestOptions.GetConnectTimeout();
+    requestParam.readTimeout = (NSTimeInterval)requestOptions.GetReadTimeout()/1000;
+    requestParam.connectTimeout = (NSTimeInterval)requestOptions.GetConnectTimeout()/1000;
     requestParam.httpVersion = requestOptions.GetHttpVersion();
-    requestParam.usingHttpProxyType = static_cast<NSInteger>(requestOptions.GetUsingHttpProxyType());
+
+    std::string cert;
+    std::string certType;
+    std::string key;
+    Secure::SecureChar keyPasswd;
+    requestOptions.GetClientCert(cert, certType, key, keyPasswd);
+
+    requestParam.ca = [NSString stringWithCString:cert.c_str() encoding:NSUTF8StringEncoding];;
+    requestParam.caType = [NSString stringWithCString:certType.c_str() encoding:NSUTF8StringEncoding];;
+    requestParam.key = [NSString stringWithCString:key.c_str() encoding:NSUTF8StringEncoding];;
+    requestParam.password = [NSString stringWithCString:keyPasswd.Data() encoding:NSUTF8StringEncoding];;
+    requestParam.usingHttpProxyType = static_cast<NSInteger>(requestOptions.GetUsingHttpProxyType());    
 
     http_ios_request* request = [[http_ios_request alloc] init];
     request_ = (__bridge void*)request;

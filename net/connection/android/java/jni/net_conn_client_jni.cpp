@@ -32,10 +32,10 @@ namespace {
 const char NetConnClient_CLASS_NAME[] = "ohos/ace/plugin/netconnclientplugin/NetConnClientPlugin";
 static const JNINativeMethod METHODS[] = {
     {"nativeInit", "()V", reinterpret_cast<void *>(NetConnClientJni::NativeInit)},
-    {"nativeOnAvailable", "(Landroid/net/Network;J)V", reinterpret_cast<void *>(NetConnClientJni::NativeOnAvailable)},
-    {"nativeOnCapabilitiesChanged", "(Landroid/net/Network;Landroid/net/NetworkCapabilities;J)V",
+    {"nativeOnAvailable", "(JI)V", reinterpret_cast<void *>(NetConnClientJni::NativeOnAvailable)},
+    {"nativeOnCapabilitiesChanged", "(Landroid/net/NetworkCapabilities;JI)V",
         reinterpret_cast<void *>(NetConnClientJni::NativeOnCapabilitiesChanged)},
-    {"nativeOnLost", "(Landroid/net/Network;J)V", reinterpret_cast<void *>(NetConnClientJni::NativeOnLost)},
+    {"nativeOnLost", "(JI)V", reinterpret_cast<void *>(NetConnClientJni::NativeOnLost)},
     {"nativeOnUnavailable", "(J)V", reinterpret_cast<void *>(NetConnClientJni::NativeOnUnavailable)}
 };
 
@@ -109,14 +109,11 @@ void NetConnClientJni::NativeInit(JNIEnv *env, jobject jobj)
     hasInit_ = true;
 }
 
-void NetConnClientJni::NativeOnAvailable(JNIEnv *env, jobject jthiz, jobject jNetWork, jlong jcallbackKey)
+void NetConnClientJni::NativeOnAvailable(JNIEnv *env, jobject jthiz, jlong jcallbackKey, jint jNetId)
 {
-    if (env == nullptr || jthiz == nullptr || jNetWork == nullptr) {
+    if (env == nullptr || jthiz == nullptr) {
         return;
     }
-    jclass jNetWork_class = env->FindClass("android/net/Network");
-    jmethodID jGetNetId = env->GetMethodID(jNetWork_class, "getNetId", "()I");
-    jint jNetId = env->CallIntMethod(jNetWork, jGetNetId);
     int32_t netId = (int32_t)jNetId;
 
     sptr<NetManagerStandard::NetHandle> netHandle =
@@ -128,15 +125,12 @@ void NetConnClientJni::NativeOnAvailable(JNIEnv *env, jobject jthiz, jobject jNe
     }
 }
 
-void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz,
-    jobject jNetWork, jobject jNetworkCapabilities, jlong jcallbackKey)
+void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, jobject jNetworkCapabilities, 
+    jlong jcallbackKey, jint jNetId)
 {
-    if (env == nullptr || jthiz == nullptr || jNetWork == nullptr || jNetworkCapabilities == nullptr) {
+    if (env == nullptr || jthiz == nullptr || jNetworkCapabilities == nullptr) {
         return;
     }
-    jclass jNetWork_class = env->FindClass("android/net/Network");
-    jmethodID jGetNetId = env->GetMethodID(jNetWork_class, "getNetId", "()I");
-    jint jNetId = env->CallIntMethod(jNetWork, jGetNetId);
     int32_t netId = (int32_t)jNetId;
 
     jclass cls_networkcapabilities = env->GetObjectClass(jNetworkCapabilities);
@@ -166,14 +160,11 @@ void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz,
     }
 }
 
-void NetConnClientJni::NativeOnLost(JNIEnv *env, jobject jthiz, jobject jNetWork, jlong jcallbackKey)
+void NetConnClientJni::NativeOnLost(JNIEnv *env, jobject jthiz, jlong jcallbackKey, jint jNetId)
 {
-    if (env == nullptr || jthiz == nullptr || jNetWork == nullptr) {
+    if (env == nullptr || jthiz == nullptr) {
         return;
     }
-    jclass jNetWork_class = env->FindClass("android/net/Network");
-    jmethodID jGetNetId = env->GetMethodID(jNetWork_class, "getNetId", "()I");
-    jint jNetId = env->CallIntMethod(jNetWork, jGetNetId);
     int32_t netId = (int32_t)jNetId;
     sptr<NetManagerStandard::NetHandle> netHandle =
         std::make_unique<NetManagerStandard::NetHandle>(netId).release();

@@ -82,7 +82,7 @@ template("plugin_i18n_static") {
       "//third_party/icu/icu4c/source/common",
       "//third_party/icu/icu4c/source/i18n",
       "//third_party/icu/icu4c/source/common/unicode",
-      "//plugins/hilog/include",
+      "//base/hiviewdfx/hilog/interfaces/native/kits/include",
       "//plugins/interfaces",
     ]
 
@@ -97,7 +97,11 @@ template("plugin_i18n_static") {
       "framework/icu_data.cpp",
       "framework/index_util.cpp",
       "framework/locale_config.cpp",
+      "framework/locale_data.cpp",
       "framework/locale_info.cpp",
+      "framework/locale_matcher.cpp",
+      "framework/locale_util.cpp",
+      "framework/napi_utils.cpp",
       "framework/phone_number_format.cpp",
       "framework/plural_rules.cpp",
       "framework/utils.cpp",

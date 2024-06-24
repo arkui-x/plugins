@@ -167,7 +167,7 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
     info.progress.index = config.index;
     info.progress.processed = 0;
     info.progress.totalProcessed = 0;
-    for(auto i = 0; i < config.files.size(); i++){
+    for (auto i = 0; i < config.files.size(); i++) {
         auto file = config.files[i];
         TaskState state;
         state.path = file.filename;
@@ -183,7 +183,7 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
             int64_t fileSize = lseek(file.fd, 0, SEEK_END);
             if (i == config.index && config.begins >= 0 && config.ends >= 0) {
                 REQUEST_HILOGI("partial upload: %{public}u, begins %{public}lld, ends %{public}lld",
-                config.index, config.begins, config.ends);
+                    config.index, config.begins, config.ends);
                 fileSize = config.ends - config.begins + 1;
             }
             info.progress.sizes.emplace_back(fileSize);
@@ -207,7 +207,7 @@ void UploadProxy::ChangeState(State state)
     if (state == State::FAILED) {
         if (!isStopped_) {
             Notify(EVENT_FAILED);
-        } 
+        }
     } else if (state == State::COMPLETED) {
         Notify(EVENT_PROGRESS);
         Notify(EVENT_COMPLETED);
@@ -215,7 +215,7 @@ void UploadProxy::ChangeState(State state)
 }
 
 void UploadProxy::Notify(const std::string &type)
-{   
+{
     if (callback_ != nullptr) {
         Json infoJson = info_;
         callback_(taskId_, type, infoJson.dump());
@@ -361,7 +361,7 @@ int32_t UploadProxy::CheckUploadStatus(CURLM *curlMulti)
         REQUEST_HILOGI("upload http code: %{public}d", respCode);
         if (respCode != HTTP_SUCCESS) {
             REQUEST_HILOGE("upload fail http error %{public}d", respCode);
-             if (respCode != HTTP_PARTIAL_SUCCESS) {
+            if (respCode != HTTP_PARTIAL_SUCCESS) {
                 info_.progress.processed = 0;
             }
             return E_SERVICE_ERROR;
@@ -400,13 +400,13 @@ int32_t UploadProxy::ProgressCallback(void *client, curl_off_t dltotal, curl_off
     if (thiz->isAbort_) {
         REQUEST_HILOGI("upload task has been removed");
         return HTTP_FORCE_STOP;
-    }   
+    }
     thiz->ReportInfo(false);
     int64_t now = RequestUtils::GetTimeNow();
     if (now - thiz->currentTime_ >= REPORT_INFO_INTERVAL) {
         thiz->Notify(EVENT_PROGRESS);
         thiz->currentTime_ = now;
-    }    
+    }
     return 0;
 }
 

@@ -37,8 +37,8 @@ ErrCode WebviewControllerAndroid::LoadUrl(
     return WebviewControllerJni::LoadUrl(webId_, url, httpHeaders);
 }
 
-ErrCode WebviewControllerAndroid::LoadData(const std::string& data, const std::string& mimeType, const std::string& encoding,
-    const std::string& baseUrl, const std::string& historyUrl)
+ErrCode WebviewControllerAndroid::LoadData(const std::string& data, const std::string& mimeType,
+    const std::string& encoding, const std::string& baseUrl, const std::string& historyUrl)
 {
     return WebviewControllerJni::LoadData(webId_, data, mimeType, encoding, baseUrl, historyUrl);
 }
@@ -157,7 +157,7 @@ void WebviewControllerAndroid::CreateWebMessagePorts(std::vector<std::string>& p
 }
 
 void WebviewControllerAndroid::PostWebMessage(
-    std::string& message, std::vector<std::string>& ports,std::string& targetUrl)
+    std::string& message, std::vector<std::string>& ports, std::string& targetUrl)
 {
     WebviewControllerJni::PostWebMessage(webId_, message, ports, targetUrl);
 }

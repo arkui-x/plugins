@@ -21,8 +21,7 @@
 #include <map>
 
 namespace OHOS::Plugin::Request {
-class HeaderNotify : public JsNotify
-{
+class HeaderNotify : public JsNotify {
 public:
     explicit HeaderNotify(napi_env env, napi_value cb, Version version, Action action);
     virtual ~HeaderNotify() = default;

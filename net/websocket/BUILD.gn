@@ -74,7 +74,6 @@ template("plugin_net_websocket_static") {
     ]
 
     if (target_os == "android") {
-      deps += [ "//third_party/zlib:shared_libz" ]
       libs = [ "log" ]
     } else if (target_os == "ios") {
       include_dirs += utils_include

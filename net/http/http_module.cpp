@@ -55,6 +55,8 @@ napi_value HttpModuleExports::InitHttpModule(napi_env env, napi_value exports)
     DefineHttpRequestClass(env, exports);
     DefineHttpResponseCacheClass(env, exports);
     InitHttpProperties(env, exports);
+    NapiUtils::SetEnvValid(env);
+    napi_add_env_cleanup_hook(env, NapiUtils::HookForEnvCleanup, env);
 
     return exports;
 }
@@ -121,6 +123,7 @@ void HttpModuleExports::InitHttpProperties(napi_env env, napi_value exports)
 
     InitRequestMethod(env, exports);
     InitResponseCode(env, exports);
+    InitCertType(env, exports);
     InitHttpProtocol(env, exports);
     InitHttpDataType(env, exports);
 }
@@ -172,6 +175,7 @@ void HttpModuleExports::InitResponseCode(napi_env env, napi_value exports)
         DECLARE_RESPONSE_CODE(ENTITY_TOO_LARGE),
         DECLARE_RESPONSE_CODE(REQ_TOO_LONG),
         DECLARE_RESPONSE_CODE(UNSUPPORTED_TYPE),
+        DECLARE_RESPONSE_CODE(RANGE_NOT_SATISFIABLE),
         DECLARE_RESPONSE_CODE(INTERNAL_ERROR),
         DECLARE_RESPONSE_CODE(NOT_IMPLEMENTED),
         DECLARE_RESPONSE_CODE(BAD_GATEWAY),
@@ -191,12 +195,28 @@ void HttpModuleExports::InitHttpProtocol(napi_env env, napi_value exports)
     std::initializer_list<napi_property_descriptor> properties = {
         DECLARE_HTTP_PROTOCOL(HTTP1_1),
         DECLARE_HTTP_PROTOCOL(HTTP2),
+        DECLARE_HTTP_PROTOCOL(HTTP3),
     };
 
     napi_value httpProtocol = NapiUtils::CreateObject(env);
     NapiUtils::DefineProperties(env, httpProtocol, properties);
 
     NapiUtils::SetNamedProperty(env, exports, INTERFACE_HTTP_PROTOCOL, httpProtocol);
+}
+
+void HttpModuleExports::InitCertType(napi_env env, napi_value exports)
+{
+    std::initializer_list<napi_property_descriptor> properties = {
+        DECLARE_NAPI_STATIC_PROPERTY(HttpConstant::HTTP_CERT_TYPE_PEM,
+                                     NapiUtils::CreateStringUtf8(env, HttpConstant::HTTP_CERT_TYPE_PEM)),
+        DECLARE_NAPI_STATIC_PROPERTY(HttpConstant::HTTP_CERT_TYPE_DER,
+                                     NapiUtils::CreateStringUtf8(env, HttpConstant::HTTP_CERT_TYPE_DER)),
+        DECLARE_NAPI_STATIC_PROPERTY(HttpConstant::HTTP_CERT_TYPE_P12,
+                                     NapiUtils::CreateStringUtf8(env, HttpConstant::HTTP_CERT_TYPE_P12)),
+    };
+    napi_value httpCertType = NapiUtils::CreateObject(env);
+    NapiUtils::DefineProperties(env, httpCertType, properties);
+    NapiUtils::SetNamedProperty(env, exports, INTERFACE_CERT_TYPE, httpCertType);
 }
 
 void HttpModuleExports::InitHttpDataType(napi_env env, napi_value exports)
@@ -281,8 +301,9 @@ napi_value HttpModuleExports::HttpRequest::Destroy(napi_env env, napi_callback_i
 
 napi_value HttpModuleExports::HttpRequest::On(napi_env env, napi_callback_info info)
 {
-    ModuleTemplate::On(env, info, {ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_RECEIVE_PROGRESS}, false);
-    return ModuleTemplate::On(env, info, {ON_HEADER_RECEIVE}, true);
+    ModuleTemplate::On(env, info,
+        { ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_RECEIVE_PROGRESS, ON_DATA_SEND_PROGRESS }, false);
+    return ModuleTemplate::On(env, info, { ON_HEADER_RECEIVE }, true);
 }
 
 napi_value HttpModuleExports::HttpRequest::Once(napi_env env, napi_callback_info info)
@@ -292,8 +313,9 @@ napi_value HttpModuleExports::HttpRequest::Once(napi_env env, napi_callback_info
 
 napi_value HttpModuleExports::HttpRequest::Off(napi_env env, napi_callback_info info)
 {
-    ModuleTemplate::Off(env, info, {ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_RECEIVE_PROGRESS});
-    return ModuleTemplate::Off(env, info, {ON_HEADER_RECEIVE});
+    ModuleTemplate::Off(env, info,
+        { ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_RECEIVE_PROGRESS, ON_DATA_SEND_PROGRESS });
+    return ModuleTemplate::Off(env, info, { ON_HEADER_RECEIVE });
 }
 
 napi_value HttpModuleExports::HttpResponseCache::Flush(napi_env env, napi_callback_info info)
