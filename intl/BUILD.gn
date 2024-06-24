@@ -30,7 +30,6 @@ template("plugin_intl_static") {
       "//third_party/icu/icu4c/source/common",
       "//third_party/icu/icu4c/source/i18n",
       "//third_party/icu/icu4c/source/common/unicode",
-      "//plugins/hilog/include",
       "//plugins/interfaces",
     ]
 

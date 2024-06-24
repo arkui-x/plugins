@@ -182,6 +182,7 @@ bool HttpExec::AddCurlHandle(CURL *handle, RequestContext *context)
 
     std::thread([context, handle] {
         std::lock_guard guard(staticVariable_.curlMultiMutex);
+        SetServerSSLCertOption(handle, context);
         staticVariable_.infoQueue.emplace(context, handle);
         staticVariable_.conditionVariable.notify_all();
         {
@@ -714,6 +715,38 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
     return true;
 }
 
+bool HttpExec::SetServerSSLCertOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context)
+{
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYHOST, 0L, context);
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_VERIFYPEER, 0L, context);
+
+    return true;
+}
+
+bool HttpExec::SetSSLCertOption(CURL *curl, OHOS::NetStack::Http::RequestContext *context)
+{
+    std::string cert;
+    std::string certType;
+    std::string key;
+    Secure::SecureChar keyPasswd;
+    context->options.GetClientCert(cert, certType, key, keyPasswd);
+    if (cert.empty()) {
+        NETSTACK_LOGD("SetSSLCertOption param is empty.");
+        return false;
+    }
+    NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLCERT, cert.c_str(), context);
+    if (!key.empty()) {
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLKEY, key.c_str(), context);
+    }
+    if (!certType.empty()) {
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLCERTTYPE, certType.c_str(), context);
+    }
+    if (keyPasswd.Length() > 0) {
+        NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_KEYPASSWD, keyPasswd.Data(), context);
+    }
+    return true;
+}
+
 bool HttpExec::SetRequestOption(CURL *curl, RequestContext *context)
 {
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTP_VERSION, context->options.GetHttpVersion(), context);
@@ -727,7 +760,7 @@ bool HttpExec::SetRequestOption(CURL *curl, RequestContext *context)
     if (!context->options.GetDohUrl().empty()) {
         NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_DOH_URL, context->options.GetDohUrl().c_str(), context);
     }
-
+    SetSSLCertOption(curl, context);
     SetMultiPartOption(curl, context);
     return true;
 }

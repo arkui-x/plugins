@@ -25,6 +25,12 @@ std::unordered_map<std::string, UDateRelativeDateTimeFormatterStyle> RelativeTim
     { "narrow", UDAT_STYLE_NARROW }
 };
 
+std::unordered_map<std::string, std::string> RelativeTimeFormat::defaultFormatStyle = {
+    { "wearable", "narrow" },
+    { "liteWearable", "narrow" },
+    { "watch", "narrow" }
+};
+
 std::unordered_map<std::string, URelativeDateTimeUnit> RelativeTimeFormat::relativeUnits = {
     { "second", UDAT_REL_UNIT_SECOND },
     { "seconds", UDAT_REL_UNIT_SECOND },
@@ -47,6 +53,7 @@ std::unordered_map<std::string, URelativeDateTimeUnit> RelativeTimeFormat::relat
 RelativeTimeFormat::RelativeTimeFormat(const std::vector<std::string> &localeTags,
     std::map<std::string, std::string> &configs)
 {
+    SetDefaultStyle();
     UErrorCode status = U_ZERO_ERROR;
     ParseConfigs(configs);
     for (size_t i = 0; i < localeTags.size(); i++) {
@@ -99,9 +106,9 @@ void RelativeTimeFormat::ParseConfigs(std::map<std::string, std::string> &config
 {
     if (configs.count("style") > 0) {
         styleString = configs["style"];
-        if (relativeFormatStyle.count(styleString) > 0) {
-            style = relativeFormatStyle[styleString];
-        }
+    }
+    if (relativeFormatStyle.count(styleString) > 0) {
+        style = relativeFormatStyle[styleString];
     }
     if (configs.count("numeric") > 0) {
         numeric = configs["numeric"];
@@ -207,6 +214,18 @@ void RelativeTimeFormat::GetResolvedOptions(std::map<std::string, std::string> &
     }
     if (!numberingSystem.empty()) {
         map.insert(std::make_pair("numberingSystem", numberingSystem));
+    }
+}
+
+void RelativeTimeFormat::SetDefaultStyle()
+{
+    auto plugin = Plugin::INTL::Create();
+    if (!plugin) {
+        return;
+    }
+    std::string deviceType = plugin->GetDeviceType();
+    if (defaultFormatStyle.find(deviceType) != defaultFormatStyle.end()) {
+        styleString = defaultFormatStyle[deviceType];
     }
 }
 } // namespace I18n

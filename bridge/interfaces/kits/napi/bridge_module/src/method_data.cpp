@@ -257,8 +257,8 @@ void MethodData::InitEventSuccessForMethod(void)
         result.SetMethodName(methodName);
         if (codecType == CodecType::JSON_CODEC) {
             result.ParseJSMethodResult(env, resultValue);
-            auto task = [instanceId, platfromResult = result.GetResult(), bridgeName, methodName]() {
-                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platfromResult);
+            auto task = [instanceId, platformResult = result.GetResult(), bridgeName, methodName]() {
+                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platformResult);
             };
             PluginUtilsInner::RunTaskOnPlatform(task);
         } else if (codecType == CodecType::BINARY_CODEC) {
@@ -288,8 +288,8 @@ void MethodData::InitEventErrorForMethod(void)
         result.SetMethodName(methodName);
         if (codecType == CodecType::JSON_CODEC) {
             result.ParseJSMethodResult(env, nullptr);
-            auto task = [instanceId, platfromResult = result.GetResult(), bridgeName, methodName]() {
-                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platfromResult);
+            auto task = [instanceId, platformResult = result.GetResult(), bridgeName, methodName]() {
+                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platformResult);
             };
             PluginUtilsInner::RunTaskOnPlatform(task);
         } else if (codecType == CodecType::BINARY_CODEC) {
@@ -509,9 +509,9 @@ void MethodData::PlatformCallMethod(const std::string& parameter)
         result.SetMethodName(methodName_);
         result.ParseJSMethodResult(env_, nullptr);
 
-        auto task = [instanceId = instanceId_, platfromResult = result.GetResult(), bridgeName = bridgeName_,
+        auto task = [instanceId = instanceId_, platformResult = result.GetResult(), bridgeName = bridgeName_,
                         methodName = methodName_]() {
-            Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platfromResult);
+            Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platformResult);
         };
         PluginUtilsInner::RunTaskOnPlatform(task);
         return;

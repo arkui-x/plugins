@@ -1,0 +1,56 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//plugins/multimedia/audio/audio.gni")
+
+java_library("audio_manager_android_java") {
+  java_files = [ "src/ohos/ace/plugin/audiomanager/AudioManagerPlugin.java" ]
+  subsystem_name = "plugins"
+  part_name = "multimedia_audio_manager"
+}
+
+ohos_combine_jars("audio_manager_java") {
+  deps = [ ":audio_manager_android_java" ]
+  subsystem_name = "plugins"
+  part_name = "multimedia_audio_manager"
+  jar_path = "${root_out_dir}/plugins/multimedia/audio/audiomanager/arkui_audiomanager_java.jar"
+}
+
+ohos_source_set("audio_manager_android_jni") {
+  include_dirs = plugins_audio_utils_include
+  include_dirs += plugins_audio_include
+  include_dirs += [
+    "//plugins/multimedia/audio/android/audiomanager/java/jni",
+    "//commonlibrary/c_utils/base/include",
+  ]
+
+  sources = [
+    "jni/audio_group_manager.cpp",
+    "jni/audio_manager_jni.cpp",
+    "jni/audio_routing_manager.cpp",
+    "jni/audio_spatialization_manager.cpp",
+    "jni/audio_stream_manager.cpp",
+    "jni/audio_system_manager.cpp",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  deps = [
+    ":audio_manager_java",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "multimedia_audio_manager"
+}

@@ -38,4 +38,9 @@ std::string INTLPluginImpl::GetSystemTimezone()
 {
     return INTLPluginJni::GetSystemTimezone();
 }
+
+std::string INTLPluginImpl::GetDeviceType()
+{
+    return INTLPluginJni::GetDeviceType();
+}
 } // namespace OHOS::Plugin

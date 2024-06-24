@@ -16,6 +16,7 @@
 #define INTL_IOS_INTL_PLUGIN_H
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -24,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 -(bool)is24HourClock;
 -(NSString*)getSystemLocale;
 -(NSString*)getSystemTimezone;
+-(NSString*)getDeviceType;
 @end
 
 NS_ASSUME_NONNULL_END

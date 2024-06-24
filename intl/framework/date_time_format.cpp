@@ -32,8 +32,25 @@ std::map<std::string, DateFormat::EStyle> DateTimeFormat::dateTimeStyle = {
     { "short", DateFormat::EStyle::kShort }
 };
 
+std::unordered_map<std::string, DefaultStyle> DateTimeFormat::DeviceToStyle = {
+    { "tablet", DefaultStyle::LONG },
+    { "2in1", DefaultStyle::LONG },
+    { "tv", DefaultStyle::LONG },
+    { "pc", DefaultStyle::LONG },
+    { "liteWearable", DefaultStyle::SHORT },
+    { "wearable", DefaultStyle::SHORT },
+    { "watch", DefaultStyle::SHORT }
+};
+
+std::unordered_map<DefaultStyle, DateFormat::EStyle> DateTimeFormat::DefaultDTStyle = {
+    { DefaultStyle::LONG, DateFormat::EStyle::kMedium },
+    { DefaultStyle::DEFAULT, DateFormat::EStyle::kShort },
+    { DefaultStyle::SHORT, DateFormat::EStyle::kShort },
+};
+
 DateTimeFormat::DateTimeFormat(const std::vector<std::string> &localeTags, std::map<std::string, std::string> &configs)
 {
+    defaultStyle = GetDefaultStyle();
     UErrorCode status = U_ZERO_ERROR;
     ParseConfigsPartOne(configs);
     ParseConfigsPartTwo(configs);
@@ -152,7 +169,7 @@ bool DateTimeFormat::InitWithDefaultLocale(std::map<std::string, std::string> &c
 
 void DateTimeFormat::InitDateFormatWithoutConfigs(UErrorCode &status)
 {
-    dateFormat = DateFormat::createDateInstance(DateFormat::SHORT, locale);
+    dateFormat = DateFormat::createDateInstance(DefaultDTStyle[defaultStyle], locale);
     SimpleDateFormat *simDateFormat = static_cast<SimpleDateFormat*>(dateFormat);
     if (simDateFormat != nullptr) {
         simDateFormat->toPattern(pattern);
@@ -263,11 +280,19 @@ void DateTimeFormat::InitDateFormat(UErrorCode &status)
     if (!dateStyle.empty() || !timeStyle.empty()) {
         DateFormat::EStyle dateStyleValue = DateFormat::EStyle::kNone;
         DateFormat::EStyle timeStyleValue = DateFormat::EStyle::kNone;
-        if (!dateStyle.empty() && dateTimeStyle.count(dateStyle) > 0) {
-            dateStyleValue = dateTimeStyle[dateStyle];
+        if (!dateStyle.empty()) {
+            if (dateTimeStyle.count(dateStyle) > 0) {
+                dateStyleValue = dateTimeStyle[dateStyle];
+            } else if (dateStyle == "auto") {
+                dateStyleValue = DefaultDTStyle[defaultStyle];
+            }
         }
-        if (!timeStyle.empty() && dateTimeStyle.count(timeStyle) > 0) {
-            timeStyleValue = dateTimeStyle[timeStyle];
+        if (!timeStyle.empty()) {
+            if (dateTimeStyle.count(timeStyle) > 0) {
+                timeStyleValue = dateTimeStyle[timeStyle];
+            } else if (timeStyle == "auto") {
+                timeStyleValue = DefaultDTStyle[defaultStyle];
+            }
         }
         dateFormat = DateFormat::createDateTimeInstance(dateStyleValue, timeStyleValue, locale);
         SimpleDateFormat *simDateFormat = static_cast<SimpleDateFormat*>(dateFormat);
@@ -290,6 +315,7 @@ void DateTimeFormat::InitDateFormat(UErrorCode &status)
         pattern =
             patternGenerator->replaceFieldTypes(patternGenerator->getBestPattern(pattern, status), pattern, status);
         pattern = patternGenerator->getBestPattern(pattern, status);
+        SetDayPeriod();
         status = U_ZERO_ERROR;
         dateFormat = new SimpleDateFormat(pattern, locale, status);
         if (!U_SUCCESS(status)) {
@@ -298,6 +324,20 @@ void DateTimeFormat::InitDateFormat(UErrorCode &status)
     }
     status = U_ZERO_ERROR;
     dateIntvFormat = DateIntervalFormat::createInstance(pattern, locale, status);
+}
+
+void DateTimeFormat::SetDayPeriod()
+{
+    if (dayPeriod == "short" || (dayPeriod == "auto" && defaultStyle ==  DefaultStyle::DEFAULT)) {
+        pattern.findAndReplace(icu::UnicodeString::fromUTF8(StringPiece("a")),
+            icu::UnicodeString::fromUTF8(StringPiece("B")));
+    } else if (dayPeriod == "long" || (dayPeriod == "auto" && defaultStyle ==  DefaultStyle::LONG)) {
+        pattern.findAndReplace(icu::UnicodeString::fromUTF8(StringPiece("a")),
+            icu::UnicodeString::fromUTF8(StringPiece("BBBB")));
+    } else if (dayPeriod == "narrow" || (dayPeriod == "auto" && defaultStyle ==  DefaultStyle::SHORT)) {
+        pattern.findAndReplace(icu::UnicodeString::fromUTF8(StringPiece("a")),
+            icu::UnicodeString::fromUTF8(StringPiece("BBBBB")));
+    }
 }
 
 void DateTimeFormat::ParseConfigsPartOne(std::map<std::string, std::string> &configs)
@@ -430,25 +470,20 @@ void DateTimeFormat::ComputePattern()
             pattern.findAndReplace(monthOfPattern, UnicodeString::fromUTF8(StringPiece("M")));
         } else if (month == "2-digit" && length != TWO_DIGIT_LENGTH) {
             pattern.findAndReplace(monthOfPattern, UnicodeString::fromUTF8(StringPiece("MM")));
-        } else if (month == "long" && length != LONG_LENGTH) {
+        } else if ((month == "long" && length != LONG_LENGTH) || (month == "auto" &&
+            defaultStyle ==  DefaultStyle::LONG)) {
             pattern.findAndReplace(monthOfPattern, UnicodeString::fromUTF8(StringPiece("MMMM")));
-        } else if (month == "short" && length != SHORT_LENGTH) {
+        } else if ((month == "short" && length != SHORT_LENGTH) || (month == "auto" &&
+            (defaultStyle ==  DefaultStyle::DEFAULT || defaultStyle ==  DefaultStyle::SHORT))) {
             pattern.findAndReplace(monthOfPattern, UnicodeString::fromUTF8(StringPiece("MMM")));
         } else if (month == "narrow" && length != NARROW_LENGTH) {
             pattern.findAndReplace(monthOfPattern, UnicodeString::fromUTF8(StringPiece("MMMMM")));
         }
     }
-    if (!timeZoneName.empty()) {
-        UnicodeString timeZoneOfPattern = UnicodeString(timeZoneChar);
-        if (timeZoneName == "long") {
-            pattern.findAndReplace(timeZoneOfPattern, UnicodeString::fromUTF8(StringPiece("zzzz")));
-        } else if (timeZoneName == "short") {
-            pattern.findAndReplace(timeZoneOfPattern, UnicodeString::fromUTF8(StringPiece("O")));
-        }
-    }
 
-    ComputeWeekdayOrEraOfPattern(weekday, weekdayChar, "EEEE", "E", "EEEEE");
-    ComputeWeekdayOrEraOfPattern(era, eraChar, "GGGG", "G", "GGGGG");
+    ComputeTimeZoneOfPattern(timeZoneName, timeZoneChar, "zzzz", "O");
+    ComputeWeekdayOfPattern(weekday, weekdayChar, "EEEE", "E", "EEEEE");
+    ComputeEraOfPattern(era, eraChar, "GGGG", "G", "GGGGG");
 }
 
 void DateTimeFormat::ComputePartOfPattern(std::string option, char16_t character, std::string twoDigitChar,
@@ -464,17 +499,52 @@ void DateTimeFormat::ComputePartOfPattern(std::string option, char16_t character
     }
 }
 
-void DateTimeFormat::ComputeWeekdayOrEraOfPattern(std::string option, char16_t character, std::string longChar,
+void DateTimeFormat::ComputeTimeZoneOfPattern(std::string option, char16_t character, std::string longChar,
+    std::string shortChar)
+{
+    if (!option.empty()) {
+        UnicodeString timeZoneOfPattern = UnicodeString(character);
+        if (option == "long" || (option == "auto" && defaultStyle ==  DefaultStyle::LONG)) {
+            pattern.findAndReplace(timeZoneOfPattern, UnicodeString::fromUTF8(StringPiece(longChar)));
+        } else if (option == "short" || (option == "auto" && (defaultStyle ==  DefaultStyle::DEFAULT ||
+            defaultStyle ==  DefaultStyle::SHORT))) {
+            pattern.findAndReplace(timeZoneOfPattern, UnicodeString::fromUTF8(StringPiece(shortChar)));
+        }
+    }
+}
+
+void DateTimeFormat::ComputeWeekdayOfPattern(std::string option, char16_t character, std::string longChar,
     std::string shortChar, std::string narrowChar)
 {
     if (!option.empty()) {
         UnicodeString curPartOfPattern = UnicodeString(character);
         int32_t length = curPartOfPattern.length();
-        if (option == "long" && length != LONG_ERA_LENGTH) {
+        if ((option == "long" && length != LONG_ERA_LENGTH) || (option == "auto" &&
+            defaultStyle ==  DefaultStyle::LONG)) {
             pattern.findAndReplace(curPartOfPattern, UnicodeString::fromUTF8(StringPiece(longChar)));
-        } else if (option == "short" && length != SHORT_ERA_LENGTH) {
+        } else if ((option == "short" && length != SHORT_ERA_LENGTH) || (option == "auto" &&
+            (defaultStyle ==  DefaultStyle::DEFAULT || defaultStyle ==  DefaultStyle::SHORT))) {
             pattern.findAndReplace(curPartOfPattern, UnicodeString::fromUTF8(StringPiece(shortChar)));
         } else if (option == "narrow" && length != NARROW_LENGTH) {
+            pattern.findAndReplace(curPartOfPattern, UnicodeString::fromUTF8(StringPiece(narrowChar)));
+        }
+    }
+}
+
+void DateTimeFormat::ComputeEraOfPattern(std::string option, char16_t character, std::string longChar,
+    std::string shortChar, std::string narrowChar)
+{
+    if (!option.empty()) {
+        UnicodeString curPartOfPattern = UnicodeString(character);
+        int32_t length = curPartOfPattern.length();
+        if ((option == "long" && length != LONG_ERA_LENGTH) || (option == "auto" &&
+            defaultStyle ==  DefaultStyle::LONG)) {
+            pattern.findAndReplace(curPartOfPattern, UnicodeString::fromUTF8(StringPiece(longChar)));
+        } else if ((option == "short" && length != SHORT_ERA_LENGTH) || (option == "auto" &&
+            defaultStyle ==  DefaultStyle::DEFAULT)) {
+            pattern.findAndReplace(curPartOfPattern, UnicodeString::fromUTF8(StringPiece(shortChar)));
+        } else if ((option == "narrow" && length != NARROW_LENGTH) || (option == "auto" &&
+            defaultStyle ==  DefaultStyle::SHORT)) {
             pattern.findAndReplace(curPartOfPattern, UnicodeString::fromUTF8(StringPiece(narrowChar)));
         }
     }
@@ -707,6 +777,21 @@ std::string DateTimeFormat::GetSecond() const
 bool DateTimeFormat::Init()
 {
     return true;
+}
+
+DefaultStyle DateTimeFormat::GetDefaultStyle()
+{
+    auto defaultStyle = DefaultStyle::DEFAULT;
+    auto plugin = Plugin::INTL::Create();
+    if (!plugin) {
+        return defaultStyle;
+    } else {
+        std::string deviceType = plugin->GetDeviceType();
+        if (DeviceToStyle.find(deviceType) != DeviceToStyle.end()) {
+            defaultStyle = DeviceToStyle[deviceType];
+        }
+    }
+    return defaultStyle;
 }
 } // namespace I18n
 } // namespace Global

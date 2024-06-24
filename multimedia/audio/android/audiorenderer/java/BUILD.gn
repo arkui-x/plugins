@@ -1,0 +1,53 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//plugins/multimedia/audio/audio.gni")
+
+java_library("audio_renderer_android_java") {
+  java_files = [ "src/ohos/ace/plugin/audiorenderer/AudioRendererPlugin.java" ]
+  subsystem_name = "plugins"
+  part_name = "multimedia_audio_audiorenderer"
+}
+
+ohos_combine_jars("audio_renderer_java") {
+  deps = [ ":audio_renderer_android_java" ]
+  subsystem_name = "plugins"
+  part_name = "multimedia_audio_audiorenderer"
+  jar_path = "${root_out_dir}/plugins/multimedia/audio/audiorenderer/arkui_audiorenderer_java.jar"
+}
+
+ohos_source_set("audio_renderer_android_jni") {
+  include_dirs = plugins_audio_utils_include
+  include_dirs += plugins_audio_include
+  include_dirs += [
+    "//plugins/multimedia/audio/android/audiorenderer/java/jni",
+    "//commonlibrary/c_utils/base/include",
+  ]
+
+  sources = [
+    "jni/audio_renderer.cpp",
+    "jni/audio_renderer_impl.cpp",
+    "jni/audio_renderer_jni.cpp",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  deps = [
+    ":audio_renderer_java",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "multimedia_audio_audiorenderer"
+}

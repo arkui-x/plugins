@@ -46,4 +46,16 @@
     return [[NSTimeZone systemTimeZone] name];
 }
 
+-(NSString*)getDeviceType{
+    NSString *deviceModel = [[UIDevice currentDevice] model];
+    NSString *deviceType = @"phones";
+    if ([deviceModel isEqualToString: @"iPhone"]) {
+        deviceType = @"phones";
+    }
+    if ([deviceModel isEqualToString: @"iPad"]) {
+        deviceType = @"tablet";
+    }
+    return deviceType;
+}
+
 @end

@@ -65,12 +65,14 @@ private:
     bool createSuccess = false;
     static std::unordered_map<std::string, URelativeDateTimeUnit> relativeUnits;
     static std::unordered_map<std::string, UDateRelativeDateTimeFormatterStyle> relativeFormatStyle;
+    static std::unordered_map<std::string, std::string> defaultFormatStyle;
     void InsertInfo(std::vector<std::vector<std::string>> &timeVector, const std::string &unit, bool isInteger,
         const std::string &value);
     void ProcessIntegerField(const std::map<size_t, size_t> &indexMap,
         std::vector<std::vector<std::string>> &timeVector, size_t &startIndex, const std::string &unit,
         const std::string &result);
     void ParseConfigs(std::map<std::string, std::string> &configs);
+    void SetDefaultStyle();
 };
 } // namespace I18n
 } // namespace Global

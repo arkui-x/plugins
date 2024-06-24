@@ -1,0 +1,53 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+java_library("notification_manager_android_java") {
+  java_files = [
+    "src/ohos/ace/plugin/notificationmanager/BadgeUtils.java",
+    "src/ohos/ace/plugin/notificationmanager/JsonUtils.java",
+    "src/ohos/ace/plugin/notificationmanager/NotificationPlugin.java",
+    "src/ohos/ace/plugin/notificationmanager/NotificationRequest.java",
+    "src/ohos/ace/plugin/notificationmanager/NotificationTools.java",
+  ]
+  subsystem_name = "plugins"
+  part_name = "notification_manager"
+}
+
+ohos_combine_jars("notification_manager_java") {
+  deps = [ ":notification_manager_android_java" ]
+
+  subsystem_name = "plugins"
+  part_name = "notification_manager"
+  jar_path = "${root_out_dir}/plugins/notification_manager/ace_notification_manager_android.jar"
+}
+
+ohos_source_set("notification_manager_android_jni") {
+  include_dirs = [ "//third_party/json/include" ]
+
+  sources = [
+    "jni/notification_impl.cpp",
+    "jni/notification_jni.cpp",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  deps = [
+    ":notification_manager_java",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "notification_manager"
+}

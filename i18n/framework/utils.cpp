@@ -16,7 +16,10 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
 #include "utils.h"
+
+#include "log.h"
 
 namespace OHOS {
 namespace Global {
@@ -54,6 +57,38 @@ int32_t ConvertString2Int(const string &numberStr, int32_t& status)
         status = -1;
         return -1;
     }
+}
+
+void GetAllValidLocalesTag(std::unordered_set<std::string>& allValidLocalesLanguageTag)
+{
+    static bool init = false;
+    if (init) {
+        return;
+    }
+    int32_t validCount = 1;
+    const icu::Locale *validLocales = icu::Locale::getAvailableLocales(validCount);
+    for (int i = 0; i < validCount; i++) {
+        allValidLocalesLanguageTag.insert(validLocales[i].getLanguage());
+    }
+    init = true;
+}
+
+bool IsValidLocaleTag(icu::Locale &locale)
+{
+    static std::unordered_set<std::string> allValidLocalesLanguageTag;
+    GetAllValidLocalesTag(allValidLocalesLanguageTag);
+    std::string languageTag = locale.getLanguage();
+    std::string elementSum = "";
+    for (const auto& element : allValidLocalesLanguageTag) {
+        elementSum += ", " + element;
+    }
+    LOGE("allValidLocalesLanguageTag size is: %{public}d", allValidLocalesLanguageTag.size());
+    LOGE("allValidLocalesLanguageTag have: %{public}s", elementSum.c_str());
+    if (allValidLocalesLanguageTag.find(languageTag) == allValidLocalesLanguageTag.end()) {
+        LOGE("GetTimePeriodName does not support this languageTag: %{public}s", languageTag.c_str());
+        return false;
+    }
+    return true;
 }
 } // namespace I18n
 } // namespace Global

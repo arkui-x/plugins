@@ -35,6 +35,8 @@ const size_t FUNC_ARGS_COUNT = 2;    // Function input parameter count
 class ErrorUtil {
 public:
     static void NapiThrow(napi_env env, int32_t errCode, bool throwError);
+    static void NapiThrow(
+        napi_env env, int32_t errCode, const std::string& valueName, const std::string& valueContent, bool throwError);
 };
 } // namespace I18n
 } // namespace Global

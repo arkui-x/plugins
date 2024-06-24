@@ -26,7 +26,7 @@ bool NAPIUtils::JsonStringToNapiValues(napi_env env, const std::string& str, siz
     size_t argNum = 0;
     Json json = Json::parse(str, nullptr, false);
     while (json.find(std::to_string(argNum)) != json.end() && argNum < argc) {
-        argv[argNum] = NAPI_GetPremers(env, json.at(std::to_string(argNum)));
+        argv[argNum] = NAPI_GetParams(env, json.at(std::to_string(argNum)));
         argNum++;
     }
     argc = argNum;
@@ -38,13 +38,13 @@ bool NAPIUtils::NapiValuesToJsonString(napi_env env, const size_t& argc,
 {
     Json json = Json {};
     for (size_t i = 0; i < argc; i++) {
-        json[std::to_string(i)] = PlatformPremers(env, argv[i]);
+        json[std::to_string(i)] = PlatformParams(env, argv[i]);
     }
     str = json.dump();
     return true;
 }
 
-napi_value NAPIUtils::NAPI_GetPremers(napi_env env, Json json)
+napi_value NAPIUtils::NAPI_GetParams(napi_env env, Json json)
 {
     napi_value result = nullptr;
     if (json.is_string()) {
@@ -63,14 +63,14 @@ napi_value NAPIUtils::NAPI_GetPremers(napi_env env, Json json)
         result = PluginUtilsNApi::CreateArray(env);
         int i = 0;
         for (auto& element : json) {
-            napi_value value = NAPI_GetPremers(env, element);
+            napi_value value = NAPI_GetParams(env, element);
             PluginUtilsNApi::SetSelementToArray(env, result, i, value);
             i++;
         }
     } else if (json.is_object()) {
         result = PluginUtilsNApi::CreateObject(env);
         for (const auto& [key, value] : json.items()) {
-            PluginUtilsNApi::SetNamedProperty(env, result, key, NAPI_GetPremers(env, value));
+            PluginUtilsNApi::SetNamedProperty(env, result, key, NAPI_GetParams(env, value));
         }
     } else {
         result = PluginUtilsNApi::CreateNull(env);
@@ -78,7 +78,7 @@ napi_value NAPIUtils::NAPI_GetPremers(napi_env env, Json json)
     return result;
 }
 
-Json NAPIUtils::PlatformPremers(napi_env env, napi_value value)
+Json NAPIUtils::PlatformParams(napi_env env, napi_value value)
 {
     Json result;
     napi_valuetype valueType = PluginUtilsNApi::GetValueType(env, value);
@@ -110,7 +110,7 @@ Json NAPIUtils::PlatformPremers(napi_env env, napi_value value)
                 for (uint32_t i = 0; i < length; i++) {
                     napi_value elementValue;
                     napi_get_element(env, value, i, &elementValue);
-                    arrayValue.push_back(PlatformPremers(env, elementValue));
+                    arrayValue.push_back(PlatformParams(env, elementValue));
                 }
                 result = arrayValue;
                 break;
@@ -118,7 +118,7 @@ Json NAPIUtils::PlatformPremers(napi_env env, napi_value value)
             std::vector<std::string> props;
             if (PluginUtilsNApi::GetPropertyNames(env, value, props)) {
                 for (auto prop : props) {
-                    result[prop] = PlatformPremers(env, PluginUtilsNApi::GetNamedProperty(env, value, prop));
+                    result[prop] = PlatformParams(env, PluginUtilsNApi::GetNamedProperty(env, value, prop));
                 }
             }
             break;
@@ -129,7 +129,7 @@ Json NAPIUtils::PlatformPremers(napi_env env, napi_value value)
     return result;
 }
 
-int NAPIUtils::NAPI_GetErrorCodeFromFson(Json json)
+int NAPIUtils::NAPI_GetErrorCodeFromJson(Json json)
 {
     int ret = -1;
     if (json.is_number()) {

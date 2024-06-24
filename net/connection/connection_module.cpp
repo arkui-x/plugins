@@ -173,7 +173,7 @@ void ConnectionModule::InitProperties(napi_env env, napi_value exports)
         DECLARE_NET_CAP(NET_CAPABILITY_INTERNET),
         DECLARE_NET_CAP(NET_CAPABILITY_NOT_VPN),
         DECLARE_NET_CAP(NET_CAPABILITY_VALIDATED),
-        DECLARE_NET_CAP(NET_CAPABILITY_CAPTIVE_PORTAL),
+        DECLARE_NET_CAP(NET_CAPABILITY_PORTAL),
         DECLARE_NET_CAP(NET_CAPABILITY_INTERNAL_DEFAULT),
     };
     napi_value caps = NapiUtils::CreateObject(env);

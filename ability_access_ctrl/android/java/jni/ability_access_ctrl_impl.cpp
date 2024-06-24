@@ -27,6 +27,8 @@ static void InitPermissionMap()
     // add permission map
     g_permissionMap["ohos.permission.CAMERA"] = "android.permission.CAMERA";
     g_permissionMap["ohos.permission.MICROPHONE"] = "android.permission.RECORD_AUDIO";
+    g_permissionMap["ohos.permission.READ_IMAGEVIDEO"] = "android.permission.READ_EXTERNAL_STORAGE";
+    g_permissionMap["ohos.permission.WRITE_IMAGEVIDEO"] = "android.permission.WRITE_EXTERNAL_STORAGE";
 }
 
 static bool OhPermissionToJava(const std::string& inPerm, std::string& outPerm)

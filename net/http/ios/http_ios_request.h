@@ -45,6 +45,10 @@ typedef NSURLRequest* _Nullable (^HTTPRequestWillRedirectionBlock)(NSURLSession*
 @property (nonatomic, assign) NSInteger proxyport;
 @property (nonatomic, copy) NSString* exclusionList;
 @property (nonatomic) void* context;
+@property (nonatomic, copy) NSString* ca;
+@property (nonatomic, copy) NSString* caType;
+@property (nonatomic, copy) NSString* key;
+@property (nonatomic, copy) NSString* password;
 @end
 
 @interface http_ios_request : NSObject

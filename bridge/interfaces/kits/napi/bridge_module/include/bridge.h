@@ -46,8 +46,8 @@ public:
     ErrorCode RegisterMethod(const std::string& methodName, const std::shared_ptr<MethodData>& methodData);
     ErrorCode UnRegisterMethod(const std::string& methodName);
     void SetMessageListener(std::shared_ptr<MethodData>& callback);
-    void SetAvaiable(bool avaiable);
-    bool GetAvaiable(void);
+    void SetAvailable(bool available);
+    bool GetAvailable(void);
     void RemoveJSMethodData(const std::string& methodName);
     void RemoveMessageData(void);
     bool GetTerminate(void);
@@ -60,7 +60,7 @@ private:
     std::string bridgeName_;
     int32_t instanceId_;
     CodecType codecType_ = CodecType::JSON_CODEC;
-    bool avaiable_ = false;
+    bool available_ = false;
     bool terminate_ = false;
     napi_env env_ = nullptr;
     std::map<std::string, std::shared_ptr<MethodData>> platformMethodDataList_;

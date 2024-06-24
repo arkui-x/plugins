@@ -26,6 +26,7 @@ public:
     bool Is24HourClock() override;
     std::string GetSystemLocale() override;
     std::string GetSystemTimezone() override;
+    std::string GetDeviceType() override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_INTL_PLUGIN_IOS_INTL_PLUGIN_IMPL_H

@@ -23,6 +23,7 @@ config("libcertificate_framework_common_static_config") {
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//third_party/bounds_checking_function/include",
     "//base/security/crypto_framework/interfaces/innerkits/common",
+    "//base/security/crypto_framework/interfaces/innerkits/key",
   ]
 }
 

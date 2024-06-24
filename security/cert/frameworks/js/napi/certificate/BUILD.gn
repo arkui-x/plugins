@@ -62,6 +62,7 @@ ohos_source_set("cert") {
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl_entry.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_crl_match_parameters.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_distinguished_name.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_x509_trust_anchor.cpp",
   ]
 

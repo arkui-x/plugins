@@ -23,7 +23,7 @@ template("plugin_taskpool_static") {
 
     deps = [
       "//commonlibrary/ets_utils/js_concurrent_module/taskpool:taskpool_static",
-      "//third_party/libuv:uv_static",
+      "//plugins/libs/uv:uv_${target_os}",
     ]
 
     subsystem_name = "plugins"

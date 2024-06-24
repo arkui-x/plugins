@@ -19,6 +19,7 @@
 #include <vector>
 #include <climits>
 #include <set>
+#include <unordered_map>
 #include "locale_info.h"
 #include "unicode/datefmt.h"
 #include "unicode/dtptngen.h"
@@ -33,6 +34,11 @@
 namespace OHOS {
 namespace Global {
 namespace I18n {
+enum class DefaultStyle {
+    LONG,
+    DEFAULT,
+    SHORT,
+};
 class DateTimeFormat {
 public:
     DateTimeFormat(const std::vector<std::string> &localeTags, std::map<std::string, std::string> &configs);
@@ -97,6 +103,7 @@ private:
     std::string hourTwoDigitString = "HH";
     std::string hourNumericString = "H";
     bool createSuccess = false;
+    DefaultStyle defaultStyle;
     static const int32_t NUMERIC_LENGTH = 1;
     static const int32_t TWO_DIGIT_LENGTH = 2;
     static const int32_t SHORT_LENGTH = 3;
@@ -118,6 +125,8 @@ private:
     static constexpr int SYS_PARAM_LEN = 128;
     static bool Init();
     static std::map<std::string, icu::DateFormat::EStyle> dateTimeStyle;
+    static std::unordered_map<std::string, DefaultStyle> DeviceToStyle;
+    static std::unordered_map<DefaultStyle, icu::DateFormat::EStyle> DefaultDTStyle;
     bool InitWithLocale(const std::string &curLocale, std::map<std::string, std::string> &configs);
     bool InitWithDefaultLocale(std::map<std::string, std::string> &configs);
     void ParseConfigsPartOne(std::map<std::string, std::string> &configs);
@@ -128,8 +137,12 @@ private:
     void ComputePartOfPattern(std::string option, char16_t character, std::string twoDigitChar,
         std::string numericChar);
     void ComputeHourCycleChars();
-    void ComputeWeekdayOrEraOfPattern(std::string option, char16_t character, std::string longChar,
-        std::string shortChar, std::string narrowChar);
+    void ComputeTimeZoneOfPattern(
+        std::string option, char16_t character, std::string longChar, std::string shortChar);
+    void ComputeWeekdayOfPattern(
+        std::string option, char16_t character, std::string longChar, std::string shortChar, std::string narrowChar);
+    void ComputeEraOfPattern(
+        std::string option, char16_t character, std::string longChar, std::string shortChar, std::string narrowChar);
     void InitDateFormatWithoutConfigs(UErrorCode &status);
     void InitDateFormat(UErrorCode &status);
     void GetAdditionalResolvedOptions(std::map<std::string, std::string> &map);
@@ -139,7 +152,9 @@ private:
     int64_t GetArrayValue(int64_t *dateArray, size_t index, size_t size);
     bool CheckInitSuccess();
     void FreeDateTimeFormat();
+    void SetDayPeriod();
     std::string GetSystemTimezone();
+    DefaultStyle GetDefaultStyle();
 };
 } // namespace I18n
 } // namespace Global

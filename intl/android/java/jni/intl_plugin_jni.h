@@ -31,6 +31,7 @@ public:
     static bool Is24HourClock();
     static std::string GetSystemLocale();
     static std::string GetSystemTimezone();
+    static std::string GetDeviceType();
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_INTL_PLUGIN_ANDROID_JAVA_JNI_INTL_PLUGIN_JNI_H

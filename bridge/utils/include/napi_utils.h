@@ -28,9 +28,9 @@ class NAPIUtils {
 public:
     static bool JsonStringToNapiValues(napi_env env, const std::string& str, size_t& argc, napi_value* argv);
     static bool NapiValuesToJsonString(napi_env env, const size_t& argc, const napi_value* argv, std::string& str);
-    static napi_value NAPI_GetPremers(napi_env env, Json json);
-    static Json PlatformPremers(napi_env env, napi_value value);
-    static int NAPI_GetErrorCodeFromFson(Json json);
+    static napi_value NAPI_GetParams(napi_env env, Json json);
+    static Json PlatformParams(napi_env env, napi_value value);
+    static int NAPI_GetErrorCodeFromJson(Json json);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif // PLUGINS_BRIDGE_NAPI_UTILS_H

@@ -17,6 +17,8 @@ common_plugin_libs = [
   "ability_access_ctrl",
   "bridge",
   "file/fs",
+  "file/photo_access_helper",
+  "file/picker",
   "common_event_manager",
   "data/preferences",
   "data/relationalstore",
@@ -25,6 +27,8 @@ common_plugin_libs = [
   "hitrace_meter",
   "i18n",
   "intl",
+  "multimedia/media",
+  "multimedia/audio",
   "net/connection",
   "net/http",
   "net/socket",
@@ -61,6 +65,9 @@ common_plugin_libs = [
   "zlib",
   "security/cryptoframework",
   "security/cert",
+  "events/emitter",
+  "wifi_manager",
+  "notification_manager",
 ]
 
 template("plugin_lib") {
