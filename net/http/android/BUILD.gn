@@ -1,0 +1,47 @@
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//plugins/net/http/http.gni")
+
+ohos_source_set("net_http_android") {
+  include_dirs = http_include
+  include_dirs += utils_include
+  include_dirs += [
+    "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/include",
+    "//foundation/arkui/ace_engine/frameworks",
+    "//foundation/arkui/ace_engine",
+    "//third_party/cJSON",
+  ]
+
+  sources = http_sources
+  sources += [
+    "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/disk_handler.cpp",
+    "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/src/lru_cache_disk_handler.cpp",
+    "//plugins/net/http/cache/src/lru_cache.cpp",
+    "http_exec.cpp",
+  ]
+
+  deps = [
+    "//plugins/interfaces/native:ace_plugin_util_android",
+    "//plugins/interfaces/native:plugin_log",
+    "//plugins/net/utils:net_utils_android",
+    "//third_party/curl:curl_shared",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  libs = [ "log" ]
+
+  subsystem_name = "plugins"
+  part_name = "net_http"
+}

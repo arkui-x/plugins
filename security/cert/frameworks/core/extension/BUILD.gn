@@ -1,0 +1,62 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+config("libcertificate_framework_extension_object_config") {
+  include_dirs = [
+    "//base/security/certificate_framework/frameworks/core/extension/inc",
+    "//commonlibrary/c_utils/base/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//third_party/bounds_checking_function/include",
+  ]
+}
+
+ohos_source_set("libcertificate_framework_extension_object") {
+  branch_protector_ret = "pac_ret"
+  subsystem_name = "plugins"
+  part_name = "security_cert"
+  public_configs = [ ":libcertificate_framework_extension_object_config" ]
+  configs = [ "../../../config/build:coverage_flag" ]
+  include_dirs = [
+    "//base/security/certificate_framework/frameworks/core/life/inc",
+    "//commonlibrary/c_utils/base/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//third_party/bounds_checking_function/include",
+  ]
+
+  sources = [
+    "//base/security/certificate_framework/frameworks/core/extension/src/cf_extension_ability.c",
+    "//base/security/certificate_framework/frameworks/core/extension/src/cf_object_extension.c",
+  ]
+
+  deps = [
+    "../../ability:libcertificate_framework_ability",
+    "../../common:libcertificate_framework_common_static",
+    "../param:libcertificate_framework_param",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+    "//plugins/libs/securec:sec_${target_os}",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+  ]
+
+  cflags = [
+    "-DHILOG_ENABLE",
+    "-fPIC",
+    "-Wall",
+    "-Werror",
+  ]
+}

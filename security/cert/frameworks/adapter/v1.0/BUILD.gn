@@ -1,0 +1,65 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+ohos_source_set("certificate_openssl_plugin_lib") {
+  branch_protector_ret = "pac_ret"
+  subsystem_name = "plugins"
+  part_name = "security_cert"
+  configs = [ "../../../config/build:coverage_flag" ]
+
+  include_dirs = [
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/inc",
+    "//base/security/certificate_framework/frameworks/core/v1.0/spi",
+    "//third_party/openssl/include/",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//third_party/bounds_checking_function/include",
+    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//base/security/crypto_framework/interfaces/innerkits/algorithm_parameter",
+    "//base/security/crypto_framework/interfaces/innerkits/common",
+    "//base/security/crypto_framework/interfaces/innerkits/crypto_operation",
+    "//base/security/crypto_framework/interfaces/innerkits/key",
+  ]
+
+  sources = [
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/certificate_openssl_common.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_openssl_ex.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_validator_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_certificate_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_crl_entry_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_crl_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_distinguished_name_openssl.c",
+  ]
+
+  cflags = [
+    "-DHILOG_ENABLE",
+    "-fPIC",
+    "-Wall",
+  ]
+
+  deps = [
+    "../../common:libcertificate_framework_common_static",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+    "//plugins/libs/securec:sec_${target_os}",
+    "//third_party/openssl:libcrypto_shared",
+    "//third_party/openssl:libssl_shared",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "crypto_framework:crypto_framework_lib",
+    "hilog:libhilog",
+  ]
+}

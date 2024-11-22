@@ -1,0 +1,91 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//foundation/multimedia/audio_framework/plugins/cross/audio.gni")
+import("//plugins/multimedia/audio/audio.gni")
+
+template("plugin_audio_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    defines += [ "LOG_DOMAIN = 0xD0015B0" ]
+
+    include_dirs = plugins_audio_include
+    include_dirs += plugins_audio_utils_include
+
+    sources = audio_sources
+    sources += [
+      "audio_utils.cpp",
+      "napi_audio_entry.cpp",
+    ]
+
+    deps = [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${platform}",
+      "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/uv:uv_${target_os}",
+    ]
+
+    external_deps = []
+
+    if (platform == "android") {
+      sources += [
+        "//plugins/multimedia/audio/android/audio_common_jni.cpp",
+        "//plugins/multimedia/audio/android/audio_convert_util.cpp",
+      ]
+      deps += [
+        "android/audiocapturer/java:audio_capturer_android_jni",
+        "android/audiomanager/java:audio_manager_android_jni",
+        "android/audiorenderer/java:audio_renderer_android_jni",
+      ]
+    } else if (platform == "ios") {
+      sources += [ "//plugins/multimedia/audio/ios/format_convert_util.mm" ]
+      deps += [
+        "ios/audiocapturer:audio_capturer_ios",
+        "ios/audiomanager:audio_manager_ios",
+        "ios/audiorenderer:audio_renderer_ios",
+      ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "multimedia"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_audio_static("multimedia_audio_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

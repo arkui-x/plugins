@@ -1,0 +1,45 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+AUDIO_SUBSYSTEM_DIR = "//foundation/multimedia/audio_framework"
+WORK_DIR = "$AUDIO_SUBSYSTEM_DIR/frameworks/js/napi"
+INTERFACE_DIR = "$AUDIO_SUBSYSTEM_DIR/interfaces"
+
+plugins_audio_utils_include = [
+  "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/napi_base_context/include",
+  "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+]
+
+plugins_audio_include = [
+  "$AUDIO_SUBSYSTEM_DIR/frameworks/native/audiopolicy/include",
+  "$AUDIO_SUBSYSTEM_DIR/frameworks/native/audioutils/include",
+  "$INTERFACE_DIR/inner_api/native/audiocapturer/include",
+  "$INTERFACE_DIR/inner_api/native/audiocommon/include",
+  "$INTERFACE_DIR/inner_api/native/audiomanager/include",
+  "$INTERFACE_DIR/inner_api/native/audiorenderer/include",
+  "$INTERFACE_DIR/inner_api/native/toneplayer/include",
+  "$WORK_DIR/audiocapturer",
+  "$WORK_DIR/audiocapturer/callback",
+  "$WORK_DIR/audiorenderer",
+  "$WORK_DIR/audiorenderer/callback",
+  "$WORK_DIR/audiomanager",
+  "$WORK_DIR/audiomanager/callback",
+  "$WORK_DIR/common",
+  "//plugins/interfaces",
+  "//plugins/interfaces/native",
+  "//plugins/multimedia/audio",
+  "//plugins/multimedia/audio/android",
+]

@@ -1,0 +1,71 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+ohos_source_set("photo_access_helper_ios") {
+  include_dirs = [
+    "//plugins/file/photo_access_helper",
+    "//foundation/distributeddatamgr/relational_store/interfaces/inner_api/appdatafwk/include",
+    "//foundation/distributeddatamgr/relational_store/frameworks/native/rdb/mock/include",
+    "//plugins/file/photo_access_helper/napi/base/include",
+    "//foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb/include",
+    "./utils",
+    "//third_party/json/include",
+    "//plugins/file/photo_access_helper/napi/photo/include",
+  ]
+
+  sources = [
+    "./utils/rdb_utils_ios.cpp",
+    "./utils/rdb_utils_result.cpp",
+    "photoPluginManager.m",
+    "photo_client_impl.mm",
+    "photo_cursor_album.m",
+    "photo_cursor_ios.m",
+    "result_set_album.mm",
+    "result_set_ios.mm",
+  ]
+
+  defines = [ "IOS_PLATFORM" ]
+
+  if (target_cpu == "arm64") {
+    defines += [ "_ARM64_" ]
+  }
+
+  configs = [ "$ace_root:ace_config" ]
+
+  cflags_objc = [
+    "-fvisibility=default",
+    "-fobjc-weak",
+    "-fobjc-arc",
+    "-O0",
+  ]
+  frameworks = [
+    "Photos.framework",
+    "PhotosUI.framework",
+    "UniformTypeIdentifiers.framework",
+    "MobileCoreServices.framework",
+  ]
+
+  cflags_objcc = cflags_objc
+
+  deps = [
+    "//foundation/arkui/ace_engine/adapter/ios/build:data_datasharepredicates",
+    "//foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb:native_rdb",
+    "//plugins/interfaces/native:ace_plugin_util_ios",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "photo_access_helper"
+}

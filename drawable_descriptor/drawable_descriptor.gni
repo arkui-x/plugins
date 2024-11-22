@@ -1,0 +1,54 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+drawable_native_include = [
+  "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  "//third_party/skia",
+  "//foundation/arkui/napi/interfaces/inner_api",
+  "//foundation/arkui/napi/interfaces/kits",
+  "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/configuration",
+  "//foundation/multimedia/image_framework/frameworks/innerkitsimpl/utils/include",
+  "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
+  "//foundation/graphic/graphic_2d/rosen/modules",
+  "//third_party/node/src",
+  "//third_party/bounds_checking_function/include",
+  "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/include",
+  "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src",
+  "//foundation/graphic/graphic_2d/rosen/modules/render_service_base/include",
+  "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src/drawing/engine_adapter",
+  "//third_party/node/deps/openssl/openssl/include/openssl",
+  "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/bundle",
+  "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/bundle_parser/include",
+  "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/hilog",
+  "//third_party/json/single_include",
+  "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/app_manager",
+  "//foundation/multimedia/image_framework/interfaces/innerkits/include",
+  "//foundation/graphic/graphic_2d/rosen/modules/platform/utils",
+  "//base/global/resource_management/interfaces/inner_api/include",
+  "//foundation/arkui/ace_engine/frameworks/core/components_ng/image_provider/adapter/rosen",
+  "//foundation/arkui/ace_engine/frameworks/core/interfaces/native/svg",
+  "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/kits/native/appkit",
+]
+
+drawable_napi_include = [
+  "//foundation/arkui/ace_engine/interfaces/inner_api/drawable_descriptor",
+  "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  "//foundation/multimedia/image_framework/interfaces/innerkits/include",
+  "//base/global/resource_management/interfaces/inner_api/include",
+  "//foundation/multimedia/image_framework/interfaces/kits/js/common/include",
+  "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/include",
+  "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src",
+  "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src/drawing/engine_adapter",
+  "//foundation/graphic/graphic_2d/utils/color_manager/export",
+  "//foundation/graphic/graphic_2d/rosen/modules/platform/utils",
+]
