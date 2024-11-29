@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -22,12 +22,10 @@ template("plugin_net_http_static") {
 
     include_dirs = http_include
     include_dirs += utils_include
-    include_dirs += [ "//third_party/cJSON" ]
 
     sources = [
       "//plugins/net/http/cache/base64_utils.cpp",
       "//plugins/net/http/cache/cache_proxy.cpp",
-      "//plugins/net/http/cache/src/lru_cache.cpp",
       "//plugins/net/http/http_module.cpp",
     ]
 
@@ -38,11 +36,16 @@ template("plugin_net_http_static") {
     ]
 
     if (platform == "android") {
+      include_dirs += [
+        "$NETSTACK_NAPI_ROOT/http/cache/lru_cache/include",
+        "//third_party/cJSON",
+      ]
       deps += [
         "android:net_http_android",
         "android/java:http_android_jni",
       ]
     } else if (platform == "ios") {
+      include_dirs += [ "//plugins/net/http/ios/lru_cache/include/" ]
       deps += [ "ios:net_http_ios" ]
     }
 

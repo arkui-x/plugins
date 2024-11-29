@@ -71,8 +71,8 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
 
     requestParam.headerJson = headerDic;
     requestParam.priority = requestOptions.GetPriority();
-    requestParam.readTimeout = requestOptions.GetReadTimeout()/1000;
-    requestParam.connectTimeout = requestOptions.GetConnectTimeout()/1000;
+    requestParam.readTimeout = (NSTimeInterval)requestOptions.GetReadTimeout()/1000;
+    requestParam.connectTimeout = (NSTimeInterval)requestOptions.GetConnectTimeout()/1000;
     requestParam.httpVersion = requestOptions.GetHttpVersion();
 
     std::string cert;
