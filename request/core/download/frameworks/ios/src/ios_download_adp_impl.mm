@@ -156,20 +156,24 @@ void IosDownloadAdpImpl::CompletionHandler(IosDownloadAdpCallback *callback, NSU
 bool IosDownloadAdpImpl::Remove()
 {
     DOWNLOAD_HILOGD("Remove download");
-    Suspend(false);
+    isSuspendByNetwork_ = false;
+    [downloadTask_ cancelByProducingResumeData:^(NSData *resumeData) {
+        if (resumeData != nil) {
+            resumeData_ = resumeData;
+        }
+    }];
     return true;
 }
 
-bool IosDownloadAdpImpl::Suspend(bool isSuspendByNetwork)
+bool IosDownloadAdpImpl::Suspend(bool isSuspendByNetwork, IosDownloadAdpCallback *callback)
 {
     DOWNLOAD_HILOGD("Suspend download");
     isSuspendByNetwork_ = isSuspendByNetwork;
     if (downloadTask_.state == NSURLSessionTaskStateRunning) {
-        [downloadTask_ cancelByProducingResumeData:^(NSData *resumeData) {
-            if (resumeData != nil) {
-                resumeData_ = resumeData;
-            }
-        }];
+        [downloadTask_ suspend];
+        if (callback != nullptr) {
+            callback->OnPause();
+        }
     }
     return true;
 }
@@ -177,6 +181,14 @@ bool IosDownloadAdpImpl::Suspend(bool isSuspendByNetwork)
 bool IosDownloadAdpImpl::Restore(IosDownloadAdpCallback *callback)
 {
     DOWNLOAD_HILOGD("Restore download");
+    if (downloadTask_ != nil && downloadTask_.state == NSURLSessionTaskStateSuspended) {
+        [downloadTask_ resume];
+        if (callback != nullptr) {
+            callback->OnResume();
+        }
+        return true;
+    }
+
     if (resumeData_ == nil) {
         DOWNLOAD_HILOGD("restore download, because resumeData is nil, download from begin.");
         Download(config_, callback);
@@ -197,6 +209,9 @@ bool IosDownloadAdpImpl::Restore(IosDownloadAdpCallback *callback)
             CompletionHandler(callback, response, filePath, error);
         }];
         [downloadTask_ resume];
+        if (callback != nullptr) {
+            callback->OnResume();
+        }
     });
     return true;
 }

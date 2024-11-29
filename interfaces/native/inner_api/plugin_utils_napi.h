@@ -102,6 +102,7 @@ public:
     static bool GetArrayBuffer(napi_env env, napi_value value, std::vector<uint8_t>& vector);
     static napi_value CreateArrayBuffer(napi_env env, const std::vector<uint8_t>& value);
     static napi_status SetEnumItem(napi_env env, napi_value object, const char* name, int32_t value);
+    static bool DetachArrayBufferFromTypedArray(napi_env env, napi_value value);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGIN_INTERFACE_NATIVE_INNER_UTILS_PLUGIN_INNER_NAPI_UTILS_H
