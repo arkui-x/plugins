@@ -24,11 +24,11 @@ ohos_source_set("libcertificate_framework_vesion1") {
     "//commonlibrary/c_utils/base/include",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//third_party/bounds_checking_function/include",
-    "//base/security/crypto_framework/interfaces/innerkits/key",
-    "//base/security/crypto_framework/interfaces/innerkits/algorithm_parameter",
-    "//base/security/crypto_framework/interfaces/innerkits/common",
-    "//base/security/crypto_framework/interfaces/innerkits/crypto_operation",
-    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//base/security/crypto_framework/inner_api/innerkits/key",
+    "//base/security/crypto_framework/inner_api/innerkits/algorithm_parameter",
+    "//base/security/crypto_framework/inner_api/innerkits/common",
+    "//base/security/crypto_framework/inner_api/innerkits/crypto_operation",
+    "//base/security/crypto_framework/inner_api/innerkits/key",
   ]
   sources = [
     "//base/security/certificate_framework/frameworks/core/v1.0/certificate/cert_chain_validator.c",

@@ -55,6 +55,7 @@ http_sources = [
   "$NETSTACK_NAPI_ROOT/http/constant/src/constant.cpp",
   "$NETSTACK_NAPI_ROOT/http/options/src/http_request_options.cpp",
   "$NETSTACK_NAPI_ROOT/http/options/src/http_response.cpp",
+  "$NETSTACK_UTILS_ROOT/common_utils/src/request_tracer.cpp",
   "$NETSTACK_UTILS_ROOT/profiler_utils/src/http_network_message.cpp",
   "$NETSTACK_UTILS_ROOT/profiler_utils/src/i_network_message.cpp",
   "$NETSTACK_UTILS_ROOT/profiler_utils/src/netstack_network_profiler.cpp",

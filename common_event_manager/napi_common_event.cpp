@@ -266,7 +266,7 @@ napi_value ParseParametersBySubscribe(const napi_env& env, const napi_value (&ar
     napi_valuetype valuetype;
     // argv[0]:subscriber
     NAPI_CALL(env, napi_typeof(env, argv[0], &valuetype));
-    
+    // NAPI_ASSERT(env, valuetype == napi_object, "Wrong argument type for arg0. Subscribe expected.");
     if (valuetype != napi_object) {
         LOGE("Wrong argument type for arg0. Subscribe expected.");
         return nullptr;

@@ -16,10 +16,10 @@
 #ifndef AUDIO_RENDERER_PRIVATE_H
 #define AUDIO_RENDERER_PRIVATE_H
 
+#include "audio_errors.h"
 #include "audio_interrupt_callback.h"
 #include "audio_renderer.h"
 #include "audio_utils.h"
-#include "audio_errors.h"
 #include "audio_renderer_impl.h"
 
 namespace OHOS {
@@ -54,7 +54,7 @@ public:
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     bool Stop() override;
     bool Flush() const override;
-    bool Release() const override;
+    bool Release() override;
     int32_t GetBufferSize(size_t &bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t &sessionID) const override;
     int32_t SetAudioRendererDesc(AudioRendererDesc audioRendererDesc) override;
@@ -83,7 +83,6 @@ public:
     int32_t Enqueue(const BufferDesc &bufDesc) const override;
     int32_t Clear() const override;
     int32_t GetBufQueueState(BufferQueueState &bufState) const override;
-    void SetApplicationCachePath(const std::string cachePath) override;
     void SetInterruptMode(InterruptMode mode) override;
     int32_t SetParallelPlayFlag(bool parallelPlayFlag) override;
     int32_t SetLowPowerVolume(float volume) const override;
@@ -94,7 +93,7 @@ public:
     float GetSingleStreamVolume() const override;
     float GetMinStreamVolume() const override;
     float GetMaxStreamVolume() const override;
-    int32_t GetCurrentOutputDevices(DeviceInfo &deviceInfo) const override;
+    int32_t GetCurrentOutputDevices(AudioDeviceDescriptor &deviceInfo) const override;
     uint32_t GetUnderflowCount() const override;
     int32_t RegisterOutputDeviceChangeWithInfoCallback(
         const std::shared_ptr<AudioRendererOutputDeviceChangeCallback> &callback) override;
@@ -125,7 +124,8 @@ public:
 
     bool IsNoStreamRenderer() const override { return false; }
 
-    int32_t SetDefaultOutputDevice(DeviceType deviceType) override { return ERR_NOT_SUPPORTED; }
+    int32_t SetDefaultOutputDevice(DeviceType deviceType) override{ return ERR_NOT_SUPPORTED; }
+    
 private:
     bool IsFormatValid(uint8_t format);
     bool IsEncodingTypeValid(uint8_t encodingType);

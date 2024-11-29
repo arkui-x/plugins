@@ -228,11 +228,6 @@ public:
         return GraphicTransformType::GRAPHIC_ROTATE_NONE;
     }
 
-    GSError IsSupportedAlloc(const std::vector<BufferVerifyAllocInfo> &infos, std::vector<bool> &supporteds) override
-    {
-        return GSERROR_NOT_SUPPORT;
-    }
-
     GSError Connect() override
     {
         return GSERROR_NOT_SUPPORT;
@@ -403,9 +398,12 @@ public:
         return GSERROR_NOT_SUPPORT;
     }
 
-    BufferRequestConfig* GetWindowConfig() override
+    void SetWindowConfig(const BufferRequestConfig& config) override {}
+
+    BufferRequestConfig GetWindowConfig() override
     {
-        return nullptr;
+        BufferRequestConfig config;
+        return config;
     }
     
     GSError SetHdrWhitePointBrightness(float brightness) override
@@ -425,6 +423,11 @@ public:
     }
 
     GSError ReleaseLastFlushedBuffer(sptr<SurfaceBuffer> buffer)  override
+    {
+        return GSERROR_NOT_SUPPORT;
+    }
+
+    GSError SetGlobalAlpha(int32_t alpha)  override
     {
         return GSERROR_NOT_SUPPORT;
     }

@@ -147,8 +147,7 @@ ErrCode WebDataBaseJni::GetHttpAuthCredentials(const std::string& host, const st
     CHECK_NULL_RETURN(jHost, INIT_ERROR);
     jstring jRealm = env->NewStringUTF(realm.c_str());
     CHECK_NULL_RETURN(jRealm, INIT_ERROR);
-    jobject jResult = env->CallObjectMethod(g_webWebviewClass.globalRef,
-        g_webWebviewClass.getHttpAuthCredentials, jHost, jRealm);
+    jobject jResult = env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getHttpAuthCredentials, jHost, jRealm);
     if (env->ExceptionCheck()) {
         LOGE("WebDataBaseJni JNI: call GetHttpAuthCredentials has exception");
         env->ExceptionDescribe();

@@ -44,8 +44,7 @@ PhotoPickerNapi::PhotoPickerNapi()
 
 PhotoPickerNapi::~PhotoPickerNapi() = default;
 
-void PhotoPickerNapi::PhotoPickerNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
-{
+void PhotoPickerNapi::PhotoPickerNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint) {
     PhotoPickerNapi *picker = reinterpret_cast<PhotoPickerNapi*>(nativeObject);
     if (picker != nullptr) {
         delete picker;
@@ -53,8 +52,7 @@ void PhotoPickerNapi::PhotoPickerNapiDestructor(napi_env env, void *nativeObject
     }
 }
 
-napi_value PhotoPickerNapi::PhotoPickerNapiConstructor(napi_env env, napi_callback_info info)
-{
+napi_value PhotoPickerNapi::PhotoPickerNapiConstructor(napi_env env, napi_callback_info info) {
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -89,8 +87,7 @@ napi_value PhotoPickerNapi::PhotoPickerNapiConstructor(napi_env env, napi_callba
     return result;
 }
 
-void SelectResultNapi::SelectResultNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint)
-{
+void SelectResultNapi::SelectResultNapiDestructor(napi_env env, void *nativeObject, void *finalize_hint) {
     SelectResultNapi *selectResult = reinterpret_cast<SelectResultNapi*>(nativeObject);
     if (selectResult != nullptr) {
         delete selectResult;
@@ -98,8 +95,7 @@ void SelectResultNapi::SelectResultNapiDestructor(napi_env env, void *nativeObje
     }
 }
 
-napi_value SelectResultNapi::SelectResultNapiConstructor(napi_env env, napi_callback_info info)
-{
+napi_value SelectResultNapi::SelectResultNapiConstructor(napi_env env, napi_callback_info info) {
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -176,8 +172,7 @@ static napi_value CreateStringEnumProperty(napi_env env, vector<pair<string, str
     return result;
 }
 
-napi_value PhotoPickerNapi::CreateMIMETypesEnum(napi_env env)
-{
+napi_value PhotoPickerNapi::CreateMIMETypesEnum(napi_env env) {
     return CreateStringEnumProperty(env,  MIME_ENUM_PROPERTIES, sMIMETypeEnumRef_);
 }
 
@@ -216,7 +211,7 @@ static void StartPhotoPickerAsyncCallbackComplete(napi_env env, napi_status stat
 
 static napi_value StartPickerExtension(napi_env env, napi_callback_info info,
     unique_ptr<PhotoPickerAsyncContext> &AsyncContext)
-{
+{ 
     std::string MIMEType = Plugin::PluginUtilsNApi::GetStringFromValueUtf8(env, AsyncContext->MIMEType);
     PhotoPickerCallback::pickerCallBack = AsyncContext->pickerCallBack;
     UserFileClient::startPhotoPicker(MIMEType);
@@ -257,8 +252,7 @@ napi_value PhotoPickerNapi::StartPhotoPicker(napi_env env, napi_callback_info in
         StartPhotoPickerExecute, StartPhotoPickerAsyncCallbackComplete);
 }
 
-napi_value PhotoPickerNapi::SelectOptionsInit(napi_env env, napi_value exports)
-{
+napi_value PhotoPickerNapi::SelectOptionsInit(napi_env env, napi_value exports) {
     const vector<napi_property_descriptor> staticProps = {
         DECLARE_NAPI_PROPERTY("PhotoViewMIMETypes", CreateMIMETypesEnum(env)),
     };
@@ -275,8 +269,7 @@ napi_value PhotoPickerNapi::SelectOptionsInit(napi_env env, napi_value exports)
     return exports;
 }
 
-napi_value SelectResultNapi::SelectResultInit(napi_env env, napi_value exports)
-{
+napi_value SelectResultNapi::SelectResultInit(napi_env env, napi_value exports) {
     NapiClassInfo info = {
         PHOTO_SELECT_RESULT_CLASS_NAME,
         &sSelectResultConstructor_,
@@ -288,8 +281,7 @@ napi_value SelectResultNapi::SelectResultInit(napi_env env, napi_value exports)
     return exports;
 }
 
-napi_value PhotoPickerNapi::PhotoPickerInit(napi_env env, napi_value exports)
-{
+napi_value PhotoPickerNapi::PhotoPickerInit(napi_env env, napi_value exports) {
     NapiClassInfo info = {
         PHOTO_PICKER_NAPI_CLASS_NAME,
         &sPhotoViewPickerConstructor_,

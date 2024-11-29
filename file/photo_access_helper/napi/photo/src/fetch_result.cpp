@@ -460,8 +460,8 @@ void FetchResult<T>::SetPhotoAlbum(PhotoAlbum* photoAlbumData, shared_ptr<Native
     photoAlbumData->SetAlbumId(albumId);
     photoAlbumData->SetPhotoAlbumType(PhotoAlbumType::USER);
     photoAlbumData->SetPhotoAlbumSubType(PhotoAlbumSubType::USER_GENERIC);
-    photoAlbumData->SetAlbumLocalIdentifier(get<string>(
-        GetRowValFromColumn(PhotoAlbumColumns::ALBUM_LOCAL_IDENTIFIER, TYPE_STRING, resultSet)));
+    photoAlbumData->SetAlbumLocalIdentifier(get<string>(GetRowValFromColumn(PhotoAlbumColumns::ALBUM_LOCAL_IDENTIFIER, TYPE_STRING,
+        resultSet)));
     photoAlbumData->SetAlbumName(get<string>(GetRowValFromColumn(PhotoAlbumColumns::ALBUM_NAME, TYPE_STRING,
         resultSet)));
 

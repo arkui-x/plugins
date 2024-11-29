@@ -41,6 +41,9 @@ public:
     ErrorCode RequestEnableNotification();
     bool isHighVersion();
     bool isGranted();
+
+private:
+    // void JavaWifiLinkedInfoToOh(const std::string& event, WifiLinkedInfo& info);
 };
 } // namespace Notification
 } // namespace OHOS

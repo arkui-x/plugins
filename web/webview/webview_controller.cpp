@@ -18,8 +18,7 @@
 #include "webview_controller.h"
 
 namespace OHOS::Plugin {
-thread_local std::vector<std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>>
-    WebviewController::asyncCallbackInfoContainer_;
+thread_local std::vector<std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>> WebviewController::asyncCallbackInfoContainer_;
 
 void WebviewController::OnReceiveValue(const std::string& result, int32_t asyncCallbackInfoId)
 {

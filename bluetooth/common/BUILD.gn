@@ -1,0 +1,283 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//plugins/bluetooth/bluetooth.gni")
+
+MockSrc = [
+  "mock/ipc_object_stub.cpp",
+  "mock/iremote_broker.cpp",
+  "mock/iremote_object.cpp",
+  "mock/message_option.cpp",
+  "mock/message_parcel.cpp",
+  "mock/mock_iservice_registry.cpp",
+  "mock/peer_holder.cpp",
+  "mock/system_ability_load_callback_stub.cpp",
+]
+
+FwkCrossPlatformSrc = [
+  "$bluetooth_inner_root/ipc/src/bluetooth_a2dp_src_observer_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_a2dp_src_proxy.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_avrcp_tg_observer_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_avrcp_tg_proxy.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_ble_advertise_callback_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_ble_advertiser_proxy.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_ble_central_manager_callback_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_ble_central_manager_proxy.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_ble_peripheral_observer_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_gatt_client_callback_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_gatt_client_proxy.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_gatt_server_callback_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_gatt_server_proxy.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_host_observer_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_host_proxy.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_opp_observer_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_remote_device_observer_stub.cpp",
+  "$bluetooth_inner_root/ipc/src/bluetooth_resource_manager_observer_stub.cpp",
+  "$bluetooth_inner_root/src/bluetooth_a2dp_src.cpp",
+  "$bluetooth_inner_root/src/bluetooth_avrcp_tg.cpp",
+  "$bluetooth_inner_root/src/bluetooth_ble_advertiser.cpp",
+  "$bluetooth_inner_root/src/bluetooth_ble_central_manager.cpp",
+  "$bluetooth_inner_root/src/bluetooth_device_class.cpp",
+  "$bluetooth_inner_root/src/bluetooth_gatt_characteristic.cpp",
+  "$bluetooth_inner_root/src/bluetooth_gatt_client.cpp",
+  "$bluetooth_inner_root/src/bluetooth_gatt_descriptor.cpp",
+  "$bluetooth_inner_root/src/bluetooth_gatt_server.cpp",
+  "$bluetooth_inner_root/src/bluetooth_gatt_service.cpp",
+  "$bluetooth_inner_root/src/bluetooth_host.cpp",
+  "$bluetooth_inner_root/src/bluetooth_host_load_callback.cpp",
+  "$bluetooth_inner_root/src/bluetooth_opp.cpp",
+  "$bluetooth_inner_root/src/bluetooth_remote_device.cpp",
+  "$bluetooth_inner_root/src/bluetooth_utils.cpp",
+  "$bluetooth_inner_root/src/uuid.cpp",
+  "$bluetooth_napi_root/src/common/napi_async_callback.cpp",
+  "$bluetooth_napi_root/src/common/napi_async_work.cpp",
+  "$bluetooth_napi_root/src/common/napi_bluetooth_error.cpp",
+  "$bluetooth_napi_root/src/common/napi_bluetooth_event.cpp",
+  "$bluetooth_napi_root/src/common/napi_bluetooth_utils.cpp",
+  "$bluetooth_napi_root/src/common/napi_event_subscribe_module.cpp",
+  "$bluetooth_napi_root/src/common/napi_native_object.cpp",
+  "$bluetooth_napi_root/src/parser/napi_parser_utils.cpp",
+  "//plugins/bluetooth/common/mock/napi_timer.cpp",
+  "//plugins/bluetooth/common/mock/bluetooth_switch_module.cpp",
+  "//plugins/bluetooth/common/src/bluetooth_crossplatform_manager.cpp",
+  "//plugins/bluetooth/common/src/bluetooth_profile_manager.cpp",
+]
+
+IpcCrossPlatformSrc = [
+  "$bluetooth_inner_root/ipc/common/avrcp_media.cpp",
+  "$bluetooth_inner_root/ipc/common/ble_parcel_data.cpp",
+  "$bluetooth_inner_root/ipc/common/ble_service_data.cpp",
+  "$bluetooth_inner_root/ipc/common/bt_uuid.cpp",
+  "$bluetooth_inner_root/ipc/common/gatt_data.cpp",
+  "$bluetooth_inner_root/ipc/common/hands_free_unit_calls.cpp",
+  "$bluetooth_inner_root/ipc/common/opp_transfer_information.cpp",
+  "$bluetooth_inner_root/ipc/common/raw_address.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_a2dp_a2dpCodecInfo.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_a2dp_a2dpCodecStatus.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_avrcp_meItem.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_avrcp_mpItem.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_ble_advertiser_data.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_ble_advertiser_settings.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_ble_scan_filter.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_ble_scan_result.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_ble_scan_settings.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_bt_uuid.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_device_battery_info.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_characteristic_parcel.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_descriptor_parcel.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_device.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_service_parcel.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_hfp_hf_call.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_opp_transfer_information.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_phone_state.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_raw_address.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_remote_device_info.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_sensing_info.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_socket_coc.cpp",
+  "$bluetooth_inner_root/ipc/parcel/parcel_bt_uuid.cpp",
+]
+
+config("bt_common_public_config") {
+  include_dirs = [
+    "$bluetooth_inner_root/include",
+    "$bluetooth_inner_root/ipc/common",
+    "$bluetooth_inner_root/ipc/interface",
+    "$bluetooth_inner_root/ipc/parcel",
+  ]
+}
+
+config("bt_framework_public_config") {
+  visibility = [ "*" ]
+  include_dirs = [
+    "$bluetooth_inner_root/include",
+    "$bluetooth_inner_root/ipc/include",
+    "$bluetooth_napi_root/include",
+    "$subsystem_root/bluetooth/interfaces/inner_api/include",
+    "$subsystem_root/bluetooth/interfaces/inner_api/include/c_header",
+  ]
+}
+
+ohos_source_set("bt_mock") {
+  sources = MockSrc
+  deps = [ "$c_utils_root/base:utilsbase" ]
+
+  if (is_android) {
+    defines = [ "ANDROID_PLATFORM" ]
+  } else if (is_ios) {
+    defines = [ "IOS_PLATFORM" ]
+  }
+  part_name = "bluetooth"
+  subsystem_name = "plugins"
+}
+
+ohos_source_set("bt_ipc_crossplatform") {
+  public_configs = [ ":bt_common_public_config" ]
+
+  include_dirs = [ "//plugins/bluetooth/common/mock" ]
+
+  sources = IpcCrossPlatformSrc
+
+  deps = [
+    ":bt_mock",
+    "$c_utils_root/base:utilsbase",
+    "$hilog_root/interfaces/native/innerkits:libhilog_${target_os}",
+  ]
+
+  if (is_android) {
+    defines = [ "ANDROID_PLATFORM" ]
+  } else if (is_ios) {
+    defines = [ "IOS_PLATFORM" ]
+    deps += [ "$ace_root/adapter/${target_os}/build:libarkui_${target_os}" ]
+  }
+
+  subsystem_name = "plugins"
+  part_name = "bluetooth"
+}
+
+ohos_source_set("bt_framework_crossplatform") {
+  public_configs = [ ":bt_framework_public_config" ]
+
+  include_dirs = [
+    "$c_utils_root/base/include",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
+    "//plugins/bluetooth/common/include",
+    "//plugins/bluetooth/common/mock",
+  ]
+
+  sources = FwkCrossPlatformSrc
+
+  deps = [
+    ":bt_ipc_crossplatform",
+    "$hilog_root/interfaces/native/innerkits:libhilog_${target_os}",
+    "//plugins/libs/napi:napi_${target_os}",
+  ]
+
+  defines = []
+  if (target_cpu == "arm64") {
+    defines += [ "_ARM64_" ]
+  }
+  if (is_android) {
+    include_dirs += [
+      "//plugins/bluetooth/impl/android/java/jni",
+      "//plugins/bluetooth/impl/android/include",
+      "//third_party/json/include",
+    ]
+    deps += [ "//plugins/bluetooth/impl/android:bluetooth_manager_android" ]
+    defines += [ "ANDROID_PLATFORM" ]
+  } else if (is_ios) {
+    include_dirs += [ "//plugins/bluetooth/impl/ios/include" ]
+    deps += [
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
+      "//plugins/bluetooth/impl/ios:bluetooth_manager_ios",
+    ]
+    defines += [ "IOS_PLATFORM" ]
+  }
+
+  frameworks = [
+    "SystemConfiguration.framework",
+    "CoreBluetooth.framework",
+    "Foundation.framework",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "bluetooth"
+}
+
+template("bt_common_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    deps = [ ":bt_framework_crossplatform" ]
+
+    if (defined(config.libace_target)) {
+      deps += [ config.libace_target ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "bluetooth"
+  }
+}
+
+foreach(item, ace_platforms) {
+  bt_common_static("bt_common_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+
+  ohos_shared_library("bt_common_" + item.name) {
+    platform = item.name
+
+    public_configs = [ ":bt_framework_public_config" ]
+
+    deps = [ ":bt_common_static_${platform}" ]
+
+    if (platform == "ios") {
+      ldflags = [
+        "-Wl",
+        "-install_name",
+        "@rpath/libbluetooth_common.framework/libbluetooth_common",
+      ]
+      output_name = "bluetooth_common"
+    } else {
+      output_name = "libbluetooth_common"
+    }
+
+    subsystem_name = "plugins"
+    part_name = "bluetooth"
+  }
+
+  if (item.name == "ios") {
+    ohos_combine_darwin_framework("libbluetooth_common") {
+      deps = [ ":bt_common_ios" ]
+      subsystem_name = "plugins"
+      part_name = "bluetooth"
+    }
+  }
+}

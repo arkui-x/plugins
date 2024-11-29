@@ -26,7 +26,7 @@ AudioRoutingManager *AudioRoutingManager::GetInstance()
 }
 
 int32_t AudioRoutingManager::GetPreferredOutputDeviceForRendererInfo(AudioRendererInfo rendererInfo,
-    std::vector<sptr<AudioDeviceDescriptor>> &desc)
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> &desc)
 {
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     CHECK_AND_RETURN_RET_LOG(managerImpl != nullptr, ERROR, "managerImpl == nullptr.");
@@ -34,7 +34,7 @@ int32_t AudioRoutingManager::GetPreferredOutputDeviceForRendererInfo(AudioRender
 }
 
 int32_t AudioRoutingManager::GetPreferredInputDeviceForCapturerInfo(AudioCapturerInfo captureInfo,
-    std::vector<sptr<AudioDeviceDescriptor>> &desc)
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> &desc)
 {
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     CHECK_AND_RETURN_RET_LOG(managerImpl != nullptr, ERROR, "managerImpl == nullptr.");
@@ -59,14 +59,16 @@ int32_t AudioRoutingManager::SetPreferredInputDeviceChangeCallback(AudioCapturer
     return [managerImpl setPreferredInputDeviceChangeCallback:callback];
 }
 
-int32_t AudioRoutingManager::UnsetPreferredOutputDeviceChangeCallback()
+int32_t AudioRoutingManager::UnsetPreferredOutputDeviceChangeCallback(
+    const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback> &callback)
 {
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     CHECK_AND_RETURN_RET_LOG(managerImpl != nullptr, ERROR, "managerImpl == nullptr.");
     return [managerImpl unsetPreferredOutputDeviceChangeCallback];
 }
 
-int32_t AudioRoutingManager::UnsetPreferredInputDeviceChangeCallback()
+int32_t AudioRoutingManager::UnsetPreferredInputDeviceChangeCallback(
+    const std::shared_ptr<AudioPreferredInputDeviceChangeCallback> &callback)
 {
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     CHECK_AND_RETURN_RET_LOG(managerImpl != nullptr, ERROR, "managerImpl == nullptr.");
@@ -80,10 +82,10 @@ vector<sptr<MicrophoneDescriptor>> AudioRoutingManager::GetAvailableMicrophones(
     return micDescs;
 }
 
-std::vector<std::unique_ptr<AudioDeviceDescriptor>> AudioRoutingManager::GetAvailableDevices(AudioDeviceUsage usage)
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioRoutingManager::GetAvailableDevices(AudioDeviceUsage usage)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
-    std::vector<std::unique_ptr<AudioDeviceDescriptor>> availableDescs;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> availableDescs;
     return availableDescs;
 }
 } // namespace AudioStandard

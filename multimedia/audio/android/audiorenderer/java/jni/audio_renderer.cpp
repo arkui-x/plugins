@@ -103,7 +103,7 @@ int32_t AudioRendererPrivate::CheckParams(const AudioRendererOptions& rendererOp
         return ERR_NOT_SUPPORTED;
     }
     if (!IsPlaybackChannelRelatedInfoValid(
-        rendererOptions.streamInfo.channels, rendererOptions.streamInfo.channelLayout)) {
+            rendererOptions.streamInfo.channels, rendererOptions.streamInfo.channelLayout)) {
         AUDIO_ERR_LOG("Unsupported channels or channelLayout");
         return ERR_NOT_SUPPORTED;
     }
@@ -136,6 +136,12 @@ int32_t AudioRendererPrivate::Write(uint8_t* buffer, size_t bufferSize)
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, 0, "rendererImpl_ == nullptr.");
 
     return rendererImpl_->Write(buffer, bufferSize);
+}
+
+int32_t AudioRendererPrivate::SetRenderMode(AudioRenderMode renderMode)
+{
+    CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
+    return rendererImpl_->SetRenderMode(renderMode);
 }
 
 int32_t AudioRendererPrivate::SetRendererWriteCallback(const std::shared_ptr<AudioRendererWriteCallback>& callback)
@@ -181,7 +187,7 @@ bool AudioRendererPrivate::Stop()
     return rendererImpl_->Stop();
 }
 
-bool AudioRendererPrivate::Release() const
+bool AudioRendererPrivate::Release()
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, false, "rendererImpl_ == nullptr.");
 
@@ -244,7 +250,7 @@ float AudioRendererPrivate::GetMaxStreamVolume() const
     return rendererImpl_->GetMaxStreamVolume();
 }
 
-int32_t AudioRendererPrivate::GetCurrentOutputDevices(DeviceInfo& deviceInfo) const
+int32_t AudioRendererPrivate::GetCurrentOutputDevices(AudioDeviceDescriptor& deviceInfo) const
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
 
@@ -315,7 +321,7 @@ void AudioRendererPrivate::UnsetRendererPeriodPositionCallback()
 }
 
 int32_t AudioRendererPrivate::RegisterOutputDeviceChangeWithInfoCallback(
-    const std::shared_ptr<AudioRendererOutputDeviceChangeCallback> &callback)
+        const std::shared_ptr<AudioRendererOutputDeviceChangeCallback> &callback)
 {
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM, "callback is null");
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
@@ -354,7 +360,7 @@ bool AudioRendererPrivate::IsRendererChannelValid(uint8_t channel)
 bool AudioRendererPrivate::IsEncodingTypeValid(uint8_t encodingType)
 {
     bool isValidEncodingType = (find(AUDIO_SUPPORTED_ENCODING_TYPES.begin(), AUDIO_SUPPORTED_ENCODING_TYPES.end(),
-        encodingType) != AUDIO_SUPPORTED_ENCODING_TYPES.end());
+                                    encodingType) != AUDIO_SUPPORTED_ENCODING_TYPES.end());
     AUDIO_DEBUG_LOG("AudioRendererPrivate: IsEncodingTypeValid: %{public}s", isValidEncodingType ? "true" : "false");
     return isValidEncodingType;
 }
@@ -362,7 +368,7 @@ bool AudioRendererPrivate::IsEncodingTypeValid(uint8_t encodingType)
 bool AudioRendererPrivate::IsSamplingRateValid(uint32_t samplingRate)
 {
     bool isValidSamplingRate = (find(AUDIO_SUPPORTED_SAMPLING_RATES.begin(), AUDIO_SUPPORTED_SAMPLING_RATES.end(),
-        samplingRate) != AUDIO_SUPPORTED_SAMPLING_RATES.end());
+                                    samplingRate) != AUDIO_SUPPORTED_SAMPLING_RATES.end());
     AUDIO_DEBUG_LOG("AudioRendererPrivate: IsSamplingRateValid: %{public}s", isValidSamplingRate ? "true" : "false");
     return isValidSamplingRate;
 }

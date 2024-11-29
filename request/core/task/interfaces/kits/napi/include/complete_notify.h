@@ -19,12 +19,14 @@
 #include "js_notify.h"
 
 namespace OHOS::Plugin::Request {
-class CompleteNotify : public JsNotify {
+class CompleteNotify : public JsNotify
+{
 public:
     explicit CompleteNotify(napi_env env, napi_value cb, Version version, Action action);
     virtual ~CompleteNotify() = default;
 
     void HandleCallback(napi_env env, napi_value cb, const std::string &param) override;
+
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_COMPLETE_NOTIFY_H

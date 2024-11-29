@@ -28,7 +28,7 @@ std::optional<RdbUtilsResult> RdbUtilsIos::ToPredicates(const DataShareAbsPredic
     const auto &operations = predicates.GetOperationList();
     for (const auto &oper : operations) {
         if (oper.operation >= 0 && oper.operation < LAST_TYPE) {
-            if ((*HANDLERS[oper.operation])(oper, rdbUtilsResult)) {
+            if((*HANDLERS[oper.operation])(oper, rdbUtilsResult)) {
                 return std::nullopt;
             }
         }

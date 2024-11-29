@@ -111,7 +111,7 @@ bool AudioCapturerPrivate::IsCapturerChannelValid(uint8_t channel)
 bool AudioCapturerPrivate::IsEncodingTypeValid(uint8_t encodingType)
 {
     bool isValidEncodingType = (find(AUDIO_SUPPORTED_ENCODING_TYPES.begin(), AUDIO_SUPPORTED_ENCODING_TYPES.end(),
-        encodingType) != AUDIO_SUPPORTED_ENCODING_TYPES.end());
+                                    encodingType) != AUDIO_SUPPORTED_ENCODING_TYPES.end());
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::IsEncodingTypeValid: %{public}s", isValidEncodingType ? "true" : "false");
     return isValidEncodingType;
 }
@@ -119,7 +119,7 @@ bool AudioCapturerPrivate::IsEncodingTypeValid(uint8_t encodingType)
 bool AudioCapturerPrivate::IsSamplingRateValid(uint32_t samplingRate)
 {
     bool isValidSamplingRate = (find(AUDIO_SUPPORTED_SAMPLING_RATES.begin(), AUDIO_SUPPORTED_SAMPLING_RATES.end(),
-        samplingRate) != AUDIO_SUPPORTED_SAMPLING_RATES.end());
+                                    samplingRate) != AUDIO_SUPPORTED_SAMPLING_RATES.end());
     AUDIO_DEBUG_LOG("AudioCapturerPrivate: IsSamplingRateValid: %{public}s", isValidSamplingRate ? "true" : "false");
     return isValidSamplingRate;
 }
@@ -284,7 +284,7 @@ int32_t AudioCapturerPrivate::Enqueue(const BufferDesc& bufDesc) const
     return capturerImpl_->Enqueue(bufDesc);
 }
 
-int32_t AudioCapturerPrivate::GetCurrentInputDevices(DeviceInfo& deviceInfo) const
+int32_t AudioCapturerPrivate::GetCurrentInputDevices(AudioDeviceDescriptor& deviceInfo) const
 {
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::GetCurrentInputDevices");
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, ERROR, "capturerImpl_ == nullptr.");

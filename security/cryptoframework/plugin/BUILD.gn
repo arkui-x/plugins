@@ -18,10 +18,10 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 
 config("plugin_config") {
   include_dirs = [
-    "//base/security/crypto_framework/interfaces/innerkits/algorithm_parameter",
-    "//base/security/crypto_framework/interfaces/innerkits/common",
-    "//base/security/crypto_framework/interfaces/innerkits/crypto_operation",
-    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//base/security/crypto_framework/interfaces/inner_api/algorithm_parameter",
+    "//base/security/crypto_framework/interfaces/inner_api/common",
+    "//base/security/crypto_framework/interfaces/inner_api/crypto_operation",
+    "//base/security/crypto_framework/interfaces/inner_api/key",
     "//base/security/crypto_framework/frameworks/spi",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   ]
@@ -47,9 +47,9 @@ ohos_source_set("crypto_openssl_plugin_lib") {
   ]
 
   deps = [
-    "//plugins/security/cryptoframework/common:crypto_plugin_common",
-    "//plugins/libs/securec:sec_${target_os}",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+    "//plugins/libs/securec:sec_${target_os}",
+    "//plugins/security/cryptoframework/common:crypto_plugin_common",
     "//third_party/openssl:libcrypto_shared",
     "//third_party/openssl:libssl_shared",
   ]

@@ -49,7 +49,7 @@ public:
     static float GetMinVolume(long rendererPtr);
     static float GetMaxVolume(long rendererPtr);
     static uint32_t GetUnderrunCount(long rendererPtr);
-    static int32_t GetCurrentOutputDevices(long rendererPtr, DeviceInfo& deviceInfo);
+    static int32_t GetCurrentOutputDevices(long rendererPtr, AudioDeviceDescriptor& deviceInfo);
     static int32_t GetAudioSessionId(long rendererPtr, uint32_t& sessionID);
     static int32_t GetRendererInfo(long rendererPtr, AudioRendererInfo& rendererInfo);
     static int32_t GetStreamInfo(long rendererPtr, AudioStreamInfo& streamInfo);

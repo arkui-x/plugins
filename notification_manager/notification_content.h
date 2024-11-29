@@ -98,6 +98,14 @@ public:
      */
     explicit NotificationContent(const std::shared_ptr<NotificationMultiLineContent> &multiLineContent);
 
+    // /**
+    //  * @brief A constructor used to create a NotificationLiveViewContent instance (obtained by calling
+    //  * GetNotificationContent()) and set the content type to NotificationContent::Type::LIVE_VIEW (obtained by calling
+    //  * GetContentType()).
+    //  *
+    //  * @param liveViewContent Indicates the NotificationMediaContent object.
+    //  */
+    // explicit NotificationContent(const std::shared_ptr<NotificationLiveViewContent> &liveViewContent);
     virtual ~NotificationContent();
 
     /**

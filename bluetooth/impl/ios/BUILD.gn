@@ -1,0 +1,76 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//plugins/bluetooth/bluetooth.gni")
+
+ohos_source_set("bluetooth_manager_ios") {
+  include_dirs = [
+    "$c_utils_root/base/include",
+    "$bluetooth_inner_root/ipc/common",
+    "$bluetooth_inner_root/ipc/interface",
+    "$bluetooth_inner_root/ipc/parcel",
+    "$bluetooth_inner_root/include",
+    "$subsystem_root/bluetooth/interfaces/inner_api/include",
+    "//plugins/bluetooth/common/impl/ios",
+    "//plugins/bluetooth/common/include",
+    "//plugins/bluetooth/common/ipc_core",
+    "//plugins/bluetooth/common/mock",
+    "//plugins/bluetooth/impl/ios/include",
+  ]
+
+  sources = [
+    "BluetoothA2dp.mm",
+    "BluetoothCentralManager.mm",
+    "BluetoothPeripheralManager.mm",
+    "BluetoothUntils.mm",
+    "bluetooth_a2dp_impl.mm",
+    "bluetooth_ble_advertiser_impl.mm",
+    "bluetooth_ble_centralmanager_impl.mm",
+    "bluetooth_gatt_client_impl.mm",
+    "bluetooth_gatt_server_impl.mm",
+    "bluetooth_host_impl.mm",
+  ]
+
+  cflags_objc = [
+    "-fvisibility=hidden",
+    "-fobjc-weak",
+    "-fobjc-arc",
+    "-O0",
+  ]
+
+  frameworks = [
+    "SystemConfiguration.framework",
+    "CoreBluetooth.framework",
+    "Foundation.framework",
+    "UIKit.framework",
+    "AVFoundation.framework",
+    "AVFAudio.framework",
+  ]
+
+  defines = [ "IOS_PLATFORM" ]
+
+  cflags_objcc = cflags_objc
+
+  if (target_cpu == "arm64") {
+    defines += [ "_ARM64_" ]
+  }
+
+  deps = [
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_ios",
+    "//commonlibrary/c_utils/base:utilsbase",
+    "//plugins/libs/napi:napi_ios",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "bluetooth"
+}

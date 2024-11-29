@@ -44,8 +44,8 @@ static napi_value PhotoAccessHelperExport(napi_env env, napi_value exports)
 #ifdef ANDROID_PLATFORM
 static void PhotoAccessHelperJniRegister()
 {
-    const char photoPluginName[] = "ohos.ace.plugin.photoaccesshelper.PhotoPlugin";
-    ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::PhotoPluginJni::Register, photoPluginName);
+   const char photoPluginName[] = "ohos.ace.plugin.photoaccesshelper.PhotoPlugin";
+   ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::PhotoPluginJni::Register, photoPluginName);
 }
 #endif
 

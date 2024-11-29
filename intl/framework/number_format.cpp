@@ -448,6 +448,7 @@ void NumberFormat::SetPrecisionWithByte(double number, const std::string& finalU
         FractionDigits = 2;
     // 10 is the threshold between different decimal
     } else if (number < 10) {
+
         if (unitUsage == "size-shortfile-byte") {
             FractionDigits = 1;
         } else {

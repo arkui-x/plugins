@@ -162,7 +162,7 @@ std::string MethodResult::GetErrorMessage() const
 
 void MethodResult::ParseJSMethodResult(napi_env env, napi_value result)
 {
-    NapiRawValue rawValue { .env = env, .value = result,
+    NapiRawValue rawValue { .env = env, .value = result, 
         .errorCode = errorCode_, .errorMessage = errcodeMessage_ };
     auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
     result_ = encoded->value;

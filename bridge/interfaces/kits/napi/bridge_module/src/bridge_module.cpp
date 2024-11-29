@@ -47,7 +47,7 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
     napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
 
-    if ((argc != PluginUtilsNApi::ARG_NUM_1 && argc != PluginUtilsNApi::ARG_NUM_2)
+    if ((argc != PluginUtilsNApi::ARG_NUM_1 && argc != PluginUtilsNApi::ARG_NUM_2) 
         || PluginUtilsNApi::GetValueType(env, argv[PluginUtilsNApi::ARG_NUM_0]) != napi_string) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
@@ -139,7 +139,7 @@ void BridgeModule::CallMethodInner(napi_env env, napi_value thisVal, std::shared
         methodData->SetBridgeName(bridge->GetBridgeName());
         code = bridge->CallMethod(methodData->GetMethodName(), methodData);
         LOGI("CallMethodInner:success, BridgeName is %{public}s, MethodName is %{public}s,",
-            bridge->GetBridgeName().c_str(), methodData->GetMethodName().c_str());
+        bridge->GetBridgeName().c_str(), methodData->GetMethodName().c_str());
     } else {
         code = ErrorCode::BRIDGE_INVALID;
         LOGE("CallMethodInner:Failed to obtain the Bridge object.");
@@ -193,7 +193,7 @@ void BridgeModule::SendMessageInner(napi_env env, napi_value thisVal, std::share
     if (bridge != nullptr) {
         callback->SetBridgeName(bridge->GetBridgeName());
         if (bridge->GetCodecType() == CodecType::JSON_CODEC) {
-            code = bridge->SendMessage(callback->GetMethodParamName(), callback);
+            code = bridge->SendMessage(callback->GetMethodParamName(), callback); 
         } else if (bridge->GetCodecType() == CodecType::BINARY_CODEC) {
             const auto& params = callback->GetMethodParamNameBinary();
             code = bridge->SendMessageBinary(params, callback);

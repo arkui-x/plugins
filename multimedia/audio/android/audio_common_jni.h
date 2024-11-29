@@ -19,6 +19,7 @@
 #include <jni.h>
 
 #include "audio_device_info.h"
+#include "audio_device_descriptor.h"
 
 namespace OHOS::Plugin {
 using namespace OHOS::AudioStandard;
@@ -26,7 +27,7 @@ class AudioCommonJni final {
 public:
     AudioCommonJni() = delete;
     ~AudioCommonJni() = delete;
-    static DeviceInfo GetDeviceInfo(jobject jDeviceInfo);
+    static AudioDeviceDescriptor GetDeviceInfo(jobject jDeviceInfo);
 
 private:
     static DeviceRole GetDeviceRole(JNIEnv* env, jclass jDeviceInfoCls, jobject jDeviceInfo);

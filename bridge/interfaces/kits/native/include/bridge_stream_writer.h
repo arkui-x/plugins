@@ -68,5 +68,5 @@ public:
 private:
     std::vector<uint8_t>* bytes_;
 };
-} // OHOS::Plugin::Bridge
+} // OHOS::Plugin::Bridge 
 #endif

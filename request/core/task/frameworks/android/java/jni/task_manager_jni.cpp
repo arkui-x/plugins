@@ -199,8 +199,7 @@ void TaskManagerJni::NativeInit(JNIEnv *env, jobject jobj)
     g_pluginClass.reportTaskInfo = env->GetMethodID(cls, METHOD_REPORT_INFO, SIGNATURE_REPORT_INFO);
     CHECK_NULL_VOID(g_pluginClass.reportTaskInfo);
 
-    g_pluginClass.getDefaultStoragePath = env->GetMethodID(cls,
-        METHOD_REPORT_STORAGE_PATH, SIGNATURE_REPORT_STORAGE_PATH);
+    g_pluginClass.getDefaultStoragePath = env->GetMethodID(cls, METHOD_REPORT_STORAGE_PATH, SIGNATURE_REPORT_STORAGE_PATH);
     CHECK_NULL_VOID(g_pluginClass.getDefaultStoragePath);
     env->DeleteLocalRef(cls);
 }
@@ -348,13 +347,14 @@ int32_t TaskManagerJni::Remove(int64_t taskId)
     CHECK_NULL_RETURN(env, E_SERVICE_ERROR);
     CHECK_NULL_RETURN(g_pluginClass.globalRef, E_SERVICE_ERROR);
     CHECK_NULL_RETURN(g_pluginClass.removeTask, E_SERVICE_ERROR);
-    if (env->CallLongMethod(g_pluginClass.globalRef, g_pluginClass.removeTask, taskId) != 0) {
+    if (env->CallLongMethod(g_pluginClass.globalRef, g_pluginClass.removeTask, taskId) != 0) {  
         if (env->ExceptionCheck()) {
             REQUEST_HILOGE("remove task has exception");
             env->ExceptionDescribe();
             env->ExceptionClear();
             return E_SERVICE_ERROR;
-        } else {
+        }
+        else{
             return E_TASK_NOT_FOUND;
         }
     }

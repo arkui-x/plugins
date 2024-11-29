@@ -36,8 +36,7 @@ void UserFileClient::Init(napi_env env, napi_callback_info info)
     plugin = PhotoClient::GetInstance();
 }
 
-void UserFileClient::startPhotoPicker(std::string &type)
-{
+void UserFileClient::startPhotoPicker(std::string &type) {
     if (plugin != nullptr) {
         plugin->startPhotoPicker(type);
     }

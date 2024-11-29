@@ -55,7 +55,7 @@ public:
     int32_t GetStreamInfo(AudioStreamInfo& streamInfo) const;
     int32_t GetAudioStreamId(uint32_t& sessionID) const;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const;
-    int32_t GetCurrentInputDevices(DeviceInfo& deviceInfo) const;
+    int32_t GetCurrentInputDevices(AudioDeviceDescriptor& deviceInfo) const;
     int32_t GetCurrentCapturerChangeInfo(AudioCapturerChangeInfo& changeInfo) const;
     int32_t SetAudioCapturerInfoChangeCallback(const std::shared_ptr<AudioCapturerInfoChangeCallback>& callback);
     int32_t RemoveAudioCapturerInfoChangeCallback(const std::shared_ptr<AudioCapturerInfoChangeCallback>& callback);

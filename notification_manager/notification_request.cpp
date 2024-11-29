@@ -195,6 +195,7 @@ bool NotificationRequest::ToJson(nlohmann::json &jsonObject) const
     jsonObject["isCountdown"]      = IsCountdownTimer();
     jsonObject["badgeNumber"]      = GetBadgeNumber();
     
+
     if (!ConvertObjectsToJson(jsonObject)) {
         LOGE("Cannot convert objects to JSON");
         return false;

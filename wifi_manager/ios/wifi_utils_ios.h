@@ -35,6 +35,7 @@ using LinkedInfo = OHOS::Plugin::WifiLinkedInfo;
 
 /**
  * Get WiFi switch status
+ * 
  * @param info Obtained current connection wifi information
  * @return Result and error code
  */
@@ -42,6 +43,7 @@ using LinkedInfo = OHOS::Plugin::WifiLinkedInfo;
 
 /**
  * Get WiFi switch status
+ * 
  * @param bActive Obtained switch status
  * @return Result and error code
  */
@@ -49,6 +51,7 @@ using LinkedInfo = OHOS::Plugin::WifiLinkedInfo;
 
 /**
  * Get WiFi connection status
+ * 
  * @param isConnected Obtained WiFi connection status
  * @return Result and error code
  */
@@ -56,12 +59,14 @@ using LinkedInfo = OHOS::Plugin::WifiLinkedInfo;
 
 /**
  * lsnrctl start
+ * 
  * @param key Type of listening wifiStateChange、wifiConnectionChange
  */
 - (void)onChange:(NSString *)key;
 
 /**
  * Cancel listening
+ * 
  * @param key Type of listening wifiStateChange、wifiConnectionChange
  */
 - (void)offChange:(NSString *)key;

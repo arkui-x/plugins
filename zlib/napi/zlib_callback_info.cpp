@@ -63,6 +63,7 @@ int32_t ZlibCallbackInfo::ExcuteWork(uv_loop_s* loop, uv_work_t* work)
             if (asyncCallbackInfo->deliverErrcode) {
                 if (asyncCallbackInfo->callbackResult == ERR_OK) {
                     CHKRV_SCOPE(asyncCallbackInfo->env, napi_get_null(asyncCallbackInfo->env, &result[0]), scope);
+
                 } else {
                     result[0] =
                         BusinessError::CreateCommonError(asyncCallbackInfo->env, asyncCallbackInfo->callbackResult, "");

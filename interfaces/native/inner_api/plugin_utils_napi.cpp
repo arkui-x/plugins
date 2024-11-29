@@ -155,20 +155,20 @@ bool PluginUtilsNApi::GetArrayBuffer(napi_env env, napi_value value, std::vector
 
 napi_value PluginUtilsNApi::CreateArrayBuffer(napi_env env, const std::vector<uint8_t>& value)
 {
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env, &scope);
-    napi_value arrayBuffer = nullptr;
-    size_t bufferSize = value.size();
-    void *data = nullptr;
-    napi_create_arraybuffer(env, bufferSize, &data, &arrayBuffer);
+   napi_handle_scope scope = nullptr;
+   napi_open_handle_scope(env, &scope);
+   napi_value arrayBuffer = nullptr;
+   size_t bufferSize = value.size();
+   void *data = nullptr;
+   napi_create_arraybuffer(env, bufferSize, &data, &arrayBuffer);
     if (memcpy_s(data, bufferSize, reinterpret_cast<const uint8_t*>(value.data()), bufferSize) != EOK) {
-        napi_close_handle_scope(env, scope);
-        return nullptr;
-    }
-    napi_value result = nullptr;
-    napi_create_typedarray(env, napi_uint8_array, bufferSize, arrayBuffer, 0, &result);
-    napi_close_handle_scope(env, scope);
-    return result;
+       napi_close_handle_scope(env, scope);
+       return nullptr;
+   }
+   napi_value result = nullptr;
+   napi_create_typedarray(env, napi_uint8_array, bufferSize, arrayBuffer, 0, &result);
+   napi_close_handle_scope(env, scope);
+   return result;
 }
 
 std::string PluginUtilsNApi::GetStringFromValueUtf8(napi_env env, napi_value value)

@@ -162,8 +162,6 @@ napi_value ConnectionModule::InitConnectionModule(napi_env env, napi_value expor
     ModuleTemplate::DefineClass(env, exports, netConnectionFunctions, INTERFACE_NET_CONNECTION);
 
     InitProperties(env, exports);
-    NapiUtils::SetEnvValid(env);
-    napi_add_env_cleanup_hook(env, NapiUtils::HookForEnvCleanup, env);  
     return exports;
 }
 

@@ -81,7 +81,7 @@ void PhotoCursorJni::Register(JNIEnv* env, jobject jobj)
     CHECK_NULL_VOID(env);
     g_pluginClass.globalRef = env->NewGlobalRef(jobj);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
-    jclass cls = env->GetObjectClass(jobj);
+    jclass cls = env->GetObjectClass(jobj); 
     CHECK_NULL_VOID(cls);
 
     g_pluginClass.goTo = env->GetMethodID(cls, "move", "(I)Z");
@@ -152,8 +152,7 @@ static jstring StringToJavaString(JNIEnv* env, const std::string& string)
     return env->NewString(reinterpret_cast<const jchar*>(str.data()), str.length());
 }
 
-int PhotoCursorJni::GoTo(int offset)
-{
+int PhotoCursorJni::GoTo(int offset) {
     jboolean result = JNI_FALSE;
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.goTo)) {
@@ -276,8 +275,7 @@ int PhotoCursorJni::GetRowCount(int &count)
     return SUCCESS_CODE;
 }
 
-int PhotoCursorJni::GoToRow(int position)
-{
+int PhotoCursorJni::GoToRow(int position) {
     jboolean result = JNI_FALSE;
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.moveToPosition)) {
@@ -295,8 +293,7 @@ int PhotoCursorJni::GoToRow(int position)
     return result == JNI_FALSE ? INVILID_CODE : SUCCESS_CODE;
 }
 
-int PhotoCursorJni::GetAllColumnNames(std::vector<std::string> &columnNames)
-{
+int PhotoCursorJni::GetAllColumnNames(std::vector<std::string> &columnNames) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getColumnNames)) {
         LOGW("PhotoCursorJni Jni get none ptr error");
@@ -378,8 +375,7 @@ int PhotoCursorJni::GetColumnName(int columnIndex, std::string &columnName)
     return SUCCESS_CODE;
 }
 
-int PhotoCursorJni::GetBlob(int columnIndex, std::vector<uint8_t> &blob)
-{
+int PhotoCursorJni::GetBlob(int columnIndex, std::vector<uint8_t> &blob) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getBlob)) {
         LOGW("PhotoCursorJni Jni get none ptr error");
@@ -401,8 +397,7 @@ int PhotoCursorJni::GetBlob(int columnIndex, std::vector<uint8_t> &blob)
     return SUCCESS_CODE;
 }
 
-int PhotoCursorJni::GetString(int columnIndex, std::string &value)
-{
+int PhotoCursorJni::GetString(int columnIndex, std::string &value) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getString)) {
         LOGW("PhotoCursorJni Jni get none ptr error");
@@ -420,8 +415,7 @@ int PhotoCursorJni::GetString(int columnIndex, std::string &value)
     return SUCCESS_CODE;
 }
 
-int PhotoCursorJni::GetInt(int columnIndex, int &value)
-{
+int PhotoCursorJni::GetInt(int columnIndex, int &value) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getInt)) {
         LOGW("PhotoCursorJni Jni get none ptr error");
@@ -439,8 +433,7 @@ int PhotoCursorJni::GetInt(int columnIndex, int &value)
     return SUCCESS_CODE;
 }
 
-int PhotoCursorJni::GetLong(int columnIndex, int64_t &value)
-{
+int PhotoCursorJni::GetLong(int columnIndex, int64_t &value) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getLong)) {
         LOGW("PhotoCursorJni Jni get none ptr error");
@@ -458,8 +451,7 @@ int PhotoCursorJni::GetLong(int columnIndex, int64_t &value)
     return SUCCESS_CODE;
 }
 
-int PhotoCursorJni::GetDouble(int columnIndex, double &value)
-{
+int PhotoCursorJni::GetDouble(int columnIndex, double &value) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getDouble)) {
         LOGW("PhotoCursorJni Jni get none ptr error");

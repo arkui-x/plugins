@@ -36,6 +36,8 @@ public:
     void InitPlatformView() override;
 
     void UpdatePlatformViewLayout(const NG::SizeF& drawSize, const NG::OffsetF& offset) override;
+    void ExchangeBind() override;
+    void GetPlatformViewType(int32_t& type);
     void HandleTouchDown(const NG::OffsetF& offset) override;
     void HandleTouchUp(const NG::OffsetF& offset) override;
     void HandleTouchMove(const NG::OffsetF& offset) override;

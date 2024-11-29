@@ -304,6 +304,7 @@ napi_value HttpModuleExports::HttpRequest::On(napi_env env, napi_callback_info i
     ModuleTemplate::On(env, info,
         { ON_HEADERS_RECEIVE, ON_DATA_RECEIVE, ON_DATA_END, ON_DATA_RECEIVE_PROGRESS, ON_DATA_SEND_PROGRESS }, false);
     return ModuleTemplate::On(env, info, { ON_HEADER_RECEIVE }, true);
+
 }
 
 napi_value HttpModuleExports::HttpRequest::Once(napi_env env, napi_callback_info info)

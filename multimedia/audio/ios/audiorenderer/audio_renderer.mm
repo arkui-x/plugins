@@ -231,7 +231,7 @@ bool AudioRendererPrivate::Stop()
     return [rendererImpl_ stop];
 }
 
-bool AudioRendererPrivate::Release() const
+bool AudioRendererPrivate::Release()
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, false, "rendererImpl_ == nullptr.");
     return [rendererImpl_ releaseRenderer];
@@ -302,7 +302,8 @@ int32_t AudioRendererPrivate::SetChannelBlendMode(ChannelBlendMode blendMode)
 
 int32_t AudioRendererPrivate::SetRenderMode(AudioRenderMode renderMode)
 {
-    return SUCCESS;
+    CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
+    return [rendererImpl_ setRenderMode:renderMode];
 }
 
 AudioRenderMode AudioRendererPrivate::GetRenderMode() const
@@ -331,8 +332,6 @@ int32_t AudioRendererPrivate::GetBufQueueState(BufferQueueState &bufState) const
 {
     return ERR_NOT_SUPPORTED;
 }
-
-void AudioRendererPrivate::SetApplicationCachePath(const std::string cachePath) {}
 
 int32_t AudioRendererPrivate::SetRendererWriteCallback(const std::shared_ptr<AudioRendererWriteCallback> &callback)
 {
@@ -400,7 +399,7 @@ float AudioRendererPrivate::GetMaxStreamVolume() const
     return [rendererImpl_ getMaxStreamVolume];
 }
 
-int32_t AudioRendererPrivate::GetCurrentOutputDevices(DeviceInfo &deviceInfo) const
+int32_t AudioRendererPrivate::GetCurrentOutputDevices(AudioDeviceDescriptor &deviceInfo) const
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
     return [rendererImpl_ getCurrentOutputDevices:deviceInfo];

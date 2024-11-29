@@ -29,7 +29,7 @@ namespace OHOS::Plugin {
         virtual ~DocumentFilePickerImpl() {};
 
         napi_value select(napi_env env, DocumentSelectOptions&);
-        napi_value save(napi_env env, DocumentSaveOptions&);
+        napi_value save(napi_env env,DocumentSaveOptions&);
     };
 } // namespace OHOS::Plugin
 

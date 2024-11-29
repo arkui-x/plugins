@@ -22,7 +22,7 @@
 #include "audio_routing_manager.h"
 #include "audio_group_manager.h"
 #include "audio_renderer_impl.h"
-#include "audio_capturer_Impl.h"
+#include "audio_capturer_impl.h"
 #import <AVFoundation/AVFoundation.h>
 
 @interface AudioManagerImpl : NSObject
@@ -32,10 +32,10 @@
 - (const OHOS::AudioStandard::AudioScene)getAudioScene;
 - (int32_t)registerVolumeKeyEventCallback:
     (const std::shared_ptr<OHOS::AudioStandard::VolumeKeyEventCallback> &)callback;
-- (std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>>)getDevices:
+- (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>>)getDevices:
     (OHOS::AudioStandard::DeviceFlag)deviceFlag;
-- (int32_t)setDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType active:(bool)flag;
-- (bool)isDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType;
+- (int32_t)setDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType active:(bool)flag;
+- (bool)isDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType;
 - (void)updateCategory:(AVAudioSessionCategory)category options:(AVAudioSessionCategoryOptions)categoryOptions;
 - (OHOS::AudioStandard::InterruptMode)getAllInterruptMode;
 - (void)addRenderer:(AudioRendererImpl *)audioRenderer;
@@ -45,9 +45,9 @@
 - (void)removeCapturer:(AudioCapturerImpl *)audioCapturer;
 - (void)updateCapturerChangeInfos;
 - (int32_t)getCurrentRendererChangeInfos:
-    (std::vector<std::unique_ptr<OHOS::AudioStandard::AudioRendererChangeInfo>> &)audioRendererChangeInfos;
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioRendererChangeInfo>> &)audioRendererChangeInfos;
 - (int32_t)getCurrentCapturerChangeInfos:
-    (std::vector<std::unique_ptr<OHOS::AudioStandard::AudioCapturerChangeInfo>> &)audioCapturerChangeInfos;
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioCapturerChangeInfo>> &)audioCapturerChangeInfos;
 - (int32_t)registerAudioRendererEventListener:
     (const std::shared_ptr<OHOS::AudioStandard::AudioRendererStateChangeCallback> &)callback;
 - (int32_t)unregisterAudioRendererEventListener;
@@ -56,9 +56,9 @@
 - (int32_t)unregisterAudioCapturerEventListener;
 - (bool)isStreamActive:(OHOS::AudioStandard::AudioVolumeType)volumeType;
 - (int32_t)getPreferredOutputDeviceForRendererInfo:
-    (std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc;
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc;
 - (int32_t)getPreferredInputDeviceForCapturerInfo:
-    (std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc;
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc;
 - (int32_t)setPreferredOutputDeviceChangeCallback:
     (const std::shared_ptr<OHOS::AudioStandard::AudioPreferredOutputDeviceChangeCallback> &)callback;
 - (int32_t)setPreferredInputDeviceChangeCallback:

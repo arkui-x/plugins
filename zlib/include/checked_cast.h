@@ -61,14 +61,14 @@ public:
         return *to;
     }
 
-    char const * what() const throw()
+    char const* what() const throw()
     {
         return "bad checked cast: source is not a target type";
     }
 
 private:
-    std::type_info const * from;
-    std::type_info const * to;
+    std::type_info const* from;
+    std::type_info const* to;
 };
 #ifdef CHECKED_CAST_DO_ASSERT
 #define BAD_CHECKED_CAST(from, to) assert(false)

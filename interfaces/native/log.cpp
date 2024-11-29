@@ -48,6 +48,5 @@ LOG_EXPORT void LogPrint(LogLevel level, const char* fmt, va_list args)
             aceLevel = OHOS::Ace::LogLevel::DEBUG;
             break;
     }
-    OHOS::Ace::LogWrapper::PrintLog(OHOS::Ace::LogDomain::JS_APP,
-        aceLevel, OHOS::Ace::AceLogTag::ACE_DEFAULT_DOMAIN, fmt, args);
+    OHOS::Ace::LogWrapper::PrintLog(OHOS::Ace::LogDomain::JS_APP, aceLevel, OHOS::Ace::AceLogTag::ACE_DEFAULT_DOMAIN, fmt, args);
 }

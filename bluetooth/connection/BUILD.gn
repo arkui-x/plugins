@@ -1,0 +1,90 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//plugins/bluetooth/bluetooth.gni")
+
+ohos_source_set("bluetooth_connection_static") {
+  include_dirs = [
+    "$bluetooth_napi_root/src",
+    "$bluetooth_napi_root/src/connection",
+    "//plugins/bluetooth/common/include",
+    "//plugins/bluetooth/common/mock",
+  ]
+
+  defines = [
+    "BLUETOOTH_API_SINCE_10",
+    "BT_LOG_DOMAIN = 0xD000100",
+    "BT_LOG_TAG = \"bluetooth_napi\"",
+    "BT_MODULE_NAME = \"bluetooth.connection\"",
+    "ENABLE_NAPI_BLUETOOTH_MANAGER",
+  ]
+
+  sources = [
+    "$bluetooth_napi_root/src/connection/napi_bluetooth_connection.cpp",
+    "$bluetooth_napi_root/src/connection/napi_bluetooth_connection_observer.cpp",
+    "$bluetooth_napi_root/src/connection/napi_bluetooth_remote_device_observer.cpp",
+    "//plugins/bluetooth/connection/native_module_connection.cpp",
+  ]
+
+  deps = [
+    "$c_utils_root/base:utilsbase",
+    "$hilog_root/interfaces/native/innerkits:libhilog_${target_os}",
+    "//plugins/bluetooth/common:bt_common_${target_os}",
+    "//plugins/libs/napi:napi_${target_os}",
+  ]
+
+  if (is_android) {
+    defines += [ "ANDROID_PLATFORM" ]
+  } else if (is_ios) {
+    defines += [ "IOS_PLATFORM" ]
+  }
+
+  subsystem_name = "plugins"
+  part_name = "bluetooth_connection"
+}
+
+template("plugin_bluetooth_connection_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    deps = [ ":bluetooth_connection_static" ]
+
+    subsystem_name = "plugins"
+    part_name = "bluetooth_connection"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_bluetooth_connection_static(
+      "bluetooth_connection_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

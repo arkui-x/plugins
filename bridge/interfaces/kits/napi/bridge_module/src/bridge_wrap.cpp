@@ -68,17 +68,17 @@ Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType&
     std::string key(GetBridgeNameWithID(bridgeName, instanceId));
     auto data = findData(key);
     if (data == nullptr) {
-        LOGI("BuildBridge instanceId is %{public}d bridgeName is %{public}s,", instanceId, bridgeName.c_str());
+        LOGI("BuildBridge instanceId is %{public}d bridgeName is %{public}s," , instanceId, bridgeName.c_str());
         return BuildBridge(bridgeName, codecType, key, instanceId);
     }
-    LOGI("CopyBridge instanceId is %{public}d bridgeName is %{public}s,", instanceId, bridgeName.c_str());
+    LOGI("CopyBridge instanceId is %{public}d bridgeName is %{public}s," , instanceId, bridgeName.c_str());
     return CopyBridge(data);
 }
 
 void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
 {
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
-    LOGI("DeleteBridge instanceId is %{public}d bridgeName is %{public}s,", instanceId, bridgeName.c_str());
+    LOGI("DeleteBridge instanceId is %{public}d bridgeName is %{public}s," , instanceId, bridgeName.c_str());
     std::string bridgeNameWithId = GetBridgeNameWithID(bridgeName, instanceId);
     auto data = findData(bridgeNameWithId);
     if (data == nullptr) {

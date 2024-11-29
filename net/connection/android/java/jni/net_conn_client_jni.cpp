@@ -125,7 +125,7 @@ void NetConnClientJni::NativeOnAvailable(JNIEnv *env, jobject jthiz, jlong jcall
     }
 }
 
-void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, jobject jNetworkCapabilities, 
+void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, jobject jNetworkCapabilities,
     jlong jcallbackKey, jint jNetId)
 {
     if (env == nullptr || jthiz == nullptr || jNetworkCapabilities == nullptr) {

@@ -41,14 +41,14 @@ int32_t AudioRoutingManager::SetMicStateChangeCallback(
 }
 
 int32_t AudioRoutingManager::GetPreferredOutputDeviceForRendererInfo(
-    AudioRendererInfo rendererInfo, std::vector<sptr<AudioDeviceDescriptor>>& desc)
+    AudioRendererInfo rendererInfo, std::vector<std::shared_ptr<AudioDeviceDescriptor>>& desc)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
 int32_t AudioRoutingManager::GetPreferredInputDeviceForCapturerInfo(
-    AudioCapturerInfo captureInfo, std::vector<sptr<AudioDeviceDescriptor>>& desc)
+    AudioCapturerInfo captureInfo, std::vector<std::shared_ptr<AudioDeviceDescriptor>>& desc)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -68,13 +68,15 @@ int32_t AudioRoutingManager::SetPreferredInputDeviceChangeCallback(
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioRoutingManager::UnsetPreferredOutputDeviceChangeCallback()
+int32_t AudioRoutingManager::UnsetPreferredOutputDeviceChangeCallback(
+    const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback>& callback)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioRoutingManager::UnsetPreferredInputDeviceChangeCallback()
+int32_t AudioRoutingManager::UnsetPreferredInputDeviceChangeCallback(
+    const std::shared_ptr<AudioPreferredInputDeviceChangeCallback>& callback)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -87,14 +89,14 @@ vector<sptr<MicrophoneDescriptor>> AudioRoutingManager::GetAvailableMicrophones(
     return microphones;
 }
 
-std::vector<std::unique_ptr<AudioDeviceDescriptor>> AudioRoutingManager::GetAvailableDevices(AudioDeviceUsage usage)
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioRoutingManager::GetAvailableDevices(AudioDeviceUsage usage)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    std::vector<std::unique_ptr<AudioDeviceDescriptor>> availableDevices;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> availableDevices;
     return availableDevices;
 }
 
-std::unique_ptr<AudioDeviceDescriptor> AudioRoutingManager::GetActiveBluetoothDevice()
+std::shared_ptr<AudioDeviceDescriptor> AudioRoutingManager::GetActiveBluetoothDevice()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return nullptr;

@@ -146,7 +146,7 @@ void AVMetadataHelperJni::NativeInit(JNIEnv *env, jobject jobj)
 }
 
 jint AVMetadataHelperJni::NativeReadAt(
-    JNIEnv *env, jobject jthiz, jlong key, jlong position, jbyteArray buffer, jint offset, jint size)
+        JNIEnv *env, jobject jthiz, jlong key, jlong position, jbyteArray buffer, jint offset, jint size)
 {
     CHECK_NULL_RETURN(env, 0);
     auto iter = mediaDataSources_.find((long)key);
@@ -217,7 +217,7 @@ int32_t AVMetadataHelperJni::SetSource(long key, int32_t fd, int64_t offset, int
     CHECK_NULL_RETURN(env, Media::MSERR_UNKNOWN);
     CHECK_NULL_RETURN(g_avmetadataHelperPluginClass.globalRef,  Media::MSERR_UNKNOWN);
     CHECK_NULL_RETURN(g_avmetadataHelperPluginClass.setDataSourceWithFd,
-        Media::MSERR_UNKNOWN);
+         Media::MSERR_UNKNOWN);
 
     char filePath[PATH_MAX] = {'\0'};
     char buf[128] = {'\0'};
@@ -387,7 +387,7 @@ void AVMetadataHelperJni::Release(long key)
 
 int32_t AVMetadataHelperJni::ConvertAVKeytoMetadataKey(int32_t key)
 {
-    switch (key) {
+    switch(key) {
         case Media::AV_KEY_ALBUM:
             return METADATA_KEY_ALBUM;
         case Media::AV_KEY_ALBUM_ARTIST:

@@ -212,7 +212,7 @@ napi_status MediaLibraryNapiUtils::GetPredicate(napi_env env, const napi_value a
         CHECK_STATUS_RET(napi_get_named_property(env, arg, propName.c_str(), &property), "Failed to get property");
         JSProxy::JSProxy<DataShare::DataSharePredicates> *jsProxy = nullptr;
         napi_unwrap(env, property, reinterpret_cast<void **>(&jsProxy));
-        shared_ptr<DataShare::DataSharePredicates> predicate = jsProxy->GetInstance();
+        shared_ptr<DataShare::DataSharePredicates> predicate = jsProxy->GetInstance(); 
         CHECK_COND_RET(HandleSpecialPredicate(context, predicate, fetchOptType) == true, napi_invalid_arg,
             "invalid predicate");
     }
@@ -301,7 +301,7 @@ napi_status MediaLibraryNapiUtils::ParseArgsBoolCallBack(napi_env env, napi_call
 template <class AsyncContext>
 napi_status MediaLibraryNapiUtils::ParseArgsStringCallback(napi_env env, napi_callback_info info, AsyncContext &context,
     string &param)
-{
+{ 
     constexpr size_t minArgs = ARGS_ONE;
     constexpr size_t maxArgs = ARGS_TWO;
     CHECK_STATUS_RET(AsyncContextSetObjectInfo(env, info, context, minArgs, maxArgs),

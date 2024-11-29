@@ -215,8 +215,7 @@ void PlayerJni::NativeInit(JNIEnv *env, jobject jobj)
     g_playerpluginClass.getTrackIndex = env->GetMethodID(cls, METHOD_GET_TRACKINDEX, SIGNATURE_GET_TRACK_INDEX);
     CHECK_AND_RETURN(g_playerpluginClass.getTrackIndex != nullptr);
 
-    g_playerpluginClass.getTrackInfoString = env->GetMethodID(cls,
-        METHOD_GET_TRACKINFO_STRING, SIGNATURE_GET_TRACK_STR);
+    g_playerpluginClass.getTrackInfoString = env->GetMethodID(cls, METHOD_GET_TRACKINFO_STRING, SIGNATURE_GET_TRACK_STR);
     CHECK_AND_RETURN(g_playerpluginClass.getTrackInfoString != nullptr);
 
     g_playerpluginClass.setDataSource = env->GetMethodID(cls, METHOD_SET_DATASOURCE, SIGNATURE_PLAY);
@@ -302,7 +301,7 @@ int32_t PlayerJni::SetSurface(long key, int32_t instanceId, long id)
 
     jlong playerId = (jlong)key;
     env->CallVoidMethod(
-        g_playerpluginClass.globalRef, g_playerpluginClass.setSurface, playerId, (jint)instanceId, (jlong)id);
+        g_playerpluginClass.globalRef,g_playerpluginClass.setSurface, playerId, (jint)instanceId, (jlong)id);
     if (env->ExceptionCheck()) {
         MEDIA_LOGE("PlayerJni JNI: call SetSurface has exception");
         env->ExceptionDescribe();
@@ -322,7 +321,7 @@ int32_t PlayerJni::GetCurrentPosition(long key, int32_t &value)
 
     jlong playerId = (jlong)key;
     jint ret = env->CallIntMethod(
-        g_playerpluginClass.globalRef, g_playerpluginClass.getCurrentPosition, playerId);
+        g_playerpluginClass.globalRef,g_playerpluginClass.getCurrentPosition, playerId);
     if (env->ExceptionCheck()) {
         MEDIA_LOGE("PlayerJni JNI: call GetCurrentPosition has exception");
         env->ExceptionDescribe();
@@ -343,7 +342,7 @@ int32_t PlayerJni::GetDuration(long key, int32_t &value)
 
     jlong playerId = (jlong)key;
     jint ret = env->CallIntMethod(
-        g_playerpluginClass.globalRef, g_playerpluginClass.getDuration, playerId);
+        g_playerpluginClass.globalRef,g_playerpluginClass.getDuration, playerId);
     if (env->ExceptionCheck()) {
         MEDIA_LOGE("PlayerJni JNI: call GetDuration has exception");
         env->ExceptionDescribe();
@@ -364,7 +363,7 @@ int32_t PlayerJni::GetVideoWidth(long key)
 
     jlong playerId = (jlong)key;
     jint ret = env->CallIntMethod(
-        g_playerpluginClass.globalRef, g_playerpluginClass.getVideoWidth, playerId);
+        g_playerpluginClass.globalRef,g_playerpluginClass.getVideoWidth, playerId);
     if (env->ExceptionCheck()) {
         MEDIA_LOGE("PlayerJni JNI: call GetVideoWidth has exception");
         env->ExceptionDescribe();
@@ -385,7 +384,7 @@ int32_t PlayerJni::GetVideoHeight(long key)
 
     jlong playerId = (jlong)key;
     jint ret = env->CallIntMethod(
-        g_playerpluginClass.globalRef, g_playerpluginClass.getVideoHeight, playerId);
+        g_playerpluginClass.globalRef,g_playerpluginClass.getVideoHeight, playerId);
     if (env->ExceptionCheck()) {
         MEDIA_LOGE("PlayerJni JNI: call GetVideoHeight has exception");
         env->ExceptionDescribe();
@@ -774,7 +773,7 @@ void PlayerJni::NativeOnVolumnChanged(JNIEnv *env, jobject jobj, jlong key, jflo
 }
 
 jint PlayerJni::NativeReadAt(
-    JNIEnv *env, jobject jthiz, jlong key, jlong position, jbyteArray buffer, jint offset, jint size)
+        JNIEnv *env, jobject jthiz, jlong key, jlong position, jbyteArray buffer, jint offset, jint size)
 {
     auto iter = mediaDataSources_.find((long)key);
     if (iter == mediaDataSources_.end()) {

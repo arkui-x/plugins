@@ -65,6 +65,7 @@ private:
     void CheckIsNeedAnd();
     void AppendWhereClauseWithInOrNotIn(const std::string &methodName, const std::string &field,
         const std::vector<std::string> &replaceValues);
+
 };
 } // namespace Media
 } // namespace OHOS

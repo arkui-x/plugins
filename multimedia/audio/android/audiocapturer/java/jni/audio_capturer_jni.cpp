@@ -204,8 +204,8 @@ void AudioCapturerJni::NativeOnRoutingChanged(JNIEnv* env, jobject jobj, jlong c
     long key = static_cast<long>(capturerPtr);
     auto iter = deviceChangeObserver_.find(key);
     if (iter != deviceChangeObserver_.end()) {
-        DeviceInfo deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
-        if (deviceInfo.deviceRole == INPUT_DEVICE) {
+        AudioDeviceDescriptor deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+        if (deviceInfo.deviceRole_ == INPUT_DEVICE) {
             for (auto deviceChangeCallback : iter->second) {
                 deviceChangeCallback->OnStateChange(deviceInfo);
             }
@@ -219,7 +219,7 @@ void AudioCapturerJni::NativeOnInfoChanged(JNIEnv* env, jobject jobj, jlong capt
     long key = static_cast<long>(capturerPtr);
     AudioCapturerChangeInfo changeInfo;
     changeInfo.inputDeviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
-    if (changeInfo.inputDeviceInfo.deviceRole == INPUT_DEVICE) {
+    if (changeInfo.inputDeviceInfo.deviceRole_ == INPUT_DEVICE) {
         uint32_t sessionID;
         AudioCapturerInfo capturerInfo;
         int32_t ret = GetAudioSessionId(key, sessionID);
@@ -757,7 +757,7 @@ bool AudioCapturerJni::GetTimestamp(long capturerPtr, Timestamp& timestamp)
     return jAvailable != SUCCESS ? false : true;
 }
 
-int32_t AudioCapturerJni::GetCurrentInputDevices(long capturerPtr, DeviceInfo& deviceInfo)
+int32_t AudioCapturerJni::GetCurrentInputDevices(long capturerPtr, AudioDeviceDescriptor& deviceInfo)
 {
     LOGD("AudioCapturerJni::GetCurrentInputDevices capturerPtr:%ld", capturerPtr);
     auto env = ARKUI_X_Plugin_GetJniEnv();
@@ -774,8 +774,8 @@ int32_t AudioCapturerJni::GetCurrentInputDevices(long capturerPtr, DeviceInfo& d
         return ERROR;
     }
 
-    DeviceInfo deviceInfoTemp = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
-    if (deviceInfoTemp.deviceRole == INPUT_DEVICE) {
+    AudioDeviceDescriptor deviceInfoTemp = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+    if (deviceInfoTemp.deviceRole_ == INPUT_DEVICE) {
         deviceInfo = deviceInfoTemp;
     }
     env->DeleteLocalRef(jDeviceInfo);

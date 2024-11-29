@@ -47,6 +47,8 @@
     std::shared_ptr<OHOS::AudioStandard::AudioRendererWriteCallback> writeCallback_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererDeviceChangeCallback> deviceCallback_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererOutputDeviceChangeCallback> deviceWithInfoCallback_;
+    OHOS::AudioStandard::AudioRenderMode renderMode_;
+    std::mutex writeCbMutex_;
 }
 
 - (void)initChannelLayout:(const OHOS::AudioStandard::AudioChannelLayout)channelLayout
@@ -69,6 +71,7 @@
     NSLog(@"initWithSampleRate samplingRate = %d, channels = %d, format = %d",
         rendererOptions.streamInfo.samplingRate, rendererOptions.streamInfo.channels,
         rendererOptions.streamInfo.format);
+    renderMode_ = OHOS::AudioStandard::RENDER_MODE_NORMAL;
     rendererOptions_ = rendererOptions;
     playQueue_ = dispatch_queue_create("audio queue play queue", DISPATCH_QUEUE_SERIAL);
     playState_ = OHOS::AudioStandard::RENDERER_NEW;
@@ -142,9 +145,27 @@
     return OHOS::AudioStandard::SUCCESS;
 }
 
-- (int32_t)setRendererWriteCallback:(const std::shared_ptr<OHOS::AudioStandard::AudioRendererWriteCallback> &)callback
+- (int32_t)setRenderMode:(OHOS::AudioStandard::AudioRenderMode)renderMode
 {
-    writeCallback_ = callback;
+    NSLog(@"SetRenderMode to %s", renderMode == OHOS::AudioStandard::AudioRenderMode::RENDER_MODE_NORMAL ?
+        "RENDER_MODE_NORMAL" : "RENDER_MODE_CALLBACK");
+    if (renderMode_ == renderMode) {
+        return OHOS::AudioStandard::SUCCESS;
+    }
+
+    // renderMode_ is inited as RENDER_MODE_NORMAL, can only be set to RENDER_MODE_CALLBACK.
+    if (renderMode_ == OHOS::AudioStandard::RENDER_MODE_CALLBACK &&
+        renderMode == OHOS::AudioStandard::RENDER_MODE_NORMAL) {
+        NSLog(@"SetRenderMode from callback to normal is not supported.");
+        return OHOS::AudioStandard::ERR_INCORRECT_MODE;
+    }
+
+    // state check
+    if (playState_ != OHOS::AudioStandard::RENDERER_PREPARED && playState_ != OHOS::AudioStandard::RENDERER_NEW) {
+        NSLog(@"SetRenderMode failed. invalid state");
+        return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
+    }
+    renderMode_ = renderMode;
     dispatch_async(playQueue_, ^{
         int32_t tryCount = QUEUE_BUFFER_SIZE;
         while (tryCount > 0) {
@@ -160,6 +181,17 @@
             }
         }
     });
+    return OHOS::AudioStandard::SUCCESS;
+}
+
+- (int32_t)setRendererWriteCallback:(const std::shared_ptr<OHOS::AudioStandard::AudioRendererWriteCallback> &)callback
+{
+    if (renderMode_ != OHOS::AudioStandard::RENDER_MODE_CALLBACK) {
+        return OHOS::AudioStandard::ERR_INCORRECT_MODE;
+        NSLog(@"incorrect render mode");
+    }
+    std::lock_guard<std::mutex> lock(writeCbMutex_);
+    writeCallback_ = callback;
     return OHOS::AudioStandard::SUCCESS;
 }
 
@@ -195,7 +227,7 @@
 
     if (deviceCallback_) {
         NSLog(@"OnStateChange");
-        OHOS::AudioStandard::DeviceInfo deviceInfo;
+        OHOS::AudioStandard::AudioDeviceDescriptor deviceInfo;
         [self getCurrentOutputDevices:deviceInfo];
         deviceCallback_->OnStateChange(deviceInfo);
     }
@@ -204,7 +236,7 @@
         NSLog(@"OnOutputDeviceChange");
         NSInteger reason = [userInfo[AVAudioSessionRouteChangeReasonKey] integerValue];
         NSLog(@"reason = %ld", reason);
-        OHOS::AudioStandard::DeviceInfo deviceInfo;
+        OHOS::AudioStandard::AudioDeviceDescriptor deviceInfo;
         [self getCurrentOutputDevices:deviceInfo];
         OHOS::AudioStandard::AudioStreamDeviceChangeReason changeReason;
         ConvertDeviceChangeReasonToOh(reason, changeReason);
@@ -560,7 +592,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     return MAX_STREAM_VOLUME;
 }
 
-- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::DeviceInfo &)deviceInfo
+- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::AudioDeviceDescriptor &)deviceInfo
 {
     if (playState_ != OHOS::AudioStandard::RENDERER_RELEASED) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
@@ -568,21 +600,21 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
         NSLog(@"routeDescription count = %lu",[routeDescription.outputs count]);
         for (AVAudioSessionPortDescription *portDescription in routeDescription.outputs) {
-            deviceInfo.deviceRole = OHOS::AudioStandard::DeviceRole::OUTPUT_DEVICE;
-            ConvertDeviceTypeToOh(portDescription.portType, deviceInfo.deviceType);
-            deviceInfo.deviceName = std::string([portDescription.portName UTF8String]);
-            deviceInfo.displayName = std::string([portDescription.UID UTF8String]);
+            deviceInfo.deviceRole_ = OHOS::AudioStandard::DeviceRole::OUTPUT_DEVICE;
+            ConvertDeviceTypeToOh(portDescription.portType, deviceInfo.deviceType_);
+            deviceInfo.deviceName_ = std::string([portDescription.portName UTF8String]);
+            deviceInfo.displayName_ = std::string([portDescription.UID UTF8String]);
             NSLog(@"portType = %@, portName = %@, UID = %@", portDescription.portType, portDescription.portName,
                 portDescription.UID);
             NSLog(@"channels = %lu",[portDescription.channels count]);
             for (AVAudioSessionChannelDescription *channelDescription in portDescription.channels) {
-                deviceInfo.channelMasks |= channelDescription.channelLabel;
+                deviceInfo.channelMasks_ |= channelDescription.channelLabel;
                 NSLog(@"channelName = %@, channelNumber = %lu, owningPortUID = %@, channelLabel = %u",
                     channelDescription.channelName,channelDescription.channelNumber,
                     channelDescription.owningPortUID, channelDescription.channelLabel);
             }
 
-            deviceInfo.audioStreamInfo.samplingRate.insert(
+            deviceInfo.audioStreamInfo_.samplingRate.insert(
                 static_cast<OHOS::AudioStandard::AudioSamplingRate>(audioSession.sampleRate));
             NSLog(@"sampleRate = %f", audioSession.sampleRate);
         }

@@ -128,7 +128,7 @@ napi_value NapiWebviewController::JsConstructor(napi_env env, napi_callback_info
 #ifdef ANDROID_PLATFORM
     WebviewController *webviewController = new (std::nothrow) WebviewControllerAndroid();
 #endif
-#ifdef IOS_PLATFORM
+#ifdef IOS_PLATFORM  
     WebviewController *webviewController = new (std::nothrow) WebviewControllerIOS();
 #endif
     if (webviewController == nullptr) {
@@ -469,11 +469,9 @@ napi_value NapiWebviewController::RunJavaScript(napi_env env, napi_callback_info
             args[INTEGER_ONE] = jsResult;
             if (asyncCallbackInfo->deferred) {
                 if (asyncCallbackInfo->result.empty()) {
-                    NAPI_CALL_RETURN_VOID(env,
-                        napi_reject_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ZERO]));
+                    NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ZERO]));
                 } else {
-                    NAPI_CALL_RETURN_VOID(env,
-                        napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
+                    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
                 }
             } else {
                 napi_value callback = nullptr;
@@ -517,6 +515,7 @@ napi_value NapiWebviewController::AccessStep(napi_env env, napi_callback_info in
     bool access = webviewController->AccessStep(step);
     NAPI_CALL(env, napi_get_boolean(env, access, &result));
     return result;
+
 }
 
 napi_value NapiWebviewController::ScrollTo(napi_env env, napi_callback_info info)

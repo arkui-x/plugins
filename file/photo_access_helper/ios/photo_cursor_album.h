@@ -23,9 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface photoCursorAlbum : NSObject
 
-@property (nonatomic, strong) PHFetchResult* fetchResult;
+@property (nonatomic,strong) PHFetchResult* fetchResult;
 
-@property (nonatomic, strong) PHAssetCollection* cursorAlbum;
+@property (nonatomic,strong) PHAssetCollection* cursorAlbum;
 
 - (id)initWithFetchResult:(PHFetchResult *)fetchResult;
 

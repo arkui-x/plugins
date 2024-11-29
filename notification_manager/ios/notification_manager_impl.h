@@ -31,8 +31,7 @@ public:
      * @param asynccallbackinfo AsyncCallbackInfoPublish
      * @param callback NotificationCallback
      */
-    virtual void PublishNotification(const NotificationRequest &request, void* asynccallbackinfo,
-        NotificationCallback callback) override;
+    virtual void PublishNotification(const NotificationRequest &request, void* asynccallbackinfo, NotificationCallback callback) override;
 
     /**
      * @brief Cancels a published notification.

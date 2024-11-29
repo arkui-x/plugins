@@ -25,6 +25,7 @@ ohos_source_set("media_ios") {
     "//plugins/multimedia/media/ios/recorder",
     "//foundation/arkui/ace_engine/adapter/ios/entrance",
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
+    "//third_party/skia",
   ]
 
   sources = [

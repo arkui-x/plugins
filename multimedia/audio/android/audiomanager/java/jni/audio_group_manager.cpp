@@ -31,6 +31,11 @@ int32_t AudioGroupManager::SetVolume(AudioVolumeType volumeType, int32_t volume,
     return ERR_NOT_SUPPORTED;
 }
 
+AudioStreamType AudioGroupManager::GetActiveVolumeType(const int32_t clientUid)
+{
+    return STREAM_DEFAULT;
+}
+
 int32_t AudioGroupManager::GetVolume(AudioVolumeType volumeType)
 {
     return Plugin::AudioManagerJni::GetVolume(volumeType);

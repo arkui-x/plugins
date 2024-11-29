@@ -56,6 +56,7 @@ static bool OhPermissionToJava(const std::string& inPerm, std::string& outPerm)
 
 static bool OhPermissionToJava(const std::string& inPerm, std::vector<std::string>& outPerm)
 {
+    // outPerm = inPerm;
     auto it = g_permissionMultipleMap.find(inPerm);
     if (it != g_permissionMultipleMap.end()) {
         if (it->second.size() > 0) {
@@ -152,9 +153,9 @@ void AbilityAccessCtrlImpl::RequestPermissions(
         std::string javaPerm;
         vJavaPerm.clear();
         if (OhPermissionToJava(permissions[i], javaPerm)) {
-            LOGE("AbilityAccessCtrlImpl transfer permisson %{public}s -> %{public}s",
-                permissions[i].c_str(), javaPerm.c_str());
-        } else if (OhPermissionToJava(permissions[i], vJavaPerm)) {
+            LOGE(
+                "AbilityAccessCtrlImpl transfer permisson %{public}s -> %{public}s", permissions[i].c_str(), javaPerm.c_str());
+        } else if(OhPermissionToJava(permissions[i], vJavaPerm)) {
             for (auto it = vJavaPerm.begin(); it != vJavaPerm.end(); ++it) {
                 javaStrings.emplace_back(*it);
             }

@@ -180,13 +180,13 @@ void AudioManagerJni::NativeOnAudioDeviceChanged(
         int32_t deviceCount = env->GetArrayLength(jDeviceInfos);
         for (int32_t i = 0; i < deviceCount; i++) {
             jobject jDeviceInfo = env->GetObjectArrayElement(jDeviceInfos, i);
-            DeviceInfo deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+            AudioDeviceDescriptor deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
             env->DeleteLocalRef(jDeviceInfo);
-            DeviceFlag flag = (deviceInfo.deviceRole == INPUT_DEVICE) ? INPUT_DEVICES_FLAG : OUTPUT_DEVICES_FLAG;
+            DeviceFlag flag = (deviceInfo.deviceRole_ == INPUT_DEVICE) ? INPUT_DEVICES_FLAG : OUTPUT_DEVICES_FLAG;
             if ((flag != it.first) && (it.first != ALL_DEVICES_FLAG)) {
                 continue;
             }
-            sptr<AudioDeviceDescriptor> audioDeviceDescriptor = new (std::nothrow) AudioDeviceDescriptor();
+            std::shared_ptr<AudioDeviceDescriptor> audioDeviceDescriptor = std::make_shared<AudioDeviceDescriptor>();
             CHECK_NULL_VOID(audioDeviceDescriptor);
             ConvertDeviceInfoToAudioDeviceDescriptor(audioDeviceDescriptor, deviceInfo);
             deviceChangeInfo.deviceDescriptors.push_back(std::move(audioDeviceDescriptor));
@@ -412,7 +412,7 @@ AudioScene AudioManagerJni::GetAudioScene()
     return scene;
 }
 
-int32_t AudioManagerJni::GetDevices(DeviceFlag deviceFlag, std::vector<sptr<AudioDeviceDescriptor>>& desc)
+int32_t AudioManagerJni::GetDevices(DeviceFlag deviceFlag, std::vector<std::shared_ptr<AudioDeviceDescriptor>>& desc)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);
@@ -435,10 +435,10 @@ int32_t AudioManagerJni::GetDevices(DeviceFlag deviceFlag, std::vector<sptr<Audi
     int32_t deviceCount = env->GetArrayLength(static_cast<jobjectArray>(jDevices));
     for (int32_t i = 0; i < deviceCount; i++) {
         jobject jDeviceInfo = env->GetObjectArrayElement(static_cast<jobjectArray>(jDevices), i);
-        DeviceInfo deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+        AudioDeviceDescriptor deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
         env->DeleteLocalRef(jDeviceInfo);
 
-        sptr<AudioDeviceDescriptor> audioDeviceDescriptor = new (std::nothrow) AudioDeviceDescriptor();
+        std::shared_ptr<AudioDeviceDescriptor> audioDeviceDescriptor = std::make_shared<AudioDeviceDescriptor>();
         if (!audioDeviceDescriptor) {
             env->DeleteLocalRef(jDevices);
             LOGE("AudioManagerJni JNI: create AudioDeviceDescriptor failed.");
@@ -452,24 +452,24 @@ int32_t AudioManagerJni::GetDevices(DeviceFlag deviceFlag, std::vector<sptr<Audi
 }
 
 void AudioManagerJni::ConvertDeviceInfoToAudioDeviceDescriptor(
-    sptr<AudioDeviceDescriptor> audioDeviceDescriptor, const DeviceInfo& deviceInfo)
+    std::shared_ptr<AudioDeviceDescriptor> audioDeviceDescriptor, const AudioDeviceDescriptor& deviceInfo)
 {
     CHECK_NULL_VOID(audioDeviceDescriptor);
-    audioDeviceDescriptor->deviceRole_ = deviceInfo.deviceRole;
-    audioDeviceDescriptor->deviceType_ = deviceInfo.deviceType;
-    audioDeviceDescriptor->deviceId_ = deviceInfo.deviceId;
-    audioDeviceDescriptor->channelMasks_ = deviceInfo.channelMasks;
-    audioDeviceDescriptor->channelIndexMasks_ = deviceInfo.channelIndexMasks;
-    audioDeviceDescriptor->deviceName_ = deviceInfo.deviceName;
-    audioDeviceDescriptor->macAddress_ = deviceInfo.macAddress;
-    audioDeviceDescriptor->interruptGroupId_ = deviceInfo.interruptGroupId;
-    audioDeviceDescriptor->volumeGroupId_ = deviceInfo.volumeGroupId;
-    audioDeviceDescriptor->networkId_ = deviceInfo.networkId;
-    audioDeviceDescriptor->displayName_ = deviceInfo.displayName;
-    audioDeviceDescriptor->audioStreamInfo_.samplingRate = deviceInfo.audioStreamInfo.samplingRate;
-    audioDeviceDescriptor->audioStreamInfo_.encoding = deviceInfo.audioStreamInfo.encoding;
-    audioDeviceDescriptor->audioStreamInfo_.format = deviceInfo.audioStreamInfo.format;
-    audioDeviceDescriptor->audioStreamInfo_.channels = deviceInfo.audioStreamInfo.channels;
+    audioDeviceDescriptor->deviceRole_ = deviceInfo.deviceRole_;
+    audioDeviceDescriptor->deviceType_ = deviceInfo.deviceType_;
+    audioDeviceDescriptor->deviceId_ = deviceInfo.deviceId_;
+    audioDeviceDescriptor->channelMasks_ = deviceInfo.channelMasks_;
+    audioDeviceDescriptor->channelIndexMasks_ = deviceInfo.channelIndexMasks_;
+    audioDeviceDescriptor->deviceName_ = deviceInfo.deviceName_;
+    audioDeviceDescriptor->macAddress_ = deviceInfo.macAddress_;
+    audioDeviceDescriptor->interruptGroupId_ = deviceInfo.interruptGroupId_;
+    audioDeviceDescriptor->volumeGroupId_ = deviceInfo.volumeGroupId_;
+    audioDeviceDescriptor->networkId_ = deviceInfo.networkId_;
+    audioDeviceDescriptor->displayName_ = deviceInfo.displayName_;
+    audioDeviceDescriptor->audioStreamInfo_.samplingRate = deviceInfo.audioStreamInfo_.samplingRate;
+    audioDeviceDescriptor->audioStreamInfo_.encoding = deviceInfo.audioStreamInfo_.encoding;
+    audioDeviceDescriptor->audioStreamInfo_.format = deviceInfo.audioStreamInfo_.format;
+    audioDeviceDescriptor->audioStreamInfo_.channels = deviceInfo.audioStreamInfo_.channels;
 }
 
 int32_t AudioManagerJni::AddDeviceChangeCallback(
@@ -533,66 +533,61 @@ void AudioManagerJni::NativeOnAudioCapturerChanged(JNIEnv* env, jobject jobj, jo
     }
 }
 
-std::vector<std::unique_ptr<AudioRendererChangeInfo>> AudioManagerJni::GetAudioRendererChangeInfo(jobject jRendererConf)
+std::vector<std::shared_ptr<AudioRendererChangeInfo>> AudioManagerJni::GetAudioRendererChangeInfo(jobject jRendererConf)
 {
-    std::vector<std::unique_ptr<AudioRendererChangeInfo>> infos;
-    
+    std::vector<std::shared_ptr<AudioRendererChangeInfo>> infos;
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, infos);
-
     jclass jListPlaybackConfigurationCls = env->FindClass("java/util/List");
-    jclass jAudioPlaybackConfigurationCls = env->FindClass("android/media/AudioPlaybackConfiguration");
+    jclass jAudioPlayCfgCls = env->FindClass("android/media/AudioPlaybackConfiguration");
     jclass jAttributeCls = env->FindClass("android/media/AudioAttributes");
     jmethodID jUsageId = env->GetMethodID(jAttributeCls, "getUsage", "()I");
     jmethodID jContentTypeId = env->GetMethodID(jAttributeCls, "getContentType", "()I");
     jmethodID sizeMethod = env->GetMethodID(jListPlaybackConfigurationCls, "size", "()I");
     jmethodID getMethod = env->GetMethodID(jListPlaybackConfigurationCls, "get", "(I)Ljava/lang/Object;");
-    jmethodID jAudioAttributesID =
-        env->GetMethodID(jAudioPlaybackConfigurationCls, "getAudioAttributes", "()Landroid/media/AudioAttributes;");
-    jmethodID jDeviceInfoID =
-        env->GetMethodID(jAudioPlaybackConfigurationCls, "getAudioDeviceInfo", "()Landroid/media/AudioDeviceInfo;");
+    jmethodID jAudioID = env->GetMethodID(jAudioPlayCfgCls, "getAudioAttributes", "()Landroid/media/AudioAttributes;");
+    jmethodID jDevID = env->GetMethodID(jAudioPlayCfgCls, "getAudioDeviceInfo", "()Landroid/media/AudioDeviceInfo;");
     if (!jUsageId || !jContentTypeId || !sizeMethod || !getMethod) {
         LOGE("The Android version does not support this interface, please use at least Android 12");
         return infos;
     }
     jint size = env->CallIntMethod(jRendererConf, sizeMethod);
     env->DeleteLocalRef(jListPlaybackConfigurationCls);
-    env->DeleteLocalRef(jAudioPlaybackConfigurationCls);
+    env->DeleteLocalRef(jAudioPlayCfgCls);
     env->DeleteLocalRef(jAttributeCls);
     for (int i = 0; i < size; i++) {
         jobject objRenderer = env->CallObjectMethod(jRendererConf, getMethod, i);
-        if (!objRenderer) {
-            continue;
-        }
-        jobject jAttribute = env->CallObjectMethod(objRenderer, jAudioAttributesID);
-        if (!jAttribute) {
+        if (objRenderer) {
+            jobject jAttribute = env->CallObjectMethod(objRenderer, jAudioID);
+            if (!jAttribute) {
+                env->DeleteLocalRef(objRenderer);
+                continue;
+            }
+            jint jContentType = env->CallIntMethod(jAttribute, jContentTypeId);
+            jint jUsage = env->CallIntMethod(jAttribute, jUsageId);
+            env->DeleteLocalRef(jAttribute);
+            jobject jDeviceInfo = env->CallObjectMethod(objRenderer, jDevID);
+            if (!jDeviceInfo) {
+                env->DeleteLocalRef(objRenderer);
+                continue;
+            }
+            std::shared_ptr<AudioRendererChangeInfo> rendererChangeInfo = std::make_shared<AudioRendererChangeInfo>();
+            ConvertAudioUsageToOh(static_cast<AudioAttributesUsage>(jUsage),
+                static_cast<AudioAttributesContenType>(jContentType), rendererChangeInfo->rendererInfo.streamUsage,
+                rendererChangeInfo->rendererInfo.contentType);
+            rendererChangeInfo->outputDeviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+            infos.push_back(std::move(rendererChangeInfo));
+            rendererChangeInfo = nullptr;
+            env->DeleteLocalRef(jDeviceInfo);
             env->DeleteLocalRef(objRenderer);
-            continue;
         }
-        jint jContentType = env->CallIntMethod(jAttribute, jContentTypeId);
-        jint jUsage = env->CallIntMethod(jAttribute, jUsageId);
-        env->DeleteLocalRef(jAttribute);
-        jobject jDeviceInfo = env->CallObjectMethod(objRenderer, jDeviceInfoID);
-        if (!jDeviceInfo) {
-            env->DeleteLocalRef(objRenderer);
-            continue;
-        }
-        std::unique_ptr<AudioRendererChangeInfo> rendererChangeInfo = std::make_unique<AudioRendererChangeInfo>();
-        ConvertAudioUsageToOh(static_cast<AudioAttributesUsage>(jUsage),
-            static_cast<AudioAttributesContenType>(jContentType), rendererChangeInfo->rendererInfo.streamUsage,
-            rendererChangeInfo->rendererInfo.contentType);
-        rendererChangeInfo->outputDeviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
-        infos.push_back(std::move(rendererChangeInfo));
-        rendererChangeInfo = nullptr;
-        env->DeleteLocalRef(jDeviceInfo);
-        env->DeleteLocalRef(objRenderer);
     }
     return infos;
 }
 
-std::vector<std::unique_ptr<AudioCapturerChangeInfo>> AudioManagerJni::GetAudioCapturerChangeInfo(jobject jCapturerConf)
+std::vector<std::shared_ptr<AudioCapturerChangeInfo>> AudioManagerJni::GetAudioCapturerChangeInfo(jobject jCapturerConf)
 {
-    std::vector<std::unique_ptr<AudioCapturerChangeInfo>> infos;
+    std::vector<std::shared_ptr<AudioCapturerChangeInfo>> infos;
 
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, infos);
@@ -626,7 +621,7 @@ std::vector<std::unique_ptr<AudioCapturerChangeInfo>> AudioManagerJni::GetAudioC
             env->DeleteLocalRef(objCapturer);
             continue;
         }
-        std::unique_ptr<AudioCapturerChangeInfo> capturerChangeInfo = std::make_unique<AudioCapturerChangeInfo>();
+        std::shared_ptr<AudioCapturerChangeInfo> capturerChangeInfo = std::make_shared<AudioCapturerChangeInfo>();
         capturerChangeInfo->sessionId = static_cast<int32_t>(jSessionId);
         capturerChangeInfo->capturerInfo.sourceType = ConvertSourceTypeToOh(static_cast<AudioSourceType>(jSourceType));
         capturerChangeInfo->capturerInfo.capturerFlags = 0;
@@ -719,7 +714,7 @@ int32_t AudioManagerJni::UnregisterAudioCapturerEventListener()
 }
 
 int32_t AudioManagerJni::GetCurrentRendererChangeInfos(
-    std::vector<std::unique_ptr<AudioRendererChangeInfo>>& audioRendererChangeInfos)
+    std::vector<std::shared_ptr<AudioRendererChangeInfo>>& audioRendererChangeInfos)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);
@@ -743,7 +738,7 @@ int32_t AudioManagerJni::GetCurrentRendererChangeInfos(
 }
 
 int32_t AudioManagerJni::GetCurrentCapturerChangeInfos(
-    std::vector<std::unique_ptr<AudioCapturerChangeInfo>>& audioCapturerChangeInfos)
+    std::vector<std::shared_ptr<AudioCapturerChangeInfo>>& audioCapturerChangeInfos)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);
@@ -794,7 +789,7 @@ AudioVolumeType GetVolumeTypeFromStreamUsage(StreamUsage streamUsage)
 
 bool AudioManagerJni::IsStreamActive(AudioVolumeType volumeType)
 {
-    std::vector<std::unique_ptr<AudioRendererChangeInfo>> audioRendererChangeInfos;
+    std::vector<std::shared_ptr<AudioRendererChangeInfo>> audioRendererChangeInfos;
     int32_t result = GetCurrentRendererChangeInfos(audioRendererChangeInfos);
     if (result != SUCCESS) {
         LOGE("GetCurrentRendererChangeInfos failed");
@@ -808,7 +803,7 @@ bool AudioManagerJni::IsStreamActive(AudioVolumeType volumeType)
     return false;
 }
 
-int32_t AudioManagerJni::SetDeviceActive(ActiveDeviceType deviceType, bool flag)
+int32_t AudioManagerJni::SetDeviceActive(DeviceType deviceType, bool flag)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);
@@ -826,7 +821,7 @@ int32_t AudioManagerJni::SetDeviceActive(ActiveDeviceType deviceType, bool flag)
     return result ? SUCCESS : ERROR;
 }
 
-bool AudioManagerJni::IsDeviceActive(ActiveDeviceType deviceType)
+bool AudioManagerJni::IsDeviceActive(DeviceType deviceType)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);

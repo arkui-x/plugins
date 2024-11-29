@@ -496,6 +496,7 @@ static void JSCommitModifyCompleteCallback(napi_env env, napi_status status, voi
     unique_ptr<JSAsyncContextOutput> jsContext = make_unique<JSAsyncContextOutput>();
     jsContext->status = false;
 
+
     if (context->error == ERR_DEFAULT) {
         if (context->changedRows < 0) {
             MediaLibraryNapiUtils::CreateNapiErrorObject(env, jsContext->error, context->changedRows,
@@ -625,6 +626,7 @@ bool FileAssetNapi::HandleParamSet(const string &inputKey, const string &value, 
 
 napi_value FileAssetNapi::UserFileMgrSet(napi_env env, napi_callback_info info)
 {
+   
     napi_value ret = nullptr;
     unique_ptr<FileAssetAsyncContext> asyncContext = make_unique<FileAssetAsyncContext>();
     CHECK_NULL_PTR_RETURN_UNDEFINED(env, asyncContext, ret, "asyncContext context is null");
@@ -646,6 +648,7 @@ napi_value FileAssetNapi::UserFileMgrSet(napi_env env, napi_callback_info info)
 
 napi_value FileAssetNapi::PhotoAccessHelperCommitModify(napi_env env, napi_callback_info info)
 {
+    
     napi_value ret = nullptr;
     unique_ptr<FileAssetAsyncContext> asyncContext = make_unique<FileAssetAsyncContext>();
     CHECK_NULL_PTR_RETURN_UNDEFINED(env, asyncContext, ret, "asyncContext context is null");
@@ -716,6 +719,7 @@ static void PhotoAccessHelperFavoriteExecute(napi_env env, void *data)
 
 napi_value FileAssetNapi::PhotoAccessHelperFavorite(napi_env env, napi_callback_info info)
 {
+    
     if (!MediaLibraryNapiUtils::IsSystemApp()) {
         NapiError::ThrowError(env, E_CHECK_SYSTEMAPP_FAIL, "This interface can be called only by system apps");
         return nullptr;

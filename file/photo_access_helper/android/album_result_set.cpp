@@ -67,8 +67,7 @@ static jstring StringToJavaString(JNIEnv* env, const std::string& string)
     return env->NewString(reinterpret_cast<const jchar*>(str.data()), str.length());
 }
 
-static void jstringListToStdStringVector(JNIEnv *env, jobject list, std::vector<std::string> &columnNames)
-{
+static void jstringListToStdStringVector(JNIEnv *env, jobject list, std::vector<std::string> &columnNames) {
     jclass listClass = env->FindClass("java/util/List");
     jmethodID sizeMethod = env->GetMethodID(listClass, "size", "()I");
     jmethodID getMethod = env->GetMethodID(listClass, "get", "(I)Ljava/lang/Object;");
@@ -88,8 +87,7 @@ static void jstringListToStdStringVector(JNIEnv *env, jobject list, std::vector<
     }
 }
 
-std::string AlbumResultSet::getAndroidName(int columnIndex)
-{
+std::string AlbumResultSet::getAndroidName(int columnIndex) {
     std::string str = columnNames_[columnIndex];
     for (auto it = ALBUM_COLUMN_MAP.begin(); it != ALBUM_COLUMN_MAP.end(); it++) {
         if (it->second == str) {
@@ -105,7 +103,7 @@ AlbumResultSet::AlbumResultSet(JNIEnv* env, jobject jobj)
     CHECK_NULL_VOID(env);
     g_pluginClass.globalRef = env->NewGlobalRef(jobj);
     CHECK_NULL_VOID(g_pluginClass.globalRef);
-    jclass QueryMapCls = env->GetObjectClass(jobj);
+    jclass QueryMapCls = env->GetObjectClass(jobj); 
     CHECK_NULL_VOID(QueryMapCls);
 
     g_pluginClass.getColumns = env->GetMethodID(QueryMapCls, "getColumns", "()Ljava/util/List;");
@@ -357,8 +355,7 @@ int AlbumResultSet::GoTo(int offset)
     return 0;
 }
 
-int AlbumResultSet::GoToFirstRow()
-{
+int AlbumResultSet::GoToFirstRow() {
     jint result = INVILID_CODE;
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getFirstValue)) {
@@ -376,8 +373,7 @@ int AlbumResultSet::GoToFirstRow()
     return 0;
 }
 
-int AlbumResultSet::GoToLastRow()
-{
+int AlbumResultSet::GoToLastRow() {
     jint result = INVILID_CODE;
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getLastValue)) {
@@ -394,8 +390,7 @@ int AlbumResultSet::GoToLastRow()
     return 0;
 }
 
-int AlbumResultSet::GoToNextRow()
-{
+int AlbumResultSet::GoToNextRow() {
     jint result = INVILID_CODE;
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getNextValue)) {
@@ -412,8 +407,7 @@ int AlbumResultSet::GoToNextRow()
     return 0;
 }
 
-int AlbumResultSet::IsAtLastRow(bool &result)
-{
+int AlbumResultSet::IsAtLastRow(bool &result) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.IsAtLastRow)) {
         LOGW("Jni get none ptr error");
@@ -428,8 +422,7 @@ int AlbumResultSet::IsAtLastRow(bool &result)
     return SUCCESS_CODE;
 }
 
-int AlbumResultSet::GetColumnCount(int &count)
-{
+int AlbumResultSet::GetColumnCount(int &count) {
     jint result = INVILID_CODE;
     if (columnNames_.empty()) {
         auto env = ARKUI_X_Plugin_GetJniEnv();
@@ -446,8 +439,7 @@ int AlbumResultSet::GetColumnCount(int &count)
     return 0;
 }
 
-int AlbumResultSet::GetColumnIndex(const std::string &columnName, int &columnIndex)
-{
+int AlbumResultSet::GetColumnIndex(const std::string &columnName, int &columnIndex) {
     jint result = INVILID_CODE;
     std::string name = columnName;
     for (auto it = ALBUM_COLUMN_MAP.begin(); it != ALBUM_COLUMN_MAP.end(); it++) {

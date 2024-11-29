@@ -105,64 +105,56 @@ int PhotoResultSet::Close()
     return 0;
 }
 
-int PhotoResultSet::GoTo(int offset)
-{
+int PhotoResultSet::GoTo(int offset) {
     if (cursorObject_) {
         return cursorObject_->GoTo(offset);
     }
     return 0;
 }
 
-int PhotoResultSet::GoToFirstRow()
-{
+int PhotoResultSet::GoToFirstRow() {
     if (cursorObject_) {
         return cursorObject_->GoToFirstRow();
     }
     return 0;
 }
 
-int PhotoResultSet::GoToLastRow()
-{
+int PhotoResultSet::GoToLastRow() {
     if (cursorObject_) {
         return cursorObject_->GoToLastRow();
     }
     return 0;
 }
 
-int PhotoResultSet::GoToNextRow()
-{
+int PhotoResultSet::GoToNextRow() {
     if (cursorObject_) {
         return cursorObject_->GoToNextRow();
     }
     return 0;
 }
 
-int PhotoResultSet::IsAtLastRow(bool &result)
-{
+int PhotoResultSet::IsAtLastRow(bool &result) {
     if (cursorObject_) {
         return cursorObject_->IsAtLastRow(result);
     }
     return 0;
 }
 
-int PhotoResultSet::GetColumnCount(int &count)
-{
+int PhotoResultSet::GetColumnCount(int &count) {
     if (cursorObject_) {
         return cursorObject_->GetColumnCount(count);
     }
     return 0;
 }
 
-int PhotoResultSet::GetColumnIndex(const std::string &columnName, int &columnIndex)
-{
+int PhotoResultSet::GetColumnIndex(const std::string &columnName, int &columnIndex) {
     if (cursorObject_) {
         return cursorObject_->GetColumnIndex(columnName, columnIndex);
     }
     return 0;
 }
 
-int PhotoResultSet::GetColumnName(int columnIndex, std::string &columnName)
-{
+int PhotoResultSet::GetColumnName(int columnIndex, std::string &columnName) {
     if (cursorObject_) {
         return cursorObject_->GetColumnName(columnIndex, columnName);
     }

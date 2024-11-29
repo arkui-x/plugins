@@ -83,18 +83,15 @@ void WebviewControllerIOS::RemoveCache(bool value)
     removeCacheOC(webId_, value);
 }
 
-void WebviewControllerIOS::BackOrForward(int32_t step)
-{
+void WebviewControllerIOS::BackOrForward(int32_t step){
     backOrForwardOC(webId_, step);
 }
 
-std::string WebviewControllerIOS::GetTitle()
-{
+std::string WebviewControllerIOS::GetTitle(){
     return getTitleOC(webId_);
 }
 
-int32_t WebviewControllerIOS::GetPageHeight()
-{
+int32_t WebviewControllerIOS::GetPageHeight(){
     return getPageHeightOC(webId_);
 }
 

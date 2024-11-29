@@ -18,6 +18,7 @@
 
 #include "audio_info.h"
 #include "audio_renderer.h"
+#include "audio_device_descriptor.h"
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
@@ -38,7 +39,7 @@
 - (int32_t)setVolume:(float)volume;
 - (float)getMinStreamVolume;
 - (float)getMaxStreamVolume;
-- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::DeviceInfo &)deviceInfo;
+- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::AudioDeviceDescriptor &)deviceInfo;
 - (int32_t)setVolumeWithRamp:(float)volume rampTime:(int32_t)duration;
 - (void)setInterruptMode:(OHOS::AudioStandard::InterruptMode)mode;
 - (OHOS::AudioStandard::InterruptMode)getInterruptMode;
@@ -46,6 +47,7 @@
 - (int32_t)getRendererInfo:(OHOS::AudioStandard::AudioRendererInfo &)rendererInfo;
 - (int32_t)getStreamInfo:(OHOS::AudioStandard::AudioStreamInfo &)streamInfo;
 - (int32_t)setRendererCallback:(const std::shared_ptr<OHOS::AudioStandard::AudioRendererCallback> &)callback;
+- (int32_t)setRenderMode:(OHOS::AudioStandard::AudioRenderMode)renderMode;
 - (int32_t)setRendererWriteCallback:(const std::shared_ptr<OHOS::AudioStandard::AudioRendererWriteCallback> &)callback;
 - (int32_t)setRendererDeviceChangeCallback:
     (const std::shared_ptr<OHOS::AudioStandard::AudioRendererDeviceChangeCallback> &)callback;

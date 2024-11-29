@@ -21,7 +21,8 @@
 #include <map>
 
 namespace OHOS::Plugin::Request {
-class FailNotify : public JsNotify {
+class FailNotify : public JsNotify
+{
 public:
     explicit FailNotify(napi_env env, napi_value cb, Version version, Action action);
     virtual ~FailNotify() = default;

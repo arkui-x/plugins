@@ -35,7 +35,7 @@
 - (int32_t)enqueue:(const OHOS::AudioStandard::BufferDesc &)bufDesc;
 - (bool)getAudioTime:(OHOS::AudioStandard::Timestamp &)timestamp;
 - (int32_t)getAudioStreamId:(uint32_t &)sessionID;
-- (int32_t)getCurrentInputDevices:(OHOS::AudioStandard::DeviceInfo &)deviceInfo;
+- (int32_t)getCurrentInputDevices:(OHOS::AudioStandard::AudioDeviceDescriptor &)deviceInfo;
 - (int32_t)getCurrentCapturerChangeInfo:(OHOS::AudioStandard::AudioCapturerChangeInfo &)changeInfo;
 - (int32_t)setCapturerReadCallback:(const std::shared_ptr<OHOS::AudioStandard::AudioCapturerReadCallback> &)callback;
 - (int32_t)setCapturerCallback:(const std::shared_ptr<OHOS::AudioStandard::AudioCapturerCallback> &)callback;

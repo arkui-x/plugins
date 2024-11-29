@@ -73,6 +73,7 @@ void FetchFileResultNapi::GetFetchResult(unique_ptr<FetchFileResultNapi> &obj)
 // Constructor callback
 napi_value FetchFileResultNapi::FetchFileResultNapiConstructor(napi_env env, napi_callback_info info)
 {
+
     napi_status status;
     napi_value result = nullptr;
     napi_value thisVar = nullptr;
@@ -113,7 +114,7 @@ FetchResType FetchFileResultNapi::GetFetchResType()
 void FetchFileResultNapi::SolveConstructorRef(unique_ptr<FetchResult<FileAsset>> &fileResult,
     napi_ref &constructorRef)
 {
-    switch (fileResult->GetResultNapiType()) {
+    switch(fileResult->GetResultNapiType()) {
         case ResultNapiType::TYPE_USERFILE_MGR: {
             constructorRef = userFileMgrConstructor_;
             break;
@@ -131,7 +132,7 @@ void FetchFileResultNapi::SolveConstructorRef(unique_ptr<FetchResult<FileAsset>>
 void FetchFileResultNapi::SolveConstructorRef(unique_ptr<FetchResult<PhotoAlbum>> &fileResult,
     napi_ref &constructorRef)
 {
-    switch (fileResult->GetResultNapiType()) {
+    switch(fileResult->GetResultNapiType()) {
         case ResultNapiType::TYPE_USERFILE_MGR: {
             constructorRef = userFileMgrConstructor_;
             break;
@@ -148,6 +149,7 @@ void FetchFileResultNapi::SolveConstructorRef(unique_ptr<FetchResult<PhotoAlbum>
 
 napi_value FetchFileResultNapi::CreateFetchFileResult(napi_env env, unique_ptr<FetchResult<FileAsset>> fileResult)
 {
+    
     napi_value constructor;
     napi_ref constructorRef;
 
@@ -323,6 +325,7 @@ static void GetNapiResFromAsset(napi_env env, FetchFileResultAsyncContext *conte
 
 static void GetPositionObjectCompleteCallback(napi_env env, napi_status status, FetchFileResultAsyncContext* context)
 {
+  
     CHECK_NULL_PTR_RETURN_VOID(context, "Async context is null");
 
     unique_ptr<JSAsyncContextOutput> jsContext = make_unique<JSAsyncContextOutput>();
@@ -616,6 +619,7 @@ std::shared_ptr<FetchResult<PhotoAlbum>> FetchFileResultNapi::GetFetchPhotoAlbum
 
 void GetAllObjectFromFetchResult(const FetchFileResultAsyncContext &asyncContext)
 {
+  
     FetchFileResultAsyncContext *context = const_cast<FetchFileResultAsyncContext *>(&asyncContext);
     context->GetAllObjectFromFetchResult();
 }

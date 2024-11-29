@@ -53,7 +53,7 @@ AudioStreamType AudioSystemManager::GetStreamType(ContentType contentType, Strea
     return STREAM_DEFAULT;
 }
 
-void AudioSystemManager::AudioServerDied(pid_t pid)
+void AudioSystemManager::AudioServerDied(pid_t pid, pid_t uid)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
 }
@@ -81,33 +81,22 @@ AudioScene AudioSystemManager::GetAudioScene() const
     return Plugin::AudioManagerJni::GetAudioScene();
 }
 
-int32_t AudioSystemManager::SetDeviceActive(ActiveDeviceType deviceType, bool flag) const
+int32_t AudioSystemManager::SetDeviceActive(DeviceType deviceType, bool flag) const
 {
-    switch (deviceType) {
-        case EARPIECE:
-        case SPEAKER:
-        case BLUETOOTH_SCO:
-        case FILE_SINK_DEVICE:
-            break;
-        default:
-            AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
-            return ERR_NOT_SUPPORTED;
+    AUDIO_INFO_LOG("device: %{public}d", deviceType);
+    if (!IsActiveDeviceType(deviceType)) {
+        AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
+        return ERR_NOT_SUPPORTED;
     }
 
     return Plugin::AudioManagerJni::SetDeviceActive(deviceType, flag);
 }
 
-bool AudioSystemManager::IsDeviceActive(ActiveDeviceType deviceType) const
+bool AudioSystemManager::IsDeviceActive(DeviceType deviceType) const
 {
-    switch (deviceType) {
-        case EARPIECE:
-        case SPEAKER:
-        case BLUETOOTH_SCO:
-        case FILE_SINK_DEVICE:
-            break;
-        default:
-            AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
-            return false;
+    if (!IsActiveDeviceType(deviceType)) {
+        AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
+        return ERR_NOT_SUPPORTED;
     }
 
     return Plugin::AudioManagerJni::IsDeviceActive(deviceType);
@@ -223,10 +212,23 @@ int32_t AudioSystemManager::SetDeviceChangeCallback(
     return Plugin::AudioManagerJni::AddDeviceChangeCallback(flag, callback);
 }
 
-int32_t AudioSystemManager::UnsetDeviceChangeCallback(DeviceFlag flag,
-    std::shared_ptr<AudioManagerDeviceChangeCallback> cb)
+int32_t AudioSystemManager::UnsetDeviceChangeCallback(DeviceFlag flag, std::shared_ptr<AudioManagerDeviceChangeCallback> cb)
 {
     return Plugin::AudioManagerJni::RemoveDeviceChangeCallback();
+}
+
+int32_t AudioSystemManager::SetMicrophoneBlockedCallback(
+    const std::shared_ptr<AudioManagerMicrophoneBlockedCallback>& callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnsetMicrophoneBlockedCallback(
+    const std::shared_ptr<AudioManagerMicrophoneBlockedCallback> callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
+    return ERR_NOT_SUPPORTED;
 }
 
 int32_t AudioSystemManager::SetRingerModeCallback(
@@ -254,13 +256,15 @@ bool AudioSystemManager::IsMicrophoneMute()
     return false;
 }
 
-int32_t AudioSystemManager::SelectOutputDevice(std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
+int32_t AudioSystemManager::SelectOutputDevice(
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::SelectInputDevice(std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
+int32_t AudioSystemManager::SelectInputDevice(
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -273,30 +277,30 @@ std::string AudioSystemManager::GetSelectedDeviceInfo(int32_t uid, int32_t pid, 
 }
 
 int32_t AudioSystemManager::SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
-    std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
 int32_t AudioSystemManager::SelectInputDevice(sptr<AudioCapturerFilter> audioCapturerFilter,
-    std::vector<sptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
-std::vector<sptr<AudioDeviceDescriptor>> AudioSystemManager::GetDevices(DeviceFlag deviceFlag)
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetDevices(DeviceFlag deviceFlag)
 {
-    std::vector<sptr<AudioDeviceDescriptor>> devices;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> devices;
     Plugin::AudioManagerJni::GetDevices(deviceFlag, devices);
     return devices;
 }
 
-std::vector<sptr<AudioDeviceDescriptor>> AudioSystemManager::GetActiveOutputDeviceDescriptors()
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetActiveOutputDeviceDescriptors()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    std::vector<sptr<AudioDeviceDescriptor>> ret;
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> ret;
     return ret;
 }
 
@@ -535,7 +539,8 @@ int32_t AudioSystemManager::UnsetAvailableDeviceChangeCallback(AudioDeviceUsage 
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::ConfigDistributedRoutingRole(AudioDeviceDescriptor* descriptor, CastType type)
+int32_t AudioSystemManager::ConfigDistributedRoutingRole(
+    std::shared_ptr<AudioDeviceDescriptor> descriptor, CastType type)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -555,7 +560,7 @@ int32_t AudioSystemManager::UnsetDistributedRoutingRoleCallback(
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::SetCallDeviceActive(ActiveDeviceType deviceType, bool flag, std::string address) const
+int32_t AudioSystemManager::SetCallDeviceActive(DeviceType deviceType, bool flag, std::string address) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -565,6 +570,22 @@ int32_t AudioSystemManager::DisableSafeMediaVolume()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
+}
+
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetOutputDevice(
+    sptr<AudioRendererFilter> audioRendererFilter)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> ret;
+    return ret;
+}
+
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetInputDevice(
+    sptr<AudioCapturerFilter> audioCapturerFilter)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> ret;
+    return ret;
 }
 } // namespace AudioStandard
 } // namespace OHOS

@@ -67,10 +67,9 @@ public:
     int32_t Enqueue(const BufferDesc& bufDesc) const override;
     int32_t Clear() const override { return 0; }
     int32_t GetBufQueueState(BufferQueueState& bufState) const override { return 0; }
-    void SetApplicationCachePath(const std::string cachePath) override {}
     void SetValid(bool valid) override {}
     int64_t GetFramesRead() const override { return 0; }
-    int32_t GetCurrentInputDevices(DeviceInfo& deviceInfo) const override;
+    int32_t GetCurrentInputDevices(AudioDeviceDescriptor& deviceInfo) const override;
     int32_t GetCurrentCapturerChangeInfo(AudioCapturerChangeInfo& changeInfo) const override;
     int32_t SetAudioCapturerDeviceChangeCallback(
         const std::shared_ptr<AudioCapturerDeviceChangeCallback>& callback) override;
@@ -83,7 +82,7 @@ public:
     int32_t RegisterAudioCapturerEventListener() override { return SUCCESS; }
     int32_t UnregisterAudioCapturerEventListener() override { return SUCCESS; }
     std::vector<sptr<MicrophoneDescriptor>> GetCurrentMicrophones() const override
-    {
+    { 
         std::vector<sptr<MicrophoneDescriptor>> emptyVector;
         return emptyVector;
     }

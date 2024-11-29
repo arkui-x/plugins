@@ -45,11 +45,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init;
 
-- (void)downloadFinished:(NSURLSessionDownloadTask *)task
-    toPath:(nullable NSURL *)path withError:(nullable NSError *)error;
+- (void)downloadFinished:(NSURLSessionDownloadTask *)task toPath:(nullable NSURL *)path withError:(nullable NSError *)error;
 
-- (void)updateProgressWithBytesWritten:(int64_t)bytesWritten
-    totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite;
+- (void)updateProgressWithBytesWritten:(int64_t)bytesWritten totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite;
 
 @end
 
@@ -61,8 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)init;
 
-- (void)upadteProgressWithTotalBytesSent:(int64_t)totalBytesSent
-    totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend;
+- (void)upadteProgressWithTotalBytesSent:(int64_t)totalBytesSent totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend;
 
 @end
 

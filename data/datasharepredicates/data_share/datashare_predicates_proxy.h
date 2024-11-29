@@ -24,7 +24,7 @@
 
 namespace OHOS {
 namespace DataShare {
-class DataSharePredicatesProxy : public JSProxy::JSProxy<DataShareAbsPredicates> {
+class DataSharePredicatesProxy : public JSProxy::JSProxy<DataShareAbsPredicates>{
 public:
     static void Init(napi_env env, napi_value exports);
     static std::shared_ptr<DataShareAbsPredicates> GetNativePredicates(

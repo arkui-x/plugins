@@ -84,15 +84,15 @@ static AudioManagerImpl *sharedInstance = nil;
     }
 }
 
-- (std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>>)getDevices:
+- (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>>)getDevices:
     (OHOS::AudioStandard::DeviceFlag)deviceFlag
 {
-    std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>> descriptors = {};
+    std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>> descriptors = {};
     if (deviceFlag == OHOS::AudioStandard::INPUT_DEVICES_FLAG) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
         NSLog(@"AVAudioSession availableInputs count = %lu",[audioSession.availableInputs count]);
         for (AVAudioSessionPortDescription *portDescription in audioSession.availableInputs) {
-            OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor> descriptor =
+            std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor> descriptor =
                 [self getDeviceInfo:portDescription role:OHOS::AudioStandard::DeviceRole::INPUT_DEVICE];
             descriptor->audioStreamInfo_.samplingRate.clear();
             descriptors.push_back(descriptor);
@@ -101,13 +101,13 @@ static AudioManagerImpl *sharedInstance = nil;
     return descriptors;
 }
 
-- (OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>)getDeviceInfo:
+- (std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>)getDeviceInfo:
     (AVAudioSessionPortDescription *)portDescription role:(OHOS::AudioStandard::DeviceRole)deviceRole
 {
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     NSLog(@"portDescription = %@",portDescription);
-    OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor> descriptor =
-        new(std::nothrow) OHOS::AudioStandard::AudioDeviceDescriptor();
+    std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor> descriptor =
+        std::make_shared<OHOS::AudioStandard::AudioDeviceDescriptor>();
     descriptor->deviceRole_ = deviceRole;
     ConvertDeviceTypeToOh(portDescription.portType, descriptor->deviceType_);
     descriptor->deviceName_ = std::string([portDescription.portName UTF8String]);
@@ -128,10 +128,10 @@ static AudioManagerImpl *sharedInstance = nil;
     return descriptor;
 }
 
-- (int32_t)setDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType active:(bool)flag
+- (int32_t)setDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType active:(bool)flag
 {
     NSLog(@"setDeviceActive deviceType = %d, flag = %d",deviceType, flag);
-    if (deviceType == OHOS::AudioStandard::SPEAKER) {
+    if (deviceType == OHOS::AudioStandard::DEVICE_TYPE_SPEAKER) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
         if (!communicationDeviceActive_) {
             savedCategory_ = audioSession.category;
@@ -156,9 +156,9 @@ static AudioManagerImpl *sharedInstance = nil;
     }
 }
 
-- (bool)isDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType
+- (bool)isDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType
 {
-    if (deviceType == OHOS::AudioStandard::SPEAKER) {
+    if (deviceType == OHOS::AudioStandard::DEVICE_TYPE_SPEAKER) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
         AVAudioSessionRouteDescription *routeDescription = audioSession.currentRoute;
         for (AVAudioSessionPortDescription *portDescription in routeDescription.outputs) {
@@ -214,7 +214,7 @@ static AudioManagerImpl *sharedInstance = nil;
 - (void)updateRendererChangeInfos
 {
     if (rendererChangeCallback_) {
-        std::vector<std::unique_ptr<OHOS::AudioStandard::AudioRendererChangeInfo>> audioRendererChangeInfos;
+        std::vector<std::shared_ptr<OHOS::AudioStandard::AudioRendererChangeInfo>> audioRendererChangeInfos;
         [self getCurrentRendererChangeInfos:audioRendererChangeInfos];
         rendererChangeCallback_->OnRendererStateChange(audioRendererChangeInfos);
     }
@@ -245,21 +245,21 @@ static AudioManagerImpl *sharedInstance = nil;
 - (void)updateCapturerChangeInfos
 {
     if (capturerChangeCallback_) {
-        std::vector<std::unique_ptr<OHOS::AudioStandard::AudioCapturerChangeInfo>> audioCapturerChangeInfos;
+        std::vector<std::shared_ptr<OHOS::AudioStandard::AudioCapturerChangeInfo>> audioCapturerChangeInfos;
         [self getCurrentCapturerChangeInfos:audioCapturerChangeInfos];
         capturerChangeCallback_->OnCapturerStateChange(audioCapturerChangeInfos);
     }
 }
 
 - (int32_t)getCurrentRendererChangeInfos:
-    (std::vector<std::unique_ptr<OHOS::AudioStandard::AudioRendererChangeInfo>> &)audioRendererChangeInfos
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioRendererChangeInfo>> &)audioRendererChangeInfos
 {
     NSLog(@"rendererList_ size = %lu", rendererList_.size());
     for (auto &renderer : rendererList_) {
         if (!renderer) {
             continue;
         }
-        auto changeInfo = std::make_unique<OHOS::AudioStandard::AudioRendererChangeInfo>();
+        auto changeInfo = std::make_shared<OHOS::AudioStandard::AudioRendererChangeInfo>();
         uint32_t sessionId;
         int32_t ret = [renderer getAudioStreamId:sessionId];
         if (!ret) {
@@ -269,7 +269,7 @@ static AudioManagerImpl *sharedInstance = nil;
         [renderer getRendererInfo:rendererInfo];
         changeInfo->rendererInfo = rendererInfo;
 
-        OHOS::AudioStandard::DeviceInfo deviceInfo;
+        OHOS::AudioStandard::AudioDeviceDescriptor deviceInfo;
         [renderer getCurrentOutputDevices:deviceInfo];
         changeInfo->outputDeviceInfo = deviceInfo;
         audioRendererChangeInfos.push_back(std::move(changeInfo));
@@ -278,14 +278,14 @@ static AudioManagerImpl *sharedInstance = nil;
 }
 
 - (int32_t)getCurrentCapturerChangeInfos:
-    (std::vector<std::unique_ptr<OHOS::AudioStandard::AudioCapturerChangeInfo>> &)audioCapturerChangeInfos
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioCapturerChangeInfo>> &)audioCapturerChangeInfos
 {
     NSLog(@"capturerList_ size = %lu", capturerList_.size());
     for (auto &capturer : capturerList_) {
         if (!capturer) {
             continue;
         }
-        auto changeInfo = std::make_unique<OHOS::AudioStandard::AudioCapturerChangeInfo>();
+        auto changeInfo = std::make_shared<OHOS::AudioStandard::AudioCapturerChangeInfo>();
         int32_t ret = [capturer getCurrentCapturerChangeInfo: *changeInfo];
         if (!ret) {
             audioCapturerChangeInfos.push_back(std::move(changeInfo));
@@ -366,7 +366,7 @@ static AudioManagerImpl *sharedInstance = nil;
 }
 
 - (int32_t)getPreferredOutputDeviceForRendererInfo:
-    (std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc
 {
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     AVAudioSessionRouteDescription *routeDescription = audioSession.currentRoute;
@@ -377,7 +377,7 @@ static AudioManagerImpl *sharedInstance = nil;
 }
 
 - (int32_t)getPreferredInputDeviceForCapturerInfo:
-    (std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc
+    (std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>> &)desc
 {
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     AVAudioSessionRouteDescription *routeDescription = audioSession.currentRoute;
@@ -422,7 +422,7 @@ static AudioManagerImpl *sharedInstance = nil;
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     AVAudioSessionRouteDescription *routeDescription = audioSession.currentRoute;
     if (outputDeviceCallback_) {
-        std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>> descriptors = {};
+        std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>> descriptors = {};
         for (AVAudioSessionPortDescription *portDescription in routeDescription.outputs) {
             descriptors.push_back(
                 [self getDeviceInfo:portDescription role:OHOS::AudioStandard::DeviceRole::OUTPUT_DEVICE]);
@@ -431,7 +431,7 @@ static AudioManagerImpl *sharedInstance = nil;
     }
 
     if (inputDeviceCallback_) {
-        std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>> descriptors = {};
+        std::vector<std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor>> descriptors = {};
         for (AVAudioSessionPortDescription *portDescription in routeDescription.inputs) {
             descriptors.push_back(
                 [self getDeviceInfo:portDescription role:OHOS::AudioStandard::DeviceRole::INPUT_DEVICE]);

@@ -60,8 +60,7 @@ static const std::map<std::string, std::string> ALBUM_SORT_COLUMN_MAP = {
     { PhotoAlbumColumns::ALBUM_NAME, "localizedTitle" },
 };
 
-static int ChangeAlbumFieldToIosField(const std::string &value, const std::map<std::string, int> &columnMap)
-{
+static int ChangeAlbumFieldToIosField(const std::string &value, const std::map<std::string, int> &columnMap) {
     auto it = columnMap.find(value);
     if (it != columnMap.end()) {
         return it->second;
@@ -69,8 +68,7 @@ static int ChangeAlbumFieldToIosField(const std::string &value, const std::map<s
     return 0;
 }
 
-static std::string ChangePhotoFieldToIosField(const std::string &field, const bool isAlbum)
-{
+static std::string ChangePhotoFieldToIosField(const std::string &field, const bool isAlbum) {
     if (isAlbum) {
         return "";
     }
@@ -81,9 +79,7 @@ static std::string ChangePhotoFieldToIosField(const std::string &field, const bo
     return "";
 }
 
-static std::string GetPhotoSortFieldToIosField(const std::string &field,
-    const std::map<std::string, std::string> &columnMap)
-{
+static std::string GetPhotoSortFieldToIosField(const std::string &field, const std::map<std::string, std::string> &columnMap) {
     auto it = columnMap.find(field);
     if (it != columnMap.end()) {
         return it->second;
@@ -91,16 +87,14 @@ static std::string GetPhotoSortFieldToIosField(const std::string &field,
     return "";
 }
 
-static std::string ChangePhotoSortFieldToIosField(const std::string &field, const bool isAlbum)
-{
+static std::string ChangePhotoSortFieldToIosField(const std::string &field, const bool isAlbum) {
     if (isAlbum) {
         return GetPhotoSortFieldToIosField(field, ALBUM_SORT_COLUMN_MAP);
     }
     return GetPhotoSortFieldToIosField(field, PHOTO_SORT_COLUMN_MAP);
 }
 
-static std::string ChangeDuring(const std::string &duringMs)
-{
+static std::string ChangeDuring(const std::string &duringMs) {
     double value = 0;
     value = std::stod(duringMs) / 1000.0;
     return std::to_string(value);

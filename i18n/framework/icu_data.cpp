@@ -37,7 +37,7 @@ void InitIcuData()
     if (status != 0) {
         return;
     }
-    UErrorCode err;
+	UErrorCode err;
     udata_setCommonDataAfterClean(&U_ICUDATA_ENTRY_POINT, &err);
     status = 1;
 }

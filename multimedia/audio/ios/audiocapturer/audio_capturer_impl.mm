@@ -314,27 +314,27 @@ static void AudioRecordAQInputCallback(
     return true;
 }
 
-- (int32_t)getCurrentInputDevices:(OHOS::AudioStandard::DeviceInfo &)deviceInfo
+- (int32_t)getCurrentInputDevices:(OHOS::AudioStandard::AudioDeviceDescriptor &)deviceInfo
 {
     if (recordState_ != OHOS::AudioStandard::CAPTURER_RELEASED) {
         AVAudioSessionRouteDescription *routeDescription = audioSession_.currentRoute;
         NSLog(@"routeDescription count=%lu",[routeDescription.inputs count]);
         for (AVAudioSessionPortDescription *portDescription in routeDescription.inputs) {
-            deviceInfo.deviceRole = OHOS::AudioStandard::DeviceRole::INPUT_DEVICE;
-            ConvertDeviceTypeToOh(portDescription.portType, deviceInfo.deviceType);
-            deviceInfo.deviceName = std::string([portDescription.portName UTF8String]);
-            deviceInfo.displayName = std::string([portDescription.UID UTF8String]);
+            deviceInfo.deviceRole_ = OHOS::AudioStandard::DeviceRole::INPUT_DEVICE;
+            ConvertDeviceTypeToOh(portDescription.portType, deviceInfo.deviceType_);
+            deviceInfo.deviceName_ = std::string([portDescription.portName UTF8String]);
+            deviceInfo.displayName_ = std::string([portDescription.UID UTF8String]);
             NSLog(@"deviceRole=%d,deviceType=%d, deviceName=%s, displayName=%s",
-                deviceInfo.deviceRole,deviceInfo.deviceType, deviceInfo.deviceName.c_str(), deviceInfo.displayName.c_str());
+                deviceInfo.deviceRole_,deviceInfo.deviceType_, deviceInfo.deviceName_.c_str(), deviceInfo.displayName_.c_str());
             NSLog(@"channels=%lu",[portDescription.channels count]);
             for (AVAudioSessionChannelDescription *channelDescription in portDescription.channels) {
-                deviceInfo.channelMasks |= channelDescription.channelLabel;
+                deviceInfo.channelMasks_ |= channelDescription.channelLabel;
                 NSLog(@"channelName=%@,channelNumber=%lu, owningPortUID=%@, channelLabel=%u",
                     channelDescription.channelName,channelDescription.channelNumber, channelDescription.owningPortUID,
                     channelDescription.channelLabel);
             }
 
-            deviceInfo.audioStreamInfo.samplingRate.insert(
+            deviceInfo.audioStreamInfo_.samplingRate.insert(
                 static_cast<OHOS::AudioStandard::AudioSamplingRate>(audioSession_.sampleRate));
             NSLog(@"sampleRate=%f", audioSession_.sampleRate);
         }
@@ -416,7 +416,7 @@ static void AudioRecordAQInputCallback(
 {
     NSDictionary *userInfo = notification.userInfo;
     if (deviceCallback_) {
-        OHOS::AudioStandard::DeviceInfo deviceInfo;
+        OHOS::AudioStandard::AudioDeviceDescriptor deviceInfo;
         [self getCurrentInputDevices: deviceInfo];
         deviceCallback_->OnStateChange(deviceInfo);
     }

@@ -37,7 +37,7 @@ public:
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     bool Stop() override;
     bool Flush() const override;
-    bool Release() const override;
+    bool Release() override;
     int32_t Write(uint8_t *buffer, size_t bufferSize) override;
     RendererState GetStatus() const override;
     int32_t SetVolume(float volume) const override;
@@ -50,7 +50,7 @@ public:
     int32_t Enqueue(const BufferDesc &bufDesc) const override;
     float GetMinStreamVolume() const override;
     float GetMaxStreamVolume() const override;
-    int32_t GetCurrentOutputDevices(DeviceInfo &deviceInfo) const override;
+    int32_t GetCurrentOutputDevices(AudioDeviceDescriptor &deviceInfo) const override;
     uint32_t GetUnderflowCount() const override;
     int32_t SetRendererCallback(const std::shared_ptr<AudioRendererCallback> &callback) override;
     int32_t SetRendererPositionCallback(int64_t markPosition,
@@ -83,14 +83,13 @@ public:
     int32_t SetRendererSamplingRate(uint32_t sampleRate) const override { return ERR_NOT_SUPPORTED; }
     uint32_t GetRendererSamplingRate() const override { return 0; }
     int32_t SetBufferDuration(uint64_t bufferDuration) const override { return ERR_NOT_SUPPORTED; }
-    int32_t SetRenderMode(AudioRenderMode renderMode) override { return SUCCESS; }
+    int32_t SetRenderMode(AudioRenderMode renderMode) override;
     AudioRenderMode GetRenderMode() const override { return RENDER_MODE_NORMAL; }
     int32_t SetRendererFirstFrameWritingCallback(
         const std::shared_ptr<AudioRendererFirstFrameWritingCallback> &callback) override { return ERR_NOT_SUPPORTED; }
     void SetPreferredFrameSize(int32_t frameSize) override {}
     int32_t Clear() const override  { return ERR_NOT_SUPPORTED; }
     int32_t GetBufQueueState(BufferQueueState &bufState) const override { return ERR_NOT_SUPPORTED; }
-    void SetApplicationCachePath(const std::string cachePath) override {}
     int32_t SetParallelPlayFlag(bool parallelPlayFlag) override { return ERR_NOT_SUPPORTED; }
     int32_t SetLowPowerVolume(float volume) const override { return ERR_NOT_SUPPORTED; }
     float GetLowPowerVolume() const override { return 0.0f; }
@@ -118,7 +117,7 @@ public:
 
     bool IsNoStreamRenderer() const override { return false; }
 
-    int32_t SetDefaultOutputDevice(DeviceType deviceType) override { return ERR_NOT_SUPPORTED; }
+    int32_t SetDefaultOutputDevice(DeviceType deviceType) override{ return ERR_NOT_SUPPORTED; }
 
 private:
     bool IsFormatValid(uint8_t format);

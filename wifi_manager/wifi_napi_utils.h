@@ -32,7 +32,7 @@ static const int32_t WIFI_NAPI_MAX_PARA = 2;
 class RegObj {
 public:
     RegObj() : m_regEnv(0), m_regHanderRef(nullptr) {}
-    explicit RegObj(const napi_env& env, const napi_ref& ref) : m_regEnv(env), m_regHanderRef(ref) {}
+    explicit RegObj(const napi_env& env, const napi_ref& ref) : m_regEnv(env),m_regHanderRef(ref){}
 
     ~RegObj() {}
 
@@ -105,14 +105,14 @@ public:
     int32_t sysCap;
     int errorCode;
 
-    AsyncContext(napi_env e, napi_async_work w = nullptr, napi_deferred d = nullptr) : env(e),
-        work(w),
-        deferred(d),
-        executeFunc(nullptr),
-        completeFunc(nullptr),
-        result(nullptr),
-        sysCap(0),
-        errorCode(ERR_CODE_SUCCESS) {}
+    AsyncContext(napi_env e, napi_async_work w = nullptr, napi_deferred d = nullptr) : env(e), 
+    work(w), 
+    deferred(d), 
+    executeFunc(nullptr), 
+    completeFunc(nullptr), 
+    result(nullptr), 
+    sysCap(0), 
+    errorCode(ERR_CODE_SUCCESS) {}
 
     AsyncContext() = delete;
 

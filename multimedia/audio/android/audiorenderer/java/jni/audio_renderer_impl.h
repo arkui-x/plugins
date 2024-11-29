@@ -41,6 +41,7 @@ public:
     bool Release();
     bool Flush();
     int32_t Write(uint8_t* buffer, size_t bufferSize);
+    int32_t SetRenderMode(AudioRenderMode renderMode);
     int32_t SetRendererWriteCallback(const std::shared_ptr<AudioRendererWriteCallback>& callback);
     int32_t GetBufferSize(size_t& bufferSize) const;
     int32_t GetBufferDesc(BufferDesc& bufDesc) const;
@@ -53,7 +54,7 @@ public:
     uint32_t GetUnderflowCount();
     int32_t GetRendererInfo(AudioRendererInfo& rendererInfo) const;
     int32_t GetStreamInfo(AudioStreamInfo& streamInfo) const;
-    int32_t GetCurrentOutputDevices(DeviceInfo& deviceInfo) const;
+    int32_t GetCurrentOutputDevices(AudioDeviceDescriptor& deviceInfo) const;
     int32_t GetAudioStreamId(uint32_t& sessionID) const;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const;
     int32_t SetChannelBlendMode(ChannelBlendMode blendMode);
@@ -87,6 +88,8 @@ private:
 
     AudioStreamInfo formatInfo_;
     AudioEffectMode effectMode_ = EFFECT_NONE;
+    AudioRenderMode renderMode_ = RENDER_MODE_NORMAL;
+    std::mutex writeCbMutex_;
 };
 } // namespace AudioStandard
 } // namespace OHOS

@@ -95,8 +95,7 @@ static jstring StringToJavaString(JNIEnv* env, const std::string& string)
     return env->NewString(reinterpret_cast<const jchar*>(str.data()), str.length());
 }
 
-static std::vector<std::string> jstringListToStdStringVector(JNIEnv *env, jobject list)
-{
+static std::vector<std::string> jstringListToStdStringVector(JNIEnv *env, jobject list) {
     std::vector<std::string> result;
     jclass listClass = env->FindClass("java/util/List");
     jmethodID sizeMethod = env->GetMethodID(listClass, "size", "()I");
@@ -114,8 +113,7 @@ static std::vector<std::string> jstringListToStdStringVector(JNIEnv *env, jobjec
     return result;
 }
 
-void PhotoPluginJni::startPhotoPicker(std::string &type)
-{
+void PhotoPluginJni::startPhotoPicker(std::string &type) {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.startPhotoPicker)) {
         LOGW("PhotoPluginJni get none ptr error");
@@ -147,8 +145,7 @@ void PhotoPluginJni::onPickerResult(JNIEnv* env, jobject thiz, jobject rst, jint
     }
 }
 
-static jobjectArray ListToJavaList(JNIEnv* env, std::vector<std::string> &array)
-{
+static jobjectArray ListToJavaList(JNIEnv* env, std::vector<std::string> &array) {
     jclass jclz = env->FindClass("java/lang/String");
     jobjectArray jArray = env->NewObjectArray(array.size(), jclz, NULL);
     for (size_t i = 0; i < array.size(); i++) {
@@ -159,12 +156,11 @@ static jobjectArray ListToJavaList(JNIEnv* env, std::vector<std::string> &array)
 }
 
 static jobject getSelectionBundle(JNIEnv* env, const NativeRdb::RdbPredicates &predicates,
-    std::vector<std::string> &selectionArgs)
-{
+    std::vector<std::string> &selectionArgs) {
     jclass jclazz = env->FindClass("android/os/Bundle");
     jmethodID init = env->GetMethodID(jclazz, "<init>", "()V");
     jobject bundle = env->NewObject(jclazz, init);
-    jmethodID jSetStringID = env->GetMethodID(jclazz, "putString", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID jSetStringID =env->GetMethodID(jclazz, "putString", "(Ljava/lang/String;Ljava/lang/String;)V");
     CHECK_NULL_RETURN(jSetStringID, bundle);
     if (!predicates.GetWhereClause().empty()) {
         jstring where = StringToJavaString(env, predicates.GetWhereClause());
@@ -177,16 +173,16 @@ static jobject getSelectionBundle(JNIEnv* env, const NativeRdb::RdbPredicates &p
         env->CallVoidMethod(bundle, jSetStringID, key, groupBy);
     }
 
-    std::string limitStr = (predicates.GetLimit() == NativeRdb::AbsPredicates::INIT_LIMIT_VALUE) ?
-        "" : std::to_string(predicates.GetLimit());
+    std::string limitStr =
+        (predicates.GetLimit() == NativeRdb::AbsPredicates::INIT_LIMIT_VALUE) ? "" : std::to_string(predicates.GetLimit());
     if (!limitStr.empty()) {
         jstring jLimit = StringToJavaString(env, limitStr);
         jstring key = StringToJavaString(env, "android:query-arg-sql-limit");
         env->CallVoidMethod(bundle, jSetStringID, key, jLimit);
     }
 
-    std::string offsetStr = (predicates.GetOffset() == NativeRdb::AbsPredicates::INIT_OFFSET_VALUE) ?
-        "" : std::to_string(predicates.GetOffset());
+    std::string offsetStr =
+        (predicates.GetOffset() == NativeRdb::AbsPredicates::INIT_OFFSET_VALUE) ? "" : std::to_string(predicates.GetOffset());
     if (!offsetStr.empty()) {
         jstring jOffset = StringToJavaString(env, offsetStr);
         jstring key = StringToJavaString(env, "android:query-arg-offset");
@@ -200,7 +196,7 @@ static jobject getSelectionBundle(JNIEnv* env, const NativeRdb::RdbPredicates &p
     }
 
     if (!selectionArgs.empty()) {
-        jmethodID jSetStringArrayID = env->GetMethodID(jclazz, "putStringArray",
+        jmethodID jSetStringArrayID =env->GetMethodID(jclazz, "putStringArray",
             "(Ljava/lang/String;[Ljava/lang/String;)V");
         jobject jArgs = ListToJavaList(env, selectionArgs);
         jstring key = StringToJavaString(env, "android:query-arg-sql-selection-args");
@@ -256,8 +252,7 @@ std::shared_ptr<Media::ResultSet> PhotoPluginJni::queryAlbum(const NativeRdb::Rd
     return resultSet;
 }
 
-bool PhotoPluginJni::checkPermission()
-{
+bool PhotoPluginJni::checkPermission() {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.checkPermission)) {
         LOGW("checkPermission get none ptr error");

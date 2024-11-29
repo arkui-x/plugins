@@ -77,7 +77,7 @@ thread_local napi_ref MediaLibraryNapi::sRequestPhotoTypeEnumRef_ = nullptr;
 thread_local napi_ref MediaLibraryNapi::sResourceTypeEnumRef_ = nullptr;
 
 constexpr int32_t DEFAULT_REFCOUNT = 1;
-constexpr int32_t DEFAULT_ALBUM_COUNT = 1;
+constexpr int32_t DEFAULT_ALBUM_COUNT = 1; 
 MediaLibraryNapi::MediaLibraryNapi()
     : env_(nullptr) {}
 
@@ -333,6 +333,7 @@ static void GetFileAssetsAsyncCallbackComplete(napi_env env, napi_status status,
         GetNapiFileResult(env, context, jsContext);
     }
 
+    
     if (context->work != nullptr) {
         MediaLibraryNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
                                                    context->work, *jsContext);
@@ -358,6 +359,7 @@ static void JSReleaseCompleteCallback(napi_env env, napi_status status,
         napi_get_undefined(env, &jsContext->data);
     }
 
+    
     if (context->work != nullptr) {
         MediaLibraryNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef,
                                                    context->work, *jsContext);
@@ -630,6 +632,7 @@ static void JSGetPhotoAlbumsExecute(napi_env env, void *data)
 
 static void JSGetPhotoAlbumsCompleteCallback(napi_env env, napi_status status, void *data)
 {
+
     auto *context = static_cast<MediaLibraryAsyncContext*>(data);
     unique_ptr<JSAsyncContextOutput> jsContext = make_unique<JSAsyncContextOutput>();
     jsContext->status = false;
@@ -749,6 +752,8 @@ static napi_value ParseAlbumTypes(napi_env env, unique_ptr<MediaLibraryAsyncCont
         context->predicates.And()->EqualTo(PhotoAlbumColumns::ALBUM_SUBTYPE, to_string(albumSubType));
     }
 #endif
+
+
     napi_value result = nullptr;
     CHECK_ARGS(env, napi_get_boolean(env, true, &result), JS_INNER_FAIL);
     return result;

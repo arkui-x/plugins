@@ -183,7 +183,8 @@ string MediaFileUtils::GetTitleFromDisplayName(const string &displayName)
 
 string MediaFileUtils::GetNetworkIdFromUri(const string &uri)
 {
-    return "";
+ //   return MediaFileUri(uri).GetNetworkId();
+ return "";
 }
 
 string MediaFileUtils::UpdatePath(const string &path, const string &uri)

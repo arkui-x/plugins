@@ -101,13 +101,12 @@ napi_value NapiPublish(napi_env env, napi_callback_info info)
     napi_value promise = nullptr;
     auto asynccallbackinfo = new (std::nothrow) AsyncCallbackInfoPublish {.env = env, .asyncWork = nullptr};
     if (!asynccallbackinfo) {
-        LOGD("asynccallbackinfo is nullptr.");
+       LOGD("asynccallbackinfo is nullptr.");
         return Common::JSParaError(env, params.callback);
     }
     asynccallbackinfo->request = params.request;
     Common::PaddingCallbackPromiseInfo(env, params.callback, asynccallbackinfo->info, promise);
-    NotificationHelper::PublishNotification(asynccallbackinfo->request,
-        static_cast<void*>(asynccallbackinfo), [](void* data, int32_t code) {
+    NotificationHelper::PublishNotification(asynccallbackinfo->request, static_cast<void*>(asynccallbackinfo), [](void* data, int32_t code) {
         AsyncCallbackInfoPublish *asynccallbackinfo = static_cast<AsyncCallbackInfoPublish *>(data);
         if (asynccallbackinfo) {
             napi_env infoEnv = asynccallbackinfo->env;

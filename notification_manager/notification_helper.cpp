@@ -19,8 +19,7 @@
 namespace OHOS {
 namespace Notification {
 std::shared_ptr<AnsNotification> notificationPtr = AnsNotification::GetInstance();
-void NotificationHelper::PublishNotification(const NotificationRequest &request,
-    void* asynccallbackinfo, NotificationCallback callback)
+void NotificationHelper::PublishNotification(const NotificationRequest &request, void* asynccallbackinfo, NotificationCallback callback)
 {
     notificationPtr->PublishNotification(request, asynccallbackinfo, callback);
 }

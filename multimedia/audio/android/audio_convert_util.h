@@ -30,7 +30,7 @@ enum AudioFormatEncoding {
     ENCODING_PCM_FLOAT = 0x04,
 };
 
-enum AudioFormatChannelLayout : int32_t {
+enum AudioFormatChannelLayout : int32_t{
     CHANNEL_OUT_DEFAULT = 0x00000001,
     CHANNEL_OUT_MONO = 0x00000004,
     CHANNEL_OUT_STEREO = 0x0000000c,
@@ -49,7 +49,7 @@ enum AudioFormatChannelLayout : int32_t {
     CHANNEL_OUT_BACK_CENTER = 0x00000400,
 };
 
-enum AudioFormatChannelLayoutIn : int32_t {
+enum AudioFormatChannelLayoutIn : int32_t{
     CHANNEL_IN_DEFAULT = 0x00000001,
     CHANNEL_IN_MONO = 0x00000010,
     CHANNEL_IN_STEREO = 0x0000000c,
@@ -60,7 +60,7 @@ enum AudioAttributesUsage {
     USAGE_MEDIA = 0x00000001,
     USAGE_VOICE_COMMUNICATION = 0x00000002,
     USAGE_VOICE_COMMUNICATION_SIGNALLING = 0x00000003,
-    USAGE_ALARM = 0x00000004,
+    USAGE_ALARM = 0x00000004, 
     USAGE_NOTIFICATION = 0x00000005,
     USAGE_NOTIFICATION_RINGTONE = 0x00000006,
     USAGE_NOTIFICATION_EVENT = 0x0000000a,
@@ -140,7 +140,7 @@ enum AudioMode {
     MODE_IN_COMMUNICATION = 0x00000003,
     MODE_CALL_SCREENING = 0x00000004,
     MODE_CALL_REDIRECT = 0x00000005,
-    MODE_COMMUNICATION_REDIRECT = 0x00000006,
+    MODE_COMMUNICATION_REDIRECT =0x00000006,
 };
 
 enum StreamType {
@@ -168,7 +168,8 @@ enum AudioDeviceFlags {
     GET_DEVICES_ALL = 0x00000003,
 };
 
-struct AudioUsage {
+struct AudioUsage
+{
     AudioAttributesUsage usage_an;
     AudioAttributesContenType content_an;
 };
@@ -181,7 +182,7 @@ void ConvertAudioUsageToOh(AudioAttributesUsage usage, AudioAttributesContenType
 AudioFormatChannelLayoutIn ConvertCapturerAudioChannelLayoutToAn(AudioChannelLayout layoutOh);
 CapturePolicy ConvertPrivacyTypeToAn(AudioPrivacyType privacyOh);
 int32_t ConvertChannelCountToLayout(AudioChannel channelCount);
-AudioDeviceType ConvertActiveDeviceTypeToAn(ActiveDeviceType deviceType);
+AudioDeviceType ConvertActiveDeviceTypeToAn(DeviceType deviceType);
 DeviceType ConvertDeviceTypeToOh(AudioDeviceType deviceType);
 AudioSourceType ConvertSourceTypeToAn(SourceType sourceTypeOh);
 SourceType ConvertSourceTypeToOh(AudioSourceType sourceTypeAn);

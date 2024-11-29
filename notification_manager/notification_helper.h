@@ -33,8 +33,7 @@ public:
      * @param asynccallbackinfo AsyncCallbackInfoPublish
      * @param callback NotificationCallback
      */
-    static void PublishNotification(const NotificationRequest &request,
-        void* asynccallbackinfo, NotificationCallback callback);
+    static void PublishNotification(const NotificationRequest &request, void* asynccallbackinfo, NotificationCallback callback);
 
     /**
      * @brief Cancels a published notification matching the specified label and notificationId.

@@ -188,7 +188,7 @@ bool HttpExec::ExecRequest(RequestContext* context)
     }
     if (context->GetManager()->IsEventDestroy()) {
         return false;
-    }
+    }   
     context->options.SetRequestTime(HttpTime::GetNowTimeGMT());
     CacheProxy proxy(context->options);
     if (context->IsUsingCache() && proxy.ReadResponseFromCache(context)) {

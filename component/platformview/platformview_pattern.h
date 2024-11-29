@@ -39,7 +39,7 @@ class PlatformViewPattern : public Pattern {
 
 public:
     PlatformViewPattern() = default;
-    explicit PlatformViewPattern(const std::string& id);
+    PlatformViewPattern(const std::string& id);
     ~PlatformViewPattern() override = default;
 
     RefPtr<LayoutProperty> CreateLayoutProperty() override
@@ -90,6 +90,7 @@ private:
 
     void RequestFocus();
     void PlatformViewInitialize();
+    void PlatformViewAddCallBack();
     void* GetNativeWindow(int32_t instanceId, int64_t textureId);
     void OnTextureRefresh(void* surface);
     void PrepareSurface();
@@ -103,6 +104,7 @@ private:
     RefPtr<RenderContext> renderContextForPlatformView_;
     WeakPtr<RenderContext> renderContextForPlatformViewWeakPtr_;
     RefPtr<PlatformViewInterface> platformView_;
+    WeakPtr<PlatformViewInterface> platformViewWeakPtr_;
     SizeF lastDrawSize_;
     OffsetF lastOffset_;
     bool hasPlatformViewInit_ = false;

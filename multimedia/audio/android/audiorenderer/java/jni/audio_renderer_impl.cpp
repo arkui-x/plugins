@@ -125,9 +125,26 @@ int32_t AudioRendererImpl::Write(uint8_t* buffer, size_t bufferSize)
     return Plugin::AudioRendererJni::Write(reinterpret_cast<long>(this), buffer, bufferSize);
 }
 
-int32_t AudioRendererImpl::SetRendererWriteCallback(const std::shared_ptr<AudioRendererWriteCallback>& callback)
+int32_t AudioRendererImpl::SetRenderMode(AudioRenderMode renderMode)
 {
-    writeCallback_ = callback;
+    AUDIO_INFO_LOG("SetRenderMode to %{public}s",
+        renderMode == RENDER_MODE_NORMAL ? "RENDER_MODE_NORMAL" : "RENDER_MODE_CALLBACK");
+    if (renderMode_ == renderMode) {
+        return SUCCESS;
+    }
+
+    // renderMode_ is inited as RENDER_MODE_NORMAL, can only be set to RENDER_MODE_CALLBACK.
+    if (renderMode_ == RENDER_MODE_CALLBACK && renderMode == RENDER_MODE_NORMAL) {
+        AUDIO_ERR_LOG("SetRenderMode from callback to normal is not supported.");
+        return ERR_INCORRECT_MODE;
+    }
+
+    // state check
+    if (playState_ != RENDERER_PREPARED && playState_ != RENDERER_NEW) {
+        AUDIO_ERR_LOG("SetRenderMode failed. invalid state");
+        return ERR_ILLEGAL_STATE;
+    }
+    renderMode_ = renderMode;
 
     int32_t ret = GetBufferSize(minWriteBufferSize_);
     if (ret != SUCCESS) {
@@ -145,13 +162,22 @@ int32_t AudioRendererImpl::SetRendererWriteCallback(const std::shared_ptr<AudioR
     return SUCCESS;
 }
 
+int32_t AudioRendererImpl::SetRendererWriteCallback(const std::shared_ptr<AudioRendererWriteCallback>& callback)
+{
+    CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM, "Invalid null callback");
+    CHECK_AND_RETURN_RET_LOG(renderMode_ == RENDER_MODE_CALLBACK, ERR_INCORRECT_MODE, "incorrect render mode");
+    std::lock_guard<std::mutex> lock(writeCbMutex_);
+    writeCallback_ = callback;
+    return SUCCESS;
+}
+
 void AudioRendererImpl::WriteCallbackFunc()
 {
     writeThreadReleased_ = false;
 
     while (!writeThreadReleased_) {
         AUDIO_DEBUG_LOG("AudioRendererJni::WriteCallbackFunc playState_:%d", playState_);
-        std::unique_lock<std::mutex> statusLock(statusLock_);
+        std::unique_lock<std::mutex> statusLock(writeCbMutex_);
         if (playState_ != RENDERER_RUNNING) {
             continue;
         }
@@ -246,7 +272,7 @@ uint32_t AudioRendererImpl::GetUnderflowCount()
     return Plugin::AudioRendererJni::GetUnderrunCount(reinterpret_cast<long>(this));
 }
 
-int32_t AudioRendererImpl::GetCurrentOutputDevices(DeviceInfo& deviceInfo) const
+int32_t AudioRendererImpl::GetCurrentOutputDevices(AudioDeviceDescriptor& deviceInfo) const
 {
     return Plugin::AudioRendererJni::GetCurrentOutputDevices(reinterpret_cast<long>(this), deviceInfo);
 }

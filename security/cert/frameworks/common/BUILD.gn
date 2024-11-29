@@ -15,15 +15,15 @@ import("//build/ohos.gni")
 
 config("libcertificate_framework_common_static_config") {
   include_dirs = [
-    "//base/security/certificate_framework/interfaces/innerkits/certificate",
-    "//base/security/certificate_framework/interfaces/innerkits/common",
-    "//base/security/certificate_framework/interfaces/innerkits/include",
+    "//base/security/certificate_framework/interfaces/inner_api/certificate",
+    "//base/security/certificate_framework/interfaces/inner_api/common",
+    "//base/security/certificate_framework/interfaces/inner_api/include",
     "//base/security/certificate_framework/frameworks/common/v1.0/inc",
     "//commonlibrary/c_utils/base/include",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//third_party/bounds_checking_function/include",
-    "//base/security/crypto_framework/interfaces/innerkits/common",
-    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//base/security/crypto_framework/interfaces/inner_api/common",
+    "//base/security/crypto_framework/interfaces/inner_api/key",
   ]
 }
 

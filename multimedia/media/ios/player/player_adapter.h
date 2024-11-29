@@ -107,7 +107,7 @@ enum {
 - (void)removePeriodicTimeObserver;
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
-    change:(NSDictionary<NSKeyValueChangeKey, id> *)change context:(void *)context;
+    change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context;
 - (void)addObserverWithSurfaceFrame;
 - (void)removeObserverWithSurfaceFrame;
 @end

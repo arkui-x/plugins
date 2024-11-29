@@ -26,8 +26,7 @@ struct CallbackHolder {
     napi_env env;
 };
 
-JsNotify::JsNotify(napi_env env,
-    napi_value cb, Version version, Action action) : env_(env), version_(version), action_(action)
+JsNotify::JsNotify(napi_env env, napi_value cb, Version version, Action action) : env_(env), version_(version), action_(action)
 {
     napi_ref ref = nullptr;
     napi_status ret = NapiUtils::GetFunctionRef(env, cb, ref);

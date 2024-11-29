@@ -192,7 +192,7 @@ ErrCode WiFiDeviceJni::On(const std::string& key)
     CHECK_NULL_RETURN(g_pluginClass.on, ErrCode::WIFI_OPT_FAILED);
     jstring jMethodOnKey = env->NewStringUTF(key.c_str());
     env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.on, jMethodOnKey);
-    if (env->ExceptionCheck()) {
+    if(env->ExceptionCheck()) {
         LOGE("WiFiDeviceJni JNI: call On has exception");
         env->ExceptionDescribe();
         env->ExceptionClear();
@@ -210,8 +210,8 @@ ErrCode WiFiDeviceJni::Off(const std::string& key)
     CHECK_NULL_RETURN(g_pluginClass.globalRef, ErrCode::WIFI_OPT_FAILED);
     CHECK_NULL_RETURN(g_pluginClass.off, ErrCode::WIFI_OPT_FAILED);
     jstring jMethodOffKey = env->NewStringUTF(key.c_str());
-    env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.off, jMethodOffKey);
-    if (env->ExceptionCheck()) {
+    env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.off , jMethodOffKey);
+    if(env->ExceptionCheck()) {
         LOGE("WiFiDeviceJni JNI: call Off has exception");
         env->ExceptionDescribe();
         env->ExceptionClear();

@@ -19,8 +19,8 @@
 using namespace OHOS::NWebError;
 
 namespace OHOS::Plugin {
-WebMessagePortAndroid::WebMessagePortAndroid(int32_t webId,
-    const std::string& portHandle) : WebMessagePort(webId, portHandle) {}
+WebMessagePortAndroid::WebMessagePortAndroid(int32_t webId, const std::string& portHandle) :
+    WebMessagePort(webId, portHandle) {}
 
 void WebMessagePortAndroid::ClosePort()
 {

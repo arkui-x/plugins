@@ -119,6 +119,8 @@ public:
     static void NativeInit(JNIEnv *env, jobject jobj);
     static jint NativeReadAt(
         JNIEnv *env, jobject jthiz, jlong key, jlong position, jbyteArray buffer, jint offset, jint size);
+
+
     static void CreateMetadataRetriever(long key);
     static void ReleaseMetadataRetriever(long key);
     static int32_t SetSource(long key, const std::string &uri, int32_t usage);

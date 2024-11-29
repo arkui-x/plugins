@@ -25,11 +25,11 @@ ohos_source_set("certificate_openssl_plugin_lib") {
     "//third_party/openssl/include/",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//third_party/bounds_checking_function/include",
-    "//base/security/crypto_framework/interfaces/innerkits/key",
-    "//base/security/crypto_framework/interfaces/innerkits/algorithm_parameter",
-    "//base/security/crypto_framework/interfaces/innerkits/common",
-    "//base/security/crypto_framework/interfaces/innerkits/crypto_operation",
-    "//base/security/crypto_framework/interfaces/innerkits/key",
+    "//base/security/crypto_framework/interfaces/inner_api/key",
+    "//base/security/crypto_framework/interfaces/inner_api/algorithm_parameter",
+    "//base/security/crypto_framework/interfaces/inner_api/common",
+    "//base/security/crypto_framework/interfaces/inner_api/crypto_operation",
+    "//base/security/crypto_framework/interfaces/inner_api/key",
   ]
 
   sources = [

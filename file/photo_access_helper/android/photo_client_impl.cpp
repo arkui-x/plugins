@@ -105,12 +105,10 @@ static void AddAndroidPredicates(DataShare::DataSharePredicates &predicates)
     }
 }
 
-static std::string changeStringToAndroidString(std::string predicatesString)
-{
+static std::string changeStringToAndroidString(std::string predicatesString) {
     for (auto it = PHOTO_COLUMN_MAP.begin(); it != PHOTO_COLUMN_MAP.end(); it++) {
         size_t pos = predicatesString.find(it->first);
-        if (pos != std::string::npos && (pos == 0 ||
-            predicatesString.at(pos - 1) == ' ' || predicatesString.at(pos - 1) == ',')) {
+        if (pos != std::string::npos && (pos == 0 || predicatesString.at(pos - 1) == ' ' || predicatesString.at(pos - 1) == ',')) {
             predicatesString.replace(pos, it->first.length(), it->second);
         }
     }
@@ -122,8 +120,7 @@ std::shared_ptr<PhotoClient> PhotoClient::GetInstance()
     return std::make_shared<PhotoClientImpl>();
 }
 
-void PhotoClientImpl::startPhotoPicker(std::string &type)
-{
+void PhotoClientImpl::startPhotoPicker(std::string &type) {
     OHOS::Plugin::PhotoPluginJni::startPhotoPicker(type);
 }
 
@@ -183,7 +180,7 @@ std::shared_ptr<ResultSet> PhotoClientImpl::Query(DataShare::DataSharePredicates
 int PhotoClientImpl::Update(std::string &uri, const std::string &predicates,
     const std::string &value)
 {
-    return 0;
+     return 0;
 }
 }
 }

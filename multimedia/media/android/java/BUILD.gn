@@ -38,6 +38,7 @@ ohos_source_set("media_android_jni") {
   include_dirs += [
     "//plugins/multimedia/media/android",
     "//plugins/multimedia/media/android/jni",
+    "//third_party/skia",
   ]
 
   sources = [

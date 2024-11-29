@@ -52,13 +52,13 @@ int32_t AudioStreamManager::UnregisterAudioCapturerEventListener(const int32_t c
 }
 
 int32_t AudioStreamManager::GetCurrentRendererChangeInfos(
-    vector<unique_ptr<AudioRendererChangeInfo>>& audioRendererChangeInfos)
+    vector<shared_ptr<AudioRendererChangeInfo>>& audioRendererChangeInfos)
 {
     return Plugin::AudioManagerJni::GetCurrentRendererChangeInfos(audioRendererChangeInfos);
 }
 
 int32_t AudioStreamManager::GetCurrentCapturerChangeInfos(
-    vector<unique_ptr<AudioCapturerChangeInfo>>& audioCapturerChangeInfos)
+    vector<shared_ptr<AudioCapturerChangeInfo>>& audioCapturerChangeInfos)
 {
     return Plugin::AudioManagerJni::GetCurrentCapturerChangeInfos(audioCapturerChangeInfos);
 }
@@ -80,7 +80,43 @@ bool AudioStreamManager::IsStreamActive(AudioVolumeType volumeType) const
     return Plugin::AudioManagerJni::IsStreamActive(volumeType);
 }
 
-int32_t AudioStreamManager::GetHardwareOutputSamplingRate(sptr<AudioDeviceDescriptor>& desc)
+int32_t AudioStreamManager::GetHardwareOutputSamplingRate(std::shared_ptr<AudioDeviceDescriptor>& desc)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioStreamManager::GetSupportedAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioStreamManager::GetSupportedAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioStreamManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioStreamManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioStreamManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioStreamManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
