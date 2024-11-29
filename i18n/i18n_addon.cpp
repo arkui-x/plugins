@@ -20,7 +20,6 @@
 #include "error_util.h"
 #include "hilog/log.h"
 #include "i18n_calendar.h"
-#include "icu_data.h"
 #include "node_api.h"
 #include "plugin_utils.h"
 #include "unicode/locid.h"
@@ -3278,7 +3277,6 @@ extern "C" __attribute__((constructor)) void I18nRegister()
     I18NPluginJniRegister();
 #endif
     napi_module_register(&g_i18nModule);
-    InitIcuData();
 }
 } // namespace I18n
 } // namespace Global
