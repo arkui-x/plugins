@@ -56,6 +56,8 @@ public:
 
     bool CreateCallback(napi_value callback);
     void DeleteCallback(void);
+    void DeleteRefData(void);
+    void DeleteRefErrorData(void);
     bool IsCallback(void);
     bool CreateAsyncWork(const std::string& asyncWorkName,
         AsyncWorkExecutor executor, AsyncWorkComplete callback);

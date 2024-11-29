@@ -32,7 +32,7 @@ public:
 
 public:
     // IosUploadAdpCallback
-    void OnProgress(uint32_t uploadedSize, uint32_t totalSize) override;
+    void OnProgress(int64_t uploadedSize, int64_t totalSize) override;
     void OnFail(const std::vector<TaskState>& taskStateList) override;
     void OnComplete(const std::vector<TaskState>& taskStateList) override;
     void SetRespHeader(const std::string &header) override;

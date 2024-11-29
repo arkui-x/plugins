@@ -16,13 +16,17 @@
 #include "bridge_wrap.h"
 
 namespace OHOS::Plugin::Bridge {
-std::map<std::string, std::shared_ptr<BridgeWrap::Data>> BridgeWrap::bridgeList_;
-std::mutex BridgeWrap::bridgeListLock_;
+
+BridgeWrap& BridgeWrap::GetInstance()
+{
+    static BridgeWrap instance;
+    return instance;
+}
 
 std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridgeName)
 {
-    auto data = bridgeList_.find(bridgeName);
-    if (data == bridgeList_.end()) {
+    auto data = bridgeList_->find(bridgeName);
+    if (data == bridgeList_->end()) {
         return nullptr;
     }
 
@@ -39,7 +43,7 @@ Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& 
     std::shared_ptr<Data> data = std::make_shared<BridgeWrap::Data>();
     data->ref_++;
     data->bridge_ = bridge;
-    bridgeList_[bridgeName] = data;
+    (*bridgeList_)[bridgeName] = data;
     return bridge;
 }
 
@@ -54,7 +58,7 @@ Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data)
 
 Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
 {
-    std::lock_guard<std::mutex> lock(bridgeListLock_);
+    std::lock_guard<std::mutex> lock(*bridgeListLock_);
     auto data = findData(bridgeName);
     if (data == nullptr) {
         return BuildBridge(bridgeName, codecType);
@@ -64,7 +68,7 @@ Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType&
 
 void BridgeWrap::DeleteBridge(const std::string& bridgeName)
 {
-    std::lock_guard<std::mutex> lock(bridgeListLock_);
+    std::lock_guard<std::mutex> lock(*bridgeListLock_);
     auto data = findData(bridgeName);
     if (data == nullptr) {
         return;
@@ -78,9 +82,9 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName)
             data->bridge_ = nullptr;
         }
 
-        auto it = bridgeList_.find(bridgeName);
-        if (it != bridgeList_.end()) {
-            bridgeList_.erase(it);
+        auto it = bridgeList_->find(bridgeName);
+        if (it != bridgeList_->end()) {
+            bridgeList_->erase(it);
         }
     }
 }

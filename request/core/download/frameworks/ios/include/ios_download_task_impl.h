@@ -49,7 +49,9 @@ public:
 
 public:
     // IosDownloadAdpCallback
-    void OnProgress(uint32_t receivedSize, uint32_t totalSize) override;
+    void OnProgress(int64_t receivedSize, int64_t totalSize) override;
+    void OnPause() override;
+    void OnResume() override;
     void OnComplete() override;
     void OnFail(ErrorCode errorCode) override;
     void SetMimeType(const std::string &mimeType) override;
@@ -66,8 +68,8 @@ private:
 private:
     std::shared_ptr<IosDownloadAdp> downloadAdp_ = nullptr;
     std::string mimeType_;
-    uint32_t receivedSize_;
-    uint32_t totalSize_;
+    int64_t receivedSize_;
+    int64_t totalSize_;
     std::mutex queryMutex_;
     NetworkType networkType_ = NETWORK_INVALID;
     bool isSuspendByNetwork_ = false;
