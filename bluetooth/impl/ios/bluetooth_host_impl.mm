@@ -454,5 +454,11 @@ int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(void)
 {
     return BT_NO_ERROR;
 }
+
+int32_t BluetoothHostImpl::ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
+    uint32_t controlTypeVal, uint32_t controlObject)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

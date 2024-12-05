@@ -115,6 +115,8 @@ public:
     int32_t SetVirtualAutoConnectType(const std::string& address, int connType, int businessType) override;
     int32_t SetFastScanLevel(int level) override;
     int32_t EnableBluetoothToRestrictMode(void) override;
+    int32_t ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
+        uint32_t controlTypeVal, uint32_t controlObject) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;
