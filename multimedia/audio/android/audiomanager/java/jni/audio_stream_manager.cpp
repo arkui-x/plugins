@@ -63,12 +63,6 @@ int32_t AudioStreamManager::GetCurrentCapturerChangeInfos(
     return Plugin::AudioManagerJni::GetCurrentCapturerChangeInfos(audioCapturerChangeInfos);
 }
 
-bool AudioStreamManager::IsAudioRendererLowLatencySupported(const AudioStreamInfo& audioStreamInfo)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return false;
-}
-
 int32_t AudioStreamManager::GetEffectInfoArray(AudioSceneEffectInfo& audioSceneEffectInfo, StreamUsage streamUsage)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
