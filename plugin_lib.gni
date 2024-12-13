@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,6 +15,12 @@ import("//build/ohos.gni")
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "arkui/advanced/dialog",
+  "arkui/advanced/segmentbutton",
+  "arkui/advanced/subheader",
+  "arkui/advanced/toolbar",
+  "arkui/mock",
+  "arkui/modifier",
   "bluetooth/access",
   "bluetooth/baseprofile",
   "bluetooth/ble",
@@ -79,6 +85,7 @@ common_plugin_libs = [
   "effectkit",
   "arkui/node",
   "arkui/shape",
+  "multimodalinput/keycode",
 ]
 
 template("plugin_lib") {
