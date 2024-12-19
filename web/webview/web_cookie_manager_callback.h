@@ -24,7 +24,8 @@ enum class TaskType {
     NONE,
     CONFIG_COOKIE,
     FETCH_COOKIE,
-    CLEAR_ALL_COOKIES
+    CLEAR_ALL_COOKIES,
+    CLEAR_SESSION_COOKIE
 };
 
 struct AsyncWorkCookieData {
