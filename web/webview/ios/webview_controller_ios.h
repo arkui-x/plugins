@@ -38,7 +38,11 @@ public:
     ErrCode ScrollTo(float x, float y) override;
     ErrCode ScrollBy(float deltaX, float deltaY) override;
     ErrCode Zoom(float factor) override;
+    ErrCode ZoomIn() override;
+    ErrCode ZoomOut() override;
     ErrCode Stop() override;
+    std::string GetOriginalUrl() override;
+    ErrCode PageUp(bool top) override;
     ErrCode SetCustomUserAgent(const std::string& userAgent) override;
     std::string GetCustomUserAgent() override;
     bool AccessStep(int32_t step) override;
@@ -49,6 +53,9 @@ public:
     std::shared_ptr<WebHistoryList> GetBackForwardEntries() override;
     void CreateWebMessagePorts(std::vector<std::string>& ports) override;
     void PostWebMessage(std::string& message, std::vector<std::string>& ports, std::string& targetUrl) override;
+    static void SetWebDebuggingAccess(bool webDebuggingAccess);
+    ErrCode PageDown(bool bottom) override;
+    ErrCode PostUrl(const std::string& url, const std::vector<uint8_t>& postData) override;
 };
 } // namespace OHOS::Plugin
 #endif

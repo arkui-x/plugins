@@ -27,6 +27,8 @@ public:
     ~WebviewControllerJni() = delete;
     static bool Register(void* env);
     static void NativeInit(JNIEnv* env, jobject jobj);
+    static void NativeInitStatic(JNIEnv* env, jobject jobj);
+    static void CallStaticMethod(JNIEnv* env);
     static ErrCode LoadUrl(int id, const std::string& url,
         const std::map<std::string, std::string>& httpHeaders);
     static ErrCode LoadData(int id, const std::string& data, const std::string& mimeType, const std::string& encoding,
@@ -38,11 +40,15 @@ public:
     static void Backward(int id);
     static void Refresh(int id);
     static ErrCode Stop(int id);
+    static std::string GetOriginalUrl(int id);
+    static ErrCode PageUp(int id, bool top);
     static ErrCode ClearHistory(int id);
     static bool AccessStep(int id, int32_t step);
     static ErrCode ScrollTo(int id, int x, int y);
     static ErrCode ScrollBy(int id, int x, int y);
     static ErrCode Zoom(int id, float factor);
+    static ErrCode ZoomIn(int id);
+    static ErrCode ZoomOut(int id);
     static std::string GetCustomUserAgent(int id);
     static ErrCode SetCustomUserAgent(int id, const std::string& userAgent);
     static void EvaluateJavaScript(int id, const std::string& script, int32_t asyncCallbackInfoId);
@@ -58,6 +64,9 @@ public:
     static ErrCode PostMessageEvent(int id, const std::string& portHandle, const std::string& webMessage);
     static ErrCode OnWebMessagePortEvent(int id, const std::string& portHandle);
     static void OnMessage(JNIEnv* env, jclass jcls, jint jWebId, jstring jPortHandle, jstring jResult);
+    static void SetWebDebuggingAccess(bool webDebuggingAccess);
+    static ErrCode PageDown(int id, bool bottom);
+    static ErrCode PostUrl(int id, const std::string& url, const std::vector<uint8_t>& postData);
 };
 }
 

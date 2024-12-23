@@ -16,6 +16,13 @@
 #include "inner_api/plugin_utils_inner.h"
 #include "log.h"
 #include "webview_controller.h"
+#include "android/java/jni/webview_controller_android.h"
+#ifdef ANDROID_PLATFORM
+#include "android/java/jni/webview_controller_android.h"
+#endif
+#ifdef IOS_PLATFORM
+#include "ios/webview_controller_ios.h"
+#endif
 
 namespace OHOS::Plugin {
 thread_local std::vector<std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>> WebviewController::asyncCallbackInfoContainer_;
@@ -102,5 +109,15 @@ std::shared_ptr<WebHistoryItem> WebHistoryList::GetItemAtIndex(int32_t index)
         return nullptr;
     }
     return webHistoryItemContainer_.at(index);
+}
+
+void WebviewController::SetWebDebuggingAccess(bool webDebuggingAccess)
+{
+#ifdef ANDROID_PLATFORM
+    WebviewControllerAndroid::SetWebDebuggingAccess(webDebuggingAccess);
+#endif
+#ifdef IOS_PLATFORM
+    WebviewControllerIOS::SetWebDebuggingAccess(webDebuggingAccess);
+#endif
 }
 } // namespace OHOS::Plugin

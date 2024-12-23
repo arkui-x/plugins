@@ -86,7 +86,17 @@ private:
 
     static napi_value Zoom(napi_env env, napi_callback_info info);
 
+    static napi_value GetWebId(napi_env env, napi_callback_info info);
+    
+    static napi_value ZoomIn(napi_env env, napi_callback_info info);
+    
+    static napi_value ZoomOut(napi_env env, napi_callback_info info);
+
     static napi_value Stop(napi_env env, napi_callback_info info);
+
+    static napi_value GetOriginalUrl(napi_env env, napi_callback_info info);
+
+    static napi_value PageUp(napi_env env, napi_callback_info info);
 
     static napi_value SetCustomUserAgent(napi_env env, napi_callback_info info);
 
@@ -109,6 +119,12 @@ private:
     static napi_value CreateWebMessagePorts(napi_env env, napi_callback_info info);
 
     static napi_value PostMessage(napi_env env, napi_callback_info info);
+
+    static napi_value SetWebDebuggingAccess(napi_env env, napi_callback_info info);
+
+    static napi_value PageDown(napi_env env, napi_callback_info info);
+
+    static napi_value PostUrl(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {
