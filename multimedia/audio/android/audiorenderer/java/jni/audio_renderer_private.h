@@ -37,7 +37,7 @@ public:
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     bool Stop() override;
     bool Flush() const override;
-    bool Release() const override;
+    bool Release() override;
     int32_t Write(uint8_t *buffer, size_t bufferSize) override;
     RendererState GetStatus() const override;
     int32_t SetVolume(float volume) const override;

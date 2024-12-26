@@ -181,7 +181,7 @@ bool AudioRendererPrivate::Stop()
     return rendererImpl_->Stop();
 }
 
-bool AudioRendererPrivate::Release() const
+bool AudioRendererPrivate::Release()
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, false, "rendererImpl_ == nullptr.");
 

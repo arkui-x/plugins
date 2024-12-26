@@ -54,7 +54,7 @@ public:
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     bool Stop() override;
     bool Flush() const override;
-    bool Release() const override;
+    bool Release() override;
     int32_t GetBufferSize(size_t &bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t &sessionID) const override;
     int32_t SetAudioRendererDesc(AudioRendererDesc audioRendererDesc) override;

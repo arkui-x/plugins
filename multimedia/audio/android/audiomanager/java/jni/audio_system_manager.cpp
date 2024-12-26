@@ -229,6 +229,20 @@ int32_t AudioSystemManager::UnsetDeviceChangeCallback(DeviceFlag flag,
     return Plugin::AudioManagerJni::RemoveDeviceChangeCallback();
 }
 
+int32_t AudioSystemManager::SetMicrophoneBlockedCallback(
+    const std::shared_ptr<AudioManagerMicrophoneBlockedCallback>& callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnsetMicrophoneBlockedCallback(
+    const std::shared_ptr<AudioManagerMicrophoneBlockedCallback> callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioSystemManager::SetRingerModeCallback(
     const int32_t clientId, const std::shared_ptr<AudioRingerModeCallback>& callback)
 {
