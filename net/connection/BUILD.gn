@@ -20,7 +20,10 @@ template("plugin_net_connection_static") {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
-    defines += [ "LOG_DOMAIN = 0xD0015B0" ]
+    defines += [
+      "LOG_DOMAIN = 0xD0015B0",
+      "CROSS_PLATFORM",
+    ]
 
     include_dirs = connection_include
     include_dirs += utils_include
