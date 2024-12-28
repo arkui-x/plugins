@@ -489,5 +489,10 @@ int32_t BluetoothHostImpl::ControlDeviceAction(const std::string &deviceId, uint
 {
     return 0;
 }
+
+int32_t BluetoothHostImpl::GetLastConnectionTime(const std::string &address, int64_t &connectionTime)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

@@ -23,6 +23,7 @@ template("plugin_bridge_static") {
     cflags_cc += invoker.cflags_cc
     include_dirs = [
       "//foundation/arkui/ace_engine/",
+      "//foundation/arkui/ace_engine/interfaces/inner_api/ace_kit/include",
       "//plugins/bridge/utils/include",
       "//foundation/arkui/ace_engine/frameworks",
       "//plugins/bridge/interfaces/kits/napi/bridge_module/include",

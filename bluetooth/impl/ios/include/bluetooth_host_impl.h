@@ -115,6 +115,7 @@ public:
     int32_t EnableBluetoothToRestrictMode(void) override;
     int32_t ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
         uint32_t controlTypeVal, uint32_t controlObject) override;
+    int32_t GetLastConnectionTime(const std::string &address, int64_t &connectionTime) override;
 
 private:
     std::mutex observerMutex_;
