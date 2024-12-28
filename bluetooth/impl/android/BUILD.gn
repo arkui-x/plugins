@@ -39,6 +39,7 @@ ohos_source_set("bluetooth_manager_android") {
   include_dirs = [
     "$ace_root/frameworks/",
     "$ace_root/frameworks/base/utils",
+    "$ace_root/interfaces/inner_api/ace_kit/include",
     "$bluetooth_inner_root/include",
     "$bluetooth_inner_root/ipc/common",
     "$bluetooth_inner_root/ipc/interface",

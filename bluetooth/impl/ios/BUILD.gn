@@ -26,6 +26,7 @@ ohos_source_set("bluetooth_manager_ios") {
     "//plugins/bluetooth/common/ipc_core",
     "//plugins/bluetooth/common/mock",
     "//plugins/bluetooth/impl/ios/include",
+    "//foundation/arkui/ace_engine/interfaces/inner_api/ace_kit/include",
   ]
 
   sources = [
