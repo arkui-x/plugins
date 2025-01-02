@@ -73,6 +73,7 @@
     } else {
         self.avPlayer = [AVPlayer playerWithPlayerItem: playerItem];
     }
+    [playerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];
     if (self.avPlayer) {
         NSLog(@"Successfully created a AVPlayer!");
         if (@available(iOS 15.0, *)) {
@@ -83,6 +84,27 @@
     self->speed_ = 0.0;
     self->playerState_ = OHOS::Media::PLAYER_INITIALIZED;
     [self performSelectorInBackground:@selector(notifyStateChange:) withObject:[NSNumber numberWithBool:YES]];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
+    change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if ([keyPath isEqualToString:@"frame"] && [object isKindOfClass:[UIView class]]) {
+        UIView * view = (UIView *)object;
+        if (view) {
+            self.avPlayerLayer.frame = view.bounds;
+            [view.layer setNeedsDisplay];
+        }
+    }
+
+    if ([keyPath isEqualToString:@"loadedTimeRanges"] && [object isKindOfClass:[AVPlayerItem class]]) {
+        AVPlayerItem * item = (AVPlayerItem *)object;
+        if (item) {
+            if (item.loadedTimeRanges.count > 0) {
+                [self notifyDurationUpdate];
+                [item removeObserver:self forKeyPath:@"loadedTimeRanges"];
+            }
+        }
+    }
 }
 
 - (void)setSourceFileFd:(int)fd
@@ -122,17 +144,6 @@
     }
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
-    change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if ([keyPath isEqualToString:@"frame"] && [object isKindOfClass:[UIView class]]) {
-        UIView * view = (UIView *)object;
-        if (view) {
-            self.avPlayerLayer.frame = view.bounds;
-            [view.layer setNeedsDisplay];
-        }
-    }
-}
-
 - (void)addObserverWithSurfaceFrame
 {
     if (self->surfaceView_) {
@@ -163,7 +174,6 @@
         [self addPeriodicTimeObserver];
         self->isObserver_ = YES;
     }
-    [self notifyDurationUpdate];
     [self notifyVideoSize];
     [self notifyCurrentTime];
     self->playerState_ = OHOS::Media::PLAYER_PREPARED;
@@ -188,7 +198,6 @@
     }
     self->playerState_ = OHOS::Media::PLAYER_STARTED;
     [self notifyVideoSize];
-    [self notifyDurationUpdate];
     [self performSelectorInBackground:@selector(notifyStateChange:) withObject:[NSNumber numberWithBool:YES]];
 }
 
