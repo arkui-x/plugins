@@ -123,6 +123,7 @@ typedef void(^ReadURLCallBack)(NSURL* resultURL);
         self.currentPhotoPickerResult(uriArray, 0);
         return;
     }
+    __weak __typeof(self)weakSelf = self;
     for (int i = 0; i < results.count; i++) {
         PHPickerResult *result = results[i];
         [result.itemProvider loadFileRepresentationForTypeIdentifier:UTTypeMovie.identifier completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
@@ -130,14 +131,24 @@ typedef void(^ReadURLCallBack)(NSURL* resultURL);
                 NSLog(@"PHPickerViewController loadFileRepresentationForTypeIdentifier UITTypeMovie failed");
                 return;
             }
-            [self loadResultwith:url UriArray:uriArray ChooseCount:results.count];
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
+            if (!strongSelf) {
+                NSLog(@"PHPickerViewController pick movie failed");
+                return;
+            }
+            [strongSelf loadResultwith:url UriArray:uriArray ChooseCount:results.count];
         }];
         [result.itemProvider loadFileRepresentationForTypeIdentifier:UTTypeImage.identifier completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
             if(error){
                 NSLog(@"PHPickerViewController loadFileRepresentationForTypeIdentifier UTTypeImage failed");
                 return;
             }
-            [self loadResultwith:url UriArray:uriArray ChooseCount:results.count];
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
+            if (!strongSelf) {
+                NSLog(@"PHPickerViewController pick image failed");
+                return;
+            }
+            [strongSelf loadResultwith:url UriArray:uriArray ChooseCount:results.count];
         }];
     }
 }
