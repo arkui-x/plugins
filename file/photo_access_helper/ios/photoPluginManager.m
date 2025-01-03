@@ -125,34 +125,47 @@ typedef void(^ReadURLCallBack)(NSURL* resultURL);
     }
     for (int i = 0; i < results.count; i++) {
         PHPickerResult *result = results[i];
-        [result.itemProvider loadInPlaceFileRepresentationForTypeIdentifier:UTTypeMovie.identifier completionHandler:^(NSURL * _Nullable url, BOOL isInPlace, NSError * _Nullable error) {
-            if(!error){
-                [self readURL:url callBack:^(NSURL *resultURL) {
-                    if (resultURL) {
-                        NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[resultURL path]];
-                        [uriArray addObject:urlString];
-                    }
-                    if (uriArray.count >= results.count) {
-                        self.currentPhotoPickerResult(uriArray, 0);
-                        return;
-                    }
-                }];
+        [result.itemProvider loadFileRepresentationForTypeIdentifier:UTTypeMovie.identifier completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
+            if(error){
+                NSLog(@"PHPickerViewController loadFileRepresentationForTypeIdentifier UITTypeMovie failed");
+                return;
             }
+            [self loadResultwith:url UriArray:uriArray ChooseCount:results.count];
         }];
-        [result.itemProvider loadInPlaceFileRepresentationForTypeIdentifier:UTTypeImage.identifier completionHandler:^(NSURL * _Nullable url, BOOL isInPlace, NSError * _Nullable error) {
-            if (!error) {
-                [self readURL:url callBack:^(NSURL *resultURL) {
-                    if (resultURL) {
-                        NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[resultURL path]];
-                        [uriArray addObject:urlString];
-                    }
-                    if (uriArray.count >= results.count) {
-                        self.currentPhotoPickerResult(uriArray, 0);
-                        return;
-                    }
-                }];
+        [result.itemProvider loadFileRepresentationForTypeIdentifier:UTTypeImage.identifier completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
+            if(error){
+                NSLog(@"PHPickerViewController loadFileRepresentationForTypeIdentifier UTTypeImage failed");
+                return;
             }
+            [self loadResultwith:url UriArray:uriArray ChooseCount:results.count];
         }];
+    }
+}
+
+- (void)loadResultwith:(NSURL *)url UriArray:(NSMutableArray *)uriArray ChooseCount:(NSUInteger)chooseCount {
+    if (![[NSFileManager defaultManager] isReadableFileAtPath:[url path]]) {
+        NSLog(@"PHPickerViewController loadFileRepresentationForTypeIdentifier url path invalid");
+        return;
+    }
+    NSString *fileName =[url lastPathComponent];
+    NSString *tempPath= NSTemporaryDirectory();
+    NSString *destinationPath= [[NSString alloc] initWithFormat:@"%@%@",tempPath,fileName];;
+    NSURL *destinationUrl = [NSURL fileURLWithPath:destinationPath];
+    if ([[NSFileManager defaultManager] isReadableFileAtPath:[destinationUrl path]]) {
+        NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[destinationUrl path]];
+        [uriArray addObject:urlString];
+    } else {
+        NSError *error;
+        [[NSFileManager defaultManager] copyItemAtURL:url toURL:destinationUrl error:&error];
+        if (error) {
+            NSLog(@"PHPickerViewController copy file failed");
+        } else {
+            NSString *urlString = [[NSString alloc] initWithFormat:PHOTO_PICKER_BASE_PATH,[destinationUrl path]];
+            [uriArray addObject:urlString];
+        }
+    }
+    if (uriArray.count >= chooseCount) {
+        self.currentPhotoPickerResult(uriArray, 0);
     }
 }
 
