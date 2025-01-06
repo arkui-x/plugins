@@ -35,6 +35,9 @@ ohos_source_set("cert") {
     "//base/security/certificate_framework/interfaces/inner_api/certificate",
     "//base/security/certificate_framework/interfaces/inner_api/include",
     "//base/security/certificate_framework/interfaces/inner_api/common",
+    "//base/security/certificate_framework/frameworks/core/v1.0/spi",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/inc",
+    "//base/security/certificate_framework/interfaces/inner_api/certificate",
   ]
 
   cflags = [
@@ -45,6 +48,7 @@ ohos_source_set("cert") {
 
   sources = [
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_chain_validator.cpp",
+    "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_cms_generator.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_crl_collection.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_crl_common.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_extension.cpp",
