@@ -59,6 +59,16 @@ void PlatformViewImpl::UpdatePlatformViewLayout(const NG::SizeF& drawSize, const
     platformViewDelegate_->UpdatePlatformViewLayout(drawSize, offset);
 }
 
+void PlatformViewImpl::ExchangeBind()
+{
+    platformViewDelegate_->ExchangeBind();
+}
+
+void PlatformViewImpl::GetPlatformViewType(int32_t& type)
+{
+    platformViewDelegate_->GetPlatformViewType(type);
+}
+
 void PlatformViewImpl::HandleTouchDown(const NG::OffsetF& offset)
 {
     platformViewDelegate_->HandleTouchDown(offset);

@@ -145,6 +145,7 @@ void PlatformViewPattern::PlatformViewInitialize()
     CHECK_NULL_VOID(context);
     platformView_ = AceType::MakeRefPtr<NG::PlatformViewImpl>(id_);
     platformView_->InitPlatformView();
+    platformViewWeakPtr_ = platformView_;
     renderSurface_ = RenderSurface::Create();
     renderSurface_->SetInstanceId(GetHostInstanceId());
     renderContextForPlatformView_ = RenderContext::Create();
@@ -156,6 +157,16 @@ void PlatformViewPattern::PlatformViewInitialize()
     renderContextForPlatformView_->InitContext(false, param);
     renderSurfaceWeakPtr_ = renderSurface_;
     renderContextForPlatformViewWeakPtr_ = renderContextForPlatformView_;
+
+    PlatformViewAddCallBack();
+ 
+    renderContext->UpdateBackgroundColor(Color::BLACK);
+    renderContextForPlatformView_->UpdateBackgroundColor(Color::BLACK);
+    renderContext->SetClipToBounds(true);
+}
+
+void PlatformViewPattern::PlatformViewAddCallBack()
+{
     auto OnAttachCallBack = [weak = WeakClaim(this)](int64_t textureId, bool isAttach) mutable {
         auto platformViewPattern = weak.Upgrade();
         CHECK_NULL_VOID(platformViewPattern);
@@ -167,14 +178,28 @@ void PlatformViewPattern::PlatformViewInitialize()
     auto OnUpdateCallBack = [weak = WeakClaim(this)](std::vector<float>& matrix) mutable {
         auto platformViewPattern = weak.Upgrade();
         CHECK_NULL_VOID(platformViewPattern);
+#if defined(ANDROID_PLATFORM)
         if (auto renderSurface = platformViewPattern->renderSurfaceWeakPtr_.Upgrade(); renderSurface) {
             renderSurface->UpdateTextureImage(matrix);
         }
+#endif
+#if defined(IOS_PLATFORM)
+        if (auto platformView = platformViewPattern->platformViewWeakPtr_.Upgrade(); platformView) {
+            platformView->ExchangeBind();
+        }
+#endif
     };
     renderContextForPlatformView_->AddUpdateCallBack(OnUpdateCallBack);
-    renderContext->UpdateBackgroundColor(Color::BLACK);
-    renderContextForPlatformView_->UpdateBackgroundColor(Color::BLACK);
-    renderContext->SetClipToBounds(true);
+#if defined(IOS_PLATFORM)
+    auto OnInitTypeCallback = [weak = WeakClaim(this)](int32_t& type) mutable {
+        auto platformViewPattern = weak.Upgrade();
+        CHECK_NULL_VOID(platformViewPattern);
+        if (auto platformView = platformViewPattern->platformViewWeakPtr_.Upgrade(); platformView) {
+            platformView->GetPlatformViewType(type);
+        }
+    };
+    renderContextForPlatformView_->AddInitTypeCallBack(OnInitTypeCallback);
+#endif
 }
 
 void PlatformViewPattern::OnModifyDone()

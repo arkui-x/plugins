@@ -20,7 +20,10 @@
 namespace OHOS::Ace {
 const char REGISTER_PLATFORM_VIEW[] = "registerPlatformView";
 const char PLATFORM_VIEW_READY[] = "platformViewReady";
+const char PLATFORM_VIEW_TYPE[] = "platformViewType";
 const char UPDATE_PLATFORM_VIEW_LAYOUT[] = "updateLayout";
+const char EXCHANGE_BIND[] = "exchangeBind";
+
 const char PLATFORM_VIEW_TOUCH_DOWN[] = "touchDown";
 const char PLATFORM_VIEW_TOUCH_UP[] = "touchUp";
 const char PLATFORM_VIEW_TOUCH_MOVE[] = "touchMove";
@@ -124,6 +127,19 @@ void PlatformViewDelegate::UpdatePlatformViewLayout(const NG::SizeF& drawSize, c
                 << offset.GetY();
     std::string param = paramStream.str();
     CallResRegisterMethod(MakeMethodHash(UPDATE_PLATFORM_VIEW_LAYOUT), param);
+}
+
+void PlatformViewDelegate::ExchangeBind()
+{
+    CallSyncResRegisterMethod(MakeMethodHash(EXCHANGE_BIND), "");
+}
+
+void PlatformViewDelegate::GetPlatformViewType(int32_t& type)
+{
+    CallSyncResRegisterMethod(MakeMethodHash(PLATFORM_VIEW_TYPE), "",
+        [this, &type](std::string& result) mutable {
+            type = GetIntParam(result, "type");
+    });
 }
 
 void PlatformViewDelegate::HandleTouchDown(const NG::OffsetF& offset)
