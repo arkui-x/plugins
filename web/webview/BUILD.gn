@@ -36,6 +36,8 @@ template("plugin_web_webview_static") {
       "web_cookie_manager.cpp",
       "web_cookie_manager_callback.cpp",
       "web_message_port.cpp",
+      "web_storage.cpp",
+      "web_storage_callback.cpp",
       "webview_async_work_callback.cpp",
       "webview_controller.cpp",
     ]
