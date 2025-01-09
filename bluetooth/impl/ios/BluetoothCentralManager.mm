@@ -28,7 +28,7 @@ static NSString* strNo = @"0";
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
       bluetoothCentralManager = [[BluetoothCentralManager alloc] init];
-      bluetoothCentralManager.centralManager = [[CBCentralManager alloc] initWithDelegate:_bluetoothCentralManager
+      bluetoothCentralManager.centralManager = [[CBCentralManager alloc] initWithDelegate:bluetoothCentralManager
                                                                                      queue:nil
                                                                                    options:nil];
     });
