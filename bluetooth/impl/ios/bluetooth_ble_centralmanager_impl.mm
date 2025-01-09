@@ -103,7 +103,7 @@ int BluetoothBleCentralManagerImpl::StartScan(
         NSString* strName = [NSString stringWithFormat:@"%s", item.GetName().c_str()];
         NSString* strDeviceId = [NSString stringWithFormat:@"%s", item.GetDeviceId().c_str()];
         NSString* strSSU = [NSString stringWithFormat:@"%s", item.GetServiceSolicitationUuid().ToString().c_str()];
-        strSSU = strSSU.UTF8String == BLUETOOTH_UUID_BASE_UUID ? @"" : strSSU;
+        strSSU = item.GetServiceSolicitationUuid().ToString() == BLUETOOTH_UUID_BASE_UUID ? @"" : strSSU;
         NSDictionary* dic = @ { @"name" : strName, @"deviceId" : strDeviceId, @"ssu" : strSSU };
         [arrFilter addObject:dic];
         std::string serviceUUID = item.GetServiceUuid().ToString();

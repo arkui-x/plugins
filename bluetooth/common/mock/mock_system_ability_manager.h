@@ -28,7 +28,18 @@ public:
 
     sptr<IRemoteObject> GetSystemAbility(int serviceId);
     int32_t LoadSystemAbility(int32_t systemAbilityId, const sptr<ISystemAbilityLoadCallback>& callback);
+    sptr<IRemoteObject> CheckSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+    {
+        return nullptr;
+    }
+    sptr<IRemoteObject> CheckSystemAbility(int32_t systemAbilityId, bool& isExist)
+    {
+        return nullptr;
+    }
+    sptr<IRemoteObject> CheckSystemAbility(int32_t systemAbilityId)
+    {
+        return nullptr;
+    }
 };
-
 } // namespace OHOS
 #endif // PLUGINS_BLUETOOTH_COMMON_MOCK_MOCK_SYSTEM_ABILITY_MANAGER_H

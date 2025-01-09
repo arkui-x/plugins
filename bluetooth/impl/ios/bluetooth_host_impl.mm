@@ -105,11 +105,6 @@ int32_t BluetoothHostImpl::DisableBle()
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::RestrictBluetooth()
-{
-    return BT_NO_ERROR;
-}
-
 int32_t BluetoothHostImpl::EnableBle()
 {
     return BT_NO_ERROR;
@@ -392,11 +387,6 @@ int32_t BluetoothHostImpl::SyncRandomAddress(const std::string& realAddr, const 
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::CountEnableTimes(bool isEnable)
-{
-    return BT_NO_ERROR;
-}
-
 int32_t BluetoothHostImpl::ConnectAllowedProfiles(const std::string& remoteAddr)
 {
     return BT_NO_ERROR;
@@ -460,5 +450,11 @@ int32_t BluetoothHostImpl::OnPairStatusChangedCallBack(
 {
     return BT_NO_ERROR;
 }
+
+int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(void)
+{
+    return BT_NO_ERROR;
+}
+
 } // namespace Bluetooth
 } // namespace OHOS

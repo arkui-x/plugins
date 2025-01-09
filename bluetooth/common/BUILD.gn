@@ -68,6 +68,7 @@ FwkCrossPlatformSrc = [
   "$bluetooth_napi_root/src/common/napi_native_object.cpp",
   "$bluetooth_napi_root/src/parser/napi_parser_utils.cpp",
   "//plugins/bluetooth/common/mock/napi_timer.cpp",
+  "//plugins/bluetooth/common/mock/bluetooth_switch_module.cpp",
   "//plugins/bluetooth/common/src/bluetooth_crossplatform_manager.cpp",
   "//plugins/bluetooth/common/src/bluetooth_profile_manager.cpp",
 ]

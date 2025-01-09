@@ -387,11 +387,6 @@ int32_t BluetoothHostImpl::SyncRandomAddress(const std::string& realAddr, const 
     return 0;
 }
 
-int32_t BluetoothHostImpl::CountEnableTimes(bool isEnable)
-{
-    return 0;
-}
-
 int32_t BluetoothHostImpl::ConnectAllowedProfiles(const std::string& remoteAddr)
 {
     return 0;
@@ -411,11 +406,6 @@ int32_t BluetoothHostImpl::GetRemoteDeviceInfo(
     const std::string& address, std::shared_ptr<BluetoothRemoteDeviceInfo>& deviceInfo, int type)
 {
     return BT_ERR_API_NOT_SUPPORT;
-}
-
-int32_t BluetoothHostImpl::RestrictBluetooth()
-{
-    return 0;
 }
 
 int32_t BluetoothHostImpl::OnChangeStateCallBack(int state)
@@ -507,6 +497,11 @@ int32_t BluetoothHostImpl::SetVirtualAutoConnectType(const std::string& address,
 }
 
 int32_t BluetoothHostImpl::SetFastScanLevel(int level)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(void)
 {
     return 0;
 }
