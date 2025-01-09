@@ -37,6 +37,8 @@ public:
 
     virtual void InitPlatformView() {}
     virtual void UpdatePlatformViewLayout(const NG::SizeF& drawSize, const NG::OffsetF& offset) {}
+    virtual void ExchangeBind() {}
+    virtual void GetPlatformViewType(int32_t& type) {}
     virtual void HandleTouchDown(const NG::OffsetF& offset) {}
     virtual void HandleTouchUp(const NG::OffsetF& offset) {}
     virtual void HandleTouchMove(const NG::OffsetF& offset) {}

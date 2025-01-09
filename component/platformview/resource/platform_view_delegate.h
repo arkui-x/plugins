@@ -35,6 +35,8 @@ public:
     void CreatePlatformView(const std::string& viewTag);
     void RegisterPlatformViewTexture(int64_t textureId, std::string& viewTag);
     void UpdatePlatformViewLayout(const NG::SizeF& drawSize, const NG::OffsetF& offset);
+    void ExchangeBind();
+    void GetPlatformViewType(int32_t& type);
     void HandleTouchDown(const NG::OffsetF& offset);
     void HandleTouchUp(const NG::OffsetF& offset);
     void HandleTouchMove(const NG::OffsetF& offset);
