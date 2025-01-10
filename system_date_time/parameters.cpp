@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,11 +21,6 @@ using namespace OHOS::MiscServices;
 
 namespace OHOS {
 namespace system {
-bool GetBoolParameter(const std::string &key, bool def)
-{
-    return true;
-}
-
 std::string GetParameter(const std::string &key, const std::string &def)
 {
     std::string timeZone = "";
@@ -35,11 +30,6 @@ std::string GetParameter(const std::string &key, const std::string &def)
         return "";
     }
     return timeZone;
-}
-
-bool SetParameter(const std::string& key, const std::string& value)
-{
-    return true;
 }
 } // namespace system
 } // namespace OHOS
