@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
- package ohos.ace.plugin.timeplugin;
+package ohos.ace.plugin.timeplugin;
 
- import java.util.TimeZone;
- import android.content.Context;
+import java.util.TimeZone;
+import android.content.Context;
 
 public class TimePlugin {
     private static final String LOG_TAG = "TimePlugin";

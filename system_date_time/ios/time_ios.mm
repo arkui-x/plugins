@@ -19,8 +19,13 @@
 namespace OHOS::Time {
 int32_t TimeIOS::GetTimeZone(std::string& timezoneId)
 {
-    NSTimeZone *systemTimeZone = [NSTimeZone systemTimeZone];
-    timezoneId = std::string([systemTimeZone.name UTF8String]);
+    NSTimeZone *systemTimeZone = nil;
+    systemTimeZone = [NSTimeZone systemTimeZone];
+    if (systemTimeZone != nil) {
+        timezoneId = std::string([systemTimeZone.name UTF8String]);
+    } else {
+        timezoneId = "";
+    }
     return 0;
 }
 
