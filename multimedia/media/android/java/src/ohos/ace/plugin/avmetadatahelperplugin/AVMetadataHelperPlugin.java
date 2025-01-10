@@ -218,14 +218,14 @@ public class AVMetadataHelperPlugin {
      * @param key The key of the MediaMetadataRetriever.
      * @return void
      */
-    public void getEmbeddedPicture(long key, byte[] pic) {
+    public byte[] getEmbeddedPicture(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
             Log.e("LOG_TAG", "MediaMetadataRetriever is not created, getEmbeddedPicture.");
-            return;
+            return null;
         }
-        pic = metadataRetriever.getEmbeddedPicture();
         notifyInfo(key, HELPER_CALL_DONE);
+        return metadataRetriever.getEmbeddedPicture();
     }
 
     /**
