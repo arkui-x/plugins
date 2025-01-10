@@ -62,6 +62,7 @@ public class BluetoothPlugin {
     private static final Object Profile_Lock = new Object();
     private static CustomBluetoothManager btManager_ = null;
     private static BluetoothA2dp bluetoothA2dp_ = null;
+
     private BluetoothBroadcastReceive btBroadcastReceive_;
     private BluetoothProfile.ServiceListener btServiceListener_ = null;
     private Context mContext_ = null;
@@ -462,7 +463,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getDeviceName permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -958,7 +959,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
                 Log.e(LOG_TAG, "isBtDiscovering permission failed" + PERMISSION_BLUETOOTH_ADMIN);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN)) {

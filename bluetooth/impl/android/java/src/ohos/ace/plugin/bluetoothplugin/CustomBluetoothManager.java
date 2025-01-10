@@ -41,6 +41,7 @@ public class CustomBluetoothManager {
     private static final int NOT_FIND = 0;
     private static volatile CustomBluetoothManager INSTANCE = null;
     private static final Object INSTANCE_LOCK = new Object();
+
     private Context context_ = null;
     private BluetoothManager bluetoothManager_ = null;
     private BluetoothAdapter bluetoothAdapter_ = null;

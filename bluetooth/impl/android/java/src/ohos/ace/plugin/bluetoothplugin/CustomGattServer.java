@@ -35,6 +35,7 @@ public class CustomGattServer {
     private static final String GATT_SERVICE_DIS = "180A";
     private static final String GATT_SERVICE_GATTS = "1800";
     private static final String GATT_SERVICE_GAP = "1801";
+
     private BluetoothGattServer gattServer_ = null;
     private int requestId_;
     private HashMap<Integer, Integer> handleInfoMap_ = new HashMap<>();

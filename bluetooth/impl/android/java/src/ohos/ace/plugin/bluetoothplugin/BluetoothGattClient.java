@@ -43,6 +43,7 @@ public class BluetoothGattClient {
     private static final int OH_BT_STATUS_FAIL = 1;
     private static final int WRITE_SUCCESS = 0;
     private static final int VERSION_TIRAMISU = 33;
+
     private BluetoothGatt bluetoothGatt_ = null;
     private int appId_ = 0;
 
@@ -305,7 +306,7 @@ public class BluetoothGattClient {
             try {
                 Method writeCharacteristicMethod = BluetoothGatt.class.getMethod("writeCharacteristic",
                     BluetoothGattCharacteristic.class, byte[].class, int.class);
-                errorCode = (int) writeCharacteristicMethod.invoke(bluetoothGatt_, characteristic, value ,writeType);
+                errorCode = (int) writeCharacteristicMethod.invoke(bluetoothGatt_, characteristic, value, writeType);
                 if (errorCode == WRITE_SUCCESS) {
                     errorCode = BluetoothErrorCode.BT_NO_ERROR.getId();
                 } else {
