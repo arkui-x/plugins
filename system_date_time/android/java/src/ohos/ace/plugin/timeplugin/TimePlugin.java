@@ -20,7 +20,7 @@ import android.content.Context;
 
 /**
  * The TimePlugin class provides the function to obtain time zones.
- * 
+ *
  * @since 2025/1/10
  */
 public class TimePlugin {
