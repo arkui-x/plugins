@@ -52,6 +52,7 @@ common_plugin_libs = [
   "buffer",
   "convertxml",
   "process",
+  "system_date_time",
   "uitest",
   "uri",
   "url",
