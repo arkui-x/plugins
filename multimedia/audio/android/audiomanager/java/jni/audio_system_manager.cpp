@@ -379,7 +379,7 @@ int32_t AudioSystemManager::UnsetAudioManagerCallback(const AudioVolumeType stre
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::ActivateAudioInterrupt(const AudioInterrupt& audioInterrupt)
+int32_t AudioSystemManager::ActivateAudioInterrupt(AudioInterrupt& audioInterrupt)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
