@@ -78,7 +78,7 @@ public class BluetoothGattClient {
                     for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
                         String characterJSONString = BluetoothHelper.convertCharacteristicToJSONString(characteristic);
                         characterStrings.add(characterJSONString);
-                        intent.putStringArrayListExtra ("characterStrings", (ArrayList<String>)characterStrings);
+                        intent.putStringArrayListExtra("characterStrings", (ArrayList<String>) characterStrings);
                         List<String> descriptorStrings = new ArrayList<>();
                         for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
                             String descriptorResult = BluetoothHelper.convertDescriptorToJSONString(descriptor);
@@ -86,7 +86,7 @@ public class BluetoothGattClient {
                         }
                         clientCharacteristicMap.put(
                             characteristic.getUuid().toString(), descriptorStrings.toArray(new String[] {}));
-                        intent.putExtra("clientCharacteristicMap", (Serializable)clientCharacteristicMap);
+                        intent.putExtra("clientCharacteristicMap", (Serializable) clientCharacteristicMap);
                     }
                     BluetoothPlugin.sendBleBroadcast(intent);
                 }
@@ -190,7 +190,7 @@ public class BluetoothGattClient {
             Log.e(LOG_TAG, "connect failed, device is null");
             return errorCode;
         }
-        try{
+        try {
             bluetoothGatt_ = device.connectGatt(context, false, gattCallback_, BluetoothDevice.TRANSPORT_LE);
             if (bluetoothGatt_ == null) {
                 Log.e(LOG_TAG, "connect failed, bluetoothGatt is null");
@@ -305,7 +305,7 @@ public class BluetoothGattClient {
             try {
                 Method writeCharacteristicMethod = BluetoothGatt.class.getMethod("writeCharacteristic",
                     BluetoothGattCharacteristic.class, byte[].class, int.class);
-                errorCode = (int) writeCharacteristicMethod.invoke(bluetoothGatt_, characteristic, value ,writeType);
+                errorCode = (int) writeCharacteristicMethod.invoke(bluetoothGatt_, characteristic, value , writeType);
                 if (errorCode == WRITE_SUCCESS) {
                     errorCode = BluetoothErrorCode.BT_NO_ERROR.getId();
                 } else {
@@ -383,14 +383,14 @@ public class BluetoothGattClient {
 
     public int writeDescriptor(String sUuidString, String cUuidString, String dUuidString, byte[] value) {
         Log.i(LOG_TAG, "writeDescriptor enter.");
-        BluetoothGattDescriptor descriptor =  getDescriptorForServices(sUuidString, cUuidString, dUuidString);
+        BluetoothGattDescriptor descriptor = getDescriptorForServices(sUuidString, cUuidString, dUuidString);
         int errorCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         if (descriptor == null) {
             return errorCode;
         }
         if (Build.VERSION.SDK_INT >= VERSION_TIRAMISU) {
             try {
-                Method writeDescriptorMethod = 
+                Method writeDescriptorMethod =
                     BluetoothGatt.class.getMethod("writeDescriptor", BluetoothGattDescriptor.class, byte[].class);
                 errorCode = (int) writeDescriptorMethod.invoke(bluetoothGatt_, descriptor, value);
                 if (errorCode == WRITE_SUCCESS) {

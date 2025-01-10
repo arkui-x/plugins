@@ -1541,7 +1541,7 @@ int BluetoothJni::NotifyCharacteristicChanged(
 }
 
 int BluetoothJni::RespondCharacteristicRead(
-    const int appId, const std::string address, const int32_t status, const std::string value, const size_t length)
+    const int& appId, const std::string& address, const int32_t& status, const std::string& value, const size_t& length)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, BtErrCode::BT_ERR_INTERNAL_ERROR);
@@ -1559,7 +1559,7 @@ int BluetoothJni::RespondCharacteristicRead(
 }
 
 int BluetoothJni::RespondCharacteristicWrite(
-    const int appId, const std::string address, const int32_t status, const uint16_t handle)
+    const int& appId, const std::string& address, const int32_t& status, const uint16_t& handle)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, BtErrCode::BT_ERR_INTERNAL_ERROR);
@@ -1575,7 +1575,7 @@ int BluetoothJni::RespondCharacteristicWrite(
 }
 
 int BluetoothJni::RespondDescriptorRead(
-    const int appId, const std::string address, const int32_t status, const std::string value, const size_t length)
+    const int& appId, const std::string& address, const int32_t& status, const std::string& value, const size_t& length)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, BtErrCode::BT_ERR_INTERNAL_ERROR);
@@ -1594,7 +1594,7 @@ int BluetoothJni::RespondDescriptorRead(
 }
 
 int BluetoothJni::RespondDescriptorWrite(
-    const int appId, const std::string address, const int32_t status, const uint16_t handle)
+    const int& appId, const std::string& address, const int32_t& status, const uint16_t& handle)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, BtErrCode::BT_ERR_INTERNAL_ERROR);

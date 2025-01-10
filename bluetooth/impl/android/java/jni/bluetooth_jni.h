@@ -118,13 +118,15 @@ public:
     static int NotifyCharacteristicChanged(int32_t appId, const BluetoothGattDevice& device,
         BluetoothGattCharacteristic* characteristic, bool needConfirm);
     static int RespondCharacteristicRead(
-        const int appId, const std::string address, const int32_t status, const std::string value, const size_t length);
+        const int& appId, const std::string& address, const int32_t& status, const std::string& value,
+        const size_t& length);
     static int RespondCharacteristicWrite(
-        const int appId, const std::string address, const int32_t status, const uint16_t handle);
+        const int& appId, const std::string& address, const int32_t& status, const uint16_t& handle);
     static int RespondDescriptorRead(
-        const int appId, const std::string address, const int32_t status, const std::string value, const size_t length);
+        const int& appId, const std::string& address, const int32_t& status, const std::string& value,
+        const size_t& length);
     static int RespondDescriptorWrite(
-        const int appId, const std::string address, const int32_t status, const uint16_t handle);
+        const int& appId, const std::string& address, const int32_t& status, const uint16_t& handle);
 
     static int32_t GattClientConnect(const int32_t appId, std::string& address, bool autoConnect);
     static int32_t GattClientDisconnect(const int32_t appId);

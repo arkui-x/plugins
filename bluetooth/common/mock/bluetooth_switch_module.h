@@ -65,9 +65,9 @@ private:
     int ProcessBluetoothSwitchAction(std::function<int(void)> action, BluetoothSwitchEvent cachedEvent);
     int ProcessBluetoothSwitchCachedEvent(BluetoothSwitchEvent event);
     int ProcessBluetoothSwitchActionEnd(
-        BluetoothSwitchEvent curSwitchActionEvent, std::vector<BluetoothSwitchEvent> expectedEventVec);
+        BluetoothSwitchEvent curSwitchActionEvent, std::vector<BluetoothSwitchEvent>& expectedEventVec);
     void DeduplicateCacheEvent(BluetoothSwitchEvent curEvent);
-    void LogCacheEventIgnored(std::vector<BluetoothSwitchEvent> eventVec);
+    void LogCacheEventIgnored(std::vector<BluetoothSwitchEvent>& eventVec);
     void LogBluetoothSwitchEvent(BluetoothSwitchEvent event);
     void OnTaskTimeout(void);
 

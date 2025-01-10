@@ -35,6 +35,7 @@ public:
     static int GetBluetoothProfileFromOhProfile(uint32_t profileId, int& profile);
     static int GetBluetoothTransportTypeFromBluetoothAdapter(int value, uint8_t& transportType);
     static int GetOhHostBtStateFromBluetoothAdapter(int value, int& btState);
+    static int GetOhHostBtStateIDFromBluetoothAdapter(int value, int& btState);
     static int GetOhPairStateFromBluetoothAdapter(int value, int& btState);
     static int GetOhProfileStateFromBTProfileState(int value, int& btState);
     static int GetOhScanModeFromBluetoothAdapter(int value, int& btScanMode);

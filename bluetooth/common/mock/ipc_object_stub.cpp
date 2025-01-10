@@ -16,7 +16,7 @@
 #include "ipc_object_stub.h"
 
 namespace OHOS {
-IPCObjectStub::IPCObjectStub(std::u16string descriptor) : IRemoteObject(descriptor) {}
+IPCObjectStub::IPCObjectStub(std::u16string& descriptor) : IRemoteObject(descriptor) {}
 
 IPCObjectStub::~IPCObjectStub() {}
 

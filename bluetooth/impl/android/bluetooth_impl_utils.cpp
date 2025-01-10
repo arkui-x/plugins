@@ -78,6 +78,17 @@ const std::string ProfileUUIDConstants::PROFILE_UUID_PBAP_PSE = "0000112f-0000-1
 bool BluetoothCtrlJniRegister::isInited_ = false;
 
 static const std::map<int, int> BT_STATE_MAP = {
+    { BluetoothAdapterConstants::STATE_TURNING_ON, static_cast<int>(BluetoothState::STATE_TURNING_ON) },
+    { BluetoothAdapterConstants::STATE_ON, static_cast<int>(BluetoothState::STATE_ON) },
+    { BluetoothAdapterConstants::STATE_TURNING_OFF, static_cast<int>(BluetoothState::STATE_TURNING_OFF) },
+    { BluetoothAdapterConstants::STATE_OFF, static_cast<int>(BluetoothState::STATE_OFF) },
+    { BluetoothAdapterConstants::STATE_CONNECTED, static_cast<int>(BTConnectState::CONNECTED) },
+    { BluetoothAdapterConstants::STATE_CONNECTING, static_cast<int>(BTConnectState::CONNECTING) },
+    { BluetoothAdapterConstants::STATE_DISCONNECTED, static_cast<int>(BTConnectState::DISCONNECTED) },
+    { BluetoothAdapterConstants::STATE_DISCONNECTING, static_cast<int>(BTConnectState::DISCONNECTING) },
+};
+
+static const std::map<int, int> BT_STATE_ID_MAP = {
     { BluetoothAdapterConstants::STATE_TURNING_ON, static_cast<int>(BTStateID::STATE_TURNING_ON) },
     { BluetoothAdapterConstants::STATE_ON, static_cast<int>(BTStateID::STATE_TURN_ON) },
     { BluetoothAdapterConstants::STATE_TURNING_OFF, static_cast<int>(BTStateID::STATE_TURNING_OFF) },
@@ -178,6 +189,17 @@ int BluetoothImplUtils::GetOhHostBtStateFromBluetoothAdapter(int value, int& btS
     return RET_NO_SUPPORT;
 }
 
+int BluetoothImplUtils::GetOhHostBtStateIDFromBluetoothAdapter(int value, int& btState)
+{
+    auto it = BT_STATE_ID_MAP.find(value);
+    if (it != BT_STATE_ID_MAP.end()) {
+        btState = it->second;
+        return RET_NO_ERROR;
+    }
+
+    return RET_NO_SUPPORT;
+}
+
 int BluetoothImplUtils::GetOhPairStateFromBluetoothAdapter(int value, int& btState)
 {
     auto it = BT_PAIRSTATE_MAP.find(value);
@@ -220,7 +242,7 @@ int BluetoothImplUtils::GetOhProfileStateFromBTProfileState(int value, int& btSt
     return RET_NO_SUPPORT;
 }
 
-bool ConvertVectorData(const std::vector<u_int8_t> data, std::vector<u_int32_t>& dataJson)
+bool ConvertVectorData(const std::vector<u_int8_t>& data, std::vector<u_int32_t>& dataJson)
 {
     for (auto it = data.begin(); it != data.end(); ++it) {
         dataJson.push_back(static_cast<u_int32_t>(*it));

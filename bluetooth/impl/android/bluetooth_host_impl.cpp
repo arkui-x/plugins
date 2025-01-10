@@ -417,7 +417,7 @@ int32_t BluetoothHostImpl::OnChangeStateCallBack(int state)
     }
 
     int btState = 0;
-    int ret = BluetoothImplUtils::GetOhHostBtStateFromBluetoothAdapter(state, btState);
+    int ret = BluetoothImplUtils::GetOhHostBtStateIDFromBluetoothAdapter(state, btState);
     if (BT_NO_ERROR == ret) {
         observer_->OnStateChanged(BTTransport::ADAPTER_BREDR, btState);
         return BT_NO_ERROR;

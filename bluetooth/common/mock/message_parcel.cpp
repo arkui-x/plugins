@@ -68,7 +68,7 @@ bool MessageParcel::ContainFileDescriptors() const
     return false;
 }
 
-bool MessageParcel::WriteInterfaceToken(std::u16string name)
+bool MessageParcel::WriteInterfaceToken(std::u16string& name)
 {
     (void)name;
     return false;
