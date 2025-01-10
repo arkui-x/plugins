@@ -117,8 +117,8 @@ public class CustomGattServer {
                 String inputUuid = uuid.substring(SUB_INDEX, SUB_INDEX_END);
                 String curUuid = entry.getValue().getUuid().toString().substring(SUB_INDEX, SUB_INDEX_END);
                 if ((inputUuid.equalsIgnoreCase(GATT_SERVICE_DIS) && curUuid.equalsIgnoreCase(GATT_SERVICE_DIS)) ||
-                    (curUuid.equals(GATT_SERVICE_GATTS) && inputUuid.equals(GATT_SERVICE_GATTS)) ||
-                    (curUuid.equals(GATT_SERVICE_GAP) && inputUuid.equals(GATT_SERVICE_GAP))) {
+                    (inputUuid.equals(GATT_SERVICE_GATTS) && curUuid.equals(GATT_SERVICE_GATTS)) ||
+                    (inputUuid.equals(GATT_SERVICE_GAP) && curUuid.equals(GATT_SERVICE_GAP))) {
                     return true;
                 }
             }
@@ -161,7 +161,7 @@ public class CustomGattServer {
         int endHandle = getServiceHandleScopeByUuid(serviceUuid)[1];
         if (BluetoothGattDescriptorMap_ != null) {
             for (int i = startHandle; i <= endHandle; i++) {
-                if (BluetoothGattDescriptorMap_.containsKey(i) &&
+                if (BluetoothGattDescriptorMap_.containsKey(i) && 
                     BluetoothGattDescriptorMap_.get(i).getUuid().toString().equalsIgnoreCase(descriptorUuid)) {
                     Log.i(LOG_TAG, "Descriptor handle is " + i);
                     return i;

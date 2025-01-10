@@ -189,7 +189,7 @@ public class CustomBluetoothManager {
                 BluetoothGattServer bluetoothGattServer = bluetoothManager_.openGattServer(context, gattServerCallback);
                 CustomGattServer customGattServer;
                 if (bluetoothGattServer == null || bluetoothGattServerMap_ == null ||
-                    (customGattServer = new CustomGattServer(bluetoothGattServer)) == null) {
+                   (customGattServer = new CustomGattServer(bluetoothGattServer)) == null) {
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                 } else {
                     bluetoothGattServerMap_.put(appId, customGattServer);

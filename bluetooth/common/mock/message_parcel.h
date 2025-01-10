@@ -40,7 +40,7 @@ public:
     bool WriteFileDescriptor(int fd);
     int ReadFileDescriptor();
     bool ContainFileDescriptors() const;
-    bool WriteInterfaceToken(std::u16string& name);
+    bool WriteInterfaceToken(std::u16string name);
     std::u16string ReadInterfaceToken();
     bool WriteRawData(const void* data, size_t size);
     const void* ReadRawData(size_t size);

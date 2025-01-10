@@ -232,7 +232,7 @@ public class BluetoothPlugin {
                 intent.putExtra("advHandle", advHandle);
                 intent.putExtra("opCode", AdvOptCode.ADV_DEFAULT_CODE.ordinal());
                 BluetoothPlugin.sendBleBroadcast(intent);
-            }
+            }  
             @Override
             public void onStartFailure(int errorCode) {
                 super.onStartFailure(errorCode);
@@ -319,7 +319,7 @@ public class BluetoothPlugin {
         if (btManager_ == null) {
             Log.e(LOG_TAG, "stopAdvertising failed, CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
-        } else if (!checkAdvertisingPermission()) {
+        }else if (!checkAdvertisingPermission()) {
             Log.e(LOG_TAG, "stopAdvertising failed, Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
@@ -338,7 +338,7 @@ public class BluetoothPlugin {
                     Log.e(LOG_TAG, "startAdvertising failed, BluetoothLeAdvertiser or AdvertiseCallback is null");
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                 } else {
-                    bluetoothLeAdvertiser.stopAdvertising(advertiseCallback);
+                    bluetoothLeAdvertiser.stopAdvertising(advertiseCallback); 
                     btManager_.removeAdvertiseCallback(advHandle);
                     btManager_.removeAdvertisingStatus(advHandle);
                 }
@@ -355,7 +355,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
                 Log.e(LOG_TAG, "startPair permission failed" + PERMISSION_BLUETOOTH_ADMIN);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -393,7 +393,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getBtProfileConnState permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -424,7 +424,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getBtProfilesConnState permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -448,7 +448,7 @@ public class BluetoothPlugin {
         } else {
             for (int index = 0; index < profileId.length; index++) {
                 retCode[0] = bluetoothAdapter.getProfileConnectionState(profileId[index]);
-                if (retCode[0] == BluetoothAdapter.STATE_CONNECTED) {
+                if (BluetoothAdapter.STATE_CONNECTED == retCode[0]) {
                     break;
                 } else {
                     retCode[0] = BluetoothAdapter.STATE_DISCONNECTED;
@@ -502,7 +502,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getLocalName permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -536,7 +536,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getPairedDevices permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -576,7 +576,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getPairState permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -612,7 +612,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getDeviceClass permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -654,7 +654,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getDeviceUuids permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
@@ -845,7 +845,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
                 Log.e(LOG_TAG, "getBtScanMode permission failed" + PERMISSION_BLUETOOTH);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN)) {
@@ -881,7 +881,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN, PERMISSION_ACCESS_FINE_LOCATION)) {
                 Log.e(LOG_TAG, "startBtDiscovery permission failed" + PERMISSION_BLUETOOTH_ADMIN);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN, PERMISSION_ACCESS_FINE_LOCATION)) {
@@ -921,7 +921,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
                 Log.e(LOG_TAG, "cancelBtDiscovery permission failed" + PERMISSION_BLUETOOTH_ADMIN);
-                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
+                return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId(); 
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN)) {
@@ -1048,7 +1048,8 @@ public class BluetoothPlugin {
         }
     }
 
-    public void registerBluetoothServiceListener(Context context) {
+    public void registerBluetoothServiceListener(Context context)
+    {
         if (btManager_ == null) {
             Log.e(LOG_TAG, "registerBluetoothServiceListener btManager_ is null!");
             return;
@@ -1102,7 +1103,7 @@ public class BluetoothPlugin {
         synchronized (Profile_Lock) {
             if (bluetoothA2dp_ != null) {
                 bluetoothAdapter.closeProfileProxy(BluetoothProfile.A2DP, bluetoothA2dp_);
-            }
+            }      
             bluetoothA2dp_ = null;
         }
     }
@@ -1111,7 +1112,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT >= API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
                 Log.e(LOG_TAG, "getA2dpConnectionState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
-                return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED;
+                return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED; 
             }
         }
 
@@ -1133,7 +1134,7 @@ public class BluetoothPlugin {
         if (Build.VERSION.SDK_INT >= API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
                 Log.e(LOG_TAG, "getA2dpConnectedDevices permission failed" + PERMISSION_BLUETOOTH_CONNECT);
-                return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED;
+                return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED; 
             }
         }
 
@@ -1205,7 +1206,7 @@ public class BluetoothPlugin {
         } else if (!checkGattServerPermission()) {
             Log.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
-        }
+        } 
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
             Log.e(LOG_TAG, "registerApplicationGattServer failed, The device does not support Bluetooth");

@@ -102,8 +102,7 @@ int BluetoothSwitchModule::ProcessBluetoothHalfEvent(void)
 }
 
 int BluetoothSwitchModule::ProcessBluetoothSwitchActionEnd(
-    BluetoothSwitchEvent curSwitchActionEvent,
-    std::vector<BluetoothSwitchEvent>& expectedEventVec)
+    BluetoothSwitchEvent curSwitchActionEvent, std::vector<BluetoothSwitchEvent> expectedEventVec)
 {
     return BT_NO_ERROR;
 }
@@ -115,7 +114,7 @@ int BluetoothSwitchModule::ProcessBluetoothSwitchCachedEvent(BluetoothSwitchEven
 
 void BluetoothSwitchModule::DeduplicateCacheEvent(BluetoothSwitchEvent curEvent) {}
 
-void BluetoothSwitchModule::LogCacheEventIgnored(std::vector<BluetoothSwitchEvent>& eventVec) {}
+void BluetoothSwitchModule::LogCacheEventIgnored(std::vector<BluetoothSwitchEvent> eventVec) {}
 
 } // namespace Bluetooth
 } // namespace OHOS

@@ -197,10 +197,10 @@ public class BluetoothHelper {
             boolean legacy = getValueFromJson(jsonObject, "legacy", Boolean.class);
             int phy = getValueFromJson(jsonObject, "phy", Integer.class);
             int callbackType = getValueFromJson(jsonObject, "callbackType", Integer.class);
-            if (reportDelayMillis < 0 ||
-                (phy != BluetoothDevice.PHY_LE_1M && phy != ScanSettings.PHY_LE_ALL_SUPPORTED) ||
-                (scanMode < ScanSettings.SCAN_MODE_OPPORTUNISTIC || scanMode > ScanSettings.SCAN_MODE_LOW_LATENCY) ||
-                (callbackType != ScanSettings.CALLBACK_TYPE_ALL_MATCHES &&
+            if (reportDelayMillis < 0 || 
+               (phy != BluetoothDevice.PHY_LE_1M && phy != ScanSettings.PHY_LE_ALL_SUPPORTED) ||
+               (scanMode < ScanSettings.SCAN_MODE_OPPORTUNISTIC || scanMode > ScanSettings.SCAN_MODE_LOW_LATENCY) ||
+               (callbackType != ScanSettings.CALLBACK_TYPE_ALL_MATCHES &&
                 callbackType != ScanSettings.CALLBACK_TYPE_FIRST_MATCH &&
                 callbackType != ScanSettings.CALLBACK_TYPE_MATCH_LOST)) {
                 return null;
@@ -283,7 +283,7 @@ public class BluetoothHelper {
             }
             JSONArray manufactureDataArray = getValueFromJson(jsonObject, "manufactureData", JSONArray.class);
             if (manufactureDataArray != null) {
-                for (int i = 0; i < manufactureDataArray.length(); ++i) {
+                for(int i = 0; i < manufactureDataArray.length(); ++i) {
                     int manufactureId = getValueFromJson(
                         manufactureDataArray.getJSONObject(i), "manufactureId", Integer.class);
                     byte[] manufactureValue = {};
@@ -296,7 +296,7 @@ public class BluetoothHelper {
             }
             JSONArray ServiceDataArray = getValueFromJson(jsonObject, "serviceData", JSONArray.class);
             if (ServiceDataArray != null) {
-                for (int i = 0; i < ServiceDataArray.length(); ++i) {
+                for(int i = 0; i < ServiceDataArray.length(); ++i) {
                     String serviceUuid = getValueFromJson(
                         ServiceDataArray.getJSONObject(i), "serviceUuid", String.class);
                     byte[] serviceValue = {};
@@ -342,8 +342,9 @@ public class BluetoothHelper {
             BluetoothGattService bluetoothGattService = gatt.getService(uuid);
             BluetoothGattCharacteristic bluetoothGattCharacteristic;
             return (bluetoothGattService == null ||
-                (bluetoothGattCharacteristic = bluetoothGattService.getCharacteristic(characteristicUuid)) ==
-                null) ? null : bluetoothGattCharacteristic;
+                   (bluetoothGattCharacteristic = bluetoothGattService.getCharacteristic(characteristicUuid)) == null)
+                    ? null
+                    : bluetoothGattCharacteristic;
         } catch (JSONException | IllegalArgumentException e) {
             Log.e(LOG_TAG, "getBluetoothGattCharacteristic failed, try-catch err is " + e);
             return null;
@@ -597,9 +598,9 @@ public class BluetoothHelper {
                     break;
                 }
                 if (((properties & CHARACTERISTIC_PROPERTIE_READ) != 0 &&
-                    (permissions & ANDROID_PERMISSION_READ) == 0) ||
+                     (permissions & ANDROID_PERMISSION_READ) == 0) ||
                     ((properties & CHARACTERISTIC_PROPERTIE_WRITE) != 0 &&
-                    (permissions & ANDROID_PERMISSION_WRITE) == 0)) {
+                     (permissions & ANDROID_PERMISSION_WRITE) == 0)) {
                     res = false;
                     break;
                 } else if (!checkDescriptorJsonIsLegality(properties, descriptorArray)) {
@@ -776,4 +777,5 @@ public class BluetoothHelper {
             return new ArrayList<String>();
         }
     }
+
 }

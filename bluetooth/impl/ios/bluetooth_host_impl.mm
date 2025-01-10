@@ -86,9 +86,9 @@ int32_t BluetoothHostImpl::GetBtState(int& state)
     BluetoothCentralManager* centralManager = [BluetoothCentralManager sharedInstance];
     int bleState = [centralManager getBleState];
     if (bleState == CBManagerStatePoweredOn) {
-        state = static_cast<int>(BluetoothState::STATE_ON);
+        state = BTStateID::STATE_TURN_ON;
     } else if (bleState == CBManagerStatePoweredOff) {
-        state = static_cast<int>(BluetoothState::STATE_OFF);
+        state = BTStateID::STATE_TURN_OFF;
     } else {
         return BT_ERR_INTERNAL_ERROR;
     }
