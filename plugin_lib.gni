@@ -86,6 +86,9 @@ common_plugin_libs = [
   "arkui/node",
   "arkui/shape",
   "multimodalinput/keycode",
+  "arkts/collections",
+  "arkts/utils",
+  "arkts/math/decimal",
 ]
 
 template("plugin_lib") {
