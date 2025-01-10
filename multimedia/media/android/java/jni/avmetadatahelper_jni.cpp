@@ -51,7 +51,7 @@ static const char SIGNATURE_SET_DATA_SOURCE_WITH_FD[] = "(JLjava/lang/String;JJ)
 static const char SIGNATURE_SET_DATA_SOURCE_WITH_DATA_SOURCE[] = "(J)V";
 static const char SIGNATURE_EXTRACT_METADATA[] = "(JI)Ljava/lang/String;";
 static const char SIGNATURE_EXTRACT_METADATA_DONE[] = "(J)V";
-static const char SIGNATURE_GET_EMBEDDED_PICTURE[] = "(J[B)V";
+static const char SIGNATURE_GET_EMBEDDED_PICTURE[] = "(J)[B";
 static const char SIGNATURE_GET_EMBEDDED_PICTURE_SIZE[] = "(J)I";
 static const char SIGNATURE_CREATE_METADATA_RETRIEVER[] = "(J)V";
 static const char SIGNATURE_RELEASE_METADATA_RETRIEVER[] = "(J)V";
@@ -348,9 +348,12 @@ std::shared_ptr<Media::AVSharedMemory> AVMetadataHelperJni::FetchArtPicture(long
     }
 
     jbyteArray jarr = env->NewByteArray((jsize)picSize);
-    env->CallVoidMethod(
-        g_avmetadataHelperPluginClass.globalRef, g_avmetadataHelperPluginClass.getEmbeddedPicture,
-        (jlong)key, jarr);
+    jarr = (jbyteArray)env->CallObjectMethod(
+        g_avmetadataHelperPluginClass.globalRef, g_avmetadataHelperPluginClass.getEmbeddedPicture, (jlong)key);
+    if (jarr == nullptr) {
+        LOGE("AVMetadataHelperJni JNI: jarr is null after CallObjectMethod");
+        return nullptr;
+    }
     if (env->ExceptionCheck()) {
         LOGE("AVMetadataHelperJni JNI: call FetchArtPicture has exception");
         env->ExceptionDescribe();
@@ -364,8 +367,7 @@ std::shared_ptr<Media::AVSharedMemory> AVMetadataHelperJni::FetchArtPicture(long
         std::make_shared<Media::MockAVSharedMemory>((int)len, Media::AVSharedMemory::Flags::FLAGS_READ_WRITE);
 
     env->GetByteArrayRegion(jarr, 0, len, reinterpret_cast<jbyte*>(dataSrc_ptr->GetBase()));
-    env->ReleaseByteArrayElements(jarr, nullptr, 0);
-
+    env->DeleteLocalRef(jarr);
     return dataSrc_ptr;
 }
 

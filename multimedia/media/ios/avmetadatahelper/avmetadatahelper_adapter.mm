@@ -96,6 +96,10 @@
 
 - (std::shared_ptr<OHOS::Media::AVSharedMemory>)fetchArtPicture
 {
+    if (@available(iOS 18.0, *)) {
+        NSLog(@"fetchArtPicture not supported");
+        return nullptr;
+    }
     if (!self->url_) {
         NSLog(@"fetchArtPicture url_ is nil!");
         return nullptr;
@@ -105,16 +109,19 @@
         NSLog(@"fetchArtPicture asset is nil!");
         return nullptr;
     }
-    AVAssetImageGenerator *gen = [[AVAssetImageGenerator alloc]initWithAsset:asset];
-    if (!gen) {
-        NSLog(@"fetchArtPicture gen is nil!");
+    NSArray *metadataItems = [asset metadataForFormat:AVMetadataFormatID3Metadata];
+    NSData *imageData = nil;
+    for (AVMetadataItem *item in metadataItems) {
+        if ([[item commonKey] isEqualToString:AVMetadataCommonKeyArtwork]) {
+            imageData = item.value;
+            break;
+        }
+    }
+    if (!imageData) {
+        NSLog(@"fetchArtPicture imageData is nil!");
         return nullptr;
     }
-    gen.appliesPreferredTrackTransform = YES;
-    CMTime time = CMTimeMakeWithSeconds(FIRST_FRAME_TIME, FIRST_FRAME_TIME_SCALE);
-    CMTime actualTime;
-    CGImageRef imageRef = [gen copyCGImageAtTime:time actualTime:&actualTime error:nil];
-    UIImage *thumbImg = [[UIImage alloc] initWithCGImage:imageRef];
+    UIImage *thumbImg = [UIImage imageWithData:imageData];
     if (!thumbImg) {
         NSLog(@"fetchArtPicture thumbImg is nil!");
         return nullptr;
