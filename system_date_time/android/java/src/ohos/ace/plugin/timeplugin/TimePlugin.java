@@ -18,20 +18,37 @@ package ohos.ace.plugin.timeplugin;
 import java.util.TimeZone;
 import android.content.Context;
 
+/**
+ * The TimePlugin class provides the function to obtain time zones.
+ */
 public class TimePlugin {
     private static final String LOG_TAG = "TimePlugin";
     private Context mContext_ = null;
 
+    /**
+     * Constructs a TestPlugin instance with the given context.
+     *
+     * @param context The context of the activity.
+     */
     public TimePlugin(Context context) {
         mContext_ = context;
         nativeInit();
     }
 
+    /**
+     * Getting the time zone name.
+     *
+     * @param timezoneId Used to receive the obtained time zone name.
+     * @return 0 Return the call result. 0 indicates success.
+     */
     public int getTimeZone(String[] timezoneId) {
         TimeZone timeZone = TimeZone.getDefault();
         timezoneId[0] = timeZone.getID();
         return 0;
     }
 
+    /**
+     * Initializes the native layer by calling the corresponding C++ function to register JNI.
+     */
     public native void nativeInit();
 }
