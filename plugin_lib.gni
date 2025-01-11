@@ -71,6 +71,7 @@ common_plugin_libs = [
   "events/emitter",
   "wifi_manager",
   "notification_manager",
+  "effectkit",
   "arkui/node",
   "arkui/shape",
 ]
