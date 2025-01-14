@@ -15,6 +15,11 @@ import("//build/ohos.gni")
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "bluetooth/access",
+  "bluetooth/baseprofile",
+  "bluetooth/ble",
+  "bluetooth/connection",
+  "bluetooth/a2dp",
   "bridge",
   "file/fs",
   "file/photo_access_helper",
