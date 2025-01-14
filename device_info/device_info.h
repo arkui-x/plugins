@@ -33,6 +33,7 @@ extern "C" {
     XX(getMarketName)                                                                                                  \
     XX(getProductSeries)                                                                                               \
     XX(getProductModel)                                                                                                \
+    XX(getProductModelAlias)                                                                                           \
     XX(getSoftwareModel)                                                                                               \
     XX(getHardwareModel)                                                                                               \
     XX(getHardwareProfile)                                                                                             \
