@@ -93,6 +93,12 @@ const std::string DeviceInfoImpl::GetProductModel(void)
     return [value cStringUsingEncoding : NSUTF8StringEncoding];
 }
 
+const std::string DeviceInfoImpl::GetProductModelAlias(void)
+{
+    NSString* value = [[UIDevice currentDevice] model];
+    return [value cStringUsingEncoding : NSUTF8StringEncoding];
+}
+
 const std::string DeviceInfoImpl::GetSoftwareModel(void)
 {
     NSString* value = [[UIDevice currentDevice] model];
@@ -178,6 +184,8 @@ const std::string DeviceInfoImpl::GetDeviceInfo(int id, const std::string &defVa
             return GetProductSeries();
         case METHOD_ID_getProductModel:
             return GetProductModel();
+        case METHOD_ID_getProductModelAlias:
+            return GetProductModelAlias();
         case METHOD_ID_getSoftwareModel:
             return GetSoftwareModel();
         case METHOD_ID_getHardwareModel:
