@@ -17,6 +17,7 @@
 #define PLUGIN_WEB_WEBVIEW_JS_WEB_WEBVIEW_H
 
 #include <uv.h>
+#include <regex>
 
 #include "napi/native_api.h"
 #include "napi/native_common.h"
@@ -24,6 +25,8 @@
 #include "web_cookie_manager_callback.h"
 #include "web_cookie_manager.h"
 #include "webview_controller.h"
+#include "geolocation_permissions.h"
+#include "geolocation_permissions_callback.h"
 
 namespace OHOS::Plugin {
 enum class ResourceType : uint32_t {
@@ -43,6 +46,7 @@ enum class ResourceType : uint32_t {
 const std::string WEBVIEW_CONTROLLER_CLASS_NAME = "WebviewController";
 const std::string WEB_HISTORY_LIST_CLASS_NAME = "WebHistoryList";
 const std::string WEB_MESSAGE_PORT_CLASS_NAME = "WebMessagePort";
+const std::string GEOLOCATION_PERMISSIONS_CLASS_NAME = "GeolocationPermissions";
 
 class NapiWebviewController {
 public:
@@ -190,6 +194,36 @@ public:
     static napi_value PostMessageEvent(napi_env env, napi_callback_info info);
 
     static napi_value OnMessageEvent(napi_env env, napi_callback_info info);
+};
+
+class NapiGeolocationPermissions {
+public:
+    NapiGeolocationPermissions() = default;
+
+    virtual ~NapiGeolocationPermissions() = default;
+
+    static napi_value Init(napi_env env, napi_value exports);
+
+private:
+    static napi_value JsConstructor(napi_env env, napi_callback_info info);
+
+    static napi_value JsAllowGeolocation(napi_env env, napi_callback_info info);
+
+    static napi_value JsDeleteGeolocation(napi_env env, napi_callback_info info);
+
+    static napi_value JsDeleteAllGeolocation(napi_env env, napi_callback_info info);
+
+    static napi_value JsGetAccessibleGeolocation(napi_env env, napi_callback_info info);
+
+    static napi_value JsGetStoredGeolocation(napi_env env, napi_callback_info info);
+
+    static std::regex originPattern;
+
+    static void CreateGetAccessibleGeolocationAsyncWork(napi_env env,
+        const std::shared_ptr<GeolocationPermissionsResultCallbackInfo> &callbackInfo);
+        
+    static void CreateGetStoredGeolocationAsyncWork(napi_env env,
+        const std::shared_ptr<GeolocationPermissionsResultCallbackInfo> &callbackInfo);
 };
 }
 #endif
