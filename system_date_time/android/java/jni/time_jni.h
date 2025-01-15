@@ -19,7 +19,6 @@
 #include <jni.h>
 #include <memory>
 #include <mutex>
-// #include <nlohmann/json.hpp>
 
 namespace OHOS::Time {
 // using Json = nlohmann::json;
@@ -35,6 +34,6 @@ public:
     // C++ call JAVA
     static int32_t GetTimeZone(std::string &timezoneId);
 };
-} // // namespace OHOS::Time
+} // namespace OHOS::Time
 
 #endif // PLUGINS_TIME_ANDROID_JAVA_JNI_TIME_JNI_H

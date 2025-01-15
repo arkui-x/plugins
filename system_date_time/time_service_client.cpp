@@ -163,11 +163,13 @@ std::string TimeServiceClient::GetTimeZone()
 
 int32_t TimeServiceClient::GetTimeZone(std::string& timezoneId)
 {
-#ifdef ANDROID_PLATFORM
+#if defined(ANDROID_PLATFORM)
     return Time::TimeJni::GetTimeZone(timezoneId);
-#endif
-#ifdef IOS_PLATFORM
+#elif defined(IOS_PLATFORM)
     return Time::TimeIOS::GetTimeZone(timezoneId);
+#else
+    timezoneId = "Asia/Shanghai";
+    return 0;
 #endif
 }
 
