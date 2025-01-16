@@ -104,7 +104,7 @@ int32_t BluetoothHostImpl::DisableBle()
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::EnableBle()
+int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect)
 {
     return BT_NO_ERROR;
 }

@@ -115,5 +115,10 @@ int BluetoothSwitchModule::ProcessBluetoothSwitchCachedEvent(BluetoothSwitchEven
 void BluetoothSwitchModule::DeduplicateCacheEvent(BluetoothSwitchEvent curEvent) {}
 
 void BluetoothSwitchModule::LogCacheEventIgnored(std::vector<BluetoothSwitchEvent> eventVec) {}
+
+void BluetoothSwitchModule::SetNoAutoConnect(bool noAutoConnect)
+{
+    noAutoConnect_ = noAutoConnect;
+}
 } // namespace Bluetooth
 } // namespace OHOS
