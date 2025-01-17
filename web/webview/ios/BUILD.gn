@@ -20,6 +20,7 @@ ohos_source_set("web_webview_ios") {
     "web_data_base_ios.cpp",
     "web_message_port_ios.cpp",
     "webview_controller_ios.cpp",
+    "web_download_manager_ios.cpp",
   ]
 
   include_dirs = web_include

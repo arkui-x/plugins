@@ -12,19 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef PLUGINS_WEB_WEBVIEW_IOS_WEB_DOWNLOAD_MANAGER_IOS_H
+#define PLUGINS_WEB_WEBVIEW_IOS_WEB_DOWNLOAD_MANAGER_IOS_H
 
-#ifndef PLUGINS_WEB_WEBVIEW_ANDROID_JAVA_JNI_WEB_DOWNLOAD_MANAGER_ANDROID_H
-#define PLUGINS_WEB_WEBVIEW_ANDROID_JAVA_JNI_WEB_DOWNLOAD_MANAGER_ANDROID_H
-
-#include "plugins/web/webview/web_download_item.h"
 #include "plugins/web/webview/web_download_manager.h"
+#include "plugins/web/webview/web_download_item.h"
 
 namespace OHOS::Plugin {
-class WebDownloadManagerAndroid final {
+class WebDownloadManagerIOS final {
 public:
-    WebDownloadManagerAndroid() = default;
-    ~WebDownloadManagerAndroid() = default;
-    static void RegisterDownloadCallback(CallbackMap& callbacks);
+    WebDownloadManagerIOS() = delete;
+    ~WebDownloadManagerIOS() = delete;
+    static void RegisterDownloadCallback(int32_t webId);
 };
 } // namespace OHOS::Plugin
 #endif
