@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,17 +21,21 @@
 #include "inner_api/plugin_utils_inner.h"
 #include "log.h"
 #include "plugin_utils.h"
-
+#include "plugins/web/webview/napi_web_message_ext.h"
 using namespace OHOS::NWebError;
 
 namespace OHOS::Plugin {
 namespace {
 const char WEB_WEBVIEW_CLASS_NAME[] = "ohos/ace/adapter/capability/web/AceWebPluginBase";
-
 static const JNINativeMethod METHODS[] = {
     { "nativeInit", "()V", reinterpret_cast<void*>(WebviewControllerJni::NativeInit) },
     { "onReceiveValue", "(Ljava/lang/String;J)V", reinterpret_cast<void*>(WebviewControllerJni::OnReceiveValue) },
-    { "onMessage", "(JLjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void*>(WebviewControllerJni::OnMessage) },
+    { "onReceiveRunJavaScriptExtValue", "(Ljava/lang/String;J)V",
+        reinterpret_cast<void*>(WebviewControllerJni::OnReceiveRunJavaScriptExtValue) },
+    { "onMessage", "(JLjava/lang/String;Ljava/lang/String;)V",
+        reinterpret_cast<void*>(WebviewControllerJni::OnMessage) },
+    { "onMessageEventExt", "(JLjava/lang/String;Ljava/lang/String;)V",
+        reinterpret_cast<void*>(WebviewControllerJni::OnMessageEventExt) },
 };
 static const char METHOD_LOADURL[] = "loadUrl";
 
@@ -50,6 +54,8 @@ static const char METHOD_BACKWARD[] = "backward";
 static const char METHOD_REFRESH[] = "refresh";
 
 static const char METHOD_EVALUTEJS[] = "evaluateJavascript";
+
+static const char METHOD_EVALUTEJS_EXT[] = "evaluateJavascriptExt";
 
 static const char METHOD_ACCESS_STEP[] = "accessStep";
 
@@ -85,7 +91,13 @@ static const char METHOD_CLOSEWEBMESSAGEPORT[] = "closeWebMessagePort";
 
 static const char METHOD_POSTMESSAGEEVENT[] = "postMessageEvent";
 
+static const char METHOD_POSTMESSAGEEVENTEXT[] = "postMessageEventExt";
+
 static const char METHOD_ONWEBMESSAGEPORTEVENT[] = "onWebMessagePortEvent";
+
+static const char METHOD_START_DOWNLOAD[] = "startDownload";
+
+static const char METHOD_ONWEBMESSAGEPORTEVENTEXT[] = "onWebMessagePortEventExt";
 
 static const char SIGNATURE_LOADURL[] = "(JLjava/lang/String;Ljava/util/HashMap;)V";
 
@@ -105,6 +117,8 @@ static const char SIGNATURE_REFRESH[] = "(J)V";
 
 static const char SIGNATURE_EVALUTEJS[] = "(JLjava/lang/String;J)V";
 
+static const char SIGNATURE_EVALUTEJS_EXT[] = "(JLjava/lang/String;J)V";
+
 static const char SIGNATURE_GETBACKFORWARDENTRIES[] = "(J)Landroid/webkit/WebBackForwardList;";
 
 static const char SIGNATURE_REMOVECACHE[] = "(JZ)V";
@@ -123,7 +137,13 @@ static const char SIGNATURE_CLOSEWEBMESSAGEPORT[] = "(JLjava/lang/String;)V";
 
 static const char SIGNATURE_POSTMESSAGEEVENT[] = "(JLjava/lang/String;Ljava/lang/String;)I";
 
+static const char SIGNATURE_POSTMESSAGEEVENTEXT[] = "(JLjava/lang/String;Ljava/lang/String;)I";
+
 static const char SIGNATURE_ONWEBMESSAGEPORTEVENT[] = "(JLjava/lang/String;)I";
+
+static const char SIGNATURE_START_DOWNLOAD[] = "(JLjava/lang/String;)V";
+
+static const char SIGNATURE_ONWEBMESSAGEPORTEVENTEXT[] = "(JLjava/lang/String;)I";
 
 static const char SIGNATURE_ACCESS_STEP[] = "(JI)Ljava/lang/String;";
 
@@ -151,6 +171,7 @@ struct {
     jmethodID backward;
     jmethodID refresh;
     jmethodID evaluateJavascript;
+    jmethodID evaluateJavascriptExt;
     jmethodID accessStep;
     jmethodID scrollTo;
     jmethodID scrollBy;
@@ -168,7 +189,10 @@ struct {
     jmethodID postWebMessage;
     jmethodID closeWebMessagePort;
     jmethodID postMessageEvent;
+    jmethodID postMessageEventExt;
     jmethodID onWebMessagePortEvent;
+    jmethodID startDownload;
+    jmethodID onWebMessagePortEventExt;
     jobject globalRef;
 } g_webWebviewClass;
 }
@@ -190,7 +214,6 @@ bool WebviewControllerJni::Register(void* env)
 
 void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
 {
-    LOGI("WebviewControllerJni JNI: NativeInit");
     CHECK_NULL_VOID(env);
     g_webWebviewClass.globalRef = env->NewGlobalRef(jobj);
     CHECK_NULL_VOID(g_webWebviewClass.globalRef);
@@ -205,6 +228,7 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.backward = env->GetMethodID(cls, METHOD_BACKWARD, SIGNATURE_BACKWARD);
     g_webWebviewClass.refresh = env->GetMethodID(cls, METHOD_REFRESH, SIGNATURE_REFRESH);
     g_webWebviewClass.evaluateJavascript = env->GetMethodID(cls, METHOD_EVALUTEJS, SIGNATURE_EVALUTEJS);
+    g_webWebviewClass.evaluateJavascriptExt = env->GetMethodID(cls, METHOD_EVALUTEJS_EXT, SIGNATURE_EVALUTEJS_EXT);
     g_webWebviewClass.accessStep = env->GetMethodID(cls, METHOD_ACCESS_STEP, SIGNATURE_ACCESS_STEP);
     g_webWebviewClass.scrollTo = env->GetMethodID(cls, METHOD_SCROLL_TO, SIGNATURE_SCROLL_TO);
     g_webWebviewClass.scrollBy = env->GetMethodID(cls, METHOD_SCROLL_BY, SIGNATURE_SCROLL_BY);
@@ -222,7 +246,10 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.postWebMessage = env->GetMethodID(cls, METHOD_POSTWEBMESSAGE, SIGNATURE_POSTWEBMESSAGE);
     g_webWebviewClass.closeWebMessagePort = env->GetMethodID(cls, METHOD_CLOSEWEBMESSAGEPORT, SIGNATURE_CLOSEWEBMESSAGEPORT);
     g_webWebviewClass.postMessageEvent = env->GetMethodID(cls, METHOD_POSTMESSAGEEVENT, SIGNATURE_POSTMESSAGEEVENT);
+    g_webWebviewClass.postMessageEventExt = env->GetMethodID(cls, METHOD_POSTMESSAGEEVENTEXT, SIGNATURE_POSTMESSAGEEVENTEXT);
     g_webWebviewClass.onWebMessagePortEvent = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENT, SIGNATURE_ONWEBMESSAGEPORTEVENT);
+    g_webWebviewClass.startDownload = env->GetMethodID(cls, METHOD_START_DOWNLOAD, SIGNATURE_START_DOWNLOAD);
+    g_webWebviewClass.onWebMessagePortEventExt = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENTEXT, SIGNATURE_ONWEBMESSAGEPORTEVENTEXT);
     env->DeleteLocalRef(cls);
 }
 
@@ -243,6 +270,25 @@ void WebviewControllerJni::OnReceiveValue(JNIEnv* env, jclass jcls, jstring jRes
 
     auto nativeId = static_cast<int32_t>(jId);
     WebviewController::OnReceiveValue(result, nativeId);
+}
+
+void WebviewControllerJni::OnReceiveRunJavaScriptExtValue(JNIEnv* env, jclass jcls, jstring jResult, jint jId)
+{
+    CHECK_NULL_VOID(env);
+    CHECK_NULL_VOID(jResult);
+
+    std::string result;
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    if (jResult != nullptr) {
+        env->DeleteLocalRef(jResult);
+    }
+
+    auto nativeId = static_cast<int32_t>(jId);
+    WebviewController::OnReceiveRunJavaScriptExtValue("STRING", result, nativeId);
 }
 
 ErrCode WebviewControllerJni::LoadUrl(int id, const std::string& url, 
@@ -476,6 +522,25 @@ void WebviewControllerJni::EvaluateJavaScript(int id, const std::string& script,
     CHECK_NULL_VOID(JsName);
     env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.evaluateJavascript, id, JsName, asyncCallbackInfoId);
     env->DeleteLocalRef(JsName);
+}
+
+void WebviewControllerJni::EvaluateJavaScriptExt(int id, const std::string& script, int32_t asyncCallbackInfoId)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.evaluateJavascriptExt)) {
+        LOGE("WebviewControllerJni::EvaluateJavaScriptExt env error");
+        return;
+    }
+
+    jstring JsName = env->NewStringUTF(script.c_str());
+    CHECK_NULL_VOID(JsName);
+    env->CallVoidMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.evaluateJavascriptExt, id, JsName, asyncCallbackInfoId);
+    env->DeleteLocalRef(JsName);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
 }
 
 bool WebviewControllerJni::AccessStep(int id, int32_t step)
@@ -829,6 +894,31 @@ void WebviewControllerJni::PostWebMessage(int id, std::string& message, std::vec
     }
 }
 
+void WebviewControllerJni::StartDownload(int id, const std::string& url)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.startDownload)) {
+        LOGE("env is null or method is null");
+        return;
+    }
+
+    if (url.empty()) {
+        LOGE("url is invalid");
+        return;
+    }
+
+    jstring jStringUrl = env->NewStringUTF(url.c_str());
+    if (!jStringUrl) {
+        return;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.startDownload, id, jStringUrl);
+    env->DeleteLocalRef(jStringUrl);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+}
+
 void WebviewControllerJni::CloseWebMessagePort(int id, const std::string& portHandle)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
@@ -867,6 +957,45 @@ ErrCode WebviewControllerJni::PostMessageEvent(int id, const std::string& portHa
     return result;
 }
 
+ErrCode WebviewControllerJni::PostMessageEventExt(int id, const std::string& portHandle, WebMessageExt* webMessageExt)
+{
+    CHECK_NULL_RETURN(webMessageExt, CAN_NOT_POST_MESSAGE);
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.postMessageEventExt)) {
+        return CAN_NOT_POST_MESSAGE;
+    }
+    jstring jPortHandle = env->NewStringUTF(portHandle.c_str());
+    CHECK_NULL_RETURN(jPortHandle, CAN_NOT_POST_MESSAGE);
+
+    std::string resultString = "";
+    if (webMessageExt->GetType() == static_cast<int32_t>(WebMessageType::STRING)) {
+        resultString = webMessageExt->GetString();
+    } else {
+        return CAN_NOT_POST_MESSAGE;
+    }
+
+    if (resultString == "") {
+        return CAN_NOT_POST_MESSAGE;
+    }
+
+    jstring jWebMessage = env->NewStringUTF(resultString.c_str());
+    if (!jWebMessage) {
+        env->DeleteLocalRef(jPortHandle);
+        return CAN_NOT_POST_MESSAGE;
+    }
+
+    auto result = static_cast<ErrCode>(env->CallIntMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.postMessageEventExt, id, jPortHandle, jWebMessage));
+    env->DeleteLocalRef(jPortHandle);
+    env->DeleteLocalRef(jWebMessage);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return CAN_NOT_POST_MESSAGE;
+    }
+    return result;
+}
+
 ErrCode WebviewControllerJni::OnWebMessagePortEvent(int id, const std::string& portHandle)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
@@ -878,6 +1007,27 @@ ErrCode WebviewControllerJni::OnWebMessagePortEvent(int id, const std::string& p
     CHECK_NULL_RETURN(JPortHandle, CAN_NOT_REGISTER_MESSAGE_EVENT);
     auto result = static_cast<ErrCode>(env->CallIntMethod(
         g_webWebviewClass.globalRef, g_webWebviewClass.onWebMessagePortEvent, id, JPortHandle));
+    env->DeleteLocalRef(JPortHandle);
+
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return CAN_NOT_REGISTER_MESSAGE_EVENT;
+    }
+    return result;
+}
+
+ErrCode WebviewControllerJni::OnWebMessagePortEventExt(int id, const std::string& portHandle)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.onWebMessagePortEventExt)) {
+        return CAN_NOT_REGISTER_MESSAGE_EVENT;
+    }
+
+    jstring JPortHandle = env->NewStringUTF(portHandle.c_str());
+    CHECK_NULL_RETURN(JPortHandle, CAN_NOT_REGISTER_MESSAGE_EVENT);
+    auto result = static_cast<ErrCode>(env->CallIntMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.onWebMessagePortEventExt, id, JPortHandle));
     env->DeleteLocalRef(JPortHandle);
 
     if (env->ExceptionCheck()) {
@@ -916,5 +1066,35 @@ void WebviewControllerJni::OnMessage(JNIEnv* env, jclass jcls, jint jWebId, jstr
 
     int32_t webId = static_cast<int32_t>(jWebId);
     WebMessagePort::OnMessage(webId, portHandle, result);
+}
+
+void WebviewControllerJni::OnMessageEventExt(
+    JNIEnv* env, jclass jcls, jint jWebId, jstring jPortHandle, jstring jResult)
+{
+    CHECK_NULL_VOID(env);
+    CHECK_NULL_VOID(jPortHandle);
+    CHECK_NULL_VOID(jResult);
+
+    std::string portHandle;
+    std::string result;
+    const char* content = env->GetStringUTFChars(jPortHandle, nullptr);
+    if (content != nullptr) {
+        portHandle.assign(content);
+        env->ReleaseStringUTFChars(jPortHandle, content);
+    }
+    env->DeleteLocalRef(jPortHandle);
+
+    content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    env->DeleteLocalRef(jResult);
+
+    int32_t webId = static_cast<int32_t>(jWebId);
+    auto webMessage = std::make_shared<WebMessage>(WebValue::Type::STRING);
+    auto messageResult = std::make_shared<WebMessageExt>(webMessage);
+    messageResult->SetString(result);
+    WebMessagePort::OnMessageExt(webId, portHandle, messageResult);
 }
 }

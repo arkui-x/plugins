@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,10 +22,13 @@ namespace OHOS::Plugin {
 class WebMessagePortAndroid : public WebMessagePort {
 public:
     WebMessagePortAndroid(int32_t webId, const std::string& portHandle);
+    WebMessagePortAndroid(int32_t webId, const std::string& portHandle, bool isExtentionType);
     ~WebMessagePortAndroid() = default;
     void ClosePort() override;
     ErrCode PostMessageEvent(const std::string& webMessage) override;
+    ErrCode PostMessageEventExt(WebMessageExt* webMessage) override;
     ErrCode OnMessageEvent() override;
+    ErrCode OnMessageEventExt() override;
 };
 } // namespace OHOS::Plugin
 
