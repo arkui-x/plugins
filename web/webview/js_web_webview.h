@@ -159,6 +159,10 @@ private:
 
     static napi_value JsConfigCookieAsync(napi_env env, napi_callback_info info);
 
+    static napi_value JsExistCookie(napi_env env, napi_callback_info info);
+
+    static napi_value JsClearSessionCookie(napi_env env, napi_callback_info info);
+
     static napi_value JsClearAllCookiesAsync(napi_env env, napi_callback_info info);
 
     static void CreateCookieAsyncWork(napi_env env, const std::string& taskName,

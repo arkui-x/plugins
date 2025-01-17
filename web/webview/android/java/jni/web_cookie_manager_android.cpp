@@ -37,4 +37,14 @@ void WebCookieManagerAndroid::ClearAllCookies(int32_t asyncCallbackInfoId)
 {
     WebCookieManagerJni::ClearAllCookies(asyncCallbackInfoId);
 }
+
+bool WebCookieManagerAndroid::ExistCookie(bool incognito)
+{
+    return WebCookieManagerJni::ExistCookie(incognito);
+}
+
+void WebCookieManagerAndroid::ClearSessionCookie(int32_t asyncCallbackInfoId)
+{
+    WebCookieManagerJni::ClearSessionCookie(asyncCallbackInfoId);
+}
 } // namespace OHOS::Plugin
