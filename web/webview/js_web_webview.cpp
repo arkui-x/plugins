@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,29 +18,38 @@
 #include <cstddef>
 #include <unistd.h>
 #include <string.h>
+#include <regex>
+#include <securec.h>
 
-#include "log.h"
+#include "business_error.h"
 #include "inner_api/plugin_utils_inner.h"
 #include "inner_api/plugin_utils_napi.h"
+#include "log.h"
+#include "napi_parse_utils.h"
+#include "napi_web_message_ext.h"
 #include "plugin_utils.h"
-#include "webview_controller.h"
+#include "web_download_delegate.h"
+#include "web_download_item.h"
+#include "web_download_manager.h"
 #include "web_message_port.h"
+#include "webview_controller.h"
+#include "webview_javascript_async_work_callback.h"
 #ifdef ANDROID_PLATFORM
 #include "android/java/jni/web_cookie_manager_android.h"
 #include "android/java/jni/web_cookie_manager_jni.h"
-#include "android/java/jni/webview_controller_android.h"
-#include "android/java/jni/webview_controller_jni.h"
 #include "android/java/jni/web_data_base_android.h"
 #include "android/java/jni/web_data_base_jni.h"
+#include "android/java/jni/web_download_delegate_jni.h"
+#include "android/java/jni/web_download_item_jni.h"
 #include "android/java/jni/web_message_port_android.h"
+#include "android/java/jni/webview_controller_android.h"
+#include "android/java/jni/webview_controller_jni.h"
 #endif
 #ifdef IOS_PLATFORM
 #include "ios/webview_controller_ios.h"
 #include "ios/web_data_base_ios.h"
 #include "ios/web_message_port_ios.h"
 #endif
-#include "napi_parse_utils.h"
-#include "business_error.h"
 
 using namespace OHOS::NWebError;
 
@@ -48,8 +57,11 @@ namespace OHOS::Plugin {
 namespace {
 thread_local napi_ref g_historyListRef;
 thread_local napi_ref g_classWebMsgPort;
+thread_local napi_ref g_jsMsgExtClassRef;
 thread_local int32_t g_asyncCallbackInfoId = 0;
 constexpr int32_t MAX_COUNT_ID = 1024;
+constexpr uint32_t URL_MAXIMUM = 2048;
+constexpr char URL_REGEXPR[] = "^http(s)?:\\/\\/.+";
 
 bool GetRawFileUrl(const std::string &fileName, std::string &result)
 {
@@ -59,6 +71,30 @@ bool GetRawFileUrl(const std::string &fileName, std::string &result)
     result = NapiWebviewController::appHapPath_ + "/resources/rawfile/" + fileName;
     LOGE("The parsed url is: %{public}s", result.c_str());
     return true;
+}
+
+bool ParsePrepareUrl(napi_env env, napi_value urlObj, std::string& url)
+{
+    napi_valuetype valueType = napi_null;
+    napi_typeof(env, urlObj, &valueType);
+
+    if (valueType == napi_string) {
+        NapiParseUtils::ParseString(env, urlObj, url);
+        if (url.size() > URL_MAXIMUM) {
+            LOGE("The URL exceeds the maximum length of %{public}d", URL_MAXIMUM);
+            return false;
+        }
+
+        if (!regex_match(url, std::regex(URL_REGEXPR, std::regex_constants::icase))) {
+            LOGE("ParsePrepareUrl error");
+            return false;
+        }
+
+        return true;
+    }
+
+    LOGE("Unable to parse type from url object.");
+    return false;
 }
 
 bool ParseUrl(napi_env env, napi_value urlObj, std::string& result)
@@ -116,6 +152,21 @@ WebviewController* GetWebviewController(napi_env env, napi_callback_info info)
     }
     return webviewController;
 }
+}
+
+napi_value RemoveDownloadDelegateRef(napi_env env, napi_value thisVar)
+{
+    WebviewController* webviewController = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&webviewController));
+    if (webviewController == nullptr || !webviewController->IsInit()) {
+        LOGE("create message port failed, napi unwrap webviewController failed");
+        return nullptr;
+    }
+
+    WebDownloadManager::RemoveDownloadDelegateRef(webviewController->GetWebId());
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 std::string NapiWebviewController::appHapPath_;
@@ -485,6 +536,124 @@ napi_value NapiWebviewController::RunJavaScript(napi_env env, napi_callback_info
         reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
     WebviewController::InsertAsyncCallbackInfo(asyncCallbackInfoInstance);
     webviewController->EvaluateJavaScript(script, g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
+    return promise;
+}
+
+napi_value NapiWebviewController::RunJavaScriptExt(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    size_t argcPromise = INTEGER_ONE;
+    size_t argcCallback = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = { 0 };
+
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+
+    if (argc != argcPromise && argc != argcCallback) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    std::string script;
+    napi_valuetype scriptType = napi_undefined;
+    napi_typeof(env, argv[INTEGER_ZERO], &scriptType);
+    if (scriptType == napi_undefined || scriptType == napi_null) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], script)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    WebviewController* webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo =
+        new AsyncJavaScriptExtEvaluteJSResultCallbackInfo(env, g_asyncCallbackInfoId);
+    CHECK_NULL_RETURN(asyncCallbackInfo, result);
+    napi_value promise = nullptr;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[argcCallback - 1], &valueType);
+        if (valueType != napi_function) {
+            delete asyncCallbackInfo;
+            asyncCallbackInfo = nullptr;
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return result;
+        }
+        NAPI_CALL(env, napi_create_reference(env, argv[argcCallback - 1], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env, &promise));
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "RunJavaScriptExt", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env,
+        napi_create_async_work(
+            env, nullptr, resource, [](napi_env env, void* data) {},
+            [](napi_env env, napi_status status, void* data) {
+                AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo =
+                    reinterpret_cast<AsyncJavaScriptExtEvaluteJSResultCallbackInfo*>(data);
+                if (!asyncCallbackInfo) {
+                    return;
+                }
+
+                napi_value setResult[INTEGER_TWO] = { 0 };
+                if (asyncCallbackInfo->result_->GetType() == WebValue::Type::STRING &&
+                    asyncCallbackInfo->result_->GetString().empty()) {
+                    setResult[INTEGER_ZERO] = BusinessError::CreateError(env, NWebError::INVALID_RESOURCE);
+                    napi_get_null(env, &setResult[INTEGER_ONE]);
+                } else {
+                    napi_get_undefined(env, &setResult[INTEGER_ZERO]);
+                    napi_value jsMsgExt = nullptr;
+                    NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, g_jsMsgExtClassRef, &jsMsgExt));
+                    NAPI_CALL_RETURN_VOID(env, napi_new_instance(env, jsMsgExt, 0, NULL, &setResult[INTEGER_ONE]));
+
+                    WebJsMessageExt* webJsMessageExt = new (std::nothrow) WebJsMessageExt(asyncCallbackInfo->result_);
+                    if (webJsMessageExt == nullptr) {
+                        LOGE("new WebJsMessageExt failed.");
+                        return;
+                    }
+
+                    napi_status status = napi_wrap(
+                        env, setResult[INTEGER_ONE], webJsMessageExt,
+                        [](napi_env env, void* data, void* hint) {
+                            WebJsMessageExt* webJsMessageExt = static_cast<WebJsMessageExt*>(data);
+                            delete webJsMessageExt;
+                            webJsMessageExt = nullptr;
+                        },
+                        nullptr, nullptr);
+                    if (status != napi_status::napi_ok) {
+                        LOGE("napi_wrap failed");
+                        return;
+                    }
+                }
+                napi_value args[INTEGER_TWO] = { setResult[INTEGER_ZERO], setResult[INTEGER_ONE] };
+                if (asyncCallbackInfo->deferred) {
+                    if (!asyncCallbackInfo->result_) {
+                        NAPI_CALL_RETURN_VOID(
+                            env, napi_reject_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ZERO]));
+                    } else {
+                        NAPI_CALL_RETURN_VOID(
+                            env, napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
+                    }
+                } else {
+                    napi_value callback = nullptr;
+                    napi_value callbackResult = nullptr;
+                    NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncCallbackInfo->callback, &callback));
+                    NAPI_CALL_RETURN_VOID(env, napi_call_function(env, nullptr, callback,
+                                                   sizeof(args) / sizeof(args[0]), args, &callbackResult));
+                }
+                WebviewController::EraseAsyncCallbackJavaScriptExtInfo(asyncCallbackInfo);
+            },
+            reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    WebviewController::InsertAsyncCallbackJavaScriptExtInfo(asyncCallbackInfo);
+    webviewController->EvaluateJavaScriptExt(script, g_asyncCallbackInfoId);
     if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
         g_asyncCallbackInfoId = 0;
     }
@@ -875,10 +1044,10 @@ napi_value NapiWebMessagePort::JsConstructor(napi_env env, napi_callback_info in
     }
 
 #ifdef ANDROID_PLATFORM
-    WebMessagePort *msgPort = new (std::nothrow) WebMessagePortAndroid(webId, portHandle);
+    WebMessagePort *msgPort = new (std::nothrow) WebMessagePortAndroid(webId, portHandle, isExtentionType);
 #endif
 #ifdef IOS_PLATFORM
-    WebMessagePort *msgPort = new (std::nothrow) WebMessagePortIOS(webId, portHandle);
+    WebMessagePort *msgPort = new (std::nothrow) WebMessagePortIOS(webId, portHandle, isExtentionType);
 #endif
     if (msgPort == nullptr) {
         LOGE("new webMessagePort failed");
@@ -953,6 +1122,53 @@ napi_value NapiWebMessagePort::PostMessageEvent(napi_env env, napi_callback_info
     return result;
 }
 
+napi_value NapiWebMessagePort::PostMessageEventExt(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = 1;
+    napi_value argv[INTEGER_ONE];
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+    if (valueType != napi_object) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_TYPE_INVALID, "message"));
+        return result;
+    }
+
+    WebMessageExt *webMessageExt = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, argv[INTEGER_ZERO], (void **)&webMessageExt));
+    if (webMessageExt == nullptr) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NOT_NULL, "message"));
+        return nullptr;
+    }
+    WebMessagePort *msgPort = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&msgPort));
+    if (msgPort == nullptr) {
+        return nullptr;
+    }
+
+    if (!msgPort->IsExtentionType()) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_TYPE_INVALID, "message"));
+        return result;
+    }
+
+    auto errorCode = msgPort->PostMessageEventExt(webMessageExt);
+    if (errorCode == CAN_NOT_POST_MESSAGE) {
+        BusinessError::ThrowErrorByErrcode(env, CAN_NOT_POST_MESSAGE);
+        return nullptr;
+    }
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
 napi_value NapiWebMessagePort::OnMessageEvent(napi_env env, napi_callback_info info)
 {
     napi_value thisVar = nullptr;
@@ -984,6 +1200,45 @@ napi_value NapiWebMessagePort::OnMessageEvent(napi_env env, napi_callback_info i
     param->callback = onMsgEventFunc;
     msgPort->SetWebMessageCallback(webMessageCallbackInfo);
     ErrCode ret = msgPort->OnMessageEvent();
+    if (ret != NO_ERROR) {
+        BusinessError::ThrowErrorByErrcode(env, ret);
+    }
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebMessagePort::OnMessageEventExt(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE];
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+    if (valueType != napi_function) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    napi_ref onMsgEventFunc = nullptr;
+    NAPI_CALL(env, napi_create_reference(env, argv[INTEGER_ZERO], INTEGER_ONE, &onMsgEventFunc));
+
+    WebMessagePort *msgPort = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&msgPort));
+    CHECK_NULL_RETURN(msgPort, nullptr);
+
+    auto webMessageCallbackInfo = std::make_shared<NapiJsCallBackParmExt>(env);
+    auto param = webMessageCallbackInfo.get();
+    CHECK_NULL_RETURN(param, nullptr);
+    param->callback = onMsgEventFunc;
+    msgPort->SetWebMessageExtCallback(webMessageCallbackInfo);
+
+    ErrCode ret = msgPort->OnMessageEventExt();
     if (ret != NO_ERROR) {
         BusinessError::ThrowErrorByErrcode(env, ret);
     }
@@ -1121,6 +1376,66 @@ napi_value NapiWebviewController::PostMessage(napi_env env, napi_callback_info i
     return result;
 }
 
+napi_value NapiWebviewController::StartDownload(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+
+    WebviewController* webviewController = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void**)&webviewController));
+    if (webviewController == nullptr || !webviewController->IsInit()) {
+        BusinessError::ThrowErrorByErrcode(env, INIT_ERROR);
+        LOGE("create message port failed, napi unwrap webviewController failed");
+        return nullptr;
+    }
+
+    std::string url;
+    if (!ParsePrepareUrl(env, argv[INTEGER_ZERO], url)) {
+        BusinessError::ThrowErrorByErrcode(env, INVALID_URL);
+        return nullptr;
+    }
+    webviewController->StartDownload(url);
+
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebviewController::SetDownloadDelegate(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+
+    WebDownloadDelegate* delegate = nullptr;
+    napi_value obj = argv[0];
+    napi_unwrap(env, obj, (void**)&delegate);
+    if (!delegate) {
+        LOGE("WebDownloader::JS_SetDownloadDelegate delegate is null");
+        (void)RemoveDownloadDelegateRef(env, thisVar);
+        return nullptr;
+    }
+    napi_create_reference(env, obj, 1, &delegate->delegate_);
+
+    WebviewController* webviewController = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void**)&webviewController));
+    if (webviewController == nullptr || !webviewController->IsInit()) {
+        BusinessError::ThrowErrorByErrcode(env, INIT_ERROR);
+        LOGE("create message port failed, napi unwrap webviewController failed");
+        return nullptr;
+    }
+    int32_t nwebId = webviewController->GetWebId();
+    WebDownloadManager::AddDownloadDelegateForWeb(nwebId, delegate);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
 napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor properties[] = {
@@ -1135,6 +1450,7 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("backward", NapiWebviewController::Backward),
         DECLARE_NAPI_FUNCTION("refresh", NapiWebviewController::Refresh),
         DECLARE_NAPI_FUNCTION("runJavaScript", NapiWebviewController::RunJavaScript),
+        DECLARE_NAPI_FUNCTION("runJavaScriptExt", NapiWebviewController::RunJavaScriptExt),
         DECLARE_NAPI_FUNCTION("accessStep", NapiWebviewController::AccessStep),
         DECLARE_NAPI_FUNCTION("scrollTo", NapiWebviewController::ScrollTo),
         DECLARE_NAPI_FUNCTION("scrollBy", NapiWebviewController::ScrollBy),
@@ -1150,6 +1466,8 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPageHeight", NapiWebviewController::GetPageHeight),
         DECLARE_NAPI_FUNCTION("createWebMessagePorts", NapiWebviewController::CreateWebMessagePorts),
         DECLARE_NAPI_FUNCTION("postMessage", NapiWebviewController::PostMessage),
+        DECLARE_NAPI_FUNCTION("startDownload", NapiWebviewController::StartDownload),
+        DECLARE_NAPI_FUNCTION("setDownloadDelegate", NapiWebviewController::SetDownloadDelegate),
     };
     napi_value constructor = nullptr;
     napi_define_class(env, WEBVIEW_CONTROLLER_CLASS_NAME.c_str(), WEBVIEW_CONTROLLER_CLASS_NAME.length(),
@@ -1173,7 +1491,9 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
     napi_property_descriptor msgPortProperties[] = {
         DECLARE_NAPI_FUNCTION("close", NapiWebMessagePort::Close),
         DECLARE_NAPI_FUNCTION("postMessageEvent", NapiWebMessagePort::PostMessageEvent),
+        DECLARE_NAPI_FUNCTION("postMessageEventExt", NapiWebMessagePort::PostMessageEventExt),
         DECLARE_NAPI_FUNCTION("onMessageEvent", NapiWebMessagePort::OnMessageEvent),
+        DECLARE_NAPI_FUNCTION("onMessageEventExt", NapiWebMessagePort::OnMessageEventExt),
     };
     NAPI_CALL(env, napi_define_class(env, WEB_MESSAGE_PORT_CLASS_NAME.c_str(), WEB_MESSAGE_PORT_CLASS_NAME.length(),
         NapiWebMessagePort::JsConstructor, nullptr, sizeof(msgPortProperties) / sizeof(msgPortProperties[0]),
@@ -1181,6 +1501,7 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
     NAPI_CALL(env, napi_create_reference(env, msgPortCons, 1, &g_classWebMsgPort));
     NAPI_CALL(env, napi_set_named_property(env, exports, WEB_MESSAGE_PORT_CLASS_NAME.c_str(), msgPortCons));
 
+    AsyncJavaScriptExtEvaluteJSResultCallbackInfo::InitJSExcute(env, exports, g_jsMsgExtClassRef);
     return exports;
 }
 
@@ -1356,6 +1677,14 @@ static napi_value WebWebviewExport(napi_env env, napi_value exports)
     NapiWebviewController::Init(env, exports);
     NapiWebDataBase::Init(env, exports);
     NapiWebCookieManager::Init(env, exports);
+    NapiWebDownloadDelegate::Init(env, exports);
+    NapiWebDownloadManager::Init(env, exports);
+    NapiWebDownloadItem::Init(env, exports);
+    NapiWebMessageExt::Init(env, exports);
+    NapiWebDownloadDelegate::Init(env, exports);
+    NapiWebDownloadManager::Init(env, exports);
+    NapiWebDownloadItem::Init(env, exports);
+    NapiWebMessageExt::Init(env, exports);
     return exports;
 }
 
@@ -1378,6 +1707,10 @@ static void WebWebviewJniRegister()
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDataBaseJni::Register, dataBaseClassName);
     const char webCookieClassName[] = "ohos.ace.plugin.webviewplugin.webcookie.WebCookiePlugin";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebCookieManagerJni::Register, webCookieClassName);
+    const char webDownloadDelegateClassName[] = "ohos.ace.adapter.capability.web.AceWebPluginBase";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&WebDownloadDelegateJni::Register, webDownloadDelegateClassName);
+    const char webDownloadItemClassName[] = "ohos.ace.adapter.capability.web.AceWebPluginBase";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&WebDownloadItemJni::Register, webDownloadItemClassName);
 }
 #endif
 
@@ -1625,5 +1958,860 @@ void NapiWebCookieManager::CreateFetchCookieAsyncWork(
         },
         reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
     WebCookieManager::InsertCallbackInfo(callbackInfo, TaskType::FETCH_COOKIE);
+}
+
+napi_value NapiWebDownloadDelegate::JS_DownloadBeforeStart(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadDelegate* webDownloadDelegate = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadDelegate);
+    if (!webDownloadDelegate) {
+        LOGE("[DOWNLOAD] webDownloadDelegate is null");
+        return thisVar;
+    }
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+
+    webDownloadDelegate->PutDownloadBeforeStart(env, argv[0]);
+    return thisVar;
+}
+
+napi_value NapiWebDownloadDelegate::JS_DownloadDidUpdate(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadDelegate* webDownloadDelegate = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadDelegate);
+    if (!webDownloadDelegate) {
+        LOGE("[DOWNLOAD] webDownloadDelegate is null");
+        return thisVar;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+
+    webDownloadDelegate->PutDownloadDidUpdate(env, argv[0]);
+    return thisVar;
+}
+
+napi_value NapiWebDownloadDelegate::JS_DownloadDidFinish(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadDelegate* webDownloadDelegate = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadDelegate);
+    if (!webDownloadDelegate) {
+        LOGE("[DOWNLOAD] webDownloadDelegate is null");
+        return thisVar;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+
+    webDownloadDelegate->PutDownloadDidFinish(env, argv[0]);
+    return thisVar;
+}
+
+napi_value NapiWebDownloadDelegate::JS_DownloadDidFail(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadDelegate* webDownloadDelegate = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadDelegate);
+    if (!webDownloadDelegate) {
+        LOGE("[DOWNLOAD] webDownloadDelegate is null");
+        return thisVar;
+    }
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+
+    webDownloadDelegate->PutDownloadDidFail(env, argv[0]);
+    return thisVar;
+}
+
+napi_value NapiWebDownloadDelegate::JS_Constructor(napi_env env, napi_callback_info cbinfo)
+{
+    WebDownloadDelegate* delegate = new (std::nothrow) WebDownloadDelegate(env);
+    napi_value thisVar = nullptr;
+    napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr);
+    napi_status status = napi_wrap(
+        env, thisVar, delegate,
+        [](napi_env, void* data, void*) {
+            if (data) {
+                WebDownloadDelegate* delegate = static_cast<WebDownloadDelegate*>(data);
+                if (delegate) {
+                    delete delegate;
+                    delegate = nullptr;
+                }
+            }
+        },
+        nullptr, nullptr);
+    if (status != napi_ok) {
+        if (delegate) {
+            delete delegate;
+            delegate = nullptr;
+        }
+        return nullptr;
+    }
+
+    return thisVar;
+}
+
+napi_value NapiWebDownloadDelegate::Init(napi_env env, napi_value exports)
+{
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_FUNCTION("onBeforeDownload", JS_DownloadBeforeStart),
+        DECLARE_NAPI_FUNCTION("onDownloadUpdated", JS_DownloadDidUpdate),
+        DECLARE_NAPI_FUNCTION("onDownloadFinish", JS_DownloadDidFinish),
+        DECLARE_NAPI_FUNCTION("onDownloadFailed", JS_DownloadDidFail),
+    };
+    const std::string WEB_DOWNLOAD_DELEGATE = "WebDownloadDelegate";
+    napi_value webDownloadDelegateClass = nullptr;
+    napi_define_class(env, WEB_DOWNLOAD_DELEGATE.c_str(), WEB_DOWNLOAD_DELEGATE.length(), JS_Constructor, nullptr,
+        sizeof(properties) / sizeof(properties[0]), properties, &webDownloadDelegateClass);
+    napi_set_named_property(env, exports, WEB_DOWNLOAD_DELEGATE.c_str(), webDownloadDelegateClass);
+
+    return exports;
+}
+
+napi_value NapiWebDownloadManager::JS_SetDownloadDelegate(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+
+    napi_value obj = argv[0];
+    napi_valuetype objType = napi_undefined;
+    napi_typeof(env, argv[0], &objType);
+
+    WebDownloadDelegate *delegate = nullptr;
+    napi_unwrap(env, obj, (void**)&delegate);
+    if (!delegate) {
+        LOGE("[DOWNLOAD] NapiWebDownloadManager::JS_SetDownloadDelegate delegate is null");
+        return nullptr;
+    }
+    napi_create_reference(env, obj, 1, &delegate->delegate_);
+    WebDownloadManager::SetDownloadDelegate(delegate);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDownloadManager::JS_Constructor(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    return thisVar;
+}
+
+napi_value NapiWebDownloadManager::Init(napi_env env, napi_value exports)
+{
+    napi_property_descriptor properties[] = {
+        { "setDownloadDelegate", nullptr, JS_SetDownloadDelegate, nullptr, nullptr, nullptr, napi_static, nullptr },
+    };
+    napi_value webDownloadManagerClass = nullptr;
+    napi_define_class(env, WEB_DOWNLOAD_MANAGER.c_str(), WEB_DOWNLOAD_MANAGER.length(), JS_Constructor, nullptr,
+        sizeof(properties) / sizeof(properties[0]), properties, &webDownloadManagerClass);
+    napi_set_named_property(env, exports, WEB_DOWNLOAD_MANAGER.c_str(), webDownloadManagerClass);
+
+    return exports;
+}
+
+napi_value NapiWebDownloadItem::JS_GetMethod(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetMethod webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value methodValue;
+    napi_status status = napi_create_string_utf8(env, webDownloadItem->method.c_str(), NAPI_AUTO_LENGTH, &methodValue);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetMethod failed");
+        return nullptr;
+    }
+    return methodValue;
+}
+
+napi_value NapiWebDownloadItem::JS_GetMimeType(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetMimeType webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value mimeTypeValue;
+    napi_status status =
+        napi_create_string_utf8(env, webDownloadItem->mimeType.c_str(), NAPI_AUTO_LENGTH, &mimeTypeValue);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetMimeType failed");
+        return nullptr;
+    }
+    return mimeTypeValue;
+}
+
+napi_value NapiWebDownloadItem::JS_GetUrl(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetUrl webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value urlValue;
+    napi_status status = napi_create_string_utf8(env, webDownloadItem->url.c_str(), NAPI_AUTO_LENGTH, &urlValue);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetUrl failed");
+        return nullptr;
+    }
+    return urlValue;
+}
+
+napi_value NapiWebDownloadItem::JS_GetSuggestedFileName(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetSuggestedFileName webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value fileNameValue;
+    napi_status status =
+        napi_create_string_utf8(env, webDownloadItem->suggestedFileName.c_str(), NAPI_AUTO_LENGTH, &fileNameValue);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetSuggestedFileName failed");
+        return nullptr;
+    }
+    return fileNameValue;
+}
+
+napi_value NapiWebDownloadItem::JS_GetCurrentSpeed(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetCurrentSpeed webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value currentSpeed;
+    napi_status status = napi_create_int64(env, webDownloadItem->currentSpeed, &currentSpeed);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetCurrentSpeed failed");
+        return nullptr;
+    }
+    return currentSpeed;
+}
+
+napi_value NapiWebDownloadItem::JS_GetPercentComplete(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetPercentComplete webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value percentComplete;
+    napi_status status = napi_create_int64(env, webDownloadItem->percentComplete, &percentComplete);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetPercentComplete failed");
+        return nullptr;
+    }
+    return percentComplete;
+}
+
+napi_value NapiWebDownloadItem::JS_GetTotalBytes(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetTotalBytes webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value totalBytes;
+    napi_status status = napi_create_int64(env, webDownloadItem->totalBytes, &totalBytes);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetTotalBytes failed");
+        return nullptr;
+    }
+    return totalBytes;
+}
+
+napi_value NapiWebDownloadItem::JS_GetReceivedBytes(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetReceivedBytes webDownloadItem is null");
+        return nullptr;
+    }
+
+    napi_value receivedBytes;
+    napi_status status = napi_create_int64(env, webDownloadItem->receivedBytes, &receivedBytes);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetReceivedBytes failed");
+        return nullptr;
+    }
+    return receivedBytes;
+}
+
+napi_value NapiWebDownloadItem::JS_GetState(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+
+    napi_value state;
+    napi_status status = napi_create_int32(env, static_cast<int32_t>(webDownloadItem->state), &state);
+    if (status != napi_ok) {
+        LOGE("napi_create_int32 failed.");
+        return nullptr;
+    }
+    return state;
+}
+
+napi_value NapiWebDownloadItem::JS_GetLastErrorCode(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+
+    napi_value errorCode;
+    napi_status status = napi_create_int32(env, static_cast<int32_t>(webDownloadItem->lastErrorCode), &errorCode);
+    if (status != napi_ok) {
+        LOGE("napi_create_int32 failed.");
+        return nullptr;
+    }
+    return errorCode;
+}
+
+napi_value NapiWebDownloadItem::JS_GetGuid(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+
+    napi_value guid;
+    napi_status status = napi_create_string_utf8(env, webDownloadItem->guid.c_str(), NAPI_AUTO_LENGTH, &guid);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetGuid failed");
+        return nullptr;
+    }
+    return guid;
+}
+
+napi_value NapiWebDownloadItem::JS_GetFullPath(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+
+    napi_value fullPath;
+    napi_status status = napi_create_string_utf8(env, webDownloadItem->fullPath.c_str(), NAPI_AUTO_LENGTH, &fullPath);
+    if (status != napi_ok) {
+        LOGE("[DOWNLOAD] NapiWebDownloadItem::JS_GetFullPath failed");
+        return nullptr;
+    }
+    return fullPath;
+}
+
+napi_value NapiWebDownloadItem::JS_Continue(napi_env env, napi_callback_info cbinfo)
+{
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, &data);
+
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDownloadItem::JS_Cancel(napi_env env, napi_callback_info cbinfo)
+{
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, &data);
+
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+    if (webDownloadItem->downloadCancelCallback) {
+        webDownloadItem->downloadCancelCallback();
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDownloadItem::JS_Pause(napi_env env, napi_callback_info cbinfo)
+{
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, &data);
+
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+    if (!webDownloadItem->downloadPauseCallback || webDownloadItem->downloadPauseCallback() != NO_ERROR) {
+        BusinessError::ThrowErrorByErrcode(env, DOWNLOAD_NOT_START);
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDownloadItem::JS_Resume(napi_env env, napi_callback_info cbinfo)
+{
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, &data);
+
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+
+    if (webDownloadItem->state != PluginWebDownloadItemState::PAUSED) {
+        BusinessError::ThrowErrorByErrcode(env, DOWNLOAD_NOT_PAUSED);
+        return nullptr;
+    }
+
+    if (!webDownloadItem->downloadResumeCallback || webDownloadItem->downloadResumeCallback() != NO_ERROR) {
+        BusinessError::ThrowErrorByErrcode(env, DOWNLOAD_NOT_PAUSED);
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDownloadItem::JS_Constructor(napi_env env, napi_callback_info cbinfo)
+{
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, &data);
+
+    WebDownloadItem* webDownloadItem = new (std::nothrow) WebDownloadItem(env);
+
+    napi_status status = napi_wrap(
+        env, thisVar, webDownloadItem,
+        [](napi_env, void* data, void*) {
+            if (data) {
+                WebDownloadItem* webDownloadItem = static_cast<WebDownloadItem*>(data);
+                if (webDownloadItem) {
+                    delete webDownloadItem;
+                    webDownloadItem = nullptr;
+                }
+            }
+
+        },
+        nullptr, nullptr);
+    if (status != napi_ok) {
+        if (webDownloadItem) {
+            delete webDownloadItem;
+            webDownloadItem = nullptr;
+        }
+        return nullptr;
+    }
+    return thisVar;
+}
+
+napi_value NapiWebDownloadItem::JS_Start(napi_env env, napi_callback_info cbinfo)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, cbinfo, &argc, argv, &thisVar, &data);
+
+    napi_valuetype value_type = napi_undefined;
+    napi_typeof(env, argv[0], &value_type);
+
+    size_t pathLen = 0;
+    napi_get_value_string_utf8(env, argv[0], nullptr, 0, &pathLen);
+    WebDownloadItem* webDownloadItem = nullptr;
+    napi_unwrap(env, thisVar, (void**)&webDownloadItem);
+
+    if (!webDownloadItem) {
+        LOGE("[DOWNLOAD] unwrap webDownloadItem failed");
+        return nullptr;
+    }
+
+    char stringValue[pathLen + 1];
+    size_t jsStringLength = 0;
+    napi_get_value_string_utf8(env, argv[0], stringValue, pathLen + 1, &jsStringLength);
+    if (jsStringLength != pathLen) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+                "BusinessError: 401. Parameter error. The type of 'downloadPath' must be a valid path string.");
+        return nullptr;
+    }
+    webDownloadItem->downloadPath = std::string(stringValue);
+    webDownloadItem->beforeCallback(webDownloadItem->downloadPath);
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebDownloadItem::Init(napi_env env, napi_value exports)
+{
+    ExportWebDownloadItemClass(env, &exports);
+    ExportWebDownloadStateEnum(env, &exports);
+    ExportWebDownloadErrorCodeEnum(env, &exports);
+    return exports;
+}
+
+void NapiWebDownloadItem::ExportWebDownloadItemClass(napi_env env, napi_value* exportsPointer)
+{
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_FUNCTION("getCurrentSpeed", JS_GetCurrentSpeed),
+        DECLARE_NAPI_FUNCTION("getPercentComplete", JS_GetPercentComplete),
+        DECLARE_NAPI_FUNCTION("getTotalBytes", JS_GetTotalBytes),
+        DECLARE_NAPI_FUNCTION("getState", JS_GetState),
+        DECLARE_NAPI_FUNCTION("getLastErrorCode", JS_GetLastErrorCode),
+        DECLARE_NAPI_FUNCTION("getMethod", JS_GetMethod),
+        DECLARE_NAPI_FUNCTION("getMimeType", JS_GetMimeType),
+        DECLARE_NAPI_FUNCTION("getUrl", JS_GetUrl),
+        DECLARE_NAPI_FUNCTION("getSuggestedFileName", JS_GetSuggestedFileName),
+        DECLARE_NAPI_FUNCTION("start", JS_Start),
+        DECLARE_NAPI_FUNCTION("continue", JS_Continue),
+        DECLARE_NAPI_FUNCTION("pause", JS_Pause),
+        DECLARE_NAPI_FUNCTION("cancel", JS_Cancel),
+        DECLARE_NAPI_FUNCTION("resume", JS_Resume),
+        DECLARE_NAPI_FUNCTION("getReceivedBytes", JS_GetReceivedBytes),
+        DECLARE_NAPI_FUNCTION("getFullPath", JS_GetFullPath),
+        DECLARE_NAPI_FUNCTION("getGuid", JS_GetGuid),
+    };
+    napi_value webDownloadClass = nullptr;
+    napi_define_class(env, WEB_DOWNLOAD_ITEMT.c_str(), WEB_DOWNLOAD_ITEMT.length(), JS_Constructor, nullptr,
+        sizeof(properties) / sizeof(properties[0]), properties, &webDownloadClass);
+    napi_set_named_property(env, *exportsPointer, WEB_DOWNLOAD_ITEMT.c_str(), webDownloadClass);
+}
+
+void NapiWebDownloadItem::ExportWebDownloadStateEnum(napi_env env, napi_value* exportsPointer)
+{
+    napi_value webDownloadStateTypeEnum = nullptr;
+    napi_property_descriptor webDownloadStateProperties[] = {
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "IN_PROGRESS",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(PluginWebDownloadItemState::IN_PROGRESS))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "COMPLETED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(PluginWebDownloadItemState::COMPLETE))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "CANCELED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(PluginWebDownloadItemState::CANCELED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "INTERRUPTED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(PluginWebDownloadItemState::INTERRUPTED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "PENDING",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(PluginWebDownloadItemState::PENDING))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "PAUSED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(PluginWebDownloadItemState::PAUSED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "UNKNOWN", NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(
+                PluginWebDownloadItemState::MAX_DOWNLOAD_STATE))),
+    };
+    napi_define_class(env, WEB_DOWNLOAD_STATE_ENUM_NAME.c_str(), WEB_DOWNLOAD_STATE_ENUM_NAME.length(),
+        NapiParseUtils::CreateEnumConstructor, nullptr, sizeof(webDownloadStateProperties) / sizeof(webDownloadStateProperties[0]),
+        webDownloadStateProperties, &webDownloadStateTypeEnum);
+    napi_set_named_property(env, *exportsPointer, WEB_DOWNLOAD_STATE_ENUM_NAME.c_str(), webDownloadStateTypeEnum);
+}
+
+void NapiWebDownloadItem::ExportWebDownloadErrorCodeEnum(napi_env env, napi_value* exportsPointer)
+{
+    napi_value webDownloadErrorCodeEnum = nullptr;
+    napi_property_descriptor webDownloadErrorCodeEnumProperties[] = {
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "ERROR_UNKNOWN",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_NONE))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_FAILED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_FAILED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_ACCESS_DENIED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_ACCESS_DENIED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_NO_SPACE",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_NO_SPACE))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_NAME_TOO_LONG",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_NAME_TOO_LONG))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_TOO_LARGE",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_TOO_LARGE))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_VIRUS_INFECTED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_VIRUS_INFECTED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_TRANSIENT_ERROR",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_TRANSIENT_ERROR))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_BLOCKED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_BLOCKED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_SECURITY_CHECK_FAILED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_SECURITY_CHECK_FAILED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_TOO_SHORT",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_TOO_SHORT))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_HASH_MISMATCH",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_HASH_MISMATCH))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "FILE_SAME_AS_SOURCE",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_FILE_SAME_AS_SOURCE))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "NETWORK_FAILED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_NETWORK_FAILED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "NETWORK_TIMEOUT",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_NETWORK_TIMEOUT))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "NETWORK_DISCONNECTED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_NETWORK_DISCONNECTED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "NETWORK_SERVER_DOWN",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_NETWORK_SERVER_DOWN))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "NETWORK_INVALID_REQUEST",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_NETWORK_INVALID_REQUEST))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_FAILED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_FAILED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_NO_RANGE",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_NO_RANGE))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_BAD_CONTENT",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_BAD_CONTENT))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_UNAUTHORIZED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_UNAUTHORIZED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_CERT_PROBLEM",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_CERT_PROBLEM))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_FORBIDDEN",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_FORBIDDEN))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_UNREACHABLE",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_UNREACHABLE))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_CONTENT_LENGTH_MISMATCH",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_CONTENT_LENGTH_MISMATCH))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "SERVER_CROSS_ORIGIN_REDIRECT",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_SERVER_CROSS_ORIGIN_REDIRECT))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "USER_CANCELED",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_USER_CANCELED))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "USER_SHUTDOWN",
+            NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_USER_SHUTDOWN))),
+        DECLARE_NAPI_STATIC_PROPERTY(
+            "CRASH", NapiParseUtils::ToInt32Value(
+                env, static_cast<int32_t>(download::DOWNLOAD_INTERRUPT_REASON_CRASH))),
+    };
+
+    napi_define_class(env, WEB_DOWNLOAD_ERROR_CODE_ENUM_NAME.c_str(), WEB_DOWNLOAD_ERROR_CODE_ENUM_NAME.length(),
+        NapiParseUtils::CreateEnumConstructor, nullptr,
+        sizeof(webDownloadErrorCodeEnumProperties) / sizeof(webDownloadErrorCodeEnumProperties[0]),
+        webDownloadErrorCodeEnumProperties, &webDownloadErrorCodeEnum);
+    napi_set_named_property(env, *exportsPointer, WEB_DOWNLOAD_ERROR_CODE_ENUM_NAME.c_str(), webDownloadErrorCodeEnum);
+}
+
+napi_status NapiWebDownloadItem::DefineProperties(napi_env env, napi_value* object)
+{
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_FUNCTION("getCurrentSpeed", JS_GetCurrentSpeed),
+        DECLARE_NAPI_FUNCTION("getPercentComplete", JS_GetPercentComplete),
+        DECLARE_NAPI_FUNCTION("getTotalBytes", JS_GetTotalBytes),
+        DECLARE_NAPI_FUNCTION("getState", JS_GetState),
+        DECLARE_NAPI_FUNCTION("getLastErrorCode", JS_GetLastErrorCode),
+        DECLARE_NAPI_FUNCTION("getMethod", JS_GetMethod),
+        DECLARE_NAPI_FUNCTION("getMimeType", JS_GetMimeType),
+        DECLARE_NAPI_FUNCTION("getUrl", JS_GetUrl),
+        DECLARE_NAPI_FUNCTION("getSuggestedFileName", JS_GetSuggestedFileName),
+        DECLARE_NAPI_FUNCTION("continue", JS_Continue),
+        DECLARE_NAPI_FUNCTION("start", JS_Start),
+        DECLARE_NAPI_FUNCTION("pause", JS_Pause),
+        DECLARE_NAPI_FUNCTION("cancel", JS_Cancel),
+        DECLARE_NAPI_FUNCTION("resume", JS_Resume),
+        DECLARE_NAPI_FUNCTION("getReceivedBytes", JS_GetReceivedBytes),
+        DECLARE_NAPI_FUNCTION("getFullPath", JS_GetFullPath),
+        DECLARE_NAPI_FUNCTION("getGuid", JS_GetGuid),
+    };
+    return napi_define_properties(env, *object, sizeof(properties) / sizeof(properties[0]), properties);
 }
 } // namespace OHOS::Plugin

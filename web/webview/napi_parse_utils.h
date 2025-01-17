@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 #include "napi/native_node_api.h"
+#include "web_message.h"
 
 namespace OHOS::Plugin {
 constexpr int INTEGER_ZERO = 0;
@@ -53,6 +54,7 @@ public:
     static bool ParseFloat(napi_env env, napi_value argv, float& outValue);
     static bool ParseSize(napi_env env, napi_value argv, size_t& outValue);
     static bool ParseChar(napi_env env, napi_value argv, char* buffer, size_t bufferSize);
+    static bool ConvertWebToNapiValue(napi_env env, std::shared_ptr<WebMessage> src, napi_value& dst);
 };
 } // namespace OHOS::Plugin
 #endif
