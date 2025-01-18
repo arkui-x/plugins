@@ -20,7 +20,8 @@
 namespace OHOS {
 namespace Plugin {
 WebDownloadItem::WebDownloadItem(napi_env env)
-    : guid(""),
+    : env_(env),
+      guid(""),
       fullPath(""),
       url(""),
       etag(""),
@@ -31,16 +32,15 @@ WebDownloadItem::WebDownloadItem(napi_env env)
       lastModified(""),
       method(""),
       receivedSlices(""),
-      downloadPath("")
+      downloadPath(""),
+      currentSpeed(0),
+      percentComplete(0),
+      totalBytes(0),
+      receivedBytes(0),
+      lastErrorCode(0),
+      webDownloadId(0),
+      nwebId(0)
 {
-    this->env_ = env;
-    this->currentSpeed = 0;
-    this->percentComplete = 0;
-    this->totalBytes = 0;
-    this->receivedBytes = 0;
-    this->lastErrorCode = 0;
-    this->webDownloadId = 0;
-    this->nwebId = 0;
 }
 
 WebDownloadItem::~WebDownloadItem()

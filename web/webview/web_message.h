@@ -53,12 +53,12 @@ public:
         return value_;
     }
 
-    void SetErrName(std::string name)
+    void SetErrName(const std::string& name)
     {
         err_name_ = name;
     }
 
-    void SetErrMsg(std::string msg)
+    void SetErrMsg(const std::string& msg)
     {
         err_msg_ = msg;
     }
@@ -73,7 +73,7 @@ public:
         return string_;
     }
 
-    void SetString(std::string string)
+    void SetString(const std::string& string)
     {
         string_ = string;
     }
@@ -83,7 +83,7 @@ public:
         return string_arr_;
     }
 
-    void SetStringArray(std::vector<std::string> string_arr)
+    void SetStringArray(const std::vector<std::string>& string_arr)
     {
         string_arr_ = string_arr;
     }
@@ -93,7 +93,7 @@ public:
         return bool_arr_;
     }
 
-    void SetBooleanArray(std::vector<bool> bool_arr)
+    void SetBooleanArray(const std::vector<bool>& bool_arr)
     {
         bool_arr_ = bool_arr;
     }
@@ -103,7 +103,7 @@ public:
         return double_arr_;
     }
 
-    void SetDoubleArray(std::vector<double> double_arr)
+    void SetDoubleArray(const std::vector<double>& double_arr)
     {
         double_arr_ = double_arr;
     }
@@ -113,7 +113,7 @@ public:
         return int64_arr_;
     }
 
-    void SetInt64Array(std::vector<int64_t> int64_arr)
+    void SetInt64Array(const std::vector<int64_t>& int64_arr)
     {
         int64_arr_ = int64_arr;
     }

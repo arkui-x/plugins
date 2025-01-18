@@ -291,7 +291,7 @@ public:
         data_.b = b;
     }
 
-    void SetString(std::string str)
+    void SetString(const std::string& str)
     {
         validateType(Type::STRING);
         str_ = str;
@@ -420,7 +420,7 @@ public:
         return (const char*)str_.c_str();
     }
 
-    void SetJsonString(std::string json_string)
+    void SetJsonString(const std::string& json_string)
     {
         str_json_ = json_string;
     }
