@@ -147,6 +147,16 @@ public class DeviceInfoPlugin {
     }
 
     /**
+     * getProductModelAlias
+     *
+     * @param defValue default value
+     * @return ProductModelAlias
+     */
+    public String getProductModelAlias(String defValue) {
+        return Build.MODEL; // ro.product.model
+    }
+
+    /**
      * getSoftwareModel
      *
      * @param defValue default value
