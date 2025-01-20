@@ -118,8 +118,8 @@ napi_valuetype GetArrayValueType(napi_env env, napi_value array, bool& isDouble)
             double elementDouble = 0.0;
             bool isReadValue32 = napi_get_value_int32(env, obj, &elementInt32) == napi_ok;
             bool isReadDouble = napi_get_value_double(env, obj, &elementDouble) == napi_ok;
-            constexpr double MINIMAL_ERROR = 0.000001;
             if (isReadValue32 && isReadDouble) {
+                constexpr double MINIMAL_ERROR = 0.000001;
                 isDouble = abs(elementDouble - elementInt32 * 1.0) > MINIMAL_ERROR;
             } else if (isReadDouble) {
                 isDouble = true;

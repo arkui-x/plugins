@@ -25,7 +25,8 @@
 namespace OHOS::Plugin {
 class WebMessagePort {
 public:
-    WebMessagePort(int32_t webId, const std::string& portHandle) : webId_(webId), portHandle_(portHandle) {}
+    WebMessagePort(int32_t webId, const std::string& portHandle) :
+        webId_(webId), portHandle_(portHandle), isExtentionType_(false) {}
     WebMessagePort(int32_t webId, const std::string& portHandle, bool isExtentionType) :
         webId_(webId), portHandle_(portHandle), isExtentionType_(isExtentionType) {}
     virtual ~WebMessagePort() = default;
