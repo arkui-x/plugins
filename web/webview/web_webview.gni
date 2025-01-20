@@ -17,8 +17,9 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 SUBSYSTEM_DIR = "//base/web/webview"
 WEB_PLUGIN_ROOT_DIR = "//plugin/web/webview"
 
-web_include = [ "$SUBSYSTEM_DIR/interfaces/kits/napi/common",
-                "$SUBSYSTEM_DIR/interfaces/native"
+web_include = [
+  "$SUBSYSTEM_DIR/interfaces/kits/napi/common",
+  "$SUBSYSTEM_DIR/interfaces/native",
 ]
 
 web_source = [
