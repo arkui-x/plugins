@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -43,6 +43,8 @@ enum class ResourceType : uint32_t {
 const std::string WEBVIEW_CONTROLLER_CLASS_NAME = "WebviewController";
 const std::string WEB_HISTORY_LIST_CLASS_NAME = "WebHistoryList";
 const std::string WEB_MESSAGE_PORT_CLASS_NAME = "WebMessagePort";
+const std::string WEB_EXT_MSG_CLASS_NAME = "WebMessageExt";
+const std::string WEB_MESSAGE_TYPE_ENUM_NAME = "WebMessageType";
 
 class NapiWebviewController {
 public:
@@ -80,6 +82,8 @@ private:
 
     static napi_value RunJavaScript(napi_env env, napi_callback_info info);
 
+    static napi_value RunJavaScriptExt(napi_env env, napi_callback_info info);
+
     static napi_value ScrollTo(napi_env env, napi_callback_info info);
 
     static napi_value ScrollBy(napi_env env, napi_callback_info info);
@@ -109,6 +113,10 @@ private:
     static napi_value CreateWebMessagePorts(napi_env env, napi_callback_info info);
 
     static napi_value PostMessage(napi_env env, napi_callback_info info);
+
+    static napi_value StartDownload(napi_env env, napi_callback_info info);
+
+    static napi_value SetDownloadDelegate(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {
@@ -193,7 +201,72 @@ public:
 
     static napi_value PostMessageEvent(napi_env env, napi_callback_info info);
 
+    static napi_value PostMessageEventExt(napi_env env, napi_callback_info info);
+
     static napi_value OnMessageEvent(napi_env env, napi_callback_info info);
+
+    static napi_value OnMessageEventExt(napi_env env, napi_callback_info info);
+};
+
+class NapiWebDownloadDelegate {
+public:
+    static napi_value Init(napi_env env, napi_value exports);
+
+    NapiWebDownloadDelegate() = default;
+    ~NapiWebDownloadDelegate() = default;
+
+    static napi_value JS_Constructor(napi_env env, napi_callback_info cbinfo);
+
+    static napi_value JS_DownloadBeforeStart(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_DownloadDidUpdate(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_DownloadDidFinish(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_DownloadDidFail(napi_env env, napi_callback_info cbinfo);
+};
+
+const std::string WEB_DOWNLOAD_ITEMT = "WebDownloadItem";
+const std::string WEB_DOWNLOAD_STATE_ENUM_NAME = "WebDownloadState";
+const std::string WEB_DOWNLOAD_ERROR_CODE_ENUM_NAME = "WebDownloadErrorCode";
+class NapiWebDownloadItem {
+public:
+    NapiWebDownloadItem() = default;
+    ~NapiWebDownloadItem() = default;
+
+    static napi_value Init(napi_env env, napi_value exports);
+    static napi_status DefineProperties(napi_env, napi_value* object);
+    static void ExportWebDownloadItemClass(napi_env, napi_value* exportsPointer);
+    static void ExportWebDownloadStateEnum(napi_env, napi_value* exportsPointer);
+    static void ExportWebDownloadErrorCodeEnum(napi_env, napi_value* exportsPointer);
+
+    static napi_value JS_Constructor(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetGuid(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetCurrentSpeed(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetPercentComplete(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetTotalBytes(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetReceivedBytes(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetState(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetMimeType(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetLastErrorCode(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetMethod(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetUrl(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetSuggestedFileName(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_GetFullPath(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_Start(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_Continue(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_Cancel(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_Pause(napi_env env, napi_callback_info cbinfo);
+    static napi_value JS_Resume(napi_env env, napi_callback_info cbinfo);
+};
+
+const std::string WEB_DOWNLOAD_MANAGER = "WebDownloadManager";
+class NapiWebDownloadManager {
+public:
+    static napi_value Init(napi_env env, napi_value exports);
+
+    NapiWebDownloadManager(napi_env env, int32_t nweb_id);
+    ~NapiWebDownloadManager() = default;
+
+    static napi_value JS_Constructor(napi_env env, napi_callback_info info);
+    static napi_value JS_SetDownloadDelegate(napi_env env, napi_callback_info info);
 };
 }
 #endif

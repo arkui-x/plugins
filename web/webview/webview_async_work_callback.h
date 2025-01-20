@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 #define PLUGIN_WEB_WEBVIEW_WEBVIEW_ASYNC_WORK_CALLBACK_H
 
 #include "napi_parse_utils.h"
+#include "plugins/web/webview/web_message_ext.h"
 #include "web_errors.h"
 
 namespace OHOS::Plugin {
@@ -34,6 +35,12 @@ struct NapiJsCallBackParm : public AsyncWorkData {
     std::string result_ = "";
 };
 
+struct NapiJsCallBackParmExt : public AsyncWorkData {
+    explicit NapiJsCallBackParmExt(napi_env env) : AsyncWorkData(env) {}
+    std::shared_ptr<WebMessage> webMessage_ = std::make_shared<WebMessage>(WebValue::Type::STRING);
+    std::shared_ptr<WebMessageExt> result_ = std::make_shared<WebMessageExt>(webMessage_);
+};
+
 struct AsyncEvaluteJSResultCallbackInfo : public AsyncWorkData {
 public:
     explicit AsyncEvaluteJSResultCallbackInfo(napi_env env, int32_t id) : AsyncWorkData(env), uniqueId_(id) {}
@@ -46,5 +53,4 @@ private:
     int32_t uniqueId_;
 };
 }
-
 #endif // PLUGIN_WEB_WEBVIEW_WEBVIEW_ASYNC_WORK_CALLBACK_H

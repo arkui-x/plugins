@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -33,11 +33,16 @@ template("plugin_web_webview_static") {
     sources += [
       "js_web_webview.cpp",
       "napi_parse_utils.cpp",
+      "napi_web_message_ext.cpp",
       "web_cookie_manager.cpp",
       "web_cookie_manager_callback.cpp",
+      "web_download_delegate.cpp",
+      "web_download_item.cpp",
+      "web_download_manager.cpp",
       "web_message_port.cpp",
       "webview_async_work_callback.cpp",
       "webview_controller.cpp",
+      "webview_javascript_async_work_callback.cpp",
     ]
 
     deps = [
