@@ -9,6 +9,7 @@
 |GetMarketName|Build.PRODUCT / ro.product.name|device.name|
 |GetProductSeries|Build.DEVICE / ro.product.device|systemInfo.version|
 |GetProductModel|Build.MODEL / ro.product.model|device.model|
+|GetProductModelAlias|Build.MODEL / ro.product.model|device.model|
 |GetSoftwareModel|Build.MODEL / ro.product.model|device.model|
 |GetHardwareModel|Build.BOARD / ro.product.board|device.model|
 |GetHardwareProfile|default|default|

@@ -21,9 +21,7 @@ template("plugin_effectkit_static") {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
 
-    deps = [
-      #"//foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit:effectkit",
-    ]
+    deps = [ "//foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit:effectkit" ]
 
     subsystem_name = "plugins"
     part_name = "effectkit"

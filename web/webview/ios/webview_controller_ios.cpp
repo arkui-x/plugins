@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -75,7 +75,12 @@ ErrCode WebviewControllerIOS::Refresh()
 
 void WebviewControllerIOS::EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId)
 {
-    EvaluateJavaScriptOC(webId_, script, asyncCallbackInfoId, WebviewController::OnReceiveValue);
+    evaluateJavaScriptOC(webId_, script, asyncCallbackInfoId, WebviewController::OnReceiveValue);
+}
+
+void WebviewControllerIOS::EvaluateJavaScriptExt(const std::string& script, int32_t asyncCallbackInfoId)
+{
+    evaluateJavaScriptExtOC(webId_, script, asyncCallbackInfoId, WebviewController::OnReceiveRunJavaScriptExtValue);
 }
 
 void WebviewControllerIOS::RemoveCache(bool value)
@@ -164,5 +169,10 @@ bool WebviewControllerIOS::AccessStep(int32_t step)
 bool WebviewControllerIOS::IsInit()
 {
     return webId_ != -1;
+}
+
+void WebviewControllerIOS::StartDownload(const std::string& url)
+{
+    startDownloadOC(webId_, url);
 }
 } // namespace OHOS::Plugin

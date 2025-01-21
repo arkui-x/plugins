@@ -33,6 +33,8 @@ thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
     WebCookieManager::fetchCookieCallbackInfoContainer_;
 thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
     WebCookieManager::clearAllCookiesCallbackInfoContainer_;
+thread_local std::vector<std::shared_ptr<AsyncCookieManagerResultCallbackInfo>>
+    WebCookieManager::clearSessionCookieCallbackInfoContainer_;
 
 void WebCookieManager::OnFetchReceiveValue(const std::string& result, int32_t asyncCallbackInfoId)
 {
@@ -66,6 +68,11 @@ void WebCookieManager::InsertCallbackInfo(
         case TaskType::CLEAR_ALL_COOKIES:
             if (asyncCallbackInfo) {
                 clearAllCookiesCallbackInfoContainer_.push_back(asyncCallbackInfo);
+            }
+            break;
+        case TaskType::CLEAR_SESSION_COOKIE:
+            if (asyncCallbackInfo) {
+                clearSessionCookieCallbackInfoContainer_.push_back(asyncCallbackInfo);
             }
             break;
         case TaskType::NONE:
@@ -113,6 +120,18 @@ bool WebCookieManager::EraseCallbackInfo(
                 }
             }
             break;
+        case TaskType::CLEAR_SESSION_COOKIE:
+            if (clearSessionCookieCallbackInfoContainer_.empty() || !asyncCallbackInfo) {
+                return false;
+            }
+            for (auto it = clearSessionCookieCallbackInfoContainer_.begin();
+                it != clearSessionCookieCallbackInfoContainer_.end(); it++) {
+                if ((*it) && (*it).get() == asyncCallbackInfo) {
+                    clearSessionCookieCallbackInfoContainer_.erase(it);
+                    return true;
+                }
+            }
+            break;
         case TaskType::NONE:
             break;
     }
@@ -156,7 +175,7 @@ bool WebCookieManager::ExcuteAsyncCallbackInfo(bool result, int32_t asyncCallbac
 
 bool WebCookieManager::ExcuteAsyncCallbackInfo(int32_t asyncCallbackInfoId)
 {
-    LOGD("WebCookieManager ClearAllCookies asyncCallbackInfoId: %{public}d", asyncCallbackInfoId);
+    LOGD("WebCookieManager ClearAllCookies ClearSessionCookie asyncCallbackInfoId: %{public}d", asyncCallbackInfoId);
     for (const auto& asyncCallbackInfo : clearAllCookiesCallbackInfoContainer_) {
         if (!asyncCallbackInfo) {
             continue;
@@ -168,6 +187,17 @@ bool WebCookieManager::ExcuteAsyncCallbackInfo(int32_t asyncCallbackInfoId)
             }
         }
     }
+    for (const auto& asyncCallbackInfo : clearSessionCookieCallbackInfoContainer_ ) {
+        if (!asyncCallbackInfo) {
+            continue;
+        };
+        if (asyncCallbackInfo->GetUniqueId() == asyncCallbackInfoId) {
+            if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
+                napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
+                return true;
+            };
+        };
+    };
     return false;
 }
 
@@ -198,6 +228,26 @@ void WebCookieManager::ClearAllCookies(int32_t asyncCallbackInfoId)
 #endif
 #ifdef IOS_PLATFORM
     WebCookieManagerIOS::ClearAllCookies(asyncCallbackInfoId);
+#endif
+}
+
+bool WebCookieManager::ExistCookie(bool incognito)
+{
+#ifdef ANDROID_PLATFORM
+    return WebCookieManagerAndroid::ExistCookie(incognito);
+#endif
+#ifdef IOS_PLATFORM
+    return WebCookieManagerIOS::ExistCookie(incognito);
+#endif
+}
+
+void WebCookieManager::ClearSessionCookie(int32_t asyncCallbackInfoId)
+{
+#ifdef ANDROID_PLATFORM
+    WebCookieManagerAndroid::ClearSessionCookie(asyncCallbackInfoId);
+#endif
+#ifdef IOS_PLATFORM
+    WebCookieManagerIOS::ClearSessionCookie(asyncCallbackInfoId);
 #endif
 }
 } // namespace OHOS::Plugin

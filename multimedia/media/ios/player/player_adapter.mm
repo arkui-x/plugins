@@ -64,7 +64,8 @@
         NSLog(@"initPlayer audioSession is nil!");
         return;
     }
-    [audioSession setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [audioSession setCategory:AVAudioSessionCategoryPlayback withOptions:AVAudioSessionCategoryOptionMixWithOthers
+        error:nil];
     [audioSession setActive:YES error:nil];
 
     AVPlayerItem * playerItem = [AVPlayerItem playerItemWithURL:self.url];
