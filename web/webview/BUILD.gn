@@ -40,6 +40,8 @@ template("plugin_web_webview_static") {
       "web_download_item.cpp",
       "web_download_manager.cpp",
       "web_message_port.cpp",
+      "web_storage.cpp",
+      "web_storage_callback.cpp",
       "webview_async_work_callback.cpp",
       "webview_controller.cpp",
       "webview_javascript_async_work_callback.cpp",

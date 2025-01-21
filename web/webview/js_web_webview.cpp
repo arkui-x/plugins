@@ -18,6 +18,9 @@
 #include <cstddef>
 #include <unistd.h>
 #include <string.h>
+#include <iostream>
+#include <vector>
+#include <string>
 #include <regex>
 #include <securec.h>
 
@@ -42,6 +45,8 @@
 #include "android/java/jni/web_download_delegate_jni.h"
 #include "android/java/jni/web_download_item_jni.h"
 #include "android/java/jni/web_message_port_android.h"
+#include "android/java/jni/web_storage_android.h"
+#include "android/java/jni/web_storage_jni.h"
 #include "android/java/jni/webview_controller_android.h"
 #include "android/java/jni/webview_controller_jni.h"
 #endif
@@ -64,8 +69,14 @@ const std::string HTTP = "http://";
 const std::string HTTPS = "https://";
 const std::string RESOURCE = "resource://rawfile";
 const std::string FILE = "file";
+constexpr int32_t MAX_WEB_STRING_LENGTH = 40960;
 constexpr uint32_t URL_MAXIMUM = 2048;
 constexpr char URL_REGEXPR[] = "^http(s)?:\\/\\/.+";
+
+const char* rawfile = "resource://rawfile/";
+const char* replacement = "file:///";
+std::regex reg("^(https?|file)://[\\w.-/]+(:\\d+)?(/.*)?$");
+
 
 bool GetRawFileUrl(const std::string &fileName, std::string &result)
 {
@@ -1933,6 +1944,7 @@ static napi_value WebWebviewExport(napi_env env, napi_value exports)
     NapiWebviewController::Init(env, exports);
     NapiWebDataBase::Init(env, exports);
     NapiWebCookieManager::Init(env, exports);
+    NapiWebStorage::Init(env, exports);
     NapiWebDownloadDelegate::Init(env, exports);
     NapiWebDownloadManager::Init(env, exports);
     NapiWebDownloadItem::Init(env, exports);
@@ -1963,6 +1975,8 @@ static void WebWebviewJniRegister()
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDataBaseJni::Register, dataBaseClassName);
     const char webCookieClassName[] = "ohos.ace.plugin.webviewplugin.webcookie.WebCookiePlugin";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebCookieManagerJni::Register, webCookieClassName);
+    const char webStorageClassName[] = "ohos.ace.plugin.webviewplugin.webstorage.WebStoragePlugin";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&WebStorageJni::Register, webStorageClassName);
     const char webDownloadDelegateClassName[] = "ohos.ace.adapter.capability.web.AceWebPluginBase";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDownloadDelegateJni::Register, webDownloadDelegateClassName);
     const char webDownloadItemClassName[] = "ohos.ace.adapter.capability.web.AceWebPluginBase";
@@ -2275,6 +2289,429 @@ void NapiWebCookieManager::CreateFetchCookieAsyncWork(
         },
         reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
     WebCookieManager::InsertCallbackInfo(callbackInfo, TaskType::FETCH_COOKIE);
+}
+
+napi_value NapiWebStorage::Init(napi_env env, napi_value exports)
+{
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_STATIC_FUNCTION("getOriginQuota", NapiWebStorage::JsGetOriginQuotaAsync),
+        DECLARE_NAPI_STATIC_FUNCTION("getOriginUsage", NapiWebStorage::JsGetOriginUsageAsync),
+        DECLARE_NAPI_STATIC_FUNCTION("getOrigins", NapiWebStorage::JsGetOriginsAsync),
+        DECLARE_NAPI_STATIC_FUNCTION("deleteAllData", NapiWebStorage::DeleteAllData),
+        DECLARE_NAPI_STATIC_FUNCTION("deleteOrigin", NapiWebStorage::DeleteOrigin),
+    };
+    napi_value constructor = nullptr;
+
+    napi_define_class(env, WEB_STORAGE_CLASS_NAME.c_str(), WEB_STORAGE_CLASS_NAME.length(),
+        NapiWebStorage::JsConstructor, nullptr, sizeof(properties) / sizeof(properties[0]),
+        properties, &constructor);
+    NAPI_ASSERT(env, constructor != nullptr, "NapiWebStorage define js class failed");
+    napi_status status = napi_set_named_property(env, exports, "WebStorage", constructor);
+    NAPI_ASSERT(env, status == napi_ok, "NapiWebStorage set property failed");
+    return exports;
+}
+
+napi_value NapiWebStorage::JsConstructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = 2;
+    napi_value argv[2] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    return thisVar;
+}
+
+void NapiWebStorage::CreateGetOriginQuotaAsyncWork(
+    napi_env env, const std::shared_ptr<AsyncWebStorageResultCallbackInfo> &callbackInfo)
+{
+    napi_value resource = nullptr;
+    auto asyncCallbackInfo = callbackInfo.get();
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, "JsGetOriginQuotaAsync", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL_RETURN_VOID(env, napi_create_async_work(env, nullptr, resource,
+        [](napi_env env, void* data) {
+        },
+        [](napi_env env, napi_status status, void* data) {
+            AsyncWebStorageResultCallbackInfo* asyncCallbackInfo =
+                reinterpret_cast<AsyncWebStorageResultCallbackInfo*>(data);
+            if (!asyncCallbackInfo) {
+                return;
+            }
+            napi_value args[INTEGER_TWO] = { 0 }; 
+            napi_value jsResult = nullptr;
+            NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, asyncCallbackInfo->result, &jsResult));
+            args[INTEGER_ONE] = jsResult;
+
+            if (asyncCallbackInfo->deferred) {
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
+            } else {
+                napi_value callback = nullptr;
+                napi_value callbackResult = nullptr;
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncCallbackInfo->callback, &callback));
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, nullptr, callback,
+                    sizeof(args) / sizeof(args[0]), args, &callbackResult));
+            }
+            WebStorage::EraseCallbackInfo(asyncCallbackInfo, StorageTaskType::GET_ORIGINQUOTA);
+        },
+        reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    WebStorage::InsertCallbackInfo(callbackInfo, StorageTaskType::GET_ORIGINQUOTA);
+}
+
+void NapiWebStorage::CreateGetOriginUsageAsyncWork(
+    napi_env env, const std::shared_ptr<AsyncWebStorageResultCallbackInfo> &callbackInfo)
+{
+    napi_value resource = nullptr;
+    auto asyncCallbackInfo = callbackInfo.get();
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, "JsGetOriginUsageAsync", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL_RETURN_VOID(env, napi_create_async_work(env, nullptr, resource,
+        [](napi_env env, void* data) {
+        },
+        [](napi_env env, napi_status status, void* data) {
+            AsyncWebStorageResultCallbackInfo* asyncCallbackInfo =
+                reinterpret_cast<AsyncWebStorageResultCallbackInfo*>(data);
+            if (!asyncCallbackInfo) {
+                return;
+            }
+            napi_value args[2] = { 0 };
+            napi_value jsResult = nullptr;
+            NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncCallbackInfo->result, &jsResult));
+            args[INTEGER_ONE] = jsResult;
+            if (asyncCallbackInfo->deferred) {
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));    
+            } else {
+                napi_value callback = nullptr;
+                napi_value callbackResult = nullptr;
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncCallbackInfo->callback, &callback));
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, nullptr, callback,
+                    sizeof(args) / sizeof(args[0]), args, &callbackResult));
+            }
+            WebStorage::EraseCallbackInfo(asyncCallbackInfo, StorageTaskType::GET_ORIGINUSAGE);
+        },
+        reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    WebStorage::InsertCallbackInfo(callbackInfo, StorageTaskType::GET_ORIGINUSAGE);
+}
+
+void NapiWebStorage::GetNapiWebStorageOriginForResult(napi_env env,
+    const std::vector<WebStorageStruct> &info, napi_value result)
+{
+    int32_t index = 0;
+    for (auto item : info) {
+        napi_value napiWebStorageOrigin = nullptr;
+        napi_create_object(env, &napiWebStorageOrigin);
+
+        napi_value origin = nullptr;
+        napi_create_string_utf8(env, item.origin.c_str(), NAPI_AUTO_LENGTH, &origin);
+        napi_set_named_property(env, napiWebStorageOrigin, "origin", origin);
+
+        napi_value quota = nullptr;
+        long long intQuotaValue = std::stoll(item.quota.c_str());
+        napi_create_int64(env, static_cast<int64_t>(intQuotaValue), &quota);
+        napi_set_named_property(env, napiWebStorageOrigin, "quota", quota);
+
+        napi_value usage = nullptr;
+        long long intUsageValue = std::stoll(item.usage.c_str());
+        napi_create_int64(env, static_cast<int64_t>(intUsageValue), &usage);
+        napi_set_named_property(env, napiWebStorageOrigin, "usage", usage);
+
+        napi_set_element(env, result, index, napiWebStorageOrigin);
+        index++;
+    }
+}
+
+void NapiWebStorage::CreateGetOriginsAsyncWork(
+    napi_env env, const std::shared_ptr<AsyncWebStorageResultCallbackInfo>& callbackInfo)
+{
+    napi_value resource = nullptr;
+    auto asyncCallbackInfo = callbackInfo.get();
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, "JsGetOriginsAsync", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL_RETURN_VOID(env, napi_create_async_work(env, nullptr, resource,
+        [](napi_env env, void* data) {},
+        [](napi_env env, napi_status status, void* data) {
+            AsyncWebStorageResultCallbackInfo* asyncCallbackInfo =
+                reinterpret_cast<AsyncWebStorageResultCallbackInfo*>(data);
+            if (!asyncCallbackInfo) {
+                return;
+            }
+            napi_value args[INTEGER_TWO] = { 0 };
+            int business_error = asyncCallbackInfo->resultVector.empty() || asyncCallbackInfo->resultVector.size() <= 0 ? 1 : 2;
+            if (business_error == 1) {
+                args[INTEGER_ZERO] = NWebError::BusinessError::CreateError(env, NWebError::NO_WEBSTORAGE_ORIGIN);
+                napi_get_undefined(env, &args[INTEGER_ONE]);
+            } else {
+                napi_get_undefined(env, &args[INTEGER_ZERO]);
+                napi_create_array(env, &args[INTEGER_ONE]);
+                GetNapiWebStorageOriginForResult(env, asyncCallbackInfo->resultVector, args[INTEGER_ONE]);
+            }
+            if (asyncCallbackInfo->deferred) {
+                if (business_error == 1) {
+                    NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ZERO]));
+                } else {
+                    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
+                }
+            } else {
+                napi_value callback = nullptr;
+                napi_value callbackResult = nullptr;
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncCallbackInfo->callback, &callback));
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, nullptr, callback,
+                    sizeof(args) / sizeof(args[0]), args, &callbackResult));
+            }
+            WebStorage::EraseCallbackInfo(asyncCallbackInfo, StorageTaskType::GET_ORIGINS);
+        },
+        reinterpret_cast<void*>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    WebStorage::InsertCallbackInfo(callbackInfo, StorageTaskType::GET_ORIGINS);
+}
+
+napi_value NapiWebStorage::JsGetOriginQuotaAsync(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = INTEGER_ONE;
+    size_t argcPromise = INTEGER_ONE;
+    size_t argcCallback = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+
+    if (argc != argcPromise && argc != argcCallback) {
+       BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+            FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_TWO, "one", "two"));
+        return nullptr;
+    }
+
+    napi_valuetype valueType = napi_null;
+    napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+    if (valueType != napi_string) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "origin", "string"));
+        return nullptr;
+    }
+
+    size_t bufferSize = 0;
+    napi_get_value_string_utf8(env, argv[INTEGER_ZERO], nullptr, 0, &bufferSize);
+    if (bufferSize >= MAX_WEB_STRING_LENGTH) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            "BusinessError 401: Parameter error. The length of 'origin' must less than 40960.");
+        return nullptr;
+    }
+    
+    char stringValue[bufferSize + 1];
+    size_t jsStringLength = 0;
+    napi_get_value_string_utf8(env, argv[INTEGER_ZERO], stringValue, bufferSize + 1, &jsStringLength);
+    if (jsStringLength != bufferSize) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            "BusinessError 401: Parameter error. The length of 'origin' obtained twice are different");
+        return nullptr;
+    }
+
+    std::string origin(stringValue);
+    std::shared_ptr<AsyncWebStorageResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<AsyncWebStorageResultCallbackInfo>(env, g_asyncCallbackInfoId);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    napi_value promise = nullptr;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[argcCallback - 1], &valueType);
+        if (valueType != napi_function) {
+             BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+                FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "callback","function"));
+            return nullptr;
+        }
+        NAPI_CALL(env, napi_create_reference(env, argv[argcCallback - 1], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env, &promise));
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateGetOriginQuotaAsyncWork(env, asyncCallbackInfoInstance);
+    WebStorage::GetOriginQuota(origin, g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
+    return promise;
+}
+
+napi_value NapiWebStorage::JsGetOriginUsageAsync(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = INTEGER_ONE;
+    size_t argcPromise = INTEGER_ONE;
+    size_t argcCallback = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = {0};
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != argcPromise && argc != argcCallback) {
+       BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+            FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_TWO, "one", "two"));
+        return nullptr;
+    }
+
+    napi_valuetype valueType = napi_null;
+    napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+    if (valueType != napi_string) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "origin", "string"));
+        return nullptr;
+    }
+
+    size_t bufferSize = 0;
+    napi_get_value_string_utf8(env, argv[INTEGER_ZERO], nullptr, 0, &bufferSize);
+    if (bufferSize >= MAX_WEB_STRING_LENGTH) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            "BusinessError 401: Parameter error. The length of 'origin' must less than 40960.");
+        return nullptr;
+    }
+
+    char stringValue[bufferSize + 1];
+    size_t jsStringLength = 0;
+    napi_get_value_string_utf8(env, argv[INTEGER_ZERO], stringValue, bufferSize + 1, &jsStringLength);
+    if (jsStringLength != bufferSize) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            "BusinessError 401: Parameter error. The length of 'origin' obtained twice are different");
+        return nullptr;
+    }
+
+    std::string origin(stringValue);
+    std::shared_ptr<AsyncWebStorageResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<AsyncWebStorageResultCallbackInfo>(env, g_asyncCallbackInfoId);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    napi_value promise = nullptr;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[argcCallback - 1], &valueType);
+        if (valueType != napi_function) {
+             BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+                FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "callback","function"));
+            return nullptr;
+        }
+        NAPI_CALL(env, napi_create_reference(env, argv[argcCallback - 1], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env, &promise));
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateGetOriginUsageAsyncWork(env, asyncCallbackInfoInstance);
+    WebStorage::GetOriginUsage(origin, g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
+    return promise;
+}
+
+napi_value NapiWebStorage::JsGetOriginsAsync(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = INTEGER_ZERO;
+    size_t argcPromise = INTEGER_ZERO;
+    size_t argcCallback = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    napi_value result = nullptr;
+
+    napi_get_undefined(env, &result);
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != argcPromise && argc != argcCallback) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+            FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_TWO, "zero", "one"));
+        return nullptr;
+    }
+
+    std::shared_ptr<AsyncWebStorageResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<AsyncWebStorageResultCallbackInfo>(env, g_asyncCallbackInfoId);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    asyncCallbackInfo->storageTaskType = StorageTaskType::GET_ORIGINS;
+    napi_value promise = nullptr;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[argcCallback - 1], &valueType);
+        if (valueType != napi_function) {
+             BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+                FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "callback","function"));
+            return nullptr;
+        }
+        NAPI_CALL(env, napi_create_reference(env, argv[argcCallback - 1], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env,  &promise));
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateGetOriginsAsyncWork(env, asyncCallbackInfoInstance);
+    WebStorage::GetOrigins(g_asyncCallbackInfoId);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
+    return promise;
+}
+
+napi_value NapiWebStorage::DeleteAllData(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    napi_value retValue = nullptr;
+
+    size_t argc = 1;
+    size_t argcForOld = 0;
+    napi_value argv[1] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &retValue, nullptr);
+    if (argc != 1 && argc != argcForOld) {
+        return nullptr;
+    }
+
+    bool incognitoMode = false;
+    if (argc == 1) {
+        napi_get_value_bool(env, argv[0], &incognitoMode);
+    }
+
+    WebStorage::DeleteAllData();
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value NapiWebStorage::DeleteOrigin(napi_env env, napi_callback_info info)
+{
+    napi_value retValue = nullptr;
+    size_t argc = 1;
+    napi_value argv = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, &argc, &argv, &retValue, nullptr);
+    if (argc != 1) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+            FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_ONE, "one"));
+        return nullptr;
+    }
+
+    size_t bufferSize = 0;
+    napi_valuetype valueType = napi_null;
+    napi_typeof(env, argv, &valueType);
+    if (valueType != napi_string) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+            FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "origin", "string"));
+        return nullptr;
+    }
+
+    napi_get_value_string_utf8(env, argv, nullptr, 0, &bufferSize);
+    if (bufferSize >= MAX_WEB_STRING_LENGTH) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+            "BusinessError 401: Parameter error. The length of 'origin' must less than 40960.");
+        return nullptr;
+    }
+
+    char stringValue[bufferSize + 1];
+    size_t jsStringLength = 0;
+    napi_get_value_string_utf8(env, argv, stringValue, bufferSize + 1, &jsStringLength);
+    if (jsStringLength != bufferSize) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR, 
+            "BusinessError 401: Parameter error. The length of 'origin' obtained twice are different");
+        return nullptr;
+    }
+
+    if (strcmp(stringValue, rawfile) == 0){     
+        strncpy(stringValue, replacement, sizeof(stringValue));
+        stringValue[sizeof(stringValue) - 1] = '\0';
+    }
+    
+    std::string origin(stringValue);
+    if (!std::regex_match(origin, reg)) {
+        BusinessError::ThrowErrorByErrcode(env, INVALID_ORIGIN);
+        return nullptr;
+    }
+
+    WebStorage::DeleteOrigin(origin);
+    napi_get_undefined(env, &result);
+    return result;
 }
 
 napi_value NapiWebDownloadDelegate::JS_DownloadBeforeStart(napi_env env, napi_callback_info cbinfo)

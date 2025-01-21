@@ -21,8 +21,18 @@ java_library("cookie_manager_android_java") {
   part_name = "web_webview"
 }
 
+java_library("web_storage_android_java") {
+  java_files =
+      [ "src/ohos/ace/plugin/webviewplugin/webstorage/WebStoragePlugin.java" ]
+  subsystem_name = "plugins"
+  part_name = "web_webview"
+}
+
 ohos_combine_jars("web_webview_java") {
-  deps = [ ":cookie_manager_android_java" ]
+  deps = [
+    ":cookie_manager_android_java",
+    ":web_storage_android_java",
+  ]
   subsystem_name = "plugins"
   part_name = "web_webview"
   jar_path = "${root_out_dir}/plugins/web/ace_web_webview_android.jar"
@@ -38,6 +48,8 @@ ohos_source_set("web_webview_android_jni") {
     "jni/web_download_item_jni.cpp",
     "jni/web_download_manager_android.cpp",
     "jni/web_message_port_android.cpp",
+    "jni/web_storage_android.cpp",
+    "jni/web_storage_jni.cpp",
     "jni/webview_controller_android.cpp",
     "jni/webview_controller_jni.cpp",
   ]
