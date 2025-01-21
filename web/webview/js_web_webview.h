@@ -24,6 +24,8 @@
 #include "web_cookie_manager_callback.h"
 #include "web_cookie_manager.h"
 #include "webview_controller.h"
+#include "web_storage_callback.h"
+#include "web_storage.h"
 
 namespace OHOS::Plugin {
 enum class ResourceType : uint32_t {
@@ -178,6 +180,49 @@ private:
 
     static void CreateFetchCookieAsyncWork(napi_env env,
         const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& callbackInfo);
+};
+
+const std::string WEB_STORAGE_CLASS_NAME = "WebStorage";
+class NapiWebStorage {
+public:
+    NapiWebStorage() {}
+
+    ~NapiWebStorage() = default;
+
+    struct WebStorageParam {
+        napi_env env_;
+        napi_ref callback_;
+        napi_deferred deferred_;
+    };
+
+
+    static napi_value Init(napi_env env, napi_value exports);
+
+private:
+    static napi_value JsConstructor(napi_env env, napi_callback_info info);
+
+    static napi_value JsGetOriginQuotaAsync(napi_env env, napi_callback_info info);
+
+    static napi_value JsGetOriginUsageAsync(napi_env env, napi_callback_info info);
+
+    static napi_value JsGetOriginsAsync(napi_env env, napi_callback_info info);
+
+    static napi_value DeleteAllData(napi_env env, napi_callback_info info);
+
+    static napi_value DeleteOrigin(napi_env env, napi_callback_info info);
+
+    static void CreateGetOriginQuotaAsyncWork(napi_env env,
+        const std::shared_ptr<AsyncWebStorageResultCallbackInfo>& callbackInfo);
+
+    static void CreateGetOriginUsageAsyncWork(napi_env env,
+        const std::shared_ptr<AsyncWebStorageResultCallbackInfo>& callbackInfo);
+
+    static void CreateGetOriginsAsyncWork(napi_env env,
+        const std::shared_ptr<AsyncWebStorageResultCallbackInfo>& callbackInfo);
+    
+    static void GetNapiWebStorageOriginForResult(napi_env env,
+        const std::vector<WebStorageStruct> &info, napi_value result);
+
 };
 
 class NapiWebHistoryList {
