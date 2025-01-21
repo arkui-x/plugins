@@ -52,6 +52,33 @@ public class WebCookiePlugin {
         });
     }
 
+    /**
+     * Determine whether cookies exist.
+     *
+     * Function description: This method is used to check for the presence of cookies.
+     *
+     * @param incognito Is it in incognito mode.
+     * @return If cookies exist, return true; otherwise, return false.
+     */
+    public boolean existCookie(boolean incognito) {
+        CookieManager.getInstance().flush();
+        return CookieManager.getInstance().hasCookies();
+    }
+
+    /**
+     * Clear session cookies.
+     *
+     * @param asyncCallbackInfoId Asynchronous callback information identification.
+     */
+    public void clearSessionCookie(long asyncCallbackInfoId) {
+        CookieManager.getInstance().removeSessionCookies(new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean value) {
+                onReceiveCookieValue(asyncCallbackInfoId);
+            }
+        });
+    }
+
     protected native void nativeInit();
 
     protected native static void onReceiveCookieValue(String value, long asyncCallbackInfoId);

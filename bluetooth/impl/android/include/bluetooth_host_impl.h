@@ -39,7 +39,7 @@ public:
     int32_t GetBtState(int& state) override;
     int32_t GetLocalAddress(std::string& addr) override;
     int32_t DisableBle() override;
-    int32_t EnableBle() override;
+    int32_t EnableBle(bool noAutoConnect = false) override;
     bool IsBrEnabled();
     bool IsBleEnabled();
     std::vector<uint32_t> GetProfileList() override;
@@ -117,6 +117,7 @@ public:
     int32_t EnableBluetoothToRestrictMode(void) override;
     int32_t ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
         uint32_t controlTypeVal, uint32_t controlObject) override;
+    int32_t GetLastConnectionTime(const std::string &address, int64_t &connectionTime) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;

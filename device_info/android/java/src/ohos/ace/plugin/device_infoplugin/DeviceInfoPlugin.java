@@ -147,6 +147,16 @@ public class DeviceInfoPlugin {
     }
 
     /**
+     * getProductModelAlias
+     *
+     * @param defValue default value
+     * @return ProductModelAlias
+     */
+    public String getProductModelAlias(String defValue) {
+        return Build.MODEL; // ro.product.model
+    }
+
+    /**
      * getSoftwareModel
      *
      * @param defValue default value
@@ -289,7 +299,7 @@ public class DeviceInfoPlugin {
             return "Unknown";
         }
 
-        return minScreenWidth >= 600 ? "Tablet" : "Handset";
+        return minScreenWidth >= 600 ? "tablet" : "phone";
     }
 
     private String getDeviceTypeByPhysicalSize() {
@@ -312,9 +322,9 @@ public class DeviceInfoPlugin {
         double diagonalSize = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
 
         if (diagonalSize >= 3.0 && diagonalSize <= 6.9) {
-            deviceType = "Handset";
+            deviceType = "phone";
         } else if (diagonalSize > 6.9 && diagonalSize <= 18.0) {
-            deviceType = "Tablet";
+            deviceType = "tablet";
         } else {
             deviceType = "Unknown";
         }

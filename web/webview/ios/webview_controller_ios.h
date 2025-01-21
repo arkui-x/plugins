@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 #define PLUGINS_WEB_WEBVIEW_IOS_WEBVIEW_CONTROLLER_IOS_H
 
 #include "plugins/web/webview/webview_controller.h"
+#include "plugins/web/webview/web_download_delegate.h"
 
 namespace OHOS::Plugin {
 class WebviewControllerIOS : public WebviewController {
@@ -35,6 +36,7 @@ public:
     bool AccessBackward() override;
     bool AccessForward() override;
     void EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId) override;
+    void EvaluateJavaScriptExt(const std::string& script, int32_t asyncCallbackInfoId) override;
     ErrCode ScrollTo(float x, float y) override;
     ErrCode ScrollBy(float deltaX, float deltaY) override;
     ErrCode Zoom(float factor) override;
@@ -56,6 +58,7 @@ public:
     static void SetWebDebuggingAccess(bool webDebuggingAccess);
     ErrCode PageDown(bool bottom) override;
     ErrCode PostUrl(const std::string& url, const std::vector<uint8_t>& postData) override;
+    void StartDownload(const std::string& url) override;
 };
 } // namespace OHOS::Plugin
 #endif

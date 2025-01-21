@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -48,6 +48,7 @@ public:
     ErrCode ClearHistory() override;
     bool AccessStep(int32_t step) override;
     void EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId) override;
+    void EvaluateJavaScriptExt(const std::string& script, int32_t asyncCallbackInfoId) override;
     std::shared_ptr<WebHistoryList> GetBackForwardEntries() override;
     void RemoveCache(bool value) override;
     void BackOrForward(int32_t step) override;
@@ -58,7 +59,7 @@ public:
     static void SetWebDebuggingAccess(bool webDebuggingAccess);
     ErrCode PageDown(bool value) override;
     ErrCode PostUrl(const std::string& url, const std::vector<uint8_t>& postData) override;
+    void StartDownload(const std::string& url) override;
 };
 }
-
 #endif

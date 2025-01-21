@@ -1,0 +1,142 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/components/ets_frontend/es2abc_config.gni")
+import("//build/ohos.gni")
+import("//commonlibrary/ets_utils/ets_utils_config.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/arkui/ace_engine/build/ace_gen_obj.gni")
+
+utils_path = "//commonlibrary/ets_utils/js_concurrent_module/utils"
+
+# compile .js to .abc.
+es2abc_gen_abc("gen_utils_abc") {
+  src_js = rebase_path("$utils_path/src/utils_js.ts")
+  dst_file = rebase_path(target_out_dir + "/utils.abc")
+  in_puts = [ "$utils_path/src/utils_js.ts" ]
+  out_puts = [ target_out_dir + "/utils.abc" ]
+  extra_args = [ "--module" ]
+}
+
+abc_output_path = get_label_info(":utils_abc", "target_out_dir")
+
+if (target_os == "ios") {
+  gen_obj("utils_js") {
+    input = "$utils_path/src/utils_js.ts"
+    output = abc_output_path + "/utils.c"
+    snapshot_dep = []
+  }
+
+  gen_obj("utils_abc") {
+    input = "$target_out_dir/utils.abc"
+    output = abc_output_path + "/utils_abc.c"
+    snapshot_dep = [ ":gen_utils_abc" ]
+  }
+} else if (target_os == "android") {
+  gen_js_obj("utils_js") {
+    input = "$utils_path/src/utils_js.ts"
+    output = abc_output_path + "/utils.o"
+  }
+
+  gen_js_obj("utils_abc") {
+    input = "$target_out_dir/utils.abc"
+    output = abc_output_path + "/utils_abc.o"
+    dep = ":gen_utils_abc"
+  }
+}
+
+locks_sources = [
+  "$utils_path/condition/condition_variable.cpp",
+  "$utils_path/json/json_manager.cpp",
+  "$utils_path/locks/async_lock.cpp",
+  "$utils_path/locks/async_lock_manager.cpp",
+  "$utils_path/locks/deadlock_helpers.cpp",
+  "$utils_path/locks/graph.cpp",
+  "$utils_path/locks/lock_request.cpp",
+  "$utils_path/native_utils_module.cpp",
+  "$utils_path/utils.cpp",
+]
+
+ohos_source_set("utils_static") {
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  defines = [ "__ARKUI_CROSS__" ]
+
+  include_dirs = [
+    "//commonlibrary/ets_utils",
+    "//commonlibrary/ets_utils/js_concurrent_module/common",
+    "$plugins_root/hilog/include",
+    "$plugins_root/interfaces",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  ]
+
+  if (target_os == "ios") {
+    deps = [
+      ":gen_obj_src_utils_abc",
+      ":gen_obj_src_utils_js",
+    ]
+  } else if (target_os == "android") {
+    deps = [
+      ":utils_abc",
+      ":utils_js",
+    ]
+  }
+
+  sources = locks_sources
+
+  deps += [
+    "$plugins_root/libs/napi:napi_${target_os}",
+    "$plugins_root/libs/uv:uv_${target_os}",
+    "$sys_module/timer:timer_static",
+  ]
+}
+
+template("plugin_arkts_utils_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    deps = [ ":utils_static" ]
+
+    subsystem_name = "plugins"
+    part_name = "arkts_utils"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_arkts_utils_static("arkts_utils_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

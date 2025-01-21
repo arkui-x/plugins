@@ -18,7 +18,10 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 ohos_source_set("plugin_log") {
   defines = [ "PLUGIN_LOG_TAG=\"Plugins\"" ]
   sources = [ "log.cpp" ]
-  include_dirs = [ "//foundation/arkui/ace_engine/frameworks" ]
+  include_dirs = [
+    "//foundation/arkui/ace_engine/frameworks",
+    "//foundation/arkui/ace_engine/interfaces/inner_api/ace_kit/include",
+  ]
 
   if (target_os == "android") {
     defines += [ "ANDROID_PLATFORM" ]
@@ -31,6 +34,7 @@ config("plugin_util_config") {
   include_dirs = [
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
     "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/error",
+    "//foundation/arkui/ace_engine/interfaces/inner_api/ace_kit/include",
     "//plugins/interfaces/native",
   ]
 }

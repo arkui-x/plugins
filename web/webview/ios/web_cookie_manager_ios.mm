@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#import <WebKit/WebKit.h>
 #include "web_cookie_manager_ios.h"
-
 #import <Foundation/Foundation.h>
 using namespace OHOS::NWebError;
 
@@ -129,6 +129,38 @@ void WebCookieManagerIOS::ClearAllCookies(int32_t asyncCallbackInfoId)
     NSArray* cookies = sharedHTTPCookieStorage.cookies;
     for (int i = 0; i < (int)cookies.count; i++) {
         [sharedHTTPCookieStorage deleteCookie:cookies[i]];
+    }
+    WebCookieManager::OnClearReceiveValue(asyncCallbackInfoId);
+}
+
+bool WebCookieManagerIOS::ExistCookie(bool incognito)
+{
+    NSHTTPCookieStorage* sharedHTTPCookieStorage = NSHTTPCookieStorage.sharedHTTPCookieStorage;
+    NSArray* cookies = sharedHTTPCookieStorage.cookies;
+    return cookies && [cookies count] > 0;
+}
+
+void WebCookieManagerIOS::ClearSessionCookie(int32_t asyncCallbackInfoId)
+{
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_11_0
+    if (@available(iOS 11.0, *)) {
+        WKWebsiteDataStore *defaultDataStore = [WKWebsiteDataStore defaultDataStore];
+        WKHTTPCookieStore *wkHTTPCookieStorage = [defaultDataStore httpCookieStore];
+        [wkHTTPCookieStorage getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull cookies) {
+            for (NSHTTPCookie *cookie in cookies) {
+                if ([cookie isSessionOnly]) {
+                    [wkHTTPCookieStorage deleteCookie:cookie completionHandler:nil];
+                }
+            }
+        }];
+    }
+#endif
+    NSHTTPCookieStorage *sharedHTTPCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    NSArray<NSHTTPCookie *> * cookies = [sharedHTTPCookieStorage.cookies copy];
+    for (NSHTTPCookie *cookie in cookies) {
+        if ([cookie isSessionOnly]) {
+            [sharedHTTPCookieStorage deleteCookie:cookie];
+        }
     }
     WebCookieManager::OnClearReceiveValue(asyncCallbackInfoId);
 }

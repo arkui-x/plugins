@@ -89,7 +89,7 @@ int32_t BluetoothHostImpl::DisableBle()
     return DisableBt();
 }
 
-int32_t BluetoothHostImpl::EnableBle()
+int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect)
 {
     return EnableBt();
 }
@@ -486,6 +486,11 @@ int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(void)
 
 int32_t BluetoothHostImpl::ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
     uint32_t controlTypeVal, uint32_t controlObject)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::GetLastConnectionTime(const std::string &address, int64_t &connectionTime)
 {
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -146,6 +146,11 @@ void WebviewControllerAndroid::EvaluateJavaScript(const std::string& script, int
     WebviewControllerJni::EvaluateJavaScript(webId_, script, asyncCallbackInfoId);
 }
 
+void WebviewControllerAndroid::EvaluateJavaScriptExt(const std::string& script, int32_t asyncCallbackInfoId)
+{
+    WebviewControllerJni::EvaluateJavaScriptExt(webId_, script, asyncCallbackInfoId);
+}
+
 std::shared_ptr<WebHistoryList> WebviewControllerAndroid::GetBackForwardEntries()
 {
     return WebviewControllerJni::GetBackForwardEntries(webId_);
@@ -195,5 +200,10 @@ ErrCode WebviewControllerAndroid::PageDown(bool value)
 ErrCode WebviewControllerAndroid::PostUrl(const std::string& url, const std::vector<uint8_t>& postData)
 {
     return WebviewControllerJni::PostUrl(webId_, url, postData);
+}
+
+void WebviewControllerAndroid::StartDownload(const std::string& url)
+{
+    WebviewControllerJni::StartDownload(webId_, url);
 }
 }
