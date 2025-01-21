@@ -113,7 +113,7 @@
     NSData *imageData = nil;
     for (AVMetadataItem *item in metadataItems) {
         if ([[item commonKey] isEqualToString:AVMetadataCommonKeyArtwork]) {
-            imageData = item.value;
+            imageData = (NSData *)item.value;
             break;
         }
     }
