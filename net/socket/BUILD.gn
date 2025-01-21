@@ -134,18 +134,25 @@ template("plugin_net_socket_static") {
     sources += tls_sources
     sources += tls_napi_sources
 
-    if (target_os == "ios") {
-      include_dirs += utils_include
-    }
-
     deps = [
       "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${platform}",
       "//plugins/net/utils:net_utils_${target_os}",
-      "//third_party/openssl:libcrypto_shared",
-      "//third_party/openssl:libssl_shared",
     ]
+
+    if (target_os == "android") {
+      deps += [
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
+      ]
+    } else if (target_os == "ios") {
+      include_dirs += utils_include
+      deps += [
+        "//third_party/openssl:libcrypto_static",
+        "//third_party/openssl:libssl_static",
+      ]
+    }
 
     subsystem_name = "plugins"
     part_name = "net_socket"
