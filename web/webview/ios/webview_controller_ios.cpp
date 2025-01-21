@@ -144,9 +144,40 @@ ErrCode WebviewControllerIOS::Zoom(float factor)
     return NO_ERROR;
 }
 
+ErrCode WebviewControllerIOS::ZoomIn()
+{
+    bool accessStatus = isZoomAccessOC(webId_);
+    if(accessStatus) {
+        zoomInOC(webId_);
+        return NO_ERROR;
+    }
+    return FUNCTION_NOT_ENABLE;
+}
+
+ErrCode WebviewControllerIOS::ZoomOut()
+{
+    bool accessStatus = isZoomAccessOC(webId_);
+    if(accessStatus) {
+        zoomOutOC(webId_);
+        return NO_ERROR;
+    }
+    return FUNCTION_NOT_ENABLE;
+}
+
 ErrCode WebviewControllerIOS::Stop()
 {
     stopOC(webId_);
+    return NO_ERROR;
+}
+
+std::string WebviewControllerIOS::GetOriginalUrl()
+{
+    return getOriginalUrlOC(webId_);
+}
+
+ErrCode WebviewControllerIOS::PageUp(bool top)
+{
+    pageUpOC(webId_, top);
     return NO_ERROR;
 }
 
@@ -169,6 +200,23 @@ bool WebviewControllerIOS::AccessStep(int32_t step)
 bool WebviewControllerIOS::IsInit()
 {
     return webId_ != -1;
+}
+
+void WebviewControllerIOS::SetWebDebuggingAccess(bool webDebuggingAccess)
+{
+    setWebDebuggingAccessOC(webDebuggingAccess);
+}
+
+ErrCode WebviewControllerIOS::PageDown(bool bottom)
+{
+    pageDownOC(webId_, bottom);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerIOS::PostUrl(const std::string& url, const std::vector<uint8_t>& postData)
+{
+    postUrlOC(webId_, url, postData);
+    return NO_ERROR;
 }
 
 void WebviewControllerIOS::StartDownload(const std::string& url)

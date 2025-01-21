@@ -38,7 +38,11 @@ public:
     ErrCode ScrollTo(float x, float y) override;
     ErrCode ScrollBy(float deltaX, float deltaY) override;
     ErrCode Zoom(float factor) override;
+    ErrCode ZoomIn() override;
+    ErrCode ZoomOut() override;
     ErrCode Stop() override;
+    std::string GetOriginalUrl() override;
+    ErrCode PageUp(bool top) override;
     ErrCode SetCustomUserAgent(const std::string& userAgent) override;
     std::string GetCustomUserAgent() override;
     ErrCode ClearHistory() override;
@@ -52,6 +56,9 @@ public:
     int32_t GetPageHeight() override;
     void CreateWebMessagePorts(std::vector<std::string>& ports) override;
     void PostWebMessage(std::string& message, std::vector<std::string>& ports, std::string& targetUrl) override;
+    static void SetWebDebuggingAccess(bool webDebuggingAccess);
+    ErrCode PageDown(bool value) override;
+    ErrCode PostUrl(const std::string& url, const std::vector<uint8_t>& postData) override;
     void StartDownload(const std::string& url) override;
 };
 }

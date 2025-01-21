@@ -29,6 +29,7 @@ namespace {
 const char WEB_WEBVIEW_CLASS_NAME[] = "ohos/ace/adapter/capability/web/AceWebPluginBase";
 static const JNINativeMethod METHODS[] = {
     { "nativeInit", "()V", reinterpret_cast<void*>(WebviewControllerJni::NativeInit) },
+    { "nativeInitStatic", "()V", reinterpret_cast<void*>(WebviewControllerJni::NativeInitStatic) },
     { "onReceiveValue", "(Ljava/lang/String;J)V", reinterpret_cast<void*>(WebviewControllerJni::OnReceiveValue) },
     { "onReceiveRunJavaScriptExtValue", "(Ljava/lang/String;J)V",
         reinterpret_cast<void*>(WebviewControllerJni::OnReceiveRunJavaScriptExtValue) },
@@ -65,7 +66,17 @@ static const char METHOD_SCROLL_BY[] = "scrollBy";
 
 static const char METHOD_ZOOM[] = "zoom";
 
+static const char METHOD_ZOOM_IN[] = "zoomIn";
+
+static const char METHOD_ZOOM_OUT[] = "zoomOut";
+
+static const char METHOD_GET_ZOOM_ACCESS[] = "getZoomAccess";
+
 static const char METHOD_STOP[] = "stop";
+
+static const char METHOD_GET_ORIGINAL_URL[] = "getOriginalUrl";
+
+static const char METHOD_PAGEUP[] = "pageUp";
 
 static const char METHOD_CLEAR_HISTORY[] = "clearHistory";
 
@@ -94,6 +105,12 @@ static const char METHOD_POSTMESSAGEEVENT[] = "postMessageEvent";
 static const char METHOD_POSTMESSAGEEVENTEXT[] = "postMessageEventExt";
 
 static const char METHOD_ONWEBMESSAGEPORTEVENT[] = "onWebMessagePortEvent";
+
+static const char METHOD_SET_WEB_DEBUGGING_ACCESS[] = "setWebDebuggingAccess";
+
+static const char METHOD_PAGEDOWN[] = "pageDown";
+
+static const char METHOD_POSTURL[] = "postUrl";
 
 static const char METHOD_START_DOWNLOAD[] = "startDownload";
 
@@ -153,13 +170,31 @@ static const char SIGNATURE_SCROLL_BY[] = "(JII)V";
 
 static const char SIGNATURE_ZOOM[] = "(JF)V";
 
+static const char SIGNATURE_ZOOM_IN[] = "(J)V";
+
+static const char SIGNATURE_GET_ZOOM_ACCESS[] = "()Z";
+
+static const char SIGNATURE_ZOOM_OUT[] = "(J)V";
+
 static const char SIGNATURE_STOP[] = "(J)V";
+
+static const char SIGNATURE_GET_ORIGINAL_URL[] = "(J)Ljava/lang/String;";
+
+static const char SIGNATURE_PAGEUP[] = "(JZ)V";
 
 static const char SIGNATURE_CLEAR_HISTORY[] = "(J)V";
 
 static const char SIGNATURE_SET_CUSTOM_USER_AGENT[] = "(JLjava/lang/String;)V";
 
 static const char SIGNATURE_GET_CUSTOM_USER_AGENT[] = "(J)Ljava/lang/String;";
+
+static const char SIGNATURE_SET_WEB_DEBUGGING_ACCESS[] = "(Z)V";
+
+static const char SIGNATURE_PAGEDOWN[] = "(JZ)V";
+
+static const char SIGNATURE_POSTURL[] = "(JLjava/lang/String;[B)V";
+
+bool _webDebuggingAccessInit = false;
 
 struct {
     jmethodID loadUrl;
@@ -176,7 +211,12 @@ struct {
     jmethodID scrollTo;
     jmethodID scrollBy;
     jmethodID zoom;
+    jmethodID zoomIn;
+    jmethodID zoomOut;
+    jmethodID getZoomAccess;
     jmethodID stop;
+    jmethodID getOriginalUrl;
+    jmethodID pageUp;
     jmethodID clearHistory;
     jmethodID setCustomUserAgent;
     jmethodID getCustomUserAgent;
@@ -191,6 +231,9 @@ struct {
     jmethodID postMessageEvent;
     jmethodID postMessageEventExt;
     jmethodID onWebMessagePortEvent;
+    jmethodID setWebDebuggingAccess;
+    jmethodID pageDown;
+    jmethodID postUrl;
     jmethodID startDownload;
     jmethodID onWebMessagePortEventExt;
     jobject globalRef;
@@ -233,7 +276,12 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.scrollTo = env->GetMethodID(cls, METHOD_SCROLL_TO, SIGNATURE_SCROLL_TO);
     g_webWebviewClass.scrollBy = env->GetMethodID(cls, METHOD_SCROLL_BY, SIGNATURE_SCROLL_BY);
     g_webWebviewClass.zoom = env->GetMethodID(cls, METHOD_ZOOM, SIGNATURE_ZOOM);
+    g_webWebviewClass.zoomIn = env->GetMethodID(cls, METHOD_ZOOM_IN, SIGNATURE_ZOOM_IN);
+    g_webWebviewClass.zoomOut = env->GetMethodID(cls, METHOD_ZOOM_OUT, SIGNATURE_ZOOM_OUT);
+    g_webWebviewClass.getZoomAccess = env->GetMethodID(cls, METHOD_GET_ZOOM_ACCESS, SIGNATURE_GET_ZOOM_ACCESS);
     g_webWebviewClass.stop = env->GetMethodID(cls, METHOD_STOP, SIGNATURE_STOP);
+    g_webWebviewClass.getOriginalUrl = env->GetMethodID(cls, METHOD_GET_ORIGINAL_URL, SIGNATURE_GET_ORIGINAL_URL);
+    g_webWebviewClass.pageUp = env->GetMethodID(cls, METHOD_PAGEUP, SIGNATURE_PAGEUP);
     g_webWebviewClass.clearHistory = env->GetMethodID(cls, METHOD_CLEAR_HISTORY, SIGNATURE_CLEAR_HISTORY);
     g_webWebviewClass.setCustomUserAgent = env->GetMethodID(cls, METHOD_SET_CUSTOM_USER_AGENT, SIGNATURE_SET_CUSTOM_USER_AGENT);
     g_webWebviewClass.getCustomUserAgent = env->GetMethodID(cls, METHOD_GET_CUSTOM_USER_AGENT, SIGNATURE_GET_CUSTOM_USER_AGENT);
@@ -248,9 +296,29 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.postMessageEvent = env->GetMethodID(cls, METHOD_POSTMESSAGEEVENT, SIGNATURE_POSTMESSAGEEVENT);
     g_webWebviewClass.postMessageEventExt = env->GetMethodID(cls, METHOD_POSTMESSAGEEVENTEXT, SIGNATURE_POSTMESSAGEEVENTEXT);
     g_webWebviewClass.onWebMessagePortEvent = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENT, SIGNATURE_ONWEBMESSAGEPORTEVENT);
+    g_webWebviewClass.setWebDebuggingAccess = env->GetMethodID(cls, METHOD_SET_WEB_DEBUGGING_ACCESS, SIGNATURE_SET_WEB_DEBUGGING_ACCESS);
+    g_webWebviewClass.pageDown = env->GetMethodID(cls, METHOD_PAGEDOWN, SIGNATURE_PAGEDOWN);
+    g_webWebviewClass.postUrl = env->GetMethodID(cls, METHOD_POSTURL, SIGNATURE_POSTURL);
+    env->DeleteLocalRef(cls);
+}
+
+void WebviewControllerJni::NativeInitStatic(JNIEnv* env, jobject jobj)
+{
+    CHECK_NULL_VOID(env);
+    g_webWebviewClass.globalRef = env->NewGlobalRef(jobj);
+    CHECK_NULL_VOID(g_webWebviewClass.globalRef);
+    jclass cls = env->GetObjectClass(jobj);
+    CHECK_NULL_VOID(cls);
+    g_webWebviewClass.setWebDebuggingAccess = env->GetMethodID(cls, METHOD_SET_WEB_DEBUGGING_ACCESS, SIGNATURE_SET_WEB_DEBUGGING_ACCESS);
     g_webWebviewClass.startDownload = env->GetMethodID(cls, METHOD_START_DOWNLOAD, SIGNATURE_START_DOWNLOAD);
     g_webWebviewClass.onWebMessagePortEventExt = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENTEXT, SIGNATURE_ONWEBMESSAGEPORTEVENTEXT);
     env->DeleteLocalRef(cls);
+    WebviewControllerJni::CallStaticMethod(env);
+}
+
+void WebviewControllerJni::CallStaticMethod(JNIEnv* env)
+{
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.setWebDebuggingAccess, _webDebuggingAccessInit);
 }
 
 void WebviewControllerJni::OnReceiveValue(JNIEnv* env, jclass jcls, jstring jResult, jint jId)
@@ -613,6 +681,44 @@ ErrCode WebviewControllerJni::Zoom(int id, float factor)
     return NO_ERROR;
 }
 
+ErrCode WebviewControllerJni::ZoomIn(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+    jboolean ret = env->CallBooleanMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getZoomAccess, id);
+    if (ret != JNI_TRUE) {
+        return FUNCTION_NOT_ENABLE;
+    }
+
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.zoomIn, id);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call ZoomIN has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerJni::ZoomOut(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, INIT_ERROR);
+    jboolean ret = env->CallBooleanMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getZoomAccess, id);
+    if (ret != JNI_TRUE) {
+        return FUNCTION_NOT_ENABLE;
+    }
+
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.zoomOut, id);
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call ZoomOUT has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return INIT_ERROR;
+    }
+    return NO_ERROR;
+}
+
 ErrCode WebviewControllerJni::Stop(int id)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
@@ -625,6 +731,41 @@ ErrCode WebviewControllerJni::Stop(int id)
         env->ExceptionClear();
         return INIT_ERROR;
     }
+    return NO_ERROR;
+}
+
+std::string WebviewControllerJni::GetOriginalUrl(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.getOriginalUrl)) {
+        return "";
+    }
+    jstring jResult = static_cast<jstring>(
+        env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getOriginalUrl, id));
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return "";
+    }
+    std::string result;
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    if (jResult != nullptr) {
+        env->DeleteLocalRef(jResult);
+    }
+    return result;
+}
+
+ErrCode WebviewControllerJni::PageUp(int id, bool top)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.pageUp)) {
+        return INIT_ERROR;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.pageUp, id, top);
     return NO_ERROR;
 }
 
@@ -762,6 +903,35 @@ std::shared_ptr<WebHistoryList> WebviewControllerJni::GetBackForwardEntries(int 
         historyList->InsertHistoryItem(webHistoryItem);
     }
     return historyList;
+}
+
+ErrCode WebviewControllerJni::PageDown(int id, bool bottom)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.pageDown)) {
+         return INIT_ERROR;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.pageDown, id, bottom);
+     return NO_ERROR;
+}
+
+ErrCode WebviewControllerJni::PostUrl(int id, const std::string& url, const std::vector<uint8_t>& postData)
+{
+   auto env = ARKUI_X_Plugin_GetJniEnv();
+   CHECK_NULL_RETURN(env, INIT_ERROR);
+   jstring JsName = env->NewStringUTF(url.c_str());
+   jbyteArray jPostData = env->NewByteArray(postData.size());
+   if (jPostData == nullptr) {
+       return INIT_ERROR;
+   }
+   env->SetByteArrayRegion(jPostData, 0, postData.size(),reinterpret_cast<const jbyte*>(postData.data()));
+   env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.postUrl, id, JsName, jPostData);
+   if (env->ExceptionCheck()) {
+       env->ExceptionDescribe();
+       env->ExceptionClear();
+       return INIT_ERROR;
+   }
+   return NO_ERROR;
 }
 
 void WebviewControllerJni::RemoveCache(int id, bool value)
@@ -1066,6 +1236,12 @@ void WebviewControllerJni::OnMessage(JNIEnv* env, jclass jcls, jint jWebId, jstr
 
     int32_t webId = static_cast<int32_t>(jWebId);
     WebMessagePort::OnMessage(webId, portHandle, result);
+}
+
+void WebviewControllerJni::SetWebDebuggingAccess(bool webDebuggingAccess)
+{
+
+    _webDebuggingAccessInit = webDebuggingAccess;
 }
 
 void WebviewControllerJni::OnMessageEventExt(

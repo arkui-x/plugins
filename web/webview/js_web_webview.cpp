@@ -65,6 +65,10 @@ thread_local napi_ref g_classWebMsgPort;
 thread_local napi_ref g_jsMsgExtClassRef;
 thread_local int32_t g_asyncCallbackInfoId = 0;
 constexpr int32_t MAX_COUNT_ID = 1024;
+const std::string HTTP = "http://";
+const std::string HTTPS = "https://";
+const std::string RESOURCE = "resource://rawfile";
+const std::string FILE = "file";
 constexpr int32_t MAX_WEB_STRING_LENGTH = 40960;
 constexpr uint32_t URL_MAXIMUM = 2048;
 constexpr char URL_REGEXPR[] = "^http(s)?:\\/\\/.+";
@@ -405,6 +409,120 @@ napi_value NapiWebviewController::LoadData(napi_env env, napi_callback_info info
         }
         BusinessError::ThrowErrorByErrcode(env, ret);
         return result;
+    }
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebviewController::PostUrl(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_TWO) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_ONE, "two"));
+        return result;
+    }
+    WebviewController *webviewController = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, (void **)&webviewController);
+    if ((!webviewController) || (status != napi_ok) || !webviewController->IsInit()) {
+        BusinessError::ThrowErrorByErrcode(env, INIT_ERROR);
+        return nullptr;
+    }
+    std::string url;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], url)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "url", "string"));
+        return result;
+    }
+    if (url.empty()) {
+    BusinessError::ThrowErrorByErrcode(env, INVALID_URL);
+    return result;
+    }
+    bool isArrayBuffer = false;
+    NAPI_CALL(env, napi_is_arraybuffer(env, argv[INTEGER_ONE], &isArrayBuffer));
+    if (!isArrayBuffer) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "postData", "array"));
+        return result;
+    }
+    if ((url.substr(INTEGER_ZERO, HTTP.size()) == HTTP || url.substr(INTEGER_ZERO, HTTPS.size()) == HTTPS)) {        
+        char *arrBuf = nullptr;
+        size_t byteLength = 0;
+        napi_get_arraybuffer_info(env, argv[INTEGER_ONE], (void **)&arrBuf, &byteLength);
+        std::vector<uint8_t> postData(arrBuf, arrBuf + byteLength);
+        ErrCode ret = webviewController->PostUrl(url, postData);
+        if (ret != NO_ERROR) {
+            if (ret == NWEB_ERROR) {
+                LOGE("PostData failed");
+                return result;
+            }
+            BusinessError::ThrowErrorByErrcode(env, ret);
+            return result;
+        }
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+        return result;
+    }
+    if (url.substr(INTEGER_ZERO, FILE.size()) == FILE) {
+        std::string filePath = url;
+        std::string fileProtocol = FILE + ":///";
+        filePath.erase(INTEGER_ZERO, fileProtocol.size());
+        int isFileExist = access(filePath.c_str(), F_OK);
+        if (isFileExist == -1) {
+            BusinessError::ThrowErrorByErrcode(env, INVALID_RESOURCE);
+        }
+    }
+    if (url.substr(INTEGER_ZERO, RESOURCE.size()) == RESOURCE)
+    {
+       std::string resourcePath = url;
+       resourcePath.erase(INTEGER_ZERO, RESOURCE.size());
+       GetRawFileUrl(resourcePath,url);
+    }    
+    ErrCode ret = webviewController->LoadUrl(url);
+    if (ret != NO_ERROR) {
+        if (ret == NWEB_ERROR) {
+            return nullptr;
+        }
+        BusinessError::ThrowErrorByErrcode(env, ret);
+        return nullptr;
+    }
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+napi_value NapiWebviewController::PageDown(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    bool bottom = false;
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_ONE, "one"));
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseBoolean(env, argv[0], bottom)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "bottom", "boolean"));
+        return result;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    ErrCode ret = webviewController->PageDown(bottom);
+    if (ret != NO_ERROR) {
+        if (ret == INIT_ERROR) {
+            LOGE("PageDown failed.");
+            return result;
+        }
+        BusinessError::ThrowErrorByErrcode(env, ret);
     }
     NAPI_CALL(env, napi_get_undefined(env, &result));
     return result;
@@ -803,6 +921,48 @@ napi_value NapiWebviewController::Zoom(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value NapiWebviewController::ZoomIn(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    ErrCode ret = webviewController->ZoomIn();
+    if (ret != NO_ERROR) {
+        if (ret == NWEB_ERROR) {
+            LOGE("ZoomIn failed.");
+            return result;
+        }
+        BusinessError::ThrowErrorByErrcode(env, ret);
+    }
+
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+    
+napi_value NapiWebviewController::ZoomOut(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    ErrCode ret = webviewController->ZoomOut();
+    if (ret != NO_ERROR) {
+        if (ret == NWEB_ERROR) {
+            LOGE("ZoomOut failed.");
+            return result;
+        }
+        BusinessError::ThrowErrorByErrcode(env, ret);
+    }
+
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
 napi_value NapiWebviewController::Stop(napi_env env, napi_callback_info info)
 {
     napi_value thisVar = nullptr;
@@ -811,6 +971,53 @@ napi_value NapiWebviewController::Stop(napi_env env, napi_callback_info info)
     WebviewController *webviewController = GetWebviewController(env, info);
     CHECK_NULL_RETURN(webviewController, result);
     webviewController->Stop();
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
+
+napi_value NapiWebviewController::GetOriginalUrl(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    std::string url = webviewController->GetOriginalUrl();
+    napi_create_string_utf8(env, url.c_str(), url.length(), &result);
+    return result;
+}
+
+napi_value NapiWebviewController::PageUp(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    bool top = false;
+    
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_ONE, "one"));
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseBoolean(env, argv[0], top)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "top", "boolean"));
+        return result;
+    }
+
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+
+    ErrCode ret = webviewController->PageUp(top);
+    if (ret != NO_ERROR) {
+        if (ret == INIT_ERROR) {
+            LOGE("PageUp failed.");
+            return result;
+        }
+        BusinessError::ThrowErrorByErrcode(env, ret);
+    }
     NAPI_CALL(env, napi_get_undefined(env, &result));
     return result;
 }
@@ -980,6 +1187,31 @@ napi_value NapiWebviewController::RemoveCache(napi_env env, napi_callback_info i
     return result;
 }
 
+napi_value NapiWebviewController::SetWebDebuggingAccess(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    bool webDebuggingAccess = false;
+
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return result;
+    }
+
+    if (!NapiParseUtils::ParseBoolean(env, argv[0], webDebuggingAccess)) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "webDebuggingAccess","boolean"));
+        return result;
+    }
+
+    WebviewController::SetWebDebuggingAccess(webDebuggingAccess);
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
 napi_value NapiWebviewController::BackOrForward(napi_env env, napi_callback_info info)
 {
     napi_value thisVar = nullptr;
@@ -1027,6 +1259,21 @@ napi_value NapiWebviewController::GetPageHeight(napi_env env, napi_callback_info
     int32_t pageHeight = webviewController->GetPageHeight();
     napi_create_int32(env, pageHeight, &result);
 
+    return result;
+}
+
+napi_value NapiWebviewController::GetWebId(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    WebviewController *webviewController = GetWebviewController(env, info);
+    CHECK_NULL_RETURN(webviewController, result);
+    int32_t newebId = webviewController->GetWebId();
+    #ifdef ANDROID_PLATFORM
+        int32_t resultWebId = newebId+1;
+        napi_create_int32(env, resultWebId, &result);
+    #else
+        napi_create_int32(env, newebId, &result);
+    #endif
     return result;
 }
 
@@ -1466,7 +1713,11 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("scrollTo", NapiWebviewController::ScrollTo),
         DECLARE_NAPI_FUNCTION("scrollBy", NapiWebviewController::ScrollBy),
         DECLARE_NAPI_FUNCTION("zoom", NapiWebviewController::Zoom),
+        DECLARE_NAPI_FUNCTION("zoomIn", NapiWebviewController::ZoomIn),
+        DECLARE_NAPI_FUNCTION("zoomOut", NapiWebviewController::ZoomOut),
         DECLARE_NAPI_FUNCTION("stop", NapiWebviewController::Stop),
+        DECLARE_NAPI_FUNCTION("getOriginalUrl", NapiWebviewController::GetOriginalUrl),
+        DECLARE_NAPI_FUNCTION("pageUp", NapiWebviewController::PageUp),
         DECLARE_NAPI_FUNCTION("clearHistory", NapiWebviewController::ClearHistory),
         DECLARE_NAPI_FUNCTION("setCustomUserAgent", NapiWebviewController::SetCustomUserAgent),
         DECLARE_NAPI_FUNCTION("getCustomUserAgent", NapiWebviewController::GetCustomUserAgent),
@@ -1475,11 +1726,16 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("backOrForward", NapiWebviewController::BackOrForward),
         DECLARE_NAPI_FUNCTION("getTitle", NapiWebviewController::GetTitle),
         DECLARE_NAPI_FUNCTION("getPageHeight", NapiWebviewController::GetPageHeight),
+        DECLARE_NAPI_FUNCTION("getWebId", NapiWebviewController::GetWebId),
         DECLARE_NAPI_FUNCTION("createWebMessagePorts", NapiWebviewController::CreateWebMessagePorts),
         DECLARE_NAPI_FUNCTION("postMessage", NapiWebviewController::PostMessage),
+        DECLARE_NAPI_STATIC_FUNCTION("setWebDebuggingAccess", NapiWebviewController::SetWebDebuggingAccess),
+        DECLARE_NAPI_FUNCTION("pageDown", NapiWebviewController::PageDown),
+        DECLARE_NAPI_FUNCTION("postUrl", NapiWebviewController::PostUrl),
         DECLARE_NAPI_FUNCTION("startDownload", NapiWebviewController::StartDownload),
         DECLARE_NAPI_FUNCTION("setDownloadDelegate", NapiWebviewController::SetDownloadDelegate),
     };
+
     napi_value constructor = nullptr;
     napi_define_class(env, WEBVIEW_CONTROLLER_CLASS_NAME.c_str(), WEBVIEW_CONTROLLER_CLASS_NAME.length(),
         NapiWebviewController::JsConstructor, nullptr, sizeof(properties) / sizeof(properties[0]),

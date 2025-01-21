@@ -95,7 +95,13 @@ public:
     virtual ErrCode ScrollTo(float x, float y) = 0;
     virtual ErrCode ScrollBy(float deltaX, float deltaY) = 0;
     virtual ErrCode Zoom(float factor) = 0;
+    virtual ErrCode ZoomIn() = 0;
+    virtual ErrCode ZoomOut() = 0;
+    virtual std::string GetOriginalUrl() = 0;
+    virtual ErrCode PageUp(bool top) = 0;
     virtual ErrCode Stop() = 0;
+    virtual ErrCode PageDown(bool bottom) = 0;
+    virtual ErrCode PostUrl(const std::string& url, const std::vector<uint8_t>& postData) = 0;
     virtual ErrCode SetCustomUserAgent(const std::string& userAgent) = 0;
     virtual std::string GetCustomUserAgent() = 0;
     virtual bool AccessStep(int32_t step) = 0;
@@ -123,6 +129,7 @@ public:
     static void OnReceiveValue(const std::string& result, int32_t asyncCallbackInfoId);
     static void InsertAsyncCallbackInfo(const std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>& asyncCallbackInfo);
     static bool EraseAsyncCallbackInfo(const AsyncEvaluteJSResultCallbackInfo* asyncCallbackInfo);
+    static void SetWebDebuggingAccess(bool webDebuggingAccess);
     static void OnReceiveRunJavaScriptExtValue(const std::string& type, const std::string& result, int32_t asyncCallbackInfoId);
     static void InsertAsyncCallbackJavaScriptExtInfo(
         const AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo);
