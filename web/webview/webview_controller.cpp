@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,12 +13,23 @@
  * limitations under the License.
  */
 
+#include "android/java/jni/webview_controller_android.h"
 #include "inner_api/plugin_utils_inner.h"
+#include "ios/webview_controller_ios.h"
 #include "log.h"
 #include "webview_controller.h"
+#include "android/java/jni/webview_controller_android.h"
+#ifdef ANDROID_PLATFORM
+#include "android/java/jni/webview_controller_android.h"
+#endif
+#ifdef IOS_PLATFORM
+#include "ios/webview_controller_ios.h"
+#endif
 
 namespace OHOS::Plugin {
 thread_local std::vector<std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>> WebviewController::asyncCallbackInfoContainer_;
+thread_local std::vector<AsyncJavaScriptExtEvaluteJSResultCallbackInfo*>
+    WebviewController::asyncCallbackJavaScriptExtInfoContainer_;
 
 void WebviewController::OnReceiveValue(const std::string& result, int32_t asyncCallbackInfoId)
 {
@@ -68,6 +79,101 @@ bool WebviewController::ExcuteAsyncCallbackInfo(const std::string& result, int32
     return false;
 }
 
+void WebviewController::OnReceiveRunJavaScriptExtValue(const std::string& type, const std::string& result, int32_t asyncCallbackInfoId)
+{
+    if (result.empty()) {
+        LOGE("WebviewController OnReceiveRunJavaScriptExtValue result is empty.");
+        return;
+    }
+    std::shared_ptr<WebMessage> webMessage = nullptr;
+    if (type == "STRING") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::STRING);
+        if (webMessage) {
+            webMessage->SetString(result);
+        }
+    } else if (type == "BOOL") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::BOOLEAN);
+        if (webMessage) {
+            webMessage->SetBoolean(result == "true");
+        }
+    } else if (type == "INT") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::INTEGER);
+        if (webMessage) {
+            webMessage->SetInt(std::stoi(result));
+        }
+    } else if (type == "DOUBLE") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::DOUBLE);
+        if (webMessage) {
+            webMessage->SetDouble(std::stod(result));
+        }
+    } else if (type == "ARRAY") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::STRINGARRAY);
+        if (webMessage) {
+            std::vector<std::string> vector; 
+            std::istringstream iss(result); 
+            std::string item; 
+            while (std::getline(iss, item, ',')) {
+                item.erase(std::remove(item.begin(), item.end(), '['), item.end()); 
+                item.erase(std::remove(item.begin(), item.end(), ']'), item.end()); 
+                vector.push_back(item);
+            }
+            webMessage->SetStringArray(vector);
+        }
+    } else {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::ERROR);
+        if (webMessage) {
+            webMessage->SetErrName("JavaScriptError");
+            webMessage->SetErrMsg(result);
+        }
+    }
+    if (webMessage) {
+        ExcuteAsyncCallbackJavaScriptExtInfo(webMessage, asyncCallbackInfoId);
+    }
+}
+
+void WebviewController::InsertAsyncCallbackJavaScriptExtInfo(
+    const AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo)
+{
+    if (asyncCallbackInfo) {
+        asyncCallbackJavaScriptExtInfoContainer_.push_back(
+            const_cast<AsyncJavaScriptExtEvaluteJSResultCallbackInfo*>(asyncCallbackInfo));
+    }
+}
+
+bool WebviewController::EraseAsyncCallbackJavaScriptExtInfo(
+    const AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo)
+{
+    if (asyncCallbackJavaScriptExtInfoContainer_.empty() || !asyncCallbackInfo) {
+        return false;
+    }
+    for (auto it = asyncCallbackJavaScriptExtInfoContainer_.cbegin();
+         it != asyncCallbackJavaScriptExtInfoContainer_.cend(); it++) {
+        if ((*it) == asyncCallbackInfo) {
+            asyncCallbackJavaScriptExtInfoContainer_.erase(it);
+            delete asyncCallbackInfo;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool WebviewController::ExcuteAsyncCallbackJavaScriptExtInfo(const std::shared_ptr<WebMessage>& result, int32_t asyncCallbackInfoId)
+{
+    for (const auto& asyncCallbackInfo : asyncCallbackJavaScriptExtInfoContainer_) {
+        if (!asyncCallbackInfo) {
+            continue;
+        }
+        if (asyncCallbackInfo->GetUniqueId() == asyncCallbackInfoId) {
+            if ((asyncCallbackInfo->env) && (asyncCallbackInfo->asyncWork)) {
+                asyncCallbackInfo->result_ = result;
+                napi_queue_async_work(asyncCallbackInfo->env, asyncCallbackInfo->asyncWork);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 WebHistoryItem::WebHistoryItem(const WebHistoryItem& other) : historyUrl(other.historyUrl),
     historyRawUrl(other.historyRawUrl), title(other.title)
 {}
@@ -102,5 +208,15 @@ std::shared_ptr<WebHistoryItem> WebHistoryList::GetItemAtIndex(int32_t index)
         return nullptr;
     }
     return webHistoryItemContainer_.at(index);
+}
+
+void WebviewController::SetWebDebuggingAccess(bool webDebuggingAccess)
+{
+#ifdef ANDROID_PLATFORM
+    WebviewControllerAndroid::SetWebDebuggingAccess(webDebuggingAccess);
+#endif
+#ifdef IOS_PLATFORM
+    WebviewControllerIOS::SetWebDebuggingAccess(webDebuggingAccess);
+#endif
 }
 } // namespace OHOS::Plugin

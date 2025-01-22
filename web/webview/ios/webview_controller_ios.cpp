@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -75,7 +75,12 @@ ErrCode WebviewControllerIOS::Refresh()
 
 void WebviewControllerIOS::EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId)
 {
-    EvaluateJavaScriptOC(webId_, script, asyncCallbackInfoId, WebviewController::OnReceiveValue);
+    evaluateJavaScriptOC(webId_, script, asyncCallbackInfoId, WebviewController::OnReceiveValue);
+}
+
+void WebviewControllerIOS::EvaluateJavaScriptExt(const std::string& script, int32_t asyncCallbackInfoId)
+{
+    evaluateJavaScriptExtOC(webId_, script, asyncCallbackInfoId, WebviewController::OnReceiveRunJavaScriptExtValue);
 }
 
 void WebviewControllerIOS::RemoveCache(bool value)
@@ -139,9 +144,40 @@ ErrCode WebviewControllerIOS::Zoom(float factor)
     return NO_ERROR;
 }
 
+ErrCode WebviewControllerIOS::ZoomIn()
+{
+    bool accessStatus = isZoomAccessOC(webId_);
+    if(accessStatus) {
+        zoomInOC(webId_);
+        return NO_ERROR;
+    }
+    return FUNCTION_NOT_ENABLE;
+}
+
+ErrCode WebviewControllerIOS::ZoomOut()
+{
+    bool accessStatus = isZoomAccessOC(webId_);
+    if(accessStatus) {
+        zoomOutOC(webId_);
+        return NO_ERROR;
+    }
+    return FUNCTION_NOT_ENABLE;
+}
+
 ErrCode WebviewControllerIOS::Stop()
 {
     stopOC(webId_);
+    return NO_ERROR;
+}
+
+std::string WebviewControllerIOS::GetOriginalUrl()
+{
+    return getOriginalUrlOC(webId_);
+}
+
+ErrCode WebviewControllerIOS::PageUp(bool top)
+{
+    pageUpOC(webId_, top);
     return NO_ERROR;
 }
 
@@ -164,5 +200,27 @@ bool WebviewControllerIOS::AccessStep(int32_t step)
 bool WebviewControllerIOS::IsInit()
 {
     return webId_ != -1;
+}
+
+void WebviewControllerIOS::SetWebDebuggingAccess(bool webDebuggingAccess)
+{
+    setWebDebuggingAccessOC(webDebuggingAccess);
+}
+
+ErrCode WebviewControllerIOS::PageDown(bool bottom)
+{
+    pageDownOC(webId_, bottom);
+    return NO_ERROR;
+}
+
+ErrCode WebviewControllerIOS::PostUrl(const std::string& url, const std::vector<uint8_t>& postData)
+{
+    postUrlOC(webId_, url, postData);
+    return NO_ERROR;
+}
+
+void WebviewControllerIOS::StartDownload(const std::string& url)
+{
+    startDownloadOC(webId_, url);
 }
 } // namespace OHOS::Plugin

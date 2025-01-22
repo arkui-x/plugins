@@ -67,6 +67,7 @@ socket_include = [
   "$NETSTACK_NAPI_ROOT/socket/socket_exec/include",
   "$NETSTACK_NAPI_ROOT/socket/socket_module/include",
   "$NETSTACK_NAPI_ROOT/socket/task_queue/include",
+  "$NETSTACK_NAPI_ROOT/proxy/include",
   "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   "//plugins/interfaces",
   "//plugins/net/socket",
@@ -75,6 +76,11 @@ socket_include = [
 ]
 
 socket_sources = [
+  "$NETSTACK_NAPI_ROOT/proxy/src/socks5_instance.cpp",
+  "$NETSTACK_NAPI_ROOT/proxy/src/socks5_none_method.cpp",
+  "$NETSTACK_NAPI_ROOT/proxy/src/socks5_package.cpp",
+  "$NETSTACK_NAPI_ROOT/proxy/src/socks5_passwd_method.cpp",
+  "$NETSTACK_NAPI_ROOT/proxy/src/socks5_utils.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/bind_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/common_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/connect_context.cpp",
@@ -97,6 +103,7 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/socket/options/src/extra_options_base.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/local_socket_options.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/net_address.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/options/src/proxy_options.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/socket_remote_info.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/socket_state_base.cpp",
   "$NETSTACK_NAPI_ROOT/socket/options/src/tcp_connect_options.cpp",
@@ -134,18 +141,25 @@ template("plugin_net_socket_static") {
     sources += tls_sources
     sources += tls_napi_sources
 
-    if (target_os == "ios") {
-      include_dirs += utils_include
-    }
-
     deps = [
       "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler:cross_platform_event_handler",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${platform}",
       "//plugins/net/utils:net_utils_${target_os}",
-      "//third_party/openssl:libcrypto_shared",
-      "//third_party/openssl:libssl_shared",
     ]
+
+    if (target_os == "android") {
+      deps += [
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
+      ]
+    } else if (target_os == "ios") {
+      include_dirs += utils_include
+      deps += [
+        "//third_party/openssl:libcrypto_static",
+        "//third_party/openssl:libssl_static",
+      ]
+    }
 
     subsystem_name = "plugins"
     part_name = "net_socket"

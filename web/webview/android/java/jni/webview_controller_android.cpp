@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -88,12 +88,32 @@ ErrCode WebviewControllerAndroid::ScrollBy(float deltaX, float deltaY)
 
 ErrCode WebviewControllerAndroid::Zoom(float factor)
 {
-    return WebviewControllerJni::Zoom(webId_, factor);;
+    return WebviewControllerJni::Zoom(webId_, factor);
+}
+
+ErrCode WebviewControllerAndroid::ZoomIn()
+{
+    return WebviewControllerJni::ZoomIn(webId_);
+}
+
+ErrCode WebviewControllerAndroid::ZoomOut()
+{
+    return WebviewControllerJni::ZoomOut(webId_);
 }
 
 ErrCode WebviewControllerAndroid::Stop()
 {
     return WebviewControllerJni::Stop(webId_);
+}
+
+std::string WebviewControllerAndroid::GetOriginalUrl()
+{
+    return WebviewControllerJni::GetOriginalUrl(webId_);
+}
+
+ErrCode WebviewControllerAndroid::PageUp(bool value)
+{
+    return WebviewControllerJni::PageUp(webId_, value);
 }
 
 ErrCode WebviewControllerAndroid::SetCustomUserAgent(const std::string& userAgent)
@@ -124,6 +144,11 @@ bool WebviewControllerAndroid::IsInit()
 void WebviewControllerAndroid::EvaluateJavaScript(const std::string& script, int32_t asyncCallbackInfoId)
 {
     WebviewControllerJni::EvaluateJavaScript(webId_, script, asyncCallbackInfoId);
+}
+
+void WebviewControllerAndroid::EvaluateJavaScriptExt(const std::string& script, int32_t asyncCallbackInfoId)
+{
+    WebviewControllerJni::EvaluateJavaScriptExt(webId_, script, asyncCallbackInfoId);
 }
 
 std::shared_ptr<WebHistoryList> WebviewControllerAndroid::GetBackForwardEntries()
@@ -160,5 +185,25 @@ void WebviewControllerAndroid::PostWebMessage(
     std::string& message, std::vector<std::string>& ports,std::string& targetUrl)
 {
     WebviewControllerJni::PostWebMessage(webId_, message, ports, targetUrl);
+}
+
+void WebviewControllerAndroid::SetWebDebuggingAccess(bool webDebuggingAccess)
+{
+    WebviewControllerJni::SetWebDebuggingAccess(webDebuggingAccess);
+}
+
+ErrCode WebviewControllerAndroid::PageDown(bool value)
+{
+    return WebviewControllerJni::PageDown(webId_, value);
+}
+
+ErrCode WebviewControllerAndroid::PostUrl(const std::string& url, const std::vector<uint8_t>& postData)
+{
+    return WebviewControllerJni::PostUrl(webId_, url, postData);
+}
+
+void WebviewControllerAndroid::StartDownload(const std::string& url)
+{
+    WebviewControllerJni::StartDownload(webId_, url);
 }
 }

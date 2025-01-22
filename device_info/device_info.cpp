@@ -85,6 +85,16 @@ static napi_value GetProductModel(napi_env env, napi_callback_info info)
     return napiValue;
 }
 
+static napi_value GetProductModelAlias(napi_env env, napi_callback_info info)
+{
+    napi_value napiValue = nullptr;
+    auto deviceinfo = DeviceInfo::Create();
+    NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetProductModelAlias");
+    std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getProductModelAlias, g_defaultValue);
+    NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    return napiValue;
+}
+
 static napi_value GetSoftwareModel(napi_env env, napi_callback_info info)
 {
     napi_value napiValue = nullptr;
@@ -341,6 +351,7 @@ static napi_value Init(napi_env env, napi_value exports)
         {"marketName", nullptr, nullptr, GetMarketName, nullptr, nullptr, napi_default, nullptr},
         {"productSeries", nullptr, nullptr, GetProductSeries, nullptr, nullptr, napi_default, nullptr},
         {"productModel", nullptr, nullptr, GetProductModel, nullptr, nullptr, napi_default, nullptr},
+        {"productModelAlias", nullptr, nullptr, GetProductModelAlias, nullptr, nullptr, napi_default, nullptr},
         {"softwareModel", nullptr, nullptr, GetSoftwareModel, nullptr, nullptr, napi_default, nullptr},
         {"hardwareModel", nullptr, nullptr, GetHardwareModel, nullptr, nullptr, napi_default, nullptr},
         {"hardwareProfile", nullptr, nullptr, GetHardwareProfile, nullptr, nullptr, napi_default, nullptr},

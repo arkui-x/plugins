@@ -36,6 +36,7 @@ private:
     const std::string GetMarketName(void);
     const std::string GetProductSeries(void);
     const std::string GetProductModel(void);
+    const std::string GetProductModelAlias(void);
     const std::string GetSoftwareModel(void);
     const std::string GetHardwareModel(void);
     const std::string GetBootLoaderVersion(const std::string &def);

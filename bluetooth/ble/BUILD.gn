@@ -31,6 +31,7 @@ ohos_source_set("bluetooth_ble_static") {
     "$bluetooth_napi_root/src/ble/napi_bluetooth_ble.cpp",
     "$bluetooth_napi_root/src/ble/napi_bluetooth_ble_advertise_callback.cpp",
     "$bluetooth_napi_root/src/ble/napi_bluetooth_ble_central_manager_callback.cpp",
+    "$bluetooth_napi_root/src/ble/napi_bluetooth_ble_scanner.cpp",
     "$bluetooth_napi_root/src/ble/napi_bluetooth_ble_utils.cpp",
     "$bluetooth_napi_root/src/ble/napi_bluetooth_gatt_client.cpp",
     "$bluetooth_napi_root/src/ble/napi_bluetooth_gatt_client_callback.cpp",
