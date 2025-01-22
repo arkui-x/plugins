@@ -47,13 +47,22 @@ ohos_source_set("crypto_openssl_plugin_lib") {
   ]
 
   deps = [
-    "//plugins/security/cryptoframework/common:crypto_plugin_common",
-    "//plugins/libs/securec:sec_${target_os}",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
-    "//third_party/openssl:libcrypto_shared",
-    "//third_party/openssl:libssl_shared",
+    "//plugins/libs/securec:sec_${target_os}",
+    "//plugins/security/cryptoframework/common:crypto_plugin_common",
   ]
 
+  if (target_os == "android") {
+    deps += [
+      "//third_party/openssl:libcrypto_shared",
+      "//third_party/openssl:libssl_shared",
+    ]
+  } else if (target_os == "ios") {
+    deps += [
+      "//third_party/openssl:libcrypto_static",
+      "//third_party/openssl:libssl_static",
+    ]
+  }
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
