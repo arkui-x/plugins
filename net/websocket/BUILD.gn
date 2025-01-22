@@ -69,14 +69,20 @@ template("plugin_net_websocket_static") {
       "//plugins/net/utils:net_utils_${target_os}",
       "//third_party/bounds_checking_function:libsec_static",
       "//third_party/libwebsockets:websockets",
-      "//third_party/openssl:libcrypto_shared",
-      "//third_party/openssl:libssl_shared",
     ]
 
     if (target_os == "android") {
       libs = [ "log" ]
+      deps += [
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
+      ]
     } else if (target_os == "ios") {
       include_dirs += utils_include
+      deps += [
+        "//third_party/openssl:libcrypto_static",
+        "//third_party/openssl:libssl_static",
+      ]
     }
 
     subsystem_name = "plugins"
