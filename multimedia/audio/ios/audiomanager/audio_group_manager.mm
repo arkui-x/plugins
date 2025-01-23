@@ -90,7 +90,7 @@ int32_t AudioGroupManager::GetMinVolume(AudioVolumeType volumeType)
     return [managerImpl getMinVolume];
 }
 
-int32_t AudioGroupManager::SetMute(AudioVolumeType volumeType, bool mute)
+int32_t AudioGroupManager::SetMute(AudioVolumeType volumeType, bool mute, const DeviceType &deviceType)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
     return ERR_NOT_SUPPORTED;
