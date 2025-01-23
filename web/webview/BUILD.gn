@@ -31,6 +31,8 @@ template("plugin_web_webview_static") {
 
     sources = web_source
     sources += [
+      "geolocation_permissions.cpp",
+      "geolocation_permissions_callback.cpp",
       "js_web_webview.cpp",
       "napi_parse_utils.cpp",
       "napi_web_message_ext.cpp",

@@ -40,6 +40,8 @@ ohos_combine_jars("web_webview_java") {
 
 ohos_source_set("web_webview_android_jni") {
   sources = [
+    "jni/geolocation_permissions_android.cpp",
+    "jni/geolocation_permissions_jni.cpp",
     "jni/web_cookie_manager_android.cpp",
     "jni/web_cookie_manager_jni.cpp",
     "jni/web_data_base_android.cpp",

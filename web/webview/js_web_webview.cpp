@@ -45,6 +45,8 @@
 #include "android/java/jni/web_download_delegate_jni.h"
 #include "android/java/jni/web_download_item_jni.h"
 #include "android/java/jni/web_message_port_android.h"
+#include "android/java/jni/geolocation_permissions_android.h"
+#include "android/java/jni/geolocation_permissions_jni.h"
 #include "android/java/jni/web_storage_android.h"
 #include "android/java/jni/web_storage_jni.h"
 #include "android/java/jni/webview_controller_android.h"
@@ -1944,6 +1946,7 @@ static napi_value WebWebviewExport(napi_env env, napi_value exports)
     NapiWebviewController::Init(env, exports);
     NapiWebDataBase::Init(env, exports);
     NapiWebCookieManager::Init(env, exports);
+    NapiGeolocationPermissions::Init(env, exports);
     NapiWebStorage::Init(env, exports);
     NapiWebDownloadDelegate::Init(env, exports);
     NapiWebDownloadManager::Init(env, exports);
@@ -1975,6 +1978,8 @@ static void WebWebviewJniRegister()
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDataBaseJni::Register, dataBaseClassName);
     const char webCookieClassName[] = "ohos.ace.plugin.webviewplugin.webcookie.WebCookiePlugin";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebCookieManagerJni::Register, webCookieClassName);
+    const char GeolocationPermissionsClassName[] = "ohos.ace.adapter.capability.web.AceGeolocationPermissions";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&GeolocationPermissionsJni::Register, GeolocationPermissionsClassName);
     const char webStorageClassName[] = "ohos.ace.plugin.webviewplugin.webstorage.WebStoragePlugin";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebStorageJni::Register, webStorageClassName);
     const char webDownloadDelegateClassName[] = "ohos.ace.adapter.capability.web.AceWebPluginBase";
@@ -2291,6 +2296,37 @@ void NapiWebCookieManager::CreateFetchCookieAsyncWork(
     WebCookieManager::InsertCallbackInfo(callbackInfo, TaskType::FETCH_COOKIE);
 }
 
+std::regex NapiGeolocationPermissions::originPattern(".*://.*");
+
+napi_value NapiGeolocationPermissions::Init(napi_env env, napi_value exports)
+{
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_STATIC_FUNCTION("allowGeolocation", NapiGeolocationPermissions::JsAllowGeolocation),
+        DECLARE_NAPI_STATIC_FUNCTION("deleteGeolocation", NapiGeolocationPermissions::JsDeleteGeolocation),
+        DECLARE_NAPI_STATIC_FUNCTION("deleteAllGeolocation", NapiGeolocationPermissions::JsDeleteAllGeolocation),
+        DECLARE_NAPI_STATIC_FUNCTION("getAccessibleGeolocation", NapiGeolocationPermissions::JsGetAccessibleGeolocation),
+        DECLARE_NAPI_STATIC_FUNCTION("getStoredGeolocation", NapiGeolocationPermissions::JsGetStoredGeolocation),
+    };
+    napi_value constructor = nullptr;
+
+    napi_define_class(env, GEOLOCATION_PERMISSIONS_CLASS_NAME.c_str(), GEOLOCATION_PERMISSIONS_CLASS_NAME.length(),
+        NapiGeolocationPermissions::JsConstructor, nullptr, sizeof(properties) / sizeof(properties[0]), properties,
+        &constructor);
+    NAPI_ASSERT(env, constructor != nullptr, "NapiGeolocationPermissions define js class failed");
+    napi_status status = napi_set_named_property(env, exports, "GeolocationPermissions", constructor);
+    NAPI_ASSERT(env, status == napi_ok, "NapiGeolocationPermissions set property failed");
+    return exports;
+}
+
+napi_value NapiGeolocationPermissions::JsConstructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    return thisVar;
+}
+
 napi_value NapiWebStorage::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor properties[] = {
@@ -2318,6 +2354,157 @@ napi_value NapiWebStorage::JsConstructor(napi_env env, napi_callback_info info)
     napi_value argv[2] = { 0 };
     napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
     return thisVar;
+}
+
+napi_value NapiGeolocationPermissions::JsAllowGeolocation(napi_env env, napi_callback_info info)
+{
+    napi_value retValue = nullptr;
+    size_t argc = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = {0};
+    napi_get_cb_info(env, info, &argc, argv, &retValue, nullptr);
+    if (argc != INTEGER_ONE && argc != INTEGER_TWO) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_TWO, "one", "two"));
+        return retValue;
+    }
+
+    std::string origin;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], origin)) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "origin", "string"));
+        return retValue;
+    }
+
+    if (!std::regex_match(origin, originPattern)) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::INVALID_ORIGIN);
+        return retValue;
+    }
+
+    bool incognito = false;
+    if (argc == INTEGER_TWO) {
+        napi_get_value_bool(env, argv[INTEGER_ONE], &incognito);
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    GeolocationPermissions::AllowGeolocation(origin, incognito);
+    return result;
+}
+
+napi_value NapiGeolocationPermissions::JsDeleteGeolocation(napi_env env, napi_callback_info info)
+{
+    napi_value retValue = nullptr;
+    size_t argc = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = {0};
+    napi_get_cb_info(env, info, &argc, argv, &retValue, nullptr);
+    if (argc != INTEGER_ONE && argc != INTEGER_TWO) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_TWO, "one", "two"));
+        return retValue;
+    }
+
+    std::string origin;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], origin)) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "origin", "string"));
+        return retValue;
+    }
+
+    if (!std::regex_match(origin, originPattern)) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::INVALID_ORIGIN);
+        return retValue;
+    }
+
+    bool incognito = false;
+    if (argc == INTEGER_TWO) {
+        napi_get_value_bool(env, argv[INTEGER_ONE], &incognito);
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    GeolocationPermissions::DeleteGeolocation(origin, incognito);
+    return result;
+}
+
+napi_value NapiGeolocationPermissions::JsDeleteAllGeolocation(napi_env env, napi_callback_info info)
+{
+    napi_value retValue = nullptr;
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE] = { 0 };
+    napi_get_cb_info(env, info, &argc, argv, &retValue, nullptr);
+    if (argc != INTEGER_ZERO && argc != INTEGER_ONE) {
+        return nullptr;
+    }
+    bool incognito = false;
+    if (argc == INTEGER_ONE) {
+        napi_get_value_bool(env, argv[INTEGER_ZERO], &incognito);
+    }
+
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    GeolocationPermissions::DeleteAllGeolocation(incognito);
+    return result;
+}
+
+napi_value NapiGeolocationPermissions::JsGetAccessibleGeolocation(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value retValue = nullptr;
+    size_t argc = INTEGER_THREE;
+    size_t argcPromise = INTEGER_ONE;
+    size_t argcPromiseOrCallback = INTEGER_TWO;
+    size_t argcCallback = INTEGER_THREE;
+    napi_value argv[INTEGER_THREE] = {0};
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != argcPromise && argc != argcPromiseOrCallback && argc != argcCallback) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_THREE, "one", "two", "three"));
+        return retValue;
+    }
+
+    std::string origin;
+    if (!NapiParseUtils::ParseString(env, argv[INTEGER_ZERO], origin)) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "origin", "string"));
+        return retValue;
+    }
+
+    if (!std::regex_match(origin, originPattern)) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::INVALID_ORIGIN);
+        return retValue;
+    }
+
+    std::shared_ptr<GeolocationPermissionsResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<GeolocationPermissionsResultCallbackInfo>(env, g_asyncCallbackInfoId);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    napi_value promise = nullptr;
+    bool incognito = false;
+    if (argc == argcCallback) {
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        NAPI_CALL(env, napi_create_reference(env, argv[INTEGER_ONE], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env, &promise));
+        NapiParseUtils::ParseBoolean(env, argv[INTEGER_TWO], incognito);
+    } else if (argc == argcPromiseOrCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        napi_typeof(env, argv[INTEGER_ONE], &valueType);
+        if (valueType == napi_function) {
+            NAPI_CALL(env, napi_create_reference(env, argv[INTEGER_ONE], 1, &asyncCallbackInfo->callback));
+            NAPI_CALL(env, napi_get_undefined(env, &promise));
+        } else if (valueType == napi_boolean) {
+            NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+            NapiParseUtils::ParseBoolean(env, argv[INTEGER_ONE], incognito);
+        } else {
+            BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+            return retValue;
+        }
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateGetAccessibleGeolocationAsyncWork(env, asyncCallbackInfoInstance);
+    GeolocationPermissions::GetAccessibleGeolocation(origin, g_asyncCallbackInfoId, incognito);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
+    return promise;
 }
 
 void NapiWebStorage::CreateGetOriginQuotaAsyncWork(
@@ -2526,6 +2713,69 @@ napi_value NapiWebStorage::JsGetOriginQuotaAsync(napi_env env, napi_callback_inf
     return promise;
 }
 
+napi_value NapiGeolocationPermissions::JsGetStoredGeolocation(napi_env env, napi_callback_info info)
+{
+    LOGI("GeolocationPermissions JsGetStoredGeolocation coming");
+    napi_value thisVar = nullptr;
+    napi_value retValue = nullptr;
+    size_t argc = INTEGER_TWO;
+    size_t argcPromise = INTEGER_ZERO;
+    size_t argcPromiseOrCallback = INTEGER_ONE;
+    size_t argcCallback = INTEGER_TWO;
+    napi_value argv[INTEGER_TWO] = {0};
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (argc != argcPromise && argc != argcPromiseOrCallback && argc != argcCallback) {
+        NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_THREE, "one", "two", "three"));
+        return retValue;
+    }
+
+    std::shared_ptr<GeolocationPermissionsResultCallbackInfo> asyncCallbackInfoInstance =
+        std::make_shared<GeolocationPermissionsResultCallbackInfo>(env, g_asyncCallbackInfoId);
+    auto asyncCallbackInfo = asyncCallbackInfoInstance.get();
+    napi_value promise = nullptr;
+    bool incognito = false;
+    if (argc == argcCallback) {
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+        if (valueType != napi_function) {
+            NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+                NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "callback", "function"));
+            return nullptr;
+        }
+        if (!NapiParseUtils::ParseBoolean(env, argv[INTEGER_ONE], incognito)) {
+            NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+                NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "incognito", "boolean"));
+            return nullptr;
+        }
+        napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+        NAPI_CALL(env, napi_create_reference(env, argv[INTEGER_ZERO], 1, &asyncCallbackInfo->callback));
+        NAPI_CALL(env, napi_get_undefined(env, &promise));
+    } else if (argc == argcPromiseOrCallback) {
+        napi_valuetype valueType = napi_null;
+        napi_typeof(env, argv[INTEGER_ZERO], &valueType);
+        if (valueType != napi_function) {
+            if (!NapiParseUtils::ParseBoolean(env, argv[INTEGER_ZERO], incognito)) {
+                NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
+                    NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "incognito", "boolean"));
+                return nullptr;
+            }
+            NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+        } else {
+            NAPI_CALL(env, napi_create_reference(env, argv[INTEGER_ZERO], 1, &asyncCallbackInfo->callback));
+            NAPI_CALL(env, napi_get_undefined(env, &promise));
+        }
+    } else if (argc == argcPromise) {
+        NAPI_CALL(env, napi_create_promise(env, &asyncCallbackInfo->deferred, &promise));
+    }
+    CreateGetStoredGeolocationAsyncWork(env, asyncCallbackInfoInstance);
+    GeolocationPermissions::GetStoredGeolocation(g_asyncCallbackInfoId, incognito);
+    if (++g_asyncCallbackInfoId >= MAX_COUNT_ID) {
+        g_asyncCallbackInfoId = 0;
+    }
+    return promise;
+}
+
 napi_value NapiWebStorage::JsGetOriginUsageAsync(napi_env env, napi_callback_info info)
 {
     napi_value thisVar = nullptr;
@@ -2635,6 +2885,100 @@ napi_value NapiWebStorage::JsGetOriginsAsync(napi_env env, napi_callback_info in
         g_asyncCallbackInfoId = 0;
     }
     return promise;
+}
+
+void NapiGeolocationPermissions::CreateGetAccessibleGeolocationAsyncWork(napi_env env,
+    const std::shared_ptr<GeolocationPermissionsResultCallbackInfo> &callbackInfo)
+{
+    napi_value resource = nullptr;
+    auto asyncCallbackInfo = callbackInfo.get();
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, "JsGetAccessibleGeolocation", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL_RETURN_VOID(env, napi_create_async_work(
+        env, nullptr, resource, [](napi_env env, void *data) {},
+        [](napi_env env, napi_status status, void *data) {
+            GeolocationPermissionsResultCallbackInfo *asyncCallbackInfo =
+                reinterpret_cast<GeolocationPermissionsResultCallbackInfo *>(data);
+            if (!asyncCallbackInfo) {
+                return;
+            }
+            napi_value args[INTEGER_TWO] = { 0 };
+            if (asyncCallbackInfo->errCode == NWebError::INVALID_ORIGIN) {
+                napi_value error;
+                napi_create_object(env, &error);
+                napi_value errorCode;
+                napi_create_int32(env, NWebError::INVALID_ORIGIN, &errorCode);
+                napi_value errorMessage;
+                napi_create_string_utf8(env, GetErrMsgByErrCode(NWebError::INVALID_ORIGIN).c_str(), NAPI_AUTO_LENGTH,
+                    &errorMessage);
+                napi_set_named_property(env, error, "code", errorCode);
+                napi_set_named_property(env, error, "message", errorMessage);
+                args[INTEGER_ZERO] = error;
+            } else {
+                NAPI_CALL_RETURN_VOID(env, napi_get_null(env, &args[INTEGER_ZERO]));
+                NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, asyncCallbackInfo->result, &args[INTEGER_ONE]));
+            }
+            if (asyncCallbackInfo->deferred) {
+                if (asyncCallbackInfo->errCode == NWebError::INVALID_ORIGIN) {
+                    NAPI_CALL_RETURN_VOID(env,
+                        napi_reject_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ZERO]));
+                } else {
+                    NAPI_CALL_RETURN_VOID(env,
+                        napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
+                }
+            } else {
+                napi_value callback = nullptr;
+                napi_value callbackResult = nullptr;
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncCallbackInfo->callback, &callback));
+                NAPI_CALL_RETURN_VOID(env,
+                    napi_call_function(env, nullptr, callback, sizeof(args) / sizeof(args[0]), args, &callbackResult));
+            }
+            GeolocationPermissions::EraseCallbackInfo(asyncCallbackInfo,
+                GeolocationPermissionsTaskType::GET_ACCESSIBLE_GEOLOCATION);
+        },
+        reinterpret_cast<void *>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    GeolocationPermissions::InsertCallbackInfo(callbackInfo,
+        GeolocationPermissionsTaskType::GET_ACCESSIBLE_GEOLOCATION);
+}
+
+void NapiGeolocationPermissions::CreateGetStoredGeolocationAsyncWork(napi_env env,
+    const std::shared_ptr<GeolocationPermissionsResultCallbackInfo> &callbackInfo)
+{
+    napi_value resource = nullptr;
+    auto asyncCallbackInfo = callbackInfo.get();
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, "JsGetStoredGeolocation", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL_RETURN_VOID(env, napi_create_async_work(env, nullptr, resource,
+        [](napi_env env, void *data) {},
+        [](napi_env env, napi_status status, void *data) {
+            GeolocationPermissionsResultCallbackInfo *asyncCallbackInfo =
+                reinterpret_cast<GeolocationPermissionsResultCallbackInfo *>(data);
+            if (!asyncCallbackInfo) {
+                return;
+            }
+            napi_value args[INTEGER_TWO] = { 0 };
+            if (asyncCallbackInfo->originsArray.empty()) {
+                NAPI_CALL_RETURN_VOID(env, napi_get_null(env, &args[INTEGER_ZERO]));
+            }
+            NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &args[INTEGER_ONE]));
+            for (size_t i = 0; i < asyncCallbackInfo->originsArray.size(); ++i) {
+                napi_value jsString = nullptr;
+                NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, asyncCallbackInfo->originsArray[i].c_str(),
+                    asyncCallbackInfo->originsArray[i].length(), &jsString));
+                NAPI_CALL_RETURN_VOID(env, napi_set_element(env, args[INTEGER_ONE], i, jsString));
+            }
+            if (asyncCallbackInfo->deferred) {
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncCallbackInfo->deferred, args[INTEGER_ONE]));
+            } else {
+                napi_value callback = nullptr;
+                napi_value callbackResult = nullptr;
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncCallbackInfo->callback, &callback));
+                NAPI_CALL_RETURN_VOID(env,
+                    napi_call_function(env, nullptr, callback, sizeof(args) / sizeof(args[0]), args, &callbackResult));
+            }
+            GeolocationPermissions::EraseCallbackInfo(asyncCallbackInfo,
+                GeolocationPermissionsTaskType::GET_STORED_GEOLOCATION);
+        },
+        reinterpret_cast<void *>(asyncCallbackInfo), &asyncCallbackInfo->asyncWork));
+    GeolocationPermissions::InsertCallbackInfo(callbackInfo, GeolocationPermissionsTaskType::GET_STORED_GEOLOCATION);
 }
 
 napi_value NapiWebStorage::DeleteAllData(napi_env env, napi_callback_info info)
