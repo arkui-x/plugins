@@ -1130,6 +1130,10 @@ ErrCode WebviewControllerJni::PostMessageEvent(int id, const std::string& portHa
 ErrCode WebviewControllerJni::PostMessageEventExt(int id, const std::string& portHandle, WebMessageExt* webMessageExt)
 {
     CHECK_NULL_RETURN(webMessageExt, CAN_NOT_POST_MESSAGE);
+    if (portHandle.empty()) {
+        return CAN_NOT_POST_MESSAGE;
+    }
+
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.postMessageEventExt)) {
         return CAN_NOT_POST_MESSAGE;

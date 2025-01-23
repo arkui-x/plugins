@@ -75,13 +75,14 @@ void OnMessageExtOC(int32_t webId, const std::string& portHandle,
 
 void WebMessagePortIOS::ClosePort()
 {
+    SetPortHandle("");
     closePortOC(GetWebId());
 }
 
 ErrCode WebMessagePortIOS::PostMessageEvent(const std::string& webMessage)
 {
-    bool result = postMessageEventOC(GetWebId(), webMessage);
-    if (!result) {
+    std::string portHandle = GetPortHandle();
+    if (portHandle.empty() || portHandle == "" || !postMessageEventOC(GetWebId(), webMessage)) {
         return CAN_NOT_POST_MESSAGE;
     }
     return NO_ERROR;
@@ -89,8 +90,9 @@ ErrCode WebMessagePortIOS::PostMessageEvent(const std::string& webMessage)
 
 ErrCode WebMessagePortIOS::PostMessageEventExt(WebMessageExt* webMessageExt)
 {
+    std::string portHandle = GetPortHandle();
     auto webMessageExtImpl = std::make_shared<AceWebMessageExtImpl>();
-    if (!webMessageExtImpl.get()) {
+    if (!webMessageExtImpl.get() || portHandle.empty() || portHandle == "") {
         return CAN_NOT_POST_MESSAGE;
     }
     int msgType = webMessageExt->GetType();

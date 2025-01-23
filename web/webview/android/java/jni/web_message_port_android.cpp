@@ -28,6 +28,7 @@ WebMessagePortAndroid::WebMessagePortAndroid(int32_t webId, const std::string& p
 void WebMessagePortAndroid::ClosePort()
 {
     WebviewControllerJni::CloseWebMessagePort(GetWebId(), GetPortHandle());
+    SetPortHandle("");
 }
 
 ErrCode WebMessagePortAndroid::PostMessageEvent(const std::string& webMessage)
