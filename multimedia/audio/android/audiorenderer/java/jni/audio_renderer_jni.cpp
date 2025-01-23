@@ -221,8 +221,8 @@ void AudioRendererJni::NativeOnRoutingChanged(JNIEnv* env, jobject jobj, jlong r
     long key = static_cast<long>(rendererPtr);
     auto iter = deviceChangeObserver_.find(key);
     if (iter != deviceChangeObserver_.end()) {
-        DeviceInfo deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
-        if (deviceInfo.deviceRole == OUTPUT_DEVICE) {
+        AudioDeviceDescriptor deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+        if (deviceInfo.deviceRole_ == OUTPUT_DEVICE) {
             (iter->second)->OnOutputDeviceChange(deviceInfo, AudioStreamDeviceChangeReason::UNKNOWN);
         }
     }
@@ -533,7 +533,7 @@ uint32_t AudioRendererJni::GetUnderrunCount(long rendererPtr)
     return count;
 }
 
-int32_t AudioRendererJni::GetCurrentOutputDevices(long rendererPtr, DeviceInfo& deviceInfo)
+int32_t AudioRendererJni::GetCurrentOutputDevices(long rendererPtr, AudioDeviceDescriptor& deviceInfo)
 {
     LOGD("AudioRendererJni::GetCurrentOutputDevices rendererPtr:%{public}ld", rendererPtr);
     auto env = ARKUI_X_Plugin_GetJniEnv();
@@ -549,8 +549,8 @@ int32_t AudioRendererJni::GetCurrentOutputDevices(long rendererPtr, DeviceInfo& 
         env->ExceptionClear();
         return ERROR;
     }
-    DeviceInfo deviceInfoTmp = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
-    if (deviceInfoTmp.deviceRole == OUTPUT_DEVICE) {
+    AudioDeviceDescriptor deviceInfoTmp = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+    if (deviceInfoTmp.deviceRole_ == OUTPUT_DEVICE) {
         deviceInfo = deviceInfoTmp;
     }
     env->DeleteLocalRef(jDeviceInfo);

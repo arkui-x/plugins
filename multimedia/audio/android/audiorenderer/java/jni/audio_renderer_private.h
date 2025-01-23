@@ -50,7 +50,7 @@ public:
     int32_t Enqueue(const BufferDesc &bufDesc) const override;
     float GetMinStreamVolume() const override;
     float GetMaxStreamVolume() const override;
-    int32_t GetCurrentOutputDevices(DeviceInfo &deviceInfo) const override;
+    int32_t GetCurrentOutputDevices(AudioDeviceDescriptor &deviceInfo) const override;
     uint32_t GetUnderflowCount() const override;
     int32_t SetRendererCallback(const std::shared_ptr<AudioRendererCallback> &callback) override;
     int32_t SetRendererPositionCallback(int64_t markPosition,

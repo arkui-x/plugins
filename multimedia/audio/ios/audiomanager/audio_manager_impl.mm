@@ -128,10 +128,10 @@ static AudioManagerImpl *sharedInstance = nil;
     return descriptor;
 }
 
-- (int32_t)setDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType active:(bool)flag
+- (int32_t)setDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType active:(bool)flag
 {
     NSLog(@"setDeviceActive deviceType = %d, flag = %d",deviceType, flag);
-    if (deviceType == OHOS::AudioStandard::SPEAKER) {
+    if (deviceType == OHOS::AudioStandard::DEVICE_TYPE_SPEAKER) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
         if (!communicationDeviceActive_) {
             savedCategory_ = audioSession.category;
@@ -156,9 +156,9 @@ static AudioManagerImpl *sharedInstance = nil;
     }
 }
 
-- (bool)isDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType
+- (bool)isDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType
 {
-    if (deviceType == OHOS::AudioStandard::SPEAKER) {
+    if (deviceType == OHOS::AudioStandard::DEVICE_TYPE_SPEAKER) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
         AVAudioSessionRouteDescription *routeDescription = audioSession.currentRoute;
         for (AVAudioSessionPortDescription *portDescription in routeDescription.outputs) {
@@ -269,7 +269,7 @@ static AudioManagerImpl *sharedInstance = nil;
         [renderer getRendererInfo:rendererInfo];
         changeInfo->rendererInfo = rendererInfo;
 
-        OHOS::AudioStandard::DeviceInfo deviceInfo;
+        OHOS::AudioStandard::AudioDeviceDescriptor deviceInfo;
         [renderer getCurrentOutputDevices:deviceInfo];
         changeInfo->outputDeviceInfo = deviceInfo;
         audioRendererChangeInfos.push_back(std::move(changeInfo));

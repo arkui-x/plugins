@@ -53,7 +53,7 @@ public:
     uint32_t GetUnderflowCount();
     int32_t GetRendererInfo(AudioRendererInfo& rendererInfo) const;
     int32_t GetStreamInfo(AudioStreamInfo& streamInfo) const;
-    int32_t GetCurrentOutputDevices(DeviceInfo& deviceInfo) const;
+    int32_t GetCurrentOutputDevices(AudioDeviceDescriptor& deviceInfo) const;
     int32_t GetAudioStreamId(uint32_t& sessionID) const;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const;
     int32_t SetChannelBlendMode(ChannelBlendMode blendMode);

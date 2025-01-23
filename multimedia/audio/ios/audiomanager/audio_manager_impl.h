@@ -22,7 +22,7 @@
 #include "audio_routing_manager.h"
 #include "audio_group_manager.h"
 #include "audio_renderer_impl.h"
-#include "audio_capturer_Impl.h"
+#include "audio_capturer_impl.h"
 #import <AVFoundation/AVFoundation.h>
 
 @interface AudioManagerImpl : NSObject
@@ -34,8 +34,8 @@
     (const std::shared_ptr<OHOS::AudioStandard::VolumeKeyEventCallback> &)callback;
 - (std::vector<OHOS::sptr<OHOS::AudioStandard::AudioDeviceDescriptor>>)getDevices:
     (OHOS::AudioStandard::DeviceFlag)deviceFlag;
-- (int32_t)setDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType active:(bool)flag;
-- (bool)isDeviceActive:(OHOS::AudioStandard::ActiveDeviceType)deviceType;
+- (int32_t)setDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType active:(bool)flag;
+- (bool)isDeviceActive:(OHOS::AudioStandard::DeviceType)deviceType;
 - (void)updateCategory:(AVAudioSessionCategory)category options:(AVAudioSessionCategoryOptions)categoryOptions;
 - (OHOS::AudioStandard::InterruptMode)getAllInterruptMode;
 - (void)addRenderer:(AudioRendererImpl *)audioRenderer;

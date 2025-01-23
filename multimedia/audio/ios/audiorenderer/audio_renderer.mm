@@ -400,7 +400,7 @@ float AudioRendererPrivate::GetMaxStreamVolume() const
     return [rendererImpl_ getMaxStreamVolume];
 }
 
-int32_t AudioRendererPrivate::GetCurrentOutputDevices(DeviceInfo &deviceInfo) const
+int32_t AudioRendererPrivate::GetCurrentOutputDevices(AudioDeviceDescriptor &deviceInfo) const
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
     return [rendererImpl_ getCurrentOutputDevices:deviceInfo];

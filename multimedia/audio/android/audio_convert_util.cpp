@@ -190,12 +190,12 @@ int32_t ConvertChannelCountToLayout(AudioChannel channelCount)
     return CHANNEL_OUT_DEFAULT;
 }
 
-AudioDeviceType ConvertActiveDeviceTypeToAn(ActiveDeviceType deviceType)
+AudioDeviceType ConvertActiveDeviceTypeToAn(DeviceType deviceType)
 {
-    static const std::map<ActiveDeviceType, AudioDeviceType> table = {
-        { BLUETOOTH_SCO, TYPE_BLUETOOTH_SCO},
-        { EARPIECE, TYPE_BUILTIN_EARPIECE},
-        { SPEAKER, TYPE_BUILTIN_SPEAKER},
+    static const std::map<DeviceType, AudioDeviceType> table = {
+        { DEVICE_TYPE_BLUETOOTH_SCO, TYPE_BLUETOOTH_SCO},
+        { DEVICE_TYPE_EARPIECE, TYPE_BUILTIN_EARPIECE},
+        { DEVICE_TYPE_SPEAKER, TYPE_BUILTIN_SPEAKER},
     };
 
     auto it = table.find(deviceType);

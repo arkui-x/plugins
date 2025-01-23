@@ -94,7 +94,7 @@ public:
     float GetSingleStreamVolume() const override;
     float GetMinStreamVolume() const override;
     float GetMaxStreamVolume() const override;
-    int32_t GetCurrentOutputDevices(DeviceInfo &deviceInfo) const override;
+    int32_t GetCurrentOutputDevices(AudioDeviceDescriptor &deviceInfo) const override;
     uint32_t GetUnderflowCount() const override;
     int32_t RegisterOutputDeviceChangeWithInfoCallback(
         const std::shared_ptr<AudioRendererOutputDeviceChangeCallback> &callback) override;
