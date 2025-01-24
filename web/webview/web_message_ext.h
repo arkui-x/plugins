@@ -112,6 +112,7 @@ public:
         if (value_) {
             return value_->GetBinary();
         }
+        return {};
     }
 
     WebValue::Type GetArrayType()
@@ -119,6 +120,7 @@ public:
         if (value_) {
             return value_->GetType();
         }
+        return WebValue::Type::NONE;
     }
 
     void SetStringArray(std::vector<std::string> value)
@@ -134,6 +136,7 @@ public:
         if (value_) {
             return value_->GetStringArray();
         }
+        return {};
     }
 
     void SetDoubleArray(std::vector<double> value)
@@ -149,6 +152,7 @@ public:
         if (value_) {
             return value_->GetDoubleArray();
         }
+        return {};
     }
 
     void SetInt64Array(std::vector<int64_t> value)
@@ -164,6 +168,7 @@ public:
         if (value_) {
             return value_->GetInt64Array();
         }
+        return {};
     }
 
     void SetBooleanArray(std::vector<bool> value)
@@ -179,6 +184,7 @@ public:
         if (value_) {
             return value_->GetBooleanArray();
         }
+        return {};
     }
 
     void SetError(std::string name, std::string message)
@@ -197,6 +203,7 @@ public:
             std::string errorMessage = value_->GetErrMsg();
             return std::make_pair(errorName, errorMessage);;
         }
+        return {"", ""};
     }
 
     void SetType(int type)
