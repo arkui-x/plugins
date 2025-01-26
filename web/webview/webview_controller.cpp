@@ -13,12 +13,10 @@
  * limitations under the License.
  */
 
-#include "android/java/jni/webview_controller_android.h"
 #include "inner_api/plugin_utils_inner.h"
-#include "ios/webview_controller_ios.h"
 #include "log.h"
+#include <regex>
 #include "webview_controller.h"
-#include "android/java/jni/webview_controller_android.h"
 #ifdef ANDROID_PLATFORM
 #include "android/java/jni/webview_controller_android.h"
 #endif
@@ -30,6 +28,57 @@ namespace OHOS::Plugin {
 thread_local std::vector<std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>> WebviewController::asyncCallbackInfoContainer_;
 thread_local std::vector<AsyncJavaScriptExtEvaluteJSResultCallbackInfo*>
     WebviewController::asyncCallbackJavaScriptExtInfoContainer_;
+
+std::vector<std::string> parseStringVector(const std::string& str) {
+    std::vector<std::string> result;
+    std::smatch match;
+    std::string s = str;
+    std::regex re("\"([^\"]*)\"");
+    while (std::regex_search(s, match, re)) {
+        result.push_back(match[1].str());
+        s = match.suffix().str();
+    }
+    return result;
+}
+
+std::vector<bool> parseBooleanVector(const std::string& str) {
+    std::vector<bool> result;
+    std::smatch match;
+    std::string s = str;
+    std::regex re("(true|false)");
+    while (std::regex_search(s, match, re)) {
+        result.push_back(match[1].str() == "true");
+        s = match.suffix().str();
+    }
+
+    return result;
+}
+
+std::vector<int64_t> parseInt64Vector(const std::string& str) {
+    std::vector<int64_t> result;
+    std::smatch match;
+    std::string s = str;
+    std::regex re("\\d+");
+    while (std::regex_search(s, match, re)) {
+        result.push_back(std::stoll(match[0].str()));
+        s = match.suffix().str();
+    }
+
+    return result;
+}
+
+std::vector<double> parseDoubleVector(const std::string& str) {
+    std::vector<double> result;
+    std::smatch match;
+    std::string s = str;
+    std::regex re("[-+]?[0-9]*\\.?[0-9]+");
+    while (std::regex_search(s, match, re)) {
+        result.push_back(std::stod(match[0].str()));
+        s = match.suffix().str();
+    }
+
+    return result;
+}
 
 void WebviewController::OnReceiveValue(const std::string& result, int32_t asyncCallbackInfoId)
 {
@@ -106,18 +155,29 @@ void WebviewController::OnReceiveRunJavaScriptExtValue(const std::string& type, 
         if (webMessage) {
             webMessage->SetDouble(std::stod(result));
         }
-    } else if (type == "ARRAY") {
+    } else if (type == "STRINGARRAY") {
         webMessage = std::make_shared<WebMessage>(WebValue::Type::STRINGARRAY);
         if (webMessage) {
-            std::vector<std::string> vector; 
-            std::istringstream iss(result); 
-            std::string item; 
-            while (std::getline(iss, item, ',')) {
-                item.erase(std::remove(item.begin(), item.end(), '['), item.end()); 
-                item.erase(std::remove(item.begin(), item.end(), ']'), item.end()); 
-                vector.push_back(item);
-            }
+            std::vector<std::string> vector = parseStringVector(result); 
             webMessage->SetStringArray(vector);
+        }
+    } else if (type == "BOOLEANARRAY") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::BOOLEANARRAY);
+        if (webMessage) {
+            std::vector<bool> vector = parseBooleanVector(result); 
+            webMessage->SetBooleanArray(vector);
+        }
+    } else if (type == "INTARRAY") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::INT64ARRAY);
+        if (webMessage) {
+            std::vector<int64_t> vector = parseInt64Vector(result); 
+            webMessage->SetInt64Array(vector);
+        }
+    } else if (type == "DOUBLEARRAY") {
+        webMessage = std::make_shared<WebMessage>(WebValue::Type::DOUBLEARRAY);
+        if (webMessage) {
+            std::vector<double> vector = parseDoubleVector(result); 
+            webMessage->SetDoubleArray(vector);
         }
     } else {
         webMessage = std::make_shared<WebMessage>(WebValue::Type::ERROR);

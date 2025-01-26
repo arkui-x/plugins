@@ -40,6 +40,11 @@ public:
         return portHandle_;
     }
 
+    void SetPortHandle(const std::string& portHandle)
+    {
+        portHandle_ = portHandle;
+    }
+
     void SetWebMessageCallback(const std::shared_ptr<NapiJsCallBackParm>& callback)
     {
         if (callback) {
