@@ -540,5 +540,10 @@ bool AudioRendererPrivate::IsPlaybackChannelRelatedInfoValid(uint8_t channels, u
     }
     return true;
 }
+
+int32_t AudioRendererPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const
+{
+    return ERR_NOT_SUPPORTED;
+}
 }  // namespace AudioStandard
 }  // namespace OHOS

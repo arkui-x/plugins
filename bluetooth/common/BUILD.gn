@@ -43,6 +43,8 @@ FwkCrossPlatformSrc = [
   "$bluetooth_inner_root/ipc/src/bluetooth_opp_observer_stub.cpp",
   "$bluetooth_inner_root/ipc/src/bluetooth_remote_device_observer_stub.cpp",
   "$bluetooth_inner_root/ipc/src/bluetooth_resource_manager_observer_stub.cpp",
+  "$bluetooth_inner_root/ipc/common/bt_trust_pair_device.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_trust_pair_device.cpp",
   "$bluetooth_inner_root/src/bluetooth_a2dp_src.cpp",
   "$bluetooth_inner_root/src/bluetooth_avrcp_tg.cpp",
   "$bluetooth_inner_root/src/bluetooth_ble_advertiser.cpp",

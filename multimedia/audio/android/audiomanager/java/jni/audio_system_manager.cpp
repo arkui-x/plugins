@@ -453,18 +453,6 @@ bool AudioSystemManager::AbandonIndependentInterrupt(FocusType focusType)
     return false;
 }
 
-int32_t AudioSystemManager::GetAudioLatencyFromXml() const
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
-uint32_t AudioSystemManager::GetSinkLatencyFromXml() const
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
 int32_t AudioSystemManager::UpdateStreamState(
     const int32_t clientUid, StreamSetState streamSetState, StreamUsage streamUsage)
 {
@@ -476,11 +464,6 @@ std::string AudioSystemManager::GetSelfBundleName()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return "";
-}
-
-void AudioSystemManager::RequestThreadPriority(uint32_t tid)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
 }
 
 int32_t AudioSystemManager::SetDeviceAbsVolumeSupported(const std::string& macAddress, const bool support)

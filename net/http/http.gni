@@ -53,6 +53,7 @@ http_sources = [
   "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_cache_strategy.cpp",
   "$NETSTACK_NAPI_ROOT/http/cache/cache_strategy/src/http_time.cpp",
   "$NETSTACK_NAPI_ROOT/http/constant/src/constant.cpp",
+  "$NETSTACK_NAPI_ROOT/http/http_exec/src/http_tls_config.cpp",
   "$NETSTACK_NAPI_ROOT/http/options/src/http_request_options.cpp",
   "$NETSTACK_NAPI_ROOT/http/options/src/http_response.cpp",
   "$NETSTACK_UTILS_ROOT/common_utils/src/request_tracer.cpp",
