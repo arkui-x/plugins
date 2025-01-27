@@ -118,6 +118,8 @@ public:
     int32_t ControlDeviceAction(const std::string &deviceId, uint32_t controlType,
         uint32_t controlTypeVal, uint32_t controlObject) override;
     int32_t GetLastConnectionTime(const std::string &address, int64_t &connectionTime) override;
+    int32_t UpdateCloudBluetoothDevice(std::vector<BluetoothTrustPairDevice> &cloudDevices) override;
+    int32_t GetCloudBondState(const std::string &address, int32_t &cloudBondState) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;
