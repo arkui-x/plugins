@@ -246,7 +246,7 @@ uint32_t AudioRendererImpl::GetUnderflowCount()
     return Plugin::AudioRendererJni::GetUnderrunCount(reinterpret_cast<long>(this));
 }
 
-int32_t AudioRendererImpl::GetCurrentOutputDevices(DeviceInfo& deviceInfo) const
+int32_t AudioRendererImpl::GetCurrentOutputDevices(AudioDeviceDescriptor& deviceInfo) const
 {
     return Plugin::AudioRendererJni::GetCurrentOutputDevices(reinterpret_cast<long>(this), deviceInfo);
 }

@@ -81,33 +81,22 @@ AudioScene AudioSystemManager::GetAudioScene() const
     return Plugin::AudioManagerJni::GetAudioScene();
 }
 
-int32_t AudioSystemManager::SetDeviceActive(ActiveDeviceType deviceType, bool flag) const
+int32_t AudioSystemManager::SetDeviceActive(DeviceType deviceType, bool flag) const
 {
-    switch (deviceType) {
-        case EARPIECE:
-        case SPEAKER:
-        case BLUETOOTH_SCO:
-        case FILE_SINK_DEVICE:
-            break;
-        default:
-            AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
-            return ERR_NOT_SUPPORTED;
+    AUDIO_INFO_LOG("device: %{public}d", deviceType);
+    if (!IsActiveDeviceType(deviceType)) {
+        AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
+        return ERR_NOT_SUPPORTED;
     }
 
     return Plugin::AudioManagerJni::SetDeviceActive(deviceType, flag);
 }
 
-bool AudioSystemManager::IsDeviceActive(ActiveDeviceType deviceType) const
+bool AudioSystemManager::IsDeviceActive(DeviceType deviceType) const
 {
-    switch (deviceType) {
-        case EARPIECE:
-        case SPEAKER:
-        case BLUETOOTH_SCO:
-        case FILE_SINK_DEVICE:
-            break;
-        default:
-            AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
-            return false;
+    if (!IsActiveDeviceType(deviceType)) {
+        AUDIO_ERR_LOG("device=%{public}d not supported", deviceType);
+        return ERR_NOT_SUPPORTED;
     }
 
     return Plugin::AudioManagerJni::IsDeviceActive(deviceType);
@@ -569,7 +558,7 @@ int32_t AudioSystemManager::UnsetDistributedRoutingRoleCallback(
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::SetCallDeviceActive(ActiveDeviceType deviceType, bool flag, std::string address) const
+int32_t AudioSystemManager::SetCallDeviceActive(DeviceType deviceType, bool flag, std::string address) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;

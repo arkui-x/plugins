@@ -61,12 +61,12 @@ public:
     static int32_t GetCurrentCapturerChangeInfos(
         std::vector<std::unique_ptr<AudioCapturerChangeInfo>>& audioCapturerChangeInfos);
     static bool IsStreamActive(AudioVolumeType volumeType);
-    static int32_t SetDeviceActive(ActiveDeviceType deviceType, bool flag);
-    static bool IsDeviceActive(ActiveDeviceType deviceType);
+    static int32_t SetDeviceActive(DeviceType deviceType, bool flag);
+    static bool IsDeviceActive(DeviceType deviceType);
 
 private:
     static void ConvertDeviceInfoToAudioDeviceDescriptor(
-        sptr<AudioDeviceDescriptor> audioDeviceDescriptor, const DeviceInfo& deviceInfo);
+        sptr<AudioDeviceDescriptor> audioDeviceDescriptor, const AudioDeviceDescriptor& deviceInfo);
     static int32_t RegisterAudioDeviceCallback();
     static int32_t UnregisterAudioDeviceCallback();
 

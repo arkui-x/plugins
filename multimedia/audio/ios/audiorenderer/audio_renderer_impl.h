@@ -18,6 +18,7 @@
 
 #include "audio_info.h"
 #include "audio_renderer.h"
+#include "audio_device_descriptor.h"
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
@@ -38,7 +39,7 @@
 - (int32_t)setVolume:(float)volume;
 - (float)getMinStreamVolume;
 - (float)getMaxStreamVolume;
-- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::DeviceInfo &)deviceInfo;
+- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::AudioDeviceDescriptor &)deviceInfo;
 - (int32_t)setVolumeWithRamp:(float)volume rampTime:(int32_t)duration;
 - (void)setInterruptMode:(OHOS::AudioStandard::InterruptMode)mode;
 - (OHOS::AudioStandard::InterruptMode)getInterruptMode;

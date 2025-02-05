@@ -136,14 +136,14 @@ AudioScene AudioSystemManager::GetAudioScene() const
     return [managerImpl getAudioScene];
 }
 
-int32_t AudioSystemManager::SetDeviceActive(ActiveDeviceType deviceType, bool flag) const
+int32_t AudioSystemManager::SetDeviceActive(DeviceType deviceType, bool flag) const
 {
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     CHECK_AND_RETURN_RET_LOG(managerImpl != nullptr, ERROR, "managerImpl == nullptr.");
     return [managerImpl setDeviceActive:deviceType active:flag];
 }
 
-bool AudioSystemManager::IsDeviceActive(ActiveDeviceType deviceType) const
+bool AudioSystemManager::IsDeviceActive(DeviceType deviceType) const
 {
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     CHECK_AND_RETURN_RET_LOG(managerImpl != nullptr, false, "managerImpl == nullptr.");

@@ -70,7 +70,7 @@ public:
     void SetApplicationCachePath(const std::string cachePath) override {}
     void SetValid(bool valid) override {}
     int64_t GetFramesRead() const override { return 0; }
-    int32_t GetCurrentInputDevices(DeviceInfo& deviceInfo) const override;
+    int32_t GetCurrentInputDevices(AudioDeviceDescriptor& deviceInfo) const override;
     int32_t GetCurrentCapturerChangeInfo(AudioCapturerChangeInfo& changeInfo) const override;
     int32_t SetAudioCapturerDeviceChangeCallback(
         const std::shared_ptr<AudioCapturerDeviceChangeCallback>& callback) override;

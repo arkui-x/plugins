@@ -180,9 +180,9 @@ void AudioManagerJni::NativeOnAudioDeviceChanged(
         int32_t deviceCount = env->GetArrayLength(jDeviceInfos);
         for (int32_t i = 0; i < deviceCount; i++) {
             jobject jDeviceInfo = env->GetObjectArrayElement(jDeviceInfos, i);
-            DeviceInfo deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+            AudioDeviceDescriptor deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
             env->DeleteLocalRef(jDeviceInfo);
-            DeviceFlag flag = (deviceInfo.deviceRole == INPUT_DEVICE) ? INPUT_DEVICES_FLAG : OUTPUT_DEVICES_FLAG;
+            DeviceFlag flag = (deviceInfo.deviceRole_ == INPUT_DEVICE) ? INPUT_DEVICES_FLAG : OUTPUT_DEVICES_FLAG;
             if ((flag != it.first) && (it.first != ALL_DEVICES_FLAG)) {
                 continue;
             }
@@ -435,7 +435,7 @@ int32_t AudioManagerJni::GetDevices(DeviceFlag deviceFlag, std::vector<sptr<Audi
     int32_t deviceCount = env->GetArrayLength(static_cast<jobjectArray>(jDevices));
     for (int32_t i = 0; i < deviceCount; i++) {
         jobject jDeviceInfo = env->GetObjectArrayElement(static_cast<jobjectArray>(jDevices), i);
-        DeviceInfo deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
+        AudioDeviceDescriptor deviceInfo = AudioCommonJni::GetDeviceInfo(jDeviceInfo);
         env->DeleteLocalRef(jDeviceInfo);
 
         sptr<AudioDeviceDescriptor> audioDeviceDescriptor = new (std::nothrow) AudioDeviceDescriptor();
@@ -452,24 +452,24 @@ int32_t AudioManagerJni::GetDevices(DeviceFlag deviceFlag, std::vector<sptr<Audi
 }
 
 void AudioManagerJni::ConvertDeviceInfoToAudioDeviceDescriptor(
-    sptr<AudioDeviceDescriptor> audioDeviceDescriptor, const DeviceInfo& deviceInfo)
+    sptr<AudioDeviceDescriptor> audioDeviceDescriptor, const AudioDeviceDescriptor& deviceInfo)
 {
     CHECK_NULL_VOID(audioDeviceDescriptor);
-    audioDeviceDescriptor->deviceRole_ = deviceInfo.deviceRole;
-    audioDeviceDescriptor->deviceType_ = deviceInfo.deviceType;
-    audioDeviceDescriptor->deviceId_ = deviceInfo.deviceId;
-    audioDeviceDescriptor->channelMasks_ = deviceInfo.channelMasks;
-    audioDeviceDescriptor->channelIndexMasks_ = deviceInfo.channelIndexMasks;
-    audioDeviceDescriptor->deviceName_ = deviceInfo.deviceName;
-    audioDeviceDescriptor->macAddress_ = deviceInfo.macAddress;
-    audioDeviceDescriptor->interruptGroupId_ = deviceInfo.interruptGroupId;
-    audioDeviceDescriptor->volumeGroupId_ = deviceInfo.volumeGroupId;
-    audioDeviceDescriptor->networkId_ = deviceInfo.networkId;
-    audioDeviceDescriptor->displayName_ = deviceInfo.displayName;
-    audioDeviceDescriptor->audioStreamInfo_.samplingRate = deviceInfo.audioStreamInfo.samplingRate;
-    audioDeviceDescriptor->audioStreamInfo_.encoding = deviceInfo.audioStreamInfo.encoding;
-    audioDeviceDescriptor->audioStreamInfo_.format = deviceInfo.audioStreamInfo.format;
-    audioDeviceDescriptor->audioStreamInfo_.channels = deviceInfo.audioStreamInfo.channels;
+    audioDeviceDescriptor->deviceRole_ = deviceInfo.deviceRole_;
+    audioDeviceDescriptor->deviceType_ = deviceInfo.deviceType_;
+    audioDeviceDescriptor->deviceId_ = deviceInfo.deviceId_;
+    audioDeviceDescriptor->channelMasks_ = deviceInfo.channelMasks_;
+    audioDeviceDescriptor->channelIndexMasks_ = deviceInfo.channelIndexMasks_;
+    audioDeviceDescriptor->deviceName_ = deviceInfo.deviceName_;
+    audioDeviceDescriptor->macAddress_ = deviceInfo.macAddress_;
+    audioDeviceDescriptor->interruptGroupId_ = deviceInfo.interruptGroupId_;
+    audioDeviceDescriptor->volumeGroupId_ = deviceInfo.volumeGroupId_;
+    audioDeviceDescriptor->networkId_ = deviceInfo.networkId_;
+    audioDeviceDescriptor->displayName_ = deviceInfo.displayName_;
+    audioDeviceDescriptor->audioStreamInfo_.samplingRate = deviceInfo.audioStreamInfo_.samplingRate;
+    audioDeviceDescriptor->audioStreamInfo_.encoding = deviceInfo.audioStreamInfo_.encoding;
+    audioDeviceDescriptor->audioStreamInfo_.format = deviceInfo.audioStreamInfo_.format;
+    audioDeviceDescriptor->audioStreamInfo_.channels = deviceInfo.audioStreamInfo_.channels;
 }
 
 int32_t AudioManagerJni::AddDeviceChangeCallback(
@@ -808,7 +808,7 @@ bool AudioManagerJni::IsStreamActive(AudioVolumeType volumeType)
     return false;
 }
 
-int32_t AudioManagerJni::SetDeviceActive(ActiveDeviceType deviceType, bool flag)
+int32_t AudioManagerJni::SetDeviceActive(DeviceType deviceType, bool flag)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);
@@ -826,7 +826,7 @@ int32_t AudioManagerJni::SetDeviceActive(ActiveDeviceType deviceType, bool flag)
     return result ? SUCCESS : ERROR;
 }
 
-bool AudioManagerJni::IsDeviceActive(ActiveDeviceType deviceType)
+bool AudioManagerJni::IsDeviceActive(DeviceType deviceType)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, ERROR);

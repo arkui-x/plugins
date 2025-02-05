@@ -229,32 +229,32 @@ AudioEncodingType AudioCommonJni::GetDeviceEncoding(JNIEnv* env, jclass jDeviceI
     return encode;
 }
 
-DeviceInfo AudioCommonJni::GetDeviceInfo(jobject jDeviceInfo)
+AudioDeviceDescriptor AudioCommonJni::GetDeviceInfo(jobject jDeviceInfo)
 {
-    DeviceInfo deviceInfo;
+    AudioDeviceDescriptor deviceInfo;
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, deviceInfo);
     CHECK_NULL_RETURN(jDeviceInfo, deviceInfo);
 
     jclass jDeviceInfoCls = env->FindClass("android/media/AudioDeviceInfo");
     // Device role
-    deviceInfo.deviceRole = GetDeviceRole(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.deviceRole_ = GetDeviceRole(env, jDeviceInfoCls, jDeviceInfo);
     // Device type
-    deviceInfo.deviceType = GetDeviceType(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.deviceType_ = GetDeviceType(env, jDeviceInfoCls, jDeviceInfo);
     // id
-    deviceInfo.deviceId = GetDeviceId(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.deviceId_ = GetDeviceId(env, jDeviceInfoCls, jDeviceInfo);
     // device name
-    deviceInfo.deviceName = GetDeviceName(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.deviceName_ = GetDeviceName(env, jDeviceInfoCls, jDeviceInfo);
     // address
-    deviceInfo.macAddress = GetDeviceAddress(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.macAddress_ = GetDeviceAddress(env, jDeviceInfoCls, jDeviceInfo);
     // sample rates
-    deviceInfo.audioStreamInfo.samplingRate = GetDeviceSampleRates(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.audioStreamInfo_.samplingRate = GetDeviceSampleRates(env, jDeviceInfoCls, jDeviceInfo);
     // channel counts
-    deviceInfo.audioStreamInfo.channels = GetDeviceAudioChannels(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.audioStreamInfo_.channels = GetDeviceAudioChannels(env, jDeviceInfoCls, jDeviceInfo);
     // channel masks
-    deviceInfo.channelMasks = GetDeviceChannelMask(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.channelMasks_ = GetDeviceChannelMask(env, jDeviceInfoCls, jDeviceInfo);
     // Encodings
-    deviceInfo.audioStreamInfo.encoding = GetDeviceEncoding(env, jDeviceInfoCls, jDeviceInfo);
+    deviceInfo.audioStreamInfo_.encoding = GetDeviceEncoding(env, jDeviceInfoCls, jDeviceInfo);
 
     env->DeleteLocalRef(jDeviceInfoCls);
 

@@ -192,7 +192,7 @@ int32_t AudioCapturerPrivate::Enqueue(const BufferDesc &bufDesc) const
     return [capturerImpl_ enqueue: bufDesc];
 }
 
-int32_t AudioCapturerPrivate::GetCurrentInputDevices(DeviceInfo &deviceInfo) const
+int32_t AudioCapturerPrivate::GetCurrentInputDevices(AudioDeviceDescriptor &deviceInfo) const
 {
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, ERROR, "capturerImpl_ == nullptr.");
     return [capturerImpl_ getCurrentInputDevices: deviceInfo];

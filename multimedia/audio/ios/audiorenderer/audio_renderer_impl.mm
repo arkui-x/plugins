@@ -195,7 +195,7 @@
 
     if (deviceCallback_) {
         NSLog(@"OnStateChange");
-        OHOS::AudioStandard::DeviceInfo deviceInfo;
+        OHOS::AudioStandard::AudioDeviceDescriptor deviceInfo;
         [self getCurrentOutputDevices:deviceInfo];
         deviceCallback_->OnStateChange(deviceInfo);
     }
@@ -204,7 +204,7 @@
         NSLog(@"OnOutputDeviceChange");
         NSInteger reason = [userInfo[AVAudioSessionRouteChangeReasonKey] integerValue];
         NSLog(@"reason = %ld", reason);
-        OHOS::AudioStandard::DeviceInfo deviceInfo;
+        OHOS::AudioStandard::AudioDeviceDescriptor deviceInfo;
         [self getCurrentOutputDevices:deviceInfo];
         OHOS::AudioStandard::AudioStreamDeviceChangeReason changeReason;
         ConvertDeviceChangeReasonToOh(reason, changeReason);
@@ -560,7 +560,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     return MAX_STREAM_VOLUME;
 }
 
-- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::DeviceInfo &)deviceInfo
+- (int32_t)getCurrentOutputDevices:(OHOS::AudioStandard::AudioDeviceDescriptor &)deviceInfo
 {
     if (playState_ != OHOS::AudioStandard::RENDERER_RELEASED) {
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
@@ -568,21 +568,21 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
         NSLog(@"routeDescription count = %lu",[routeDescription.outputs count]);
         for (AVAudioSessionPortDescription *portDescription in routeDescription.outputs) {
-            deviceInfo.deviceRole = OHOS::AudioStandard::DeviceRole::OUTPUT_DEVICE;
-            ConvertDeviceTypeToOh(portDescription.portType, deviceInfo.deviceType);
-            deviceInfo.deviceName = std::string([portDescription.portName UTF8String]);
-            deviceInfo.displayName = std::string([portDescription.UID UTF8String]);
+            deviceInfo.deviceRole_ = OHOS::AudioStandard::DeviceRole::OUTPUT_DEVICE;
+            ConvertDeviceTypeToOh(portDescription.portType, deviceInfo.deviceType_);
+            deviceInfo.deviceName_ = std::string([portDescription.portName UTF8String]);
+            deviceInfo.displayName_ = std::string([portDescription.UID UTF8String]);
             NSLog(@"portType = %@, portName = %@, UID = %@", portDescription.portType, portDescription.portName,
                 portDescription.UID);
             NSLog(@"channels = %lu",[portDescription.channels count]);
             for (AVAudioSessionChannelDescription *channelDescription in portDescription.channels) {
-                deviceInfo.channelMasks |= channelDescription.channelLabel;
+                deviceInfo.channelMasks_ |= channelDescription.channelLabel;
                 NSLog(@"channelName = %@, channelNumber = %lu, owningPortUID = %@, channelLabel = %u",
                     channelDescription.channelName,channelDescription.channelNumber,
                     channelDescription.owningPortUID, channelDescription.channelLabel);
             }
 
-            deviceInfo.audioStreamInfo.samplingRate.insert(
+            deviceInfo.audioStreamInfo_.samplingRate.insert(
                 static_cast<OHOS::AudioStandard::AudioSamplingRate>(audioSession.sampleRate));
             NSLog(@"sampleRate = %f", audioSession.sampleRate);
         }

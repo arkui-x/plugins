@@ -275,7 +275,7 @@ int32_t AudioCapturerImpl::GetAudioStreamId(uint32_t& sessionID) const
     return Plugin::AudioCapturerJni::GetAudioSessionId(reinterpret_cast<long>(this), sessionID);
 }
 
-int32_t AudioCapturerImpl::GetCurrentInputDevices(DeviceInfo& deviceInfo) const
+int32_t AudioCapturerImpl::GetCurrentInputDevices(AudioDeviceDescriptor& deviceInfo) const
 {
     return Plugin::AudioCapturerJni::GetCurrentInputDevices(reinterpret_cast<long>(this), deviceInfo);
 }
@@ -283,7 +283,7 @@ int32_t AudioCapturerImpl::GetCurrentInputDevices(DeviceInfo& deviceInfo) const
 int32_t AudioCapturerImpl::GetCurrentCapturerChangeInfo(AudioCapturerChangeInfo& changeInfo) const
 {
     uint32_t sessionID;
-    DeviceInfo deviceInfo;
+    AudioDeviceDescriptor deviceInfo;
     CapturerState capturerState;
     AudioCapturerInfo capturerInfo;
     int32_t ret = Plugin::AudioCapturerJni::GetAudioSessionId(reinterpret_cast<long>(this), sessionID);

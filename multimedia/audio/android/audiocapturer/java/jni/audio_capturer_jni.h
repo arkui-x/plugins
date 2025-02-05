@@ -60,7 +60,7 @@ public:
     static int32_t GetStreamInfo(long capturerPtr, AudioStandard::AudioStreamInfo& streamInfo);
     static int32_t GetAudioSessionId(long capturerPtr, uint32_t& sessionID);
     static bool GetTimestamp(long capturerPtr, AudioStandard::Timestamp& timestamp);
-    static int32_t GetCurrentInputDevices(long capturerPtr, AudioStandard::DeviceInfo& deviceInfo);
+    static int32_t GetCurrentInputDevices(long capturerPtr, AudioStandard::AudioDeviceDescriptor& deviceInfo);
     static void SetCapturerState(long capturerPtr, const AudioStandard::CapturerState capturerState);
     static int32_t SetAudioCapturerInfoChangeCallback(
         long capturerPtr, const std::shared_ptr<AudioStandard::AudioCapturerInfoChangeCallback>& callback);

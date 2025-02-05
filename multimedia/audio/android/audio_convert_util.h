@@ -181,7 +181,7 @@ void ConvertAudioUsageToOh(AudioAttributesUsage usage, AudioAttributesContenType
 AudioFormatChannelLayoutIn ConvertCapturerAudioChannelLayoutToAn(AudioChannelLayout layoutOh);
 CapturePolicy ConvertPrivacyTypeToAn(AudioPrivacyType privacyOh);
 int32_t ConvertChannelCountToLayout(AudioChannel channelCount);
-AudioDeviceType ConvertActiveDeviceTypeToAn(ActiveDeviceType deviceType);
+AudioDeviceType ConvertActiveDeviceTypeToAn(DeviceType deviceType);
 DeviceType ConvertDeviceTypeToOh(AudioDeviceType deviceType);
 AudioSourceType ConvertSourceTypeToAn(SourceType sourceTypeOh);
 SourceType ConvertSourceTypeToOh(AudioSourceType sourceTypeAn);
