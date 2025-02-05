@@ -64,6 +64,7 @@ common_plugin_libs = [
   "util/stack",
   "util/treemap",
   "util/treeset",
+  "util/json",
   "hilog",
   "taskpool",
   "test_plugin",
