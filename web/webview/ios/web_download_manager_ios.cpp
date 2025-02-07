@@ -27,17 +27,6 @@ WebDownloadDelegate* GetDownloadDelegate(int32_t webId) {
     return webDownloadDelegate;
 }
 
-void UpdateDownloadItem(int32_t webId, bool isUpdate, WebDownloadItem* webDownloadItem) {
-    WebDownloadDelegate* webDownloadDelegate = GetDownloadDelegate(webId);
-    if (webDownloadDelegate) {
-        if (isUpdate) {
-            webDownloadDelegate->DownloadDidUpdate(webDownloadItem);
-        } else {
-            webDownloadDelegate->DownloadDidFail(webDownloadItem);
-        }
-    }
-}
-
 void AssignWebDownloadManagerByObject(int32_t webId, WebDownloadItem* webDownloadItem,
     const std::shared_ptr<AceWebDownloadImpl> webDownloadImpl)
 {
@@ -59,40 +48,18 @@ void AssignWebDownloadManagerByObject(int32_t webId, WebDownloadItem* webDownloa
     webDownloadItem->receivedBytes = webDownloadImpl->GetReceivedBytes();
     webDownloadItem->fullPath = webDownloadImpl->GetFullPath();
 
-    webDownloadItem->beforeCallback = [webId, guid, webDownloadItem](const std::string path)->void {
-        if (webDownloadItem == nullptr) {
-            return;
-        }
+    webDownloadItem->beforeCallback = [webId, guid](const std::string path)->void {
         webDownloadItemStartOC(webId, guid, path);
-        webDownloadItem->state = PluginWebDownloadItemState::PENDING;
-        UpdateDownloadItem(webId, true, webDownloadItem);
     };
-    webDownloadItem->downloadCancelCallback = [webId, guid, webDownloadItem]()->void {
-        if (webDownloadItem == nullptr || webDownloadItem->state == PluginWebDownloadItemState::CANCELED) {
-            return;
-        }
+    webDownloadItem->downloadCancelCallback = [webId, guid]()->void {
         webDownloadItemCancelOC(webId, guid);
-        webDownloadItem->lastErrorCode = download::DOWNLOAD_INTERRUPT_REASON_USER_CANCELED;
-        webDownloadItem->state = PluginWebDownloadItemState::CANCELED;
-        UpdateDownloadItem(webId, false, webDownloadItem);
     };
-    webDownloadItem->downloadPauseCallback = [webId, guid, webDownloadItem]()->int {
-        if (webDownloadItem == nullptr || webDownloadItem->state == PluginWebDownloadItemState::PAUSED) {
-            return 0;
-        }
+    webDownloadItem->downloadPauseCallback = [webId, guid]()->int {
         webDownloadItemPauseOC(webId, guid);
-        webDownloadItem->state = PluginWebDownloadItemState::PAUSED;
-        UpdateDownloadItem(webId, true, webDownloadItem);
         return 0;
     };
-    webDownloadItem->downloadResumeCallback = [webId, guid, webDownloadItem]()->int {
-        if (webDownloadItem == nullptr || webDownloadItem->state == PluginWebDownloadItemState::IN_PROGRESS ||
-            webDownloadItem->state == PluginWebDownloadItemState::PENDING) {
-            return 0;
-        }
+    webDownloadItem->downloadResumeCallback = [webId, guid]()->int {
         webDownloadItemResumeOC(webId, guid);
-        webDownloadItem->state = PluginWebDownloadItemState::PENDING;
-        UpdateDownloadItem(webId, true, webDownloadItem);
         return 0;
     };
 }
