@@ -34,7 +34,7 @@ drawable_native_include = [
   "//third_party/cJSON",
   "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/app_manager",
   "//foundation/multimedia/image_framework/interfaces/innerkits/include",
-  "//foundation/graphic/graphic_2d/rosen/modules/platform/utils",
+  "//commonlibrary/c_utils/base/include",
   "//base/global/resource_management/interfaces/inner_api/include",
   "//foundation/arkui/ace_engine/frameworks/core/components_ng/image_provider/adapter/rosen",
   "//foundation/arkui/ace_engine/frameworks/core/interfaces/native/svg",
@@ -51,6 +51,6 @@ drawable_napi_include = [
   "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src",
   "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src/drawing/engine_adapter",
   "//foundation/graphic/graphic_2d/utils/color_manager/export",
-  "//foundation/graphic/graphic_2d/rosen/modules/platform/utils",
+  "//commonlibrary/c_utils/base/include",
   "//third_party/skia",
 ]
