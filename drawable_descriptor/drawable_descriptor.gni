@@ -50,6 +50,7 @@ drawable_napi_include = [
   "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/include",
   "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src",
   "//foundation/graphic/graphic_2d/rosen/modules/2d_graphics/src/drawing/engine_adapter",
+  "//foundation/graphic/graphic_2d/rosen/modules/render_service_base/include",
   "//foundation/graphic/graphic_2d/utils/color_manager/export",
   "//commonlibrary/c_utils/base/include",
   "//third_party/skia",
