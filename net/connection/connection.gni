@@ -29,7 +29,7 @@ utils_include = [
   "$NETMANAGER_BASE_ROOT/utils/napi_utils/include",
   "$INNERKITS_ROOT/netpolicyclient/include",
   "$INNERKITS_ROOT/netstatsclient/include",
-  "$PLATFORM_ROOT/utils",
+  "//commonlibrary/c_utils/base/include",
   "$PLATFORM_ROOT/ipc_core",
 ]
 
