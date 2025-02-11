@@ -95,7 +95,7 @@ std::array<float, 16> SurfaceUtils::MatrixProduct(const std::array<float, 16>& l
 }
 
 void SurfaceUtils::ComputeTransformMatrix(float matrix[16], uint32_t matrixSize,
-    sptr<SurfaceBuffer>& buffer, GraphicTransformType& transform, Rect& crop)
+    sptr<SurfaceBuffer>& buffer, GraphicTransformType& transform, const Rect& crop)
 {
     const std::array<float, TRANSFORM_MATRIX_ELE_COUNT> rotate90 = {0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1};
     std::array<float, TRANSFORM_MATRIX_ELE_COUNT> transformMatrix = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
