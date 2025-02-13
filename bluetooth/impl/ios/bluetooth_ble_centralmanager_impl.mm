@@ -203,6 +203,12 @@ int BluetoothBleCentralManagerImpl::RemoveLpDeviceParam(const bluetooth::Uuid& u
     return BT_NO_ERROR;
 }
 
+int BluetoothBleCentralManagerImpl::ChangeScanParams(int32_t scannerId, const BluetoothBleScanSettings& settings,
+    const std::vector<BluetoothBleScanFilter>& filters, uint32_t filterAction)
+{
+    return BT_NO_ERROR;
+}
+
 int BluetoothBleCentralManagerImpl::getCallBackScannerId()
 {
     scannerId_ += 1;

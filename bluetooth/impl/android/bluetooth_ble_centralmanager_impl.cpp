@@ -143,5 +143,12 @@ int BluetoothBleCentralManagerImpl::RemoveLpDeviceParam(const bluetooth::Uuid& u
     HILOGE("Not Supported");
     return 0;
 }
+
+int BluetoothBleCentralManagerImpl::ChangeScanParams(int32_t scannerId, const BluetoothBleScanSettings& settings,
+    const std::vector<BluetoothBleScanFilter>& filters, uint32_t filterAction)
+{
+    HILOGE("Not Supported");
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

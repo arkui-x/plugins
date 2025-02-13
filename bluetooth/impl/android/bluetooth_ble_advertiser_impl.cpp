@@ -125,5 +125,12 @@ int BluetoothBleAdvertiserImpl::DisableAdvertising(uint8_t advHandle)
     HILOGE("Not Supported");
     return BT_NO_ERROR;
 }
+
+int BluetoothBleAdvertiserImpl::ChangeAdvertisingParams(
+    uint8_t advHandle, const BluetoothBleAdvertiserSettings& settings)
+{
+    HILOGE("Not Supported");
+    return BT_NO_ERROR;
+}
 } // namespace Bluetooth
 } // namespace OHOS

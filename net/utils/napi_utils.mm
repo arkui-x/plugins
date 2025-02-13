@@ -302,6 +302,44 @@ napi_value CreateStringUtf8(napi_env env, const std::string &str)
     return value;
 }
 
+void GetSecureDataPropertyUtf8(napi_env env, napi_value object, const std::string &propertyName,
+                               SecureData &data)
+{
+    if (!HasNamedProperty(env, object, propertyName)) {
+        return;
+    }
+    napi_value value = GetNamedProperty(env, object, propertyName);
+    GetSecureDataFromValueUtf8(env, value, data);
+}
+
+void GetSecureDataFromValueUtf8(napi_env env, napi_value value, SecureData &data)
+{
+    if (GetValueType(env, value) != napi_string) {
+        return;
+    }
+
+    size_t stringLength = 0;
+    NAPI_CALL_RETURN_VOID(env, napi_get_value_string_utf8(env, value, nullptr, 0, &stringLength));
+    if (stringLength == 0 || stringLength > SIZE_MAX - 1) {
+        return;
+    }
+
+    auto deleter = [](char *s) { free(reinterpret_cast<void *>(s)); };
+    auto mem = malloc(stringLength + 1);
+    if (mem == nullptr) {
+        return;
+    }
+    std::unique_ptr<char, decltype(deleter)> str(static_cast<char *>(mem), deleter);
+    if (memset_s(str.get(), stringLength + 1, 0, stringLength + 1) != EOK) {
+        return;
+    }
+    size_t length = 0;
+    NAPI_CALL_RETURN_VOID(env, napi_get_value_string_utf8(env, value, str.get(), stringLength + 1, &length));
+    if (length > 0) {
+        data.append(str.get(), length);
+    }
+}
+
 std::string GetStringFromValueUtf8(napi_env env, napi_value value)
 {
     if (GetValueType(env, value) != napi_string) {

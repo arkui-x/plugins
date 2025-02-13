@@ -43,6 +43,7 @@ http_include = [
   "//plugins/net/http/android/java/jni",
   "//third_party/curl/include",
   "//third_party/bounds_checking_function/include",
+  "$NETSTACK_NAPI_ROOT/http/http_exec/include",
 ]
 
 http_sources = [

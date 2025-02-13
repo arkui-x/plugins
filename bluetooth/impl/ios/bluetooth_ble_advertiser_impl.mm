@@ -106,6 +106,12 @@ int BluetoothBleAdvertiserImpl::DisableAdvertising(uint8_t advHandle)
     return BT_NO_ERROR;
 }
 
+int BluetoothBleAdvertiserImpl::ChangeAdvertisingParams(
+    uint8_t advHandle, const BluetoothBleAdvertiserSettings& settings)
+{
+    return BT_NO_ERROR;
+}
+
 int BluetoothBleAdvertiserImpl::StopAdvertising(int32_t advHandle)
 {
     NSString* strAppId = [NSString stringWithFormat:@"%d", advHandle];

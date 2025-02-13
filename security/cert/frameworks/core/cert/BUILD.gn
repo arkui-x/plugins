@@ -29,9 +29,11 @@ ohos_source_set("libcertificate_framework_cert_object") {
     "//commonlibrary/c_utils/base/include",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//third_party/bounds_checking_function/include",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/inc",
   ]
 
   sources = [
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_certificate_create.c",
     "//base/security/certificate_framework/frameworks/core/cert/src/cf_cert_ability.c",
     "//base/security/certificate_framework/frameworks/core/cert/src/cf_object_cert.c",
   ]
