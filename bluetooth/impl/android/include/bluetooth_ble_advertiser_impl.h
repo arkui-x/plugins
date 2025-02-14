@@ -45,6 +45,7 @@ public:
         int32_t advHandle) override;
     int EnableAdvertising(uint8_t advHandle, uint16_t duration) override;
     int DisableAdvertising(uint8_t advHandle) override;
+    int ChangeAdvertisingParams(uint8_t advHandle, const BluetoothBleAdvertiserSettings &settings) override;
 
 private:
     sptr<IBluetoothBleAdvertiseCallback> callbackImpl_ = nullptr;
