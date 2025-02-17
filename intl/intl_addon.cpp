@@ -1852,9 +1852,10 @@ extern "C" __attribute__((constructor)) void INTLPluginRegister()
 {
 #ifdef ANDROID_PLATFORM
     INTLPluginJniRegister();
+#else
+    InitIcuData();
 #endif
     napi_module_register(&g_intlModule);
-    InitIcuData();
 }
 } // namespace I18n
 } // namespace Global
