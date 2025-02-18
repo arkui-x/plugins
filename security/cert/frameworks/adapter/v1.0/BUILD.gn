@@ -38,6 +38,7 @@ ohos_source_set("certificate_openssl_plugin_lib") {
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_openssl_ex.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_chain_validator_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_cert_cms_generator_openssl.c",
+    "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_certificate_create.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_certificate_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_crl_entry_openssl.c",
     "//base/security/certificate_framework/frameworks/adapter/v1.0/src/x509_crl_openssl.c",
