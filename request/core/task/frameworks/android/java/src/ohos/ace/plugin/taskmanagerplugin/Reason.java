@@ -58,5 +58,4 @@ public interface Reason {
     int UNSUPPORT_RANGE_REQUEST_CODE = 19;
     String OTHERS_ERROR = "OTHERS_ERROR";
     int OTHERS_ERROR_CODE = 20;
-
 }

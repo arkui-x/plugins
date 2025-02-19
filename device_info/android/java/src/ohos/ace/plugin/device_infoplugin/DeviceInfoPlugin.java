@@ -99,7 +99,7 @@ public class DeviceInfoPlugin {
         }
 
         String deviceType = getDeviceTypeByResourceConfiguration();
-        if (deviceType != null && deviceType != "Unknown") {
+        if (deviceType != null && !"Unknown".equals(deviceType)) {
             return deviceType;
         }
 

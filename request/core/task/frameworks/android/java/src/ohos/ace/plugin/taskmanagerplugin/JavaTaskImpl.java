@@ -29,9 +29,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+/**
+ * JavaTaskImpl class implements JavaTask interface and provides task management functions.
+ *
+ * @since 2024-05-31
+ */
 public class JavaTaskImpl {
-    private DownloadImpl mDownloadImpl;
     public static Context mContext;
+
+    private DownloadImpl mDownloadImpl;
 
     public JavaTaskImpl(Context context) {
         mContext = context;
@@ -178,11 +184,13 @@ public class JavaTaskImpl {
     }
 
     public void reset() {
-        //set status stopped which is not complete when launching app
+        // set status stopped which is not complete when launching app
         Executors.newCachedThreadPool().submit(() -> {
             List<TaskInfo> taskInfoList = TaskDao.queryAll(mContext);
             for (TaskInfo item : taskInfoList) {
-                if (item.getProgress().getState() != State.STOPPED && item.getProgress().getState() != State.COMPLETED && item.getProgress().getState() != State.FAILED && item.getProgress().getState() != State.REMOVED) {
+                if (item.getProgress().getState() != State.STOPPED && item.getProgress().getState() != State.COMPLETED
+                        && item.getProgress().getState() != State.FAILED
+                        && item.getProgress().getState() != State.REMOVED) {
                     item.getProgress().setState(State.STOPPED);
                     mDownloadImpl.sendStopCallback(item);
                 }
@@ -215,7 +223,7 @@ public class JavaTaskImpl {
             Log.e(TAG, "show: task is null");
             return "";
         }
-        if (!TextUtils.isEmpty(taskInfo.getToken()) && !taskInfo.getToken().equals("null")) {
+        if (!TextUtils.isEmpty(taskInfo.getToken()) && !"null".equals(taskInfo.getToken())) {
             Log.e(TAG, "show: token is not null");
             return "";
         }
@@ -227,7 +235,8 @@ public class JavaTaskImpl {
     public String touch(long taskId, String token) {
         Log.i(TAG, "touch: " + taskId);
         mDownloadImpl.postQueryProgressByTid(taskId);
-        CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.queryByToken(mContext, taskId, token));
+        CompletableFuture<TaskInfo> future =
+            CompletableFuture.supplyAsync(() -> TaskDao.queryByToken(mContext, taskId, token));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
@@ -249,7 +258,8 @@ public class JavaTaskImpl {
         mDownloadImpl.postQueryProgress();
         List<Long> taskIdList = new ArrayList<>();
         Filter filter = JsonUtil.jsonToFilter(filterJson);
-        CompletableFuture<List<Long>> future = CompletableFuture.supplyAsync(() -> TaskDao.queryByFilter(mContext, filter));
+        CompletableFuture<List<Long>> future =
+            CompletableFuture.supplyAsync(() -> TaskDao.queryByFilter(mContext, filter));
         try {
             taskIdList = future.get();
         } catch (ExecutionException | InterruptedException e) {
@@ -280,7 +290,8 @@ public class JavaTaskImpl {
     }
 
     public void jniOnRequestCallback(long taskId, String eventType, String taskInfoJson) {
-        Log.i(TAG, "jniOnRequestCallback: taskId:" + taskId + ",eventType:" + eventType + ",taskInfoJson:" + taskInfoJson);
+        Log.i(TAG,
+                "jniOnRequestCallback: taskId:" + taskId + ",eventType:" + eventType + ",taskInfoJson:" + taskInfoJson);
         if (!IConstant.isAndroidDebug) {
             onRequestCallback(taskId, eventType, taskInfoJson);
         }

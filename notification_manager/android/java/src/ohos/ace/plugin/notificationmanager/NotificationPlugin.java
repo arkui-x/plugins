@@ -77,7 +77,7 @@ public class NotificationPlugin {
             return;
         }
         Log.d(TAG, "requestEnableNotification requestPermissions " + activity);
-        activity.requestPermissions(new String[] { PERMISSION }, 1);
+        activity.requestPermissions(new String[] {PERMISSION}, 1);
     }
 
     public boolean isAPITiramisuLater() {

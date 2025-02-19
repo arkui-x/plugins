@@ -62,11 +62,12 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
             nativeOnError(key, what, extra);
         }
     }
+
     /**
      * Called to indicate an info or a warning during recording.
      *
-     * @param mr The MediaRecorder the info pertains to
-     * @param what The type of info or warning that has occurred
+     * @param mr    The MediaRecorder the info pertains to
+     * @param what  The type of info or warning that has occurred
      * @param extra An extra code, specific to the info type
      * @return void
      */
@@ -77,6 +78,7 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
             nativeOnInfo(key, what, extra);
         }
     }
+
     /**
      * Creates a MediaRecorder object.
      *
@@ -382,10 +384,10 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
     public void setOutputFile(long key, String url) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
         if (mediaRecorder != null) {
-            try{
+            try {
                 FileOutputStream fs = new FileOutputStream(url);
                 mediaRecorder.setOutputFile(fs.getFD());
-            } catch(IOException ex){
+            } catch (IOException ex) {
                 Log.e(LOG_TAG, "setOutputFile IOException:" + ex.getMessage());
             }
         }

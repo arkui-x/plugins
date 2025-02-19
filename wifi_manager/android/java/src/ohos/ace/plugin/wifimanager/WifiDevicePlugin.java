@@ -23,28 +23,33 @@ import android.util.Log;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-public class WifiDevicePlugin implements WifiBroadcastInterface{
+/**
+ * WifiDevicePlugin is a plugin for wifi device management.
+ *
+ * @since 2024-06-24
+ */
+public class WifiDevicePlugin implements WifiBroadcastInterface {
     private static final String WIFI_STATE_CHANGE = "wifiStateChange";
 
     private static final String WIFI_CONNECTION_CHANGE = "wifiConnectionChange";
-    
+
     // 0-not active
-    private static final long WIFI_SWITCH_NOT_ACTIVE = 0;
+    private static final long WIFI_SWITCH_NOT_ACTIVE = 0L;
 
     // 1-Active
-    private static final long WIFI_SWITCH_ACTIVE = 1;
+    private static final long WIFI_SWITCH_ACTIVE = 1L;
 
     // 2-activating
-    private static final long WIFI_SWITCH_ACTIVATING = 2;
+    private static final long WIFI_SWITCH_ACTIVATING = 2L;
 
     // 3-Deactivating
-    private static final long WIFI_SWITCH_DEACTIVATING = 3;
+    private static final long WIFI_SWITCH_DEACTIVATING = 3L;
 
     // 0-Disconnected
-    private static final long WIFI_CONNECT_DISCONNECTED = 0;
- 
+    private static final long WIFI_CONNECT_DISCONNECTED = 0L;
+
     // 1-Connected
-    private static final long WIFI_CONNECT_CONNECTED = 1;
+    private static final long WIFI_CONNECT_CONNECTED = 1L;
 
     private Context context;
 
@@ -96,19 +101,19 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
         if (mWifiDeviceUtils == null) {
             mWifiDeviceUtils = new WifiDeviceUtils(context);
         }
-        try{
+        try {
             isConnectedWifi = mWifiDeviceUtils.getIsConnected();
         } catch (Exception exception) {
             Log.e(TAG, "getIsConnected exception");
         }
         return isConnectedWifi;
     }
-    
+
     public void on(String value) {
-        try{
+        try {
             if (mWifiReceiver == null) {
-                  mWifiReceiver = new WifiBroadcastReceiver(context, this);
-              }
+                mWifiReceiver = new WifiBroadcastReceiver(context, this);
+            }
             if (TextUtils.equals(value, WIFI_STATE_CHANGE)) {
                 mWifiReceiver.registerSwitchReceiver();
             } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) {
@@ -120,7 +125,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
             Log.e(TAG, "on exception");
         }
     }
-    
+
     public void off(String value) {
         if (mWifiReceiver == null) {
             mWifiReceiver = new WifiBroadcastReceiver(context, this);
@@ -175,5 +180,4 @@ public class WifiDevicePlugin implements WifiBroadcastInterface{
                 break;
         }
     }
-
 }

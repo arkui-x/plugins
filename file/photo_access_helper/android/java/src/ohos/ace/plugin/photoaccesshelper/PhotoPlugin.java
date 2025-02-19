@@ -192,14 +192,15 @@ public class PhotoPlugin {
         String packageName = activity.getPackageName();
         try {
             Class<?> delegate = Class.forName("ohos.stage.ability.adapter.StageActivityDelegate");
-            Class<?> callbackInterface = Class.forName("ohos.stage.ability.adapter.StageActivityDelegate$INTENTCALLBACK");
+            Class<?> callbackInterface =
+                Class.forName("ohos.stage.ability.adapter.StageActivityDelegate$INTENTCALLBACK");
             Method addIntentMethod = delegate.getMethod("addIntentCallback", callbackInterface);
             if (mProxyInstance == null) {
                 mProxyInstance = Proxy.newProxyInstance(
                     callbackInterface.getClassLoader(),
                     new Class<?>[] {callbackInterface},
                     (proxy, method, args) -> {
-                        if (!method.getName().equals("onResult")) {
+                        if (!"onResult".equals(method.getName())) {
                             return null;
                         }
                         int requestCode = (int) args[0];
@@ -210,7 +211,8 @@ public class PhotoPlugin {
                     });
                 addIntentMethod.invoke(null, mProxyInstance);
             }
-        } catch (NoSuchMethodException | ClassNotFoundException | InvocationTargetException | IllegalAccessException e) {
+        } catch (NoSuchMethodException | ClassNotFoundException | InvocationTargetException
+                | IllegalAccessException e) {
             Log.e(TAG, e.getMessage());
         }
     }
@@ -218,7 +220,9 @@ public class PhotoPlugin {
     public void onResult(int requestCode, int resultCode, Intent data, Activity activity) {
         Log.i(TAG, "onResult enter requestCode is " + requestCode + ", " + resultCode);
 
-        if (!checkResult(requestCode, resultCode, data)) return;
+        if (!checkResult(requestCode, resultCode, data)) {
+            return;
+        }
 
         List<String> rst = new ArrayList<>();
         int RESULT_OK = 0;
@@ -249,7 +253,7 @@ public class PhotoPlugin {
         List<String> rst = new ArrayList<>();
         Uri uri = data.getData();
         if (uri != null) {
-            String imagePath = getImagePath(uri); 
+            String imagePath = getImagePath(uri);
             if (!imagePath.equals(EMPTY_STR)) {
                 rst.add(imagePath);
             }

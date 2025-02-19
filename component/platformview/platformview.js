@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-const __PlatformView__ = requireInternal("platformview");
+const __PlatformView__ = requireInternal('platformview');
 class PlatformView extends JSViewAbstract {
     static create(value) {
         __PlatformView__.create(value);

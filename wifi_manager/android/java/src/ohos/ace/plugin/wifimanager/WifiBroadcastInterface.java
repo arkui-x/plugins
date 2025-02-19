@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,16 @@
  * limitations under the License.
  */
 
- package ohos.ace.plugin.wifimanager;
+package ohos.ace.plugin.wifimanager;
 
- public interface WifiBroadcastInterface {
+/**
+ * WifiBroadcastInterface Interface definition for WifiManager Android Plugin.
+ *
+ * @since 2024-06-24
+ */
+public interface WifiBroadcastInterface {
     String TAG = "WifiManagerAndroid";
-    
+
     // 0-Disconnected
     int WIFI_STATE_DISCONNECT = 0;
 
@@ -38,5 +43,4 @@
 
     void wifiConnectState(int state);
     void wifiSwitchState(int state);
-    
 }

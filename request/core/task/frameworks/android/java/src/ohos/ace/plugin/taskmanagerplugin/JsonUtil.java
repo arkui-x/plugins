@@ -29,8 +29,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * JsonUtil class for json to config and config to json convert.
+ *
+ * @since 2024-05-31
+ */
 public class JsonUtil {
-
     /**
      * Json转Config
      *
@@ -191,7 +195,7 @@ public class JsonUtil {
                 }
                 progress.setSizes(sizes);
             }
-            //extras
+            // extras
             JSONObject extrasJSON = json.optJSONObject("extras");
             if (extrasJSON != null) {
                 Iterator<String> keys = extrasJSON.keys();
@@ -295,7 +299,6 @@ public class JsonUtil {
             jsonObj.put("tries", taskInfo.getTries());
             jsonObj.put("code", taskInfo.getCode());
             jsonObj.put("withSystem", taskInfo.isWithSystem());
-//            jsonObj.put("priority", taskInfo.getPriority());
             jsonObj.put("extras", taskInfo.getExtras());
             // Progress
             Progress progress = taskInfo.getProgress();
@@ -556,5 +559,4 @@ public class JsonUtil {
         }
         return formItems;
     }
-
 }

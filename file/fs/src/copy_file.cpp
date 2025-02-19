@@ -187,9 +187,9 @@ static NError OpenFile(FileInfo& srcFile, FileInfo& destFile)
 
 static tuple<bool, int> ParseJsMode(napi_env env, const NFuncArg& funcArg)
 {
-    bool succ = false;
     int mode = 0;
     if (funcArg.GetArgc() >= NARG_CNT::THREE) {
+        bool succ = false;
         tie(succ, mode) = NVal(env, funcArg[NARG_POS::THIRD]).ToInt32(mode);
         if (!succ || mode) {
             return { false, mode };
