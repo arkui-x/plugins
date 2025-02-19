@@ -290,6 +290,34 @@ int32_t AudioSystemManager::SelectInputDevice(sptr<AudioCapturerFilter> audioCap
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSystemManager::ExcludeOutputDevices(AudioDeviceUsage audioDevUsage,
+        std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnexcludeOutputDevices(AudioDeviceUsage audioDevUsage,
+        std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnexcludeOutputDevices(AudioDeviceUsage audioDevUsage) const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetExcludedOutputDevices(
+        AudioDeviceUsage audioDevUsage) const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> ret;
+    return ret;
+}
+
 std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetDevices(DeviceFlag deviceFlag)
 {
     std::vector<std::shared_ptr<AudioDeviceDescriptor>> devices;
