@@ -56,7 +56,6 @@ public class AudioRendererPlugin {
 
     public void createAudioTrack(long rendererPtr, int sampleRate, int channel, int encoding,
                                 int channelLayout, int usage, int content, int privacyType, float maxSpeed) {
-
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack != null) {
             return;
@@ -82,10 +81,10 @@ public class AudioRendererPlugin {
 
         // create AudioFormat
         audioTrack = new AudioTrack.Builder()
-        .setAudioAttributes(attribute)
-        .setAudioFormat(format)
-        .setBufferSizeInBytes((int)(bufferSizeInBytes * maxSpeed))
-        .build();
+                .setAudioAttributes(attribute)
+                .setAudioFormat(format)
+                .setBufferSizeInBytes((int) (bufferSizeInBytes * maxSpeed))
+                .build();
 
         audioTracks.put(rendererPtr, audioTrack);
     }
@@ -367,7 +366,7 @@ public class AudioRendererPlugin {
     }
 
     /**
-     * Used for notifications when the previously set marker has been reached by the playback head. 
+     * Used for notifications when the previously set marker has been reached by the playback head.
      */
     public class OnPlaybackPositionUpdateListenerImpl implements AudioTrack.OnPlaybackPositionUpdateListener {
         @Override

@@ -55,7 +55,7 @@ public class TaskDao {
         values.put("downloadId", "");
         values.put("token", config.getToken());
         values.put("taskStates", "");
-        //config's filed
+        // config's filed
         values.put("roaming", config.isRoaming() ? 1 : 0);
         values.put("metered", config.isMetered() ? 1 : 0);
         values.put("network", config.getNetwork());
@@ -188,7 +188,8 @@ public class TaskDao {
         initDb(context);
         String[] selectionArgs = {String.valueOf(taskId), token};
         List<TaskInfo> taskInfos = new ArrayList<>();
-        try (Cursor cursor = mSQLiteDatabase.query("Task", null, "tid=? and token=?", selectionArgs, null, null, null)) {
+        try (Cursor cursor = mSQLiteDatabase.query("Task", null, "tid=? and token=?", selectionArgs, null, null,
+                null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 do {
                     TaskInfo taskInfo = getTaskInfoByCursor(cursor);

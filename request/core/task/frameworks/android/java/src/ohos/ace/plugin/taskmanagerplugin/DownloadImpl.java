@@ -66,12 +66,22 @@ public class DownloadImpl {
     private static final int NETWORK_INVALID = 0;
     private static final int NETWORK_WIFI = 1;
     private static final int NETWORK_MOBILE = 2;
+
     private boolean isIgnoreStatus = false;
     private final Context context;
     private DownloadManager.Request request;
     private DownloadManager downloadManager;
 
     private final List<QueryRunnable> queryRunnables = new ArrayList<>();
+
+    private final Handler handle = new Handler(Looper.getMainLooper());
+    private JavaTaskImpl mJavaTaskImpl;
+
+    public DownloadImpl(Context context, JavaTaskImpl javaTask) {
+        this.context = context;
+        mJavaTaskImpl = javaTask;
+        mJavaTaskImpl.jniInit();
+    }
 
     private class QueryRunnable implements Runnable {
         private final TaskInfo taskInfo;
@@ -95,15 +105,6 @@ public class DownloadImpl {
         }
     }
 
-    private final Handler handle = new Handler(Looper.getMainLooper());
-    private JavaTaskImpl mJavaTaskImpl;
-
-    public DownloadImpl(Context context, JavaTaskImpl javaTask) {
-        this.context = context;
-        mJavaTaskImpl = javaTask;
-        mJavaTaskImpl.jniInit();
-    }
-
     /**
      * get network state is wifi or mobile net
      *
@@ -111,7 +112,8 @@ public class DownloadImpl {
      */
     @SuppressLint("MissingPermission")
     public int getNetworkState() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager =
+            (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
             return NETWORK_INVALID;
         }
@@ -151,7 +153,8 @@ public class DownloadImpl {
      * @return the download id
      */
     public void startDownload(TaskInfo taskInfo) {
-        CompletableFuture<Config> configFuture = CompletableFuture.supplyAsync(() -> TaskDao.queryConfig(context, taskInfo.getTid()));
+        CompletableFuture<Config> configFuture =
+            CompletableFuture.supplyAsync(() -> TaskDao.queryConfig(context, taskInfo.getTid()));
         Config config = null;
         try {
             config = configFuture.get();
@@ -207,7 +210,8 @@ public class DownloadImpl {
         }
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
         request.setTitle(config.getTitle());
-        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(config.getUrl()));
+        String mimeType =
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(config.getUrl()));
         request.setMimeType(mimeType);
         if (config.getMode() == Mode.FOREGROUND) {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
@@ -331,8 +335,10 @@ public class DownloadImpl {
         try {
             cursor = downloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
             if (cursor != null && cursor.moveToFirst()) {
-                bytes[DOWNLOAD_RECEIVED_SIZE_ARGC] = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                bytes[DOWNLOAD_TOTAL_SIZE_ARGC] = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                bytes[DOWNLOAD_RECEIVED_SIZE_ARGC] =
+                    cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                bytes[DOWNLOAD_TOTAL_SIZE_ARGC] =
+                    cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
             }
         } finally {
             if (cursor != null) {
@@ -397,7 +403,8 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
-                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS,
+                            JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
                 Log.i(TAG, "isIgnoreStatus:" + isIgnoreStatus);
@@ -411,8 +418,10 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
-                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
-                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.COMPLETED, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS,
+                            JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.COMPLETED,
+                            JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
                 stopQueryProgress(queryRunnable);
@@ -443,14 +452,17 @@ public class DownloadImpl {
      * query download progress
      */
     public void queryProgress(QueryRunnable queryRunnable) {
-        Log.i(TAG, "queryProgress: tid:" + queryRunnable.taskInfo.getTid() + ",downloadId:" + queryRunnable.taskInfo.getDownloadId());
+        Log.i(TAG, "queryProgress: tid:" + queryRunnable.taskInfo.getTid() + ",downloadId:" +
+            queryRunnable.taskInfo.getDownloadId());
         int[] bytesAndStatus = new int[]{ARRAY_INIT_VAL, ARRAY_INIT_VAL, 0, 0};
 
         // begin to query status
-        try (Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(queryRunnable.taskInfo.getDownloadId()))) {
+        try (Cursor cursor =
+            downloadManager.query(new DownloadManager.Query().setFilterById(queryRunnable.taskInfo.getDownloadId()))) {
             if (cursor != null && cursor.moveToFirst()) {
                 bytesAndStatus[DOWNLOAD_STATUS] = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                bytesAndStatus[DOWNLOAD_COLUMN_REASON] = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON));
+                bytesAndStatus[DOWNLOAD_COLUMN_REASON] =
+                    cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON));
                 Log.i(TAG, "queryProgress status: " + bytesAndStatus[DOWNLOAD_STATUS]);
                 queryDownloadStatus(queryRunnable, bytesAndStatus[DOWNLOAD_STATUS], bytesAndStatus);
             } else {
@@ -485,7 +497,6 @@ public class DownloadImpl {
             if (qr.taskInfo.getTid() == taskInfo.getTid()) {
                 stopQueryProgress(qr);
             }
-
         }
     }
 
@@ -534,7 +545,7 @@ public class DownloadImpl {
             Log.i(TAG, "get network response code: " + responseCode);
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 String acceptRanges = conn.getHeaderField("Accept-Ranges");
-                if (acceptRanges != null && acceptRanges.equals("bytes")) {
+                if (acceptRanges != null && "bytes".equals(acceptRanges)) {
                     Log.i(TAG, "The url support breakpoint continuation");
                 } else {
                     Log.e(TAG, "The url unsupport breakpoint continuation, download from the start location");
@@ -557,7 +568,8 @@ public class DownloadImpl {
         stopQueryProgress(taskInfo);
         removeDownload(taskInfo);
         TaskDao.update(context, taskInfo, false);
-        mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.PAUSE, JsonUtil.convertTaskInfoToJson(taskInfo));
+        mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
+            EventType.PAUSE, JsonUtil.convertTaskInfoToJson(taskInfo));
     }
 
     /**
@@ -614,10 +626,12 @@ public class DownloadImpl {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(taskInfo));
+                    mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
+                        EventType.FAILED, JsonUtil.convertTaskInfoToJson(taskInfo));
                 });
             } else {
-                mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(taskInfo));
+                mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
+                    EventType.FAILED, JsonUtil.convertTaskInfoToJson(taskInfo));
             }
         }
     }
@@ -636,20 +650,23 @@ public class DownloadImpl {
     private void sendResumeCallback(TaskInfo taskInfo) {
         Progress progress = taskInfo.getProgress();
         progress.setState(State.RUNNING);
-        mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.RESUME, JsonUtil.convertTaskInfoToJson(taskInfo));
+        mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
+            EventType.RESUME, JsonUtil.convertTaskInfoToJson(taskInfo));
         TaskDao.update(context, taskInfo, true);
     }
 
     public void sendRemoveCallback(TaskInfo taskInfo) {
         Progress progress = taskInfo.getProgress();
         progress.setState(State.REMOVED);
-        TaskDao.update(context,taskInfo,true);
-        mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.REMOVE, JsonUtil.convertTaskInfoToJson(taskInfo));
+        TaskDao.update(context, taskInfo, true);
+        mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
+            EventType.REMOVE, JsonUtil.convertTaskInfoToJson(taskInfo));
         stopQueryProgress(taskInfo);
     }
 
     private boolean statusIsFinish(int status) {
-        return status == State.COMPLETED || status == State.FAILED || status == State.STOPPED || status == State.REMOVED;
+        return status ==
+            State.COMPLETED || status == State.FAILED || status == State.STOPPED || status == State.REMOVED;
     }
 
     public String getMimeType(long downloadId) {

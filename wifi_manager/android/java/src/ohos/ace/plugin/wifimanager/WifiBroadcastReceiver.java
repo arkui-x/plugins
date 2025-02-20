@@ -69,7 +69,6 @@ public class WifiBroadcastReceiver {
      * Listening and broadcasting of WiFi link status
      */
     class WifiConnectReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent safeIntent) {
             // The identification (action/intention) of the currently received broadcast
@@ -78,11 +77,12 @@ public class WifiBroadcastReceiver {
                 return;
             }
             String action = safeIntent.getAction();
-            if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+            if (!ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
                 Log.e(TAG, "WifiConnectReceiver action is not CONNECTIVITY_ACTION");
                 return;
             }
-            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             if (connectivityManager == null) {
                 Log.e(TAG, "WifiConnectReceiver connectivityManager is null");
                 return;
@@ -90,7 +90,7 @@ public class WifiBroadcastReceiver {
             NetworkInfo info = connectivityManager.getActiveNetworkInfo();
             if (info != null && info.isAvailable()) {
                 String typeName = info.getTypeName();
-                if (typeName.equals(WifiDeviceUtils.NETWORKINFO_TYPE_NAME)) {
+                if (WifiDeviceUtils.NETWORKINFO_TYPE_NAME.equals(typeName)) {
                     mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_LINKED);
                 } else {
                     mWifiInterface.wifiConnectState(WifiBroadcastInterface.WIFI_STATE_DISCONNECT);
@@ -125,7 +125,6 @@ public class WifiBroadcastReceiver {
      * Monitoring and broadcasting of WiFi switch status
      */
     class WifiSwitchBroadcastReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent safeIntent) {
             if (mWifiInterface == null || context == null || safeIntent == null) {

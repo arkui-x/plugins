@@ -29,15 +29,20 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * WifiDeviceUtils providing wifi device information.
+ *
+ * @since 2024-06-24
+ */
 public class WifiDeviceUtils {
     public static final String NETWORKINFO_TYPE_NAME = "WIFI";
 
     private Context context;
- 
+
     private WifiManager mWifiManager;
 
     public WifiDeviceUtils(Context context) {
-        if (context == null){
+        if (context == null) {
             Log.e(TAG, "WifiDeviceUtils context is null");
             return;
         }
@@ -94,7 +99,7 @@ public class WifiDeviceUtils {
         }
         return mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED;
     }
-    
+
     /**
      * Get WIFI link status
      */
@@ -105,7 +110,8 @@ public class WifiDeviceUtils {
         }
 
         // Get Network Connection Manager
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager =
+            (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
             Log.e(TAG, "WifiDeviceUtils getIsConnected connectivityManager is null");
             return false;
@@ -114,7 +120,7 @@ public class WifiDeviceUtils {
         // Obtain current network status information
         NetworkInfo info = connectivityManager.getActiveNetworkInfo();
         if (info != null && info.isAvailable()) {
-            return info.getTypeName().equals(NETWORKINFO_TYPE_NAME);
+            return NETWORKINFO_TYPE_NAME.equals(info.getTypeName());
         }
         return false;
     }

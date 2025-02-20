@@ -274,7 +274,7 @@ public class AudioCapturerPlugin {
             Log.e(LOG_TAG, "audioRecord is null");
             return AudioRecord.ERROR_INVALID_OPERATION;
         }
-        return audioRecord.getTimestamp(timestamp,  AudioTimestamp.TIMEBASE_MONOTONIC);
+        return audioRecord.getTimestamp(timestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
     }
 
     public AudioDeviceInfo getRoutedDevice(long capturerPtr) {

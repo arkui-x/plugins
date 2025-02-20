@@ -43,9 +43,6 @@ import java.lang.Runnable;
 public class PlayerPlugin {
     private static final String LOG_TAG = "PlayerPlugin";
 
-    private volatile Map<Long, MediaPlayer> mediaPlayerMap;
-    private Map<Long, MediaDataSourceImpl> mediaDataSourceMap;
-
     public static final int PLAYER_INFO_TYPE_SPEEDDONE = 2;
     public static final int PLAYER_INFO_TYPE_BITRATEDONE = 3;
     public static final int PLAYER_INFO_TYPE_EOS = 4;
@@ -66,6 +63,10 @@ public class PlayerPlugin {
     public static final int PLAYER_TIME_UPDATE_TIME_DELAY = 100;
     private static final String PLAYER_TRACK_CODEC_MIME = "codec_mime";
     private static final int PLAYER_CODEC_MIME_LENGTH = 5;
+
+    private volatile Map<Long, MediaPlayer> mediaPlayerMap;
+    private Map<Long, MediaDataSourceImpl> mediaDataSourceMap;
+
     /**
      * PlayerPlugin
      *
@@ -84,7 +85,7 @@ public class PlayerPlugin {
 
     public class PreparedCallbackImpl implements MediaPlayer.OnPreparedListener {
         @Override
-        public void onPrepared (MediaPlayer mp) {
+        public void onPrepared(MediaPlayer mp) {
             long key = getMediaPlayerKey(mp);
             if (key != 0) {
                 notifyInfo(key, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_PREPARED);
@@ -96,7 +97,7 @@ public class PlayerPlugin {
 
     public class CompletionCallbackImpl implements MediaPlayer.OnCompletionListener {
         @Override
-        public void onCompletion (MediaPlayer mp) {
+        public void onCompletion(MediaPlayer mp) {
             long key = getMediaPlayerKey(mp);
             if (key != 0) {
                 nativeOnInfo(key, PLAYER_INFO_TYPE_EOS, 0);
@@ -108,7 +109,7 @@ public class PlayerPlugin {
 
     public class SeekCompletionCallbackImpl implements MediaPlayer.OnSeekCompleteListener {
         @Override
-        public void onSeekComplete (MediaPlayer mp) {
+        public void onSeekComplete(MediaPlayer mp) {
             long key = getMediaPlayerKey(mp);
             if (key != 0) {
                 nativeOnSeekComplete(key, mp.getCurrentPosition());
@@ -158,6 +159,7 @@ public class PlayerPlugin {
      */
     public class MediaDataSourceImpl extends MediaDataSource {
         private long key;
+
         public MediaDataSourceImpl(long id) {
             key = id;
         }
@@ -172,7 +174,7 @@ public class PlayerPlugin {
         }
 
         @Override
-        public void close () {
+        public void close() {
         }
     };
 
@@ -180,6 +182,7 @@ public class PlayerPlugin {
         private long id;
         private int infoType;
         private int info;
+
         @Override
         public void run() {
             nativeOnInfo(id, infoType, info);
@@ -269,10 +272,10 @@ public class PlayerPlugin {
         if (mp == null) {
             return;
         }
-        try{
+        try {
             mp.setDataSource(url);
             notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_INITIALIZED);
-        } catch(IOException ex){
+        } catch (IOException ex) {
             Log.e(LOG_TAG, "setDataSourceWithUrl IOException:" + ex.getMessage());
         }
     }
@@ -282,7 +285,7 @@ public class PlayerPlugin {
         if (mp == null) {
             return;
         }
-        try{
+        try {
             if (length <= 0) {
                 File file = new File(url);
                 length = file.length();
@@ -291,7 +294,7 @@ public class PlayerPlugin {
 
             mp.setDataSource(fs.getFD(), offset, length);
             notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_INITIALIZED);
-        } catch(IOException ex){
+        } catch (IOException ex) {
             Log.e(LOG_TAG, "setDataSourceWithFd IOException:" + ex.getMessage());
         }
     }
@@ -301,11 +304,11 @@ public class PlayerPlugin {
         if (mp == null) {
             return;
         }
-        try{
+        try {
             mp.prepare();
             notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_PREPARED);
             notifyInfo(id, PLAYER_INFO_TYPE_DURATION_UPDATE, mp.getDuration());
-        } catch(IOException ex){
+        } catch (IOException ex) {
             Log.e(LOG_TAG, "prepare IOException:" + ex.getMessage());
         }
     }
@@ -405,7 +408,7 @@ public class PlayerPlugin {
         }
         for (MediaPlayer.TrackInfo info : mp.getTrackInfo()) {
             if (info.getTrackType() == type) {
-                if (key.equals(PLAYER_TRACK_CODEC_MIME)) {
+                if (PLAYER_TRACK_CODEC_MIME.equals(key)) {
                     return getTrackMime(info);
                 }
                 if (info.getFormat() != null) {
@@ -504,8 +507,7 @@ public class PlayerPlugin {
         mp.setVideoScalingMode(mode);
     }
 
-    private int ConvertSpeedToMode(float speed)
-    {
+    private int convertSpeedToMode(float speed) {
         if (Float.compare(speed, 1.0f) < 0) {
             return 0;
         } else if (Float.compare(speed, 1.0f) == 0) {
@@ -519,8 +521,7 @@ public class PlayerPlugin {
         }
     }
 
-    private float ConvertModeToSpeed(int mode)
-    {
+    private float convertModeToSpeed(int mode) {
         float speed = 1.0f;
         switch (mode) {
             case 0:
@@ -551,12 +552,12 @@ public class PlayerPlugin {
         }
         boolean isPlaying = mp.isPlaying();
         PlaybackParams param = mp.getPlaybackParams();
-        param = param.setSpeed(ConvertModeToSpeed(mode));
+        param = param.setSpeed(convertModeToSpeed(mode));
         mp.setPlaybackParams(param);
         if (!isPlaying) {
             mp.pause();
         }
-        notifyInfo(id, PLAYER_INFO_TYPE_SPEEDDONE, ConvertSpeedToMode(mp.getPlaybackParams().getSpeed()));
+        notifyInfo(id, PLAYER_INFO_TYPE_SPEEDDONE, convertSpeedToMode(mp.getPlaybackParams().getSpeed()));
     }
 
     public int getPlaybackParams(long id) {
@@ -564,7 +565,7 @@ public class PlayerPlugin {
         if (mp == null) {
             return 0;
         }
-        return ConvertSpeedToMode(mp.getPlaybackParams().getSpeed());
+        return convertSpeedToMode(mp.getPlaybackParams().getSpeed());
     }
 
     public void selectBitrate(long id, int bitrate) {
