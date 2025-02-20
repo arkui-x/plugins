@@ -141,11 +141,10 @@ void LRUCache::MergeOtherCache(const LRUCache& other)
 cJSON* LRUCache::WriteCacheToJsonValue()
 {
     cJSON* root = cJSON_CreateObject();
-
-    int index = 0;
     {
         // set mutex in min scope
         std::lock_guard<std::mutex> guard(mutex_);
+        int index = 0;
         for (const auto &node : nodeList_) {
             cJSON *nodeKey = cJSON_CreateObject();
             for (const auto &p : node.value) {

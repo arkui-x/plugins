@@ -37,16 +37,18 @@ import android.content.Context;
 import java.net.URLConnection;
 import java.util.Objects;
 
+/**
+ * FilePicker class for file picker plugin implementation in Java.
+ *
+ * @since 2024-06-24
+ */
 public class FilePicker {
-
-    private Object mProxyInstance;
-
     private static final String LOG_TAG = "FilePicker";
-
     private static final int FILE_PICKER_CODE = 82;
-
     private static final int RESULT_ERROR = 13900042;
     private static final int RESULT_OK = 0;
+
+    private Object mProxyInstance;
 
     public FilePicker(Context context) {
         nativeInit();
@@ -56,14 +58,15 @@ public class FilePicker {
     private void setCallback() {
         try {
             Class<?> delegate = Class.forName("ohos.stage.ability.adapter.StageActivityDelegate");
-            Class<?> callbackInterface = Class.forName("ohos.stage.ability.adapter.StageActivityDelegate$INTENTCALLBACK");
+            Class<?> callbackInterface =
+                Class.forName("ohos.stage.ability.adapter.StageActivityDelegate$INTENTCALLBACK");
             Method addIntentMethod = delegate.getMethod("addIntentCallback", callbackInterface);
             if (mProxyInstance == null) {
                 mProxyInstance = Proxy.newProxyInstance(
                         callbackInterface.getClassLoader(),
                         new Class<?>[]{callbackInterface},
                         (proxy, method, args) -> {
-                            if (!method.getName().equals("onResult")) {
+                            if (!"onResult".equals(method.getName())) {
                                 return null;
                             }
                             int requestCode = (int) args[0];
@@ -148,7 +151,9 @@ public class FilePicker {
     public void onResult(int requestCode, int resultCode, Intent data) {
         Log.i(LOG_TAG, "onResult enter");
 
-        if (!checkResult(requestCode, resultCode, data)) return;
+        if (!checkResult(requestCode, resultCode, data)) {
+            return;
+        }
 
         List<String> rst = new ArrayList<>();
 

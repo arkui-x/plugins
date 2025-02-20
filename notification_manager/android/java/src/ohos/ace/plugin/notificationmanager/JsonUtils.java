@@ -77,7 +77,8 @@ public class JsonUtils {
     private static NotificationRequest.NotificationBasicContent getBasicContent(int contentType,
             JSONObject contentObject) {
         if (contentType == NotificationTools.ContentType.LONG_TEXT.getValue()) {
-            NotificationRequest.NotificationLongTextContent longTextContent = new NotificationRequest.NotificationLongTextContent();
+            NotificationRequest.NotificationLongTextContent longTextContent =
+                new NotificationRequest.NotificationLongTextContent();
             longTextContent.title = contentObject.optString("title");
             longTextContent.text = contentObject.optString("text");
 
@@ -88,7 +89,8 @@ public class JsonUtils {
             return longTextContent;
         }
         if (contentType == NotificationTools.ContentType.MULTILINE.getValue()) {
-            NotificationRequest.NotificationMultiLineContent linesTextContent = new NotificationRequest.NotificationMultiLineContent();
+            NotificationRequest.NotificationMultiLineContent linesTextContent =
+                new NotificationRequest.NotificationMultiLineContent();
             linesTextContent.title = contentObject.optString("title");
             linesTextContent.text = contentObject.optString("text");
 
@@ -100,7 +102,8 @@ public class JsonUtils {
             return linesTextContent;
         }
         if (contentType == NotificationTools.ContentType.PICTURE.getValue()) {
-            NotificationRequest.NotificationPictureContent pictureContent = new NotificationRequest.NotificationPictureContent();
+            NotificationRequest.NotificationPictureContent pictureContent =
+                new NotificationRequest.NotificationPictureContent();
             pictureContent.title = contentObject.optString("title");
             pictureContent.text = contentObject.optString("text");
 

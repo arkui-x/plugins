@@ -261,5 +261,4 @@ public class TaskInfo {
     public void setExtras(String extras) {
         this.extras = extras;
     }
-
 }

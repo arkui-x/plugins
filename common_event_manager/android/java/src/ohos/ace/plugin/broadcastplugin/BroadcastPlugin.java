@@ -123,8 +123,8 @@ public class BroadcastPlugin {
         BroadcastReceiver broadcastReceiver;
         IntentFilter filter = new IntentFilter();
         for (String action : actions) {
-            if (action.equals(Intent.ACTION_BATTERY_LOW)
-                || action.equals(Intent.ACTION_BATTERY_OKAY)) {
+            if (Intent.ACTION_BATTERY_LOW.equals(action)
+                || Intent.ACTION_BATTERY_OKAY.equals(action)) {
                 filter.addAction(Intent.ACTION_BATTERY_CHANGED);
             } else {
                 filter.addAction(action);
@@ -145,7 +145,7 @@ public class BroadcastPlugin {
                     String key = "";
                     for (Map.Entry<String, BroadcastReceiver> entry : broadcastReceiverMap.entrySet()) {
                         if (entry.getValue() == this) {
-                            key = entry.getKey(); 
+                            key = entry.getKey();
                             break;
                         }
                     }
@@ -163,7 +163,7 @@ public class BroadcastPlugin {
 
     private void receiveBroadcast(String key, Intent intent, String json) {
         Log.i(LOG_TAG, " receiveBroadcast " + key);
-        if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+        if (Intent.ACTION_BATTERY_CHANGED.equals(intent.getAction())) {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
             int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, BATTERY_FULL_VALUE);
             int batteryPercent = level * BATTERY_FULL_VALUE / scale;

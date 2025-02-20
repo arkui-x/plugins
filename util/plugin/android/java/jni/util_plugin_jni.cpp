@@ -127,9 +127,8 @@ std::string UtilPluginJni::EncodeIntoChinese(std::string input, std::string enco
         env->ExceptionDescribe();
         env->ExceptionClear();
     }
-    std::string output = "";
     std::string hexstr = env->GetStringUTFChars(result, NULL);
-    output = hexTostring(hexstr);
+    std::string output = hexTostring(hexstr);
     return output;
 }
 

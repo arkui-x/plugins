@@ -24,7 +24,7 @@ const ErrCode = {
   RESULT_ERROR: 13900042,
   NAME_TOO_LONG: 13900030,
   CONTEXT_NO_EXIST: 16000011,
-}
+};
 
 const ERRCODE_MAP = new Map([
   [ErrCode.INVALID_ARGS, 'Invalid argument'],
@@ -79,7 +79,7 @@ function checkArguments(args) {
       for (let i = 0; i < option.newFileNames.length; i++) {
         let value = option.newFileNames[i];
         if (strSizeUTF8(value) >= CREATE_FILE_NAME_LENGTH_LIMIT) {
-          console.log('[picker] checkArguments Invalid name: ' + value);
+          console.log(`[picker] checkArguments Invalid name: ${value}`);
           checkArgumentsResult = getErr(ErrCode.NAME_TOO_LONG);
         }
       }
@@ -95,7 +95,7 @@ function getErr(errCode) {
 
 function parseDocumentPickerSelectOption(args) {
   let config = {
-    parameters: {}
+    parameters: {},
   };
 
   if (args.length > ARGS_ZERO && typeof args[ARGS_ZERO] === 'object') {
@@ -119,7 +119,7 @@ function parseDocumentPickerSelectOption(args) {
     }
   }
 
-  console.log('[picker] document select config: ' + JSON.stringify(config));
+  console.log(`[picker] document select config: ${JSON.stringify(config)}`);
   return config;
 }
 
@@ -133,21 +133,21 @@ async function documentPickerSelect(...args) {
   let documentSelectConfig = undefined;
   let documentSelectResult = {
     error: undefined,
-    data: undefined
+    data: undefined,
   };
 
   try {
     documentSelectConfig = parseDocumentPickerSelectOption(args);
-    documentSelectResult = await this.filepicker.select(documentSelectConfig.parameters)
+    documentSelectResult = await this.filepicker.select(documentSelectConfig.parameters);
   } catch (error) {
-    console.error('[picker] DocumentSelect error: ' + JSON.stringify(error));
+    console.error(`[picker] DocumentSelect error: ${JSON.stringify(error)}`);
     return undefined;
   }
-  console.log('[picker] DocumentSelect result: ' + JSON.stringify(documentSelectResult));
+  console.log(`[picker] DocumentSelect result: ${JSON.stringify(documentSelectResult)}`);
   try {
     let selectResult = {
       error: documentSelectResult.error,
-      data: documentSelectResult.data
+      data: documentSelectResult.data,
     };
     if (args.length === ARGS_TWO && typeof args[ARGS_ONE] === 'function') {
       console.debug('[picker] select 1 called');
@@ -163,16 +163,16 @@ async function documentPickerSelect(...args) {
       } else {
         reject(selectResult.error);
       }
-    })
+    });
   } catch (resultError) {
-    console.error('[picker] Result error: ' + resultError);
+    console.error(`[picker] Result error: ${resultError}`);
   }
   return undefined;
 }
 
 function parseDocumentPickerSaveOption(args) {
   let config = {
-    parameters: {}
+    parameters: {},
   };
 
   if (args.length > ARGS_ZERO && typeof args[ARGS_ZERO] === 'object') {
@@ -190,7 +190,7 @@ function parseDocumentPickerSaveOption(args) {
     }
   }
 
-  console.log('[picker] document save config: ' + JSON.stringify(config));
+  console.log(`[picker] document save config: ${JSON.stringify(config)}`);
   return config;
 }
 
@@ -204,41 +204,41 @@ async function documentPickerSave(...args) {
   let documentSaveConfig = undefined;
   let documentSaveResult = {
     error: undefined,
-    data: undefined
+    data: undefined,
   };
 
   try {
     documentSaveConfig = parseDocumentPickerSaveOption(args);
-    documentSaveResult = await this.filepicker.save(documentSaveConfig.parameters)
+    documentSaveResult = await this.filepicker.save(documentSaveConfig.parameters);
   } catch (error) {
-    console.error('[picker] document save error: ' + error);
+    console.error(`[picker] document save error: ${error}`);
     return undefined;
   }
 
-  console.log('[picker] document save result: ' + JSON.stringify(documentSaveResult));
+  console.log(`[picker] document save result: ${JSON.stringify(documentSaveResult)}`);
   try {
     let saveResult = {
       error: documentSaveResult.error,
-      data: documentSaveResult.data
+      data: documentSaveResult.data,
     };
-    console.log('[picker] document saveResult: ' + JSON.stringify(saveResult));
+    console.log(`[picker] document saveResult: ${JSON.stringify(saveResult)}`);
     if (args.length === ARGS_TWO && typeof args[ARGS_ONE] === 'function') {
-      console.debug('[picker] save 1 called')
+      console.debug('[picker] save 1 called');
       return args[ARGS_ONE](saveResult.error, saveResult.data);
     } else if (args.length === ARGS_ONE && typeof args[ARGS_ZERO] === 'function') {
-      console.debug('[picker] save 2 called')
+      console.debug('[picker] save 2 called');
       return args[ARGS_ZERO](saveResult.error, saveResult.data);
     }
-    console.debug('[picker] save 3 called')
+    console.debug('[picker] save 3 called');
     return new Promise((resolve, reject) => {
       if (saveResult.data !== undefined) {
         resolve(saveResult.data);
       } else {
         reject(saveResult.error);
       }
-    })
+    });
   } catch (resultError) {
-    console.error('[picker] Result error: ' + resultError);
+    console.error(`[picker] Result error: ${resultError}`);
   }
   return undefined;
 }
@@ -282,4 +282,4 @@ export default {
   AudioSaveOptions: AudioSaveOptions,
   DocumentViewPicker: DocumentViewPicker,
   AudioViewPicker: AudioViewPicker,
-}
+};

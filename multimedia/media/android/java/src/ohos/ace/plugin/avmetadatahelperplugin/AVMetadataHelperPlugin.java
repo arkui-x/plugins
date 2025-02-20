@@ -34,14 +34,14 @@ import android.media.MediaMetadataRetriever;
 public class AVMetadataHelperPlugin {
     private static final String LOG_TAG = "AVMetadataHelperPlugin";
 
-    private Map<Long, MediaMetadataRetriever> metadataRetrieverMap = new HashMap<>();
-    private Map<Long, MediaDataSourceImpl> dataSourceMap = new HashMap<>();
-
     public static final int HELPER_STATE_ERROR = 0;
     public static final int HELPER_IDLE = 1;
     public static final int HELPER_PREPARED = 2;
     public static final int HELPER_CALL_DONE = 3;
     public static final int HELPER_RELEASED = 4;
+
+    private Map<Long, MediaMetadataRetriever> metadataRetrieverMap = new HashMap<>();
+    private Map<Long, MediaDataSourceImpl> dataSourceMap = new HashMap<>();
 
     /**
      * AVMetadataHelperPlugin
@@ -63,6 +63,7 @@ public class AVMetadataHelperPlugin {
      */
     public class MediaDataSourceImpl extends MediaDataSource {
         private long key;
+
         public MediaDataSourceImpl(long id) {
             key = id;
         }
@@ -77,13 +78,14 @@ public class AVMetadataHelperPlugin {
         }
 
         @Override
-        public void close () {
+        public void close() {
         }
     };
 
     private class CallbackThread extends Thread {
         private long id;
         private int state;
+
         @Override
         public void run() {
             nativeOnStateChanged(id, state);
@@ -153,7 +155,7 @@ public class AVMetadataHelperPlugin {
             FileInputStream fs = new FileInputStream(url);
             metadataRetriever.setDataSource(fs.getFD(), offset, size);
             notifyInfo(key, HELPER_PREPARED);
-        } catch(IOException ex){
+        } catch (IOException ex) {
             Log.e(LOG_TAG, "setDataSource IOException:" + ex.getMessage());
         }
     }

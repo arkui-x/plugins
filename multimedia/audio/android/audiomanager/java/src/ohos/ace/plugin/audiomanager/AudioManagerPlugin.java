@@ -96,7 +96,7 @@ public class AudioManagerPlugin {
             return -1;
         }
         Object result = invoke("android.media.AudioManager", "getStreamMinVolume",
-            audioManager_, new Class<?>[] { int.class }, streamType);
+                audioManager_, new Class<?>[] {int.class}, streamType);
         if (result instanceof Integer) {
             return (int) result;
         }
@@ -141,7 +141,7 @@ public class AudioManagerPlugin {
             return 0.0f;
         }
         Object result = invoke("android.media.AudioManager", "getStreamVolumeDb",
-            audioManager_, new Class<?>[] { int.class, int.class, int.class }, streamType, index, deviceType);
+                audioManager_, new Class<?>[] {int.class, int.class, int.class}, streamType, index, deviceType);
         if (result instanceof Float) {
             return (float) result;
         }
@@ -282,9 +282,9 @@ public class AudioManagerPlugin {
         }
         if (lastDeviceInfo != null) {
             Object resultSet = invoke("android.media.AudioManager",
-                    "setCommunicationDevice", audioManager_, new Class<?>[] { AudioDeviceInfo.class }, lastDeviceInfo);
+                    "setCommunicationDevice", audioManager_, new Class<?>[] {AudioDeviceInfo.class}, lastDeviceInfo);
             if (resultSet instanceof Boolean) {
-                return (Boolean)resultSet;
+                return (Boolean) resultSet;
             }
         }
         return false;
@@ -314,7 +314,7 @@ public class AudioManagerPlugin {
         }
 
         @Override
-        public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices)  {
+        public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
             nativeOnAudioDeviceChanged(false, removedDevices);
         }
     }
