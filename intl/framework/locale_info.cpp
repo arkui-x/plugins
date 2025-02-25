@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,20 +26,28 @@ namespace Global {
 namespace I18n {
 using namespace icu;
 
+std::set<std::string> LocaleInfo::allValidLocales = {};
+bool LocaleInfo::allValidLocalesInit = false;
+std::mutex LocaleInfo::allValidLocalesMutex;
+
 std::set<std::string> LocaleInfo::GetValidLocales()
 {
-    static std::set<std::string> allValidLocales;
-    if (allValidLocales.size() > 0) {
+    if (allValidLocalesInit) {
+        return allValidLocales;
+    }
+    std::lock_guard<std::mutex> allValidLocalesLock(allValidLocalesMutex);
+    if (allValidLocalesInit) {
         return allValidLocales;
     }
     int32_t validCount = 1;
-    const Locale *validLocales = Locale::getAvailableLocales(validCount);
+    const Locale *validLocales = icu::Locale::getAvailableLocales(validCount);
     for (int i = 0; i < validCount; i++) {
         allValidLocales.insert(validLocales[i].getLanguage());
     }
     allValidLocales.insert("in");
     allValidLocales.insert("iw");
     allValidLocales.insert("tl");
+    allValidLocalesInit = true;
     return allValidLocales;
 }
 
