@@ -34,7 +34,6 @@ template("plugin_intl_static") {
     ]
 
     sources = [
-      "//third_party/icu/ohos_icu4j/data/lite/icudt72l_dat.S",
       "framework/collator.cpp",
       "framework/date_time_format.cpp",
       "framework/icu_data.cpp",
