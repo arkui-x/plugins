@@ -25,13 +25,15 @@ namespace OHOS {
 namespace Global {
 namespace I18n {
 using namespace icu;
-std::set<std::string> LocaleInfo::allValidLocales = GetValidLocales();
 
 std::set<std::string> LocaleInfo::GetValidLocales()
 {
+    static std::set<std::string> allValidLocales;
+    if (allValidLocales.size() > 0) {
+        return allValidLocales;
+    }
     int32_t validCount = 1;
     const Locale *validLocales = Locale::getAvailableLocales(validCount);
-    std::set<std::string> allValidLocales;
     for (int i = 0; i < validCount; i++) {
         allValidLocales.insert(validLocales[i].getLanguage());
     }

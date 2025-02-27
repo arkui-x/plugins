@@ -89,7 +89,7 @@ NumberFormat::NumberFormat(const std::vector<std::string> &localeTags, std::map<
             status = U_ZERO_ERROR;
             continue;
         }
-        if (LocaleInfo::allValidLocales.count(locale.getLanguage()) > 0) {
+        if (LocaleInfo::GetValidLocales().count(locale.getLanguage()) > 0) {
             localeInfo = std::make_unique<LocaleInfo>(curLocale, configs);
             CreateRelativeTimeFormat(curLocale);
             if (!localeInfo->InitSuccess()) {
