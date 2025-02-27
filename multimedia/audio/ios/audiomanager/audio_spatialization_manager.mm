@@ -50,6 +50,12 @@ bool AudioSpatializationManager::IsSpatializationEnabled(
     return false;
 }
 
+bool AudioSpatializationManager::IsSpatializationEnabledForCurrentDevice()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
 int32_t AudioSpatializationManager::SetSpatializationEnabled(const bool enable)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
@@ -96,6 +102,13 @@ int32_t AudioSpatializationManager::RegisterSpatializationEnabledEventListener(
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSpatializationManager::RegisterSpatializationEnabledForCurrentDeviceEventListener(
+    const std::shared_ptr<AudioSpatializationEnabledChangeForCurrentDeviceCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioSpatializationManager::RegisterHeadTrackingEnabledEventListener(
     const std::shared_ptr<AudioHeadTrackingEnabledChangeCallback> &callback)
 {
@@ -106,6 +119,12 @@ int32_t AudioSpatializationManager::RegisterHeadTrackingEnabledEventListener(
 int32_t AudioSpatializationManager::UnregisterSpatializationEnabledEventListener()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSpatializationManager::UnregisterSpatializationEnabledForCurrentDeviceEventListener()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 

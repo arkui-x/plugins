@@ -317,7 +317,7 @@ int32_t AudioSystemManager::UnexcludeOutputDevices(AudioDeviceUsage audioDevUsag
     return ERR_NOT_SUPPORTED;
 }
 
-std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetExcludedOutputDevices(
+std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetExcludedDevices(
         AudioDeviceUsage audioDevUsage) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
