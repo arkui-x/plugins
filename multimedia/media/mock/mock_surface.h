@@ -344,7 +344,7 @@ public:
         return GSERROR_NOT_SUPPORT;
     }
 
-    GSError DetachBufferFromQueue(sptr<SurfaceBuffer> buffer) override
+    GSError DetachBufferFromQueue(sptr<SurfaceBuffer> buffer, bool isReserveSlot = false) override
     {
         return GSERROR_NOT_SUPPORT;
     }
