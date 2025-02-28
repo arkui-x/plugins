@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #define OHOS_GLOBAL_I18N_LOCALE_INFO_H
 
 #include <map>
+#include <mutex>
 #include <set>
 #include <cstdint>
 
@@ -48,8 +49,8 @@ public:
     bool InitSuccess() const;
     static const uint32_t SCRIPT_LEN = 4;
     static const uint32_t REGION_LEN = 2;
-    static std::set<std::string> allValidLocales;
     static std::set<std::string> GetValidLocales();
+    
 private:
     std::string language;
     std::string region;
@@ -70,10 +71,14 @@ private:
     std::string numberingSystemTag = "-nu-";
     std::string numericTag = "-kn-";
     std::string caseFirstTag = "-kf-";
-    static bool icuInitialized;
-    static bool Init();
-    static const uint32_t CONFIG_TAG_LEN = 4;
     std::map<std::string, std::string> configs;
+    static std::set<std::string> allValidLocales;
+    static bool allValidLocalesInit;
+    static std::mutex allValidLocalesMutex;
+    static bool icuInitialized;
+    static const uint32_t CONFIG_TAG_LEN = 4;
+
+    static bool Init();
     void ComputeFinalLocaleTag(const std::string &localeTag);
     void ParseConfigs();
     void ParseLocaleTag(const std::string &localeTag);
