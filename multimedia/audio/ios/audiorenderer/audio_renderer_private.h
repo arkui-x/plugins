@@ -126,6 +126,9 @@ public:
     bool IsNoStreamRenderer() const override { return false; }
 
     int32_t SetDefaultOutputDevice(DeviceType deviceType) override { return ERR_NOT_SUPPORTED; }
+
+    int32_t GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
+    
 private:
     bool IsFormatValid(uint8_t format);
     bool IsEncodingTypeValid(uint8_t encodingType);
