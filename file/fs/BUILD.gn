@@ -35,6 +35,7 @@ template("plugin_fs_static") {
   ohos_source_set(target_name) {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
+    defines += [ "CROSS_PLATFORM" ]
 
     include_dirs = [
       "$fs_dirs/src/mod_fs",
