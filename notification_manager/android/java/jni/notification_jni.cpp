@@ -155,7 +155,7 @@ ErrorCode NotificationJni::publish(const NotificationRequest& request)
     request.ToJson(jsonParser);
 
     jstring requestStr = env->NewStringUTF(jsonParser.dump().c_str());
-    jstring jinfo = (jstring)env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.publish, requestStr);
+    env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.publish, requestStr);
     if (env->ExceptionCheck()) {
         LOGE("NotificationJni JNI: call publish has exception");
         env->ExceptionDescribe();
