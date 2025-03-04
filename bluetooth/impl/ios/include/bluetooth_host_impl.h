@@ -113,6 +113,9 @@ public:
     int32_t SetVirtualAutoConnectType(const std::string& address, int connType, int businessType) override;
     int32_t SetFastScanLevel(int level) override;
     int32_t EnableBluetoothToRestrictMode(void) override;
+    int32_t GetLastConnectionTime(const std::string &address, int64_t &connectionTime) override;
+    int32_t UpdateCloudBluetoothDevice(std::vector<BluetoothTrustPairDevice> &cloudDevices) override;
+    int32_t GetCloudBondState(const std::string &address, int32_t &cloudBondState) override;
 
 private:
     std::mutex observerMutex_;

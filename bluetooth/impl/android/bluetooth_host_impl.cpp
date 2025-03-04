@@ -506,5 +506,20 @@ int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(void)
     return 0;
 }
 
+int32_t BluetoothHostImpl::GetLastConnectionTime(const std::string &address, int64_t &connectionTime)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::UpdateCloudBluetoothDevice(std::vector<BluetoothTrustPairDevice> &cloudDevices)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::GetCloudBondState(const std::string &address, int32_t &cloudBondState)
+{
+    return 0;
+}
+
 } // namespace Bluetooth
 } // namespace OHOS
