@@ -275,11 +275,11 @@ function AudioViewPicker() {
 }
 
 export default {
-  DocumentSelectMode: DocumentSelectMode,
-  DocumentSelectOptions: DocumentSelectOptions,
-  DocumentSaveOptions: DocumentSaveOptions,
-  AudioSelectOptions: AudioSelectOptions,
-  AudioSaveOptions: AudioSaveOptions,
-  DocumentViewPicker: DocumentViewPicker,
-  AudioViewPicker: AudioViewPicker,
+  DocumentSelectMode,
+  DocumentSelectOptions,
+  DocumentSaveOptions,
+  AudioSelectOptions,
+  AudioSaveOptions,
+  DocumentViewPicker,
+  AudioViewPicker,
 };

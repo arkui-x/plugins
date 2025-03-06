@@ -29,10 +29,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * TaskDao class is used to operate database
+ *
+ * @since 2024-05-31
+ */
 public class TaskDao {
     private static DatabaseHelper mDatabaseHelper;
     private static SQLiteDatabase mSQLiteDatabase;
 
+    /**
+     * init database
+     *
+     * @param context context
+     * @param config config
+     * @return long
+     */
     public static long insert(Context context, Config config) {
         Log.i(TAG, "insert:" + JsonUtil.configToJson(config));
         initDb(context);
@@ -91,6 +103,13 @@ public class TaskDao {
         return IConstant.FAILED_VALUE;
     }
 
+    /**
+     * query config by taskId
+     *
+     * @param context context
+     * @param taskId  taskId
+     * @return config
+     */
     @SuppressLint("Range")
     public static Config queryConfig(Context context, long taskId) {
         Log.i(TAG, "queryConfig: " + taskId);
@@ -128,6 +147,13 @@ public class TaskDao {
         return null;
     }
 
+    /**
+     * query task by taskId
+     *
+     * @param context context
+     * @param taskId  taskId
+     * @return task
+     */
     @SuppressLint("Range")
     public static TaskInfo query(Context context, long taskId) {
         Log.i(TAG, "query: " + taskId);
@@ -157,6 +183,12 @@ public class TaskDao {
         return null;
     }
 
+    /**
+     * query all tasks
+     *
+     * @param context context
+     * @return tasks
+     */
     @SuppressLint("Range")
     public static List<TaskInfo> queryAll(Context context) {
         Log.i(TAG, "queryAll");
@@ -182,6 +214,14 @@ public class TaskDao {
         return taskInfos;
     }
 
+    /**
+     * query task by taskId and token
+     *
+     * @param context context
+     * @param taskId  taskId
+     * @param token   token
+     * @return task
+     */
     @SuppressLint("Range")
     public static TaskInfo queryByToken(Context context, long taskId, String token) {
         Log.i(TAG, "queryByToken: " + taskId + ",token:" + token);
@@ -266,6 +306,13 @@ public class TaskDao {
         return taskInfo;
     }
 
+    /**
+     * query task by filter
+     *
+     * @param context context
+     * @param filter filter
+     * @return List<Long>
+     */
     @SuppressLint("Range")
     public static List<Long> queryByFilter(Context context, Filter filter) {
         Log.i(TAG, "queryByFilter");
@@ -348,6 +395,13 @@ public class TaskDao {
         return taskIds;
     }
 
+    /**
+     * Update task info
+     *
+     * @param context context
+     * @param taskInfo task info
+     * @param isSaveToken is save token
+     */
     public static void update(Context context, TaskInfo taskInfo, boolean isSaveToken) {
         Log.i(TAG, "update: " + JsonUtil.convertTaskInfoToJson(taskInfo));
         initDb(context);
@@ -388,6 +442,12 @@ public class TaskDao {
         }
     }
 
+    /**
+     * delete task by taskId
+     *
+     * @param context context
+     * @param taskId  taskId
+     */
     public static void delete(Context context, long taskId) {
         Log.i(TAG, "delete: " + taskId);
         initDb(context);

@@ -84,6 +84,13 @@ public class BroadcastPlugin {
         }
     }
 
+    /**
+     * sendBroadcast send broadcast
+     *
+     * @param action action of the broadcast
+     * @param json json of the broadcast
+     * @return true if send broadcast success, false if send broadcast failed
+     */
     public boolean sendBroadcast(String action, String json) {
         if (context == null) {
             return false;
@@ -110,6 +117,13 @@ public class BroadcastPlugin {
         return true;
     }
 
+    /**
+     * registerBroadcast register broadcast
+     *
+     * @param key key of the broadcast
+     * @param actions actions of the broadcast
+     * @return true if register broadcast success, false if register broadcast failed
+     */
     public boolean registerBroadcast(String key, String[] actions) {
         if (context == null) {
             return false;
@@ -186,6 +200,12 @@ public class BroadcastPlugin {
         }
     }
 
+    /**
+     * nativeDestroy is used to destroy the native environment
+     *
+     * @param key the key of broadcast
+     * @return boolean whether the broadcast is unregistered successfully
+     */
     public boolean unRegisterBroadcast(String key) {
         if (context == null) {
             return false;
@@ -206,6 +226,17 @@ public class BroadcastPlugin {
         return true;
     }
 
+    /**
+     * nativeInit is used to initialize the native environment
+     */
     protected native void nativeInit();
+
+    /**
+     * nativeReceiveBroadcast is used to receive broadcast
+     *
+     * @param key the key of broadcast
+     * @param action the action of broadcast
+     * @param json the json of broadcast
+     */
     protected native void nativeReceiveBroadcast(String key, String action, String json);
 }

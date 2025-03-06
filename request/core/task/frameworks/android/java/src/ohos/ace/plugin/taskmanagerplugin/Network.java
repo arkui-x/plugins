@@ -15,8 +15,24 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Network
+ *
+ * @since 2024-05-31
+ */
 public interface Network {
+    /**
+     * Network type
+     */
     int ANY = 0;
+
+    /**
+     * Network type
+     */
     int WIFI = 1;
+
+    /**
+     * Network type
+     */
     int CELLULAR = 2;
 }

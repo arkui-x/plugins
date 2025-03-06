@@ -18,15 +18,26 @@ package ohos.ace.plugin.testplugin;
 import android.content.Context;
 import android.util.Log;
 
+/**
+ * TestPlugin class is used to test plugin
+ *
+ * @since 2024-08-06
+ */
 public class TestPlugin {
     private static final String LOG_TAG = "TestPlugin";
     public TestPlugin(Context context) {
         nativeInit();
     }
 
+    /**
+     * hello is used to test plugin
+     */
     public void hello() {
         Log.i(LOG_TAG, "TestPlugin: hello from java");
     }
 
+    /**
+     * nativeInit is used to init native
+     */
     protected native void nativeInit();
 }

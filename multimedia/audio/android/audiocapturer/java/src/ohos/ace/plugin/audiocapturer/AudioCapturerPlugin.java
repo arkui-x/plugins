@@ -20,7 +20,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
-import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioTimestamp;
@@ -32,6 +31,8 @@ import java.util.HashMap;
 
 /**
  * AudioCapturerPlugin
+ *
+ * @since 2024-06-24
  */
 public class AudioCapturerPlugin {
     private static final String LOG_TAG = "AudioCapturerPlugin";
@@ -55,6 +56,16 @@ public class AudioCapturerPlugin {
         nativeInit();
     }
 
+    /**
+     * createAudioRecord create audio record
+     *
+     * @param capturerPtr capturerPtr of the audio record
+     * @param sampleRate sampleRate of the audio record
+     * @param channel channel of the audio record
+     * @param encoding encoding of the audio record
+     * @param sourceType sourceType of the audio record
+     * @return int result of the operation
+     */
     public int createAudioRecord(long capturerPtr, int sampleRate, int channel, int encoding,
                                   int sourceType) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
@@ -63,8 +74,8 @@ public class AudioCapturerPlugin {
         }
         if (sourceType == AudioSource.MIC) {
             PackageManager pm = appContext.getPackageManager();
-            boolean permission = (PackageManager.PERMISSION_GRANTED ==
-                pm.checkPermission("android.permission.RECORD_AUDIO", appContext.getPackageName()));
+            boolean permission = (pm.checkPermission("android.permission.RECORD_AUDIO",
+                    appContext.getPackageName()) == PackageManager.PERMISSION_GRANTED);
             if (!permission) {
                 Log.e(LOG_TAG, "No microphone permission.createAudioRecord failed.");
                 return AudioRecord.ERROR_INVALID_OPERATION;
@@ -82,6 +93,11 @@ public class AudioCapturerPlugin {
         return AudioRecord.SUCCESS;
     }
 
+    /**
+     * finalize audio record
+     *
+     * @param capturerPtr capturerPtr of the audio record
+     */
     public void finalize(long capturerPtr) {
         mAudioRecords.remove(capturerPtr);
         positionUpdateListeners.remove(capturerPtr);
@@ -89,6 +105,11 @@ public class AudioCapturerPlugin {
         infoChangeListeners.remove(capturerPtr);
     }
 
+    /**
+     * start recording
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void startRecording(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -98,6 +119,11 @@ public class AudioCapturerPlugin {
         audioRecord.startRecording();
     }
 
+    /**
+     * stop recording
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void stop(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -107,6 +133,11 @@ public class AudioCapturerPlugin {
         audioRecord.stop();
     }
 
+    /**
+     * release audioRecord
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void release(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -117,6 +148,15 @@ public class AudioCapturerPlugin {
         finalize(capturerPtr);
     }
 
+    /**
+     * get min buffer size
+     *
+     * @param capturerPtr capturerPtr
+     * @param sampleRateInHz sampleRateInHz
+     * @param channelConfig channelConfig
+     * @param audioFormat audioFormat
+     * @return min buffer size
+     */
     public int getMinBufferSize(long capturerPtr, int sampleRateInHz, int channelConfig, int audioFormat) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -126,6 +166,14 @@ public class AudioCapturerPlugin {
         return AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
     }
 
+    /**
+     * read data from audioRecord
+     *
+     * @param capturerPtr capturerPtr
+     * @param buffer buffer
+     * @param size size
+     * @return read size
+     */
     public int read(long capturerPtr, byte[] buffer, int size) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -136,6 +184,12 @@ public class AudioCapturerPlugin {
         return retSize;
     }
 
+    /**
+     * get audio source from audioRecord
+     *
+     * @param capturerPtr capturerPtr
+     * @return audio source
+     */
     public int getAudioSource(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -145,6 +199,13 @@ public class AudioCapturerPlugin {
         return audioRecord.getAudioSource();
     }
 
+    /**
+     * set notification marker position
+     *
+     * @param capturerPtr capturerPtr
+     * @param markerInFrames markerInFrames
+     * @return result
+     */
     public int setNotificationMarkerPosition(long capturerPtr, int markerInFrames) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -154,6 +215,11 @@ public class AudioCapturerPlugin {
         return audioRecord.setNotificationMarkerPosition(markerInFrames);
     }
 
+    /**
+     * set record position update listener
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void setRecordPositionUpdateListener(long capturerPtr) {
         OnRecordPositionUpdateListenerImpl listener = positionUpdateListeners.get(capturerPtr);
         if (listener != null) {
@@ -169,6 +235,11 @@ public class AudioCapturerPlugin {
         positionUpdateListeners.put(capturerPtr, listener);
     }
 
+    /**
+     * unset record position update listener
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void unsetRecordPositionUpdateListener(long capturerPtr) {
         OnRecordPositionUpdateListenerImpl listener = positionUpdateListeners.get(capturerPtr);
         if (listener == null) {
@@ -183,6 +254,13 @@ public class AudioCapturerPlugin {
         audioRecord.setRecordPositionUpdateListener(null);
     }
 
+    /**
+     * set position notification period
+     *
+     * @param capturerPtr capturerPtr
+     * @param periodInFrames periodInFrames
+     * @return result
+     */
     public int setPositionNotificationPeriod(long capturerPtr, int periodInFrames) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -192,6 +270,11 @@ public class AudioCapturerPlugin {
         return audioRecord.setPositionNotificationPeriod(periodInFrames);
     }
 
+    /**
+     * add on routing changed listener
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void addOnRoutingChangedListener(long capturerPtr) {
         OnRoutingChangedListenerImpl listener = deviceChangeListeners.get(capturerPtr);
         if (listener != null) {
@@ -207,6 +290,11 @@ public class AudioCapturerPlugin {
         deviceChangeListeners.put(capturerPtr, listener);
     }
 
+    /**
+     * add on info changed listener
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void addOnInfoChangedListener(long capturerPtr) {
         OnInfoChangedListenerImpl infoListener = infoChangeListeners.get(capturerPtr);
         if (infoListener != null) {
@@ -222,6 +310,11 @@ public class AudioCapturerPlugin {
         infoChangeListeners.put(capturerPtr, infoListener);
     }
 
+    /**
+     * remove on routing changed listener
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void removeOnRoutingChangedListener(long capturerPtr) {
         OnRoutingChangedListenerImpl listener = deviceChangeListeners.get(capturerPtr);
         if (listener == null) {
@@ -236,6 +329,11 @@ public class AudioCapturerPlugin {
         audioRecord.removeOnRoutingChangedListener(listener);
     }
 
+    /**
+     * add on info changed listener
+     *
+     * @param capturerPtr capturerPtr
+     */
     public void removeOnInfoChangedListener(long capturerPtr) {
         OnInfoChangedListenerImpl infoListener = infoChangeListeners.get(capturerPtr);
         if (infoListener == null) {
@@ -250,6 +348,12 @@ public class AudioCapturerPlugin {
         audioRecord.removeOnRoutingChangedListener(infoListener);
     }
 
+    /**
+     * Get the audio format of the audio record.
+     *
+     * @param capturerPtr capturerPtr
+     * @return audio format
+     */
     public AudioFormat getFormat(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -259,6 +363,12 @@ public class AudioCapturerPlugin {
         return audioRecord.getFormat();
     }
 
+    /**
+     * Get the audio session id of the audio record.
+     *
+     * @param capturerPtr capturerPtr
+     * @return audio session id
+     */
     public int getAudioSessionId(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -268,6 +378,13 @@ public class AudioCapturerPlugin {
         return audioRecord.getAudioSessionId();
     }
 
+    /**
+     * Get the audio source of the audio record.
+     *
+     * @param capturerPtr capturerPtr
+     * @param timestamp timestamp
+     * @return audio source
+     */
     public int getTimestamp(long capturerPtr, AudioTimestamp timestamp) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -277,6 +394,12 @@ public class AudioCapturerPlugin {
         return audioRecord.getTimestamp(timestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
     }
 
+    /**
+     * AudioRecord.OnRoutingChangedListener implementation
+     *
+     * @param capturerPtr capturerPtr
+     * @return OnRoutingChangedListenerImpl
+     */
     public AudioDeviceInfo getRoutedDevice(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
@@ -286,6 +409,9 @@ public class AudioCapturerPlugin {
         return audioRecord.getRoutedDevice();
     }
 
+    /**
+     * AudioRecord.OnRecordPositionUpdateListener implementation
+     */
     public class OnRecordPositionUpdateListenerImpl implements AudioRecord.OnRecordPositionUpdateListener {
         @Override
         public void onMarkerReached(AudioRecord record) {
@@ -312,6 +438,9 @@ public class AudioCapturerPlugin {
         }
     };
 
+    /**
+     * AudioRouting.OnRoutingChangedListener implementation
+     */
     public class OnRoutingChangedListenerImpl implements AudioRouting.OnRoutingChangedListener {
         @Override
         public void onRoutingChanged(AudioRouting router) {
@@ -328,6 +457,9 @@ public class AudioCapturerPlugin {
         }
     };
 
+    /**
+     * AudioDeviceInfo.OnInfoChangedListener implementation
+     */
     public class OnInfoChangedListenerImpl implements AudioRouting.OnRoutingChangedListener {
         @Override
         public void onRoutingChanged(AudioRouting router) {
@@ -348,8 +480,36 @@ public class AudioCapturerPlugin {
      * AudioCapturerPlugin native method.
      */
     protected native void nativeInit();
+
+    /**
+     * AudioCapturerPlugin native method.
+     *
+     * @param key the key
+     * @param position the position
+     */
     protected native void nativeOnMarkerReached(long key, int position);
+
+    /**
+     * AudioCapturerPlugin native method.
+     *
+     * @param key the key
+     * @param period the period
+     */
     protected native void nativeOnPeriodicNotification(long key, int period);
+
+    /**
+     * AudioCapturerPlugin native method.
+     *
+     * @param key the key
+     * @param deviceInfo the deviceInfo
+     */
     protected native void nativeOnRoutingChanged(long key, AudioDeviceInfo deviceInfo);
+
+    /**
+     * AudioCapturerPlugin native method.
+     *
+     * @param key the key
+     * @param deviceInfo the deviceInfo
+     */
     protected native void nativeOnInfoChanged(long key, AudioDeviceInfo deviceInfo);
 }

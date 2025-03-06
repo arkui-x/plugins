@@ -29,6 +29,8 @@ import ohos.ace.plugin.wifimanager.WifiBroadcastReceiver.WifiConnectReceiver;
 
 /**
  * Monitor the broadcast of the on/off status and network connection status of WiFi
+ *
+ * @since 2024-06-24
  */
 public class WifiBroadcastReceiver {
     private Context context;

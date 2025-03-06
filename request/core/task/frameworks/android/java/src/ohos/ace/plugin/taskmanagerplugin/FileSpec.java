@@ -15,6 +15,11 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * FileSpec
+ *
+ * @since 2024-05-31
+ */
 public class FileSpec {
     private String name;
     private String uri;

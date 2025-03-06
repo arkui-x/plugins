@@ -29,19 +29,22 @@ import android.content.ContentQueryMap;
 import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 
-import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 import ohos.ace.plugin.photoaccesshelper.AlbumValues;
 
+/**
+ * PhotoPlugin class is used to implement the photo picker function
+ *
+ * @since 2024-06-24
+ */
 public class PhotoPlugin {
     private static String TAG = "photoPlugin";
 
@@ -62,6 +65,11 @@ public class PhotoPlugin {
         nativeInit();
     }
 
+    /**
+     * startPhotoPicker
+     *
+     * @param type type
+     */
     public void startPhotoPicker(String type) {
         if (mContext == null) {
             Log.i(TAG, "mContext is null");
@@ -86,6 +94,11 @@ public class PhotoPlugin {
         }
     }
 
+    /**
+     * checkPermission
+     *
+     * @return boolean
+     */
     public boolean checkPermission() {
         if (mContext == null) {
             Log.i(TAG, "mContext is null");
@@ -113,6 +126,14 @@ public class PhotoPlugin {
         }
     }
 
+    /**
+     * queryPhoto
+     *
+     * @param selection selection
+     * @param selectionArgs selectionArgs
+     * @param projection projection
+     * @return Cursor
+     */
     public Cursor queryPhoto(Bundle selection, String[] selectionArgs, String[] projection) {
         if (mContext == null) {
             Log.i(TAG, "mContext is null");
@@ -151,6 +172,14 @@ public class PhotoPlugin {
         }
     }
 
+    /**
+     * query album
+     *
+     * @param selection selection
+     * @param selectionArgs selectionArgs
+     * @param projection projection
+     * @return AlbumValues
+     */
     public AlbumValues queryAlbum(Bundle selection, String[] selectionArgs, String[] projection) {
         if (mContext == null) {
             Log.i(TAG, "mContext is null");
@@ -217,6 +246,14 @@ public class PhotoPlugin {
         }
     }
 
+    /**
+     * onResult method is called when the activity result is returned
+     *
+     * @param requestCode requestCode
+     * @param resultCode resultCode
+     * @param data data
+     * @param activity activity
+     */
     public void onResult(int requestCode, int resultCode, Intent data, Activity activity) {
         Log.i(TAG, "onResult enter requestCode is " + requestCode + ", " + resultCode);
 
@@ -335,7 +372,16 @@ public class PhotoPlugin {
         return null;
     }
 
+    /**
+     * nativeInit
+     */
     protected native void nativeInit();
 
+    /**
+     * onPickerResult
+     *
+     * @param rst result
+     * @param errCode error code
+     */
     protected native void onPickerResult(List<String> rst, int errCode);
 }

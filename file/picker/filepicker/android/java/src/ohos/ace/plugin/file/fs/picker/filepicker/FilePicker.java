@@ -93,6 +93,14 @@ public class FilePicker {
         }
     }
 
+    /**
+     * select file or folder
+     *
+     * @param maxSelectNumber max select number
+     * @param defaultFilePathUri default file path uri
+     * @param fileSuffixFilters file suffix filters
+     * @param selectMode select mode
+     */
     public void select(int maxSelectNumber, String defaultFilePathUri, String[] fileSuffixFilters, int selectMode) {
         Log.i(LOG_TAG, "select enter. selectMode:" + selectMode);
         if (selectMode == DocumentSelectMode.FOLDER.code) {
@@ -102,6 +110,13 @@ public class FilePicker {
         this.selectFile(maxSelectNumber, defaultFilePathUri, fileSuffixFilters);
     }
 
+    /**
+     * select file
+     *
+     * @param maxSelectNumber max select number
+     * @param defaultFilePathUri default file path uri
+     * @param fileSuffixFilters file suffix filters
+     */
     public void selectFile(int maxSelectNumber, String defaultFilePathUri, String[] fileSuffixFilters) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -124,13 +139,21 @@ public class FilePicker {
         startPicker(intent);
     }
 
-
+    /**
+     * select folder
+     */
     public void selectFolder() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         startPicker(intent);
     }
 
+    /**
+     * save file
+     *
+     * @param newFileNames new file names
+     * @param defaultFilePath default file path
+     */
     public void save(String[] newFileNames, String defaultFilePath) {
         Log.i(LOG_TAG, "save enter");
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -148,6 +171,13 @@ public class FilePicker {
         startPicker(intent);
     }
 
+    /**
+     * start picker activity and wait for result
+     *
+     * @param requestCode requestCode for picker activity
+     * @param resultCode resultCode for picker activity
+     * @param data data for picker activity
+     */
     public void onResult(int requestCode, int resultCode, Intent data) {
         Log.i(LOG_TAG, "onResult enter");
 
@@ -239,7 +269,16 @@ public class FilePicker {
         return null;
     }
 
+    /**
+     * start file picker
+     */
     protected native void nativeInit();
 
+    /**
+     * on picker result
+     *
+     * @param rst result
+     * @param errCode error code
+     */
     protected native void onPickerResult(List<String> rst, int errCode);
 }

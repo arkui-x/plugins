@@ -18,6 +18,11 @@ package ohos.ace.plugin.taskmanagerplugin;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Filter class for task manager plugin filter parameters definition and getter/setter methods definition.
+ *
+ * @since 2024-05-31
+ */
 public class Progress {
     private int state;
     private int index;

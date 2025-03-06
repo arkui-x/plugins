@@ -23,7 +23,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.text.TextUtils;
-import android.os.Build;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -35,12 +34,20 @@ import org.json.JSONObject;
  * @since 2024-06-24
  */
 public class WifiDeviceUtils {
+    /**
+     * Network type name
+     */
     public static final String NETWORKINFO_TYPE_NAME = "WIFI";
 
     private Context context;
 
     private WifiManager mWifiManager;
 
+    /**
+     * Constructor for WifiDeviceUtils
+     *
+     * @param context Context
+     */
     public WifiDeviceUtils(Context context) {
         if (context == null) {
             Log.e(TAG, "WifiDeviceUtils context is null");
@@ -52,6 +59,8 @@ public class WifiDeviceUtils {
 
     /**
      * Obtain information on the WIFI link
+     *
+     * @return WifiInfo
      */
     public String getWifiInfo() {
         if (mWifiManager == null) {
@@ -91,6 +100,8 @@ public class WifiDeviceUtils {
 
     /**
      * Check if the WiFi switch is turned on
+     *
+     * @return true: open, false: close
      */
     public boolean getWifiActive() {
         if (mWifiManager == null) {
@@ -102,6 +113,8 @@ public class WifiDeviceUtils {
 
     /**
      * Get WIFI link status
+     *
+     * @return true: connected, false: disconnected
      */
     public boolean getIsConnected() {
         if (context == null) {
