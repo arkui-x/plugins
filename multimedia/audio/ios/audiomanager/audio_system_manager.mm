@@ -449,5 +449,69 @@ std::vector<std::shared_ptr<AudioDeviceDescriptor>> AudioSystemManager::GetInput
     std::vector<std::shared_ptr<AudioDeviceDescriptor>> ret;
     return ret;
 }
+
+int32_t AudioSystemManager::SetSelfAppVolume(int32_t volume, int32_t flag)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::SetAppVolume(int32_t appUid, int32_t volume, int32_t flag)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetAppVolume(int32_t appUid) const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetSelfAppVolume() const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::SetAppVolumeMuted(int32_t appUid, bool muted, int32_t volumeFlag)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnsetSelfAppVolumeCallback(
+    const std::shared_ptr<AudioManagerAppVolumeChangeCallback>& callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::SetSelfAppVolumeCallback(
+    const std::shared_ptr<AudioManagerAppVolumeChangeCallback>& callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::SetAppVolumeCallbackForUid(
+    const int32_t appUid, const std::shared_ptr<AudioManagerAppVolumeChangeCallback>& callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnsetAppVolumeCallbackForUid(
+    const std::shared_ptr<AudioManagerAppVolumeChangeCallback>& callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+bool AudioSystemManager::IsAppVolumeMute(int32_t appUid, bool owned)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS

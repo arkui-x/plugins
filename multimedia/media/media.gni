@@ -96,6 +96,7 @@ media_include = [
   "//plugins/multimedia/media/android/java/jni",
   "//plugins/multimedia/media/android/java",
   "$PLAYER_FRAMEWORK_DIR/services/services/engine_intf",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/screencapturemonitor/",
 ]
 
 media_source = [
@@ -106,6 +107,8 @@ media_source = [
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/common/js_common_utils.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/avrecorder/avrecorder_callback.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/avrecorder/avrecorder_napi.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/mediasource/media_source_loader_callback.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/mediasource/media_source_loading_request_napi.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/mediasource/media_source_napi.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/metadatahelper/avmetadataextractor_napi.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/metadatahelper/avmetadatahelper_callback.cpp",
