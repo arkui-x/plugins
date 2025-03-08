@@ -27,5 +27,10 @@ bool VolumeUtils::IsPCVolumeEnable()
 {
     return false;
 }
+
+bool PermissionUtil::VerifySystemPermission()
+{
+    return false;
+}
 } // namespace AudioStandard
 } // namespace OHOS

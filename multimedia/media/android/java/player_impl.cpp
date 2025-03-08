@@ -128,6 +128,11 @@ int32_t PlayerImpl::SetVolume(float leftVolume, float rightVolume)
     return Plugin::PlayerJni::SetVolume(long(this), leftVolume, rightVolume);
 }
 
+int32_t PlayerImpl::SetVolumeMode(int32_t mode)
+{
+    return MSERR_UNSUPPORT;
+}
+
 int32_t PlayerImpl::Seek(int32_t mSeconds, PlayerSeekMode mode)
 {
     return Plugin::PlayerJni::Seek(long(this), mSeconds, mode);

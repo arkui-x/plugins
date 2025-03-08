@@ -134,6 +134,11 @@ int32_t PlayerImpl::SetVolume(float leftVolume, float rightVolume)
     return MSERR_OK;
 }
 
+int32_t PlayerImpl::SetVolumeMode(int32_t mode)
+{
+    return MSERR_UNSUPPORT;
+}
+
 int32_t PlayerImpl::Seek(int32_t mSeconds, PlayerSeekMode mode)
 {
     [playerAdapter_ seekTime: mSeconds];
