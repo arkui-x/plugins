@@ -15,7 +15,6 @@
 
 package ohos.ace.plugin.notificationmanager;
 
-import android.app.Notification;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -23,11 +22,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Iterator;
-
+/**
+ * JsonUtils
+ *
+ * @since 2024-06-24
+ */
 public class JsonUtils {
     private static final String TAG = JsonUtils.class.getSimpleName();
 
+    /**
+     * getNotificationRequest from jsonString
+     *
+     * @param jsonString jsonString
+     * @return NotificationRequest
+     */
     public static NotificationRequest getNotificationRequest(String jsonString) {
         NotificationRequest request = new NotificationRequest();
         if (TextUtils.isEmpty(jsonString)) {

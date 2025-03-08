@@ -33,9 +33,21 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
+/**
+ * BadgeUtils set badge number for different manufacturers of mobile phones
+ *
+ * @since 2024-06-24
+ */
 public class BadgeUtils {
     private static final String TAG = BadgeUtils.class.getSimpleName();
 
+    /**
+     * set badge number
+     *
+     * @param context application context
+     * @param count badge number
+     * @param notification notification
+     */
     public static void setBadgeNumber(Context context, int count, Notification notification) {
         if (context == null) {
             return;
@@ -92,6 +104,7 @@ public class BadgeUtils {
      *
      * @param count   badge number
      * @param context applicationcontext
+     * @param notification notification
      */
     private static void setXiaoMiBadge(int count, Context context, Notification notification) {
         if (notification == null) {

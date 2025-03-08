@@ -24,6 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * AlbumValues
+ *
+ * @since 2024-06-24
+ */
 public class AlbumValues {
     private ContentQueryMap albumMap;
 
@@ -34,6 +39,11 @@ public class AlbumValues {
         getFirstValue();
     }
 
+    /**
+     * getColumns
+     *
+     * @return List<String>
+     */
     public List<String> getColumns() {
         if (albumMap == null) {
             return null;
@@ -51,6 +61,11 @@ public class AlbumValues {
         return columns;
     }
 
+    /**
+     * Get the first row of the album
+     *
+     * @return ContentValues
+     */
     public ContentValues getFirstValue() {
         Map<String, ContentValues> rows = albumMap.getRows();
         Set<Map.Entry<String, ContentValues>> entry = rows.entrySet();
@@ -61,6 +76,11 @@ public class AlbumValues {
         return mIterator.next().getValue();
     }
 
+    /**
+     * Get the next row of the album
+     *
+     * @return ContentValues
+     */
     public ContentValues getNextValue() {
         if (mIterator == null || !mIterator.hasNext()) {
             return null;
@@ -68,6 +88,11 @@ public class AlbumValues {
         return mIterator.next().getValue();
     }
 
+    /**
+     * Determine if the current row is the last row of the album
+     *
+     * @return boolean
+     */
     public boolean IsAtLastRow() {
         if (mIterator == null) {
             return true;
@@ -75,6 +100,11 @@ public class AlbumValues {
         return !mIterator.hasNext();
     }
 
+    /**
+     * Get the last row of the album
+     *
+     * @return ContentValues
+     */
     public ContentValues getLastValue() {
         if (mIterator == null) {
             return null;
@@ -89,6 +119,12 @@ public class AlbumValues {
         return values;
     }
 
+    /**
+     * Get the row of the album according to the position
+     *
+     * @param position position
+     * @return ContentValues
+     */
     public ContentValues gotoRow(int position) {
         if (albumMap == null || albumMap.getRows().size() <= position) {
             return null;
@@ -102,6 +138,12 @@ public class AlbumValues {
         return mIterator.next().getValue();
     }
 
+    /**
+     * Get the row of the album according to the offset
+     *
+     * @param offset offset
+     * @return ContentValues
+     */
     public ContentValues move(int offset) {
         if (mIterator == null) {
             getFirstValue();
@@ -113,6 +155,13 @@ public class AlbumValues {
         return mIterator.next().getValue();
     }
 
+    /**
+     * get value as byte[]
+     *
+     * @param contentValues ContentValues object
+     * @param key key of the value
+     * @return byte[] value
+     */
     public byte[] getAsBoolean(ContentValues contentValues, String key) {
         if (contentValues == null) {
             return null;
@@ -121,6 +170,11 @@ public class AlbumValues {
         return (byte[]) value;
     }
 
+    /**
+     * Get the number of rows in the album
+     *
+     * @return int
+     */
     public int size() {
         if (albumMap == null || albumMap.getRows() == null) {
             return 0;

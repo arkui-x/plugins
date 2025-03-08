@@ -15,6 +15,11 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * TaskState class to store the task state
+ *
+ * @since 2024-05-31
+ */
 public class TaskState {
     private String path;
     private int responseCode;

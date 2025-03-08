@@ -17,8 +17,14 @@ package ohos.ace.plugin.taskmanagerplugin;
 
 import java.util.HashMap;
 
+/**
+ * Config class for task manager plugin.
+ *
+ * @since 2024-05-31
+ */
 public class Config {
     private long taskId;
+
     /**
      * The task action, upload or download.
      */
@@ -26,6 +32,7 @@ public class Config {
     private String url;
     private String title;
     private String description;
+
     /**
      * The default is background.
      */

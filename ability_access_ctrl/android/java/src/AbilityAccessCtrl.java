@@ -21,7 +21,6 @@ import java.util.Map;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.util.Log;
 import android.content.pm.PackageManager;
 
@@ -67,7 +66,6 @@ public class AbilityAccessCtrl {
      * requestPermissions
      *
      * @param permissions The permission list to be requested.
-     * @return void
      */
     public void requestPermissions(String[] permissions) {
         Log.i(LOG_TAG, "AbilityAccessCtrl: request from java");
@@ -113,7 +111,6 @@ public class AbilityAccessCtrl {
     /**
      * nativeInit
      * Register the initialization method of the plugin for the plugin construction to call.
-     * @return void
      */
     protected native void nativeInit();
 }

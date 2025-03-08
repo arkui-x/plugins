@@ -20,13 +20,8 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 
-import android.app.PendingIntent;
-import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -36,14 +31,21 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
+/**
+ * NotificationPlugin: NotificationPlugin
+ *
+ * @since 2024-06-24
+ */
 public class NotificationPlugin {
     private static final String TAG = NotificationPlugin.class.getSimpleName();
     private static final String PERMISSION = "android.permission.POST_NOTIFICATIONS";
     private static final String CHANNER_ID = "arkuix";
-    private NotificationManager mManager;
+
     Notification.Builder mBuilder;
-    private NotificationChannel mNotificationChannel;
+
     private Context context;
+    private NotificationManager mManager;
+    private NotificationChannel mNotificationChannel;
     private NotificationRequest request;
 
     public NotificationPlugin(Context context) {
@@ -66,10 +68,22 @@ public class NotificationPlugin {
         nativeInit();
     }
 
+    /**
+     * nativeInit
+     */
     protected native void nativeInit();
 
+    /**
+     * nativeReceiveCallback
+     *
+     * @param key key
+     * @param code code
+     */
     protected native void nativeReceiveCallback(String key, long code);
 
+    /**
+     * requestEnableNotification
+     */
     public void requestEnableNotification() {
         Activity activity = getActivity();
         if (activity == null) {
@@ -80,12 +94,22 @@ public class NotificationPlugin {
         activity.requestPermissions(new String[] {PERMISSION}, 1);
     }
 
+    /**
+     * isAPITiramisuLater
+     *
+     * @return boolean
+     */
     public boolean isAPITiramisuLater() {
         // Build.VERSION_CODES.TIRAMISU
         Log.d(TAG, "isHighVersion version " + Build.VERSION.SDK_INT);
         return Build.VERSION.SDK_INT >= 33;
     }
 
+    /**
+     * checkPermission
+     *
+     * @return boolean
+     */
     public boolean checkPermission() {
         if (!isAPITiramisuLater()) {
             return mManager.areNotificationsEnabled();
@@ -98,6 +122,11 @@ public class NotificationPlugin {
         }
     }
 
+    /**
+     * publish notification
+     *
+     * @param jsonString json string
+     */
     public void publish(String jsonString) {
         if (TextUtils.isEmpty(jsonString)) {
             return;
@@ -106,15 +135,31 @@ public class NotificationPlugin {
         createNotification();
     }
 
+    /**
+     * publish notification
+     *
+     * @param detail notification detail
+     */
     public void publish(NotificationRequest detail) {
         request = detail;
         createNotification();
     }
 
+    /**
+     * set badge number
+     *
+     * @param count badge number
+     */
     public void setBadgeNumber(int count) {
         BadgeUtils.setBadgeNumber(context, count);
     }
 
+    /**
+     * cancel notification
+     *
+     * @param id notification id
+     * @param tag notification tag
+     */
     public void cancel(int id, String tag) {
         if (!TextUtils.isEmpty(tag)) {
             mManager.cancel(tag, id);
@@ -123,6 +168,9 @@ public class NotificationPlugin {
         }
     }
 
+    /**
+     * cancel all notification
+     */
     public void cancelAll() {
         mManager.cancelAll();
     }

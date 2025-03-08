@@ -48,7 +48,7 @@ static tuple<bool, unsigned int> GetJsFlags(napi_env env, const NFuncArg &funcAr
     return { true, flags };
 }
 
-static NVal InstantiateFile(napi_env env, int fd, string pathOrUri, bool isUri)
+static NVal InstantiateFile(napi_env env, int fd, const string& pathOrUri, bool isUri)
 {
     napi_value objFile = NClass::InstantiateClass(env, FileNExporter::className_, {});
     if (!objFile) {

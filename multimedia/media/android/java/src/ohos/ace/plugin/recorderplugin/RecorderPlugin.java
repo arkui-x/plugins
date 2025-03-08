@@ -21,7 +21,6 @@ import android.view.Surface;
 import android.util.Log;
 import java.util.Map;
 import java.util.HashMap;
-import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -53,7 +52,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * @param mr The MediaRecorder that encountered the error
      * @param what The type of error that has occurred
      * @param extra An extra code, specific to the error type
-     * @return void
      */
     @Override
     public void onError(MediaRecorder mr, int what, int extra) {
@@ -69,7 +67,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * @param mr    The MediaRecorder the info pertains to
      * @param what  The type of info or warning that has occurred
      * @param extra An extra code, specific to the info type
-     * @return void
      */
     @Override
     public void onInfo(MediaRecorder mr, int what, int extra) {
@@ -83,7 +80,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Creates a MediaRecorder object.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void createMediaRecorder(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -102,7 +98,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Releases a MediaRecorder object.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void releaseMediaRecorder(long key) {
         mediaRecorderMap.remove(key);
@@ -112,7 +107,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Prepares the recorder to begin capturing and encoding data.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void prepare(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -131,7 +125,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Begins capturing and encoding data to the file.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void start(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -144,7 +137,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Pauses recording.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void pause(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -157,7 +149,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Resumes recording.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void resume(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -170,7 +161,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Stop the MediaRecorder to its idle state.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void stop(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -183,7 +173,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Restarts the MediaRecorder to its idle state.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void reset(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -196,7 +185,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Releases resources associated with this MediaRecorder object.
      *
      * @param key The key of the MediaRecorder.
-     * @return void
      */
     public void release(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -211,7 +199,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * @param key The key of the MediaRecorder.
      * @param width The width of the video to be captured.
      * @param height The height of the video to be captured.
-     * @return void
      */
     public void setVideoSize(long key, int width, int height) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -225,7 +212,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param video_encoder The video encoder to use.
-     * @return void
      */
     public void setVideoEncoder(long key, int video_encoder) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -239,7 +225,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param bitRate The video encoding bit rate in bits per second.
-     * @return void
      */
     public void setVideoEncodingBitRate(long key, int bitRate) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -253,7 +238,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param rate The number of frames per second of video to capture
-     * @return void
      */
     public void setVideoFrameRate(long key, int rate) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -267,7 +251,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param video_source The video source to use.
-     * @return void
      */
     public void setVideoSource(long key, int video_source) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -295,7 +278,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param audioSource The value of the audio source.
-     * @return void
      */
     public void setAudioSource(long key, int audioSource) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -308,8 +290,7 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Gets the surface to record from when using SURFACE video source.
      *
      * @param key The key of the MediaRecorder.
-     * @param audioSource The sampling rate for audio in samples per second.
-     * @return void
+     * @param samplingRate The audio sampling rate in Hertz.
      */
     public void setAudioSamplingRate(long key, int samplingRate) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -323,7 +304,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param bitRate The audio encoding bit rate in bits per second.
-     * @return void
      */
     public void setAudioEncodingBitRate(long key, int bitRate) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -337,7 +317,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param audio_encoder The value of the audio encoder.
-     * @return void
      */
     public void setAudioEncoder(long key, int audio_encoder) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -351,7 +330,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param numChannels The number of audio channels.
-     * @return void
      */
     public void setAudioChannels(long key, int numChannels) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -365,7 +343,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param output_format The output format to use.
-     * @return void
      */
     public void setOutputFormat(long key, int output_format) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -378,8 +355,7 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * Pass in the file descriptor of the file to be written.
      *
      * @param key The key of the MediaRecorder.
-     * @param fd  An open file descriptor to be written into.
-     * @return void
+     * @param url The file descriptor of the file to be written.
      */
     public void setOutputFile(long key, String url) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -399,7 +375,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * @param key The key of the MediaRecorder.
      * @param latitude Latitude in degrees. Its value must be in the range [-90, 90].
      * @param longitude Longitude in degrees. Its value must be in the range [-180, 180].
-     * @return void
      */
     public void setLocation(long key, float latitude, float longitude) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -413,7 +388,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      *
      * @param key The key of the MediaRecorder.
      * @param degrees The angle to be rotated clockwise in degrees.
-     * @return void
      */
     public void setOrientationHint(long key, int degrees) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
@@ -441,7 +415,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
     /**
      * Init RecorderPlugin jni.
      *
-     * @return void
      */
     protected native void nativeInit();
 
@@ -451,7 +424,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * @param key The key of the MediaRecorder.
      * @param what The type of info or warning that has occurred
      * @param extra An extra code, specific to the info type
-     * @return void
      */
     protected native void nativeOnInfo(long key, int what, int extra);
 
@@ -461,7 +433,6 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      * @param key The key of the MediaRecorder.
      * @param what The type of error that has occurred.
      * @param extra An extra code, specific to the error type.
-     * @return void
      */
     protected native void nativeOnError(long key, int what, int extra);
 }

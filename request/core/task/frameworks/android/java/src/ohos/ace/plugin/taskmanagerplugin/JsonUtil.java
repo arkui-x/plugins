@@ -96,6 +96,12 @@ public class JsonUtil {
         return config;
     }
 
+    /**
+     * config to json
+     *
+     * @param config config
+     * @return json
+     */
     public static String configToJson(Config config) {
         if (config == null) {
             return "";
@@ -176,6 +182,12 @@ public class JsonUtil {
         return "";
     }
 
+    /**
+     * json to Config
+     *
+     * @param progressJson progressJson
+     * @return Config
+     */
     public static Progress convertJsonToProgress(String progressJson) {
         if (progressJson == null) {
             return null;
@@ -214,6 +226,12 @@ public class JsonUtil {
         return null;
     }
 
+    /**
+     * json to TaskState
+     *
+     * @param jsonTaskState jsonTaskState
+     * @return TaskState
+     */
     public static TaskState convertJsonToTaskState(String jsonTaskState) {
         if (jsonTaskState == null || jsonTaskState.isEmpty()) {
             return null;
@@ -231,6 +249,12 @@ public class JsonUtil {
         return null;
     }
 
+    /**
+     * TaskState to Json
+     *
+     * @param taskState TaskState object
+     * @return Json string
+     */
     public static String convertTaskStateToJson(TaskState taskState) {
         if (taskState == null) {
             return "";
@@ -247,6 +271,12 @@ public class JsonUtil {
         return "";
     }
 
+    /**
+     * Convert TaskInfo to Json
+     *
+     * @param taskInfo TaskInfo object
+     * @return Json string
+     */
     public static String convertTaskInfoToJson(TaskInfo taskInfo) {
         if (taskInfo == null) {
             return "";
@@ -333,6 +363,12 @@ public class JsonUtil {
         return "";
     }
 
+    /**
+     * json to Filter
+     *
+     * @param filterJson filter json
+     * @return Filter
+     */
     public static Filter jsonToFilter(String filterJson) {
         if (filterJson == null) {
             return null;
@@ -353,6 +389,12 @@ public class JsonUtil {
         return null;
     }
 
+    /**
+     * json to TaskInfo
+     *
+     * @param taskInfoJson taskInfo json
+     * @return TaskInfo
+     */
     public static TaskInfo jsonToTaskInfo(String taskInfoJson) {
         if (taskInfoJson == null) {
             return null;
@@ -452,11 +494,23 @@ public class JsonUtil {
         return null;
     }
 
+    /**
+     * Converts a map to a JSON string.
+     *
+     * @param map the map to be converted
+     * @return the JSON string representation of the map
+     */
     public static String mapStringToJson(Map<String, String> map) {
         JSONObject jsonObject = new JSONObject(map);
         return jsonObject.toString();
     }
 
+    /**
+     * Converts a JSON string to a map of strings.
+     *
+     * @param json the JSON string to be converted
+     * @return the map of strings representation of the JSON string
+     */
     public static HashMap<String, String> jsonToMapString(String json) {
         HashMap<String, String> map = new HashMap<>();
         if (json == null) {
@@ -476,6 +530,12 @@ public class JsonUtil {
         return map;
     }
 
+    /**
+     * Convert FileSpec list to json string
+     *
+     * @param fileSpecList FileSpec list
+     * @return json string
+     */
     public static String convertFileSpecToJson(List<FileSpec> fileSpecList) {
         if (fileSpecList == null) {
             return "";
@@ -498,6 +558,12 @@ public class JsonUtil {
         return "";
     }
 
+    /**
+     * Convert json string to FileSpec list
+     *
+     * @param json json string
+     * @return FileSpec list
+     */
     public static List<FileSpec> jsonToFileSpecList(String json) {
         List<FileSpec> fileSpecList = new ArrayList<>();
         if (json == null) {
@@ -521,6 +587,12 @@ public class JsonUtil {
         return fileSpecList;
     }
 
+    /**
+     * Convert FormItem list to json string
+     *
+     * @param formItems FormItem list
+     * @return json string
+     */
     public static String formsListToJson(List<FormItem> formItems) {
         if (formItems == null) {
             return "";
@@ -540,6 +612,12 @@ public class JsonUtil {
         return "";
     }
 
+    /**
+     * Convert json string to FormItem list
+     *
+     * @param json json string
+     * @return FormItem list
+     */
     public static List<FormItem> jsonToFormList(String json) {
         List<FormItem> formItems = new ArrayList<>();
         if (json == null || json.isEmpty()) {

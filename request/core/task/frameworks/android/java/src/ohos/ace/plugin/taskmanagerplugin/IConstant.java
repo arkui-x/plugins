@@ -15,9 +15,25 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Constant Interface for Request Plugin
+ *
+ * @since 2024-05-31
+ */
 public interface IConstant {
+    /**
+     * tag for log
+     */
     String TAG = "RequestAndroid";
+
+    /**
+     * failed value
+     */
     long FAILED_VALUE = -1;
 
-    boolean isAndroidDebug = false;
+
+    /**
+     * android debug flag
+     */
+    boolean IS_ANDROID_DEBUG = false;
 }

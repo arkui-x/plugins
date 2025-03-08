@@ -15,7 +15,19 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Mode
+ *
+ * @since 2024-05-31
+ */
 public interface Mode {
+    /**
+     * background mode constant
+     */
     int BACKGROUND = 0;
+
+    /**
+     * foreground mode constant
+     */
     int FOREGROUND = 1;
 }

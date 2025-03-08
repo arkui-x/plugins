@@ -35,6 +35,11 @@ import java.util.concurrent.Executors;
  * @since 2024-05-31
  */
 public class JavaTaskImpl {
+    /**
+     * JavaTaskImpl constructor.
+     *
+     * @param context Context
+     */
     public static Context mContext;
 
     private DownloadImpl mDownloadImpl;
@@ -45,6 +50,12 @@ public class JavaTaskImpl {
         reset();
     }
 
+    /**
+     * Create a task.
+     *
+     * @param configJson task configuration information
+     * @return task id
+     */
     public long create(String configJson) {
         Log.i(TAG, "create: configJson:" + configJson);
         Config config = JsonUtil.jsonToConfig(configJson);
@@ -64,6 +75,11 @@ public class JavaTaskImpl {
         return IConstant.FAILED_VALUE;
     }
 
+    /**
+     * Start the task.
+     *
+     * @param taskId Task ID
+     */
     public void start(long taskId) {
         Log.i(TAG, "start: taskId:" + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
@@ -84,6 +100,11 @@ public class JavaTaskImpl {
         }
     }
 
+    /**
+     * Pause the task.
+     *
+     * @param taskId Task ID
+     */
     public void resume(long taskId) {
         Log.i(TAG, "resume: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
@@ -104,6 +125,11 @@ public class JavaTaskImpl {
         }
     }
 
+    /**
+     * Pause the task.
+     *
+     * @param taskId Task ID
+     */
     public void pause(long taskId) {
         Log.i(TAG, "pause: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
@@ -124,6 +150,11 @@ public class JavaTaskImpl {
         }
     }
 
+    /**
+     * Stop the task.
+     *
+     * @param taskId Task ID
+     */
     public void stop(long taskId) {
         Log.i(TAG, "stop: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
@@ -145,6 +176,12 @@ public class JavaTaskImpl {
         }
     }
 
+    /**
+     * Remove the task.
+     *
+     * @param taskId Task ID
+     * @return 0 if success, -1 if failed
+     */
     public long remove(long taskId) {
         Log.i(TAG, "remove: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
@@ -167,6 +204,12 @@ public class JavaTaskImpl {
         return 0;
     }
 
+    /**
+     * getMimeType for task
+     *
+     * @param taskId task id
+     * @return mimeType
+     */
     public String getMimeType(long taskId) {
         Log.i(TAG, "getMimeType: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
@@ -183,6 +226,9 @@ public class JavaTaskImpl {
         return mDownloadImpl.getMimeType(taskInfo.getDownloadId());
     }
 
+    /**
+     * reset task status
+     */
     public void reset() {
         // set status stopped which is not complete when launching app
         Executors.newCachedThreadPool().submit(() -> {
@@ -198,6 +244,11 @@ public class JavaTaskImpl {
         });
     }
 
+    /**
+     * report task info
+     *
+     * @param taskInfoJson task info json
+     */
     public void reportTaskInfo(String taskInfoJson) {
         Log.i(TAG, "reportTaskInfo: " + taskInfoJson);
         TaskInfo taskInfo = JsonUtil.jsonToTaskInfo(taskInfoJson);
@@ -208,6 +259,12 @@ public class JavaTaskImpl {
         TaskDao.update(mContext, taskInfo, false);
     }
 
+    /**
+     * show task info
+     *
+     * @param taskId task id
+     * @return task info json
+     */
     public String show(long taskId) {
         Log.i(TAG, "show: " + taskId);
         mDownloadImpl.postQueryProgressByTid(taskId);
@@ -232,6 +289,13 @@ public class JavaTaskImpl {
         return result;
     }
 
+    /**
+     * touch task info
+     *
+     * @param taskId task id
+     * @param token token
+     * @return task info json
+     */
     public String touch(long taskId, String token) {
         Log.i(TAG, "touch: " + taskId);
         mDownloadImpl.postQueryProgressByTid(taskId);
@@ -253,6 +317,12 @@ public class JavaTaskImpl {
         return result;
     }
 
+    /**
+     * search task info
+     *
+     * @param filterJson filter json
+     * @return task id array
+     */
     public long[] search(String filterJson) {
         Log.i(TAG, "search: " + filterJson);
         mDownloadImpl.postQueryProgress();
@@ -274,6 +344,11 @@ public class JavaTaskImpl {
         return taskIdArray;
     }
 
+    /**
+     * Get the default storage path of the current device
+     *
+     * @return default storage path
+     */
     public String getDefaultStoragePath() {
         File file = mContext.getCacheDir();
         if (file != null) {
@@ -282,17 +357,27 @@ public class JavaTaskImpl {
         return "";
     }
 
+    /**
+     * Get the default download path of the current device
+     */
     public void jniInit() {
         Log.i(TAG, "jniInit: ");
-        if (!IConstant.isAndroidDebug) {
+        if (!IConstant.IS_ANDROID_DEBUG) {
             nativeInit();
         }
     }
 
+    /**
+     * Callback function for the native layer
+     *
+     * @param taskId task id
+     * @param eventType event type
+     * @param taskInfoJson task information
+     */
     public void jniOnRequestCallback(long taskId, String eventType, String taskInfoJson) {
         Log.i(TAG,
                 "jniOnRequestCallback: taskId:" + taskId + ",eventType:" + eventType + ",taskInfoJson:" + taskInfoJson);
-        if (!IConstant.isAndroidDebug) {
+        if (!IConstant.IS_ANDROID_DEBUG) {
             onRequestCallback(taskId, eventType, taskInfoJson);
         }
     }

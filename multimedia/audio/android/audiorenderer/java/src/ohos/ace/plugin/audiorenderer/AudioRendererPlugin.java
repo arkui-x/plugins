@@ -34,6 +34,8 @@ import java.util.HashMap;
 
 /**
  * AudioRendererPlugin
+ *
+ * @since 2024-06-24
  */
 public class AudioRendererPlugin {
     private static final String LOG_TAG = "AudioRendererPlugin";
@@ -54,6 +56,19 @@ public class AudioRendererPlugin {
         nativeInit();
     }
 
+    /**
+     * createAudioTrack create audio track
+     *
+     * @param rendererPtr rendererPtr of the audio renderer
+     * @param sampleRate sample rate of the audio track
+     * @param channel channel of the audio track
+     * @param encoding encoding of the audio track
+     * @param channelLayout channel layout of the audio track
+     * @param usage usage of the audio track
+     * @param content content of the audio track
+     * @param privacyType privacy type of the audio track
+     * @param maxSpeed max speed of the audio track
+     */
     public void createAudioTrack(long rendererPtr, int sampleRate, int channel, int encoding,
                                 int channelLayout, int usage, int content, int privacyType, float maxSpeed) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
@@ -89,12 +104,22 @@ public class AudioRendererPlugin {
         audioTracks.put(rendererPtr, audioTrack);
     }
 
+    /**
+     * Finalize the audio renderer.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void finalize(long rendererPtr) {
         audioTracks.remove(rendererPtr);
         positionUpdateListeners.remove(rendererPtr);
         deviceChangeListeners.remove(rendererPtr);
     }
 
+    /**
+     * Play the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void play(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -104,6 +129,11 @@ public class AudioRendererPlugin {
         audioTrack.play();
     }
 
+    /**
+     * Pause the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void pause(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -113,6 +143,11 @@ public class AudioRendererPlugin {
         audioTrack.pause();
     }
 
+    /**
+     * Set the volume of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void stop(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -122,6 +157,11 @@ public class AudioRendererPlugin {
         audioTrack.stop();
     }
 
+    /**
+     * Release the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void release(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -132,6 +172,11 @@ public class AudioRendererPlugin {
         finalize(rendererPtr);
     }
 
+    /**
+     * Flush the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void flush(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -141,6 +186,12 @@ public class AudioRendererPlugin {
         audioTrack.flush();
     }
 
+    /**
+     * Set the speed of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @param speed the speed to set
+     */
     public void setSpeed(long rendererPtr, float speed) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -153,6 +204,12 @@ public class AudioRendererPlugin {
         audioTrack.setPlaybackParams(params);
     }
 
+    /**
+     * Set the volume of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @return the result of setting the volume
+     */
     public float getSpeed(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -164,6 +221,15 @@ public class AudioRendererPlugin {
         return params.getSpeed();
     }
 
+    /**
+     * Get the minimum buffer size of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @param sampleRateInHz the sample rate in Hz
+     * @param channelConfig the channel configuration
+     * @param audioFormat the audio format
+     * @return the minimum buffer size
+     */
     public int getMinBufferSize(long rendererPtr, int sampleRateInHz, int channelConfig, int audioFormat) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -173,6 +239,14 @@ public class AudioRendererPlugin {
         return AudioTrack.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
     }
 
+    /**
+     * Write data to the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @param buffer the buffer to write
+     * @param size the size of the buffer
+     * @return the result of writing the data
+     */
     public int write(long rendererPtr, byte[] buffer, int size) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -182,6 +256,13 @@ public class AudioRendererPlugin {
         return audioTrack.write(buffer, 0, size);
     }
 
+    /**
+     * Set the volume of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @param gain the gain to set
+     * @return the result of setting the volume
+     */
     public int setVolume(long rendererPtr, float gain) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -191,14 +272,32 @@ public class AudioRendererPlugin {
         return audioTrack.setVolume(gain);
     }
 
+    /**
+     * Get the minimum volume of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @return the minimum volume of the audio track
+     */
     public float getMinVolume(long rendererPtr) {
         return AudioTrack.getMinVolume();
     }
 
+    /**
+     * Get the maximum volume of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @return the maximum volume of the audio track
+     */
     public float getMaxVolume(long rendererPtr) {
         return AudioTrack.getMaxVolume();
     }
 
+    /**
+     * Get the number of times the audio track has underrun.
+     *
+     * @param rendererPtr the renderer pointer
+     * @return the number of times the audio track has underrun
+     */
     public int getUnderrunCount(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -208,6 +307,13 @@ public class AudioRendererPlugin {
         return audioTrack.getUnderrunCount();
     }
 
+    /**
+     * Set the notification marker position of the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @param markerInFrames the marker position in frames
+     * @return the result of setting the notification marker position
+     */
     public int setNotificationMarkerPosition(long rendererPtr, int markerInFrames) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -217,6 +323,11 @@ public class AudioRendererPlugin {
         return audioTrack.setNotificationMarkerPosition(markerInFrames);
     }
 
+    /**
+     * Set the playback position update listener for the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void setPlaybackPositionUpdateListener(long rendererPtr) {
         OnPlaybackPositionUpdateListenerImpl listener = positionUpdateListeners.get(rendererPtr);
         if (listener != null) {
@@ -232,6 +343,11 @@ public class AudioRendererPlugin {
         positionUpdateListeners.put(rendererPtr, listener);
     }
 
+    /**
+     * Unset the playback position update listener for the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     */
     public void unsetPlaybackPositionUpdateListener(long rendererPtr) {
         OnPlaybackPositionUpdateListenerImpl listener = positionUpdateListeners.get(rendererPtr);
         if (listener == null) {
@@ -246,6 +362,13 @@ public class AudioRendererPlugin {
         audioTrack.setPlaybackPositionUpdateListener(null);
     }
 
+    /**
+     * Set the position notification period for the audio track.
+     *
+     * @param rendererPtr the renderer pointer
+     * @param periodInFrames the period in frames
+     * @return the result of setting the position notification period
+     */
     public int setPositionNotificationPeriod(long rendererPtr, int periodInFrames) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -255,6 +378,12 @@ public class AudioRendererPlugin {
         return audioTrack.setPositionNotificationPeriod(periodInFrames);
     }
 
+    /**
+     * Get the current output device
+     *
+     * @param rendererPtr the renderer pointer
+     * @return the current output device
+     */
     public AudioDeviceInfo getCurrentOutputDevices(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -264,6 +393,12 @@ public class AudioRendererPlugin {
         return audioTrack.getRoutedDevice();
     }
 
+    /**
+     * Get the audio session id
+     *
+     * @param rendererPtr the renderer pointer
+     * @return the audio session id
+     */
     public int getAudioSessionId(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -273,6 +408,11 @@ public class AudioRendererPlugin {
         return audioTrack.getAudioSessionId();
     }
 
+    /**
+     * Add the routing changed listener.
+     *
+     * @param rendererPtr the audio track pointer
+     */
     public void addOnRoutingChangedListener(long rendererPtr) {
         OnRoutingChangedListenerImpl listener = deviceChangeListeners.get(rendererPtr);
         if (listener != null) {
@@ -288,6 +428,11 @@ public class AudioRendererPlugin {
         deviceChangeListeners.put(rendererPtr, listener);
     }
 
+    /**
+     * Remove the routing changed listener.
+     *
+     * @param rendererPtr the audio track pointer
+     */
     public void removeOnRoutingChangedListener(long rendererPtr) {
         OnRoutingChangedListenerImpl listener = deviceChangeListeners.get(rendererPtr);
         if (listener == null) {
@@ -302,6 +447,13 @@ public class AudioRendererPlugin {
         audioTrack.removeOnRoutingChangedListener(listener);
     }
 
+    /**
+     * Set the dual mono mode of the audio track.
+     *
+     * @param rendererPtr the audio track pointer
+     * @param dualMonoMode the dual mono mode
+     * @return true if the operation is successful, false otherwise
+     */
     public boolean setDualMonoMode(long rendererPtr, int dualMonoMode) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -316,6 +468,12 @@ public class AudioRendererPlugin {
         return false;
     }
 
+    /**
+     * Get the audio attributes of the audio track.
+     *
+     * @param rendererPtr the audio track pointer
+     * @return the audio attributes
+     */
     public AudioAttributes getAudioAttributes(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -347,6 +505,12 @@ public class AudioRendererPlugin {
         return value;
     }
 
+    /**
+     * Get the audio format of the audio track.
+     *
+     * @param rendererPtr the audio track pointer
+     * @return the audio format
+     */
     public AudioFormat getFormat(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -356,6 +520,13 @@ public class AudioRendererPlugin {
         return audioTrack.getFormat();
     }
 
+    /**
+     * Used for notifications when the playback head reaches a set position.
+     *
+     * @param rendererPtr The renderer pointer.
+     * @param timestamp The timestamp.
+     * @return True if the timestamp is set successfully, false otherwise.
+     */
     public boolean getTimestamp(long rendererPtr, AudioTimestamp timestamp) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
@@ -415,7 +586,28 @@ public class AudioRendererPlugin {
      * AudioRendererPlugin native method.
      */
     protected native void nativeInit();
+
+    /**
+     * AudioRendererPlugin native method.
+     *
+     * @param key key
+     * @param position position
+     */
     protected native void nativeOnMarkerReached(long key, int position);
+
+    /**
+     * AudioRendererPlugin native method.
+     *
+     * @param key key
+     * @param period period
+     */
     protected native void nativeOnPeriodicNotification(long key, int period);
+
+    /**
+     * AudioRendererPlugin native method.
+     *
+     * @param key key
+     * @param deviceInfo deviceInfo
+     */
     protected native void nativeOnRoutingChanged(long key, AudioDeviceInfo deviceInfo);
 }
