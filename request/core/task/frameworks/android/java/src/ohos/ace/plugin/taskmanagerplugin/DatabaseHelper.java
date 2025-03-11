@@ -19,11 +19,16 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+/**
+ * DatabaseHelper class for task manager plugin database operations.
+ *
+ * @since 2024-05-31
+ */
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "task.db";
     private static final int DATABASE_VERSION = 1;
 
-    public DatabaseHelper( Context context) {
+    public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 

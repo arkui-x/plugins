@@ -40,6 +40,7 @@ public class INTLPlugin {
     private static final int SQUARE = 2;
     private static final int THRESHOLD_DP = 600;
     private static final double THRESHOLD_INCH = 6.9;
+
     private Context mContext;
 
     /**
@@ -141,8 +142,8 @@ public class INTLPlugin {
             display.getMetrics(metrics);
         }
 
-        double width = metrics.widthPixels /  metrics.xdpi;
-        double height = metrics.heightPixels /  metrics.ydpi;
+        double width = metrics.widthPixels / metrics.xdpi;
+        double height = metrics.heightPixels / metrics.ydpi;
         double diagonalSize = Math.sqrt(Math.pow(width, SQUARE) + Math.pow(height, SQUARE));
 
         if (diagonalSize >= THRESHOLD_INCH) {

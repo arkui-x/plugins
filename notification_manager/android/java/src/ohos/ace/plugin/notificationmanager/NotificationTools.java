@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
- package ohos.ace.plugin.notificationmanager;
+package ohos.ace.plugin.notificationmanager;
 
 import android.app.Notification;
 import android.content.Context;
@@ -70,7 +70,8 @@ public class NotificationTools {
             if (!(content.content instanceof NotificationRequest.NotificationLongTextContent)) {
                 return null;
             }
-            NotificationRequest.NotificationLongTextContent longTextContent = (NotificationRequest.NotificationLongTextContent) content.content;
+            NotificationRequest.NotificationLongTextContent longTextContent =
+                (NotificationRequest.NotificationLongTextContent) content.content;
             Notification.BigTextStyle style = new Notification.BigTextStyle();
             style.bigText(longTextContent.longText);
             style.setSummaryText(longTextContent.briefText);
@@ -81,7 +82,8 @@ public class NotificationTools {
             if (!(content.content instanceof NotificationRequest.NotificationMultiLineContent)) {
                 return null;
             }
-            NotificationRequest.NotificationMultiLineContent linesTextContent = (NotificationRequest.NotificationMultiLineContent) content.content;
+            NotificationRequest.NotificationMultiLineContent linesTextContent =
+                (NotificationRequest.NotificationMultiLineContent) content.content;
             Notification.InboxStyle inboxStyle = new Notification.InboxStyle();
             if (linesTextContent.allLines != null) {
                 for (int i = 0; i < linesTextContent.allLines.length; i++) {
@@ -96,7 +98,8 @@ public class NotificationTools {
             if (!(content.content instanceof NotificationRequest.NotificationPictureContent)) {
                 return null;
             }
-            NotificationRequest.NotificationPictureContent pictureContent = (NotificationRequest.NotificationPictureContent) content.content;
+            NotificationRequest.NotificationPictureContent pictureContent =
+                (NotificationRequest.NotificationPictureContent) content.content;
             Notification.BigPictureStyle pictureStyle = new Notification.BigPictureStyle();
             pictureStyle.setSummaryText(pictureContent.briefText);
             pictureStyle.setBigContentTitle(pictureContent.expandedTitle);

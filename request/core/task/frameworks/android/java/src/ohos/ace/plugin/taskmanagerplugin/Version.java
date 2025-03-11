@@ -14,7 +14,19 @@
  */
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Version interface defines the version of the API.
+ *
+ * @since 2024-05-31
+ */
 public interface Version {
-    int API9  = 0;
-    int API10  = 1;
+    /**
+     * Represents the version for API level 9.
+     */
+    int API9 = 0;
+
+    /**
+     * Represents the version for API level 10.
+     */
+    int API10 = 1;
 }
