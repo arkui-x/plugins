@@ -16,7 +16,6 @@
 package ohos.ace.plugin.intlplugin;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.LocaleList;
 import android.text.format.DateFormat;

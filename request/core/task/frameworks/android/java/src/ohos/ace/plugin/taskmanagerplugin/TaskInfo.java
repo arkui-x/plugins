@@ -17,6 +17,11 @@ package ohos.ace.plugin.taskmanagerplugin;
 
 import java.util.List;
 
+/**
+ * TaskInfo class
+ *
+ * @since 2024-05-31
+ */
 public class TaskInfo {
     private long tid;
     private String saveas;

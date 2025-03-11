@@ -15,11 +15,39 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * event type
+ *
+ * @since 2024-05-31
+ */
 public interface EventType {
+    /**
+     * event type
+     */
     String PROGRESS = "progress";
+
+    /**
+     * event type
+     */
     String COMPLETED = "completed";
+
+    /**
+     * event type
+     */
     String PAUSE = "pause";
+
+    /**
+     * event type
+     */
     String RESUME = "resume";
+
+    /**
+     * event type
+     */
     String REMOVE = "remove";
+
+    /**
+     * event type
+     */
     String FAILED = "failed";
 }

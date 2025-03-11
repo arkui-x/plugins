@@ -19,12 +19,8 @@ import static ohos.ace.plugin.taskmanagerplugin.IConstant.TAG;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -150,7 +146,7 @@ public class DownloadImpl {
     /**
      * Start download with url
      *
-     * @return the download id
+     * @param taskInfo the task info
      */
     public void startDownload(TaskInfo taskInfo) {
         CompletableFuture<Config> configFuture =
@@ -262,6 +258,7 @@ public class DownloadImpl {
      * get download paused reason
      *
      * @param downloadColumnReason download paused reason
+     * @return paused reason
      */
     private String getPausedReason(int downloadColumnReason) {
         Log.i(TAG, "get download paused reason");
@@ -287,6 +284,7 @@ public class DownloadImpl {
      * get download failed reason
      *
      * @param downloadColumnReason download failed reason
+     * @return failed reason
      */
     private String getFailedReason(int downloadColumnReason) {
         Log.i(TAG, "get download failed reason");
@@ -327,6 +325,7 @@ public class DownloadImpl {
     /**
      * get download failed reason
      *
+     * @param downloadId download id
      * @return download size and total size Array
      */
     private int[] getDownloadBytes(long downloadId) {
@@ -351,6 +350,7 @@ public class DownloadImpl {
     /**
      * get download failed reason
      *
+     * @param queryRunnable query runnable
      * @param downloadStatus download status
      * @param bytesAndStatus the Array of saving download bytes and status
      */
@@ -436,7 +436,8 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
-                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.FAILED, JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+                    mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.FAILED,
+                            JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
                 stopQueryProgress(queryRunnable);
@@ -450,6 +451,8 @@ public class DownloadImpl {
 
     /**
      * query download progress
+     *
+     * @param queryRunnable queryRunnable
      */
     public void queryProgress(QueryRunnable queryRunnable) {
         Log.i(TAG, "queryProgress: tid:" + queryRunnable.taskInfo.getTid() + ",downloadId:" +
@@ -473,6 +476,9 @@ public class DownloadImpl {
 
     /**
      * begin to query progress
+     *
+     * @param taskInfo task info
+     *
      */
     private void startQueryProgress(TaskInfo taskInfo) {
         QueryRunnable queryRunnable = new QueryRunnable(taskInfo);
@@ -483,6 +489,8 @@ public class DownloadImpl {
 
     /**
      * stop query progress
+     *
+     * @param queryRunnable queryRunnable
      */
     public void stopQueryProgress(QueryRunnable queryRunnable) {
         queryRunnable.setDownloading(false);
@@ -490,6 +498,11 @@ public class DownloadImpl {
         queryRunnables.remove(queryRunnable);
     }
 
+    /**
+     * stop query progress by tid
+     *
+     * @params taskInfo task info
+     */
     public void stopQueryProgress(TaskInfo taskInfo) {
         Iterator<QueryRunnable> iterator = queryRunnables.iterator();
         while (iterator.hasNext()) {
@@ -500,6 +513,9 @@ public class DownloadImpl {
         }
     }
 
+    /**
+     * post query progress by tid
+     */
     public void postQueryProgressByTid(long tid) {
         Log.i(TAG, "postQueryProgressByTid: tid:" + tid);
         for (QueryRunnable item : queryRunnables) {
@@ -512,6 +528,9 @@ public class DownloadImpl {
         }
     }
 
+    /**
+     * post query progress
+     */
     public void postQueryProgress() {
         Log.i(TAG, "postQueryProgress");
         for (QueryRunnable item : queryRunnables) {
@@ -522,6 +541,8 @@ public class DownloadImpl {
 
     /**
      * remove download and delete file
+     *
+     * @param taskInfo task info
      */
     public void removeDownload(TaskInfo taskInfo) {
         Log.i(TAG, "removeDownload: " + taskInfo.getTid());
@@ -535,6 +556,7 @@ public class DownloadImpl {
     /**
      * judge whether support breakpoint continuation
      *
+     * @param downloadUrl download url
      * @return true or false
      */
     public boolean isSupportBreakpoint(String downloadUrl) {
@@ -561,6 +583,8 @@ public class DownloadImpl {
 
     /**
      * pause download
+     *
+     * @param taskInfo task info
      */
     public void pauseDownload(TaskInfo taskInfo) {
         Log.i(TAG, "execute pauseDownload, taskId: " + taskInfo.getTid());
@@ -575,14 +599,20 @@ public class DownloadImpl {
     /**
      * resume download
      *
-     * @return true or false
-     * @throws IllegalArgumentException
+     * @param taskInfo task info
+     * @throws IllegalArgumentException if the taskInfo is null
      */
     public void resumeDownload(TaskInfo taskInfo) {
         startDownload(taskInfo);
         sendResumeCallback(taskInfo);
     }
 
+    /**
+     * check whether the url can be downloaded
+     *
+     * @param urlString download url
+     * @return true or false
+     */
     public boolean canMakeRequest(String urlString) {
         Log.i(TAG, "Download: start download manager service, downloadUrl: " + urlString);
         try {
@@ -636,6 +666,11 @@ public class DownloadImpl {
         }
     }
 
+    /**
+     * send stop callback
+     *
+     * @param taskInfo task info
+     */
     public void sendStopCallback(TaskInfo taskInfo) {
         Progress progress = taskInfo.getProgress();
         if (progress.getState() != State.STOPPED && !statusIsFinish(progress.getState())) {
@@ -655,6 +690,11 @@ public class DownloadImpl {
         TaskDao.update(context, taskInfo, true);
     }
 
+    /**
+     * send complete callback
+     *
+     * @param taskInfo task info
+     */
     public void sendRemoveCallback(TaskInfo taskInfo) {
         Progress progress = taskInfo.getProgress();
         progress.setState(State.REMOVED);
@@ -669,10 +709,22 @@ public class DownloadImpl {
             State.COMPLETED || status == State.FAILED || status == State.STOPPED || status == State.REMOVED;
     }
 
+    /**
+     * get mime type by download id
+     *
+     * @param downloadId download id
+     * @return mime type
+     */
     public String getMimeType(long downloadId) {
         return downloadManager.getMimeTypeForDownloadedFile(downloadId);
     }
 
+    /**
+     * get reason code by reason
+     *
+     * @param reason reason
+     * @return reason code
+     */
     public int getReasonCodeByReason(String reason) {
         switch (reason) {
             case Reason.TASK_SURVIVAL_ONE_MONTH:

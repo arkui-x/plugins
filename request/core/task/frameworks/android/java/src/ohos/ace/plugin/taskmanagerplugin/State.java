@@ -15,15 +15,59 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Task State
+ *
+ * @since 2024-05-31
+ */
 public interface State {
+    /**
+     * Task State
+     */
     int INITIALIZED = 0x00;
+
+    /**
+     * Task State
+     */
     int WAITING = 0x10;
+
+    /**
+     * Task State
+     */
     int RUNNING = 0x20;
+
+    /**
+     * Task State
+     */
     int RETRYING = 0x21;
+
+    /**
+     * Task State
+     */
     int PAUSED = 0x30;
+
+    /**
+     * Task State
+     */
     int STOPPED = 0x31;
+
+    /**
+     * Task State
+     */
     int COMPLETED = 0x40;
+
+    /**
+     * Task State
+     */
     int FAILED = 0x41;
+
+    /**
+     * Task State
+     */
     int REMOVED = 0x50;
+
+    /**
+     * Task State
+     */
     int DEFAULT = 0x60;
 }

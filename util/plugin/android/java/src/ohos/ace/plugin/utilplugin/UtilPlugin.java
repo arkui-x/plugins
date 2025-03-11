@@ -31,6 +31,7 @@ public class UtilPlugin {
 
     /**
      * UtilPlugin
+     *
      * @param context context of the application
      */
     public UtilPlugin(Context context) {
@@ -39,6 +40,7 @@ public class UtilPlugin {
 
     /**
      * Encode to chinese
+     *
      * @param input input string
      * @param encoding encoding string
      * @return byte array string
@@ -69,6 +71,7 @@ public class UtilPlugin {
 
     /**
      * Decode with chinese encoding type
+     *
      * @param input input string
      * @param encoding encoding string
      * @return utf-8 string

@@ -14,7 +14,19 @@
  */
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Action
+ *
+ * @since 2024-05-31
+ */
 public interface Action {
+    /**
+     * Action
+     */
     int DOWNLOAD = 0;
+
+    /**
+     * Action
+     */
     int UPLOAD = 1;
 }

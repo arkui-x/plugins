@@ -20,19 +20,16 @@ import android.media.MediaPlayer;
 import android.media.MediaDataSource;
 import android.media.PlaybackParams;
 import android.media.MediaFormat;
-import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Surface;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Constructor;
 import java.lang.Runnable;
 
 /**
@@ -41,30 +38,109 @@ import java.lang.Runnable;
  * @since 1
  */
 public class PlayerPlugin {
+    /**
+     * player instance
+     */
     private static final String LOG_TAG = "PlayerPlugin";
 
+    /**
+     * player info type speed done
+     */
     public static final int PLAYER_INFO_TYPE_SPEEDDONE = 2;
+
+    /**
+     * player info type bitrate done
+     */
     public static final int PLAYER_INFO_TYPE_BITRATEDONE = 3;
+
+    /**
+     * player info type eos
+     */
     public static final int PLAYER_INFO_TYPE_EOS = 4;
+
+    /**
+     * player info type state change
+     */
     public static final int PLAYER_INFO_TYPE_STATE_CHANGE = 5;
+
+    /**
+     * player info type position update
+     */
     public static final int PLAYER_INFO_TYPE_POSITION_UPDATE = 6;
+
+    /**
+     * player info type duration update
+     */
     public static final int PLAYER_INFO_TYPE_DURATION_UPDATE = 15;
 
+    /**
+     * PLAYER_STATE_ERROR
+     */
     public static final int PLAYER_STATE_ERROR = 0;
+
+    /**
+     * PLAYER_STATE_IDLE
+     */
     public static final int PLAYER_STATE_IDLE = 1;
+
+    /**
+     * PLAYER_STATE_INITIALIZED
+     */
     public static final int PLAYER_STATE_INITIALIZED = 2;
+
+    /**
+     * PLAYER_STATE_PREPARING
+     */
     public static final int PLAYER_STATE_PREPARED = 4;
+
+    /**
+     * PLAYER_STATE_STARTED
+     */
     public static final int PLAYER_STATE_STARTED = 5;
+
+    /**
+     * PLAYER_STATE_PAUSED
+     */
     public static final int PLAYER_STATE_PAUSED = 6;
+
+    /**
+     * PLAYER_STATE_STOPPED
+     */
     public static final int PLAYER_STATE_STOPPED = 7;
+
+    /**
+     * PLAYER_STATE_PLAYBACK_COMPLETE
+     */
     public static final int PLAYER_STATE_PLAYBACK_COMPLETE = 8;
+
+    /**
+     * PLAYER_STATE_RELEASED
+     */
     public static final int PLAYER_STATE_RELEASED = 9;
 
+    /**
+     * PLAYER_TIME_UPDATE_TIME_DELAY
+     */
     public static final int PLAYER_TIME_UPDATE_TIME_DELAY = 100;
+
+    /**
+     * PLAYER_TRACK_CODEC_MIME
+     */
     private static final String PLAYER_TRACK_CODEC_MIME = "codec_mime";
+
+    /**
+     * PLAYER_CODEC_MIME_LENGTH
+     */
     private static final int PLAYER_CODEC_MIME_LENGTH = 5;
 
+    /**
+     * player instance
+     */
     private volatile Map<Long, MediaPlayer> mediaPlayerMap;
+
+    /**
+     * media data source
+     */
     private Map<Long, MediaDataSourceImpl> mediaDataSourceMap;
 
     /**
@@ -83,6 +159,9 @@ public class PlayerPlugin {
         nativeInit();
     }
 
+    /**
+     * PreparedCallbackImpl implementation
+     */
     public class PreparedCallbackImpl implements MediaPlayer.OnPreparedListener {
         @Override
         public void onPrepared(MediaPlayer mp) {
@@ -95,6 +174,9 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * CompletionCallbackImpl
+     */
     public class CompletionCallbackImpl implements MediaPlayer.OnCompletionListener {
         @Override
         public void onCompletion(MediaPlayer mp) {
@@ -107,6 +189,9 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * SeekCompletionCallbackImpl
+     */
     public class SeekCompletionCallbackImpl implements MediaPlayer.OnSeekCompleteListener {
         @Override
         public void onSeekComplete(MediaPlayer mp) {
@@ -118,6 +203,9 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * BufferingUpdateCallbackImpl
+     */
     public class BufferingUpdateCallbackImpl implements MediaPlayer.OnBufferingUpdateListener {
         @Override
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
@@ -128,6 +216,9 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * VideoSizeChangedCallbackImpl
+     */
     public class VideoSizeChangedCallbackImpl implements MediaPlayer.OnVideoSizeChangedListener {
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
@@ -138,6 +229,9 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * ErrorCallbackImpl
+     */
     public class ErrorCallbackImpl implements MediaPlayer.OnErrorListener {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -154,6 +248,7 @@ public class PlayerPlugin {
 
     /**
      * MediaDataSourceImpl
+     *
      * The class is used for getting the data source.
      * @since 1
      */
@@ -163,6 +258,7 @@ public class PlayerPlugin {
         public MediaDataSourceImpl(long id) {
             key = id;
         }
+
         @Override
         public long getSize() {
             return -1;
@@ -178,6 +274,9 @@ public class PlayerPlugin {
         }
     };
 
+    /**
+     * CallbackThread
+     */
     private class CallbackThread extends Thread {
         private long id;
         private int infoType;
@@ -195,6 +294,11 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * addCallbackThread to callback thread pool
+     *
+     * @param id the player id
+     */
     public void addMediaPlayer(long id) {
         MediaPlayer mp = mediaPlayerMap.get(id);
         if (mp != null) {
@@ -250,10 +354,20 @@ public class PlayerPlugin {
         handler.postDelayed(runnable, 0);
     }
 
+    /**
+     * releaseMediaPlayer release the MediaPlayer
+     *
+     * @param key the key of MediaPlayer
+     */
     public void releaseMediaPlayer(long key) {
         mediaPlayerMap.remove(key);
     }
 
+    /**
+     * setDataSource set the MediaPlayer data source with MediaDataSource
+     *
+     * @param id the key of MediaPlayer
+     */
     public void setDataSource(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -267,6 +381,12 @@ public class PlayerPlugin {
         notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_INITIALIZED);
     }
 
+    /**
+     * setDataSourceWithUrl set the MediaPlayer data source with url
+     *
+     * @param id  the key of MediaPlayer
+     * @param url  the file path
+     */
     public void setDataSourceWithUrl(long id, String url) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -280,6 +400,14 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * setDataSourceWithFd set the MediaPlayer data source with file descriptor
+     *
+     * @param id    the key of MediaPlayer
+     * @param url   the file path
+     * @param offset the offset of the file
+     * @param length the length of the file
+     */
     public void setDataSourceWithFd(long id, String url, long offset, long length) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -299,6 +427,11 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * prepare prepare the MediaPlayer
+     *
+     * @param id the key of MediaPlayer
+     */
     public void prepare(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -313,6 +446,11 @@ public class PlayerPlugin {
         }
     }
 
+    /**
+     * prepareAsync prepare the MediaPlayer asynchronously
+     *
+     * @param id the key of MediaPlayer
+     */
     public void prepareAsync(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -321,6 +459,11 @@ public class PlayerPlugin {
         mp.prepareAsync();
     }
 
+    /**
+     * play play the MediaPlayer
+     *
+     * @param id the key of MediaPlayer
+     */
     public void play(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -330,6 +473,11 @@ public class PlayerPlugin {
         notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_STARTED);
     }
 
+    /**
+     * pause pause the MediaPlayer
+     *
+     * @param id the key of MediaPlayer
+     */
     public void pause(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -339,6 +487,11 @@ public class PlayerPlugin {
         notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_PAUSED);
     }
 
+    /**
+     * stop stop the MediaPlayer
+     *
+     * @param id the key of MediaPlayer
+     */
     public void stop(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -348,6 +501,11 @@ public class PlayerPlugin {
         notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_STOPPED);
     }
 
+    /**
+     * reset reset the MediaPlayer
+     *
+     * @param id the id of MediaPlayer
+     */
     public void reset(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -357,6 +515,11 @@ public class PlayerPlugin {
         notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_IDLE);
     }
 
+    /**
+     * release release the MediaPlayer
+     *
+     * @param id the id of MediaPlayer
+     */
     public void release(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -367,6 +530,13 @@ public class PlayerPlugin {
         notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_RELEASED);
     }
 
+    /**
+     * seekTo seek to the specified time position
+     *
+     * @param id the id of MediaPlayer
+     * @param msec the time position to seek to
+     * @param mode the mode of seek
+     */
     public void seekTo(long id, int msec, int mode) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -375,6 +545,13 @@ public class PlayerPlugin {
         mp.seekTo(msec, mode);
     }
 
+    /**
+     * setVolume set the volume of the MediaPlayer
+     *
+     * @param id the id of MediaPlayer
+     * @param leftVolume the left volume
+     * @param rightVolume the right volume
+     */
     public void setVolume(long id, float leftVolume, float rightVolume) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -384,6 +561,13 @@ public class PlayerPlugin {
         nativeOnVolumnChanged(id, leftVolume);
     }
 
+    /**
+     * get track index
+     *
+     * @param id    player id
+     * @param type  track type
+     * @return track index
+     */
     public int getTrackIndex(long id, int type) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -401,6 +585,14 @@ public class PlayerPlugin {
         return "unknow";
     }
 
+    /**
+     * get track info string
+     *
+     * @param id    player id
+     * @param type  track type
+     * @param key   track key
+     * @return track info string
+     */
     public String getTrackInfoString(long id, int type, String key) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -420,6 +612,12 @@ public class PlayerPlugin {
         return "";
     }
 
+    /**
+     * get looping
+     *
+     * @param id player id
+     * @return looping
+     */
     public boolean isLooping(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -428,6 +626,12 @@ public class PlayerPlugin {
         return mp.isLooping();
     }
 
+    /**
+     * set looping
+     *
+     * @param id player id
+     * @param flag looping flag
+     */
     public void setLooping(long id, boolean flag) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -436,6 +640,12 @@ public class PlayerPlugin {
         mp.setLooping(flag);
     }
 
+    /**
+     * get current position
+     *
+     * @param id player id
+     * @return current position
+     */
     public int getCurrentPosition(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -444,6 +654,12 @@ public class PlayerPlugin {
         return mp.getCurrentPosition();
     }
 
+    /**
+     * get duration
+     *
+     * @param id player id
+     * @return duration
+     */
     public int getDuration(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -452,6 +668,13 @@ public class PlayerPlugin {
         return mp.getDuration();
     }
 
+    /**
+     * setSurface set the surface of the MediaPlayer
+     *
+     * @param id the id of MediaPlayer
+     * @param instanceId the instance id of AceSurfaceHolder
+     * @param surfaceID the surface id of AceSurfaceHolder
+     */
     public void setSurface(long id, int instanceId, long surfaceID) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -483,6 +706,12 @@ public class PlayerPlugin {
         return value;
     }
 
+    /**
+     * get video width
+     *
+     * @param id player id
+     * @return video width
+     */
     public int getVideoWidth(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -491,6 +720,12 @@ public class PlayerPlugin {
         return mp.getVideoWidth();
     }
 
+    /**
+     * get video height
+     *
+     * @param id player id
+     * @return video height
+     */
     public int getVideoHeight(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -499,6 +734,12 @@ public class PlayerPlugin {
         return mp.getVideoHeight();
     }
 
+    /**
+     * Set the video scaling mode.
+     *
+     * @param id the player id
+     * @param mode the video scaling mode
+     */
     public void setVideoScalingMode(long id, int mode) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -545,6 +786,12 @@ public class PlayerPlugin {
         return speed;
     }
 
+    /**
+     * Set the playback speed.
+     *
+     * @param id the player id
+     * @param mode the playback speed
+     */
     public void setPlaybackParams(long id, int mode) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -560,6 +807,12 @@ public class PlayerPlugin {
         notifyInfo(id, PLAYER_INFO_TYPE_SPEEDDONE, convertSpeedToMode(mp.getPlaybackParams().getSpeed()));
     }
 
+    /**
+     * Get the playback speed.
+     *
+     * @param id the player id
+     * @return the playback speed
+     */
     public int getPlaybackParams(long id) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -568,6 +821,12 @@ public class PlayerPlugin {
         return convertSpeedToMode(mp.getPlaybackParams().getSpeed());
     }
 
+    /**
+     * Select the bitrate.
+     *
+     * @param id the player id
+     * @param bitrate the bitrate
+     */
     public void selectBitrate(long id, int bitrate) {
         MediaPlayer mp = getMediaPlayerById(id);
         if (mp == null) {
@@ -586,15 +845,68 @@ public class PlayerPlugin {
 
     /**
      * Init PlayerJni jni.
-     *
-     * @return void
      */
     protected native void nativeInit();
+
+    /**
+     * nativeOnInfo jni.
+     *
+     * @param key key
+     * @param what what
+     * @param extra extra
+     */
     protected native void nativeOnInfo(long key, int what, int extra);
+
+    /**
+     * nativeOnError jni.
+     *
+     * @param key key
+     * @param code code
+     */
     protected native void nativeOnError(long key, int code);
+
+    /**
+     * nativeOnCompletion jni.
+     *
+     * @param key key
+     * @param percent percent
+     */
     protected native void nativeOnBufferingUpdate(long key, int percent);
+
+    /**
+     * nativeOnSeekComplete jni.
+     *
+     * @param key key
+     * @param position position
+     */
     protected native void nativeOnSeekComplete(long key, int position);
+
+    /**
+     * nativeOnVideoSizeChanged jni.
+     *
+     * @param key key
+     * @param width width
+     * @param height height
+     */
     protected native void nativeOnVideoSizeChanged(long key, int width, int height);
+
+    /**
+     * nativeOnVolumnChanged jni.
+     *
+     * @param key key
+     * @param vol vol
+     */
     protected native void nativeOnVolumnChanged(long key, float vol);
+
+    /**
+     * nativeReadAt jni.
+     *
+     * @param key key
+     * @param position position
+     * @param buffer buffer
+     * @param offset offset
+     * @param size size
+     * @return int
+     */
     protected native int nativeReadAt(long key, long position, byte[] buffer, int offset, int size);
 }

@@ -21,26 +21,52 @@ package ohos.ace.plugin.wifimanager;
  * @since 2024-06-24
  */
 public interface WifiBroadcastInterface {
+    /**
+     * Wifi connect state callback.
+     */
     String TAG = "WifiManagerAndroid";
 
-    // 0-Disconnected
+    /**
+     * 0-Disconnected
+     */
     int WIFI_STATE_DISCONNECT = 0;
 
-    // 1-Connected
+    /**
+     * 1-Connected
+     */
     int WIFI_STATE_LINKED = 1;
 
-    // Opening WiFi
+    /**
+     * 2-Connecting
+     */
     int WIFI_STATE_ENABLING = 2;
 
-    // WiFi turned on
+    /**
+     * 3-Enabled
+     */
     int WIFI_STATE_ENABLED = 3;
 
-    // Closing WiFi
+    /**
+     * 4-Disabling
+     */
     int WIFI_STATE_DISABLING = 0;
 
-    // WiFi turned off
+    /**
+     * 5-Disabled
+     */
     int WIFI_STATE_DISABLED = 1;
 
+    /**
+     * Wifi connect state callback.
+     *
+     * @param state 0-Disconnected 1-Connected 2-Connecting 3-Enabled 4-Disabling 5-Disabled
+     */
     void wifiConnectState(int state);
+
+    /**
+     * Wifi switch state callback.
+     *
+     * @param state 0-off 1-on
+     */
     void wifiSwitchState(int state);
 }

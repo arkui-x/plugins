@@ -130,7 +130,6 @@ public class NetConnClientPlugin {
      * Registers a default Callback to listen to network status.
      *
      * @param callbackKey the key of the callback.
-     * @return void
      */
     public void registerDefaultNetConnCallback(long callbackKey) {
         NetworkCallbackImpl callback = observer.get(callbackKey);
@@ -151,7 +150,6 @@ public class NetConnClientPlugin {
      *
      * @param callbackKey The key of the callback.
      * @param types The types of the network.
-     * @return void
      */
     public void registerNetConnCallback(long callbackKey, int[] types) {
         NetworkCallbackImpl callback = observer.get(callbackKey);
@@ -188,7 +186,6 @@ public class NetConnClientPlugin {
      * unregister the callback.
      *
      * @param callbackKey the key of the callback
-     * @return void
      */
     public void unregisterNetConnCallback(long callbackKey) {
         NetworkCallbackImpl callback = observer.get(callbackKey);
@@ -233,8 +230,6 @@ public class NetConnClientPlugin {
 
     /**
      * Init NetConnClientPlugin jni.
-     *
-     * @return void
      */
     protected native void nativeInit();
 
@@ -243,7 +238,6 @@ public class NetConnClientPlugin {
      *
      * @param callbackKey The key of the callback
      * @param networkId The id of the network
-     * @return void
      */
     protected native void nativeOnAvailable(long callbackKey, int networkId);
 
@@ -253,7 +247,6 @@ public class NetConnClientPlugin {
      * @param networkCapabilities The capailities of the network.
      * @param callbackKey The key of the callback
      * @param networkId The id of the network
-     * @return void
      */
     protected native void nativeOnCapabilitiesChanged(NetworkCapabilities networkCapabilities,
         long callbackKey, int networkId);
@@ -263,7 +256,6 @@ public class NetConnClientPlugin {
      *
      * @param callbackKey The key of the callback
      * @param networkId The id of the network
-     * @return void
      */
     protected native void nativeOnLost(long callbackKey, int networkId);
 
@@ -272,7 +264,6 @@ public class NetConnClientPlugin {
      *
      * @param network Identifies a Network
      * @param callbackKey The key of the callback
-     * @return void
      */
     protected native void nativeOnUnavailable(long callbackKey);
 }

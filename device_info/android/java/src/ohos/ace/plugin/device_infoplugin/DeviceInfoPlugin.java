@@ -333,9 +333,7 @@ public class DeviceInfoPlugin {
     }
 
     /**
-     * nativeInit
-     * Register the initialization method of the plugin for the plugin construction to call.
-     * @return void
+     * Get the device type.
      */
     protected native void nativeInit();
 }

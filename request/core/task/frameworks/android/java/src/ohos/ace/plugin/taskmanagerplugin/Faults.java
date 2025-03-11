@@ -15,10 +15,34 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Faults
+ *
+ * @since 2025-05-31
+ */
 public interface Faults {
+    /**
+     * Faults Code
+     */
     int OTHERS = 0xFF;
+
+    /**
+     * Faults Code
+     */
     int DISCONNECTED = 0x00;
+
+    /**
+     * Faults Code
+     */
     int TIMEOUT = 0x10;
+
+    /**
+     * Faults Code
+     */
     int PROTOCOL = 0x20;
+
+    /**
+     * Faults Code
+     */
     int FSIO = 0x40;
 }

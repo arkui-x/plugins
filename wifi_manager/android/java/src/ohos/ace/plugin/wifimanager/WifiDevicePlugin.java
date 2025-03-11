@@ -20,8 +20,6 @@ import static ohos.ace.plugin.wifimanager.WifiBroadcastInterface.TAG;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 
 /**
  * WifiDevicePlugin is a plugin for wifi device management.
@@ -73,11 +71,27 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
         mWifiReceiver = new WifiBroadcastReceiver(context, this);
     }
 
+    /**
+     * Initialize the native library
+     *
+     * @param key key of the event
+     * @param code code of the event
+     */
     protected native void nativeInit();
 
-    // Call this method when an event is triggered
+    /**
+     * Call this method when an event is triggered
+     *
+     * @param key key of the event
+     * @param code code of the event
+     */
     protected native void nativeReceiveCallback(String key, long code);
 
+    /**
+     * Get the wifi info
+     *
+     * @return wifi info in json format
+     */
     public String getLinkedInfo() {
         if (mWifiDeviceUtils == null) {
             mWifiDeviceUtils = new WifiDeviceUtils(context);
@@ -89,6 +103,11 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
         return wifiInfoJson;
     }
 
+    /**
+     * Get the wifi switch status
+     *
+     * @return true if the wifi is active, false otherwise
+     */
     public boolean isWifiActive() {
         if (mWifiDeviceUtils == null) {
             mWifiDeviceUtils = new WifiDeviceUtils(context);
@@ -96,6 +115,11 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
         return mWifiDeviceUtils.getWifiActive();
     }
 
+    /**
+     * Get the wifi connection status
+     *
+     * @return true if the wifi is connected, false otherwise
+     */
     public boolean isConnected() {
         boolean isConnectedWifi = false;
         if (mWifiDeviceUtils == null) {
@@ -109,6 +133,11 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
         return isConnectedWifi;
     }
 
+    /**
+     * Turn on the wifi switch
+     *
+     * @param value value of the event
+     */
     public void on(String value) {
         try {
             if (mWifiReceiver == null) {
@@ -126,6 +155,11 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
         }
     }
 
+    /**
+     * Turn off the wifi switch
+     *
+     * @param value value of the event
+     */
     public void off(String value) {
         if (mWifiReceiver == null) {
             mWifiReceiver = new WifiBroadcastReceiver(context, this);
@@ -141,6 +175,8 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
 
     /**
      * Monitor changes in WiFi switch status
+     *
+     * @param state WiFi switch status
      */
     @Override
     public void wifiSwitchState(int state) {
@@ -165,6 +201,8 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
 
     /**
      * Monitor WiFi connection status
+     *
+     * @param state WiFi connection status
      */
     @Override
     public void wifiConnectState(int state) {

@@ -43,6 +43,7 @@ public class RunningLockPlugin {
      * RunningLockPlugin
      *
      * @param context context of the application
+     * @param isNativeInit is native init
      */
     public RunningLockPlugin(Context context, boolean isNativeInit) {
         if (context != null) {
@@ -65,7 +66,8 @@ public class RunningLockPlugin {
     /**
      * init WakeLock
      *
-     * @return void
+     * @param name name of the wakeLock
+     * @param type type of the wakeLock
      */
     public boolean init(String name, int type) {
         int wakeLockLevel;
@@ -106,7 +108,8 @@ public class RunningLockPlugin {
     /**
      * RunningLock Lock
      *
-     * @return void
+     * @param timeOutMs timeOutMs of the wakeLock
+     * @return The RunningLock is locked.
      */
     public boolean lock(long timeOutMs) {
         if (wakeLock != null) {
@@ -125,7 +128,7 @@ public class RunningLockPlugin {
     /**
      * RunningLock unLock
      *
-     * @return void
+     * @return The RunningLock is unlocked.
      */
     public boolean unLock() {
         if (wakeLock != null) {
@@ -137,5 +140,8 @@ public class RunningLockPlugin {
         return true;
     }
 
+    /**
+     * RunningLock isNativeInit
+     */
     protected native void nativeInit();
 }
