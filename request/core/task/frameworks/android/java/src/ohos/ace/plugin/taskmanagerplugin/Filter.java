@@ -15,6 +15,11 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * Filter class for task manager plugin
+ *
+ * @since 2024-05-31
+ */
 public class Filter {
     private String bundle;
     private long before;

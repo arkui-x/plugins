@@ -16,7 +16,6 @@
 package ohos.ace.plugin.httpplugin;
 
 import android.content.Context;
-import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 
@@ -46,7 +45,7 @@ public class HttpPlugin {
      * Get cache file path
      *
      * @return Return cache file path
-     * @throws IOException
+     * @throws IOException IOException
      */
     public String getCacheDir() throws IOException {
         if (this.context_ == null) {

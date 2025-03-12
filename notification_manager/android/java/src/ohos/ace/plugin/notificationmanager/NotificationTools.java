@@ -24,13 +24,20 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
-import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+/**
+ * NotificationTools class is used to create notification style
+ *
+ * @since 2024-06-24
+ */
 public class NotificationTools {
     private static final String TAG = NotificationTools.class.getSimpleName();
 
+    /**
+     * create style from notification content
+     */
     public enum ContentType {
         NONE(0),
         BASIC_TEXT(1),
@@ -131,6 +138,7 @@ public class NotificationTools {
     /**
      * get Icon from file path
      *
+     * @param context the context
      * @param filePath the picture Path
      * @return Icon
      */
@@ -173,6 +181,12 @@ public class NotificationTools {
         return bitmap;
     }
 
+    /**
+     * get First Upper String
+     *
+     * @param input the input string
+     * @return String
+     */
     public static String getFirstUpperStr(String input) {
         if (TextUtils.isEmpty(input) || input.length() < 1) {
             return input;

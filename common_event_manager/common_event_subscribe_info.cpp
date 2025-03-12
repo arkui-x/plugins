@@ -32,16 +32,15 @@ CommonEventSubscribeInfo::CommonEventSubscribeInfo(const std::vector<std::string
     }
 }
 
-CommonEventSubscribeInfo::CommonEventSubscribeInfo(const CommonEventSubscribeInfo& commonEventSubscribeInfo)
+CommonEventSubscribeInfo::CommonEventSubscribeInfo(const CommonEventSubscribeInfo& commonEventSubscribeInfo) :
+publisherPermission_(commonEventSubscribeInfo.GetPublisherPermission()),
+      publisherDeviceId_(commonEventSubscribeInfo.GetPPublisherDeviceId()),
+      userId_(commonEventSubscribeInfo.GetUserId()), priority_(commonEventSubscribeInfo.GetPriority())
 {
-    publisherPermission_ = commonEventSubscribeInfo.GetPublisherPermission();
-    publisherDeviceId_ = commonEventSubscribeInfo.GetPPublisherDeviceId();
     std::vector<std::string> events = commonEventSubscribeInfo.GetEvents();
     for (auto it = events.begin(); it != events.end(); it++) {
         events_.push_back(*it);
-    }
-    userId_ = commonEventSubscribeInfo.GetUserId();
-    priority_ = commonEventSubscribeInfo.GetPriority();
+}
 }
 
 CommonEventSubscribeInfo& CommonEventSubscribeInfo::operator=(const CommonEventSubscribeInfo& commonEventSubscribeInfo)

@@ -19,8 +19,6 @@ import android.content.Context;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
-import android.media.AudioRouting;
-import android.media.AudioRouting.OnRoutingChangedListener;
 import android.media.AudioManager.AudioRecordingCallback;
 import android.media.AudioPlaybackConfiguration;
 import android.media.AudioRecordingConfiguration;
@@ -28,12 +26,12 @@ import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
 
 /**
  * AudioManagerPlugin
+ *
+ * @since 2024-06-24
  */
 public class AudioManagerPlugin {
     private static final String LOG_TAG = "AudioManagerPlugin";
@@ -74,6 +72,12 @@ public class AudioManagerPlugin {
         return value;
     }
 
+    /**
+     * getVolume get volume of the stream
+     *
+     * @param streamType stream type of the audio
+     * @return volume of the stream
+     */
     public int getVolume(int streamType) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -82,6 +86,12 @@ public class AudioManagerPlugin {
         return audioManager_.getStreamVolume(streamType);
     }
 
+    /**
+     * getMaxVolume get max volume of the stream
+     *
+     * @param streamType stream type of the audio
+     * @return max volume of the stream
+     */
     public int getMaxVolume(int streamType) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -90,6 +100,12 @@ public class AudioManagerPlugin {
         return audioManager_.getStreamMaxVolume(streamType);
     }
 
+    /**
+     * getMinVolume get min volume of the stream
+     *
+     * @param streamType stream type of the audio
+     * @return min volume of the stream
+     */
     public int getMinVolume(int streamType) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -103,6 +119,12 @@ public class AudioManagerPlugin {
         return -1;
     }
 
+    /**
+     * isStreamMute method get stream mute
+     *
+     * @param streamType stream type of the audio
+     * @return stream mute
+     */
     public boolean isStreamMute(int streamType) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -111,6 +133,11 @@ public class AudioManagerPlugin {
         return audioManager_.isStreamMute(streamType);
     }
 
+    /**
+     * getRingerMode method get ringer mode
+     *
+     * @return ringer mode
+     */
     public int getRingerMode() {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -119,6 +146,11 @@ public class AudioManagerPlugin {
         return audioManager_.getRingerMode();
     }
 
+    /**
+     * getRingerModeInternal method
+     *
+     * @return ringerMode internal
+     */
     public boolean isMicrophoneMute() {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -127,6 +159,11 @@ public class AudioManagerPlugin {
         return audioManager_.isMicrophoneMute();
     }
 
+    /**
+     * isVolumeFixed method get volume fixed
+     *
+     * @return volume fixed
+     */
     public boolean isVolumeFixed() {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -135,6 +172,14 @@ public class AudioManagerPlugin {
         return audioManager_.isVolumeFixed();
     }
 
+    /**
+     * getSystemVolumeInDb method
+     *
+     * @param streamType stream type of the audio
+     * @param index index of the audio
+     * @param deviceType device type of the audio
+     * @return volume of the stream in db
+     */
     public float getSystemVolumeInDb(int streamType, int index, int deviceType) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -148,6 +193,11 @@ public class AudioManagerPlugin {
         return 0.0f;
     }
 
+    /**
+     * getAudioScene method get audio scene
+     *
+     * @return audio scene
+     */
     public int getAudioScene() {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -156,6 +206,12 @@ public class AudioManagerPlugin {
         return audioManager_.getMode();
     }
 
+    /**
+     * getAudioSceneInternal method
+     *
+     * @param flags flags of audio scene
+     * @return audio scene
+     */
     public AudioDeviceInfo[] getDevices(int flags) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -190,6 +246,11 @@ public class AudioManagerPlugin {
         }
     }
 
+    /**
+     * Get current audio renderer info array
+     *
+     * @return List<AudioPlaybackConfiguration>
+     */
     public List<AudioPlaybackConfiguration> getCurrentAudioRendererInfoArray() {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -198,6 +259,11 @@ public class AudioManagerPlugin {
         return audioManager_.getActivePlaybackConfigurations();
     }
 
+    /**
+     * Get current audio capturer info array
+     *
+     * @return List<AudioRecordingConfiguration>
+     */
     public List<AudioRecordingConfiguration> getCurrentAudioCapturerInfoArray() {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -206,6 +272,9 @@ public class AudioManagerPlugin {
         return audioManager_.getActiveRecordingConfigurations();
     }
 
+    /**
+     * registerAudioRendererEventListener method
+     */
     public void registerAudioRendererEventListener() {
         if (audioPlaybackCallbacklListeners_ == null) {
             if (audioManager_ == null) {
@@ -219,6 +288,9 @@ public class AudioManagerPlugin {
         }
     }
 
+    /**
+     * unregisterAudioRendererEventListener method
+     */
     public void unregisterAudioRendererEventListener() {
         if (audioPlaybackCallbacklListeners_ != null) {
             if (audioManager_ == null) {
@@ -232,6 +304,9 @@ public class AudioManagerPlugin {
         }
     }
 
+    /**
+     * registerAudioCapturerEventListener method
+     */
     public void registerAudioCapturerEventListener() {
         if (audioRecordingCallbacklListeners_ == null) {
             if (audioManager_ == null) {
@@ -245,6 +320,9 @@ public class AudioManagerPlugin {
         }
     }
 
+    /**
+     * unregisterAudioCapturerEventListener method
+     */
     public void unregisterAudioCapturerEventListener() {
         if (audioRecordingCallbacklListeners_ != null) {
             if (audioManager_ == null) {
@@ -258,6 +336,13 @@ public class AudioManagerPlugin {
         }
     }
 
+    /**
+     * setDeviceActive method
+     *
+     * @param deviceType device type
+     * @param flag flag
+     * @return boolean
+     */
     public boolean setDeviceActive(int deviceType, boolean flag) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -290,6 +375,12 @@ public class AudioManagerPlugin {
         return false;
     }
 
+    /**
+     * isDeviceActive method
+     *
+     * @param deviceType device type
+     * @return boolean
+     */
     public boolean isDeviceActive(int deviceType) {
         if (audioManager_ == null) {
             Log.e(LOG_TAG, "audioManager_ is null");
@@ -319,6 +410,9 @@ public class AudioManagerPlugin {
         }
     }
 
+    /**
+     * Notifications of audio playback and recording events.
+     */
     public class OnAudioPlaybackCallbackListenerImpl extends AudioManager.AudioPlaybackCallback {
         @Override
         public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
@@ -326,6 +420,9 @@ public class AudioManagerPlugin {
         }
     }
 
+    /**
+     * Notifications of audio recording events.
+     */
     public class OnAudioRecordingCallbackListenerImpl extends AudioManager.AudioRecordingCallback {
         @Override
         public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs) {
@@ -337,7 +434,26 @@ public class AudioManagerPlugin {
      * AudioManagerPlugin native method.
      */
     protected native void nativeInit();
+
+    /**
+     * AudioManagerPlugin native method.
+     *
+     * @param isAdded true if the device is added, false if the device is removed
+     * @param devices AudioDeviceInfo array
+     */
     protected native void nativeOnAudioDeviceChanged(boolean isAdded, AudioDeviceInfo[] devices);
+
+    /**
+     * AudioManagerPlugin native method.
+     *
+     * @param configs AudioPlaybackConfiguration list
+     */
     protected native void nativeOnAudioRendererChanged(List<AudioPlaybackConfiguration> configs);
+
+    /**
+     * AudioManagerPlugin native method.
+     *
+     * @param configs AudioRecordingConfiguration list
+     */
     protected native void nativeOnAudioCapturerChanged(List<AudioRecordingConfiguration> configs);
 }

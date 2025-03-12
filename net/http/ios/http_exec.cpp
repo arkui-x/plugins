@@ -628,8 +628,7 @@ void HttpExec::SendRequest()
 
     if (it != staticVariable_.contextMap.end()) {
         std::shared_ptr<HttpExecInterface> httpExec = nullptr;
-        RequestContext* context = nullptr;
-        context = it->first;
+        RequestContext* context = it->first;
         httpExec = it->second.httpExec;
         it->second.requestStatus = RequestStatus::REQUEST_STARTED;
 

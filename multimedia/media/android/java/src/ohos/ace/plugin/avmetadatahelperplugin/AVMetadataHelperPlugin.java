@@ -20,7 +20,6 @@ import android.util.Log;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import android.media.MediaDataSource;
@@ -32,12 +31,34 @@ import android.media.MediaMetadataRetriever;
  * @since 1
  */
 public class AVMetadataHelperPlugin {
+    /**
+     * nativeInit is used to initialize the native library.
+     */
     private static final String LOG_TAG = "AVMetadataHelperPlugin";
 
+    /**
+     * HELPER_STATE_ERROR is used to indicate the state of the helper is error.
+     */
     public static final int HELPER_STATE_ERROR = 0;
+
+    /**
+     * HELPER_IDLE is used to indicate the state of the helper is idle.
+     */
     public static final int HELPER_IDLE = 1;
+
+    /**
+     * HELPER_PREPARING is used to indicate the state of the helper is preparing.
+     */
     public static final int HELPER_PREPARED = 2;
+
+    /**
+     * HELPER_CALL_DONE is used to indicate the call is done.
+     */
     public static final int HELPER_CALL_DONE = 3;
+
+    /**
+     * HELPER_RELEASED is used to indicate the state of the helper is released.
+     */
     public static final int HELPER_RELEASED = 4;
 
     private Map<Long, MediaMetadataRetriever> metadataRetrieverMap = new HashMap<>();
@@ -58,6 +79,7 @@ public class AVMetadataHelperPlugin {
 
     /**
      * MediaDataSourceImpl
+     *
      * The class is used for getting the data source.
      * @since 1
      */
@@ -67,6 +89,7 @@ public class AVMetadataHelperPlugin {
         public MediaDataSourceImpl(long id) {
             key = id;
         }
+
         @Override
         public long getSize() {
             return -1;
@@ -101,7 +124,6 @@ public class AVMetadataHelperPlugin {
      * creates a MediaMetadataRetriever object.
      *
      * @param key The key of the MediaMetadataRetriever.
-     * @return void
      */
     public void createMetadataRetriever(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -126,7 +148,6 @@ public class AVMetadataHelperPlugin {
      * releases a MediaMetadataRetriever object.
      *
      * @param key The key of the MediaMetadataRetriever.
-     * @return void
      */
     public void releaseMetadataRetriever(long key) {
         metadataRetrieverMap.remove(key);
@@ -139,7 +160,6 @@ public class AVMetadataHelperPlugin {
      * @param url the url for the file you want to play.
      * @param offset the offset into the file where the data to be played starts, in bytes. It must be non-negative
      * @param size the length in bytes of the data to be played. The negative value is invalid.
-     * @return void
      */
     public void setDataSource(long key, String url, long offset, long size) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -164,7 +184,6 @@ public class AVMetadataHelperPlugin {
      * Sets the data source (file pathname) to use.
      *
      * @param key The key of the MediaMetadataRetriever.
-     * @return void
      */
     public void setDataSource(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -183,7 +202,6 @@ public class AVMetadataHelperPlugin {
      *
      * @param key The key of the MediaMetadataRetriever.
      * @param keyCode The key of metadata.
-     * @return void
      */
     public String extractMetadata(long key, int keyCode) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -195,10 +213,21 @@ public class AVMetadataHelperPlugin {
         return ret == null ? "" : ret;
     }
 
+    /**
+     * Retrieves the optional graphic or album/cover art associated associated with the data source.
+     *
+     * @param key The key of the MediaMetadataRetriever.
+     */
     public void extractMetadataDone(long key) {
         notifyInfo(key, HELPER_CALL_DONE);
     }
 
+    /**
+     * Retrieves the optional graphic or album/cover art associated associated with the data source.
+     *
+     * @param key The key of the MediaMetadataRetriever.
+     * @return The size of the embedded picture.
+     */
     public int getEmbeddedPictureSize(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
@@ -218,7 +247,6 @@ public class AVMetadataHelperPlugin {
      * Finds the optional graphic or album/cover art associated associated with the data source..
      *
      * @param key The key of the MediaMetadataRetriever.
-     * @return void
      */
     public byte[] getEmbeddedPicture(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -234,7 +262,6 @@ public class AVMetadataHelperPlugin {
      * releases a MediaMetadataRetriever object.
      *
      * @param key The key of the MediaMetadataRetriever.
-     * @return void
      */
     public void release(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -249,7 +276,6 @@ public class AVMetadataHelperPlugin {
     /**
      * Init AVMetadataHelperPlugin jni.
      *
-     * @return void
      */
     protected native void nativeInit();
 

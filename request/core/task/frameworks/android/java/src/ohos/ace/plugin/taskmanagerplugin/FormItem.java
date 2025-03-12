@@ -15,6 +15,11 @@
 
 package ohos.ace.plugin.taskmanagerplugin;
 
+/**
+ * FormItem class for form item
+ *
+ * @since 2024-05-31
+ */
 public class FormItem {
     private String name;
     private String value;
