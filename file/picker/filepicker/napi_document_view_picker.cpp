@@ -25,52 +25,66 @@
 
 namespace OHOS::Plugin {
 
+constexpr const char* KEY_PICK_NUM = "key_pick_num";
+constexpr const char* KEY_PICK_DIR_PATH = "key_pick_dir_path";
+constexpr const char* KEY_FILE_SUFFIX_FILTER = "key_file_suffix_filter";
+constexpr const char* KEY_SELECT_MODE = "key_select_mode";
+constexpr const char* KEY_AUTH_MODE = "key_auth_mode";
+constexpr const char* KEY_PICK_FILE_NAME = "key_pick_file_name";
+constexpr const char* KEY_FILE_SUFFIX_CHOICES = "key_file_suffix_choices";
+
+void ParseDefaultFilePathUri(const napi_env& env, const napi_value& argv, std::string& defaultFilePathUri) {
+    napi_value defaultFilePathUriValue;
+    napi_get_named_property(env, argv, KEY_PICK_DIR_PATH, &defaultFilePathUriValue);
+    size_t size;
+    napi_get_value_string_utf8(env, defaultFilePathUriValue, nullptr, 0, &size);
+    napi_get_value_string_utf8(env, defaultFilePathUriValue, (char*)defaultFilePathUri.c_str(), size + 1, &size);
+}
+
+void ParseFileSuffixFilters(const napi_env& env, const napi_value& argv, std::vector<std::string>& fileSuffixFilters, const char* key) {
+    napi_value value;
+    napi_get_named_property(env, argv, key, &value);
+    ParseStringArray(env, value, fileSuffixFilters);
+}
+
 napi_value GetDocumentSelectOptions(const napi_env& env, const napi_value& argv, DocumentSelectOptions& options)
 {
     LOGI("GetDocumentSelectOptions enter");
     bool hasProperty = false;
 
     // maxSelectNumber
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_pick_num", &hasProperty));
-
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_PICK_NUM, &hasProperty));
     if (hasProperty) {
         napi_value maxSelectNumber;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_pick_num", &maxSelectNumber));
+        NAPI_CALL_CHECK(napi_get_named_property(env, argv, KEY_PICK_NUM, &maxSelectNumber));
         NAPI_CALL_CHECK(napi_get_value_int32(env, maxSelectNumber, &options.maxSelectNumber));
     }
 
     // defaultFilePathUri
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_pick_dir_path", &hasProperty));
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_PICK_DIR_PATH, &hasProperty));
     if (hasProperty) {
-        napi_value defaultFilePathUri;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_pick_dir_path", &defaultFilePathUri));
-        size_t size;
-        NAPI_CALL_CHECK(napi_get_value_string_utf8(env, defaultFilePathUri, nullptr, 0, &size));
-        NAPI_CALL_CHECK(napi_get_value_string_utf8(
-            env, defaultFilePathUri, (char*)options.defaultFilePathUri.c_str(), size + 1, &size));
+        ParseDefaultFilePathUri(env, argv, options.defaultFilePathUri);
     }
 
     // fileSuffixFilters
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_file_suffix_filter", &hasProperty));
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_FILE_SUFFIX_FILTER, &hasProperty));
     if (hasProperty) {
-        napi_value value;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_file_suffix_filter", &value));
-        ParseStringArray(env, value, options.fileSuffixFilters);
+        ParseFileSuffixFilters(env, argv, options.fileSuffixFilters, KEY_FILE_SUFFIX_FILTER);
     }
 
     // key_select_mode
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_select_mode", &hasProperty));
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_SELECT_MODE, &hasProperty));
     if (hasProperty) {
         napi_value key_select_mode;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_select_mode", &key_select_mode));
+        NAPI_CALL_CHECK(napi_get_named_property(env, argv, KEY_SELECT_MODE, &key_select_mode));
         NAPI_CALL_CHECK(napi_get_value_int32(env, key_select_mode, &options.key_select_mode));
     }
 
     // authMode
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_auth_mode", &hasProperty));
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_AUTH_MODE, &hasProperty));
     if (hasProperty) {
         napi_value authMode;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_auth_mode", &authMode));
+        NAPI_CALL_CHECK(napi_get_named_property(env, argv, KEY_AUTH_MODE, &authMode));
         NAPI_CALL_CHECK(napi_get_value_bool(env, authMode, &options.authMode));
     }
     LOGI("GetDocumentSelectOptions end");
@@ -100,10 +114,10 @@ napi_value GetDocumentSaveOptions(const napi_env& env, const napi_value& argv, D
     bool hasProperty = false;
 
     // newFileNames
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_pick_file_name", &hasProperty));
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_PICK_FILE_NAME, &hasProperty));
     if (hasProperty) {
         napi_value value;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_pick_file_name", &value));
+        NAPI_CALL_CHECK(napi_get_named_property(env, argv, KEY_PICK_FILE_NAME, &value));
         ParseStringArray(env, value, options.newFileNames);
         if (options.newFileNames.size() > 0) {
             options.saveFile = options.newFileNames[0];
@@ -111,22 +125,15 @@ napi_value GetDocumentSaveOptions(const napi_env& env, const napi_value& argv, D
     }
 
     // defaultFilePathUri
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_pick_dir_path", &hasProperty));
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_PICK_DIR_PATH, &hasProperty));
     if (hasProperty) {
-        napi_value defaultFilePathUri;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_pick_dir_path", &defaultFilePathUri));
-        size_t size;
-        NAPI_CALL_CHECK(napi_get_value_string_utf8(env, defaultFilePathUri, nullptr, 0, &size));
-        NAPI_CALL_CHECK(napi_get_value_string_utf8(
-            env, defaultFilePathUri, (char*)options.defaultFilePathUri.c_str(), size + 1, &size));
+        ParseDefaultFilePathUri(env, argv, options.defaultFilePathUri);
     }
 
     // fileSuffixFilters
-    NAPI_CALL_CHECK(napi_has_named_property(env, argv, "key_file_suffix_choices", &hasProperty));
+    NAPI_CALL_CHECK(napi_has_named_property(env, argv, KEY_FILE_SUFFIX_CHOICES, &hasProperty));
     if (hasProperty) {
-        napi_value value;
-        NAPI_CALL_CHECK(napi_get_named_property(env, argv, "key_file_suffix_choices", &value));
-        ParseStringArray(env, value, options.fileSuffixFilters);
+        ParseFileSuffixFilters(env, argv, options.fileSuffixFilters, KEY_FILE_SUFFIX_CHOICES);
     }
 
     return nullptr;
