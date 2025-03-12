@@ -43,8 +43,8 @@ public:
     int32_t GetParams(AudioCapturerParams& params) const override { return 0; }
     int32_t GetCapturerInfo(AudioCapturerInfo& capturerInfo) const override;
     int32_t GetStreamInfo(AudioStreamInfo& streamInfo) const override;
-    bool Start() const override;
-    int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) const override;
+    bool Start() override;
+    int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) override;
     CapturerState GetStatus() const override;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const override;
     bool Pause() const override;
@@ -63,8 +63,8 @@ public:
     int32_t SetCaptureMode(AudioCaptureMode captureMode) override { return 0; }
     AudioCaptureMode GetCaptureMode() const override { return CAPTURE_MODE_NORMAL; }
     int32_t SetCapturerReadCallback(const std::shared_ptr<AudioCapturerReadCallback>& callback) override;
-    int32_t GetBufferDesc(BufferDesc& bufDesc) const override;
-    int32_t Enqueue(const BufferDesc& bufDesc) const override;
+    int32_t GetBufferDesc(BufferDesc& bufDesc) override;
+    int32_t Enqueue(const BufferDesc& bufDesc) override;
     int32_t Clear() const override { return 0; }
     int32_t GetBufQueueState(BufferQueueState& bufState) const override { return 0; }
     void SetValid(bool valid) override {}
@@ -81,6 +81,10 @@ public:
         const std::shared_ptr<AudioCapturerInfoChangeCallback>& callback) override;
     int32_t RegisterAudioCapturerEventListener() override { return SUCCESS; }
     int32_t UnregisterAudioCapturerEventListener() override { return SUCCESS; }
+    void SetAudioCapturerErrorCallback(std::shared_ptr<AudioCapturerErrorCallback> errorCallback) override;
+    int32_t RegisterAudioPolicyServerDiedCb(const int32_t clientPid,
+        const std::shared_ptr<AudioCapturerPolicyServiceDiedCallback> &callback) override;
+    int32_t GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
     std::vector<sptr<MicrophoneDescriptor>> GetCurrentMicrophones() const override
     { 
         std::vector<sptr<MicrophoneDescriptor>> emptyVector;

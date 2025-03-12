@@ -186,7 +186,7 @@ void AudioCapturerPrivate::UnsetCapturerPeriodPositionCallback()
     return capturerImpl_->UnsetCapturerPeriodPositionCallback();
 }
 
-bool AudioCapturerPrivate::Start() const
+bool AudioCapturerPrivate::Start()
 {
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::Start");
 
@@ -195,7 +195,7 @@ bool AudioCapturerPrivate::Start() const
     return capturerImpl_->Start();
 }
 
-int32_t AudioCapturerPrivate::Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) const
+int32_t AudioCapturerPrivate::Read(uint8_t& buffer, size_t userSize, bool isBlockingRead)
 {
     return 0;
 }
@@ -268,7 +268,7 @@ int32_t AudioCapturerPrivate::SetCapturerReadCallback(const std::shared_ptr<Audi
     return capturerImpl_->SetCapturerReadCallback(callback);
 }
 
-int32_t AudioCapturerPrivate::GetBufferDesc(BufferDesc& bufDesc) const
+int32_t AudioCapturerPrivate::GetBufferDesc(BufferDesc& bufDesc)
 {
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::GetBufferDesc");
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, ERROR, "capturerImpl_ == nullptr.");
@@ -276,7 +276,7 @@ int32_t AudioCapturerPrivate::GetBufferDesc(BufferDesc& bufDesc) const
     return capturerImpl_->GetBufferDesc(bufDesc);
 }
 
-int32_t AudioCapturerPrivate::Enqueue(const BufferDesc& bufDesc) const
+int32_t AudioCapturerPrivate::Enqueue(const BufferDesc& bufDesc)
 {
     AUDIO_DEBUG_LOG("AudioCapturerPrivate::Enqueue");
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, ERROR, "capturerImpl_ == nullptr.");
@@ -342,6 +342,23 @@ int32_t AudioCapturerPrivate::RemoveAudioCapturerInfoChangeCallback(
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, ERROR, "capturerImpl_ == nullptr.");
 
     return capturerImpl_->RemoveAudioCapturerInfoChangeCallback(callback);
+}
+
+void AudioCapturerPrivate::SetAudioCapturerErrorCallback(std::shared_ptr<AudioCapturerErrorCallback> errorCallback)
+{
+
+}
+
+int32_t AudioCapturerPrivate::RegisterAudioPolicyServerDiedCb(const int32_t clientPid,
+    const std::shared_ptr<AudioCapturerPolicyServiceDiedCallback> &callback)
+{
+    return 0;
+}
+
+// diffrence from GetAudioPosition only when set speed
+int32_t AudioCapturerPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const
+{
+    return 0;
 }
 } // namespace AudioStandard
 } // namespace OHOS

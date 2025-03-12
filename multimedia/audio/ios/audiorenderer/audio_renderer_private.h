@@ -48,7 +48,7 @@ public:
     int32_t Write(uint8_t *pcmBuffer, size_t pcmSize, uint8_t *metaBuffer, size_t metaSize) override;
     RendererState GetStatus() const override;
     bool GetAudioTime(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
-    bool GetAudioPosition(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
+    bool GetAudioPosition(Timestamp &timestamp, Timestamp::Timestampbase base) override;
     bool Drain() const override;
     bool PauseTransitent(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
@@ -79,8 +79,8 @@ public:
     int32_t SetRendererFirstFrameWritingCallback(
         const std::shared_ptr<AudioRendererFirstFrameWritingCallback> &callback) override;
     void SetPreferredFrameSize(int32_t frameSize) override;
-    int32_t GetBufferDesc(BufferDesc &bufDesc) const override;
-    int32_t Enqueue(const BufferDesc &bufDesc) const override;
+    int32_t GetBufferDesc(BufferDesc &bufDesc) override;
+    int32_t Enqueue(const BufferDesc &bufDesc) override;
     int32_t Clear() const override;
     int32_t GetBufQueueState(BufferQueueState &bufState) const override;
     void SetInterruptMode(InterruptMode mode) override;

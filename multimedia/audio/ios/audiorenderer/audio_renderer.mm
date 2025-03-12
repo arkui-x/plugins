@@ -197,7 +197,7 @@ bool AudioRendererPrivate::GetAudioTime(Timestamp &timestamp, Timestamp::Timesta
     return [rendererImpl_ getAudioTime:timestamp];
 }
 
-bool AudioRendererPrivate::GetAudioPosition(Timestamp &timestamp, Timestamp::Timestampbase base) const
+bool AudioRendererPrivate::GetAudioPosition(Timestamp &timestamp, Timestamp::Timestampbase base)
 {
     return false;
 }
@@ -311,13 +311,13 @@ AudioRenderMode AudioRendererPrivate::GetRenderMode() const
     return RENDER_MODE_NORMAL;
 }
 
-int32_t AudioRendererPrivate::GetBufferDesc(BufferDesc &bufDesc) const
+int32_t AudioRendererPrivate::GetBufferDesc(BufferDesc &bufDesc)
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
     return [rendererImpl_ getBufferDesc:bufDesc];
 }
 
-int32_t AudioRendererPrivate::Enqueue(const BufferDesc &bufDesc) const
+int32_t AudioRendererPrivate::Enqueue(const BufferDesc &bufDesc)
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
     return [rendererImpl_ enqueue:bufDesc];

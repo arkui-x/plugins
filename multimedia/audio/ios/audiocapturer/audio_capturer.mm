@@ -131,7 +131,7 @@ int32_t AudioCapturerPrivate::GetStreamInfo(AudioStreamInfo &streamInfo) const
     return [capturerImpl_ getStreamInfo: streamInfo];
 }
 
-bool AudioCapturerPrivate::Start() const
+bool AudioCapturerPrivate::Start()
 {
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, false, "capturerImpl_ == nullptr.");
     return [capturerImpl_ start];
@@ -180,13 +180,13 @@ int32_t AudioCapturerPrivate::SetCapturerReadCallback(const std::shared_ptr<Audi
     return [capturerImpl_ setCapturerReadCallback: callback];
 }
 
-int32_t AudioCapturerPrivate::GetBufferDesc(BufferDesc &bufDesc) const
+int32_t AudioCapturerPrivate::GetBufferDesc(BufferDesc &bufDesc)
 {
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, ERROR, "capturerImpl_ == nullptr.");
     return [capturerImpl_ getBufferDesc: bufDesc];
 }
 
-int32_t AudioCapturerPrivate::Enqueue(const BufferDesc &bufDesc) const
+int32_t AudioCapturerPrivate::Enqueue(const BufferDesc &bufDesc)
 {
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, ERROR, "capturerImpl_ == nullptr.");
     return [capturerImpl_ enqueue: bufDesc];
@@ -363,7 +363,7 @@ std::vector<sptr<MicrophoneDescriptor>> AudioCapturerPrivate::GetCurrentMicropho
     return emptyVector;
 }
 
-int32_t AudioCapturerPrivate::Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) const
+int32_t AudioCapturerPrivate::Read(uint8_t& buffer, size_t userSize, bool isBlockingRead)
 {
     return 0;
 }
@@ -374,6 +374,23 @@ int32_t AudioCapturerPrivate::RegisterAudioCapturerEventListener()
 }
 
 int32_t AudioCapturerPrivate::UnregisterAudioCapturerEventListener()
+{
+    return 0;
+}
+
+void AudioCapturerPrivate::SetAudioCapturerErrorCallback(std::shared_ptr<AudioCapturerErrorCallback> errorCallback)
+{
+
+}
+
+int32_t AudioCapturerPrivate::RegisterAudioPolicyServerDiedCb(const int32_t clientPid,
+    const std::shared_ptr<AudioCapturerPolicyServiceDiedCallback> &callback)
+{
+    return 0;
+}
+
+// diffrence from GetAudioPosition only when set speed
+int32_t AudioCapturerPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const
 {
     return 0;
 }
