@@ -30,19 +30,25 @@
 #include "uv.h"
 
 namespace OHOS::Plugin {
-static thread_local napi_ref g_atManagerRef_;
+static thread_local napi_ref g_abilityTokenManagerRef;
 static const std::string ATMANAGER_CLASS_NAME = "atManager";
-static constexpr int32_t VERIFY_INPUT_MAX_PARAMS = 2;
-static constexpr int32_t REQUEST_INPUT_MAX_PARAMS = 3;
-static constexpr int32_t JS_ERROR_PARAM_ILLEGAL = 401;
 static std::unique_ptr<AbilityAccessCtrl> g_acPlugin = nullptr;
+enum class JsReturnCode {
+    SUCCESS = 0,
+    PARAM_ILLEGAL = 401,
+    INNER_ERROR = 402,
+};
+
+enum class InputParams {
+    VERIFY_MAX = 2,
+    REQUEST_MAX = 3,
+};
+
 static constexpr int32_t ASYNC_CALL_BACK_VALUES_NUM = 2;
 static constexpr int32_t MAX_LENGTH = 256;
 static constexpr int32_t RET_SUCCESS = 0;
-static bool IsTokenIDValid(uint32_t id)
-{
-    return id != 0;
-}
+
+static inline bool IsTokenIDValid(uint32_t id) { return id != 0; }
 
 static bool IsPermissionNameValid(const std::string& permissionName)
 {
@@ -57,8 +63,8 @@ napi_value GetNapiNull(napi_env env)
 }
 
 static const std::map<uint32_t, std::string> g_errorStringMap = {
-    {JS_ERROR_PARAM_INVALID, "The parameter is invalid."},
-    {JS_ERROR_INNER, "Common inner error."},
+    {static_cast<uint32_t>(JsReturnCode::PARAM_ILLEGAL), "The parameter is illegal."},
+    {static_cast<uint32_t>(JsReturnCode::INNER_ERROR), "Common inner error."},
 };
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& type)
@@ -131,34 +137,34 @@ void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, c
 static bool ParseInputCheckPermission(
     const napi_env env, const napi_callback_info info, AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = VERIFY_INPUT_MAX_PARAMS;
+    size_t argc = static_cast<size_t>(InputParams::VERIFY_MAX);
 
-    napi_value argv[VERIFY_INPUT_MAX_PARAMS] = { nullptr };
+    napi_value argv[static_cast<size_t>(InputParams::VERIFY_MAX)] = { nullptr };
     napi_value thisVar = nullptr;
     std::string errMsg;
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < VERIFY_INPUT_MAX_PARAMS) {
+    if (argc < static_cast<size_t>(InputParams::VERIFY_MAX)) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
-            JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+            static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL), "Parameter is missing.")), false);
         return false;
     }
     // 0: the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
         errMsg = GetParamErrorMsg("tokenId", "number");
         NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            napi_throw(env, GenerateBusinessError(env, static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL), errMsg)), false);
         return false;
     }
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permission)) {
         errMsg = GetParamErrorMsg("permissionName", "string");
         NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            napi_throw(env, GenerateBusinessError(env, static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL), errMsg)), false);
         return false;
     }
     if (!IsTokenIDValid(asyncContext.tokenId) || !IsPermissionNameValid(asyncContext.permission)) {
-        asyncContext.jsCode = JS_ERROR_PARAM_INVALID; // -1: faile
+        asyncContext.jsCode = static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL); // -1: faile
     }
     return true;
 }
@@ -166,16 +172,16 @@ static bool ParseInputCheckPermission(
 static bool ParseInputRequestPermission(
     const napi_env env, const napi_callback_info info, RequestAsyncContext& asyncContext)
 {
-    size_t argc = REQUEST_INPUT_MAX_PARAMS;
+    size_t argc = static_cast<size_t>(InputParams::REQUEST_MAX);
 
-    napi_value argv[REQUEST_INPUT_MAX_PARAMS] = { nullptr };
+    napi_value argv[static_cast<size_t>(InputParams::REQUEST_MAX)] = { nullptr };
     napi_value thisVar = nullptr;
     std::string errMsg;
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < REQUEST_INPUT_MAX_PARAMS - 1) {
+    if (argc < static_cast<size_t>(InputParams::REQUEST_MAX) - 1) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
-            JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+            static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL), "Parameter is missing.")), false);
         return false;
     }
 
@@ -184,15 +190,15 @@ static bool ParseInputRequestPermission(
         (asyncContext.permissionList.empty())) {
         errMsg = GetParamErrorMsg("permissions", "Array<string>");
         NAPI_CALL_BASE(
-            env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            env, napi_throw(env, GenerateBusinessError(env, static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL), errMsg)), false);
         return false;
     }
 
     // argv[2] : callback
-    if (argc == REQUEST_INPUT_MAX_PARAMS) {
+    if (argc == static_cast<size_t>(InputParams::REQUEST_MAX)) {
         if (!ParseCallback(env, argv[2], asyncContext.callbackRef)) {    // argv[2] : callback
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionRequestResult>");
-            napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg));
+            napi_throw(env, GenerateBusinessError(env, static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL), errMsg));
             return false;
         }
     }
@@ -213,8 +219,8 @@ static napi_value CreateAtManager(napi_env env, napi_callback_info cbInfo)
     napi_value instance = nullptr;
     napi_value cons = nullptr;
 
-    NAPI_CALL(env, napi_get_reference_value(env, g_atManagerRef_, &cons));
-    LOGW("Get a reference to the global variable g_atManagerRef_ complete");
+    NAPI_CALL(env, napi_get_reference_value(env, g_abilityTokenManagerRef, &cons));
+    LOGW("Get a reference to the global variable g_abilityTokenManagerRef complete");
 
     NAPI_CALL(env, napi_new_instance(env, cons, 0, nullptr, &instance));
     LOGW("New js instance complete");
@@ -240,7 +246,7 @@ static napi_value JSCheckAccessTokenSync(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    if (asyncContext->jsCode != JS_OK) {
+    if (asyncContext->jsCode != static_cast<int32_t>(JsReturnCode::SUCCESS)) {
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env,
             asyncContext->jsCode, GetErrorMessage(asyncContext->jsCode))));
         return nullptr;
@@ -277,7 +283,7 @@ void CheckAccessTokenComplete(napi_env env, napi_status status, void *data)
         return;
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    if (asyncContext->jsCode != JS_OK) {
+    if (asyncContext->jsCode != static_cast<int32_t>(JsReturnCode::SUCCESS)) {
         napi_value error = GenerateBusinessError(env, asyncContext->jsCode, GetErrorMessage(asyncContext->jsCode));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred, error));
     } else {
@@ -361,17 +367,17 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     }
     std::unique_ptr<RequestAsyncContext> contextPtr {context};
 
-    int32_t result = JsErrorCode::JS_OK;
+    int32_t result = static_cast<int32_t>(JsReturnCode::SUCCESS);
     if (retCB->grantResults.empty()) {
         LOGE("grantResults empty");
-        result = JsErrorCode::JS_ERROR_INNER;
+        result = static_cast<int32_t>(JsReturnCode::INNER_ERROR);
     }
     napi_handle_scope scope = nullptr;
     NAPI_CALL_RETURN_VOID(context->env, napi_open_handle_scope(context->env, &scope));
     napi_value requestResult = WrapRequestResult(context->env, retCB->permissions, retCB->grantResults);
     if (requestResult == nullptr) {
         LOGE("wrap requestResult failed");
-        result = JsErrorCode::JS_ERROR_INNER;
+        result = static_cast<int32_t>(JsReturnCode::INNER_ERROR);
     }
 
     if (context->deferred != nullptr) {
@@ -474,7 +480,7 @@ static napi_value AbilityAccessCtrlExport(napi_env env, napi_value exports)
     NAPI_CALL(env, napi_define_class(env, ATMANAGER_CLASS_NAME.c_str(), ATMANAGER_CLASS_NAME.size(),
         JsConstructor, nullptr, sizeof(properties) / sizeof(napi_property_descriptor), properties, &cons));
 
-    NAPI_CALL(env, napi_create_reference(env, cons, 1, &g_atManagerRef_));
+    NAPI_CALL(env, napi_create_reference(env, cons, 1, &g_abilityTokenManagerRef));
     NAPI_CALL(env, napi_set_named_property(env, exports, ATMANAGER_CLASS_NAME.c_str(), cons));
 
     napi_value grantStatus = nullptr;
