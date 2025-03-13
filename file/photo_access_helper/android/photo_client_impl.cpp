@@ -32,6 +32,10 @@ using namespace std;
 
 namespace OHOS {
 namespace Media {
+
+static const double SINGLE_VALUE = 2.0;
+static const int ANDROID_PHOTO_MEDIA_TYPE = 3;
+
 static const std::map<std::string, std::string> PHOTO_COLUMN_MAP = {
     { PhotoColumn::MEDIA_FILE_PATH, "_data" },
     { PhotoColumn::MEDIA_ID, "_id" },
@@ -87,9 +91,8 @@ static void AddAndroidPredicates(DataShare::DataSharePredicates &predicates)
         }
         if (static_cast<string>(item.GetSingle(0)) == MediaColumn::MEDIA_TYPE) {
             isContainMediaType = true;
-            double compare = 2.0;
-            if (fabs(static_cast<double>(item.GetSingle(1)) - compare) < 1e-6) {
-                operations.push_back({ item.operation, { MediaColumn::MEDIA_TYPE, static_cast<int>(3)}});
+            if (fabs(static_cast<double>(item.GetSingle(1)) - SINGLE_VALUE) < 1e-6) {
+                operations.push_back({ item.operation, { MediaColumn::MEDIA_TYPE, ANDROID_PHOTO_MEDIA_TYPE}});
             } else {
                 operations.push_back(item);
             }
@@ -115,6 +118,17 @@ static std::string changeStringToAndroidString(std::string predicatesString) {
     return predicatesString;
 }
 
+static void ProcessPredicates(NativeRdb::RdbPredicates &rdbPredicates)
+{
+    std::string whereClause = rdbPredicates.GetWhereClause();
+    whereClause = changeStringToAndroidString(whereClause);
+    rdbPredicates.SetWhereClause(whereClause);
+
+    std::string order = rdbPredicates.GetOrder();
+    order = changeStringToAndroidString(order);
+    rdbPredicates.SetOrder(order);
+}
+
 std::shared_ptr<PhotoClient> PhotoClient::GetInstance()
 {
     return std::make_shared<PhotoClientImpl>();
@@ -135,14 +149,8 @@ std::shared_ptr<ResultSet> PhotoClientImpl::QueryAlbum(DataShare::DataSharePredi
     columns.push_back("sum");
     columns.push_back("_id");
     NativeRdb::RdbPredicates rdbPredicates = RdbDataShareAdapter::RdbUtils::ToPredicates(predicates, "");
-    std::string whereClause = rdbPredicates.GetWhereClause();
 
-    whereClause = changeStringToAndroidString(whereClause);
-    rdbPredicates.SetWhereClause(whereClause);
-
-    std::string order = rdbPredicates.GetOrder();
-    order = changeStringToAndroidString(order);
-    rdbPredicates.SetOrder(order);
+    ProcessPredicates(rdbPredicates);
 
     std::vector<std::string> args;
     ChangeArgsToString(rdbPredicates.GetBindArgs(), args);
@@ -161,13 +169,8 @@ std::shared_ptr<ResultSet> PhotoClientImpl::Query(DataShare::DataSharePredicates
     }
     AddAndroidPredicates(predicates);
     NativeRdb::RdbPredicates rdbPredicates = RdbDataShareAdapter::RdbUtils::ToPredicates(predicates, "");
-    std::string whereClause = rdbPredicates.GetWhereClause();
-    whereClause = changeStringToAndroidString(whereClause);
-    rdbPredicates.SetWhereClause(whereClause);
 
-    std::string order = rdbPredicates.GetOrder();
-    order = changeStringToAndroidString(order);
-    rdbPredicates.SetOrder(order);
+    ProcessPredicates(rdbPredicates);
 
     std::vector<std::string> args;
     ChangeArgsToString(rdbPredicates.GetBindArgs(), args);
