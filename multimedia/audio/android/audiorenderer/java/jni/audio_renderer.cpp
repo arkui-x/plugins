@@ -222,14 +222,14 @@ int32_t AudioRendererPrivate::SetChannelBlendMode(ChannelBlendMode blendMode)
     return rendererImpl_->SetChannelBlendMode(blendMode);
 }
 
-int32_t AudioRendererPrivate::GetBufferDesc(BufferDesc& bufDesc) const
+int32_t AudioRendererPrivate::GetBufferDesc(BufferDesc& bufDesc)
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
 
     return rendererImpl_->GetBufferDesc(bufDesc);
 }
 
-int32_t AudioRendererPrivate::Enqueue(const BufferDesc& bufDesc) const
+int32_t AudioRendererPrivate::Enqueue(const BufferDesc& bufDesc)
 {
     CHECK_AND_RETURN_RET_LOG(rendererImpl_ != nullptr, ERROR, "rendererImpl_ == nullptr.");
 

@@ -46,8 +46,8 @@ public:
     bool GetAudioTime(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
     int32_t GetBufferSize(size_t &bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t &sessionID) const override;
-    int32_t GetBufferDesc(BufferDesc &bufDesc) const override;
-    int32_t Enqueue(const BufferDesc &bufDesc) const override;
+    int32_t GetBufferDesc(BufferDesc &bufDesc) override;
+    int32_t Enqueue(const BufferDesc &bufDesc) override;
     float GetMinStreamVolume() const override;
     float GetMaxStreamVolume() const override;
     int32_t GetCurrentOutputDevices(AudioDeviceDescriptor &deviceInfo) const override;
@@ -107,7 +107,7 @@ public:
     int32_t UnregisterAudioPolicyServerDiedCb(const int32_t clientPid) override { return 0; };
     int64_t GetFramesWritten() const override { return 0; }
     void SetAudioRendererErrorCallback(std::shared_ptr<AudioRendererErrorCallback> errorCallback) override {}
-    bool GetAudioPosition(Timestamp &timestamp, Timestamp::Timestampbase base) const override { return false; }
+    bool GetAudioPosition(Timestamp &timestamp, Timestamp::Timestampbase base) override { return false; }
     bool IsFastRenderer() override { return false; }
 
     void SetSilentModeAndMixWithOthers(bool on) override {};

@@ -489,6 +489,66 @@ napi_value ConnectionExec::DeleteCustomDNSRulesCallback(DeleteCustomDNSRulesCont
     return NapiUtils::GetUndefined(context->GetEnv());
 }
 
+bool ConnectionExec::ExecSetInterfaceUp(SetInterfaceUpContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::SetInterfaceUpCallback(SetInterfaceUpContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecSetInterfaceIpAddr(SetInterfaceIpAddrContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::SetInterfaceIpAddrCallback(SetInterfaceIpAddrContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecAddNetworkRoute(AddNetworkRouteContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::AddNetworkRouteCallback(AddNetworkRouteContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecGetNetInterfaceConfiguration(GetNetInterfaceConfigurationContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::GetNetInterfaceConfigurationCallback(GetNetInterfaceConfigurationContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecRegisterNetSupplier(RegisterNetSupplierContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::RegisterNetSupplierCallback(RegisterNetSupplierContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecUnregisterNetSupplier(UnregisterNetSupplierContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::UnregisterNetSupplierCallback(UnregisterNetSupplierContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
 bool ConnectionExec::ExecFactoryResetNetwork(FactoryResetNetworkContext *context)
 {
     NETMANAGER_BASE_LOGI("ExecFactoryResetNetwork into");
@@ -704,6 +764,26 @@ bool ConnectionExec::NetConnectionExec::ExecUnregister(UnregisterContext *contex
 }
 
 napi_value ConnectionExec::NetConnectionExec::UnregisterCallback(RegisterContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::NetInterfaceExec::ExecIfaceRegister(IfaceRegisterContext *context)
+{
+    return NETMANAGER_ERR_INTERNAL;
+}
+
+napi_value ConnectionExec::NetInterfaceExec::IfaceRegisterCallback(IfaceRegisterContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::NetInterfaceExec::ExecIfaceUnregister(IfaceUnregisterContext *context)
+{
+    return NETMANAGER_ERR_INTERNAL;
+}
+
+napi_value ConnectionExec::NetInterfaceExec::IfaceUnregisterCallback(IfaceUnregisterContext *context)
 {
     return NapiUtils::GetUndefined(context->GetEnv());
 }

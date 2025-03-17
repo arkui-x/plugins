@@ -38,6 +38,7 @@ template("plugin_multimedia_media_static") {
       "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
       "//foundation/multimedia/player_framework/frameworks/js/avtranscoder",
       "//foundation/multimedia/drm_framework/services/drm_service/ipc",
+      "//foundation/multimedia/player_framework/frameworks/js/utils",
       "//third_party/skia",
     ]
 
