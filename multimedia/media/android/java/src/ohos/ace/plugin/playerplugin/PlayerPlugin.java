@@ -247,9 +247,8 @@ public class PlayerPlugin {
     }
 
     /**
-     * MediaDataSourceImpl
-     *
      * The class is used for getting the data source.
+     *
      * @since 1
      */
     public class MediaDataSourceImpl extends MediaDataSource {

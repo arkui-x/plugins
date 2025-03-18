@@ -501,7 +501,7 @@ public class DownloadImpl {
     /**
      * stop query progress by tid
      *
-     * @params taskInfo task info
+     * @param taskInfo task info
      */
     public void stopQueryProgress(TaskInfo taskInfo) {
         Iterator<QueryRunnable> iterator = queryRunnables.iterator();
@@ -515,6 +515,8 @@ public class DownloadImpl {
 
     /**
      * post query progress by tid
+     *
+     * @param tid task id
      */
     public void postQueryProgressByTid(long tid) {
         Log.i(TAG, "postQueryProgressByTid: tid:" + tid);
