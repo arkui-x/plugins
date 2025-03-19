@@ -97,6 +97,11 @@ int32_t RecorderImpl::RecorderImpl::SetVideoEnableTemporalScale(int32_t sourceId
     return MSERR_OK;
 }
 
+int32_t RecorderImpl::RecorderImpl::SetVideoEnableStableQualityMode(int32_t sourceId, bool enableStableQualityMode)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::SetCaptureRate(int32_t sourceId, double fps)
 {
     return MSERR_OK;

@@ -90,7 +90,6 @@ public:
         std::vector<sptr<MicrophoneDescriptor>> emptyVector;
         return emptyVector;
     }
-    int32_t SetCaptureSilentState(bool state) override { return 0; }
     uint32_t GetOverflowCount() const override { return 0; }
     int32_t SetAudioSourceConcurrency(const std::vector<SourceType> &targetSources) override { return 0; }
 

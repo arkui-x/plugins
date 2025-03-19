@@ -342,11 +342,6 @@ int32_t AudioCapturerPrivate::GetParams(AudioCapturerParams& params) const
     return 0;
 }
 
-int32_t AudioCapturerPrivate::SetCaptureSilentState(bool state)
-{
-    return 0;
-}
-
 uint32_t AudioCapturerPrivate::GetOverflowCount() const
 {
     return 0;

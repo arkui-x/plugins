@@ -68,7 +68,6 @@ public:
     int32_t SetCaptureMode(AudioCaptureMode captureMode) override;
     int32_t GetBufQueueState(BufferQueueState& bufState) const override;
     int32_t GetParams(AudioCapturerParams& params) const override;
-    int32_t SetCaptureSilentState(bool state) override;
     uint32_t GetOverflowCount() const override;
     int32_t SetAudioSourceConcurrency(const std::vector<SourceType> &targetSources) override;
     std::vector<sptr<MicrophoneDescriptor>> GetCurrentMicrophones() const override;
