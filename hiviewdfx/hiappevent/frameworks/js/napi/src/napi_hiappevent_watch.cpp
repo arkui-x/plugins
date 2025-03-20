@@ -293,7 +293,7 @@ napi_value AddWatcher(const napi_env env, const napi_value watcher, uint64_t beg
     int errCode = NapiError::ERR_OK;
     if (!IsValidWatcher(env, watcher, errCode)) {
         HILOG_ERROR(LOG_CORE, "invalid watcher");
-        AppEventStat::WriteApiEndEventAsync("addWatcher", beginTime, AppEventStat::FAILED, errCode);
+        AppEventStat::WriteApiEndEvent("addWatcher", beginTime, AppEventStat::FAILED, errCode);
         return NapiUtil::CreateNull(env);
     }
 
@@ -320,7 +320,7 @@ napi_value AddWatcher(const napi_env env, const napi_value watcher, uint64_t beg
     int64_t observerSeq = AppEventObserverMgr::GetInstance().RegisterObserver(watcherPtr);
     if (observerSeq <= 0) {
         HILOG_ERROR(LOG_CORE, "invalid observer sequence");
-        AppEventStat::WriteApiEndEventAsync("addWatcher", beginTime, AppEventStat::FAILED, NapiError::ERR_OK);
+        AppEventStat::WriteApiEndEvent("addWatcher", beginTime, AppEventStat::FAILED, NapiError::ERR_OK);
         return NapiUtil::CreateNull(env);
     }
 
@@ -332,24 +332,24 @@ napi_value AddWatcher(const napi_env env, const napi_value watcher, uint64_t beg
     };
     napi_value holder = CreateHolder(env, holderParamNum, holderParams);
     watcherPtr->InitHolder(env, holder);
-    AppEventStat::WriteApiEndEventAsync("addWatcher", beginTime, AppEventStat::SUCCESS, NapiError::ERR_OK);
+    AppEventStat::WriteApiEndEvent("addWatcher", beginTime, AppEventStat::SUCCESS, NapiError::ERR_OK);
     return holder;
 }
 
 napi_value RemoveWatcher(const napi_env env, const napi_value watcher, uint64_t beginTime)
 {
     if (!NapiUtil::IsObject(env, watcher)) {
-        AppEventStat::WriteApiEndEventAsync("removeWatcher", beginTime, AppEventStat::FAILED, NapiError::ERR_PARAM);
+        AppEventStat::WriteApiEndEvent("removeWatcher", beginTime, AppEventStat::FAILED, NapiError::ERR_PARAM);
         NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg("watcher", "Watcher"));
         return NapiUtil::CreateUndefined(env);
     }
     int errCode = NapiError::ERR_OK;
     if (!IsValidName(env, NapiUtil::GetProperty(env, watcher, NAME_PROPERTY), errCode)) {
-        AppEventStat::WriteApiEndEventAsync("removeWatcher", beginTime, AppEventStat::FAILED, errCode);
+        AppEventStat::WriteApiEndEvent("removeWatcher", beginTime, AppEventStat::FAILED, errCode);
         return NapiUtil::CreateUndefined(env);
     }
     (void)AppEventObserverMgr::GetInstance().UnregisterObserver(GetName(env, watcher), ObserverType::WATCHER);
-    AppEventStat::WriteApiEndEventAsync("removeWatcher", beginTime, AppEventStat::SUCCESS, NapiError::ERR_OK);
+    AppEventStat::WriteApiEndEvent("removeWatcher", beginTime, AppEventStat::SUCCESS, NapiError::ERR_OK);
     return NapiUtil::CreateUndefined(env);
 }
 } // namespace NapiHiAppEventWatch

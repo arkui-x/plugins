@@ -22,7 +22,6 @@ namespace OHOS {
 namespace HiviewDFX {
 namespace NapiHiAppEventConfig {
 bool Configure(const napi_env env, const napi_value configObj, bool isThrow = false);
-bool IsDisable();
 std::string GetStorageDir();
 } // namespace NapiHiAppEventConfig
 } // namespace HiviewDFX

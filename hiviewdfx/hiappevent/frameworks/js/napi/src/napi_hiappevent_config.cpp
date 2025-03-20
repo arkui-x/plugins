@@ -57,11 +57,6 @@ bool Configure(const napi_env env, const napi_value configObj, bool isThrow)
     }
     return true;
 }
-
-bool IsDisable()
-{
-    return HiAppEventConfig::GetInstance().GetDisable();
-}
 } // namespace NapiHiAppEventConfig
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -22,7 +22,6 @@
 namespace OHOS {
 namespace HiviewDFX {
 namespace NapiHiAppEventInit {
-napi_value InitNapiClass(napi_env env, napi_value exports);
 napi_value InitNapiClassV9(napi_env env, napi_value exports);
 } // namespace NapiHiAppEventInit
 } // namespace HiviewDFX

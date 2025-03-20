@@ -36,7 +36,7 @@ uint64_t RandomNum()
 }
 } // namespace
 
-void WriteApiEndEventAsync(const std::string& apiName, uint64_t beginTime, int result, int errCode)
+void WriteApiEndEvent(const std::string& apiName, uint64_t beginTime, int result, int errCode)
 {
     auto appEventPack = std::make_shared<AppEventPack>("api_diagnostic", "api_exec_end", BEHAVIOR);
     appEventPack->AddParam("trans_id", "transId_" + std::to_string(RandomNum()));

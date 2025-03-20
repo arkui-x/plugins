@@ -113,14 +113,6 @@ void InitConstClassByName(napi_env env, napi_value exports, const std::string& n
 }
 } // namespace
 
-napi_value InitNapiClass(napi_env env, napi_value exports)
-{
-    InitConstClassByName(env, exports, EVENT_CLASS_NAME);
-    InitConstClassByName(env, exports, PARAM_CLASS_NAME);
-    InitConstClassByName(env, exports, EVENT_TYPE_CLASS_NAME);
-    return exports;
-}
-
 napi_value InitNapiClassV9(napi_env env, napi_value exports)
 {
     InitConstClassByName(env, exports, EVENT_CLASS_NAME_V9);
