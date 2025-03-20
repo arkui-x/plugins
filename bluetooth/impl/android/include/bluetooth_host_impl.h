@@ -70,7 +70,8 @@ public:
     int32_t GetMessagePermission(const std::string& address) override;
     bool SetMessagePermission(const std::string& address, int32_t permission) override;
     int32_t GetPowerMode(const std::string& address) override;
-    int32_t GetDeviceName(int32_t transport, const std::string& address, std::string& name) override;
+    int32_t GetDeviceName(int32_t transport, const std::string& address, std::string& name,
+        bool alias = false) override;
     std::string GetDeviceAlias(const std::string& address) override;
     int32_t SetDeviceAlias(const std::string& address, const std::string& aliasName) override;
     int32_t GetRemoteDeviceBatteryInfo(const std::string& address, BluetoothBatteryInfo& info) override;
@@ -121,6 +122,8 @@ public:
     int32_t UpdateCloudBluetoothDevice(std::vector<BluetoothTrustPairDevice> &cloudDevices) override;
     int32_t GetCloudBondState(const std::string &address, int32_t &cloudBondState) override;
     int32_t UpdateRefusePolicy(const int32_t pid, const int64_t prohibitedSecondsTime) override;
+    int32_t ProcessRandomDeviceIdCommand(
+        int32_t command, std::vector<std::string> &deviceIdVec, bool &isValid) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;

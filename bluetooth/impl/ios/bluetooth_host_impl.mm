@@ -260,7 +260,7 @@ int32_t BluetoothHostImpl::GetPowerMode(const std::string& address)
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::GetDeviceName(int32_t transport, const std::string& address, std::string& name)
+int32_t BluetoothHostImpl::GetDeviceName(int32_t transport, const std::string& address, std::string& name, bool alias)
 {
     NSString* strDeviceId = [NSString stringWithFormat:@"%s", address.c_str()];
     CBPeripheral* peripheral = [[BluetoothCentralManager sharedInstance] getDevice:strDeviceId];
@@ -477,6 +477,12 @@ int32_t BluetoothHostImpl::GetCloudBondState(const std::string &address, int32_t
 }
 
 int BluetoothHostImpl::UpdateRefusePolicy(const int32_t pid, const int64_t prohibitedSecondsTime)
+{
+    return 0;
+}
+
+int BluetoothHostImpl::ProcessRandomDeviceIdCommand(
+    int32_t command, std::vector<std::string>& deviceIdVec, bool &isValid)
 {
     return 0;
 }
