@@ -68,6 +68,7 @@ public class RunningLockPlugin {
      *
      * @param name name of the wakeLock
      * @param type type of the wakeLock
+     * @return The RunningLock is initialized.
      */
     public boolean init(String name, int type) {
         int wakeLockLevel;

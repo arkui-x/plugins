@@ -78,9 +78,8 @@ public class AVMetadataHelperPlugin {
     }
 
     /**
-     * MediaDataSourceImpl
-     *
      * The class is used for getting the data source.
+     *
      * @since 1
      */
     public class MediaDataSourceImpl extends MediaDataSource {
@@ -202,6 +201,7 @@ public class AVMetadataHelperPlugin {
      *
      * @param key The key of the MediaMetadataRetriever.
      * @param keyCode The key of metadata.
+     * @return The value of the metadata.
      */
     public String extractMetadata(long key, int keyCode) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -247,6 +247,7 @@ public class AVMetadataHelperPlugin {
      * Finds the optional graphic or album/cover art associated associated with the data source..
      *
      * @param key The key of the MediaMetadataRetriever.
+     * @return The embedded picture.
      */
     public byte[] getEmbeddedPicture(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
@@ -296,7 +297,6 @@ public class AVMetadataHelperPlugin {
      *
      * @param key The key of the MediaMetadataRetriever.
      * @param state The state of the MediaMetadataRetriever.
-     * @return void.
      */
     protected native void nativeOnStateChanged(long key, int state);
 }

@@ -22,7 +22,6 @@ import android.app.NotificationManager;
 
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.content.Context;
