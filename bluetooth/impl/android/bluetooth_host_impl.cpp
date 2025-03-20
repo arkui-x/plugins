@@ -255,7 +255,7 @@ int32_t BluetoothHostImpl::GetPowerMode(const std::string& address)
     return 0;
 }
 
-int32_t BluetoothHostImpl::GetDeviceName(int32_t transport, const std::string& address, std::string& name)
+int32_t BluetoothHostImpl::GetDeviceName(int32_t transport, const std::string& address, std::string& name, bool alias)
 {
     return BluetoothJni::GetDeviceName(address, name);
 }

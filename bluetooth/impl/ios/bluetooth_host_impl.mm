@@ -261,7 +261,7 @@ int32_t BluetoothHostImpl::GetPowerMode(const std::string& address)
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::GetDeviceName(int32_t transport, const std::string& address, std::string& name)
+int32_t BluetoothHostImpl::GetDeviceName(int32_t transport, const std::string& address, std::string& name, bool alias)
 {
     NSString* strDeviceId = [NSString stringWithFormat:@"%s", address.c_str()];
     CBPeripheral* peripheral = [[BluetoothCentralManager sharedInstance] getDevice:strDeviceId];
