@@ -56,6 +56,7 @@ public:
 
 private:
     std::string id_;
+    std::mutex callbackLock_;
     WeakPtr<RenderSurface> renderSurface_;
     RefPtr<PlatformViewDelegate> platformViewDelegate_;
 

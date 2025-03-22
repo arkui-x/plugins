@@ -48,6 +48,7 @@ void PlatformViewImpl::InitPlatformView()
     platformViewDelegate_->SetPlatformViewReadyCallback([weak = WeakClaim(this)]() {
         auto delegate_ = weak.Upgrade();
         CHECK_NULL_VOID(delegate_);
+        std::lock_guard<std::mutex> lock(delegate_->callbackLock_);
         auto callback = delegate_->platformViewReadyCallback_;
         CHECK_NULL_VOID(callback);
         callback();
@@ -94,18 +95,21 @@ void PlatformViewImpl::ProcessSurfaceCreate()
 void PlatformViewImpl::ProcessTextureRefresh(int32_t instanceId, int64_t textureId)
 {
     if (textureRefreshCallback_) {
+        std::lock_guard<std::mutex> lock(callbackLock_);
         textureRefreshCallback_(instanceId, textureId);
     }
 }
 
 void PlatformViewImpl::RegisterTextureEvent(TextureRefreshEvent&& textureRefreshEvent)
 {
-    textureRefreshCallback_ = textureRefreshEvent;
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    textureRefreshCallback_ = std::move(textureRefreshEvent);
 }
 
 void PlatformViewImpl::RegisterPlatformViewReadyEvent(PlatformViewReadyEvent&& platformViewReadyEvent)
 {
-    platformViewReadyCallback_ = platformViewReadyEvent;
+    std::lock_guard<std::mutex> lock(callbackLock_);
+    platformViewReadyCallback_ = std::move(platformViewReadyEvent);
 }
 
 void PlatformViewImpl::SetRenderSurface(const RefPtr<RenderSurface>& renderSurface)
