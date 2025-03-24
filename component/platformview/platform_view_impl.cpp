@@ -94,8 +94,8 @@ void PlatformViewImpl::ProcessSurfaceCreate()
 
 void PlatformViewImpl::ProcessTextureRefresh(int32_t instanceId, int64_t textureId)
 {
+    std::lock_guard<std::mutex> lock(callbackLock_);
     if (textureRefreshCallback_) {
-        std::lock_guard<std::mutex> lock(callbackLock_);
         textureRefreshCallback_(instanceId, textureId);
     }
 }
