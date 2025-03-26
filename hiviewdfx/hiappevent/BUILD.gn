@@ -32,7 +32,6 @@ template("hiviewdfx_hiappevent_static") {
       "//plugins/hiviewdfx/hiappevent/frameworks/native/libhiappevent/include",
       "//third_party/jsoncpp/include",
       "//plugins/hiviewdfx/hiappevent/frameworks/native/libhiappevent/utility/include",
-      "//plugins/hiviewdfx/hiappevent/interfaces/native/kits/include",
     ]
 
     sources = [
