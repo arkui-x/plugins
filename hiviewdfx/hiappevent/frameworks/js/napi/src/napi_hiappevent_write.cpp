@@ -18,10 +18,9 @@
 
 #include "hiappevent_base.h"
 #include "hiappevent_write.h"
+#include "hilog/log.h"
 #include "napi_error.h"
 #include "napi_util.h"
-
-using namespace OHOS::HiviewDFX;
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -55,6 +54,10 @@ napi_value BuildErrorByResult(const napi_env env, int result)
 
 void Write(const napi_env env, HiAppEventAsyncContext* asyncContext)
 {
+    if (asyncContext == nullptr) {
+        HILOG_ERROR(LOG_CORE, "asyncContext is null");
+        return;
+    }
     napi_value resource = NapiUtil::CreateString(env, "NapiHiAppEventWriter");
     napi_create_async_work(
         env, nullptr, resource,
@@ -102,6 +105,10 @@ void Write(const napi_env env, HiAppEventAsyncContext* asyncContext)
 
 void SetEventParam(const napi_env env, HiAppEventAsyncContext* asyncContext)
 {
+    if (asyncContext == nullptr) {
+        HILOG_ERROR(LOG_CORE, "asyncContext is null");
+        return;
+    }
     napi_value resource = NapiUtil::CreateString(env, "NapiHiAppEventSetEventParam");
     napi_create_async_work(
         env, nullptr, resource,

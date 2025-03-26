@@ -102,13 +102,6 @@ bool NapiHiAppEventBuilder::IsValidEventInfo(const napi_env env, const napi_valu
            IsValidEventParam(env, NapiUtil::GetProperty(env, eventInfo, PARAM_PROPERTY));
 }
 
-bool NapiHiAppEventBuilder::IsOldWriteParams(const napi_env env, const napi_value params[], size_t len)
-{
-    return IsValidEventName(env, params[0])      // 0 means the index of event name
-           && IsValidEventType(env, params[1])   // 1 means the index of event type
-           && IsValidEventParam(env, params[2]); // 2 means the index of event param
-}
-
 bool NapiHiAppEventBuilder::IsNewWriteParams(const napi_env env, const napi_value params[], size_t len)
 {
     return IsValidEventInfo(env, params[0]);
@@ -203,15 +196,6 @@ bool NapiHiAppEventBuilder::AddParams2EventPack(napi_env env, const napi_value p
     return true;
 }
 
-void NapiHiAppEventBuilder::BuildEventPack(napi_env env, const napi_value params[])
-{
-    int index = 0;
-    std::string name = NapiUtil::GetString(env, params[index++]);
-    int32_t type = NapiUtil::GetInt32(env, params[index++]);
-    appEventPack_ = std::make_shared<AppEventPack>(name, type);
-    AddParams2EventPack(env, params[index]);
-}
-
 bool NapiHiAppEventBuilder::BuildEventPack(napi_env env, const napi_value eventInfo)
 {
     std::string domain = NapiUtil::GetString(env, NapiUtil::GetProperty(env, eventInfo, DOMAIN_PROPERTY));
@@ -226,26 +210,10 @@ void NapiHiAppEventBuilder::BuildCallback(const napi_env env, const napi_value c
 {
     if (NapiUtil::IsFunction(env, callback)) {
         callback_ = NapiUtil::CreateReference(env, callback);
-    }
-}
-
-std::shared_ptr<AppEventPack> NapiHiAppEventBuilder::Build(const napi_env env, const napi_value params[], size_t len)
-{
-    if (len < 3) { // the min number of params for write is 3
-        result_ = ERROR_INVALID_PARAM_NUM_JS;
-        return nullptr;
-    }
-
-    // 1. build AppEventPack
-    if (IsOldWriteParams(env, params, len)) {
-        BuildEventPack(env, params);
     } else {
-        result_ = ERROR_INVALID_PARAM_TYPE_JS;
+        HILOG_ERROR(LOG_CORE, "callback is invalid");
+        callback_ = nullptr;
     }
-
-    // 2. build callback if any
-    BuildCallback(env, params[len - 1]); // (len - 1) means the last param
-    return appEventPack_;
 }
 
 std::shared_ptr<AppEventPack> NapiHiAppEventBuilder::BuildV9(const napi_env env, const napi_value params[], size_t len)

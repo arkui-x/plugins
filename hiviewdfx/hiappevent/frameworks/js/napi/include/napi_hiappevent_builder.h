@@ -30,7 +30,6 @@ public:
     ~NapiHiAppEventBuilder() {}
     int GetResult() const;
     napi_ref GetCallback() const;
-    std::shared_ptr<AppEventPack> Build(const napi_env env, const napi_value params[], size_t len);
     std::shared_ptr<AppEventPack> BuildV9(const napi_env env, const napi_value params[], size_t len);
 
 protected:
@@ -44,16 +43,14 @@ protected:
 private:
     bool IsValidEventType(const napi_env env, const napi_value type);
     bool IsValidEventInfo(const napi_env env, const napi_value eventInfo);
-    bool IsOldWriteParams(const napi_env env, const napi_value params[], size_t len);
     bool IsNewWriteParams(const napi_env env, const napi_value params[], size_t len);
-    void BuildEventPack(napi_env env, const napi_value params[]);
     bool BuildEventPack(napi_env env, const napi_value eventInfo);
     void BuildCallback(const napi_env env, const napi_value callback);
 
 protected:
     bool isV9_;
     int result_;
-    napi_ref callback_;
+    napi_ref callback_ = nullptr;
     std::shared_ptr<AppEventPack> appEventPack_;
 };
 } // namespace HiviewDFX

@@ -41,7 +41,7 @@ const std::string NAME_PROPERTY = "name";
 const std::string COND_PROPERTY = "triggerCondition";
 const std::string COND_PROPS[] = { "row", "size", "timeOut" };
 const std::string FILTERS_PROPERTY = "appEventFilters";
-const std::string FILTERS_DOAMIN_PROP = "domain";
+const std::string FILTERS_DOMAIN_PROP = "domain";
 const std::string FILTERS_TYPES_PROP = "eventTypes";
 const std::string FILTERS_NAMES_PROP = "names";
 const std::string TRIGGER_PROPERTY = "onTrigger";
@@ -95,14 +95,14 @@ bool IsValidCondition(const napi_env env, const napi_value cond, int& errCode)
 
 bool IsValidFilter(const napi_env env, const napi_value filter, int& errCode)
 {
-    napi_value domain = NapiUtil::GetProperty(env, filter, FILTERS_DOAMIN_PROP);
+    napi_value domain = NapiUtil::GetProperty(env, filter, FILTERS_DOMAIN_PROP);
     if (domain == nullptr) {
-        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg(FILTERS_DOAMIN_PROP));
+        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg(FILTERS_DOMAIN_PROP));
         errCode = NapiError::ERR_PARAM;
         return false;
     }
     if (!NapiUtil::IsString(env, domain)) {
-        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg(FILTERS_DOAMIN_PROP, "string"));
+        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg(FILTERS_DOMAIN_PROP, "string"));
         errCode = NapiError::ERR_PARAM;
         return false;
     }
@@ -245,7 +245,7 @@ void GetFilters(const napi_env env, const napi_value watcher, std::vector<AppEve
     size_t len = NapiUtil::GetArrayLength(env, filtersValue);
     for (size_t i = 0; i < len; i++) {
         napi_value filterValue = NapiUtil::GetElement(env, filtersValue, i);
-        std::string domain = NapiUtil::GetString(env, NapiUtil::GetProperty(env, filterValue, FILTERS_DOAMIN_PROP));
+        std::string domain = NapiUtil::GetString(env, NapiUtil::GetProperty(env, filterValue, FILTERS_DOMAIN_PROP));
         napi_value namesValue = NapiUtil::GetProperty(env, filterValue, FILTERS_NAMES_PROP);
         std::unordered_set<std::string> names;
         if (namesValue != nullptr) {
@@ -296,35 +296,30 @@ napi_value AddWatcher(const napi_env env, const napi_value watcher, uint64_t beg
         AppEventStat::WriteApiEndEvent("addWatcher", beginTime, AppEventStat::FAILED, errCode);
         return NapiUtil::CreateNull(env);
     }
-
-    // 1. build watcher object
     std::vector<AppEventFilter> filters;
     GetFilters(env, watcher, filters);
     std::string name = GetName(env, watcher);
+    if (name.empty()) {
+        HILOG_ERROR(LOG_CORE, "invalid name");
+        AppEventStat::WriteApiEndEvent("addWatcher", beginTime, AppEventStat::FAILED, NapiError::ERR_OK);
+        return NapiUtil::CreateNull(env);
+    }
     TriggerCondition cond = GetCondition(env, watcher);
     auto watcherPtr = std::make_shared<NapiAppEventWatcher>(name, filters, cond);
-
-    // 2. set trigger if any
     napi_value trigger = NapiUtil::GetProperty(env, watcher, TRIGGER_PROPERTY);
     if (trigger != nullptr) {
         watcherPtr->InitTrigger(env, trigger);
     }
-
-    // 3. set receive if any
     napi_value receiver = NapiUtil::GetProperty(env, watcher, RECEIVE_PROPERTY);
     if (receiver != nullptr) {
         watcherPtr->InitReceiver(env, receiver);
     }
-
-    // 4. add the watcher to Manager
     int64_t observerSeq = AppEventObserverMgr::GetInstance().RegisterObserver(watcherPtr);
     if (observerSeq <= 0) {
         HILOG_ERROR(LOG_CORE, "invalid observer sequence");
         AppEventStat::WriteApiEndEvent("addWatcher", beginTime, AppEventStat::FAILED, NapiError::ERR_OK);
         return NapiUtil::CreateNull(env);
     }
-
-    // 5. create holder and add holder to the watcher
     constexpr size_t holderParamNum = 2;
     napi_value holderParams[holderParamNum] = {
         NapiUtil::CreateString(env, name),

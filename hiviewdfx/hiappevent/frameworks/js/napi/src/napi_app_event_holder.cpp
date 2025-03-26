@@ -53,8 +53,10 @@ NapiAppEventHolder::NapiAppEventHolder(const std::string& name, int64_t observer
     takeRow_ = DEFAULT_ROW_NUM;
     takeSize_ = DEFAULT_SIZE;
     packageId_ = 0; // id is incremented from 0
+
     // if the seq is invalid, need to get seq by the name(for js constructor)
     if (observerSeq_ <= 0) {
+        HILOG_WARN(LOG_CORE, "get seq by name=%{public}s", name_.c_str());
         observerSeq_ = GetObserverSeqByName(name_);
     }
 }
@@ -68,11 +70,11 @@ napi_value NapiAppEventHolder::NapiConstructor(napi_env env, napi_callback_info 
 
     if (paramNum < PARAM_NUM) {
         HILOG_ERROR(LOG_CORE, "hodler failed to construct: invalid param num");
-        return thisVar;
+        return nullptr;
     }
     auto holder = new (std::nothrow) NapiAppEventHolder(NapiUtil::GetString(env, params[0]));
     if (holder == nullptr) {
-        return thisVar;
+        return nullptr;
     }
     napi_wrap(
         env, thisVar, holder,
@@ -99,28 +101,40 @@ napi_value NapiAppEventHolder::NapiExport(napi_env env, napi_value exports)
     return exports;
 }
 
-napi_value NapiAppEventHolder::NapiSetRow(napi_env env, napi_callback_info info)
+bool GetNumberParam(
+    napi_env env, napi_callback_info info, const char* name, int& num, NapiAppEventHolder*& holder)
 {
     size_t paramNum = PARAM_NUM;
     napi_value params[PARAM_NUM] = { 0 };
     napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &paramNum, params, &thisVar, nullptr));
+    if (napi_get_cb_info(env, info, &paramNum, params, &thisVar, nullptr) != napi_ok) {
+        return false;
+    }
     if (paramNum < PARAM_NUM) {
-        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg("size"));
-        return nullptr;
+        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg(name));
+        return false;
     }
     if (!NapiUtil::IsNumber(env, params[0])) {
-        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg("size", "number"));
+        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg(name, "number"));
+        return false;
+    }
+    num = NapiUtil::GetInt32(env, params[0]);
+    if (napi_unwrap(env, thisVar, (void**)&holder) != napi_ok || holder == nullptr) {
+        return false;
+    }
+    return true;
+}
+
+napi_value NapiAppEventHolder::NapiSetRow(napi_env env, napi_callback_info info)
+{
+    int num = 0;
+    NapiAppEventHolder* holder = nullptr;
+    if (!GetNumberParam(env, info, "size", num, holder)) {
         return nullptr;
     }
-    int num = NapiUtil::GetInt32(env, params[0]);
     if (num <= 0) {
         NapiUtil::ThrowError(env, NapiError::ERR_INVALID_SIZE, "Invalid size value.");
         return NapiUtil::CreateUndefined(env);
-    }
-    NapiAppEventHolder* holder = nullptr;
-    if (napi_unwrap(env, thisVar, (void**)&holder) != napi_ok || holder == nullptr) {
-        return nullptr;
     }
     holder->SetRow(num);
     return NapiUtil::CreateUndefined(env);
@@ -128,26 +142,14 @@ napi_value NapiAppEventHolder::NapiSetRow(napi_env env, napi_callback_info info)
 
 napi_value NapiAppEventHolder::NapiSetSize(napi_env env, napi_callback_info info)
 {
-    size_t paramNum = PARAM_NUM;
-    napi_value params[PARAM_NUM] = { 0 };
-    napi_value thisVar = nullptr;
-    NAPI_CALL(env, napi_get_cb_info(env, info, &paramNum, params, &thisVar, nullptr));
-    if (paramNum < PARAM_NUM) {
-        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg("size"));
+    int num = 0;
+    NapiAppEventHolder* holder = nullptr;
+    if (!GetNumberParam(env, info, "size", num, holder)) {
         return nullptr;
     }
-    if (!NapiUtil::IsNumber(env, params[0])) {
-        NapiUtil::ThrowError(env, NapiError::ERR_PARAM, NapiUtil::CreateErrMsg("size", "number"));
-        return nullptr;
-    }
-    int num = NapiUtil::GetInt32(env, params[0]);
     if (num < 0) {
         NapiUtil::ThrowError(env, NapiError::ERR_INVALID_SIZE, "Invalid size value.");
         return NapiUtil::CreateUndefined(env);
-    }
-    NapiAppEventHolder* holder = nullptr;
-    if (napi_unwrap(env, thisVar, (void**)&holder) != napi_ok || holder == nullptr) {
-        return nullptr;
     }
     holder->SetSize(num);
     return NapiUtil::CreateUndefined(env);
