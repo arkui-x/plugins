@@ -36,7 +36,6 @@ ohos_source_set("libcertificate_framework_common_static") {
   sources = [
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_blob.c",
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_check.c",
-    "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_log.c",
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_memory.c",
     "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_object_base.c",
     "//base/security/certificate_framework/frameworks/common/v1.0/src/utils.c",
