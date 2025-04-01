@@ -91,6 +91,7 @@ common_plugin_libs = [
   "arkts/collections",
   "arkts/utils",
   "arkts/math/decimal",
+  "hiviewdfx/hiappevent",
 ]
 
 template("plugin_lib") {
