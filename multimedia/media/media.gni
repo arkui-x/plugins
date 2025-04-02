@@ -104,6 +104,7 @@ media_source = [
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/avplayer/media_data_source_callback.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/avplayer/avplayer_callback.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/avplayer/avplayer_napi.cpp",
+  "$PLAYER_FRAMEWORK_DIR/frameworks/js/utils/scoped_file_descriptor.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/common/js_common_utils.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/avrecorder/avrecorder_callback.cpp",
   "$PLAYER_FRAMEWORK_DIR/frameworks/js/avrecorder/avrecorder_napi.cpp",
