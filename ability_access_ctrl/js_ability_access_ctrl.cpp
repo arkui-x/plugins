@@ -36,7 +36,8 @@ static std::unique_ptr<AbilityAccessCtrl> g_acPlugin = nullptr;
 enum class JsReturnCode {
     SUCCESS = 0,
     PARAM_ILLEGAL = 401,
-    INNER_ERROR = 402,
+    PARAM_INVALID = 12100001,
+    INNER_ERROR = 12100009
 };
 
 enum class InputParams {
@@ -63,7 +64,7 @@ napi_value GetNapiNull(napi_env env)
 }
 
 static const std::map<uint32_t, std::string> g_errorStringMap = {
-    {static_cast<uint32_t>(JsReturnCode::PARAM_ILLEGAL), "The parameter is illegal."},
+    {static_cast<uint32_t>(JsReturnCode::PARAM_ILLEGAL), "The parameter is invalid."},
     {static_cast<uint32_t>(JsReturnCode::INNER_ERROR), "Common inner error."},
 };
 
@@ -164,7 +165,7 @@ static bool ParseInputCheckPermission(
         return false;
     }
     if (!IsTokenIDValid(asyncContext.tokenId) || !IsPermissionNameValid(asyncContext.permission)) {
-        asyncContext.jsCode = static_cast<int32_t>(JsReturnCode::PARAM_ILLEGAL); // -1: faile
+        asyncContext.jsCode = static_cast<int32_t>(JsReturnCode::PARAM_INVALID); // -1: faile
     }
     return true;
 }
