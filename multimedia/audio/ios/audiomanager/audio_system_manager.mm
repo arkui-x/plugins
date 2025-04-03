@@ -462,13 +462,13 @@ int32_t AudioSystemManager::SetAppVolume(int32_t appUid, int32_t volume, int32_t
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::GetAppVolume(int32_t appUid) const
+int32_t AudioSystemManager::GetAppVolume(int32_t appUid, int32_t &volumeLevel) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::GetSelfAppVolume() const
+int32_t AudioSystemManager::GetSelfAppVolume(int32_t &volumeLevel) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -508,7 +508,7 @@ int32_t AudioSystemManager::UnsetAppVolumeCallbackForUid(
     return ERR_NOT_SUPPORTED;
 }
 
-bool AudioSystemManager::IsAppVolumeMute(int32_t appUid, bool owned)
+int32_t AudioSystemManager::IsAppVolumeMute(const int32_t appUid, const bool owned, bool &isMute)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;

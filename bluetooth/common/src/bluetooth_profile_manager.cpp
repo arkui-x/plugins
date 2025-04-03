@@ -164,5 +164,10 @@ bool BluetoothProfileManager::IsBluetoothServiceOn()
 {
     return isBluetoothServiceOn_.load();
 }
+
+void BluetoothProfileManager::Close()
+{
+}
+
 } // namespace Bluetooth
 } // namespace OHOS
