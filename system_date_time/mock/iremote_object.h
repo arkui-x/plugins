@@ -18,8 +18,8 @@
 
 #include <codecvt>
 #include <locale>
-#include <string>
 #include <memory>
+#include <string>
 
 #include "refbase.h"
 
