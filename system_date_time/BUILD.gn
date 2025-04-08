@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/config/components/idl_tool/idl.gni")
 import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
-import("//build/config/components/idl_tool/idl.gni")
 
 time_root_path = "//base/time/time_service"
 time_jsnapi_path = "${time_root_path}/framework/js/napi"
@@ -44,7 +44,7 @@ template("plugin_system_date_time_static") {
   ohos_source_set(target_name) {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
-    configs = ["//base/time/time_service/services:time_service_gen_config"]
+    configs = [ "//base/time/time_service/services:time_service_gen_config" ]
 
     include_dirs = [
       "//base/time/time_service/utils/native/include",
@@ -60,9 +60,9 @@ template("plugin_system_date_time_static") {
     deps = [
       "${c_utils_root}/base:utilsbase",
       "${hilog_root}/interfaces/native/innerkits:libhilog_${target_os}",
+      "//base/time/time_service/services:timeservice_interface",
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
       "//plugins/libs/napi:napi_${target_os}",
-      "//base/time/time_service/services:timeservice_interface",
     ]
 
     sources = [
