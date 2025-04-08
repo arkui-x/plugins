@@ -18,11 +18,38 @@
 
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "iremote_object.h"
 
 namespace OHOS {
+using ErrCode = int;
+constexpr int MIN_TRANSACTION_ID = 0x1;
+
+class Allocator {
+public:
+    virtual ~Allocator() = default;
+};
+
+class Parcel {
+public:
+    Parcel();
+    explicit Parcel(Allocator *allocator);
+
+    virtual ~Parcel();
+};
+
+class Parcelable : public virtual RefBase {
+public:
+    Parcelable();
+    explicit Parcelable(bool asRemote);
+
+    virtual ~Parcelable() = default;
+
+    virtual bool Marshalling(Parcel &parcel) const = 0;
+};
+
 template<typename T>
 class BrokerCreator {
 public:
@@ -33,7 +60,7 @@ public:
 class IRemoteBroker : public virtual RefBase {
 public:
     IRemoteBroker() = default;
-    virtual ~IRemoteBroker() override = default;
+    virtual ~IRemoteBroker() = default;
 };
 
 #define DECLARE_INTERFACE_DESCRIPTOR(DESCRIPTOR)                   \

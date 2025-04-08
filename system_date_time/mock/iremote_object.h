@@ -19,10 +19,13 @@
 #include <codecvt>
 #include <locale>
 #include <string>
+#include <memory>
+
+#include "refbase.h"
 
 namespace OHOS {
 
-class IRemoteObject {
+class IRemoteObject : public virtual RefBase {
 public:
 
     class DeathRecipient {
