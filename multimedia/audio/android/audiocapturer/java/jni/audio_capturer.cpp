@@ -214,6 +214,11 @@ bool AudioCapturerPrivate::GetAudioTime(Timestamp& timestamp, Timestamp::Timesta
     return capturerImpl_->GetAudioTime(timestamp, base);
 }
 
+bool AudioCapturerPrivate::GetFirstPkgTimeStampInfo(int64_t &firstTs) const
+{
+    return false;
+}
+
 bool AudioCapturerPrivate::Pause() const
 {
     return true;
@@ -357,6 +362,11 @@ int32_t AudioCapturerPrivate::RegisterAudioPolicyServerDiedCb(const int32_t clie
 
 // diffrence from GetAudioPosition only when set speed
 int32_t AudioCapturerPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const
+{
+    return 0;
+}
+
+int32_t AudioCapturerPrivate::SetInputDevice(DeviceType deviceType) const
 {
     return 0;
 }

@@ -47,6 +47,7 @@ public:
     int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) override;
     CapturerState GetStatus() const override;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const override;
+    bool GetFirstPkgTimeStampInfo(int64_t &firstTs) const override;
     bool Pause() const override;
     bool Stop() const override;
     bool Flush() const override;
@@ -91,6 +92,7 @@ public:
         return emptyVector;
     }
     uint32_t GetOverflowCount() const override { return 0; }
+    int32_t SetInputDevice(DeviceType deviceType) const override;
     int32_t SetAudioSourceConcurrency(const std::vector<SourceType> &targetSources) override { return 0; }
 
 private:

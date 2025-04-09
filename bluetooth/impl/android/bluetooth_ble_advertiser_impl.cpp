@@ -67,7 +67,8 @@ int BluetoothBleAdvertiserImpl::StopAdvertising(int32_t advHandle)
     return ret;
 }
 
-int32_t BluetoothBleAdvertiserImpl::GetAdvertiserHandle(int32_t& advHandle)
+int32_t BluetoothBleAdvertiserImpl::GetAdvertiserHandle(int32_t& advHandle,
+    const sptr<IBluetoothBleAdvertiseCallback> &callback)
 {
     std::lock_guard<std::mutex> lock(advertiserMutex_);
     for (uint8_t handle = 0; handle < MAX_ADV_HANDLE_NUM; ++handle) {

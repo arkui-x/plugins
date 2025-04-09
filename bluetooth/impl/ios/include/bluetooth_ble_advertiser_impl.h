@@ -40,7 +40,7 @@ public:
     void Close(int32_t advHandle) override;
     void SetAdvertisingData(const BluetoothBleAdvertiserData& advData, const BluetoothBleAdvertiserData& scanResponse,
         int32_t advHandle) override;
-    int32_t GetAdvertiserHandle(int32_t& advHandle) override;
+    int32_t GetAdvertiserHandle(int32_t& advHandle, const sptr<IBluetoothBleAdvertiseCallback> &callback) override;
 
 private:
     std::mutex advertiserMutex_;
