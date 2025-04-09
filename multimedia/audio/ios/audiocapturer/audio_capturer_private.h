@@ -36,6 +36,7 @@ public:
     int32_t GetStreamInfo(AudioStreamInfo &streamInfo) const override;
     CapturerState GetStatus() const override;
     bool GetAudioTime(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
+    bool GetFirstPkgTimeStampInfo(int64_t &firstTs) const override;
     bool Start() override;
     bool Stop() const override;
     bool Release() override;
@@ -69,6 +70,7 @@ public:
     int32_t GetBufQueueState(BufferQueueState& bufState) const override;
     int32_t GetParams(AudioCapturerParams& params) const override;
     uint32_t GetOverflowCount() const override;
+    int32_t SetInputDevice(DeviceType deviceType) const override;
     int32_t SetAudioSourceConcurrency(const std::vector<SourceType> &targetSources) override;
     std::vector<sptr<MicrophoneDescriptor>> GetCurrentMicrophones() const override;
     int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) override;
