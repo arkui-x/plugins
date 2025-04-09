@@ -195,6 +195,7 @@ template("plugin_i18n_static") {
     sources += [
       "${PROTOBUF_DIR}/src/google/protobuf/any_lite.cc",
       "${PROTOBUF_DIR}/src/google/protobuf/arena.cc",
+      "${PROTOBUF_DIR}/src/google/protobuf/arenastring.cc",
       "${PROTOBUF_DIR}/src/google/protobuf/extension_set.cc",
       "${PROTOBUF_DIR}/src/google/protobuf/generated_enum_util.cc",
       "${PROTOBUF_DIR}/src/google/protobuf/generated_message_table_driven_lite.cc",
@@ -243,8 +244,13 @@ template("plugin_i18n_static") {
 
     if (platform == "android") {
       deps += [ "android/java:i18n_plugin_android_jni" ]
+      libs = [
+        "android",
+        "log",
+      ]
     } else if (platform == "ios") {
       deps += [ "ios:i18n_plugin_ios" ]
+      cflags_cc += [ "-faligned-allocation" ]
     }
 
     subsystem_name = "plugins"
