@@ -125,7 +125,8 @@ int BluetoothBleAdvertiserImpl::StopAdvertising(int32_t advHandle)
 
 void BluetoothBleAdvertiserImpl::Close(int32_t advHandle) {}
 
-int32_t BluetoothBleAdvertiserImpl::GetAdvertiserHandle(int32_t& advHandle)
+int32_t BluetoothBleAdvertiserImpl::GetAdvertiserHandle(int32_t& advHandle,
+    const sptr<IBluetoothBleAdvertiseCallback> &callback)
 {
     advHandle = [[BluetoothPeripheralManager sharedInstance] getAppId];
     return BT_NO_ERROR;
