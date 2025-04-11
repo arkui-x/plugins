@@ -23,12 +23,6 @@
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
-typedef enum {
-    JS_OK = 0,
-    JS_ERROR_PARAM_INVALID = 12100001,
-    JS_ERROR_INNER = 12100009
-} JsErrorCode;
-
 typedef enum TypePermissionState {
     PERMISSION_DENIED = -1,
     PERMISSION_GRANTED = 0,
