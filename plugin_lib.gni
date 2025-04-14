@@ -92,6 +92,7 @@ common_plugin_libs = [
   "arkts/utils",
   "arkts/math/decimal",
   "hiviewdfx/hiappevent",
+  "arkui/advanced/swiperefresher",
 ]
 
 template("plugin_lib") {
