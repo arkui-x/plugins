@@ -198,7 +198,7 @@ bool WebCookieManagerJni::ExistCookie(bool incognito)
     if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.existCookie)) {
         return false;
     }
-    bool isCookie = env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.existCookie, incognito);
+    jboolean isCookie = env->CallBooleanMethod(g_webWebviewClass.globalRef, g_webWebviewClass.existCookie, incognito);
     if (env->ExceptionCheck()) {
         LOGE("WebCookieManagerJni JNI: call ExistCookie has exception");
         env->ExceptionDescribe();
