@@ -124,6 +124,6 @@ void PluginUtilsInner::JSRegisterGrantResult(GrantResult grantResult)
 
 int32_t PluginUtilsInner::GetInstanceId()
 {
-    return OHOS::Ace::Container::CurrentId();
+    return OHOS::Ace::Container::CurrentIdSafelyWithCheck();
 }
 } // namespace OHOS::Plugin
