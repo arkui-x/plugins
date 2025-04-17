@@ -47,5 +47,16 @@ void ARKUI_X_Plugin_RunAsyncTask(ARKUI_X_Plugin_Task task, ARKUI_X_Plugin_Thread
         } else {
             LOGE("The mode of thread is not support in the ARKUI_X_Plugin_RunAsyncTask method!");
         }
+    } else {
+        auto eventRunner = OHOS::AppExecFwk::EventRunner::Current();
+        if (!eventRunner) {
+            LOGE("RunTaskOnPlatform eventRunner is nullptr");
+            return;
+        }
+        if (eventRunner->IsCurrentRunnerThread()) {
+            task();
+        } else {
+            OHOS::Plugin::PluginUtilsInner::RunTaskOnEvent(task, eventRunner);
+        }
     }
 }
