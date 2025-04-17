@@ -29,6 +29,8 @@ template("plugin_bridge_static") {
       "//plugins/bridge/interfaces/kits/napi/bridge_module/include",
       "//plugins/bridge/interfaces/kits/native/include",
       "//third_party/json/include",
+
+      # "//foundation/arkui/ace_engine/interfaces/inner_api/ace",
     ]
 
     if (platform == "android") {
