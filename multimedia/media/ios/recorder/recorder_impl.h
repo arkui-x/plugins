@@ -74,6 +74,7 @@ public:
     int32_t GetMaxAmplitude() override;
     int32_t IsWatermarkSupported(bool &isWatermarkSupported) override;
     int32_t SetWatermark(std::shared_ptr<AVBuffer> &waterMarkBuffer) override;
+    int32_t SetUserMeta(const std::shared_ptr<Meta> &userMeta) override;
 
 private:
     RecorderAdapter *recorderAdapter_ = nil;

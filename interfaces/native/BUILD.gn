@@ -35,6 +35,8 @@ config("plugin_util_config") {
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
     "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/error",
     "//foundation/arkui/ace_engine/interfaces/inner_api/ace_kit/include",
+
+    # "//foundation/arkui/ace_engine/interfaces/inner_api/ace",
     "//plugins/interfaces/native",
   ]
 }

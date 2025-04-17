@@ -44,6 +44,8 @@ http_include = [
   "//third_party/curl/include",
   "//third_party/bounds_checking_function/include",
   "$NETSTACK_NAPI_ROOT/http/http_exec/include",
+
+  # "//foundation/arkui/ace_engine/interfaces/inner_api/ace",
 ]
 
 http_sources = [

@@ -284,5 +284,10 @@ int32_t RecorderImpl::SetWatermark(std::shared_ptr<AVBuffer> &waterMarkBuffer)
 {
     return MSERR_OK;
 }
+
+int32_t RecorderImpl::SetUserMeta(const std::shared_ptr<Meta> &userMeta)
+{
+    return MSERR_OK;
+}
 } // namespace Media
 } // namespace OHOS
