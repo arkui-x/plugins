@@ -18,6 +18,14 @@ class PlatformView extends JSViewAbstract {
     static create(value) {
         __PlatformView__.create(value);
     }
+    
+    static onAppear(value) {
+        __Common__.onAppear(value);
+    }
+
+    static onDisAppear(value) {
+        __Common__.onDisAppear(value);
+    }
 }
 
 export default PlatformView;
