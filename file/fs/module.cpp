@@ -22,7 +22,7 @@
 #include "filemgmt_libhilog.h"
 #include "prop_n_exporter.h"
 #include "stat_n_exporter.h"
-
+#include "stream_n_exporter.h"
 using namespace std;
 
 namespace OHOS {
@@ -31,11 +31,12 @@ namespace ModuleFileIO {
 static napi_value Export(napi_env env, napi_value exports)
 {
     InitOpenMode(env, exports);
+    InitWhenceType(env, exports);
     std::vector<unique_ptr<NExporter>> products;
     products.emplace_back(make_unique<PropNExporter>(env, exports));
     products.emplace_back(make_unique<FileNExporter>(env, exports));
     products.emplace_back(make_unique<StatNExporter>(env, exports));
-
+    products.emplace_back(make_unique<StreamNExporter>(env, exports));
     for (auto &&product : products) {
         if (!product->Export()) {
             HILOGE("INNER BUG. Failed to export class %{public}s for module fileio", product->GetClassName().c_str());
