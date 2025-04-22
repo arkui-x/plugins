@@ -19,7 +19,6 @@
 #include "character.h"
 #include "error_util.h"
 #include "i18n_calendar.h"
-#include "icu_data.h"
 #include "log.h"
 #include "locale_info.h"
 #include "locale_matcher.h"
@@ -3409,7 +3408,6 @@ extern "C" __attribute__((constructor)) void I18nRegister()
     I18NPluginJniRegister();
 #endif
     napi_module_register(&g_i18nModule);
-    InitIcuData();
 }
 } // namespace I18n
 } // namespace Global
