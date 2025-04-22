@@ -1,0 +1,86 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/filemanagement/file_api/file_api.gni")
+
+fs_dirs = "//foundation/filemanagement/file_api/interfaces/kits/js"
+libhilog_dirs = "//foundation/filemanagement/file_api/utils/filemgmt_libhilog"
+libn_dirs = "//foundation/filemanagement/file_api/utils/filemgmt_libn"
+utils_dirs = "//foundation/filemanagement/file_api/utils"
+libn_src = [
+  "$libn_dirs/src/n_async/n_async_work_callback.cpp",
+  "$libn_dirs/src/n_async/n_async_work_promise.cpp",
+  "$libn_dirs/src/n_async/n_ref.cpp",
+  "$libn_dirs/src/n_class.cpp",
+  "$libn_dirs/src/n_error.cpp",
+  "$libn_dirs/src/n_func_arg.cpp",
+  "$libn_dirs/src/n_val.cpp",
+]
+
+template("plugin_statvfs_static") {
+  forward_variables_from(invoker, "*")
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    include_dirs = [
+      "$fs_dirs/src/mod_statvfs",
+      "$libn_dirs/include",
+      "$libn_dirs/include/n_async",
+      "$libhilog_dirs",
+      "$utils_dirs/common/include",
+    ]
+
+    sources = libn_src
+    sources += [
+      "$fs_dirs/src/mod_statvfs/statvfs_n_exporter.cpp",
+      "$fs_dirs/src/mod_statvfs/statvfs_napi.cpp",
+    ]
+
+    deps = [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+      "//plugins/interfaces/native:plugin_log",
+      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/uv:uv_${target_os}",
+      "//third_party/openssl:libcrypto_shared",
+    ]
+
+    use_exceptions = true
+
+    subsystem_name = "plugins"
+    part_name = "file_statvfs"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_statvfs_static("file_statvfs_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
