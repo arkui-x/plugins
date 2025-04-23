@@ -53,6 +53,8 @@
 #include "xattr.h"
 #include "movedir.h"
 #include "copydir.h"
+#include "create_randomaccessfile.h"
+#include "class_randomaccessfile/randomaccessfile_n_exporter.h"
 
 namespace OHOS {
 namespace FileManagement {
@@ -724,6 +726,7 @@ bool PropNExporter::ExportSync()
             NVal::DeclareNapiFunction("symlinkSync", Symlink::Sync),
             NVal::DeclareNapiFunction("moveDirSync", MoveDir::Sync),
             NVal::DeclareNapiFunction("copyDirSync", CopyDir::Sync),
+            NVal::DeclareNapiFunction("createRandomAccessFileSync", CreateRandomAccessFile::Sync),
         });
 }
 
@@ -756,6 +759,7 @@ bool PropNExporter::ExportAsync()
             NVal::DeclareNapiFunction("symlink", Symlink::Async),
             NVal::DeclareNapiFunction("moveDir", MoveDir::Async),
             NVal::DeclareNapiFunction("copyDir", CopyDir::Async),
+            NVal::DeclareNapiFunction("createRandomAccessFile", CreateRandomAccessFile::Async),
         });
 }
 
