@@ -253,17 +253,12 @@ int32_t TimeServiceClient::GetThreadTimeNs(int64_t& time)
     return 0;
 }
 
-bool TimeServiceClient::ProxyTimer(int32_t uid, bool isProxy, bool needRetrigger)
-{
-    return true;
-}
-
 bool TimeServiceClient::ProxyTimer(int32_t uid, std::set<int> pidList, bool isProxy, bool needRetrigger)
 {
     return true;
 }
 
-int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval)
+int32_t TimeServiceClient::AdjustTimer(bool isAdjust, uint32_t interval, uint32_t delta)
 {
     return 0;
 }
