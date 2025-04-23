@@ -344,8 +344,6 @@ NSString* PercentEscapedStringFromString(NSString* string) {
             [mutablePairs addObject:[pair URLEncodedStringValue]];
         }
         query = [mutablePairs componentsJoinedByString:@"&"];
-    } else {
-        return;
     }
 
     NSSet<NSString*>* methodSet = [NSSet setWithObjects:@"GET", @"HEAD", @"DELETE", nil];
@@ -359,9 +357,13 @@ NSString* PercentEscapedStringFromString(NSString* string) {
         NSString * contentType = [self.request valueForHTTPHeaderField:@"Content-Type"];
         //default application/json
         if (contentType.length == 0) {
+            contentType = @"application/json";
             [self.request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
         }
         NSData * bodyData = queryDataFromParameters(contentType, query, parameters);
+        if (!bodyData && [self.requestParam.bodyParam isKindOfClass:[NSString class]]) {
+            bodyData = [self.requestParam.bodyParam dataUsingEncoding:NSUTF8StringEncoding];
+        }
         if (bodyData) {
             [self.request setHTTPBody:bodyData];
         }
@@ -372,22 +374,25 @@ NSData * queryDataFromParameters(NSString* contentType, NSString* query,NSDictio
 {
     NSData *bodyData = nil;
     if ([contentType isEqualToString:@"application/x-plist"]) {
-        NSError *error = nil;
-        bodyData = [NSPropertyListSerialization dataWithPropertyList:parameters
-            format:NSPropertyListXMLFormat_v1_0 options:0 error:&error];
-        if (error) {
-            NSLog(@"JSONSerialization fail：%@", error.localizedDescription);
+        if (parameters) {
+            NSError *error = nil;
+            bodyData = [NSPropertyListSerialization dataWithPropertyList:parameters
+                            format:NSPropertyListXMLFormat_v1_0 options:0 error:&error];
+            if (error) {
+                NSLog(@"JSONSerialization fail：%@", error.localizedDescription);
+            }
         }
     } else if ([contentType isEqualToString:@"application/x-www-form-urlencoded"]) {
-        if (!query) {
-            query = @"";
+        if (query) {
+            bodyData = [query dataUsingEncoding:NSUTF8StringEncoding];
         }
-        bodyData = [query dataUsingEncoding:NSUTF8StringEncoding];
     }else {
-        NSError *error = nil;
-        bodyData = [NSJSONSerialization dataWithJSONObject:parameters options:0 error:&error];
-        if (error) {
-            NSLog(@"JSONSerialization fail：%@", error.localizedDescription);
+        if (parameters) {
+            NSError *error = nil;
+            bodyData = [NSJSONSerialization dataWithJSONObject:parameters options:0 error:&error];
+            if (error) {
+                NSLog(@"JSONSerialization fail：%@", error.localizedDescription);
+            }
         }
     }
     return bodyData;
