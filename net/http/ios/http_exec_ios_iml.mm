@@ -58,8 +58,6 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
     requestParam.returnDataType = (NSInteger)requestOptions.GetHttpDataType();
     const char* body = requestOptions.GetBody().c_str();
     requestParam.bodyParam = [NSString stringWithCString:body encoding:NSUTF8StringEncoding];
-    NSString *nowString = [NSString stringWithCString:body encoding:NSUTF8StringEncoding];
-    NSLog(@"yanTestNow HttpExecIosIml::SendRequest in bodyParam:%@",nowString);
     requestParam.context = userData;
 
     NSMutableDictionary* headerDic = [NSMutableDictionary dictionary];
