@@ -18,7 +18,6 @@
 #include <vector>
 #include <set>
 
-#include "icu_data.h"
 #include "log.h"
 #include "node_api.h"
 #include "plugin_utils.h"
@@ -1854,7 +1853,6 @@ extern "C" __attribute__((constructor)) void INTLPluginRegister()
     INTLPluginJniRegister();
 #endif
     napi_module_register(&g_intlModule);
-    InitIcuData();
 }
 } // namespace I18n
 } // namespace Global
