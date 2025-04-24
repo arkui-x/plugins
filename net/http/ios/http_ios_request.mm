@@ -327,14 +327,11 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 - (void)serializingQueryParams
 {
     if (!self.requestParam.bodyParam) {
-        NSLog(@"yanTestNow serializingQueryParams in bodyParam is null");
-        // self.requestParam.bodyParam = @"yanTestNow data self in";
         return;
-    } 
+    }
 
     NSDictionary* parameters = nil;
     if ([self.requestParam.bodyParam isKindOfClass:[NSDictionary class]]) {
-         NSLog(@"yanTestNow serializingQueryParams in NSDictionary type");
         parameters = self.requestParam.bodyParam;
     } else {
         parameters = [self convertDictionaryWithJSONString:self.requestParam.bodyParam];
@@ -347,51 +344,36 @@ NSString* PercentEscapedStringFromString(NSString* string) {
             [mutablePairs addObject:[pair URLEncodedStringValue]];
         }
         query = [mutablePairs componentsJoinedByString:@"&"];
-    } 
-    // else {
-    //     NSLog(@"yanTestNow serializingQueryParams in query is null");
-    //     // query = self.requestParam.bodyParam;
-    //     // return;
-    // }
+    }
 
-    NSLog(@"yanTestNow serializingQueryParams in query is %@",query);
     NSSet<NSString*>* methodSet = [NSSet setWithObjects:@"GET", @"HEAD", @"DELETE", nil];
     if ([methodSet containsObject:[self.requestParam.method uppercaseString]]) {
-        NSLog(@"yanTestNow serializingQueryParams in methodSet is 1");
         if (query && query.length > 0) {
             NSString* absoluteString = [self.request.URL absoluteString];
             NSString* string = [absoluteString stringByAppendingFormat:self.request.URL.query ?@"&%@":@"?%@",query];
             self.request.URL = [NSURL URLWithString:string];
         }
     } else {
-        NSLog(@"yanTestNow serializingQueryParams in methodSet is 2");
         NSString * contentType = [self.request valueForHTTPHeaderField:@"Content-Type"];
         //default application/json
-        NSLog(@"yanTestNow serializingQueryParams in contentType is %@", contentType);
         if (contentType.length == 0) {
             contentType = @"application/json";
             [self.request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
         }
         NSData * bodyData = queryDataFromParameters(contentType, query, parameters);
         if (!bodyData && [self.requestParam.bodyParam isKindOfClass:[NSString class]]) {
-            NSLog(@"yanTestNow body is nil trans to data");
-        }
-        if (!bodyData && [self.requestParam.bodyParam isKindOfClass:[NSString class]]) {
             bodyData = [self.requestParam.bodyParam dataUsingEncoding:NSUTF8StringEncoding];
         }
         if (bodyData) {
-            NSString *nowDataString = [[NSString alloc] initWithData:bodyData encoding:NSUTF8StringEncoding];
-            NSLog(@"yanTestNow serializingQueryParams in setHttpBody:%@",nowDataString);
             [self.request setHTTPBody:bodyData];
         }
     }
 }
 
-NSData * queryDataFromParameters(NSString* contentType, NSString* query, NSDictionary* parameters)
+NSData * queryDataFromParameters(NSString* contentType, NSString* query,NSDictionary* parameters)
 {
     NSData *bodyData = nil;
     if ([contentType isEqualToString:@"application/x-plist"]) {
-        NSLog(@"yanTestNow queryDataFromParameters in application/x-plist in");
         if (parameters) {
             NSError *error = nil;
             bodyData = [NSPropertyListSerialization dataWithPropertyList:parameters
@@ -401,12 +383,10 @@ NSData * queryDataFromParameters(NSString* contentType, NSString* query, NSDicti
             }
         }
     } else if ([contentType isEqualToString:@"application/x-www-form-urlencoded"]) {
-        NSLog(@"yanTestNow queryDataFromParameters in x-www-form-urlencoded in");
         if (query) {
             bodyData = [query dataUsingEncoding:NSUTF8StringEncoding];
         }
     }else {
-        NSLog(@"yanTestNow queryDataFromParameters in else in");
         if (parameters) {
             NSError *error = nil;
             bodyData = [NSJSONSerialization dataWithJSONObject:parameters options:0 error:&error];
