@@ -100,6 +100,12 @@ Str* CutFileName(const char* path, size_t size);
 
 void StrFree(Str* str);
 
+std::string GetParentDirectory(const std::string& path);
+
+bool FileIsExist(const char* filePath);
+
+bool RemoveFile(const char* filePath);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

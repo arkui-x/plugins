@@ -49,12 +49,17 @@ template("plugin_fs_static") {
       "$plugin_fs_dirs/common/",
       "$plugin_fs_dirs/src/",
       "$plugin_fs_dirs/src/class_readeriterator",
+      "$plugin_fs_dirs/src/class_atomicFile",
       "$utils_dirs/common/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "//third_party/libuv/include",
       "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
       "//commonlibrary/c_utils/base/include",
     ]
+
+    if (target_os != "ios") {
+      include_dirs += [ "$fs_dirs/src/mod_fs/class_watcher", ]
+    }
 
     sources = libn_src
     sources += [
@@ -65,6 +70,7 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/properties/create_stream.cpp",
       "$fs_dirs/src/mod_fs/properties/create_streamrw.cpp",
       "$fs_dirs/src/mod_fs/properties/fdatasync.cpp",
+      "$fs_dirs/src/mod_fs/properties/fdopen_stream.cpp",
       "$fs_dirs/src/mod_fs/properties/fsync.cpp",
       "$fs_dirs/src/mod_fs/properties/listfile.cpp",
       "$fs_dirs/src/mod_fs/properties/lstat.cpp",
@@ -78,6 +84,7 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/class_randomaccessfile/randomaccessfile_n_exporter.cpp",
       "$plugin_fs_dirs/common/fd_guard.cpp",
       "$plugin_fs_dirs/module.cpp",
+      "$plugin_fs_dirs/src/class_atomicFile/atomicfile_n_exporter.cpp",
       "$plugin_fs_dirs/src/copy_file.cpp",
       "$plugin_fs_dirs/src/file_n_exporter.cpp",
       "$plugin_fs_dirs/src/lseek.cpp",
@@ -94,6 +101,14 @@ template("plugin_fs_static") {
       "$plugin_fs_dirs/src/class_readeriterator/readeriterator_n_exporter.cpp",
       "$plugin_fs_dirs/src/read_lines.cpp",
     ]
+
+    if (target_os != "ios") {
+      sources += [
+        "$fs_dirs/src/mod_fs/class_watcher/watcher_entity.cpp",
+        "$fs_dirs/src/mod_fs/class_watcher/watcher_n_exporter.cpp",
+        "$fs_dirs/src/mod_fs/properties/watcher.cpp",
+      ]
+    }
 
     deps = [
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
