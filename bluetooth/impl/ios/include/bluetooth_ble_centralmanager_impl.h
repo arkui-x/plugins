@@ -40,7 +40,7 @@ public:
     void DeregisterBleCentralManagerCallback(
         int32_t scannerId, const sptr<IBluetoothBleCentralManagerCallback>& callback) override;
     int StartScan(int32_t scannerId, const BluetoothBleScanSettings& settings,
-        const std::vector<BluetoothBleScanFilter>& filters) override;
+        const std::vector<BluetoothBleScanFilter>& filters, bool isNewApi) override;
     int StopScan(int32_t scannerId) override;
     void RemoveScanFilter(int32_t scannerId) override;
     bool FreezeByRss(std::set<int> pidSet, bool isProxy) override;

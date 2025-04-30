@@ -129,5 +129,11 @@ int32_t AudioStreamManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &p
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
+
+bool AudioStreamManager::IsAcousticEchoCancelerSupported(SourceType sourceType)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
 } // namespace AudioStandard
 } // namespace OHOS

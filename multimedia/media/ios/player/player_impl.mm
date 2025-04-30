@@ -282,5 +282,9 @@ int32_t PlayerImpl::SetMediaMuted(OHOS::Media::MediaType mediaType, bool isMuted
 {
     return MSERR_UNSUPPORT;
 }
+
+void PlayerImpl::ReleaseClientListener()
+{
+}
 } // namespace Media
 } // namespace OHOS
