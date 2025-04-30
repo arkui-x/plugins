@@ -56,8 +56,8 @@ void BluetoothBleCentralManagerImpl::DeregisterBleCentralManagerCallback(
     }
 }
 
-int BluetoothBleCentralManagerImpl::StartScan(
-    int32_t scannerId, const BluetoothBleScanSettings& settings, const std::vector<BluetoothBleScanFilter>& filters)
+int BluetoothBleCentralManagerImpl::StartScan(int32_t scannerId, const BluetoothBleScanSettings& settings,
+    const std::vector<BluetoothBleScanFilter>& filters, bool isNewApi)
 {
     HILOGD("scannerId is %d ", scannerId);
     return BluetoothJni::StartScan(scannerId, settings, filters);

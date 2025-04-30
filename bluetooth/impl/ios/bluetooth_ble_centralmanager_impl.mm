@@ -93,8 +93,8 @@ bool isConditionFilters(NSString* string, NSString* strFilter)
     return false;
 }
 
-int BluetoothBleCentralManagerImpl::StartScan(
-    int32_t scannerId, const BluetoothBleScanSettings& settings, const std::vector<BluetoothBleScanFilter>& filters)
+int BluetoothBleCentralManagerImpl::StartScan(int32_t scannerId, const BluetoothBleScanSettings& settings,
+    const std::vector<BluetoothBleScanFilter>& filters, bool isNewApi)
 {
     NSMutableArray<CBUUID*>* arrUuid = [NSMutableArray array];
     NSMutableArray* arrFilter = [NSMutableArray array];
