@@ -41,9 +41,9 @@ public:
     void RegisterBleCentralManagerCallback(int32_t& scannerId, bool enableRandomAddrMode,
         const sptr<IBluetoothBleCentralManagerCallback>& callback) override;
     void DeregisterBleCentralManagerCallback(
-        int32_t scannerId, const sptr<IBluetoothBleCentralManagerCallback>& callback) override;
+    int32_t scannerId, const sptr<IBluetoothBleCentralManagerCallback>& callback) override;
     int StartScan(int32_t scannerId, const BluetoothBleScanSettings& settings,
-        const std::vector<BluetoothBleScanFilter>& filters) override;
+        const std::vector<BluetoothBleScanFilter>& filters, bool isNewApi) override;
     int StopScan(int32_t scannerId) override;
 
     void OnScanResult(int32_t scannerId, const BluetoothBleScanResult& scanResult);

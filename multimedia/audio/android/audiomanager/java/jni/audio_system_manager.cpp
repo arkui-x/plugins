@@ -81,7 +81,7 @@ AudioScene AudioSystemManager::GetAudioScene() const
     return Plugin::AudioManagerJni::GetAudioScene();
 }
 
-int32_t AudioSystemManager::SetDeviceActive(DeviceType deviceType, bool flag) const
+int32_t AudioSystemManager::SetDeviceActive(DeviceType deviceType, bool flag, const int32_t clientUid) const
 {
     AUDIO_INFO_LOG("device: %{public}d", deviceType);
     if (!IsActiveDeviceType(deviceType)) {
@@ -571,7 +571,8 @@ int32_t AudioSystemManager::UnsetDistributedRoutingRoleCallback(
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::SetCallDeviceActive(DeviceType deviceType, bool flag, std::string address) const
+int32_t AudioSystemManager::SetCallDeviceActive(
+    DeviceType deviceType, bool flag, std::string address, const int32_t clientUid) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
