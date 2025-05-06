@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,6 +44,27 @@
 
 -(NSString*)getSystemTimezone{
     return [[NSTimeZone systemTimeZone] name];
+}
+
+-(NSString*)getSystemCalendar{
+    NSCalendar *currentCalendar = [NSCalendar autoupdatingCurrentCalendar];
+    return currentCalendar.calendarIdentifier;
+}
+
+-(NSString*)getNumberingSystem{
+    NSLocale *currentLocale = [NSLocale autoupdatingCurrentLocale];
+    NSString *localeIdentifier = [currentLocale objectForKey:NSLocaleIdentifier];
+    NSArray *parts = [localeIdentifier componentsSeparatedByString:@"@"];
+    for (NSInteger i = 1; i < parts.count; i++) {
+        NSArray *keyValuePairs = [parts[i] componentsSeparatedByString:@";"];
+        for (NSString *pair in keyValuePairs) {
+            NSArray *keyValue = [pair componentsSeparatedByString:@"="];
+            if (keyValue.count == 2 && [keyValue[0] isEqualToString:@"numbers"]) {
+                return keyValue[1];
+            }
+        }
+    }
+    return @"latn";
 }
 
 -(NSString*)getDeviceType{

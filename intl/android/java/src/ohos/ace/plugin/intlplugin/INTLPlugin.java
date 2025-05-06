@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 package ohos.ace.plugin.intlplugin;
 
 import android.content.Context;
+import android.icu.text.NumberingSystem;
 import android.os.Build;
 import android.os.LocaleList;
 import android.text.format.DateFormat;
@@ -26,6 +27,7 @@ import android.view.WindowManager;
 
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.Calendar;
 
 /**
  * INTL android plugin module
@@ -92,6 +94,26 @@ public class INTLPlugin {
      */
     public String getSystemTimezone() {
         return TimeZone.getDefault().getID();
+    }
+
+    /**
+     * getSystemCalendar
+     *
+     * @return System calendar
+     */
+    public String getSystemCalendar() {
+        return Calendar.getInstance().getCalendarType();
+    }
+
+    /**
+     * getNumberingSystem
+     *
+     * @return The digital system used by the system
+     */
+    public String getNumberingSystem() {
+        Locale systemLocale = LocaleList.getDefault().get(0);
+        NumberingSystem numberingSystem = NumberingSystem.getInstance(systemLocale);
+        return numberingSystem.getName();
     }
 
     /**

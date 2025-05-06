@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 #include "date_time_format.h"
-#include "locale_config.h"
 #include "ohos/init_data.h"
+#include "locale_config.h"
 #include "utils.h"
 
 namespace OHOS {
@@ -124,6 +124,7 @@ bool DateTimeFormat::InitWithLocale(const std::string &curLocale, std::map<std::
     if (localeInfo == nullptr || !localeInfo->InitSuccess()) {
         return false;
     }
+
     locale = localeInfo->GetLocale();
     localeTag = localeInfo->GetBaseName();
     if (hourCycle.empty()) {
@@ -131,9 +132,7 @@ bool DateTimeFormat::InitWithLocale(const std::string &curLocale, std::map<std::
     }
     if (hour12.empty() && hourCycle.empty()) {
         bool is24HourClock = LocaleConfig::Is24HourClock();
-        if (is24HourClock) {
-            hour12 = "false";
-        }
+        hour12 = is24HourClock ? "false" : "true";
     }
     ComputeHourCycleChars();
     ComputeSkeleton();
@@ -164,7 +163,8 @@ bool DateTimeFormat::InitWithDefaultLocale(std::map<std::string, std::string> &c
         delete dateFormat;
         dateFormat = nullptr;
     }
-    return InitWithLocale(LocaleConfig::GetSystemLocale(), configs);
+
+    return InitWithLocale(LocaleConfig::GetSystemLocaleWithExtParam(), configs);
 }
 
 void DateTimeFormat::InitDateFormatWithoutConfigs(UErrorCode &status)
