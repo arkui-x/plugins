@@ -26,7 +26,7 @@
 
 namespace OHOS::Plugin {
 static constexpr const int MAX_STR_LENGTH = 65536;
-std::mutex WebviewController::objMapMutex;
+thread_local std::mutex WebviewController::objMapMutex;
 void CreateArrayNapi(napi_env env, const std::shared_ptr<Ace::WebJSValue>& arg, napi_value napi_arg);
 void CreateDictionaryNapi(napi_env env, const std::shared_ptr<Ace::WebJSValue>& arg, napi_value napi_arg);
 std::shared_ptr<Ace::WebJSValue> GetNapiValue(napi_env env, napi_value ret);

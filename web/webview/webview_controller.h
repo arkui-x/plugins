@@ -164,7 +164,7 @@ private:
     static thread_local std::vector<AsyncJavaScriptExtEvaluteJSResultCallbackInfo *>
         asyncCallbackJavaScriptExtInfoContainer_;
     static thread_local std::map<std::string, RegisterJavaScriptProxyParam> objMap_;
-    static std::mutex objMapMutex;
+    static thread_local std::mutex objMapMutex;
 };
 } // namespace OHOS::Plugin
 
