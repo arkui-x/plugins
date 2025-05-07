@@ -21,6 +21,7 @@
 #include <vector>
 #include "napi_parse_utils.h"
 #include "web_errors.h"
+#include "web_javascript_value.h"
 #include "web_message.h"
 #include "web_value.h"
 #include "webview_async_work_callback.h"
@@ -35,6 +36,15 @@ struct WebHistoryItem final {
     std::string historyRawUrl = "";
     std::string title = "";
 };
+
+typedef struct RegisterJavaScriptProxyParam {
+    napi_env env;
+    napi_ref objRef;
+    std::string objName;
+    std::vector<std::string> syncMethodList;
+    std::vector<std::string> asyncMethodList;
+    std::string permission;
+} RegisterJavaScriptProxyParam;
 
 class WebHistoryList {
 public:
@@ -113,6 +123,8 @@ public:
     virtual void BackOrForward(int32_t step) = 0;
     virtual std::string GetTitle() = 0;
     virtual int32_t GetPageHeight() = 0;
+    virtual void RegisterJavaScriptProxy(const RegisterJavaScriptProxyParam& param) = 0;
+    virtual void DeleteJavaScriptRegister(const std::string& objName) = 0;
     virtual ErrCode ClearHistory() {
         return NWebError::NO_ERROR;
     }
@@ -135,6 +147,12 @@ public:
         const AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo);
     static bool EraseAsyncCallbackJavaScriptExtInfo(
         const AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo);
+    static void InsertJavaScriptProxy(const RegisterJavaScriptProxyParam& param);
+    static void DeleteJavaScriptProxy(const std::string& objName);
+    static std::shared_ptr<Ace::WebJSValue> OnReceiveJavascriptExecuteCall(
+        const std::string& objName, const std::string& methodName,
+        const std::vector<std::shared_ptr<OHOS::Ace::WebJSValue>>& argsList);
+    static ErrCode CheckObjectName(const std::string& objName);
 
 protected:
     int32_t webId_ = -1;
@@ -145,6 +163,8 @@ private:
         const std::shared_ptr<WebMessage>& result, int32_t asyncCallbackInfoId);
     static thread_local std::vector<AsyncJavaScriptExtEvaluteJSResultCallbackInfo *>
         asyncCallbackJavaScriptExtInfoContainer_;
+    static thread_local std::map<std::string, RegisterJavaScriptProxyParam> objMap_;
+    static std::mutex objMapMutex;
 };
 } // namespace OHOS::Plugin
 

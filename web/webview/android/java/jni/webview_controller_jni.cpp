@@ -22,6 +22,9 @@
 #include "log.h"
 #include "plugin_utils.h"
 #include "plugins/web/webview/napi_web_message_ext.h"
+
+#define MAX_DEEPTH 10
+
 using namespace OHOS::NWebError;
 
 namespace OHOS::Plugin {
@@ -37,6 +40,9 @@ static const JNINativeMethod METHODS[] = {
         reinterpret_cast<void*>(WebviewControllerJni::OnMessage) },
     { "onMessageEventExt", "(JLjava/lang/String;Ljava/lang/String;)V",
         reinterpret_cast<void*>(WebviewControllerJni::OnMessageEventExt) },
+    { "onReceiveJavascriptExecuteCall",
+        "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;",
+        reinterpret_cast<void*>(WebviewControllerJni::OnReceiveJavascriptExecuteCall) },
 };
 static const char METHOD_LOADURL[] = "loadUrl";
 
@@ -116,6 +122,10 @@ static const char METHOD_START_DOWNLOAD[] = "startDownload";
 
 static const char METHOD_ONWEBMESSAGEPORTEVENTEXT[] = "onWebMessagePortEventExt";
 
+static const char METHOD_REGISTERJAVASCRIPTPROXY[] = "registerJavaScriptProxy";
+
+static const char METHOD_DELETEJAVASCRIPTREGISTER[] = "deleteJavaScriptRegister";
+
 static const char SIGNATURE_LOADURL[] = "(JLjava/lang/String;Ljava/util/HashMap;)V";
 
 static const char SIGNATURE_LOADDATA[] = "(JLjava/util/HashMap;)V";
@@ -194,6 +204,11 @@ static const char SIGNATURE_PAGEDOWN[] = "(JZ)V";
 
 static const char SIGNATURE_POSTURL[] = "(JLjava/lang/String;[B)V";
 
+static const char SIGNATURE_REGISTERJAVASCRIPTPROXY[] =
+    "(JLjava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V";
+
+static const char SIGNATURE_DELETEJAVASCRIPTREGISTER[] = "(JLjava/lang/String;)V";
+
 bool _webDebuggingAccessInit = false;
 
 struct {
@@ -236,6 +251,8 @@ struct {
     jmethodID postUrl;
     jmethodID startDownload;
     jmethodID onWebMessagePortEventExt;
+    jmethodID registerJavaScriptProxy;
+    jmethodID deleteJavaScriptRegister;
     jobject globalRef;
 } g_webWebviewClass;
 }
@@ -299,6 +316,10 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.setWebDebuggingAccess = env->GetMethodID(cls, METHOD_SET_WEB_DEBUGGING_ACCESS, SIGNATURE_SET_WEB_DEBUGGING_ACCESS);
     g_webWebviewClass.pageDown = env->GetMethodID(cls, METHOD_PAGEDOWN, SIGNATURE_PAGEDOWN);
     g_webWebviewClass.postUrl = env->GetMethodID(cls, METHOD_POSTURL, SIGNATURE_POSTURL);
+    g_webWebviewClass.registerJavaScriptProxy =
+        env->GetMethodID(cls, METHOD_REGISTERJAVASCRIPTPROXY, SIGNATURE_REGISTERJAVASCRIPTPROXY);
+    g_webWebviewClass.deleteJavaScriptRegister =
+        env->GetMethodID(cls, METHOD_DELETEJAVASCRIPTREGISTER, SIGNATURE_DELETEJAVASCRIPTREGISTER);
     env->DeleteLocalRef(cls);
 }
 
@@ -1276,5 +1297,432 @@ void WebviewControllerJni::OnMessageEventExt(
     auto messageResult = std::make_shared<WebMessageExt>(webMessage);
     messageResult->SetString(result);
     WebMessagePort::OnMessageExt(webId, portHandle, messageResult);
+}
+
+void WebviewControllerJni::RegisterJavaScriptProxy(int id, const std::string& objName,
+    const std::vector<std::string>& syncMethodList, const std::vector<std::string>& asyncMethodList,
+    const std::string& permission)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_VOID(env);
+    CHECK_NULL_VOID(g_webWebviewClass.globalRef);
+    CHECK_NULL_VOID(g_webWebviewClass.registerJavaScriptProxy);
+
+    if (syncMethodList.empty() && asyncMethodList.empty()) {
+        LOGE("Register JavaScript Proxy MethodList is nullptr");
+        return;
+    }
+    jclass jStringCls = env->FindClass("java/lang/String");
+    CHECK_NULL_VOID(jStringCls);
+    jobjectArray objectArray = env->NewObjectArray(syncMethodList.size(), jStringCls, nullptr);
+    for (size_t index = 0; index < syncMethodList.size(); ++index) {
+        jstring jstr = env->NewStringUTF(syncMethodList[index].c_str());
+        if (!jstr) {
+            return;
+        }
+        env->SetObjectArrayElement(objectArray, index, jstr);
+        env->DeleteLocalRef(jstr);
+    }
+    jobjectArray asyncObjectArray = env->NewObjectArray(asyncMethodList.size(), jStringCls, nullptr);
+    for (size_t index = 0; index < asyncMethodList.size(); ++index) {
+        jstring jstr = env->NewStringUTF(asyncMethodList[index].c_str());
+        if (!jstr) {
+            return;
+        }
+        env->SetObjectArrayElement(asyncObjectArray, index, jstr);
+        env->DeleteLocalRef(jstr);
+    }
+    jstring jsObjName = env->NewStringUTF(objName.c_str());
+    jstring jsPermission = env->NewStringUTF(permission.c_str());
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.registerJavaScriptProxy, id, jsObjName,
+        objectArray, asyncObjectArray, jsPermission);
+    env->DeleteLocalRef(objectArray);
+    env->DeleteLocalRef(asyncObjectArray);
+    env->DeleteLocalRef(jsObjName);
+    env->DeleteLocalRef(jsPermission);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+}
+
+jobject WebviewControllerJni::OnReceiveJavascriptExecuteCall(
+    JNIEnv* env, jclass jcls, jstring className, jstring methodName, jobjectArray argsList)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(className, nullptr);
+    CHECK_NULL_RETURN(methodName, nullptr);
+    CHECK_NULL_RETURN(argsList, nullptr);
+    std::string strClassName;
+    std::string strMethodName;
+    const char* pClassName = env->GetStringUTFChars(className, nullptr);
+    CHECK_NULL_RETURN(pClassName, nullptr);
+    strClassName.assign(pClassName);
+    env->ReleaseStringUTFChars(className, pClassName);
+    env->DeleteLocalRef(className);
+    const char* pMethodName = env->GetStringUTFChars(methodName, nullptr);
+    CHECK_NULL_RETURN(pMethodName, nullptr);
+    strMethodName.assign(pMethodName);
+    env->ReleaseStringUTFChars(methodName, pMethodName);
+    env->DeleteLocalRef(methodName);
+    std::vector<std::shared_ptr<Ace::WebJSValue>> argsValue;
+    jsize length = env->GetArrayLength(argsList);
+    for (jsize i = 0; i < length; i++) {
+        jobject element = env->GetObjectArrayElement(argsList, i);
+        CHECK_NULL_RETURN(element, nullptr);
+        std::shared_ptr<Ace::WebJSValue> resultValue = WebviewControllerJni::ProcessJavaObject(env, element);
+        CHECK_NULL_RETURN(resultValue, nullptr);
+        argsValue.emplace_back(resultValue);
+        env->DeleteLocalRef(element);
+    }
+    std::shared_ptr<Ace::WebJSValue> ret =
+        WebviewController::OnReceiveJavascriptExecuteCall(strClassName, strMethodName, argsValue);
+    CHECK_NULL_RETURN(ret, nullptr);
+    return WebviewControllerJni::ConvertWebToJava(env, ret);
+}
+
+jobject WebviewControllerJni::ConvertWebToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(ret, nullptr);
+    jobject javaValue = nullptr;
+    if (ret->IsString()) {
+        javaValue = WebviewControllerJni::ConvertWebStringToJava(env, ret);
+    } else if (ret->IsINTEGER()) {
+        javaValue = WebviewControllerJni::ConvertWebIntegerToJava(env, ret);
+    } else if (ret->IsBoolean()) {
+        javaValue = WebviewControllerJni::ConvertWebBooleanToJava(env, ret);
+    } else if (ret->IsDouble()) {
+        javaValue = WebviewControllerJni::ConvertWebDoubleToJava(env, ret);
+    } else if (ret->IsList()) {
+        javaValue = WebviewControllerJni::ConvertWebListToJava(env, ret);
+    } else if (ret->IsDictionary()) {
+        javaValue = WebviewControllerJni::ConvertWebDictionaryToJava(env, ret);
+    }
+    return javaValue;
+}
+
+jobject WebviewControllerJni::ConvertWebDictionaryToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(ret, nullptr);
+    jclass mapClass = env->FindClass("java/util/HashMap");
+    CHECK_NULL_RETURN(mapClass, nullptr);
+    jmethodID mapConstructor = env->GetMethodID(mapClass, "<init>", "()V");
+    if (mapConstructor == nullptr) {
+        env->DeleteLocalRef(mapClass);
+        return nullptr;
+    }
+    jmethodID putMethod = env->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    jobject javaMap = env->NewObject(mapClass, mapConstructor);
+    if (putMethod != nullptr && javaMap != nullptr) {
+        std::map<std::string, Ace::WebJSValue> mapValue = ret->GetDictionaryValue();
+        for (auto& [key, value]: mapValue) {
+            auto ptr = std::make_shared<Ace::WebJSValue>(value);
+            if (ptr != nullptr) {
+                jobject javaValue = WebviewControllerJni::ConvertWebToJava(env, ptr);
+                jstring javaKey = env->NewStringUTF(key.c_str());
+                env->CallObjectMethod(javaMap, putMethod, javaKey, javaValue);
+                env->DeleteLocalRef(javaValue);
+                env->DeleteLocalRef(javaKey);
+            }
+        }
+    }
+    env->DeleteLocalRef(mapClass);
+    return javaMap;
+}
+
+jobject WebviewControllerJni::ConvertWebListToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(ret, nullptr);
+    jclass listClass = env->FindClass("java/util/ArrayList");
+    CHECK_NULL_RETURN(listClass, nullptr);
+    jmethodID addMethod = env->GetMethodID(listClass, "add", "(Ljava/lang/Object;)Z");
+    jmethodID listConstructor = env->GetMethodID(listClass, "<init>", "()V");
+    if (listConstructor == nullptr || addMethod == nullptr) {
+        env->DeleteLocalRef(listClass);
+        return nullptr;
+    }
+    jobject javaList = env->NewObject(listClass, listConstructor);
+    std::vector<Ace::WebJSValue> listValue = ret->GetListValue();
+    for (Ace::WebJSValue& item: listValue) {
+        auto ptr = std::make_shared<Ace::WebJSValue>(item);
+        if (ptr != nullptr) {
+            jobject element = WebviewControllerJni::ConvertWebToJava(env, ptr);
+            env->CallBooleanMethod(javaList, addMethod, element);
+            env->DeleteLocalRef(element);
+        }
+    }
+    env->DeleteLocalRef(listClass);
+    return javaList;
+}
+
+jobject WebviewControllerJni::ConvertWebBooleanToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(ret, nullptr);
+    jclass booleanClass = env->FindClass("java/lang/Boolean");
+    CHECK_NULL_RETURN(booleanClass, nullptr);
+    jmethodID booleanConstructor = env->GetMethodID(booleanClass, "<init>", "(Z)V");
+    if (booleanConstructor == nullptr) {
+        env->DeleteLocalRef(booleanClass);
+        return nullptr;
+    }
+    bool value = ret->GetBoolean();
+    jobject result = env->NewObject(booleanClass, booleanConstructor, value);
+    env->DeleteLocalRef(booleanClass);
+    return result;
+}
+
+jobject WebviewControllerJni::ConvertWebIntegerToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(ret, nullptr);
+    jclass intClass = env->FindClass("java/lang/Integer");
+    CHECK_NULL_RETURN(intClass, nullptr);
+    jmethodID intConstructor = env->GetMethodID(intClass, "<init>", "(I)V");
+    if (intConstructor == nullptr) {
+        env->DeleteLocalRef(intClass);
+        return nullptr;
+    }
+    std::int32_t value = ret->GetInt();
+    jobject result = env->NewObject(intClass, intConstructor, value);
+    env->DeleteLocalRef(intClass);
+    return result;
+}
+
+jobject WebviewControllerJni::ConvertWebDoubleToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(ret, nullptr);
+    jclass doubleClass = env->FindClass("java/lang/Double");
+    CHECK_NULL_RETURN(doubleClass, nullptr);
+    jmethodID doubleConstructor = env->GetMethodID(doubleClass, "<init>", "(D)V");
+    if (doubleConstructor == nullptr) {
+        env->DeleteLocalRef(doubleClass);
+        return nullptr;
+    }
+    double value = ret->GetDouble();
+    jobject result = env->NewObject(doubleClass, doubleConstructor, value);
+    env->DeleteLocalRef(doubleClass);
+    return result;
+}
+
+jobject WebviewControllerJni::ConvertWebStringToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret)
+{
+    CHECK_NULL_RETURN(env, nullptr);
+    CHECK_NULL_RETURN(ret, nullptr);
+    std::string str = ret->GetString();
+    return env->NewStringUTF(str.c_str());
+}
+
+std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaObject(JNIEnv* env, jobject obj, int currentDepth)
+{
+    auto result = std::make_shared<Ace::WebJSValue>();
+    CHECK_NULL_RETURN(result, nullptr);
+    CHECK_NULL_RETURN(env, result);
+    CHECK_NULL_RETURN(obj, result);
+    if (currentDepth > MAX_DEEPTH) {
+        return result;
+    }
+    if (env->IsInstanceOf(obj, env->FindClass("java/util/List"))) {
+        result = WebviewControllerJni::ProcessJavaList(env, obj, ++currentDepth);
+    } else if (env->IsInstanceOf(obj, env->FindClass("java/util/Map"))) {
+        result = WebviewControllerJni::ProcessJavaMap(env, obj, ++currentDepth);
+    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/String"))) {
+        result = WebviewControllerJni::ProcessJavaString(env, obj);
+    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/Integer"))) {
+        result = WebviewControllerJni::ProcessJavaInteger(env, obj);
+    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/Boolean"))) {
+        result = WebviewControllerJni::ProcessJavaBoolean(env, obj);
+    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/Double"))) {
+        result = WebviewControllerJni::ProcessJavaDouble(env, obj);
+    }
+    return result;
+}
+
+std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaList(JNIEnv* env, jobject obj, int currentDepth)
+{
+    auto result = std::make_shared<Ace::WebJSValue>(Ace::WebJSValue::Type::LIST);
+    CHECK_NULL_RETURN(result, nullptr);
+    CHECK_NULL_RETURN(env, result);
+    CHECK_NULL_RETURN(obj, result);
+    if (currentDepth > MAX_DEEPTH) {
+        result = std::make_shared<Ace::WebJSValue>(Ace::WebJSValue::Type::NONE);
+        return result;
+    }
+    jclass listClass = env->GetObjectClass(obj);
+    CHECK_NULL_RETURN(listClass, result);
+    jmethodID sizeMethod = env->GetMethodID(listClass, "size", "()I");
+    jmethodID getMethod = env->GetMethodID(listClass, "get", "(I)Ljava/lang/Object;");
+    if (sizeMethod == nullptr || getMethod == nullptr) {
+        env->DeleteLocalRef(listClass);
+        return result;
+    }
+    const jint size = env->CallIntMethod(obj, sizeMethod);
+    for (jint i = 0; i < size; ++i) {
+        jobject element = env->CallObjectMethod(obj, getMethod, i);
+        if (element != nullptr) {
+            std::shared_ptr<Ace::WebJSValue> valuePtr =
+                WebviewControllerJni::ProcessJavaObject(env, element, currentDepth);
+            if (valuePtr != nullptr) {
+                result->AddListValue(*valuePtr);
+            }
+            env->DeleteLocalRef(element);
+        }
+    }
+    env->DeleteLocalRef(listClass);
+    return result;
+}
+
+void WebviewControllerJni::ProcessMapEntries(
+    JNIEnv* env, jobject iter, std::shared_ptr<Ace::WebJSValue> result, int currentDepth)
+{
+    CHECK_NULL_VOID(env);
+    CHECK_NULL_VOID(iter);
+    CHECK_NULL_VOID(result);
+    jclass iteratorClass = env->GetObjectClass(iter);
+    CHECK_NULL_VOID(iteratorClass);
+    jclass entryClass = env->FindClass("java/util/Map$Entry");
+    if (entryClass == nullptr) {
+        env->DeleteLocalRef(iteratorClass);
+        return;
+    }
+    jmethodID hasNext = env->GetMethodID(iteratorClass, "hasNext", "()Z");
+    jmethodID next = env->GetMethodID(iteratorClass, "next", "()Ljava/lang/Object;");
+    jmethodID getKey = env->GetMethodID(entryClass, "getKey", "()Ljava/lang/Object;");
+    jmethodID getValue = env->GetMethodID(entryClass, "getValue", "()Ljava/lang/Object;");
+    if (hasNext != nullptr && next != nullptr && getKey != nullptr && getValue != nullptr) {
+        while (env->CallBooleanMethod(iter, hasNext)) {
+            jobject entry = env->CallObjectMethod(iter, next);
+            jstring key = static_cast<jstring>(env->CallObjectMethod(entry, getKey));
+            jobject value = env->CallObjectMethod(entry, getValue);
+            const char* keyStr = env->GetStringUTFChars(key, nullptr);
+            std::shared_ptr<Ace::WebJSValue> valuePtr = ProcessJavaObject(env, value, currentDepth);
+            if (keyStr != nullptr && valuePtr != nullptr) {
+                result->AddDictionaryValue(keyStr, *valuePtr);
+            }
+            env->ReleaseStringUTFChars(key, keyStr);
+            env->DeleteLocalRef(entry);
+            env->DeleteLocalRef(key);
+            env->DeleteLocalRef(value);
+        }
+    }
+    env->DeleteLocalRef(iteratorClass);
+    env->DeleteLocalRef(entryClass);
+}
+
+std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaMap(JNIEnv* env, jobject obj, int currentDepth)
+{
+    auto result = std::make_shared<Ace::WebJSValue>(Ace::WebJSValue::Type::DICTIONARY);
+    CHECK_NULL_RETURN(result, nullptr);
+    CHECK_NULL_RETURN(env, result);
+    CHECK_NULL_RETURN(obj, result);
+    if (currentDepth > MAX_DEEPTH) {
+        auto result = std::make_shared<Ace::WebJSValue>(Ace::WebJSValue::Type::NONE);
+        return result;
+    }
+    jclass mapClass = env->GetObjectClass(obj);
+    CHECK_NULL_RETURN(mapClass, result);
+    jmethodID entrySet = env->GetMethodID(mapClass, "entrySet", "()Ljava/util/Set;");
+    jobject set = env->CallObjectMethod(obj, entrySet);
+    if (set == nullptr) {
+        env->DeleteLocalRef(mapClass);
+        return result;
+    }
+    jclass setClass = env->GetObjectClass(set);
+    if (setClass != nullptr) {
+        jmethodID iteratorMethod = env->GetMethodID(setClass, "iterator", "()Ljava/util/Iterator;");
+        jobject iter = env->CallObjectMethod(set, iteratorMethod);
+        ProcessMapEntries(env, iter, result, currentDepth);
+        env->DeleteLocalRef(iter);
+    }
+    env->DeleteLocalRef(mapClass);
+    env->DeleteLocalRef(set);
+    env->DeleteLocalRef(setClass);
+    return result;
+}
+
+std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaString(JNIEnv* env, jobject obj)
+{
+    auto result = std::make_shared<Ace::WebJSValue>();
+    CHECK_NULL_RETURN(result, nullptr);
+    CHECK_NULL_RETURN(env, result);
+    CHECK_NULL_RETURN(obj, result);
+    result->SetType(Ace::WebJSValue::Type::STRING);
+    jstring str = static_cast<jstring>(obj);
+    const char* utf = env->GetStringUTFChars(str, nullptr);
+    if (utf != nullptr) {
+        result->SetString(utf);
+    }
+    env->ReleaseStringUTFChars(str, utf);
+    return result;
+}
+
+std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaInteger(JNIEnv* env, jobject obj)
+{
+    auto result = std::make_shared<Ace::WebJSValue>();
+    CHECK_NULL_RETURN(result, nullptr);
+    CHECK_NULL_RETURN(env, result);
+    CHECK_NULL_RETURN(obj, result);
+    result->SetType(Ace::WebJSValue::Type::INTEGER);
+    jclass cls = env->GetObjectClass(obj);
+    CHECK_NULL_RETURN(cls, result);
+    jmethodID method = env->GetMethodID(cls, "intValue", "()I");
+    if (method != nullptr) {
+        result->SetInt(env->CallIntMethod(obj, method));
+    }
+    env->DeleteLocalRef(cls);
+    return result;
+}
+
+std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaBoolean(JNIEnv* env, jobject obj)
+{
+    auto result = std::make_shared<Ace::WebJSValue>();
+    CHECK_NULL_RETURN(result, nullptr);
+    CHECK_NULL_RETURN(env, result);
+    CHECK_NULL_RETURN(obj, result);
+    result->SetType(Ace::WebJSValue::Type::BOOLEAN);
+    jclass cls = env->GetObjectClass(obj);
+    CHECK_NULL_RETURN(cls, result);
+    jmethodID method = env->GetMethodID(cls, "booleanValue", "()Z");
+    if (method != nullptr) {
+        result->SetBoolean(env->CallBooleanMethod(obj, method));
+    }
+    env->DeleteLocalRef(cls);
+    return result;
+}
+
+std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaDouble(JNIEnv* env, jobject obj)
+{
+    auto result = std::make_shared<Ace::WebJSValue>();
+    CHECK_NULL_RETURN(result, nullptr);
+    CHECK_NULL_RETURN(env, result);
+    CHECK_NULL_RETURN(obj, result);
+    result->SetType(Ace::WebJSValue::Type::DOUBLE);
+    jclass cls = env->GetObjectClass(obj);
+    CHECK_NULL_RETURN(cls, result);
+    jmethodID method = env->GetMethodID(cls, "doubleValue", "()D");
+    if (method != nullptr) {
+        result->SetDouble(env->CallDoubleMethod(obj, method));
+    }
+    env->DeleteLocalRef(cls);
+    return result;
+}
+
+void WebviewControllerJni::DeleteJavaScriptRegister(int id, const std::string& objName)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_VOID(env);
+    CHECK_NULL_VOID(g_webWebviewClass.globalRef);
+    CHECK_NULL_VOID(g_webWebviewClass.deleteJavaScriptRegister);
+    jstring jsObjName = env->NewStringUTF(objName.c_str());
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.deleteJavaScriptRegister, id, jsObjName);
+    env->DeleteLocalRef(jsObjName);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
 }
 }
