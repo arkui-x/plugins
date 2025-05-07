@@ -1570,6 +1570,9 @@ std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaList(JNIEnv* e
                 result->AddListValue(*valuePtr);
             }
             env->DeleteLocalRef(element);
+        } else {
+            Ace::WebJSValue nullValue(Ace::WebJSValue::Type::NONE);
+            result->AddListValue(nullValue);
         }
     }
     env->DeleteLocalRef(listClass);
