@@ -1353,18 +1353,17 @@ jobject WebviewControllerJni::OnReceiveJavascriptExecuteCall(
     CHECK_NULL_RETURN(className, nullptr);
     CHECK_NULL_RETURN(methodName, nullptr);
     CHECK_NULL_RETURN(argsList, nullptr);
-    std::string strClassName;
-    std::string strMethodName;
-    const char* pClassName = env->GetStringUTFChars(className, nullptr);
-    CHECK_NULL_RETURN(pClassName, nullptr);
-    strClassName.assign(pClassName);
-    env->ReleaseStringUTFChars(className, pClassName);
-    env->DeleteLocalRef(className);
-    const char* pMethodName = env->GetStringUTFChars(methodName, nullptr);
-    CHECK_NULL_RETURN(pMethodName, nullptr);
-    strMethodName.assign(pMethodName);
-    env->ReleaseStringUTFChars(methodName, pMethodName);
-    env->DeleteLocalRef(methodName);
+    auto getUTFString = [env](jstring jstr) -> std::string {
+        const char* pString = env->GetStringUTFChars(jstr, nullptr);
+        CHECK_NULL_RETURN(pString, "");
+        std::string str(pString);
+        env->ReleaseStringUTFChars(jstr, pString);
+        return str;
+    };
+    std::string strClassName = getUTFString(className);
+    CHECK_NULL_RETURN(!strClassName.empty(), nullptr);
+    std::string strMethodName = getUTFString(methodName);
+    CHECK_NULL_RETURN(!strMethodName.empty(), nullptr);
     std::vector<std::shared_ptr<Ace::WebJSValue>> argsValue;
     jsize length = env->GetArrayLength(argsList);
     for (jsize i = 0; i < length; i++) {
