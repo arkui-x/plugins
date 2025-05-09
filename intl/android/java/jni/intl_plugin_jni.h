@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,6 +31,8 @@ public:
     static bool Is24HourClock();
     static std::string GetSystemLocale();
     static std::string GetSystemTimezone();
+    static std::string GetSystemCalendar();
+    static std::string GetNumberingSystem();
     static std::string GetDeviceType();
 };
 } // namespace OHOS::Plugin

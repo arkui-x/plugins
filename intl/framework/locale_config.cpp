@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 // cross modify
 //
 #include "locale_config.h"
+#include <map>
 
 namespace OHOS {
 namespace Global {
@@ -39,12 +40,49 @@ string LocaleConfig::GetSystemTimezone()
     return plugin->GetSystemTimezone();
 }
 
+std::string LocaleConfig::GetSystemCalendar()
+{
+    if (!plugin) {
+        return "";
+    }
+    return plugin->GetSystemCalendar();
+}
+
+std::string LocaleConfig::GetNumberingSystem()
+{
+    if (!plugin) {
+        return "";
+    }
+    return plugin->GetNumberingSystem();
+}
+
 bool LocaleConfig::Is24HourClock()
 {
     if (!plugin) {
         return false;
     }
     return plugin->Is24HourClock();
+}
+
+std::string LocaleConfig::GetSystemLocaleWithExtParam()
+{
+    std::string systemLocale = LocaleConfig::GetSystemLocale();
+    bool hasExtParam = false;
+    
+    std::string systemNumberingSystem = LocaleConfig::GetNumberingSystem();
+    if (!systemNumberingSystem.empty()) {
+        systemLocale += "-u-nu-" + systemNumberingSystem;
+        hasExtParam = true;
+    }
+    std::string systemCalendar = LocaleConfig::GetSystemCalendar();
+    if (!systemCalendar.empty()) {
+        if (!hasExtParam) {
+            systemLocale += "-u";
+        }
+        systemLocale += "-ca-" + systemCalendar;
+    }
+
+    return systemLocale;
 }
 } // namespace I18n
 } // namespace Global

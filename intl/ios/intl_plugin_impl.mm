@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,6 +39,20 @@ std::string INTLPluginImpl::GetSystemLocale()
 std::string INTLPluginImpl::GetSystemTimezone()
 {
     NSString *origin = [[iOSINTLPlugin shareinstance] getSystemTimezone];
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
+
+std::string INTLPluginImpl::GetSystemCalendar()
+{
+    NSString *origin = [[iOSINTLPlugin shareinstance] getSystemCalendar];
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
+
+std::string INTLPluginImpl::GetNumberingSystem()
+{
+    NSString *origin = [[iOSINTLPlugin shareinstance] getNumberingSystem];
     std::string result = std::string([origin UTF8String]);
     return result;
 }

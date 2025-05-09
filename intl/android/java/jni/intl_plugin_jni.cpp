@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,17 +33,23 @@ static const JNINativeMethod METHODS[] = {
 const char METHOD_IS24HOUR_CLOCK[] = "is24HourClock";
 const char METHOD_GET_SYSTEM_LOCALE[] = "getSystemLocale";
 const char METHOD_GET_SYSTEM_TIMEZONE[] = "getSystemTimezone";
+const char METHOD_GET_SYSTEM_CALENDAR[] = "getSystemCalendar";
+const char METHOD_GET_NUMBERING_SYSTEM[] = "getNumberingSystem";
 const char METHOD_GET_DEVICE_TYPE[] = "getDeviceType";
 
 const char SIGNATURE_IS24HOUR_CLOCK[] = "()Z";
 const char SIGNATURE_GET_SYSTEM_LOCALE[] = "()Ljava/lang/String;";
 const char SIGNATURE_GET_SYSTEM_TIMEZONE[] = "()Ljava/lang/String;";
+const char SIGNATURE_GET_SYSTEM_CALENDAR[] = "()Ljava/lang/String;";
+const char SIGNATURE_GET_NUMBERING_SYSTEM[] = "()Ljava/lang/String;";
 const char SIGNATURE_GET_DEVICE_TYPE[] = "()Ljava/lang/String;";
 
 struct {
     jmethodID is24HourClock;
     jmethodID getSystemLocale;
     jmethodID getSystemTimezone;
+    jmethodID getSystemCalendar;
+    jmethodID getNumberingSystem;
     jmethodID getDeviceType;
     jobject globalRef;
 } g_pluginClass;
@@ -80,6 +86,13 @@ void INTLPluginJni::NativeInit(JNIEnv* env, jobject jobj)
 
     g_pluginClass.getSystemTimezone = env->GetMethodID(cls, METHOD_GET_SYSTEM_TIMEZONE, SIGNATURE_GET_SYSTEM_TIMEZONE);
     CHECK_NULL_VOID(g_pluginClass.getSystemTimezone);
+
+    g_pluginClass.getSystemCalendar = env->GetMethodID(cls, METHOD_GET_SYSTEM_CALENDAR, SIGNATURE_GET_SYSTEM_CALENDAR);
+    CHECK_NULL_VOID(g_pluginClass.getSystemCalendar);
+
+    g_pluginClass.getNumberingSystem =
+        env->GetMethodID(cls, METHOD_GET_NUMBERING_SYSTEM, SIGNATURE_GET_NUMBERING_SYSTEM);
+    CHECK_NULL_VOID(g_pluginClass.getNumberingSystem);
 
     g_pluginClass.getDeviceType = env->GetMethodID(cls, METHOD_GET_DEVICE_TYPE, SIGNATURE_GET_DEVICE_TYPE);
     CHECK_NULL_VOID(g_pluginClass.getDeviceType);
@@ -138,6 +151,42 @@ std::string INTLPluginJni::GetSystemTimezone()
     }
     std::string timezone = env->GetStringUTFChars(result, NULL);
     return timezone;
+}
+
+std::string INTLPluginJni::GetSystemCalendar()
+{
+    jstring result;
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getSystemCalendar)) {
+        LOGW("INTLPluginJni get none ptr error");
+        return "";
+    }
+    result = static_cast<jstring>(env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.getSystemCalendar));
+    if (env->ExceptionCheck()) {
+        LOGE("INTL JNI: call getSystemCalendar failed");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    std::string calendar = env->GetStringUTFChars(result, NULL);
+    return calendar;
+}
+
+std::string INTLPluginJni::GetNumberingSystem()
+{
+    jstring result;
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getNumberingSystem)) {
+        LOGW("INTLPluginJni get none ptr error");
+        return "";
+    }
+    result = static_cast<jstring>(env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.getNumberingSystem));
+    if (env->ExceptionCheck()) {
+        LOGE("INTL JNI: call getNumberingSystem failed");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    std::string numberingSystem = env->GetStringUTFChars(result, NULL);
+    return numberingSystem;
 }
 
 std::string INTLPluginJni::GetDeviceType()
