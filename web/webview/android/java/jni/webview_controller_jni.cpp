@@ -1528,7 +1528,12 @@ std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaObject(JNIEnv*
     }
 
     static std::once_flag flag;
-    static jclass listClass, mapClass, stringClass, intClass, boolClass, doubleClass;
+    static jclass listClass;
+    static jclass mapClass;
+    static jclass stringClass;
+    static jclass intClass;
+    static jclass boolClass;
+    static jclass doubleClass;
 
     std::call_once(flag, [env]() {
         auto createGlobalRef = [env](const char* className) {
