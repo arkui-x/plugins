@@ -223,4 +223,15 @@ void WebviewControllerIOS::StartDownload(const std::string& url)
 {
     startDownloadOC(webId_, url);
 }
+
+void WebviewControllerIOS::RegisterJavaScriptProxy(const RegisterJavaScriptProxyParam& param)
+{
+    registerJavaScriptProxyOC(webId_, param.objName, param.syncMethodList, param.asyncMethodList,
+        WebviewController::OnReceiveJavascriptExecuteCall);
+}
+
+void WebviewControllerIOS::DeleteJavaScriptRegister(const std::string& objName)
+{
+    deleteJavaScriptRegisterOC(webId_, objName);
+}
 } // namespace OHOS::Plugin
