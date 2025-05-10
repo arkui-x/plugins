@@ -1340,6 +1340,7 @@ void WebviewControllerJni::RegisterJavaScriptProxy(int id, const std::string& ob
     env->DeleteLocalRef(asyncObjectArray);
     env->DeleteLocalRef(jsObjName);
     env->DeleteLocalRef(jsPermission);
+    env->DeleteLocalRef(jStringCls);
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
         env->ExceptionClear();
@@ -1353,18 +1354,17 @@ jobject WebviewControllerJni::OnReceiveJavascriptExecuteCall(
     CHECK_NULL_RETURN(className, nullptr);
     CHECK_NULL_RETURN(methodName, nullptr);
     CHECK_NULL_RETURN(argsList, nullptr);
-    std::string strClassName;
-    std::string strMethodName;
-    const char* pClassName = env->GetStringUTFChars(className, nullptr);
-    CHECK_NULL_RETURN(pClassName, nullptr);
-    strClassName.assign(pClassName);
-    env->ReleaseStringUTFChars(className, pClassName);
-    env->DeleteLocalRef(className);
-    const char* pMethodName = env->GetStringUTFChars(methodName, nullptr);
-    CHECK_NULL_RETURN(pMethodName, nullptr);
-    strMethodName.assign(pMethodName);
-    env->ReleaseStringUTFChars(methodName, pMethodName);
-    env->DeleteLocalRef(methodName);
+    auto getUTFString = [env](jstring jstr) -> std::string {
+        const char* pString = env->GetStringUTFChars(jstr, nullptr);
+        CHECK_NULL_RETURN(pString, "");
+        std::string str(pString);
+        env->ReleaseStringUTFChars(jstr, pString);
+        return str;
+    };
+    std::string strClassName = getUTFString(className);
+    CHECK_NULL_RETURN(!strClassName.empty(), nullptr);
+    std::string strMethodName = getUTFString(methodName);
+    CHECK_NULL_RETURN(!strMethodName.empty(), nullptr);
     std::vector<std::shared_ptr<Ace::WebJSValue>> argsValue;
     jsize length = env->GetArrayLength(argsList);
     for (jsize i = 0; i < length; i++) {
@@ -1526,19 +1526,31 @@ std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaObject(JNIEnv*
     if (currentDepth > MAX_DEEPTH) {
         return result;
     }
-    if (env->IsInstanceOf(obj, env->FindClass("java/util/List"))) {
+    jclass listClass = env->FindClass("java/util/List");
+    jclass mapClass = env->FindClass("java/util/Map");
+    jclass stringClass = env->FindClass("java/lang/String");
+    jclass intClass = env->FindClass("java/lang/Integer");
+    jclass boolClass = env->FindClass("java/lang/Boolean");
+    jclass doubleClass = env->FindClass("java/lang/Double");
+    if (env->IsInstanceOf(obj, listClass)) {
         result = WebviewControllerJni::ProcessJavaList(env, obj, ++currentDepth);
-    } else if (env->IsInstanceOf(obj, env->FindClass("java/util/Map"))) {
+    } else if (env->IsInstanceOf(obj, mapClass)) {
         result = WebviewControllerJni::ProcessJavaMap(env, obj, ++currentDepth);
-    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/String"))) {
+    } else if (env->IsInstanceOf(obj, stringClass)) {
         result = WebviewControllerJni::ProcessJavaString(env, obj);
-    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/Integer"))) {
+    } else if (env->IsInstanceOf(obj, intClass)) {
         result = WebviewControllerJni::ProcessJavaInteger(env, obj);
-    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/Boolean"))) {
+    } else if (env->IsInstanceOf(obj, boolClass)) {
         result = WebviewControllerJni::ProcessJavaBoolean(env, obj);
-    } else if (env->IsInstanceOf(obj, env->FindClass("java/lang/Double"))) {
+    } else if (env->IsInstanceOf(obj, doubleClass)) {
         result = WebviewControllerJni::ProcessJavaDouble(env, obj);
     }
+    env->DeleteLocalRef(listClass);
+    env->DeleteLocalRef(mapClass);
+    env->DeleteLocalRef(stringClass);
+    env->DeleteLocalRef(intClass);
+    env->DeleteLocalRef(boolClass);
+    env->DeleteLocalRef(doubleClass);
     return result;
 }
 

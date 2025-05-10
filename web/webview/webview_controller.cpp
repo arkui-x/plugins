@@ -282,7 +282,6 @@ void GetArrayNapiValue(napi_env env, napi_value ret, std::shared_ptr<Ace::WebJSV
     argument->SetType(Ace::WebJSValue::Type::LIST);
     uint32_t length = 0;
     napi_get_array_length(env, ret, &length);
-    std::vector<std::shared_ptr<Ace::WebJSValue>> list;
     napi_value element = nullptr;
     napi_valuetype elementType;
     for (uint32_t i = 0; i < length; ++i) {
@@ -299,12 +298,8 @@ void GetArrayNapiValue(napi_env env, napi_value ret, std::shared_ptr<Ace::WebJSV
         std::shared_ptr<Ace::WebJSValue> item = std::make_shared<Ace::WebJSValue>(Ace::WebJSValue::Type::NONE);
         if (item) {
             ProcessArrayElement(env, element, item);
-            list.push_back(item);
+            argument->AddListValue(*item);
         }
-    }
-
-    for (const auto& item : list) {
-        argument->AddListValue(*item);
     }
 }
 
