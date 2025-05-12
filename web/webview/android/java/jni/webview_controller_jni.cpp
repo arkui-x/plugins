@@ -1526,31 +1526,44 @@ std::shared_ptr<Ace::WebJSValue> WebviewControllerJni::ProcessJavaObject(JNIEnv*
     if (currentDepth > MAX_DEEPTH) {
         return result;
     }
-    jclass listClass = env->FindClass("java/util/List");
-    jclass mapClass = env->FindClass("java/util/Map");
-    jclass stringClass = env->FindClass("java/lang/String");
-    jclass intClass = env->FindClass("java/lang/Integer");
-    jclass boolClass = env->FindClass("java/lang/Boolean");
-    jclass doubleClass = env->FindClass("java/lang/Double");
+
+    static std::once_flag flag;
+    static jclass listClass;
+    static jclass mapClass;
+    static jclass stringClass;
+    static jclass intClass;
+    static jclass boolClass;
+    static jclass doubleClass;
+
+    std::call_once(flag, [env]() {
+        auto createGlobalRef = [env](const char* className) {
+            jclass localClass = env->FindClass(className);
+            jclass globalClass = static_cast<jclass>(env->NewGlobalRef(localClass));
+            env->DeleteLocalRef(localClass);
+            return globalClass;
+        };
+
+        listClass = createGlobalRef("java/util/List");
+        mapClass = createGlobalRef("java/util/Map");
+        stringClass = createGlobalRef("java/lang/String");
+        intClass = createGlobalRef("java/lang/Integer");
+        boolClass = createGlobalRef("java/lang/Boolean");
+        doubleClass = createGlobalRef("java/lang/Double");
+    });
+
     if (env->IsInstanceOf(obj, listClass)) {
-        result = WebviewControllerJni::ProcessJavaList(env, obj, ++currentDepth);
+        result = ProcessJavaList(env, obj, currentDepth + 1);
     } else if (env->IsInstanceOf(obj, mapClass)) {
-        result = WebviewControllerJni::ProcessJavaMap(env, obj, ++currentDepth);
+        result = ProcessJavaMap(env, obj, currentDepth + 1);
     } else if (env->IsInstanceOf(obj, stringClass)) {
-        result = WebviewControllerJni::ProcessJavaString(env, obj);
+        result = ProcessJavaString(env, obj);
     } else if (env->IsInstanceOf(obj, intClass)) {
-        result = WebviewControllerJni::ProcessJavaInteger(env, obj);
+        result = ProcessJavaInteger(env, obj);
     } else if (env->IsInstanceOf(obj, boolClass)) {
-        result = WebviewControllerJni::ProcessJavaBoolean(env, obj);
+        result = ProcessJavaBoolean(env, obj);
     } else if (env->IsInstanceOf(obj, doubleClass)) {
-        result = WebviewControllerJni::ProcessJavaDouble(env, obj);
+        result = ProcessJavaDouble(env, obj);
     }
-    env->DeleteLocalRef(listClass);
-    env->DeleteLocalRef(mapClass);
-    env->DeleteLocalRef(stringClass);
-    env->DeleteLocalRef(intClass);
-    env->DeleteLocalRef(boolClass);
-    env->DeleteLocalRef(doubleClass);
     return result;
 }
 
