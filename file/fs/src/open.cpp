@@ -30,6 +30,7 @@ namespace FileManagement {
 namespace ModuleFileIO {
 using namespace std;
 using namespace OHOS::FileManagement::LibN;
+const std::string FILE_START = "file:///";
 
 static tuple<bool, unsigned int> GetJsFlags(napi_env env, const NFuncArg &funcArg)
 {
@@ -83,6 +84,16 @@ static NVal InstantiateFile(napi_env env, int fd, const string& pathOrUri, bool 
     return { env, objFile };
 }
 
+static string GetSubstr(string path)
+{
+    string pathStr = string(path);
+    std::size_t index = pathStr.find(FILE_START);
+    if (index == 0) {
+        pathStr = pathStr.substr(FILE_START.length());
+    }
+    return pathStr;
+}
+
 napi_value Open::Sync(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
@@ -102,7 +113,7 @@ napi_value Open::Sync(napi_env env, napi_callback_info info)
         HILOGE("Invalid mode");
         return nullptr;
     }
-    string pathStr = string(path.get());
+    string pathStr = GetSubstr(string(path.get()));
     std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> open_req = {
         new uv_fs_t, CommonFunc::fs_req_cleanup };
     if (!open_req) {
@@ -154,14 +165,14 @@ napi_value Open::Async(napi_env env, napi_callback_info info)
             HILOGE("Failed to request heap memory.");
             return NError(ENOMEM);
         }
-        int ret = uv_fs_open(nullptr, open_req.get(), path.c_str(), mode, S_IRUSR |
+        int ret = uv_fs_open(nullptr, open_req.get(), GetSubstr(path).c_str(), mode, S_IRUSR |
             S_IWUSR | S_IRGRP | S_IWGRP, nullptr);
         if (ret < 0) {
             HILOGE("Failed to open file for libuv error %{public}d", ret);
             return NError(ret);
         }
         arg->fd = ret;
-        arg->path = path;
+        arg->path = GetSubstr(path);
         return NError(ERRNO_NOERR);
     };
     auto cbCompl = [arg](napi_env env, NError err) -> NVal {
