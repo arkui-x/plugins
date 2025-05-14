@@ -44,6 +44,7 @@ template("plugin_net_connection_static") {
     if (platform == "android") {
       deps += [ "android/java:netconnclient_anroid_jni" ]
     } else if (platform == "ios") {
+      defines += [ "IOS_PLATFORM" ]
       deps += [ "ios:net_connection_ios" ]
     }
 
