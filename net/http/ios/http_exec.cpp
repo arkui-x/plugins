@@ -99,7 +99,7 @@ static void AsyncWorkRequestInStreamCallback(napi_env env, napi_status status, v
     if (context->GetDeferred() != nullptr) {
         if (context->IsExecOK()) {
             napi_resolve_deferred(env, context->GetDeferred(), argv[EVENT_PARAM_ONE]);
-            context->Emit(ON_DATA_END, std::make_pair(undefined, undefined));
+            context->EmitSharedManager(ON_DATA_END, std::make_pair(undefined, undefined));
         } else {
             napi_reject_deferred(env, context->GetDeferred(), argv[EVENT_PARAM_ZERO]);
         }
@@ -110,7 +110,7 @@ static void AsyncWorkRequestInStreamCallback(napi_env env, napi_status status, v
         (void)NapiUtils::CallFunction(env, undefined, func, EVENT_PARAM_TWO, argv);
     }
     if (context->IsExecOK()) {
-        context->Emit(ON_DATA_END, std::make_pair(undefined, undefined));
+        context->EmitSharedManager(ON_DATA_END, std::make_pair(undefined, undefined));
     }
 }
 
@@ -186,7 +186,7 @@ bool HttpExec::ExecRequest(RequestContext* context)
         context->SetPermissionDenied(true);
         return false;
     }
-    if (context->GetManager()->IsEventDestroy()) {
+    if (context->GetSharedManager()->IsEventDestroy()) {
         return false;
     }   
     context->options.SetRequestTime(HttpTime::GetNowTimeGMT());
@@ -197,7 +197,7 @@ bool HttpExec::ExecRequest(RequestContext* context)
 
     if (!RequestWithoutCache(context)) {
         context->SetErrorCode(NapiUtils::NETSTACK_NAPI_INTERNAL_ERROR);
-        if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
+        if (context->GetSharedManager()) {
             if (context->IsRequestInStream()) {
                 NapiUtils::CreateUvQueueWorkByModuleId(
                     context->GetEnv(), std::bind(AsyncWorkRequestInStreamCallback, context->GetEnv(), napi_ok, context),
@@ -396,7 +396,7 @@ static void ResponseHeaderCallback(uv_work_t *work, int status)
 {
     (void)status;
 
-    auto workWrapper = static_cast<UvWorkWrapper *>(work->data);
+    auto workWrapper = static_cast<UvWorkWrapperShared*>(work->data);
     napi_env env = workWrapper->env;
     auto headerMap = static_cast<std::map<std::string, std::string> *>(workWrapper->data);
     auto closeScope = [env](napi_handle_scope scope) { NapiUtils::CloseScope(env, scope); };
@@ -438,7 +438,7 @@ size_t HttpExec::OnWritingMemoryHeader(const void* data, size_t size, void* user
         context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_BODY_TIMING);
         return 0;
     }
-    if (context->GetManager()->IsEventDestroy()) {
+    if (context->GetSharedManager()->IsEventDestroy()) {
         context->StopAndCacheNapiPerformanceTiming(HttpConstant::RESPONSE_HEADER_TIMING);
         return 0;
     }
@@ -479,7 +479,7 @@ bool HttpExec::OnSuccessResponse(HttpResponse& httpResponse, void* userData)
 
     ReleaseRequestInfo(context);
 
-    if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
+    if (context->GetSharedManager()) {
         if (context->IsRequestInStream()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
             NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestInStreamCallback);
@@ -502,7 +502,7 @@ bool HttpExec::OnFailedResponse(int32_t errCode, std::string& errMessage, void* 
     context->SetExecOK(false);
     ReleaseRequestInfo(context);
 
-    if (context->GetManager() && EventManager::IsManagerValid(context->GetManager())) {
+    if (context->GetSharedManager()) {
         if (context->IsRequestInStream()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(CURL_TIMEOUT_MS));
             NapiUtils::CreateUvQueueWorkEnhanced(context->GetEnv(), context, AsyncWorkRequestInStreamCallback);
@@ -537,7 +537,8 @@ void HttpExec::OnDataReceive(napi_env env, napi_status status, void* data)
         NETSTACK_LOGE("[CreateArrayBuffer] memory copy failed");
         return;
     }
-    context->Emit(ON_DATA_RECEIVE, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), arrayBuffer));
+    context->EmitSharedManager(
+        ON_DATA_RECEIVE, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), arrayBuffer));
 }
 
 void HttpExec::OnHeaderReceive(napi_env env, napi_status status, void* data)
@@ -550,8 +551,8 @@ void HttpExec::OnHeaderReceive(napi_env env, napi_status status, void* data)
     napi_value header = MakeResponseHeader(context->GetEnv(), context);
 
     napi_value undefined = NapiUtils::GetUndefined(context->GetEnv());
-    context->Emit(ON_HEADER_RECEIVE, std::make_pair(undefined, header));
-    context->Emit(ON_HEADERS_RECEIVE, std::make_pair(undefined, header));
+    context->EmitSharedManager(ON_HEADER_RECEIVE, std::make_pair(undefined, header));
+    context->EmitSharedManager(ON_HEADERS_RECEIVE, std::make_pair(undefined, header));
 }
 
 void HttpExec::OnDataProgress(napi_env env, napi_status status, void* data)
@@ -571,7 +572,8 @@ void HttpExec::OnDataProgress(napi_env env, napi_status status, void* data)
         NapiUtils::SetUint32Property(context->GetEnv(), progress, "receiveSize", static_cast<uint32_t>(dlLen.nLen));
         NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize", static_cast<uint32_t>(dlLen.tLen));
 
-        context->Emit(ON_DATA_RECEIVE_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
+        context->EmitSharedManager(
+            ON_DATA_RECEIVE_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
     }
 }
 
@@ -591,7 +593,8 @@ void HttpExec::OnDataUploadProgress(napi_env env, napi_status status, void *data
                                  static_cast<uint32_t>(context->GetUlLen().nLen));
     NapiUtils::SetUint32Property(context->GetEnv(), progress, "totalSize",
                                  static_cast<uint32_t>(context->GetUlLen().tLen));
-    context->Emit(ON_DATA_SEND_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
+    context->EmitSharedManager(
+        ON_DATA_SEND_PROGRESS, std::make_pair(NapiUtils::GetUndefined(context->GetEnv()), progress));
 }
 
 int HttpExec::ProgressCallback(void *userData, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
@@ -685,8 +688,8 @@ napi_value HttpExec::MakeResponseHeader(napi_env env, void *ctx)
 void HttpExec::OnHeaderReceive(RequestContext* context, napi_value header)
 {
     napi_value undefined = NapiUtils::GetUndefined(context->GetEnv());
-    context->Emit(ON_HEADER_RECEIVE, std::make_pair(undefined, header));
-    context->Emit(ON_HEADERS_RECEIVE, std::make_pair(undefined, header));
+    context->EmitSharedManager(ON_HEADER_RECEIVE, std::make_pair(undefined, header));
+    context->EmitSharedManager(ON_HEADERS_RECEIVE, std::make_pair(undefined, header));
 }
 
 bool HttpExec::IsUnReserved(unsigned char in)
