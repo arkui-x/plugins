@@ -74,6 +74,27 @@ public:
     static ErrCode PageDown(int id, bool bottom);
     static ErrCode PostUrl(int id, const std::string& url, const std::vector<uint8_t>& postData);
     static void OnMessageEventExt(JNIEnv* env, jclass jcls, jint jWebId, jstring jPortHandle, jstring jResult);
+    static void RegisterJavaScriptProxy(int id, const std::string& objName,
+        const std::vector<std::string>& syncMethodList, const std::vector<std::string>& asyncMethodList,
+        const std::string& permission);
+    static jobject OnReceiveJavascriptExecuteCall(
+        JNIEnv* env, jclass jcls, jstring objName, jstring methodName, jobjectArray argsList);
+    static void DeleteJavaScriptRegister(int id, const std::string& objName);
+    static std::shared_ptr<Ace::WebJSValue> ProcessJavaObject(JNIEnv* env, jobject obj, int currentDepth = 0);
+    static std::shared_ptr<Ace::WebJSValue> ProcessJavaList(JNIEnv* env, jobject obj, int currentDepth);
+    static void ProcessMapEntries(JNIEnv* env, jobject iter, std::shared_ptr<Ace::WebJSValue> result, int currentDepth);
+    static std::shared_ptr<Ace::WebJSValue> ProcessJavaMap(JNIEnv* env, jobject obj, int currentDepth);
+    static std::shared_ptr<Ace::WebJSValue> ProcessJavaString(JNIEnv* env, jobject obj);
+    static std::shared_ptr<Ace::WebJSValue> ProcessJavaInteger(JNIEnv* env, jobject obj);
+    static std::shared_ptr<Ace::WebJSValue> ProcessJavaBoolean(JNIEnv* env, jobject obj);
+    static std::shared_ptr<Ace::WebJSValue> ProcessJavaDouble(JNIEnv* env, jobject obj);
+    static jobject ConvertWebToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
+    static jobject ConvertWebBooleanToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
+    static jobject ConvertWebIntegerToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
+    static jobject ConvertWebDoubleToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
+    static jobject ConvertWebStringToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
+    static jobject ConvertWebListToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
+    static jobject ConvertWebDictionaryToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
 };
 }
 

@@ -60,6 +60,8 @@ public:
     ErrCode PageDown(bool value) override;
     ErrCode PostUrl(const std::string& url, const std::vector<uint8_t>& postData) override;
     void StartDownload(const std::string& url) override;
+    void RegisterJavaScriptProxy(const RegisterJavaScriptProxyParam& param) override;
+    void DeleteJavaScriptRegister(const std::string& objName) override;
 };
 }
 #endif

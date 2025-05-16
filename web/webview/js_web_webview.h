@@ -139,6 +139,10 @@ private:
     static napi_value StartDownload(napi_env env, napi_callback_info info);
 
     static napi_value SetDownloadDelegate(napi_env env, napi_callback_info info);
+
+    static napi_value RegisterJavaScriptProxy(napi_env env, napi_callback_info info);
+
+    static napi_value DeleteJavaScriptRegister(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {

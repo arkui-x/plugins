@@ -206,4 +206,15 @@ void WebviewControllerAndroid::StartDownload(const std::string& url)
 {
     WebviewControllerJni::StartDownload(webId_, url);
 }
+
+void WebviewControllerAndroid::RegisterJavaScriptProxy(const RegisterJavaScriptProxyParam& param)
+{
+    WebviewControllerJni::RegisterJavaScriptProxy(
+        webId_, param.objName, param.syncMethodList, param.asyncMethodList, param.permission);
+}
+
+void WebviewControllerAndroid::DeleteJavaScriptRegister(const std::string& objName)
+{
+    WebviewControllerJni::DeleteJavaScriptRegister(webId_, objName);
+}
 }
