@@ -41,6 +41,7 @@ template("plugin_fs_static") {
       "$fs_dirs/src/mod_fs/properties",
       "$fs_dirs/src/mod_fs/class_file",
       "$fs_dirs/src/mod_fs/class_stat",
+      "$fs_dirs/src/mod_fs/class_stream",
       "$libhilog_dirs",
       "$libn_dirs/include",
       "$libn_dirs/include/n_async",
@@ -55,9 +56,12 @@ template("plugin_fs_static") {
 
     sources = libn_src
     sources += [
+      "$fs_dirs/src/mod_fs/class_stream/stream_n_exporter.cpp",
       "$fs_dirs/src/mod_fs/class_stat/stat_n_exporter.cpp",
       "$fs_dirs/src/mod_fs/common_func.cpp",
       "$fs_dirs/src/mod_fs/properties/close.cpp",
+      "$fs_dirs/src/mod_fs/properties/create_stream.cpp",
+      "$fs_dirs/src/mod_fs/properties/create_streamrw.cpp",
       "$fs_dirs/src/mod_fs/properties/fdatasync.cpp",
       "$fs_dirs/src/mod_fs/properties/fsync.cpp",
       "$fs_dirs/src/mod_fs/properties/listfile.cpp",

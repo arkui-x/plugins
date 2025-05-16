@@ -27,6 +27,8 @@
 #include "class_file/file_n_exporter.h"
 #include "close.h"
 #include "copy_file.h"
+#include "create_stream.h"
+#include "create_streamrw.h"
 #include "fdatasync.h"
 #include "filemgmt_libn.h"
 #include "fsync.h"
@@ -574,51 +576,67 @@ napi_value PropNExporter::WriteSync(napi_env env, napi_callback_info info)
     return NVal::CreateInt64(env, static_cast<int64_t>(ret)).val_;
 }
 
-bool PropNExporter::Export()
+bool PropNExporter::ExportSync()
+{
+    return exports_.AddProp(
+        {
+            NVal::DeclareNapiFunction("accessSync", AccessSync),
+            NVal::DeclareNapiFunction("closeSync", Close::Sync),
+            NVal::DeclareNapiFunction("copyFileSync", CopyFile::Sync),
+            NVal::DeclareNapiFunction("fdatasyncSync", Fdatasync::Sync),
+            NVal::DeclareNapiFunction("fsyncSync", Fsync::Sync),
+            NVal::DeclareNapiFunction("listFileSync", ListFile::Sync),
+            NVal::DeclareNapiFunction("lseek", Lseek::Sync),
+            NVal::DeclareNapiFunction("lstatSync", Lstat::Sync),
+            NVal::DeclareNapiFunction("mkdirSync", MkdirSync),
+            NVal::DeclareNapiFunction("mkdtempSync", Mkdtemp::Sync),
+            NVal::DeclareNapiFunction("moveFileSync", Move::Sync),
+            NVal::DeclareNapiFunction("openSync", Open::Sync),
+            NVal::DeclareNapiFunction("readSync", ReadSync),
+            NVal::DeclareNapiFunction("readTextSync", ReadText::Sync),
+            NVal::DeclareNapiFunction("renameSync", Rename::Sync),
+            NVal::DeclareNapiFunction("rmdirSync", Rmdirent::Sync),
+            NVal::DeclareNapiFunction("statSync", Stat::Sync),
+            NVal::DeclareNapiFunction("truncateSync", Truncate::Sync),
+            NVal::DeclareNapiFunction("unlinkSync", UnlinkSync),
+            NVal::DeclareNapiFunction("utimes", Utimes::Sync),
+            NVal::DeclareNapiFunction("writeSync", WriteSync),
+            NVal::DeclareNapiFunction("createStreamSync", CreateStream::Sync),
+            NVal::DeclareNapiFunction("createReadStream", CreateStreamRw::Read),
+            NVal::DeclareNapiFunction("createWriteStream", CreateStreamRw::Write),
+        });
+}
+
+bool PropNExporter::ExportAsync()
 {
     return exports_.AddProp(
         {
             NVal::DeclareNapiFunction("access", Access),
-            NVal::DeclareNapiFunction("accessSync", AccessSync),
-            NVal::DeclareNapiFunction("close", Close::Async),
-            NVal::DeclareNapiFunction("closeSync", Close::Sync),
-            NVal::DeclareNapiFunction("copyFile", CopyFile::Async),
-            NVal::DeclareNapiFunction("copyFileSync", CopyFile::Sync),
-            NVal::DeclareNapiFunction("fdatasync", Fdatasync::Async),
-            NVal::DeclareNapiFunction("fdatasyncSync", Fdatasync::Sync),
             NVal::DeclareNapiFunction("fsync", Fsync::Async),
-            NVal::DeclareNapiFunction("fsyncSync", Fsync::Sync),
             NVal::DeclareNapiFunction("listFile", ListFile::Async),
-            NVal::DeclareNapiFunction("listFileSync", ListFile::Sync),
-            NVal::DeclareNapiFunction("lseek", Lseek::Sync),
             NVal::DeclareNapiFunction("lstat", Lstat::Async),
-            NVal::DeclareNapiFunction("lstatSync", Lstat::Sync),
             NVal::DeclareNapiFunction("mkdir", Mkdir),
-            NVal::DeclareNapiFunction("mkdirSync", MkdirSync),
             NVal::DeclareNapiFunction("mkdtemp", Mkdtemp::Async),
-            NVal::DeclareNapiFunction("mkdtempSync", Mkdtemp::Sync),
             NVal::DeclareNapiFunction("moveFile", Move::Async),
-            NVal::DeclareNapiFunction("moveFileSync", Move::Sync),
             NVal::DeclareNapiFunction("open", Open::Async),
-            NVal::DeclareNapiFunction("openSync", Open::Sync),
             NVal::DeclareNapiFunction("read", Read),
-            NVal::DeclareNapiFunction("readSync", ReadSync),
             NVal::DeclareNapiFunction("readText", ReadText::Async),
-            NVal::DeclareNapiFunction("readTextSync", ReadText::Sync),
             NVal::DeclareNapiFunction("rename", Rename::Async),
-            NVal::DeclareNapiFunction("renameSync", Rename::Sync),
             NVal::DeclareNapiFunction("rmdir", Rmdirent::Async),
-            NVal::DeclareNapiFunction("rmdirSync", Rmdirent::Sync),
             NVal::DeclareNapiFunction("stat", Stat::Async),
-            NVal::DeclareNapiFunction("statSync", Stat::Sync),
             NVal::DeclareNapiFunction("truncate", Truncate::Async),
-            NVal::DeclareNapiFunction("truncateSync", Truncate::Sync),
             NVal::DeclareNapiFunction("unlink", Unlink),
-            NVal::DeclareNapiFunction("unlinkSync", UnlinkSync),
-            NVal::DeclareNapiFunction("utimes", Utimes::Sync),
             NVal::DeclareNapiFunction("write", Write),
-            NVal::DeclareNapiFunction("writeSync", WriteSync),
+            NVal::DeclareNapiFunction("close", Close::Async),
+            NVal::DeclareNapiFunction("createStream", CreateStream::Async),
+            NVal::DeclareNapiFunction("copyFile", CopyFile::Async),
+            NVal::DeclareNapiFunction("fdatasync", Fdatasync::Async),
         });
+}
+
+bool PropNExporter::Export()
+{
+    return ExportSync() && ExportAsync();
 }
 
 string PropNExporter::GetClassName()

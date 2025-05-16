@@ -1,0 +1,126 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/arkui/ace_engine/build/ace_gen_obj.gni")
+import("//foundation/filemanagement/file_api/file_api.gni")
+
+# compile .ts to .js.
+action("build_streamrw_js") {
+  script = "${file_api_path}/interfaces/kits/ts/streamrw/build_ts_js.py"
+  outFile_Path = target_out_dir + "/" + current_cpu
+  args = [
+    "--dst-file",
+    rebase_path(target_out_dir + "/streamrw.js"),
+    "--module-path",
+    rebase_path(
+        "/foundation/filemanagement/file_api/interfaces/kits/ts/streamrw"),
+    "--out-file",
+    rebase_path(outFile_Path + "/streamrw.js"),
+    "--out-filePath",
+    rebase_path(outFile_Path),
+    "--relative-path",
+    rebase_path("//", root_build_dir),
+  ]
+  outputs = [ target_out_dir + "/streamrw.js" ]
+}
+
+# compile .js to .abc.
+es2abc_gen_abc("gen_streamrw_abc") {
+  extra_visibility = [ ":*" ]
+  src_js = rebase_path(target_out_dir + "/streamrw.js")
+  dst_file = rebase_path(target_out_dir + "/streamrw.abc")
+  in_puts = [ target_out_dir + "/streamrw.js" ]
+  out_puts = [ target_out_dir + "/streamrw.abc" ]
+  extra_args = [ "--module" ]
+  extra_dependencies = [ ":build_streamrw_js" ]
+}
+
+abc_output_path = get_label_info(":streamrw_abc", "target_out_dir")
+
+gen_obj("streamrw_js") {
+  input = "$target_out_dir/streamrw.js"
+  if (use_mac || use_mingw_win || use_ios || use_linux) {
+    stream_js_obj_path = abc_output_path + "/streamrw.c"
+  } else {
+    stream_js_obj_path = abc_output_path + "/streamrw.o"
+  }
+  output = stream_js_obj_path
+  snapshot_dep = [ ":build_streamrw_js" ]
+}
+
+gen_obj("streamrw_abc") {
+  input = "$target_out_dir/streamrw.abc"
+  if (use_mac || use_mingw_win || use_ios || use_linux) {
+    stream_js_obj_path = abc_output_path + "/streamrw_abc.c"
+  } else {
+    stream_js_obj_path = abc_output_path + "/streamrw_abc.o"
+  }
+  output = stream_js_obj_path
+  snapshot_dep = [ ":gen_streamrw_abc" ]
+}
+
+ohos_source_set("streamrw_static") {
+  sources = [
+    "${file_api_path}/interfaces/kits/ts/streamrw/native_module_streamrw.cpp",
+  ]
+  deps = [
+    ":gen_obj_src_streamrw_abc",
+    ":gen_obj_src_streamrw_js",
+    "//plugins/interfaces/native:ace_plugin_util_${target_os}",
+    "//plugins/libs/napi:napi_${target_os}",
+  ]
+  use_exceptions = true
+
+  subsystem_name = "plugins"
+  part_name = "file_streamrw"
+}
+
+template("plugin_streamrw_static") {
+  branch_protector_ret = "pac_ret"
+
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    deps = [ ":streamrw_static" ]
+
+    subsystem_name = "plugins"
+    part_name = "file_streamrw"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_streamrw_static("file_streamrw_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

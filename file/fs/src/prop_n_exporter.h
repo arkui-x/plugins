@@ -59,6 +59,8 @@ public:
     static napi_value Mkdir(napi_env env, napi_callback_info info);
     static napi_value Read(napi_env env, napi_callback_info info);
     static napi_value Write(napi_env env, napi_callback_info info);
+    bool ExportSync();
+    bool ExportAsync();
     bool Export() override;
     std::string GetClassName() override;
 
