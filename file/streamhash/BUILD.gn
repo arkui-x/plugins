@@ -1,0 +1,125 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//arkcompiler/ets_frontend/es2panda/es2abc_config.gni")
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/arkui/ace_engine/build/ace_gen_obj.gni")
+import("//foundation/filemanagement/file_api/file_api.gni")
+
+# compile .ts to .js.
+action("build_streamhash_js") {
+  script = "${file_api_path}/interfaces/kits/ts/streamhash/build_ts_js.py"
+  outFile_Path = target_out_dir + "/" + current_cpu
+  args = [
+    "--dst-file",
+    rebase_path(target_out_dir + "/streamhash.js"),
+    "--module-path",
+    rebase_path(
+        "/foundation/filemanagement/file_api/interfaces/kits/ts/streamhash"),
+    "--out-file",
+    rebase_path(outFile_Path + "/streamhash.js"),
+    "--out-filePath",
+    rebase_path(outFile_Path),
+    "--relative-path",
+    rebase_path("//", root_build_dir),
+  ]
+  outputs = [ target_out_dir + "/streamhash.js" ]
+}
+
+# compile .js to .abc.
+es2abc_gen_abc("gen_streamhash_abc") {
+  extra_visibility = [ ":*" ]
+  src_js = rebase_path(target_out_dir + "/streamhash.js")
+  dst_file = rebase_path(target_out_dir + "/streamhash.abc")
+  in_puts = [ target_out_dir + "/streamhash.js" ]
+  out_puts = [ target_out_dir + "/streamhash.abc" ]
+  extra_args = [ "--module" ]
+  extra_dependencies = [ ":build_streamhash_js" ]
+}
+
+abc_output_path = get_label_info(":streamhash_abc", "target_out_dir")
+
+gen_obj("streamhash_js") {
+  input = "$target_out_dir/streamhash.js"
+  if (use_mac || use_mingw_win || use_ios || use_linux) {
+    stream_js_obj_path = abc_output_path + "/streamhash.c"
+  } else {
+    stream_js_obj_path = abc_output_path + "/streamhash.o"
+  }
+  output = stream_js_obj_path
+  snapshot_dep = [ ":build_streamhash_js" ]
+}
+
+gen_obj("streamhash_abc") {
+  input = "$target_out_dir/streamhash.abc"
+  if (use_mac || use_mingw_win || use_ios || use_linux) {
+    stream_js_obj_path = abc_output_path + "/streamhash_abc.c"
+  } else {
+    stream_js_obj_path = abc_output_path + "/streamhash_abc.o"
+  }
+  output = stream_js_obj_path
+  snapshot_dep = [ ":gen_streamhash_abc" ]
+}
+
+ohos_source_set("streamhash_static") {
+  branch_protector_ret = "pac_ret"
+
+  sources = [ "${file_api_path}/interfaces/kits/ts/streamhash/native_module_streamhash.cpp" ]
+
+  deps = [
+    ":gen_obj_src_streamhash_abc",
+    ":gen_obj_src_streamhash_js",
+    "//plugins/interfaces/native:ace_plugin_util_${target_os}",
+    "//plugins/libs/napi:napi_${target_os}",
+  ]
+  use_exceptions = true
+
+  subsystem_name = "plugins"
+  part_name = "file_streamhash"
+}
+
+template("plugin_streamhash_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    deps = [ ":streamhash_static" ]
+
+    subsystem_name = "plugins"
+    part_name = "file_streamhash"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_streamhash_static("file_streamhash_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
