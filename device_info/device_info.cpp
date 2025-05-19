@@ -25,6 +25,40 @@
 #endif
 
 namespace OHOS::Plugin {
+static napi_value CreateDeviceTypes(napi_env env, napi_value exports)
+{
+    napi_value deviceTypes = nullptr;
+    napi_value typeDefault = nullptr;
+    napi_value typePhone = nullptr;
+    napi_value typeTablet = nullptr;
+    napi_value type2in1 = nullptr;
+    napi_value typeTv = nullptr;
+    napi_value typeWearable = nullptr;
+    napi_value typeCar = nullptr;
+
+    napi_create_object(env, &deviceTypes);
+
+    napi_create_string_utf8(env, "default", NAPI_AUTO_LENGTH, &typeDefault);
+    napi_create_string_utf8(env, "phone", NAPI_AUTO_LENGTH, &typePhone);
+    napi_create_string_utf8(env, "tablet", NAPI_AUTO_LENGTH, &typeTablet);
+    napi_create_string_utf8(env, "2in1", NAPI_AUTO_LENGTH, &type2in1);
+    napi_create_string_utf8(env, "tv", NAPI_AUTO_LENGTH, &typeTv);
+    napi_create_string_utf8(env, "wearable", NAPI_AUTO_LENGTH, &typeWearable);
+    napi_create_string_utf8(env, "car", NAPI_AUTO_LENGTH, &typeCar);
+
+    napi_set_named_property(env, deviceTypes, "TYPE_DEFAULT", typeDefault);
+    napi_set_named_property(env, deviceTypes, "TYPE_PHONE", typePhone);
+    napi_set_named_property(env, deviceTypes, "TYPE_TABLET", typeTablet);
+    napi_set_named_property(env, deviceTypes, "TYPE_2IN1", type2in1);
+    napi_set_named_property(env, deviceTypes, "TYPE_TV", typeTv);
+    napi_set_named_property(env, deviceTypes, "TYPE_WEARABLE", typeWearable);
+    napi_set_named_property(env, deviceTypes, "TYPE_CAR", typeCar);
+
+    napi_set_named_property(env, exports, "DeviceTypes", deviceTypes);
+
+    return exports;
+}
+
 static napi_value GetDeviceType(napi_env env, napi_callback_info info)
 {
     napi_value deviceType = nullptr;
@@ -376,6 +410,7 @@ static napi_value Init(napi_env env, napi_value exports)
         {"buildRootHash", nullptr, nullptr, GetBuildRootHash, nullptr, nullptr, napi_default, nullptr},
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(napi_property_descriptor), desc));
+    CreateDeviceTypes(env, exports);
     LOGI("RegisterModule deviceinfo Init.");
     return exports;
 }
