@@ -38,7 +38,7 @@ template("plugin_hitrace_meter_static") {
       deps += [
         "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
       ]
-    } else {
+    } else if (platform == "ios")  {
       deps += [ "//foundation/arkui/ace_engine/adapter/ios/build:libarkui_ios" ]
     }
 
