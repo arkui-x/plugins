@@ -163,11 +163,12 @@ static void Deleter(struct NameList *arg)
     arg = nullptr;
 }
 
-static int CopyFile(const string &src, const string &dest, const int mode)
+static int CheckAndRemoveExistingDest(const std::string &dest, int mode)
 {
-    uv_fs_t statReq;
-    int ret = uv_fs_stat(nullptr, &statReq, dest.c_str(), nullptr);
-    uv_fs_req_cleanup(&statReq);
+    uv_fs_t stat_req;
+    int ret = uv_fs_stat(nullptr, &stat_req, dest.c_str(), nullptr);
+    uv_fs_req_cleanup(&stat_req);
+
     if (ret == 0) {
         if (mode == DIRMODE_FILE_COPY_THROW_ERR) {
             HILOGE("Failed to copy file due to existing destPath with throw err");
@@ -180,15 +181,116 @@ static int CopyFile(const string &src, const string &dest, const int mode)
             }
         }
     }
+    return ERRNO_NOERR;
+}
+
+#ifdef IOS_PLATFORM
+mode_t GetFileMode(const string &src)
+{
+    uv_fs_t src_stat_req;
+    int ret = uv_fs_stat(nullptr, &src_stat_req, src.c_str(), nullptr);
+    if (ret < 0) {
+        HILOGE("Failed to stat source file: %s", uv_strerror(ret));
+        uv_fs_req_cleanup(&src_stat_req);
+        return ret;
+    }
+
+    uv_stat_t* src_stat = static_cast<uv_stat_t*>(src_stat_req.ptr);
+    if (!(src_stat->st_mode & S_IFREG)) {
+        HILOGE("Source is not a regular file");
+        uv_fs_req_cleanup(&src_stat_req);
+        return -EINVAL;
+    }
+    mode_t src_mode = src_stat->st_mode & 0777;
+    uv_fs_req_cleanup(&src_stat_req);
+    return src_mode;
+}
+
+static int SafeClose(uv_file fd1, uv_file fd2)
+{
+    uv_fs_t req1;
+    uv_fs_t req2;
+    if (fd1 >= 0) {
+        uv_fs_close(nullptr, &req1, fd1, nullptr);
+        uv_fs_req_cleanup(&req1);
+    }
+    if (fd2 >= 0) {
+        uv_fs_close(nullptr, &req2, fd2, nullptr);
+        uv_fs_req_cleanup(&req2);
+    }
+    return ERRNO_NOERR;
+}
+
+static uv_file OpenFile(const string& path, int flags, mode_t mode)
+{
+    uv_fs_t open_req;
+    uv_file fd = uv_fs_open(nullptr, &open_req, path.c_str(), flags, mode, nullptr);
+    uv_fs_req_cleanup(&open_req);
+    return fd;
+}
+
+static int HandleIOError(uv_file src, uv_file dest, const char* msg, int err)
+{
+    HILOGE("%s: %s", msg, uv_strerror(err));
+    SafeClose(src, dest);
+    return err;
+}
+
+static int CopyFile(const string &src, const string &dest, int mode)
+{
+    int check = CheckAndRemoveExistingDest(dest, mode);
+    if (check != ERRNO_NOERR) return check;
+
+    uv_file src_fd = OpenFile(src, O_RDONLY, 0);
+    if (src_fd < 0)
+        return HandleIOError(-1, -1, "Open source failed", src_fd);
+
+    uv_file dest_fd = OpenFile(dest, O_WRONLY|O_CREAT|O_TRUNC, GetFileMode(src));
+    if (dest_fd < 0)
+        return HandleIOError(src_fd, -1, "Create dest failed", dest_fd);
+
+    char buffer[4096];
+    uv_buf_t buf;
+
+    while (true) {
+        buf = uv_buf_init(buffer, sizeof(buffer));
+        uv_fs_t read_req;
+        ssize_t read = uv_fs_read(nullptr, &read_req, src_fd, &buf, 1, -1, nullptr);
+        uv_fs_req_cleanup(&read_req);
+        if (read < 0)
+            return HandleIOError(src_fd, dest_fd, "Read failed", read);
+        if (read == 0)
+            break;
+
+        buf = uv_buf_init(buffer, read);
+        uv_fs_t write_req;
+        ssize_t written = uv_fs_write(nullptr, &write_req, dest_fd, &buf, 1, -1, nullptr);
+        uv_fs_req_cleanup(&write_req);
+        if (written < 0)
+            return HandleIOError(src_fd, dest_fd, "Write failed", written);
+        if (written != read)
+            return HandleIOError(src_fd, dest_fd, "Partial write", -EIO);
+    }
+
+    return SafeClose(src_fd, dest_fd);
+}
+#else
+static int CopyFile(const string &src, const string &dest, const int mode)
+{
+    int checkResult = CheckAndRemoveExistingDest(dest, mode);
+    if (checkResult != ERRNO_NOERR) {
+        return checkResult;
+    }
     uv_fs_t copyfile_req;
-    ret = uv_fs_copyfile(nullptr, &copyfile_req, src.c_str(), dest.c_str(), 0, nullptr);
+    int ret = uv_fs_copyfile(nullptr, &copyfile_req, src.c_str(), dest.c_str(), 0, nullptr);
     uv_fs_req_cleanup(&copyfile_req);
     if (ret < 0) {
-        HILOGE("Failed to copy file: %{public}s", uv_strerror(ret));
+        HILOGE("Failed to copy file: %s", uv_strerror(ret));
         return ret;
     }
     return ERRNO_NOERR;
 }
+#endif
 
 static int CopySubDir(const std::string& srcPath, const std::string& destPath, const int mode,
                       std::vector<struct ConflictFiles>& errfiles)

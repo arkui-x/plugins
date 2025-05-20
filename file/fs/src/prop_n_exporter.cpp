@@ -35,6 +35,8 @@
 #include "file_utils.h"
 #include "filemgmt_libn.h"
 #include "fsync.h"
+#include "fs_utils.h"
+#include "file_utils.h"
 #include "listfile.h"
 #include "lseek.h"
 #include "lstat.h"
@@ -44,7 +46,6 @@
 #include "read_text.h"
 #include "rename.h"
 #include "rmdirent.h"
-#include "rust_file.h"
 #include "stat.h"
 #include "symlink.h"
 #include "utimes.h"
@@ -59,11 +60,12 @@ namespace ModuleFileIO {
 using namespace std;
 using namespace OHOS::FileManagement::LibN;
 
+constexpr int32_t MAX_MODE_VALUE = 7;
+
 enum AccessFlag : int32_t {
     DEFAULT_FLAG = -1,
     LOCAL_FLAG,
 };
- 
 struct AccessArgs {
     string path;
     int mode = -1;
@@ -72,7 +74,7 @@ struct AccessArgs {
 
 static int AccessCore(const string &path, int mode)
 {
-    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup) *> access_req = {new uv_fs_t,
+    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup) *> access_req = {new (std::nothrow) uv_fs_t,
         CommonFunc::fs_req_cleanup};
     if (!access_req) {
         HILOGE("Failed to request heap memory.");
@@ -88,7 +90,7 @@ static int GetMode(NVal secondVar, bool *hasMode)
         int mode = 0;
         *hasMode = true;
         tie(succ, mode) = secondVar.ToInt32();
-        if (succ && (static_cast<unsigned int>(mode) & 0x06) == static_cast<unsigned int>(mode)) {
+        if (succ && mode >= 0 && mode <= MAX_MODE_VALUE && (mode & 0x06) == mode) {
             return mode;
         }
     }
@@ -305,7 +307,105 @@ napi_value PropNExporter::UnlinkSync(napi_env env, napi_callback_info info)
     return NVal::CreateUndefined(env).val_;
 }
 
+static int MkdirCore(const string &path)
+{
+    if (path.empty()) {
+        HILOGE("Invalid path: path is empty");
+        return EINVAL;
+    }
+    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> mkdirReq = {
+        new (std::nothrow) uv_fs_t, CommonFunc::fs_req_cleanup};
+
+    if (!mkdirReq) {
+        HILOGE("Failed to request heap memory.");
+        return ENOMEM;
+    }
+    return uv_fs_mkdir(nullptr, mkdirReq.get(), path.c_str(), DIR_DEFAULT_PERM, nullptr);
+}
+
+static NError MkdirExec(const string &path, bool recursion, bool hasOption)
+{
+    if (hasOption) {
+        int ret = AccessCore(path, 0);
+        if (ret == ERRNO_NOERR) {
+            HILOGD("The path already exists");
+            return NError(EEXIST);
+        }
+        if (ret != -ENOENT) {
+            HILOGE("Failed to check for illegal path or request for heap memory");
+            return NError(ret);
+        }
+        ret = OHOS::FileManagement::ModuleFileIO::Mkdirs(path.c_str(), static_cast<MakeDirectionMode>(recursion));
+        if (ret != 0) {
+            HILOGE("Failed to create directories, error: %{public}d", ret);
+            ret = ENOENT;
+            return NError(ret);
+        }
+        ret = AccessCore(path, 0);
+        if (ret != 0) {
+            HILOGE("Failed to verify the result of Mkdirs function");
+            return NError(ret);
+        }
+        return NError(ERRNO_NOERR);
+    }
+
+    int ret = MkdirCore(path);
+    if (ret) {
+        HILOGE("Failed to create directory");
+        return NError(ret);
+    }
+    return NError(ERRNO_NOERR);
+}
+
 napi_value PropNExporter::Mkdir(napi_env env, napi_callback_info info)
+{
+    NFuncArg funcArg(env, info);
+    if (!funcArg.InitArgs(NARG_CNT::ONE, NARG_CNT::THREE)) {
+        HILOGE("Number of arguments unmatched");
+        NError(EINVAL).ThrowErr(env);
+        return nullptr;
+    }
+    auto [succ, tmp, ignore] = NVal(env, funcArg[NARG_POS::FIRST]).ToUTF8StringPath();
+    if (!succ) {
+        HILOGE("Invalid path from JS first argument");
+        NError(EINVAL).ThrowErr(env);
+        return nullptr;
+    }
+
+    bool recursion = false;
+    bool hasOption = false;
+
+    if (funcArg.GetArgc() >= NARG_CNT::TWO) {
+        NVal option(env, funcArg[NARG_POS::SECOND]);
+        if (!option.TypeIs(napi_function)) {
+            tie(hasOption, recursion) = option.ToBool(false);
+            if (!hasOption) {
+                HILOGE("Invalid option argument");
+                NError(EINVAL).ThrowErr(env);
+                return nullptr;
+            }
+        }
+    }
+
+    auto cbExec = [path = string(tmp.get()), recursion, hasOption]() -> NError {
+        return MkdirExec(path, recursion, hasOption);
+    };
+
+    auto cbCompl = [](napi_env env, NError err) -> NVal {
+        return err ? NVal(env, err.GetNapiErr(env)) : NVal::CreateUndefined(env);
+    };
+
+    NVal thisVar(env, funcArg.GetThisVar());
+    if (funcArg.GetArgc() == NARG_CNT::ONE || (funcArg.GetArgc() == NARG_CNT::TWO &&
+        !NVal(env, funcArg[NARG_POS::SECOND]).TypeIs(napi_function))) {
+        return NAsyncWorkPromise(env, thisVar).Schedule(PROCEDURE_MKDIR_NAME, cbExec, cbCompl).val_;
+    } else {
+        NVal cb(env, funcArg[funcArg.GetArgc() - 1]);
+        return NAsyncWorkCallback(env, thisVar, cb).Schedule(PROCEDURE_MKDIR_NAME, cbExec, cbCompl).val_;
+    }
+}
+
+napi_value PropNExporter::MkdirSync(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
     if (!funcArg.InitArgs(NARG_CNT::ONE, NARG_CNT::TWO)) {
@@ -314,71 +414,27 @@ napi_value PropNExporter::Mkdir(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    auto [succ, tmp, ignore] = NVal(env, funcArg[NARG_POS::FIRST]).ToUTF8String();
+    auto [succ, path, ignore] = NVal(env, funcArg[NARG_POS::FIRST]).ToUTF8StringPath();
     if (!succ) {
         HILOGE("Invalid path from JS first argument");
         NError(EINVAL).ThrowErr(env);
         return nullptr;
     }
+    bool hasOption = false;
+    bool recursion = false;
 
-    auto cbExec = [path = string(tmp.get())]() -> NError {
-        std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> mkdir_req = {
-            new uv_fs_t, CommonFunc::fs_req_cleanup };
-        if (!mkdir_req) {
-            HILOGE("Failed to request heap memory.");
-            return NError(ENOMEM);
+    if (funcArg.GetArgc() == NARG_CNT::TWO) {
+        tie(hasOption, recursion) = NVal(env, funcArg[NARG_POS::SECOND]).ToBool(false);
+        if (!hasOption) {
+            HILOGE("Invalid recursion mode");
+            NError(EINVAL).ThrowErr(env);
+            return nullptr;
         }
-        int ret = uv_fs_mkdir(nullptr, mkdir_req.get(), path.c_str(), 0770, nullptr);
-        if (ret < 0) {
-            HILOGE("Failed to create directory");
-            return NError(ret);
-        }
-        return NError(ERRNO_NOERR);
-    };
-
-    auto cbCompl = [](napi_env env, NError err) -> NVal {
-        if (err) {
-            return { env, err.GetNapiErr(env) };
-        }
-        return { NVal::CreateUndefined(env) };
-    };
-
-    NVal thisVar(env, funcArg.GetThisVar());
-    if (funcArg.GetArgc() == NARG_CNT::ONE) {
-        return NAsyncWorkPromise(env, thisVar).Schedule(PROCEDURE_MKDIR_NAME, cbExec, cbCompl).val_;
-    } else {
-        NVal cb(env, funcArg[NARG_POS::SECOND]);
-        return NAsyncWorkCallback(env, thisVar, cb).Schedule(PROCEDURE_MKDIR_NAME, cbExec, cbCompl).val_;
-    }
-}
-
-napi_value PropNExporter::MkdirSync(napi_env env, napi_callback_info info)
-{
-    NFuncArg funcArg(env, info);
-    if (!funcArg.InitArgs(NARG_CNT::ONE)) {
-        HILOGE("Number of arguments unmatched");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
     }
 
-    auto [succ, path, ignore] = NVal(env, funcArg[NARG_POS::FIRST]).ToUTF8String();
-    if (!succ) {
-        HILOGE("Invalid path from JS first argument");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
-    }
-
-    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> mkdir_req = {
-        new uv_fs_t, CommonFunc::fs_req_cleanup };
-    if (!mkdir_req) {
-        HILOGE("Failed to request heap memory.");
-        NError(ENOMEM).ThrowErr(env);
-        return nullptr;
-    }
-    int ret = uv_fs_mkdir(nullptr, mkdir_req.get(), path.get(), 0770, nullptr);
-    if (ret < 0) {
-        HILOGE("Failed to create directory");
-        NError(ret).ThrowErr(env);
+    auto err = MkdirExec(path.get(), recursion, hasOption);
+    if (err) {
+        err.ThrowErr(env);
         return nullptr;
     }
 
@@ -699,7 +755,7 @@ bool PropNExporter::ExportAsync()
             NVal::DeclareNapiFunction("getxattr", Xattr::GetAsync),
             NVal::DeclareNapiFunction("symlink", Symlink::Async),
             NVal::DeclareNapiFunction("moveDir", MoveDir::Async),
-            NVal::DeclareNapiFunction("copyDirSync", CopyDir::Sync),
+            NVal::DeclareNapiFunction("copyDir", CopyDir::Async),
         });
 }
 

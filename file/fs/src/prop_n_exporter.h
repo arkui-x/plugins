@@ -68,6 +68,7 @@ public:
     ~PropNExporter() override;
 };
 
+constexpr int DIR_DEFAULT_PERM = 0770;
 const std::string PROCEDURE_ACCESS_NAME = "FileIOAccess";
 const std::string PROCEDURE_UNLINK_NAME = "FileIOUnlink";
 const std::string PROCEDURE_MKDIR_NAME = "FileIOMkdir";
