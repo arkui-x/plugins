@@ -46,11 +46,21 @@ static bool IsIllegalXattr(const char *key, const char *value)
     return isIllegalKey || isIllegalValue;
 }
 
+static napi_value CheckAndThrow(napi_env env, int errCode)
+{
+    NError(errCode).ThrowErr(env);
+    return nullptr;
+}
+
 static int32_t GetXattrCore(const char *path,
                             const char *key,
                             std::shared_ptr<string> result)
 {
+#ifdef IOS_PLATFORM
+    ssize_t xAttrSize = getxattr(path, key, nullptr, 0, 0, 0);
+#else
     ssize_t xAttrSize = getxattr(path, key, nullptr, 0);
+#endif
     if (xAttrSize == -1) {
         HILOGW("Failed to get xattr value, errno is %{public}d", errno);
         *result = "";
@@ -62,7 +72,11 @@ static int32_t GetXattrCore(const char *path,
         return ERRNO_NOERR;
     }
     auto xattrValue = CreateUniquePtr<char[]>(static_cast<long>(xAttrSize) + 1);
+#ifdef IOS_PLATFORM
+    xAttrSize = getxattr(path, key, xattrValue.get(), static_cast<size_t>(xAttrSize), 0, 0);
+#else
     xAttrSize = getxattr(path, key, xattrValue.get(), static_cast<size_t>(xAttrSize));
+#endif
     if (xAttrSize == -1) {
         HILOGE("Failed to get xattr value, errno is %{public}d", errno);
         return errno;
@@ -77,8 +91,7 @@ napi_value Xattr::SetSync(napi_env env, napi_callback_info info)
     NFuncArg funcArg(env, info);
     if (!funcArg.InitArgs(static_cast<int>(NARG_CNT::THREE))) {
         HILOGE("Number of arguments unmatched");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     bool isSuccess = false;
     std::unique_ptr<char[]> path;
@@ -87,26 +100,30 @@ napi_value Xattr::SetSync(napi_env env, napi_callback_info info)
     tie(isSuccess, path, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::FIRST)]).ToUTF8StringPath();
     if (!isSuccess) {
         HILOGE("Invalid path");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     tie(isSuccess, key, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::SECOND)]).ToUTF8String();
     if (!isSuccess) {
         HILOGE("Invalid xattr key");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     tie(isSuccess, value, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::THIRD)]).ToUTF8String();
     if (!isSuccess || IsIllegalXattr(key.get(), value.get())) {
         HILOGE("Invalid xattr value");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
+#ifdef IOS_PLATFORM
+    if (setxattr(path.get(), key.get(), value.get(), strnlen(value.get(), MAX_XATTR_SIZE), 0, 0) < 0) {
+        HILOGE("setxattr fail, ios errno is %{public}d", errno);
+        errno = ENOENT;
+        return CheckAndThrow(env, errno);
+    }
+#else
     if (setxattr(path.get(), key.get(), value.get(), strnlen(value.get(), MAX_XATTR_SIZE), 0) < 0) {
         HILOGE("setxattr fail, errno is %{public}d", errno);
-        NError(errno).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, errno);
     }
+#endif
     return NVal::CreateUndefined(env).val_;
 }
 
@@ -115,8 +132,7 @@ napi_value Xattr::GetSync(napi_env env, napi_callback_info info)
     NFuncArg funcArg(env, info);
     if (!funcArg.InitArgs(static_cast<int>(NARG_CNT::TWO))) {
         HILOGE("Number of arguments unmatched");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
 
     bool isSuccess = false;
@@ -125,21 +141,18 @@ napi_value Xattr::GetSync(napi_env env, napi_callback_info info)
     tie(isSuccess, path, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::FIRST)]).ToUTF8StringPath();
     if (!isSuccess) {
         HILOGE("Invalid path");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     tie(isSuccess, key, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::SECOND)]).ToUTF8String();
-    if (!succ) {
+    if (!isSuccess) {
         HILOGE("Invalid xattr key");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     auto result = make_shared<std::string>();
     int32_t ret = GetXattrCore(path.get(), key.get(), result);
     if (ret != ERRNO_NOERR) {
         HILOGE("Invalid getxattr");
-        NError(ret).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, ret);
     }
     return NVal::CreateUTF8String(env, *result).val_;
 }
@@ -149,8 +162,7 @@ napi_value Xattr::GetAsync(napi_env env, napi_callback_info info)
     NFuncArg funcArg(env, info);
     if (!funcArg.InitArgs(static_cast<int>(NARG_CNT::TWO))) {
         HILOGE("Number of arguments unmatched");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     bool isSuccess = false;
     std::unique_ptr<char[]> path;
@@ -158,14 +170,12 @@ napi_value Xattr::GetAsync(napi_env env, napi_callback_info info)
     tie(isSuccess, path, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::FIRST)]).ToUTF8StringPath();
     if (!isSuccess) {
         HILOGE("Invalid path");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     tie(isSuccess, key, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::SECOND)]).ToUTF8String();
     if (!isSuccess) {
         HILOGE("Invalid xattr key");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     auto result = make_shared<std::string>();
     string pathString(path.get());
@@ -187,14 +197,12 @@ napi_value Xattr::GetAsync(napi_env env, napi_callback_info info)
         .val_;
 }
 
-
 napi_value Xattr::SetAsync(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
     if (!funcArg.InitArgs(static_cast<int>(NARG_CNT::THREE))) {
         HILOGE("Number of arguments unmatched");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     bool isSuccess = false;
     std::unique_ptr<char[]> path;
@@ -203,41 +211,42 @@ napi_value Xattr::SetAsync(napi_env env, napi_callback_info info)
     tie(isSuccess, path, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::FIRST)]).ToUTF8StringPath();
     if (!isSuccess) {
         HILOGE("Invalid path");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     tie(isSuccess, key, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::SECOND)]).ToUTF8String();
     if (!isSuccess) {
         HILOGE("Invalid xattr key");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     tie(isSuccess, value, std::ignore) = NVal(env, funcArg[static_cast<int>(NARG_POS::THIRD)]).ToUTF8String();
     if (!isSuccess || IsIllegalXattr(key.get(), value.get())) {
         HILOGE("Invalid xattr value");
-        NError(EINVAL).ThrowErr(env);
-        return nullptr;
+        return CheckAndThrow(env, EINVAL);
     }
     string pathString(path.get());
     string keyString(key.get());
     string valueString(value.get());
     auto cbExec = [path = move(pathString), key = move(keyString), value = move(valueString)]() -> NError {
+#ifdef IOS_PLATFORM
+        if (setxattr(path.c_str(), key.c_str(), value.c_str(), strnlen(value.c_str(), MAX_XATTR_SIZE), 0, 0) < 0) {
+            HILOGE("setxattr fail, errno is %{public}d", errno);
+            errno = ENOENT;
+            return NError(errno);
+        }
+#else
         if (setxattr(path.c_str(), key.c_str(), value.c_str(), strnlen(value.c_str(), MAX_XATTR_SIZE), 0) < 0) {
             HILOGE("setxattr fail, errno is %{public}d", errno);
             return NError(errno);
         }
+#endif
         return NError(ERRNO_NOERR);
     };
     auto cbComplete = [](napi_env env, NError err) -> NVal {
-        if (err) {
-            return {env, err.GetNapiErr(env)};
-        }
-        return NVal::CreateUndefined(env);
+        return err ? NVal{env, err.GetNapiErr(env)} : NVal::CreateUndefined(env);
     };
     static const std::string procedureName = "SetXattr";
     NVal thisVar(env, funcArg.GetThisVar());
-    return NAsyncWorkPromise(env, thisVar)
-        .Schedule(procedureName, cbExec, cbComplete).val_;
+    return NAsyncWorkPromise(env, thisVar).Schedule(procedureName, cbExec, cbComplete).val_;
 }
 } // namespace ModuleFileIO
 } // namespace FileManagement

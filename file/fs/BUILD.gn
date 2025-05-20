@@ -96,6 +96,10 @@ template("plugin_fs_static") {
       "//plugins/libs/uv:uv_${target_os}",
     ]
 
+    if (target_os == "ios") {
+      defines += [ "IOS_PLATFORM" ]
+    }
+
     use_exceptions = true
 
     subsystem_name = "plugins"
