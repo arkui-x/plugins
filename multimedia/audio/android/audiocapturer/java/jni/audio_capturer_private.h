@@ -46,6 +46,7 @@ public:
     bool Start() override;
     int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) override;
     CapturerState GetStatus() const override;
+    bool GetTimeStampInfo(Timestamp &timestampNs, Timestamp::Timestampbase base) const override;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const override;
     bool GetFirstPkgTimeStampInfo(int64_t &firstTs) const override;
     bool Pause() const override;

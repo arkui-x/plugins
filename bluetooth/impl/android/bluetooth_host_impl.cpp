@@ -364,7 +364,7 @@ int32_t BluetoothHostImpl::SetFastScan(bool isEnable)
     return 0;
 }
 
-int32_t BluetoothHostImpl::GetRandomAddress(const std::string& realAddr, std::string& randomAddr)
+int32_t BluetoothHostImpl::GetRandomAddress(const std::string& realAddr, std::string& randomAddr, uint64_t tokenId)
 {
     return 0;
 }
@@ -512,6 +512,16 @@ int BluetoothHostImpl::UpdateRefusePolicy(const int32_t pid, const int64_t prohi
 
 int BluetoothHostImpl::ProcessRandomDeviceIdCommand(
     int32_t command, std::vector<std::string>& deviceIdVec, bool &isValid)
+{
+    return 0;
+}
+
+int BluetoothHostImpl::GetCarKeyDfxData(std::string &dfxData)
+{
+    return 0;
+}
+
+int BluetoothHostImpl::SetCarKeyCardData(const std::string &address, int32_t action)
 {
     return 0;
 }

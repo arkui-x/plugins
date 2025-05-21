@@ -99,7 +99,7 @@ public:
         return GSERROR_NOT_SUPPORT;
     }
     GSError FlushBuffer(sptr<SurfaceBuffer>& buffer, const sptr<SyncFence>& fence,
-                        BufferFlushConfigWithDamages &config) override
+                        BufferFlushConfigWithDamages &config, bool needLock = true) override
     {
         return GSERROR_NOT_SUPPORT;
     }

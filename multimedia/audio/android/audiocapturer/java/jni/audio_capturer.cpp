@@ -207,6 +207,11 @@ CapturerState AudioCapturerPrivate::GetStatus() const
     return capturerImpl_->GetStatus();
 }
 
+bool AudioCapturerPrivate::GetTimeStampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const
+{
+    return false;
+}
+
 bool AudioCapturerPrivate::GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const
 {
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, false, "capturerImpl_ == nullptr.");

@@ -63,6 +63,7 @@ FwkCrossPlatformSrc = [
   "$bluetooth_inner_root/src/uuid.cpp",
   "$bluetooth_napi_root/src/common/napi_async_callback.cpp",
   "$bluetooth_napi_root/src/common/napi_async_work.cpp",
+  "$bluetooth_napi_root/src/common/napi_ha_event_utils.cpp",
   "$bluetooth_napi_root/src/common/napi_bluetooth_error.cpp",
   "$bluetooth_napi_root/src/common/napi_bluetooth_event.cpp",
   "$bluetooth_napi_root/src/common/napi_bluetooth_utils.cpp",
@@ -204,6 +205,8 @@ ohos_source_set("bt_framework_crossplatform") {
     ]
     defines += [ "IOS_PLATFORM" ]
   }
+
+  defines += [ "CROSS_PLATFORM" ]
 
   frameworks = [
     "SystemConfiguration.framework",

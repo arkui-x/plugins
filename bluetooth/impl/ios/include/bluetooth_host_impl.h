@@ -96,7 +96,7 @@ public:
     void RegisterBlePeripheralCallback(const sptr<IBluetoothBlePeripheralObserver>& observer) override;
     void DeregisterBlePeripheralCallback(const sptr<IBluetoothBlePeripheralObserver>& observer) override;
     int32_t SetFastScan(bool isEnable) override;
-    int32_t GetRandomAddress(const std::string& realAddr, std::string& randomAddr) override;
+    int32_t GetRandomAddress(const std::string& realAddr, std::string& randomAddr, uint64_t tokenId = 0) override;
     int32_t SyncRandomAddress(const std::string& realAddr, const std::string& randomAddr) override;
     int32_t ConnectAllowedProfiles(const std::string& remoteAddr) override;
     int32_t DisconnectAllowedProfiles(const std::string& remoteAddr) override;
@@ -122,6 +122,8 @@ public:
     int32_t UpdateRefusePolicy(const int32_t pid, const int64_t prohibitedSecondsTime) override;
     int32_t ProcessRandomDeviceIdCommand(
         int32_t command, std::vector<std::string> &deviceIdVec, bool &isValid) override;
+    int32_t GetCarKeyDfxData(std::string &dfxData) override;
+    int32_t SetCarKeyCardData(const std::string &address, int32_t action) override;
 
 private:
     std::mutex observerMutex_;
