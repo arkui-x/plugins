@@ -48,6 +48,7 @@ template("plugin_fs_static") {
       "$libn_dirs/include/n_async",
       "$plugin_fs_dirs/common/",
       "$plugin_fs_dirs/src/",
+      "$plugin_fs_dirs/src/class_readeriterator",
       "$utils_dirs/common/include",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
       "//third_party/libuv/include",
@@ -90,6 +91,8 @@ template("plugin_fs_static") {
       "$plugin_fs_dirs/src/movedir.cpp",
       "$plugin_fs_dirs/src/copydir.cpp",
       "$plugin_fs_dirs/src/fs_utils.cpp",
+      "$plugin_fs_dirs/src/class_readeriterator/readeriterator_n_exporter.cpp",
+      "$plugin_fs_dirs/src/read_lines.cpp",
     ]
 
     deps = [
@@ -104,6 +107,10 @@ template("plugin_fs_static") {
     }
 
     use_exceptions = true
+
+    if (target_os == "ios") {
+      defines += [ "IOS_PLATFORM" ]
+    }
 
     subsystem_name = "plugins"
     part_name = "file_fs"
