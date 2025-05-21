@@ -3,6 +3,7 @@
 |   接口名   |  Android |  IOS   |
 | ---------- | ----- |  -------  |
 |  |  实现  |  实现    |
+|DeviceTypes|<br/>TYPE_DEFAULT = 'default'<br/>TYPE_PHONE = 'phone'<br/>TYPE_TABLET = 'tablet'<br/>TYPE_2IN1 = '2in1'<br/>TYPE_TV = 'tv'<br/>TYPE_WEARABLE = 'wearable'<br/>TYPE_CAR = 'car'|<br/>TYPE_DEFAULT = 'default'<br/>TYPE_PHONE = 'phone'<br/>TYPE_TABLET = 'tablet'<br/>TYPE_2IN1 = '2in1'<br/>TYPE_TV = 'tv'<br/>TYPE_WEARABLE = 'wearable'<br/>TYPE_CAR = 'car'|
 |GetDeviceType|根据应用类型或屏幕尺寸获取|device.userInterfaceIdiom|
 |GetManufacture|Build.MANUFACTURER|"Apple"|
 |GetBrand|Build.BRAND|"Apple"|
