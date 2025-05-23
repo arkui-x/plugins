@@ -45,6 +45,7 @@ template("plugin_cryptoframework_static") {
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_rand.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sign.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sm2_crypto_util.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sm2_ec_signature.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sym_key.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_sym_key_generator.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_utils.cpp",

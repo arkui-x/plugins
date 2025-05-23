@@ -513,5 +513,19 @@ int32_t AudioSystemManager::IsAppVolumeMute(const int32_t appUid, const bool own
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
+
+int32_t AudioSystemManager::UnsetActiveVolumeTypeCallback(
+    const std::shared_ptr<AudioManagerActiveVolumeTypeChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::SetActiveVolumeTypeCallback(
+    const std::shared_ptr<AudioManagerActiveVolumeTypeChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS

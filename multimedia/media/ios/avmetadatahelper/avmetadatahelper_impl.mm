@@ -236,7 +236,14 @@ std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchFrameAtTime(
     return nullptr;
 }
 
-std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchFrameYuv(int64_t timeUs, int32_t option, const PixelMapParams &param)
+std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchFrameYuv(
+    int64_t timeUs, int32_t option, const PixelMapParams& param)
+{
+    return nullptr;
+}
+
+std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchScaledFrameYuv(
+    int64_t timeUs, int32_t option, const PixelMapParams& param)
 {
     return nullptr;
 }
