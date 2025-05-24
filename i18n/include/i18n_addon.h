@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -150,6 +150,8 @@ private:
     static napi_value GetSystemCountriesImpl(napi_env env, napi_callback_info info, bool throwError);
     static napi_value GetDisplayLanguageImpl(napi_env env, napi_callback_info info, bool throwError);
     static napi_value GetDisplayCountryImpl(napi_env env, napi_callback_info info, bool throwError);
+    static napi_value SetAppPreferredLanguage(napi_env env, napi_callback_info info);
+    static napi_value GetAppPreferredLanguage(napi_env env, napi_callback_info info);
 
     static napi_value ObjectConstructor(napi_env env, napi_callback_info info);
 
@@ -162,7 +164,7 @@ private:
     static napi_value GetI18nNormalizerInstance(napi_env env, napi_callback_info info);
     static napi_value I18nNormalizerConstructor(napi_env env, napi_callback_info info);
     static napi_value Normalize(napi_env env, napi_callback_info info);
-    
+
     static bool GetCountryNapiValueWithError(napi_env env, napi_value napiValue, size_t len, char* valueBuf,
         std::string index);
     static bool GetNapiStringValueWithError(napi_env env, napi_value napiValue, size_t len, char* valueBuf,

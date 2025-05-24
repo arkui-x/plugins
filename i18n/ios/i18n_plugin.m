@@ -56,4 +56,23 @@
     return [[NSTimeZone systemTimeZone] name];
 }
 
+-(NSString*)getAppPreferredLanguage{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *customLanguages = [defaults objectForKey:@"ArkuiXApplePreferredLanguages"];
+
+    NSString *languageCode;
+    if (customLanguages && customLanguages.length != 0) {
+        languageCode = customLanguages;
+    } else {
+        languageCode = [self getSystemLocale];
+    }
+
+    return languageCode;
+}
+
+- (void)setAppPreferredLanguage:(NSString *)languageCode {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:languageCode forKey:@"ArkuiXApplePreferredLanguages"];
+    [defaults synchronize];
+}
 @end
