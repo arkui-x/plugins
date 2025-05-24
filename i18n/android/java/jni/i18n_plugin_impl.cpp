@@ -48,4 +48,14 @@ std::string I18NPluginImpl::GetSystemTimezone()
 {
     return I18NPluginJni::GetSystemTimezone();
 }
+
+std::string I18NPluginImpl::GetAppPreferredLanguage()
+{
+    return I18NPluginJni::GetAppPreferredLanguage();
+}
+
+void I18NPluginImpl::SetAppPreferredLanguage(const std::string& languageTag)
+{
+    I18NPluginJni::SetAppPreferredLanguage(languageTag);
+}
 } // namespace OHOS::Plugin
