@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -108,6 +108,7 @@ private:
     SizeF lastDrawSize_;
     OffsetF lastOffset_;
     bool hasPlatformViewInit_ = false;
+    bool isTextureReady = false;
     RefPtr<TouchEventImpl> touchEvent_;
     OffsetF localPosition_;
     SizeF drawSize_;

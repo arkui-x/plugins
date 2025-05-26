@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -70,6 +70,7 @@ void PlatformViewPattern::OnTextureRefresh(void* surface)
     CHECK_NULL_VOID(renderContextForPlatformView);
     renderContextForPlatformView->MarkNewFrameAvailable(surface);
     UpdatePlatformViewLayoutIfNeeded();
+    isTextureReady = true;
 }
 
 void PlatformViewPattern::RegisterPlatformViewEvent()
@@ -160,8 +161,8 @@ void PlatformViewPattern::PlatformViewInitialize()
 
     PlatformViewAddCallBack();
  
-    renderContext->UpdateBackgroundColor(Color::BLACK);
-    renderContextForPlatformView_->UpdateBackgroundColor(Color::BLACK);
+    renderContext->UpdateBackgroundColor(Color::WHITE);
+    renderContextForPlatformView_->UpdateBackgroundColor(Color::WHITE);
     renderContext->SetClipToBounds(true);
 }
 
@@ -283,6 +284,7 @@ void PlatformViewPattern::BeforeSyncGeometryProperties(const DirtySwapConfig& co
         hasPlatformViewInit_ = true;
     }
     UpdateSurfaceBounds(false, config.frameOffsetChange);
+    isTextureReady = false;
     UpdatePlatformViewLayoutIfNeeded();
     host->MarkNeedSyncRenderTree();
 }
@@ -295,6 +297,9 @@ void PlatformViewPattern::UpdatePlatformViewLayoutIfNeeded()
     OffsetF offset = localPosition_ + transformRelativeOffset;
     if (lastDrawSize_ != drawSize_ || lastOffset_ != offset) {
         platformView_->UpdatePlatformViewLayout(drawSize_, offset);
+        if (!isTextureReady) {
+            return;
+        }
         if (renderContextForPlatformView_) {
             renderContextForPlatformView_->SetBounds(
                 localPosition_.GetX(), localPosition_.GetY(), drawSize_.Width(), drawSize_.Height());
