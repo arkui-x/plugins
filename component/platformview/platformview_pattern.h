@@ -108,6 +108,7 @@ private:
     SizeF lastDrawSize_;
     OffsetF lastOffset_;
     bool hasPlatformViewInit_ = false;
+    bool isTextureReady = false;
     RefPtr<TouchEventImpl> touchEvent_;
     OffsetF localPosition_;
     SizeF drawSize_;
