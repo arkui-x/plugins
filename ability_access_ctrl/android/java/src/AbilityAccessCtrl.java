@@ -17,12 +17,17 @@ package ohos.ace.plugin.abilityaccessctrl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Map;
 
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.content.pm.PackageManager;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 /**
  * AbilityAccessCtrl
@@ -70,9 +75,17 @@ public class AbilityAccessCtrl {
     public void requestPermissions(String[] permissions) {
         Log.i(LOG_TAG, "AbilityAccessCtrl: request from java");
         Log.i(LOG_TAG, "AbilityAccessCtrl: request  " + permissions.length);
-        Activity activity = getActivity();
-        if (activity != null) {
-            activity.requestPermissions(permissions, 1);
+        Activity curActivity = getActivity();
+        if (curActivity == null) {
+            return;
+        }
+        Fragment fragment = getFragment(curActivity);
+        if (fragment != null) {
+            Log.i(LOG_TAG, "AbilityAccessCtrl: fragment request");
+            fragment.requestPermissions(permissions, 1);
+        } else {
+            Log.i(LOG_TAG, "AbilityAccessCtrl: curActivity request");
+            curActivity.requestPermissions(permissions, 1);
         }
     }
 
@@ -104,6 +117,30 @@ public class AbilityAccessCtrl {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Fragment getFragment(Activity curActivity) {
+        if (!(curActivity instanceof FragmentActivity)) {
+            return null;
+        }
+        FragmentActivity fragmentActivity = (FragmentActivity) curActivity;
+        FragmentManager fragmentManager = fragmentActivity.getSupportFragmentManager();
+        if (fragmentManager == null) {
+            return null;
+        }
+        List<Fragment> fragments = fragmentManager.getFragments();
+        if (fragments == null) {
+            return null;
+        }
+        for (Fragment fragment : fragments) {
+            if (fragment == null) {
+                continue;
+            }
+            if (fragment.getUserVisibleHint()) {
+                return fragment;
+            }
         }
         return null;
     }
