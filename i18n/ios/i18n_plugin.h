@@ -26,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 -(NSString*)getSystemLanguage;
 -(NSString*)getSystemRegion;
 -(NSString*)getSystemTimezone;
+-(NSString*)getAppPreferredLanguage;
+-(void)setAppPreferredLanguage:(NSString*)languageTag;
 @end
 
 NS_ASSUME_NONNULL_END

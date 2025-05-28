@@ -56,4 +56,17 @@ std::string I18NPluginImpl::GetSystemTimezone()
     std::string result = std::string([origin UTF8String]);
     return result;
 }
+
+std::string I18NPluginImpl::GetAppPreferredLanguage()
+{
+    NSString *origin = [[iOSI18NPlugin shareinstance] getAppPreferredLanguage];
+    std::string result = std::string([origin UTF8String]);
+    return result;
+}
+
+void I18NPluginImpl::SetAppPreferredLanguage(const std::string& languageTag)
+{
+    NSString *nsLanguageTag = [NSString stringWithUTF8String:languageTag.c_str()];
+    [[iOSI18NPlugin shareinstance] setAppPreferredLanguage:nsLanguageTag];
+}
 } // namespace OHOS::Plugin

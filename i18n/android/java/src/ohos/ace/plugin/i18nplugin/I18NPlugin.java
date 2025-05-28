@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,8 @@
 package ohos.ace.plugin.i18nplugin;
 
 import android.content.Context;
-import android.os.LocaleList;
+import android.content.res.Resources;
+import android.content.SharedPreferences;
 import android.text.format.DateFormat;
 import android.util.Log;
 
@@ -30,6 +31,11 @@ import java.util.TimeZone;
  */
 public class I18NPlugin {
     private static final String LOG_TAG = "I18NPlugin";
+    private static final String LANGUAGE_SHARE_PREFERENC = "language_prefs";
+    private static final String KEY_LANGUAGE = "app_language";
+
+    private static Runnable mRestartFunc = null;
+
     private Context mContext;
 
     /**
@@ -61,7 +67,7 @@ public class I18NPlugin {
      * @return System locale
      */
     public String getSystemLocale() {
-        Locale systemLocale = LocaleList.getDefault().get(0);
+        Locale systemLocale = Resources.getSystem().getConfiguration().getLocales().get(0);
         String localeTag = "";
         if (systemLocale != null) {
             localeTag += systemLocale.getLanguage();
@@ -81,7 +87,7 @@ public class I18NPlugin {
      * @return System language
      */
     public String getSystemLanguage() {
-        Locale systemLocale = LocaleList.getDefault().get(0);
+        Locale systemLocale = Resources.getSystem().getConfiguration().getLocales().get(0);
         String langugeTag = "";
         if (systemLocale != null) {
             langugeTag += systemLocale.getLanguage();
@@ -98,7 +104,7 @@ public class I18NPlugin {
      * @return System region
      */
     public String getSystemRegion() {
-        Locale systemLocale = LocaleList.getDefault().get(0);
+        Locale systemLocale = Resources.getSystem().getConfiguration().getLocales().get(0);
         if (systemLocale == null) {
             return "";
         }
@@ -112,6 +118,46 @@ public class I18NPlugin {
      */
     public String getSystemTimezone() {
         return TimeZone.getDefault().getID();
+    }
+
+    /**
+     * getAppPreferredLanguage
+     *
+     * @return app preferred language
+     */
+    public String getAppPreferredLanguage() {
+        SharedPreferences prefs =
+            mContext.getSharedPreferences(LANGUAGE_SHARE_PREFERENC, Context.MODE_PRIVATE);
+        String savedLang = prefs.getString(KEY_LANGUAGE, null);
+        if (savedLang != null && !savedLang.isEmpty()) {
+            return savedLang;
+        } else {
+            return getSystemLocale();
+        }
+    }
+
+    /**
+     * setAppPreferredLanguage
+     *
+     * @param languageTag app preferred language
+     */
+    public void setAppPreferredLanguage(String languageTag) {
+        SharedPreferences.Editor editor =
+            mContext.getSharedPreferences(LANGUAGE_SHARE_PREFERENC, Context.MODE_PRIVATE).edit();
+        editor.putString(KEY_LANGUAGE, languageTag);
+        editor.commit();
+        if (mRestartFunc != null) {
+            mRestartFunc.run();
+        }
+    }
+
+    /**
+     * setRestartFunc
+     *
+     * @param func function to restart app
+     */
+    public static void setRestartFunc(Runnable func) {
+        mRestartFunc = func;
     }
 
     /**
