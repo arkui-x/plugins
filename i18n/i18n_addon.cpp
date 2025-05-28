@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -2747,6 +2747,64 @@ napi_value I18nAddon::Is24HourClock(napi_env env, napi_callback_info info)
     return result;
 }
 
+napi_value I18nAddon::SetAppPreferredLanguage(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = { 0 };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    status = napi_typeof(env, argv[0], &valueType);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    if (valueType != napi_valuetype::napi_string) {
+        LOGE("SetAppPreferredLanguage Parameter type is not string");
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "language", "string", true);
+        return nullptr;
+    }
+
+    size_t len = 0;
+    status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &len);
+    if (status != napi_ok) {
+        LOGE("SetAppPreferredLanguage: Get string failed");
+        return nullptr;
+    }
+    std::vector<char> buf(len + 1);
+    status = napi_get_value_string_utf8(env, argv[0], buf.data(), len + 1, &len);
+    if (status != napi_ok) {
+        LOGE("SetAppPreferredLanguage: Create string failed");
+        return nullptr;
+    }
+    std::string localeTag(buf.data());
+
+    UErrorCode icuStatus = U_ZERO_ERROR;
+    icu::Locale locale = icu::Locale::forLanguageTag(localeTag.data(), icuStatus);
+    if (U_FAILURE(icuStatus) || !(IsValidLocaleTag(locale) || localeTag.compare("default") == 0)) {
+        LOGE("SetAppPreferredLanguage does not support this locale");
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, "language", "a valid language", true);
+        return nullptr;
+    }
+    LocaleConfig::SetAppPreferredLanguage(localeTag);
+    return nullptr;
+}
+
+napi_value I18nAddon::GetAppPreferredLanguage(napi_env env, napi_callback_info info)
+{
+    std::string language = LocaleConfig::GetAppPreferredLanguage();
+    napi_value result = nullptr;
+    napi_status status = napi_create_string_utf8(env, language.c_str(), NAPI_AUTO_LENGTH, &result);
+    if (status != napi_ok) {
+        LOGE("getAppPreferredLanguage: create string result failed");
+        return nullptr;
+    }
+    return result;
+}
+
 bool I18nAddon::ParseStringParam(napi_env env, napi_value argv, bool throwError, std::string &strParam)
 {
     if (argv == nullptr) {
@@ -2969,7 +3027,7 @@ napi_value I18nAddon::GetTimeZoneDisplayName(napi_env env, napi_callback_info in
         LOGE("Get TimeZone object failed");
         return nullptr;
     }
-    
+
     std::string locale;
     bool isDST = false;
     int32_t parameterStatus = GetParameter(env, argv, locale, isDST);
@@ -3108,6 +3166,8 @@ napi_value I18nAddon::CreateSystemObject(napi_env env, napi_status &initStatus)
         DECLARE_NAPI_FUNCTION("getSystemRegion", GetSystemRegion),
         DECLARE_NAPI_FUNCTION("getSystemLocale", GetSystemLocale),
         DECLARE_NAPI_FUNCTION("is24HourClock", Is24HourClock),
+        DECLARE_NAPI_STATIC_FUNCTION("setAppPreferredLanguage", SetAppPreferredLanguage),
+        DECLARE_NAPI_STATIC_FUNCTION("getAppPreferredLanguage", GetAppPreferredLanguage),
     };
     status = napi_define_properties(env, system,
                                     sizeof(systemProperties) / sizeof(napi_property_descriptor),
@@ -3295,7 +3355,7 @@ napi_value I18nAddon::I18nNormalizerConstructor(napi_env env, napi_callback_info
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
     napi_typeof(env, argv[0], &valueType);
-    
+
     if (valueType != napi_valuetype::napi_number) {
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, true);
     }

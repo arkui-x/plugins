@@ -28,6 +28,8 @@ public:
     std::string GetSystemLanguage() override;
     std::string GetSystemRegion() override;
     std::string GetSystemTimezone() override;
+    std::string GetAppPreferredLanguage() override;
+    void SetAppPreferredLanguage(const std::string& languageTag) override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H

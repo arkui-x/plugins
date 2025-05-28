@@ -29,6 +29,8 @@ public:
     virtual std::string GetSystemLanguage();
     virtual std::string GetSystemRegion();
     virtual std::string GetSystemTimezone();
+    virtual std::string GetAppPreferredLanguage();
+    virtual void SetAppPreferredLanguage(const std::string& languageTag);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
