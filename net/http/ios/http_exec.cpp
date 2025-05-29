@@ -42,7 +42,7 @@ static constexpr const int EVENT_PARAM_ZERO = 0;
 static constexpr const int EVENT_PARAM_ONE = 1;
 static constexpr const int EVENT_PARAM_TWO = 2;
 static constexpr size_t MAX_LIMIT = 5 * 1024 * 1024;
-static constexpr const char *TLS12_SECURITY_CIPHER_SUITE = R"(DEFAULT:!CBC:!eNULL:!EXPORT)";
+static constexpr const char *TLS12_SECURITY_CIPHER_SUITE = R"(DEFAULT:!eNULL:!EXPORT)";
 
 HttpExec::StaticVariable HttpExec::staticVariable_;
 HttpExec::StaticContextVec HttpExec::staticContextSet_;
