@@ -62,7 +62,7 @@ static constexpr int CURL_HANDLE_NUM = 10;
 static constexpr const uint32_t EVENT_PARAM_ZERO = 0;
 static constexpr const uint32_t EVENT_PARAM_ONE = 1;
 static constexpr const uint32_t EVENT_PARAM_TWO = 2;
-static constexpr const char *TLS12_SECURITY_CIPHER_SUITE = R"(DEFAULT:!CBC:!eNULL:!EXPORT)";
+static constexpr const char *TLS12_SECURITY_CIPHER_SUITE = R"(DEFAULT:!eNULL:!EXPORT)";
 
 #ifdef HTTP_PROXY_ENABLE
 static constexpr int32_t SYSPARA_MAX_SIZE = 128;
