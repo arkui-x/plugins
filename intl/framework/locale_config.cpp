@@ -21,6 +21,17 @@ namespace OHOS {
 namespace Global {
 namespace I18n {
 using namespace std;
+namespace {
+const std::map<std::string, std::string> IcuCalendarMap = {
+    { "gregorian", "gregory" },
+    { "ethiopicAmeteMihret", "ethiopic" },
+    { "ethiopicAmeteAlem", "ethioaa" },
+    { "islamicCivil", "islamic-civil" },
+    { "islamicTabular", "islamic-tbla" },
+    { "islamicUmmAlQura", "islamic-umalqura" },
+    { "republicOfChina", "roc" },
+};
+}
 
 unique_ptr<Plugin::INTL> LocaleConfig::plugin = Plugin::INTL::Create();
 
@@ -45,7 +56,12 @@ std::string LocaleConfig::GetSystemCalendar()
     if (!plugin) {
         return "";
     }
-    return plugin->GetSystemCalendar();
+    std::string calendar = plugin->GetSystemCalendar();
+    auto iter = IcuCalendarMap.find(calendar);
+    if (iter != IcuCalendarMap.end()) {
+        calendar = iter->second;
+    }
+    return calendar;
 }
 
 std::string LocaleConfig::GetNumberingSystem()
@@ -68,7 +84,7 @@ std::string LocaleConfig::GetSystemLocaleWithExtParam()
 {
     std::string systemLocale = LocaleConfig::GetSystemLocale();
     bool hasExtParam = false;
-    
+
     std::string systemNumberingSystem = LocaleConfig::GetNumberingSystem();
     if (!systemNumberingSystem.empty()) {
         systemLocale += "-u-nu-" + systemNumberingSystem;
