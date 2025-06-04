@@ -18,6 +18,7 @@ package ohos.ace.plugin.i18nplugin;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.text.format.DateFormat;
 import android.util.Log;
 
@@ -31,10 +32,10 @@ import java.util.TimeZone;
  */
 public class I18NPlugin {
     private static final String LOG_TAG = "I18NPlugin";
-    private static final String LANGUAGE_SHARE_PREFERENC = "language_prefs";
+    private static final String LANGUAGE_SHARE_PREFERENCE = "language_prefs";
     private static final String KEY_LANGUAGE = "app_language";
 
-    private static Runnable mRestartFunc = null;
+    private static I18NSetAppPreferredLanguage mRestartFunc = null;
 
     private Context mContext;
 
@@ -67,7 +68,7 @@ public class I18NPlugin {
      * @return System locale
      */
     public String getSystemLocale() {
-        Locale systemLocale = Resources.getSystem().getConfiguration().getLocales().get(0);
+        Locale systemLocale = getSystemLocaleCompat();
         String localeTag = "";
         if (systemLocale != null) {
             localeTag += systemLocale.getLanguage();
@@ -87,7 +88,7 @@ public class I18NPlugin {
      * @return System language
      */
     public String getSystemLanguage() {
-        Locale systemLocale = Resources.getSystem().getConfiguration().getLocales().get(0);
+        Locale systemLocale = getSystemLocaleCompat();
         String langugeTag = "";
         if (systemLocale != null) {
             langugeTag += systemLocale.getLanguage();
@@ -104,7 +105,7 @@ public class I18NPlugin {
      * @return System region
      */
     public String getSystemRegion() {
-        Locale systemLocale = Resources.getSystem().getConfiguration().getLocales().get(0);
+        Locale systemLocale = getSystemLocaleCompat();
         if (systemLocale == null) {
             return "";
         }
@@ -126,8 +127,12 @@ public class I18NPlugin {
      * @return app preferred language
      */
     public String getAppPreferredLanguage() {
+        if (mContext == null) {
+            Log.w(LOG_TAG, "I18NPlugin: context not registered");
+            return getSystemLocale();
+        }
         SharedPreferences prefs =
-            mContext.getSharedPreferences(LANGUAGE_SHARE_PREFERENC, Context.MODE_PRIVATE);
+            mContext.getSharedPreferences(LANGUAGE_SHARE_PREFERENCE, Context.MODE_PRIVATE);
         String savedLang = prefs.getString(KEY_LANGUAGE, null);
         if (savedLang != null && !savedLang.isEmpty()) {
             return savedLang;
@@ -142,12 +147,16 @@ public class I18NPlugin {
      * @param languageTag app preferred language
      */
     public void setAppPreferredLanguage(String languageTag) {
+        if (mContext == null) {
+            Log.w(LOG_TAG, "I18NPlugin: context not registered");
+            return;
+        }
         SharedPreferences.Editor editor =
-            mContext.getSharedPreferences(LANGUAGE_SHARE_PREFERENC, Context.MODE_PRIVATE).edit();
+            mContext.getSharedPreferences(LANGUAGE_SHARE_PREFERENCE, Context.MODE_PRIVATE).edit();
         editor.putString(KEY_LANGUAGE, languageTag);
         editor.commit();
         if (mRestartFunc != null) {
-            mRestartFunc.run();
+            mRestartFunc.restartApp();
         }
     }
 
@@ -156,12 +165,27 @@ public class I18NPlugin {
      *
      * @param func function to restart app
      */
-    public static void setRestartFunc(Runnable func) {
+    public static void setRestartFunc(I18NSetAppPreferredLanguage func) {
         mRestartFunc = func;
+    }
+
+    /**
+     * clear Restart function
+     */
+    public static void clearRestartFunc() {
+        mRestartFunc = null;
     }
 
     /**
      * nativeInit
      */
     protected native void nativeInit();
+
+    private Locale getSystemLocaleCompat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Resources.getSystem().getConfiguration().getLocales().get(0);
+        } else {
+            return Locale.getDefault();
+        }
+    }
 }

@@ -73,6 +73,9 @@ template("plugin_i18n_static") {
     defines += invoker.defines
     cflags_cc += invoker.cflags_cc
     use_exceptions = true
+
+    configs = [ "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/kits/native/appkit:appkit_native_config" ]
+
     include_dirs = [
       "include",
       "$ace_root",
@@ -241,6 +244,10 @@ template("plugin_i18n_static") {
       "//plugins/libs/icu:icu_${target_os}",
       "//plugins/libs/napi:napi_${target_os}",
     ]
+
+    if (defined(config.libace_target)) {
+      deps += [ config.libace_target ]
+    }
 
     if (platform == "android") {
       deps += [ "android/java:i18n_plugin_android_jni" ]
