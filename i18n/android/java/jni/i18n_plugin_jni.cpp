@@ -35,12 +35,16 @@ const char METHOD_GET_SYSTEM_LOCALE[] = "getSystemLocale";
 const char METHOD_GET_SYSTEM_LANGUAGE[] = "getSystemLanguage";
 const char METHOD_GET_SYSTEM_REGION[] = "getSystemRegion";
 const char METHOD_GET_SYSTEM_TIMEZONE[] = "getSystemTimezone";
+const char METHOD_GET_APP_PREFERRED_LANGUAGE[] = "getAppPreferredLanguage";
+const char METHOD_SET_APP_PREFERRED_LANGUAGE[] = "setAppPreferredLanguage";
 
 const char SIGNATURE_IS24HOUR_CLOCK[] = "()Z";
 const char SIGNATURE_GET_SYSTEM_LOCALE[] = "()Ljava/lang/String;";
 const char SIGNATURE_GET_SYSTEM_LANGUAGE[] = "()Ljava/lang/String;";
 const char SIGNATURE_GET_SYSTEM_REGION[] = "()Ljava/lang/String;";
 const char SIGNATURE_GET_SYSTEM_TIMEZONE[] = "()Ljava/lang/String;";
+const char SIGNATURE_GET_APP_PREFERRED_LANGUAGE[] = "()Ljava/lang/String;";
+const char SIGNATURE_SET_APP_PREFERRED_LANGUAGE[] = "(Ljava/lang/String;)V";
 
 struct {
     jmethodID is24HourClock;
@@ -48,6 +52,8 @@ struct {
     jmethodID getSystemLanguage;
     jmethodID getSystemRegion;
     jmethodID getSystemTimezone;
+    jmethodID getAppPreferredLanguage;
+    jmethodID setAppPreferredLanguage;
     jobject globalRef;
 } g_pluginClass;
 } // namespace
@@ -89,6 +95,14 @@ void I18NPluginJni::NativeInit(JNIEnv* env, jobject jobj)
 
     g_pluginClass.getSystemTimezone = env->GetMethodID(cls, METHOD_GET_SYSTEM_TIMEZONE, SIGNATURE_GET_SYSTEM_TIMEZONE);
     CHECK_NULL_VOID(g_pluginClass.getSystemTimezone);
+
+    g_pluginClass.getAppPreferredLanguage =
+        env->GetMethodID(cls, METHOD_GET_APP_PREFERRED_LANGUAGE, SIGNATURE_GET_APP_PREFERRED_LANGUAGE);
+    CHECK_NULL_VOID(g_pluginClass.getAppPreferredLanguage);
+
+    g_pluginClass.setAppPreferredLanguage =
+        env->GetMethodID(cls, METHOD_SET_APP_PREFERRED_LANGUAGE, SIGNATURE_SET_APP_PREFERRED_LANGUAGE);
+    CHECK_NULL_VOID(g_pluginClass.getAppPreferredLanguage);
 
     env->DeleteLocalRef(cls);
 }
@@ -180,5 +194,42 @@ std::string I18NPluginJni::GetSystemTimezone()
     }
     std::string timezone = env->GetStringUTFChars(result, NULL);
     return timezone;
+}
+
+std::string I18NPluginJni::GetAppPreferredLanguage()
+{
+    jstring result;
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.getAppPreferredLanguage)) {
+        LOGW("getAppPreferredLanguage: I18NPluginJni get none ptr error");
+        return "";
+    }
+    result = static_cast<jstring>(
+        env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.getAppPreferredLanguage));
+    if (env->ExceptionCheck()) {
+        LOGE("getAppPreferredLanguage: I18N JNI: call getAppPreferredLanguage failed");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    std::string appPreferredLanguage = env->GetStringUTFChars(result, NULL);
+    return appPreferredLanguage;
+}
+
+void I18NPluginJni::SetAppPreferredLanguage(const std::string& languageTag)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.setAppPreferredLanguage)) {
+        LOGW("SetAppPreferredLanguage: I18NPluginJni get none ptr error");
+        return;
+    }
+
+    jstring jLanguageTag = env->NewStringUTF(languageTag.c_str());
+    env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.setAppPreferredLanguage, jLanguageTag);
+    env->DeleteLocalRef(jLanguageTag);
+    if (env->ExceptionCheck()) {
+        LOGE("I18N JNI: call setAppPreferredLanguage failed");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
 }
 } // namespace OHOS::Plugin

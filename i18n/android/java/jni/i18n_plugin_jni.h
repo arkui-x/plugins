@@ -33,6 +33,8 @@ public:
     static std::string GetSystemLanguage();
     static std::string GetSystemRegion();
     static std::string GetSystemTimezone();
+    static std::string GetAppPreferredLanguage();
+    static void SetAppPreferredLanguage(const std::string& languageTag);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_ANDROID_JAVA_JNI_I18N_PLUGIN_JNI_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,23 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef I18N_IOS_I18N_PLUGIN_H
-#define I18N_IOS_I18N_PLUGIN_H
+
+#ifndef PLUGIN_ACCESSIBILITY_IOS_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_H
+#define PLUGIN_ACCESSIBILITY_IOS_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_H
 
 #import <Foundation/Foundation.h>
 
-NS_ASSUME_NONNULL_BEGIN
-
-@interface iOSI18NPlugin : NSObject
-+(instancetype)shareinstance;
--(bool)is24HourClock;
--(NSString*)getSystemLocale;
--(NSString*)getSystemLanguage;
--(NSString*)getSystemRegion;
--(NSString*)getSystemTimezone;
--(NSString*)getAppPreferredLanguage;
--(void)setAppPreferredLanguage:(NSString*)languageTag;
+@interface AccessibilitySystemAbilityClient : NSObject
++ (instancetype) sharedInstance;
+- (bool) getAccessibilityEnabled;
+- (void) subscribeState:(void (^)(bool state))block;
+- (void) unsubscribeState:(void (^)(bool state))block;
 @end
-
-NS_ASSUME_NONNULL_END
-#endif
+#endif // PLUGIN_ACCESSIBILITY_IOS_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_H

@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 
 common_plugin_libs = [
   "ability_access_ctrl",
+  "accessibility",
   "arkui/advanced/dialog",
   "arkui/advanced/segmentbutton",
   "arkui/advanced/subheader",
@@ -98,6 +99,10 @@ common_plugin_libs = [
   "arkts/math/decimal",
   "hiviewdfx/hiappevent",
   "arkui/advanced/swiperefresher",
+  "arkui/advanced/composelistitem",
+  "arkui/advanced/composetitlebar",
+  "arkui/advanced/selecttitlebar",
+  "arkui/advanced/selectionmenu",
 ]
 
 template("plugin_lib") {
