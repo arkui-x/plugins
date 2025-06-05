@@ -81,6 +81,8 @@ template("plugin_fs_static") {
       "$plugin_fs_dirs/src/move.cpp",
       "$plugin_fs_dirs/src/open.cpp",
       "$plugin_fs_dirs/src/prop_n_exporter.cpp",
+      "$plugin_fs_dirs/src/movedir.cpp",
+      "$plugin_fs_dirs/src/copydir.cpp",
     ]
 
     deps = [

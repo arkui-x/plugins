@@ -44,6 +44,8 @@
 #include "stat.h"
 #include "utimes.h"
 #include "truncate.h"
+#include "movedir.h"
+#include "copydir.h"
 
 namespace OHOS {
 namespace FileManagement {
@@ -604,6 +606,8 @@ bool PropNExporter::ExportSync()
             NVal::DeclareNapiFunction("createStreamSync", CreateStream::Sync),
             NVal::DeclareNapiFunction("createReadStream", CreateStreamRw::Read),
             NVal::DeclareNapiFunction("createWriteStream", CreateStreamRw::Write),
+            NVal::DeclareNapiFunction("moveDirSync", MoveDir::Sync),
+            NVal::DeclareNapiFunction("copyDirSync", CopyDir::Sync),
         });
 }
 
@@ -631,6 +635,8 @@ bool PropNExporter::ExportAsync()
             NVal::DeclareNapiFunction("createStream", CreateStream::Async),
             NVal::DeclareNapiFunction("copyFile", CopyFile::Async),
             NVal::DeclareNapiFunction("fdatasync", Fdatasync::Async),
+            NVal::DeclareNapiFunction("moveDir", MoveDir::Async),
+            NVal::DeclareNapiFunction("copyDirSync", CopyDir::Sync),
         });
 }
 
