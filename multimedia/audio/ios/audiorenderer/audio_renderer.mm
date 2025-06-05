@@ -545,5 +545,9 @@ int32_t AudioRendererPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timest
 {
     return ERR_NOT_SUPPORTED;
 }
+
+void AudioRendererPrivate::SetFastStatusChangeCallback(
+    const std::shared_ptr<AudioRendererFastStatusChangeCallback>& callback)
+{}
 }  // namespace AudioStandard
 }  // namespace OHOS

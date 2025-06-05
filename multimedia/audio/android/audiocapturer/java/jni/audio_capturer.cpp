@@ -375,5 +375,14 @@ int32_t AudioCapturerPrivate::SetInputDevice(DeviceType deviceType) const
 {
     return 0;
 }
+
+int32_t AudioCapturerPrivate::SetInterruptStrategy(InterruptStrategy strategy)
+{
+    return 0;
+}
+
+void AudioCapturerPrivate::SetFastStatusChangeCallback(
+    const std::shared_ptr<AudioCapturerFastStatusChangeCallback>& callback)
+{}
 } // namespace AudioStandard
 } // namespace OHOS

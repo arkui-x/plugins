@@ -95,6 +95,8 @@ public:
     uint32_t GetOverflowCount() const override { return 0; }
     int32_t SetInputDevice(DeviceType deviceType) const override;
     int32_t SetAudioSourceConcurrency(const std::vector<SourceType> &targetSources) override { return 0; }
+    int32_t SetInterruptStrategy(InterruptStrategy strategy) override;
+    void SetFastStatusChangeCallback(const std::shared_ptr<AudioCapturerFastStatusChangeCallback> &callback) override;
 
 private:
     std::shared_ptr<AudioCapturerImpl> capturerImpl_ = nullptr;

@@ -367,6 +367,11 @@ int32_t AudioCapturerPrivate::SetAudioSourceConcurrency(const std::vector<Source
     return 0; 
 }
 
+int32_t AudioCapturerPrivate::SetInterruptStrategy(InterruptStrategy strategy)
+{
+    return 0;
+}
+
 std::vector<sptr<MicrophoneDescriptor>> AudioCapturerPrivate::GetCurrentMicrophones() const
 {
     std::vector<sptr<MicrophoneDescriptor>> emptyVector;
@@ -404,5 +409,9 @@ int32_t AudioCapturerPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timest
 {
     return 0;
 }
+
+void AudioCapturerPrivate::SetFastStatusChangeCallback(
+    const std::shared_ptr<AudioCapturerFastStatusChangeCallback>& callback)
+{}
 }  // namespace AudioStandard
 }  // namespace OHOS
