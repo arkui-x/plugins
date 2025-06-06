@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "application_context.h"
 #include "localebuilder.h"
 #include "locid.h"
 #include "ucase.h"
@@ -186,8 +187,15 @@ void LocaleConfig::SetAppPreferredLanguage(const std::string &language)
     if (!plugin) {
         return;
     }
-    std::string localeTag = language.compare("default") == 0 ? "" : language;
-    plugin->SetAppPreferredLanguage(localeTag);
+    if (language.compare("default") == 0) {
+        plugin->SetAppPreferredLanguage("");
+        return;
+    }
+    plugin->SetAppPreferredLanguage(language);
+    auto appContext = AbilityRuntime::Platform::ApplicationContext::GetInstance();
+    if (appContext != nullptr) {
+        appContext->SetLanguage(language);
+    }
 }
 } // namespace I18n
 } // namespace Global

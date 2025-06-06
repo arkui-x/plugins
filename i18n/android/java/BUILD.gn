@@ -14,7 +14,10 @@
 import("//build/ohos.gni")
 
 java_library("i18n_plugin_android_java") {
-  java_files = [ "src/ohos/ace/plugin/i18nplugin/I18NPlugin.java" ]
+  java_files = [
+    "src/ohos/ace/plugin/i18nplugin/I18NPlugin.java",
+    "src/ohos/ace/plugin/i18nplugin/I18NSetAppPreferredLanguage.java",
+  ]
   subsystem_name = "plugins"
   part_name = "i18n"
 }

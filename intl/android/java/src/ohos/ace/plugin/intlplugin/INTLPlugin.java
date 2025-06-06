@@ -16,6 +16,7 @@
 package ohos.ace.plugin.intlplugin;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.icu.text.NumberingSystem;
 import android.os.Build;
 import android.os.LocaleList;
@@ -73,7 +74,7 @@ public class INTLPlugin {
      * @return System locale
      */
     public String getSystemLocale() {
-        Locale systemLocale = LocaleList.getDefault().get(0);
+        Locale systemLocale = getSystemLocaleCompat();
         String localeTag = "";
         if (systemLocale != null) {
             localeTag += systemLocale.getLanguage();
@@ -177,4 +178,12 @@ public class INTLPlugin {
      * nativeInit
      */
     protected native void nativeInit();
+
+    private Locale getSystemLocaleCompat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Resources.getSystem().getConfiguration().getLocales().get(0);
+        } else {
+            return Locale.getDefault();
+        }
+    }
 }
