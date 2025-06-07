@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2025 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -52,6 +52,7 @@ template("plugin_fs_static") {
       "//third_party/libuv/include",
       "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
       "//commonlibrary/c_utils/base/include",
+      "//foundation/filemanagement/file_api/interfaces/kits/rust/include",
     ]
 
     sources = libn_src
@@ -81,6 +82,9 @@ template("plugin_fs_static") {
       "$plugin_fs_dirs/src/move.cpp",
       "$plugin_fs_dirs/src/open.cpp",
       "$plugin_fs_dirs/src/prop_n_exporter.cpp",
+      "$plugin_fs_dirs/src/xattr.cpp",
+      "$fs_dirs/src/mod_fs/properties/dup.cpp",
+      "$fs_dirs/src/mod_fs/properties/symlink.cpp",
       "$plugin_fs_dirs/src/movedir.cpp",
       "$plugin_fs_dirs/src/copydir.cpp",
     ]
@@ -91,6 +95,10 @@ template("plugin_fs_static") {
       "//plugins/libs/napi:napi_${target_os}",
       "//plugins/libs/uv:uv_${target_os}",
     ]
+
+    if (target_os == "ios") {
+      defines += [ "IOS_PLATFORM" ]
+    }
 
     use_exceptions = true
 

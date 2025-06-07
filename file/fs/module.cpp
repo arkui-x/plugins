@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,6 +32,8 @@ static napi_value Export(napi_env env, napi_value exports)
 {
     InitOpenMode(env, exports);
     InitWhenceType(env, exports);
+    InitAccessModeType(env, exports);
+    InitAccessFlagType(env, exports);
     std::vector<unique_ptr<NExporter>> products;
     products.emplace_back(make_unique<PropNExporter>(env, exports));
     products.emplace_back(make_unique<FileNExporter>(env, exports));

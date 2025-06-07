@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -50,6 +50,41 @@ static FileEntity *GetFileEntity(napi_env env, napi_value raf_entity)
     return rafEntity;
 }
 
+static tuple<int, unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*>> RealPathCore(const string &srcPath)
+{
+    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> realpath_req = {
+        new (std::nothrow) uv_fs_t, CommonFunc::fs_req_cleanup };
+    if (!realpath_req) {
+        HILOGE("Failed to request heap memory.");
+        return { ENOMEM, move(realpath_req)};
+    }
+    int ret = uv_fs_realpath(nullptr, realpath_req.get(), srcPath.c_str(), nullptr);
+    return { ret, move(realpath_req) };
+}
+
+napi_value FileNExporter::GetPath(napi_env env, napi_callback_info info)
+{
+    NFuncArg funcArg(env, info);
+    if (!funcArg.InitArgs(NARG_CNT::ZERO)) {
+        HILOGE("Number of arguments unmatched");
+        NError(EINVAL).ThrowErr(env);
+        return nullptr;
+    }
+    auto fileEntity = GetFileEntity(env, funcArg.GetThisVar());
+    if (!fileEntity) {
+        HILOGE("Failed to get file entity");
+        NError(EINVAL).ThrowErr(env);
+        return nullptr;
+    }
+    auto [realPathRes, realPath] = RealPathCore(fileEntity->path_);
+    if (realPathRes != ERRNO_NOERR) {
+        HILOGE("Failed to get real path");
+        NError(realPathRes).ThrowErr(env);
+        return nullptr;
+    }
+    return NVal::CreateUTF8String(env, string(static_cast<const char *>(realPath->ptr))).val_;
+}
+
 napi_value FileNExporter::GetFD(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
@@ -93,6 +128,7 @@ bool FileNExporter::Export()
 {
     vector<napi_property_descriptor> props = {
         NVal::DeclareNapiGetter("fd", GetFD),
+        NVal::DeclareNapiGetter("path", GetPath),
     };
     string className = GetClassName();
     bool succ = false;

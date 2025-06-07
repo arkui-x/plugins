@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <sys/xattr.h>
 #include <unistd.h>
 
 #include "common_func.h"
@@ -29,7 +30,9 @@
 #include "copy_file.h"
 #include "create_stream.h"
 #include "create_streamrw.h"
+#include "dup.h"
 #include "fdatasync.h"
+#include "file_utils.h"
 #include "filemgmt_libn.h"
 #include "fsync.h"
 #include "listfile.h"
@@ -41,9 +44,12 @@
 #include "read_text.h"
 #include "rename.h"
 #include "rmdirent.h"
+#include "rust_file.h"
 #include "stat.h"
+#include "symlink.h"
 #include "utimes.h"
 #include "truncate.h"
+#include "xattr.h"
 #include "movedir.h"
 #include "copydir.h"
 
@@ -53,32 +59,89 @@ namespace ModuleFileIO {
 using namespace std;
 using namespace OHOS::FileManagement::LibN;
 
+enum AccessFlag : int32_t {
+    DEFAULT_FLAG = -1,
+    LOCAL_FLAG,
+};
+ 
+struct AccessArgs {
+    string path;
+    int mode = -1;
+    int flag = DEFAULT_FLAG;
+};
+
+static int AccessCore(const string &path, int mode)
+{
+    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup) *> access_req = {new uv_fs_t,
+        CommonFunc::fs_req_cleanup};
+    if (!access_req) {
+        HILOGE("Failed to request heap memory.");
+        return ENOMEM;
+    }
+    return uv_fs_access(nullptr, access_req.get(), path.c_str(), mode, nullptr);
+}
+
+static int GetMode(NVal secondVar, bool *hasMode)
+{
+    if (secondVar.TypeIs(napi_number)) {
+        bool succ = false;
+        int mode = 0;
+        *hasMode = true;
+        tie(succ, mode) = secondVar.ToInt32();
+        if (succ && (static_cast<unsigned int>(mode) & 0x06) == static_cast<unsigned int>(mode)) {
+            return mode;
+        }
+    }
+    return -1;
+}
+
+static bool GetAccessArgs(napi_env env, const NFuncArg &funcArg, AccessArgs &args)
+{
+    auto [succ, path, ignore] = NVal(env, funcArg[NARG_POS::FIRST]).ToUTF8StringPath();
+    if (!succ) {
+        HILOGE("Invalid path from JS first argument");
+        return false;
+    }
+    args.path = path.get();
+
+    bool hasMode = false;
+    if (funcArg.GetArgc() >= NARG_CNT::TWO) {
+        args.mode = GetMode(NVal(env, funcArg[NARG_POS::SECOND]), &hasMode);
+    }
+    if (args.mode < 0 && hasMode) {
+        HILOGE("Invalid mode from JS second argument");
+        return false;
+    }
+    args.mode = hasMode ? args.mode : 0;
+
+    if (funcArg.GetArgc() == NARG_CNT::THREE) {
+        tie(succ, args.flag) = NVal(env, funcArg[NARG_POS::THIRD]).ToInt32(args.flag);
+        if (!succ) {
+            HILOGE("Invalid flag from JS third argument");
+            return false;
+        }
+    }
+    return true;
+}
+
 napi_value PropNExporter::AccessSync(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
-    if (!funcArg.InitArgs(NARG_CNT::ONE)) {
+    if (!funcArg.InitArgs(NARG_CNT::ONE, NARG_CNT::THREE)) {
         HILOGE("Number of arguments unmatched");
         NError(EINVAL).ThrowErr(env);
         return nullptr;
     }
 
-    auto [succ, path, ignore] = NVal(env, funcArg[NARG_POS::FIRST]).ToUTF8String();
-    if (!succ) {
-        HILOGE("Invalid path from JS first argument");
+    AccessArgs args;
+    if (!GetAccessArgs(env, funcArg, args)) {
         NError(EINVAL).ThrowErr(env);
         return nullptr;
     }
 
     bool isAccess = false;
-    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> access_req = {
-        new uv_fs_t, CommonFunc::fs_req_cleanup };
-    if (!access_req) {
-        HILOGE("Failed to request heap memory.");
-        NError(ENOMEM).ThrowErr(env);
-        return nullptr;
-    }
-    int ret = uv_fs_access(nullptr, access_req.get(), path.get(), 0, nullptr);
-    if (ret < 0 && ret != -ENOENT) {
+    int ret = AccessCore(args.path, args.mode);
+    if (ret < 0 && (string_view(uv_err_name(ret)) != "ENOENT")) {
         HILOGE("Failed to access file by path");
         NError(ret).ThrowErr(env);
         return nullptr;
@@ -92,37 +155,30 @@ napi_value PropNExporter::AccessSync(napi_env env, napi_callback_info info)
 napi_value PropNExporter::Access(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
-    if (!funcArg.InitArgs(NARG_CNT::ONE, NARG_CNT::TWO)) {
+    if (!funcArg.InitArgs(NARG_CNT::ONE, NARG_CNT::THREE)) {
         HILOGE("Number of arguments unmatched");
         NError(EINVAL).ThrowErr(env);
         return nullptr;
     }
 
-    auto [succ, tmp, ignore] = NVal(env, funcArg[NARG_POS::FIRST]).ToUTF8String();
-    if (!succ) {
-        HILOGE("Invalid path from JS first argument");
+    AccessArgs args;
+    if (!GetAccessArgs(env, funcArg, args)) {
         NError(EINVAL).ThrowErr(env);
         return nullptr;
     }
 
-    auto result = make_shared<AsyncAccessArg>();
-    if (!result) {
+    auto result = CreateSharedPtr<AsyncAccessArg>();
+    if (result == nullptr) {
         HILOGE("Failed to request heap memory.");
         NError(ENOMEM).ThrowErr(env);
         return nullptr;
     }
-    auto cbExec = [path = string(tmp.get()), result]() -> NError {
-        std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> access_req = {
-            new uv_fs_t, CommonFunc::fs_req_cleanup };
-        if (!access_req) {
-            HILOGE("Failed to request heap memory.");
-            return NError(ENOMEM);
-        }
-        int ret = uv_fs_access(nullptr, access_req.get(), path.c_str(), 0, nullptr);
+    auto cbExec = [path = args.path, result, mode = args.mode]() -> NError {
+        int ret = AccessCore(path, mode);
         if (ret == 0) {
             result->isAccess = true;
         }
-        return (ret < 0 && ret != -ENOENT) ? NError(ret) : NError(ERRNO_NOERR);
+        return (ret < 0 && (string_view(uv_err_name(ret)) != "ENOENT")) ? NError(ret) : NError(ERRNO_NOERR);
     };
 
     auto cbComplete = [result](napi_env env, NError err) -> NVal {
@@ -133,7 +189,7 @@ napi_value PropNExporter::Access(napi_env env, napi_callback_info info)
     };
 
     NVal thisVar(env, funcArg.GetThisVar());
-    if (funcArg.GetArgc() == NARG_CNT::ONE) {
+    if (funcArg.GetArgc() == NARG_CNT::ONE || NVal(env, funcArg[NARG_POS::SECOND]).TypeIs(napi_number)) {
         return NAsyncWorkPromise(env, thisVar).Schedule(PROCEDURE_ACCESS_NAME, cbExec, cbComplete).val_;
     } else {
         NVal cb(env, funcArg[NARG_POS::SECOND]);
@@ -606,6 +662,10 @@ bool PropNExporter::ExportSync()
             NVal::DeclareNapiFunction("createStreamSync", CreateStream::Sync),
             NVal::DeclareNapiFunction("createReadStream", CreateStreamRw::Read),
             NVal::DeclareNapiFunction("createWriteStream", CreateStreamRw::Write),
+            NVal::DeclareNapiFunction("dup", Dup::Sync),
+            NVal::DeclareNapiFunction("setxattrSync", Xattr::SetSync),
+            NVal::DeclareNapiFunction("getxattrSync", Xattr::GetSync),
+            NVal::DeclareNapiFunction("symlinkSync", Symlink::Sync),
             NVal::DeclareNapiFunction("moveDirSync", MoveDir::Sync),
             NVal::DeclareNapiFunction("copyDirSync", CopyDir::Sync),
         });
@@ -635,6 +695,9 @@ bool PropNExporter::ExportAsync()
             NVal::DeclareNapiFunction("createStream", CreateStream::Async),
             NVal::DeclareNapiFunction("copyFile", CopyFile::Async),
             NVal::DeclareNapiFunction("fdatasync", Fdatasync::Async),
+            NVal::DeclareNapiFunction("setxattr", Xattr::SetAsync),
+            NVal::DeclareNapiFunction("getxattr", Xattr::GetAsync),
+            NVal::DeclareNapiFunction("symlink", Symlink::Async),
             NVal::DeclareNapiFunction("moveDir", MoveDir::Async),
             NVal::DeclareNapiFunction("copyDirSync", CopyDir::Sync),
         });
