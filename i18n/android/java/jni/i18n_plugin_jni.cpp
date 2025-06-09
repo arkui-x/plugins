@@ -224,7 +224,7 @@ void I18NPluginJni::SetAppPreferredLanguage(const std::string& languageTag)
     }
 
     jstring jLanguageTag = env->NewStringUTF(languageTag.c_str());
-    env->CallObjectMethod(g_pluginClass.globalRef, g_pluginClass.setAppPreferredLanguage, jLanguageTag);
+    env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.setAppPreferredLanguage, jLanguageTag);
     env->DeleteLocalRef(jLanguageTag);
     if (env->ExceptionCheck()) {
         LOGE("I18N JNI: call setAppPreferredLanguage failed");
