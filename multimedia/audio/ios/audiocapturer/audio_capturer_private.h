@@ -73,6 +73,7 @@ public:
     uint32_t GetOverflowCount() const override;
     int32_t SetInputDevice(DeviceType deviceType) const override;
     int32_t SetAudioSourceConcurrency(const std::vector<SourceType> &targetSources) override;
+    int32_t SetInterruptStrategy(InterruptStrategy strategy) override;
     std::vector<sptr<MicrophoneDescriptor>> GetCurrentMicrophones() const override;
     int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) override;
     int32_t RegisterAudioCapturerEventListener() override;
@@ -81,6 +82,7 @@ public:
     int32_t RegisterAudioPolicyServerDiedCb(const int32_t clientPid,
         const std::shared_ptr<AudioCapturerPolicyServiceDiedCallback> &callback) override;
     int32_t GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
+    void SetFastStatusChangeCallback(const std::shared_ptr<AudioCapturerFastStatusChangeCallback> &callback) override;
     int32_t SetCapturerPositionCallback(
         int64_t markPosition, const std::shared_ptr<CapturerPositionCallback>& callback) override;
     void UnsetCapturerPositionCallback() override;

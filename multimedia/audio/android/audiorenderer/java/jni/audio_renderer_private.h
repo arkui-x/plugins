@@ -121,6 +121,8 @@ public:
 
     int32_t GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
 
+    void SetFastStatusChangeCallback(const std::shared_ptr<AudioRendererFastStatusChangeCallback> &callback) override;
+
 private:
     bool IsFormatValid(uint8_t format);
     bool IsEncodingTypeValid(uint8_t encodingType);

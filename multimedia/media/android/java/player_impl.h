@@ -50,6 +50,7 @@ public:
     int32_t GetSubtitleTrackInfo(std::vector<Format> &subtitleTrack) override;
     int32_t GetVideoHeight() override;
     int32_t SetPlaybackSpeed(PlaybackRateMode mode) override;
+    int32_t SetPlaybackRate(float rate) override;
     int32_t GetDuration(int32_t &duration) override;
     int32_t GetPlaybackSpeed(PlaybackRateMode &mode) override;
     int32_t SetLooping(bool loop) override;

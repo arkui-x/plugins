@@ -36,9 +36,11 @@ template("plugin_multimedia_media_static") {
       "//foundation/multimedia/player_framework/frameworks/js/avscreen_capture",
       "//foundation/multimedia/player_framework/frameworks/js/mediasource",
       "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
+      "//foundation/graphic/graphic_surface/interfaces/inner_api",
       "//foundation/multimedia/player_framework/frameworks/js/avtranscoder",
       "//foundation/multimedia/drm_framework/services/drm_service/ipc",
       "//foundation/multimedia/player_framework/frameworks/js/utils",
+      "//foundation/multimedia/audio_framework/frameworks/native/audioutils/include",
       "//third_party/skia",
     ]
 

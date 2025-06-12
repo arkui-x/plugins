@@ -25,7 +25,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, LOG_DOMAIN_PLAYER, "Pla
 
 namespace OHOS {
 namespace Media {
-std::shared_ptr<Player> PlayerFactory::CreatePlayer()
+std::shared_ptr<Player> PlayerFactory::CreatePlayer(const PlayerProducer producer)
 {
     std::shared_ptr<PlayerImpl> impl = std::make_shared<PlayerImpl>();
     CHECK_AND_RETURN_RET_LOG(impl != nullptr, nullptr, "failed to new PlayerImpl");
@@ -191,6 +191,11 @@ int32_t PlayerImpl::SetPlaybackSpeed(PlaybackRateMode mode)
 {
     [playerAdapter_ setSpeed:mode];
     return MSERR_OK;
+}
+
+int32_t PlayerImpl::SetPlaybackRate(float rate)
+{
+    return MSERR_UNSUPPORT;
 }
 
 int32_t PlayerImpl::GetPlaybackSpeed(PlaybackRateMode &mode)

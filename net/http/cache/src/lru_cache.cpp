@@ -122,7 +122,7 @@ void LRUCache::Put(const std::string& key, const std::unordered_map<std::string,
     }
 }
 
-void LRUCache::MergeOtherCache(const LRUCache& other)
+void LRUCache::MergeOtherCache(LRUCache& other)
 {
     std::list<Node> reverseList;
     {
