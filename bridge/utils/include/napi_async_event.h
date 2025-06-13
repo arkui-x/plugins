@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,8 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <string>
 #include <tuple>
 
@@ -80,10 +82,11 @@ private:
     napi_ref refData_ = nullptr;
     napi_ref refErrorData_ = nullptr;
     int errorCode_ = 0;
-    std::string methodParameter_;
     OnAsyncEventSuccess eventSuccess_ = nullptr;
     OnAsyncEventError eventError_ = nullptr;
     std::deque<std::tuple<uint8_t*, size_t>> taskQueue_;
+    std::queue<std::string> methodParameters_;
+    std::mutex queueLock_;
 
     void TriggerEventSuccess(napi_value result);
     void TriggerEventError(ErrorCode code);
