@@ -92,22 +92,15 @@ void MediaEvent::EventWriteBundleName(std::string eventName, OHOS::HiviewDFX::Hi
 #endif
 }
 
-MediaTrace::MediaTrace(const std::string &funcName)
-{
-    isSync_ = true;
-}
+MediaTrace::MediaTrace(const std::string& funcName, HiTraceOutputLevel level, const std::string& customArgs) {}
 
-void MediaTrace::TraceBegin(const std::string &funcName, int32_t taskId)
-{
-}
+void MediaTrace::TraceBegin(const std::string& funcName, int32_t taskId, HiTraceOutputLevel level,
+    const std::string& customCategory, const std::string& customArgs)
+{}
 
-void MediaTrace::TraceEnd(const std::string &funcName, int32_t taskId)
-{
-}
+void MediaTrace::TraceEnd(const std::string& funcName, int32_t taskId, HiTraceOutputLevel level) {}
 
-void MediaTrace::CounterTrace(const std::string &varName, int32_t val)
-{
-}
+void MediaTrace::CounterTrace(const std::string& varName, int32_t val, HiTraceOutputLevel level) {}
 
 MediaTrace::~MediaTrace()
 {

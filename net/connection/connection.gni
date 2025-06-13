@@ -35,7 +35,6 @@ utils_include = [
 
 utils_source = [
   "$NETMANAGER_BASE_ROOT/utils/errorcode_utils/src/errorcode_convertor.cpp",
-  "$NETMANAGER_BASE_ROOT/utils/log/src/net_mgr_log_wrapper.cpp",
   "$NETMANAGER_BASE_ROOT/utils/napi_utils/src/base_context.cpp",
   "$NETMANAGER_BASE_ROOT/utils/napi_utils/src/event_listener.cpp",
   "$NETMANAGER_BASE_ROOT/utils/napi_utils/src/event_manager.cpp",
