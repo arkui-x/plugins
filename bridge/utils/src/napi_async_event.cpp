@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -119,7 +119,8 @@ napi_value NAPIAsyncEvent::GetRefErrorData(void)
 
 void NAPIAsyncEvent::SetMethodParameter(const std::string& jsonStr)
 {
-    methodParameter_ = jsonStr;
+    std::lock_guard<std::mutex> lock(queueLock_);
+    methodParameters_.emplace(jsonStr);
 }
 
 void NAPIAsyncEvent::SetMethodParameter(uint8_t* data, size_t size)
@@ -239,15 +240,20 @@ void NAPIAsyncEvent::AsyncWorkCallMethod(void)
     napi_value callback = nullptr;
     napi_value methodResultValue = nullptr;
     napi_get_reference_value(env_, callback_, &callback);
-    if (methodParameter_.empty()) {
+    std::string methodParameter = "";
+    {
+        std::lock_guard<std::mutex> lock(queueLock_);
+        methodParameter = methodParameters_.front();
+        methodParameters_.pop();
+    }
+    if (methodParameter.empty()) {
         methodResultValue = PluginUtilsNApi::CallFunction(
             env_, PluginUtilsNApi::CreateUndefined(env_), callback, 0, nullptr);
         TriggerEventSuccess(methodResultValue);
     } else {
         size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
         napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
-
-        bool ret = NAPIUtils::JsonStringToNapiValues(env_, methodParameter_, argc, argv);
+        bool ret = NAPIUtils::JsonStringToNapiValues(env_, methodParameter, argc, argv);
         if (ret) {
             methodResultValue = PluginUtilsNApi::CallFunction(
                 env_, PluginUtilsNApi::CreateUndefined(env_), callback, argc, argv);
