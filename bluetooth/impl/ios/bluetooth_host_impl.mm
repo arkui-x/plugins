@@ -476,7 +476,8 @@ int32_t BluetoothHostImpl::GetCloudBondState(const std::string &address, int32_t
     return 0;
 }
 
-int BluetoothHostImpl::UpdateRefusePolicy(const int32_t pid, const int64_t prohibitedSecondsTime)
+int BluetoothHostImpl::UpdateRefusePolicy(const int32_t protocolType,
+    const int32_t pid, const int64_t prohibitedSecondsTime)
 {
     return 0;
 }

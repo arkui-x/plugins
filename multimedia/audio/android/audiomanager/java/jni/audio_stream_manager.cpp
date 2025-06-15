@@ -121,5 +121,11 @@ bool AudioStreamManager::IsAcousticEchoCancelerSupported(SourceType sourceType)
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return false;
 }
+
+bool AudioStreamManager::IsCapturerFocusAvailable(const AudioCapturerChangeInfo &capturerInfo)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
 } // namespace AudioStandard
 } // namespace OHOS
