@@ -122,7 +122,12 @@ public class AbilityAccessCtrl {
     }
 
     private Fragment getFragment(Activity curActivity) {
-        if (!(curActivity instanceof FragmentActivity)) {
+        try {
+            if (!(curActivity instanceof FragmentActivity)) {
+                return null;
+            }
+        } catch (NoClassDefFoundError exception) {
+            Log.w(LOG_TAG, "FragmentActivity no class define found");
             return null;
         }
         FragmentActivity fragmentActivity = (FragmentActivity) curActivity;
