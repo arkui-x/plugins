@@ -44,6 +44,7 @@
 #include "move.h"
 #include "open.h"
 #include "read_text.h"
+#include "read_lines.h"
 #include "rename.h"
 #include "rmdirent.h"
 #include "stat.h"
@@ -709,6 +710,7 @@ bool PropNExporter::ExportSync()
             NVal::DeclareNapiFunction("moveFileSync", Move::Sync),
             NVal::DeclareNapiFunction("openSync", Open::Sync),
             NVal::DeclareNapiFunction("readSync", ReadSync),
+            NVal::DeclareNapiFunction("readLinesSync", ReadLines::Sync),
             NVal::DeclareNapiFunction("readTextSync", ReadText::Sync),
             NVal::DeclareNapiFunction("renameSync", Rename::Sync),
             NVal::DeclareNapiFunction("rmdirSync", Rmdirent::Sync),
@@ -743,6 +745,7 @@ bool PropNExporter::ExportAsync()
             NVal::DeclareNapiFunction("moveFile", Move::Async),
             NVal::DeclareNapiFunction("open", Open::Async),
             NVal::DeclareNapiFunction("read", Read),
+            NVal::DeclareNapiFunction("readLines", ReadLines::Async),
             NVal::DeclareNapiFunction("readText", ReadText::Async),
             NVal::DeclareNapiFunction("rename", Rename::Async),
             NVal::DeclareNapiFunction("rmdir", Rmdirent::Async),
