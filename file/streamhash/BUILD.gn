@@ -75,7 +75,7 @@ gen_obj("streamhash_abc") {
 ohos_source_set("streamhash_static") {
   branch_protector_ret = "pac_ret"
 
-  sources = [ "${file_api_path}/interfaces/kits/ts/streamhash/native_module_streamhash.cpp" ]
+  sources = [ "native_module_streamhash.cpp" ]
 
   deps = [
     ":gen_obj_src_streamhash_abc",

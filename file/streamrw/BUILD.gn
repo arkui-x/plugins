@@ -74,7 +74,7 @@ gen_obj("streamrw_abc") {
 
 ohos_source_set("streamrw_static") {
   sources = [
-    "${file_api_path}/interfaces/kits/ts/streamrw/native_module_streamrw.cpp",
+    "native_module_streamrw.cpp"
   ]
   deps = [
     ":gen_obj_src_streamrw_abc",
