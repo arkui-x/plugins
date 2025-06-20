@@ -187,6 +187,66 @@ void StrFree(Str *str)
 
     delete str;
 }
+
+std::string GetParentDirectory(const std::string& path)
+{
+    if (path.empty()) {
+        return ".";
+    }
+
+    std::string normalizedPath = path;
+    for (char& ch : normalizedPath) {
+        if (ch == '\\') {
+            ch = '/';
+        }
+    }
+
+    while (!normalizedPath.empty() && normalizedPath.back() == '/') {
+        normalizedPath.pop_back();
+    }
+
+    if (normalizedPath.empty()) {
+        return path;
+    }
+
+    size_t lastSlashPos = path.find_last_of("/");
+    if (lastSlashPos == std::string::npos) {
+        return ".";
+    }
+    if (lastSlashPos == 0) {
+        return "/";
+    }
+    return path.substr(0, lastSlashPos);
+}
+
+bool FileIsExist(const char* filePath)
+{
+    uv_fs_t req;
+    int result = uv_fs_stat(nullptr, &req, filePath, nullptr);
+    if (result < 0) {
+        if (result != UV_ENOENT) {
+            HILOGE("Failed to get file stat: %{public}s", uv_strerror(result));
+        }
+        uv_fs_req_cleanup(&req);
+        return false;
+    }
+    uv_fs_req_cleanup(&req);
+    return true;
+}
+
+bool RemoveFile(const char* filePath)
+{
+    uv_fs_t req;
+    int result = uv_fs_unlink(nullptr, &req, filePath, nullptr);
+    if (result < 0) {
+        HILOGE("Faile to remove file: %{public}s", uv_strerror(result));
+        uv_fs_req_cleanup(&req);
+        return false;
+    }
+
+    uv_fs_req_cleanup(&req);
+    return true;
+}
 } // namespace ModuleFileIO
 } // namespace FileManagement
 } // namespace OHOS
