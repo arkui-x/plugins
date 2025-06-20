@@ -35,10 +35,14 @@ ohos_source_set("media_android_jni") {
   include_dirs = media_include
   include_dirs += utils_include
 
+  third_party_skia_include_root = "//third_party/skia"
+  if (ace_engine_feature_enable_upgrade_skia) {
+    third_party_skia_include_root = "//third_party/skia/m133"
+  }
   include_dirs += [
     "//plugins/multimedia/media/android",
     "//plugins/multimedia/media/android/jni",
-    "//third_party/skia",
+    "${third_party_skia_include_root}",
   ]
 
   sources = [
@@ -55,6 +59,9 @@ ohos_source_set("media_android_jni") {
     "SUPPORT_VIDEO",
   ]
 
+  if (ace_engine_feature_enable_upgrade_skia) {
+    defines += [ "USE_M133_SKIA" ]
+  }
   deps = [
     ":media_java",
     "//plugins/interfaces/native:ace_plugin_util_android",

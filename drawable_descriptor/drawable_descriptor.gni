@@ -11,9 +11,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/ohos_var.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+third_party_skia_include_root =  "//third_party/skia"
+if (ace_engine_feature_enable_upgrade_skia) {
+  third_party_skia_include_root = "//third_party/skia/m133"
+}
+
 drawable_native_include = [
   "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-  "//third_party/skia",
+  "${third_party_skia_include_root}",
   "//foundation/arkui/napi/interfaces/inner_api",
   "//foundation/arkui/napi/interfaces/kits",
   "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/configuration",
@@ -53,5 +61,5 @@ drawable_napi_include = [
   "//foundation/graphic/graphic_2d/rosen/modules/render_service_base/include",
   "//foundation/graphic/graphic_2d/utils/color_manager/export",
   "//commonlibrary/c_utils/base/include",
-  "//third_party/skia",
+  "${third_party_skia_include_root}",
 ]

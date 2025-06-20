@@ -19,6 +19,7 @@
 #include <string.h>
 #include <locale>
 #include <codecvt>
+#include <unistd.h>
 
 #include "media_errors.h"
 #include "plugin_utils.h"

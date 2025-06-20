@@ -32,6 +32,12 @@ template("plugin_multimedia_media_static") {
 
     include_dirs = media_include
     include_dirs += utils_include
+
+  third_party_skia_include_root = "//third_party/skia"
+  if (ace_engine_feature_enable_upgrade_skia) {
+    third_party_skia_include_root = "//third_party/skia/m133"
+    defines += [ "USE_M133_SKIA" ]
+  }
     include_dirs += [
       "//foundation/multimedia/player_framework/frameworks/js/avscreen_capture",
       "//foundation/multimedia/player_framework/frameworks/js/mediasource",
@@ -41,7 +47,7 @@ template("plugin_multimedia_media_static") {
       "//foundation/multimedia/drm_framework/services/drm_service/ipc",
       "//foundation/multimedia/player_framework/frameworks/js/utils",
       "//foundation/multimedia/audio_framework/frameworks/native/audioutils/include",
-      "//third_party/skia",
+      "${third_party_skia_include_root}",
     ]
 
     sources = media_source
