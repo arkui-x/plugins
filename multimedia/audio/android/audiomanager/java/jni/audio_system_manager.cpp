@@ -691,5 +691,89 @@ int32_t AudioSystemManager::UnsetAudioSceneChangeCallback(
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
+
+float AudioSystemManager::GetVolumeInUnitOfDb(AudioVolumeType volumeType, int32_t volumeLevel, DeviceType device)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetMaxVolumeByUsage(StreamUsage streamUsage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetMinVolumeByUsage(StreamUsage streamUsage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetVolumeByUsage(StreamUsage streamUsage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::IsStreamMuteByUsage(StreamUsage streamUsage, bool &isMute)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+float AudioSystemManager::GetVolumeInDbByStream(StreamUsage streamUsage, int32_t volumeLevel, DeviceType deviceType)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+std::vector<AudioVolumeType> AudioSystemManager::GetSupportedAudioVolumeTypes()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    std::vector<AudioVolumeType> nullList = {};
+    return nullList;
+}
+
+AudioVolumeType AudioSystemManager::GetAudioVolumeTypeByStreamUsage(StreamUsage streamUsage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return AudioStreamType::STREAM_DEFAULT;
+}
+
+std::vector<StreamUsage> AudioSystemManager::GetStreamUsagesByVolumeType(AudioVolumeType audioVolumeType)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    std::vector<StreamUsage> nullList = {};
+    return nullList;
+}
+
+int32_t AudioSystemManager::RegisterStreamVolumeChangeCallback(const int32_t clientPid,
+    const std::set<StreamUsage> &streamUsages, const std::shared_ptr<StreamVolumeChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnregisterStreamVolumeChangeCallback(const int32_t clientPid,
+    const std::shared_ptr<StreamVolumeChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::RegisterSystemVolumeChangeCallback(const int32_t clientPid,
+    const std::shared_ptr<SystemVolumeChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnregisterSystemVolumeChangeCallback(const int32_t clientPid,
+    const std::shared_ptr<SystemVolumeChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS

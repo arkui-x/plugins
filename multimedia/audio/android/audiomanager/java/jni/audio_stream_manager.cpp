@@ -74,6 +74,12 @@ bool AudioStreamManager::IsStreamActive(AudioVolumeType volumeType) const
     return Plugin::AudioManagerJni::IsStreamActive(volumeType);
 }
 
+bool AudioStreamManager::IsStreamActiveByStreamUsage(StreamUsage streamUsage) const
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
 int32_t AudioStreamManager::GetHardwareOutputSamplingRate(std::shared_ptr<AudioDeviceDescriptor>& desc)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
@@ -122,7 +128,13 @@ bool AudioStreamManager::IsAcousticEchoCancelerSupported(SourceType sourceType)
     return false;
 }
 
-bool AudioStreamManager::IsCapturerFocusAvailable(const AudioCapturerChangeInfo &capturerInfo)
+bool AudioStreamManager::IsAudioLoopbackSupported(AudioLoopbackMode mode)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
+bool AudioStreamManager::IsCapturerFocusAvailable(const AudioCapturerInfo &capturerInfo)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return false;

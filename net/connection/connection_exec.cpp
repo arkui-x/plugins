@@ -388,6 +388,26 @@ napi_value ConnectionExec::SetAppNetCallback(SetAppNetContext *context)
     return NapiUtils::GetUndefined(context->GetEnv());
 }
 
+bool ConnectionExec::ExecSetNetExtAttribute(SetNetExtAttributeContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::SetNetExtAttributeCallback(SetNetExtAttributeContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecGetNetExtAttribute(GetNetExtAttributeContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::GetNetExtAttributeCallback(GetNetExtAttributeContext *context)
+{
+    return NapiUtils::CreateStringUtf8(context->GetEnv(), context->netExtAttribute_);
+}
+
 bool ConnectionExec::ExecSetCustomDNSRule(SetCustomDNSRuleContext *context)
 {
     if (context == nullptr) {
