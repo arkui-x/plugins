@@ -34,6 +34,7 @@ public:
     int32_t SetVideoIsHdr(int32_t sourceId, bool isHdr) override;
     int32_t SetVideoEnableTemporalScale(int32_t sourceId, bool enableTemporalScale) override;
     int32_t SetVideoEnableStableQualityMode(int32_t sourceId, bool enableStableQualityMode) override;
+    int32_t SetVideoEnableBFrame(int32_t sourceId, bool enableBFrame) override;
     int32_t SetCaptureRate(int32_t sourceId, double fps) override;
     sptr<OHOS::Surface> GetSurface(int32_t sourceId) override;
     sptr<OHOS::Surface> GetMetaSurface(int32_t sourceId) override;
