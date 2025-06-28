@@ -127,6 +127,11 @@ int32_t RecorderImpl::RecorderImpl::SetVideoEnableStableQualityMode(int32_t sour
     return MSERR_OK;
 }
 
+int32_t RecorderImpl::RecorderImpl::SetVideoEnableBFrame(int32_t sourceId, bool enableBFrame)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::SetCaptureRate(int32_t sourceId, double fps)
 {
 
