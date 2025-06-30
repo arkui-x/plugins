@@ -18,6 +18,10 @@ import("//plugins/multimedia/media/media.gni")
 ohos_source_set("media_ios") {
   include_dirs = media_include
   include_dirs += utils_include
+    third_party_skia_include_root = "//third_party/skia"
+  if (ace_engine_feature_enable_upgrade_skia) {
+    third_party_skia_include_root = "//third_party/skia/m133"
+  }
   include_dirs += [
     "//plugins/multimedia/media/ios",
     "//plugins/multimedia/media/ios/avmetadatahelper",
@@ -25,7 +29,7 @@ ohos_source_set("media_ios") {
     "//plugins/multimedia/media/ios/recorder",
     "//foundation/arkui/ace_engine/adapter/ios/entrance",
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
-    "//third_party/skia",
+    "${third_party_skia_include_root}",
   ]
 
   sources = [
@@ -39,6 +43,10 @@ ohos_source_set("media_ios") {
   ]
 
   defines = [ "IOS_PLATFORM" ]
+
+  if (ace_engine_feature_enable_upgrade_skia) {
+    defines += [ "USE_M133_SKIA" ]
+  }
 
   if (target_cpu == "arm64") {
     defines += [ "_ARM64_" ]
