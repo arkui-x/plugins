@@ -175,6 +175,7 @@ ohos_source_set("bt_framework_crossplatform") {
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
     "//plugins/bluetooth/common/include",
     "//plugins/bluetooth/common/mock",
+    "$bluetooth_napi_root/src",
   ]
 
   sources = FwkCrossPlatformSrc

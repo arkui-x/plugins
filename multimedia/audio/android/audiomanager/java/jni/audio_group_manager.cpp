@@ -25,7 +25,7 @@ AudioGroupManager::AudioGroupManager(int32_t groupId) : groupId_(groupId) {}
 
 AudioGroupManager::~AudioGroupManager() {}
 
-int32_t AudioGroupManager::SetVolume(AudioVolumeType volumeType, int32_t volume, int32_t flag)
+int32_t AudioGroupManager::SetVolume(AudioVolumeType volumeType, int32_t volume, int32_t flag, int32_t uid)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -36,7 +36,7 @@ AudioStreamType AudioGroupManager::GetActiveVolumeType(const int32_t clientUid)
     return STREAM_DEFAULT;
 }
 
-int32_t AudioGroupManager::GetVolume(AudioVolumeType volumeType)
+int32_t AudioGroupManager::GetVolume(AudioVolumeType volumeType, int32_t uid)
 {
     return Plugin::AudioManagerJni::GetVolume(volumeType);
 }

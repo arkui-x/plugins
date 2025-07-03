@@ -739,7 +739,7 @@ void ConnectionExec::NetHandleExec::SetAddressInfo(const char *host, addrinfo *i
 
 bool ConnectionExec::NetConnectionExec::ExecRegister(RegisterContext *context)
 {
-    EventManager *manager = context->GetManager();
+    auto manager = context->GetManager();
     auto conn = static_cast<NetConnection *>(manager->GetData());
     sptr<INetConnCallback> callback = conn->GetObserver();
 
@@ -773,7 +773,7 @@ napi_value ConnectionExec::NetConnectionExec::RegisterCallback(RegisterContext *
 
 bool ConnectionExec::NetConnectionExec::ExecUnregister(UnregisterContext *context)
 {
-    EventManager *manager = context->GetManager();
+    auto manager = context->GetManager();
     auto conn = static_cast<NetConnection *>(manager->GetData());
     sptr<INetConnCallback> callback = conn->GetObserver();
 

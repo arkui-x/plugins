@@ -17,6 +17,7 @@ ohos_source_set("bluetooth_ble_static") {
   include_dirs = [
     "//plugins/bluetooth/common/include",
     "//plugins/bluetooth/common/mock",
+    "$bluetooth_napi_root/src",
   ]
 
   defines = [
