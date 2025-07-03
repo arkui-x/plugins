@@ -267,7 +267,6 @@ public class JavaTaskImpl {
      */
     public String show(long taskId) {
         Log.i(TAG, "show: " + taskId);
-        mDownloadImpl.postQueryProgressByTid(taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
@@ -280,9 +279,14 @@ public class JavaTaskImpl {
             Log.e(TAG, "show: task is null");
             return "";
         }
-        if (!TextUtils.isEmpty(taskInfo.getToken()) && !"null".equals(taskInfo.getToken())) {
-            Log.e(TAG, "show: token is not null");
-            return "";
+        if (taskInfo.getAction() == Action.DOWNLOAD) {
+            mDownloadImpl.postQueryProgressByTid(taskId);
+            if (!TextUtils.isEmpty(taskInfo.getToken()) && !"null".equals(taskInfo.getToken())) {
+                Log.e(TAG, "show: token is not null");
+                return "";
+            }
+        } else {
+            Log.i(TAG, "Action.UPLOAD taskId: " + taskId);
         }
         String result = JsonUtil.convertTaskInfoToJson(taskInfo);
         Log.d(TAG, "show: result:" + result);

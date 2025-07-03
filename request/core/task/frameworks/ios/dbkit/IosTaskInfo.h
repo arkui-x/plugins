@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface IosTaskInfo : NSObject
 @property (nonatomic, assign) int64_t tid;
 @property (nullable, nonatomic, copy) NSString *saveas;
+@property (nullable, nonatomic, copy) NSString *proxy;
 @property (nullable, nonatomic, copy) NSString *url;
 @property (nullable, nonatomic, copy) NSString *data;
 @property (nullable, nonatomic, copy) NSString *title;
@@ -33,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) NSString *mimeType;
 @property (nonatomic, assign) int state;
 @property (nullable, nonatomic, copy) NSString *progress;
+@property (nullable, nonatomic, copy) NSString *response;
 @property (nonatomic, assign) int64_t ctime;
 @property (nonatomic, assign) int64_t mtime;
 @property (nonatomic, assign) int faults;

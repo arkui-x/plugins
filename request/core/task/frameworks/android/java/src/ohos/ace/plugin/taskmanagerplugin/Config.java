@@ -42,6 +42,7 @@ public class Config {
     private HashMap<String, String> headers;
     private String data;
     private String saveas;
+    private String proxy;
     private int network;
     private boolean metered;
     private boolean roaming;
@@ -152,6 +153,15 @@ public class Config {
     public void setSaveas(String saveas) {
         this.saveas = saveas;
     }
+
+    public String getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(String proxy) {
+        this.proxy = proxy;
+    }
+
 
     public int getNetwork() {
         return network;

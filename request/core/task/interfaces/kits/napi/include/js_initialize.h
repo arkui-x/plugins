@@ -37,6 +37,7 @@ private:
     static bool ParseConfigV9(napi_env env, napi_value jsConfig, Config &config, std::string &errInfo);
     static bool ParseUploadConfig(napi_env env, napi_value jsConfig, Config &config, std::string &errInfo);
     static bool ParseDownloadConfig(napi_env env, napi_value jsConfig, Config &config, std::string &errInfo);
+    static bool ParseProxy(napi_env env, napi_value jsConfig, std::string &proxy, std::string &errInfo);
     static bool ParseAction(napi_env env, napi_value jsConfig, Action &action);
     static bool ParseUrl(napi_env env, napi_value jsConfig, std::string &url);
     static bool ParseData(napi_env env, napi_value jsConfig, Config &config);

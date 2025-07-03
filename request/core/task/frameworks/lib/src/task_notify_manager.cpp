@@ -56,6 +56,7 @@ int32_t TaskNotifyManager::RegisterNotify(const std::string &eventType, std::sha
         queuedNotifyMap_.erase(queuedIt);
     }
     notifyMap_.emplace(eventType, listener);
+    REQUEST_HILOGI("RegisterNotify notifyMap_.size: [%{public}zu]", notifyMap_.size());
     return E_OK;
 }
 
@@ -74,6 +75,7 @@ int32_t TaskNotifyManager::RemoveNotify(const std::string &eventType)
         return E_PARAMETER_CHECK;
     }
     notifyMap_.erase(it);
+    REQUEST_HILOGI("RemoveNotify notifyMap_.size: [%{public}zu]", notifyMap_.size());
     return E_OK;
 }
 

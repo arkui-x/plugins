@@ -291,6 +291,11 @@ int32_t TaskManagerJni::Pause(int64_t taskId)
         env->ExceptionClear();
         return E_SERVICE_ERROR;
     }
+    std::unique_lock<std::mutex> lock(mutex_);
+    auto it = uploadProxyList_.find(taskId);
+    if (it != uploadProxyList_.end() && it->second != nullptr) {
+        it->second->Pause();
+    }
     REQUEST_HILOGI("TaskManagerJni JNI: execute pause success.");
     return E_OK;
 }
@@ -309,6 +314,11 @@ int32_t TaskManagerJni::Resume(int64_t taskId)
         env->ExceptionDescribe();
         env->ExceptionClear();
         return E_SERVICE_ERROR;
+    }
+    std::unique_lock<std::mutex> lock(mutex_);
+    auto it = uploadProxyList_.find(taskId);
+    if (it != uploadProxyList_.end() && it->second != nullptr) {
+        it->second->Resume();
     }
     REQUEST_HILOGI("TaskManagerJni JNI: execute resume success.");
     return E_OK;

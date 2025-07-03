@@ -66,6 +66,7 @@
     self.background = [dict[@"background"] boolValue];
     self.title = dict[@"title"];
     self.saveas = dict[@"saveas"];
+    self.proxy = dict[@"proxy"];
     self.realPath = dict[@"realPath"];
     self.method = dict[@"method"];
     self.token = dict[@"token"];
@@ -82,6 +83,7 @@
 - (IosTaskInfo *)getTaskInfo {
     IosTaskInfo *info = [[IosTaskInfo alloc] init];
     info.saveas = self.saveas;
+    info.proxy = self.proxy;
     info.url = self.url;
     info.data = @"";
     info.title = self.title;

@@ -20,6 +20,8 @@
 #include "header_notify.h"
 #include "log.h"
 #include "pause_notify.h"
+#include "resume_notify.h"
+#include "response_notify.h"
 #include "progress_notify.h"
 #include "remove_notify.h"
 #include "request_utils.h"
@@ -41,8 +43,12 @@ std::unordered_set<std::string> JsTask::supportEventsV9_ = {
 };
 
 std::unordered_set<std::string> JsTask::supportEventsV10_ = {
+    EVENT_PAUSE,
+    EVENT_RESUME,
+    EVENT_REMOVE,
     EVENT_PROGRESS,
     EVENT_COMPLETED,
+    EVENT_RESPONSE,
     EVENT_FAILED,
 };
 
@@ -489,8 +495,12 @@ std::shared_ptr<JsNotify> JsTask::CreateNotify(napi_env env,
         return std::make_shared<FailNotify>(env, callback, version, action);
     } else if (type == EVENT_HEADERRECEIVE) {
         return std::make_shared<HeaderNotify>(env, callback, version, action);
+    } else if (type == EVENT_RESPONSE) {
+        return std::make_shared<ResponseNotify>(env, callback, version, action);
     } else if (type == EVENT_PAUSE) {
         return std::make_shared<PauseNotify>(env, callback, version, action);
+    } else if (type == EVENT_RESUME) {
+        return std::make_shared<ResumeNotify>(env, callback, version, action);
     } else if (type == EVENT_REMOVE) {
         return std::make_shared<RemoveNotify>(env, callback, version, action);
     } else {

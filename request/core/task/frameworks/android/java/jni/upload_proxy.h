@@ -33,6 +33,8 @@ public:
     bool Start(UploadCallback callback) override;
     bool Remove() override;
     bool Stop() override;
+    bool Pause() override;
+    bool Resume() override;
 
 private:
     void Exec();
@@ -44,6 +46,7 @@ private:
     void Notify(const std::string &type);
 
     int32_t UploadOneFile(uint32_t index, const FileSpec &file);
+    int32_t ResumeUploadOneFile(uint32_t index);
     int32_t CheckUploadStatus(CURLM *curlMulti);
     void ClearCurlResource(CURLM *curlMulti, CURL *curl, curl_mime *mime);
     void SplitHttpMessage(const std::string &stmp);
@@ -62,14 +65,20 @@ private:
     void SetCurlOpt(CURL *curl, const Config &config);
     void SetHttpPut(CURL *curl, const FileSpec &file, int64_t fileSize);
     void SetMimePost(CURL *curl, curl_mime *mime, const FileSpec &file, int64_t fileSize);
+    void ParseHttpHeaders(const std::string& headers);
 
 private:
     int64_t taskId_ = 0;
+    CURL* currentCurl_ = nullptr;
+    CURLM *curlMulti_ = nullptr;
+    curl_mime *currentMime_ = nullptr;
     Config config_;
+    Response response_;
     UploadCallback callback_ = nullptr;
     TaskInfo info_ {};
     std::mutex mutex_;
     bool isAbort_ = false;
+    bool isPause_ = false;
     bool isStopped_ = false;
     std::string responseHead_ = "";
     struct curl_slist *list_ = nullptr;

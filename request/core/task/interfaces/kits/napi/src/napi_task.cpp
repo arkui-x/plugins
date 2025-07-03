@@ -40,6 +40,9 @@ napi_property_descriptor clzDes[] = {
     DECLARE_NAPI_FUNCTION(FUNCTION_OFF, JsTask::Off),
     DECLARE_NAPI_FUNCTION(FUNCTION_START, JsTask::Start),
     DECLARE_NAPI_FUNCTION(FUNCTION_STOP, JsTask::Stop),
+    DECLARE_NAPI_FUNCTION(FUNCTION_PAUSE, JsTask::Pause),
+    DECLARE_NAPI_FUNCTION(FUNCTION_DELETE, JsTask::Remove),
+    DECLARE_NAPI_FUNCTION(FUNCTION_RESUME, JsTask::Resume),
 };
 
 napi_property_descriptor clzDesV9[] = {

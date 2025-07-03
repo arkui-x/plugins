@@ -78,13 +78,39 @@ int32_t UploadProxy::Start(int64_t taskId)
 
 int32_t UploadProxy::Pause(int64_t taskId)
 {
-    NSLog(@"UploadProxy::Pause, taskId:%lld", taskId);
+    NSLog(@"UploadProxy::Pause taskId:%lld", taskId);
+    bool isPause = false;
+    for (auto &task : uploadTaskList_) {
+        if (task == nil) {
+            continue;
+        }
+        if (task.state == NSURLSessionTaskStateRunning) {
+            isPause = true;
+            [task suspend];
+        }
+    }
+    if (isPause) {
+        ChangeState(State::PAUSED);
+    }
     return E_OK;
 }
 
 int32_t UploadProxy::Resume(int64_t taskId)
 {
-    NSLog(@"UploadProxy::Resume, taskId:%lld", taskId);
+    NSLog(@"UploadProxy::Resume taskId:%lld", taskId);
+    bool isResume = false;
+    for (auto &task : uploadTaskList_) {
+        if (task == nil) {
+            continue;
+        }
+        if (task.state == NSURLSessionTaskStateSuspended) {
+            isResume = true;
+            [task resume];
+        }
+    }
+    if (isResume) {
+        ChangeState(State::RUNNING);
+    }
     return E_OK;
 }
 
@@ -372,6 +398,7 @@ void UploadProxy::CompletionHandler(NSURLResponse *response, NSError *error)
         taskState.message = GetCodeMessage(taskState.responseCode);
         taskStateList.push_back(taskState);
     }
+    OnResponseCallback(response);
     GetExtras(response);
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
@@ -386,7 +413,7 @@ void UploadProxy::CompletionHandler(NSURLResponse *response, NSError *error)
             return;
         }
     }
-    if (error != nil) {
+    if (error != nil && info_.progress.state != State::PAUSED) {
         NSLog(@"upload failed, error: %@", [error description]);
         ChangeState(State::FAILED);
         for (auto &task : uploadTaskList_) {
@@ -397,7 +424,7 @@ void UploadProxy::CompletionHandler(NSURLResponse *response, NSError *error)
     } else {
          // all responsed
         if (respCount_ == fileCount_) {
-            if (error != nil) {
+            if (error != nil && info_.progress.state != State::PAUSED) {
                 NSLog(@"upload failed, error: %@", [error description]);
                 ChangeState(State::FAILED);
             } else {
@@ -454,7 +481,7 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
                     fileSize -= config.begins;
                 }
                 if (config.ends > 0) {
-                    fileSize = config.ends - config.begins;
+                    fileSize = config.ends - config.begins + 1;
                 }
                 int64_t offset = 0;
                 if (config.begins > 0) {
@@ -480,16 +507,138 @@ int64_t UploadProxy::GetTotalFileSize() const
 
 void UploadProxy::ChangeState(State state)
 {
+    NSLog(@"UploadProxy::ChangeState, taskId:%lld, state:%d", taskId_, state);
     info_.progress.state = state;
     info_.mtime = RequestUtils::GetTimeNow();
     if (callback_ == nullptr) {
         return;
     }
-    if (state == State::FAILED) {
-        callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
-    } else if (state == State::COMPLETED) {
-        callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
-        callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
+    switch (state) {
+        case State::FAILED: {
+            callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
+            break;
+        }
+        case State::COMPLETED: {
+            callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
+            callback_(taskId_, EVENT_COMPLETED, JsonUtils::TaskInfoToJsonString(info_));
+            break;
+        }
+        case State::PAUSED: {
+            callback_(taskId_, EVENT_PAUSE, JsonUtils::TaskInfoToJsonString(info_));
+            IosTaskDao::UpdateDB(info_);
+            break;
+        }
+        case State::RUNNING: {
+            callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
+            break;
+        }
+        default: {
+            NSLog(@"upload ChangeState, Other state");
+            break;
+        }
+    }
+}
+
+NSString* UploadProxy::GetStandardHTTPReason(NSInteger statusCode) {
+    static NSDictionary<NSNumber *, NSString *> *reasonPhrases;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        reasonPhrases = @{
+            @100: @"Continue",
+            @101: @"Switching Protocols",
+            @200: @"OK",
+            @201: @"Created",
+            @202: @"Accepted",
+            @203: @"Non-Authoritative Information",
+            @204: @"No Content",
+            @205: @"Reset Content",
+            @206: @"Partial Content",
+            @300: @"Multiple Choices",
+            @301: @"Moved Permanently",
+            @302: @"Found",
+            @303: @"See Other",
+            @304: @"Not Modified",
+            @305: @"Use Proxy",
+            @307: @"Temporary Redirect",
+            @400: @"Bad Request",
+            @401: @"Unauthorized",
+            @402: @"Payment Required",
+            @403: @"Forbidden",
+            @404: @"Not Found",
+            @405: @"Method Not Allowed",
+            @406: @"Not Acceptable",
+            @407: @"Proxy Authentication Required",
+            @408: @"Request Timeout",
+            @409: @"Conflict",
+            @410: @"Gone",
+            @411: @"Length Required",
+            @412: @"Precondition Failed",
+            @413: @"Payload Too Large",
+            @414: @"URI Too Long",
+            @415: @"Unsupported Media Type",
+            @416: @"Range Not Satisfiable",
+            @417: @"Expectation Failed",
+            @426: @"Upgrade Required",
+            @500: @"Internal Server Error",
+            @501: @"Not Implemented",
+            @502: @"Bad Gateway",
+            @503: @"Service Unavailable",
+            @504: @"Gateway Timeout",
+            @505: @"HTTP Version Not Supported"
+        };
+    });
+    
+    return reasonPhrases[@(statusCode)] ?: [NSHTTPURLResponse localizedStringForStatusCode:statusCode];
+}
+
+void UploadProxy::OnResponseCallback(NSURLResponse *response)
+{
+    if (callback_ == nullptr || response == nil) {
+        return;
+    }
+     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+         NSInteger statusCode = httpResponse.statusCode;
+         NSString *reason = GetStandardHTTPReason(statusCode);
+         NSMutableDictionary<NSString *, NSArray<NSString *> *> *multiValueHeaders = [NSMutableDictionary dictionary];
+         [httpResponse.allHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *value, BOOL *stop) {
+             if ([key.lowercaseString isEqualToString:@"set-cookie"]) {
+                 multiValueHeaders[key] = @[value];
+             } else {
+                 NSArray<NSString *> *values = [value componentsSeparatedByString:@","];
+                 multiValueHeaders[key] = values;
+             }
+         }];
+         NSString *httpVersion = @"HTTP/1.1";
+         NSString *description = [response description];
+         NSRegularExpression *regex =
+            [NSRegularExpression regularExpressionWithPattern:@"HTTP/(\\d\\.\\d) (\\d{3}) (.+?)\n" options:0 error:nil];
+         NSTextCheckingResult *match =
+            [regex firstMatchInString:description options:0 range:NSMakeRange(0, description.length)];
+         if (match) {
+             httpVersion = [description substringWithRange:match.range];
+         }
+         info_.response.version = httpVersion ? std::string([httpVersion UTF8String]) : "";
+         info_.response.statusCode = httpResponse.statusCode;
+         info_.response.reason = reason ? std::string([reason UTF8String]) : "";
+         info_.response.headers.clear();
+         for (NSString *ocKey in multiValueHeaders) {
+            NSArray<NSString *> *ocValues = multiValueHeaders[ocKey];
+            std::string cppKey = ocKey ? std::string([ocKey UTF8String]) : "";
+            std::vector<std::string> cppValues;
+            PushBackOcValues(ocValues, cppValues);
+            info_.response.headers[cppKey] = cppValues;
+         }
+        callback_(taskId_, EVENT_RESPONSE, JsonUtils::TaskInfoToJsonString(info_));
+     }
+}
+
+void UploadProxy::PushBackOcValues(NSArray<NSString *> *ocValues, std::vector<std::string> &cppValues)
+{
+    for (NSString *ocValue in ocValues) {
+        if (ocValue) {
+            cppValues.push_back(std::string([ocValue UTF8String]));
+        }
     }
 }
 

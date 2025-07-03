@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_REQUEST_I_UPLOAD_PROXY_H
-#define PLUGINS_REQUEST_I_UPLOAD_PROXY_H
+#ifndef PLUGINS_REQUEST_RESUME_NOTIFY_H
+#define PLUGINS_REQUEST_RESUME_NOTIFY_H
 
-#include <functional>
+#include "js_notify.h"
 #include <string>
+#include <map>
 
 namespace OHOS::Plugin::Request {
-using UploadCallback = std::function<void(int64_t taskId, const std::string &type, const std::string &params)>;
-class IUploadProxy {
+class ResumeNotify : public JsNotify
+{
 public:
-    virtual ~IUploadProxy() = default;
-    virtual bool Start(UploadCallback callback) = 0;
-    virtual bool Remove() = 0;
-    virtual bool Stop() = 0;
-    virtual bool Pause() = 0;
-    virtual bool Resume() = 0;
+    explicit ResumeNotify(napi_env env, napi_value cb, Version version, Action action);
+    virtual ~ResumeNotify() = default;
+
+    void HandleCallback(napi_env env, napi_value cb, const std::string &param) override;
 };
 } // namespace OHOS::Plugin::Request
-#endif // PLUGINS_REQUEST_UPLOAD_PROXY_H
+#endif // PLUGINS_REQUEST_RESUME_NOTIFY_H

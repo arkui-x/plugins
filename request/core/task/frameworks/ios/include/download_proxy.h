@@ -49,11 +49,14 @@ private:
     void ReportMimeType(NSURLResponse *response);
     void OnCompletedCallback();
     void OnProgressCallback(NSProgress *downloadProgress);
+    void OnResponseCallback(NSURLResponse *response);
     void OnFailedCallback();
     void OnPauseCallback();
     bool CheckUrl(const std::string &strUrl);
     void SetSizes(int64_t fileSize);
     void GetFileSize(const std::string &downloadUrl);
+    void PushBackOcValues(NSArray<NSString *> *ocValues, std::vector<std::string> &cppValues);
+    NSString* GetStandardHTTPReason(NSInteger statusCode);
 
 private:
     Config config_;

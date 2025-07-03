@@ -27,6 +27,8 @@ public:
     static std::shared_ptr<ITaskManagerAdp> Get();
     virtual ITask *Create(const Config &config) = 0;
     virtual int32_t Remove(int64_t taskId) = 0;
+    virtual int32_t Pause(int64_t taskId) = 0;
+    virtual int32_t Resume(int64_t taskId) = 0;
     virtual int32_t GetTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info) = 0;
     virtual int32_t Search(const Filter &filter, std::vector<std::string> &taskIdList) = 0;
     virtual int32_t GetDefaultStoragePath(std::string& path) = 0;

@@ -29,6 +29,11 @@ public interface EventType {
     /**
      * event type
      */
+    String RESPONSE = "response";
+
+    /**
+     * event type
+     */
     String COMPLETED = "completed";
 
     /**

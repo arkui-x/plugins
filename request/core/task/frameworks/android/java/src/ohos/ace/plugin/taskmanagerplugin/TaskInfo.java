@@ -25,6 +25,7 @@ import java.util.List;
 public class TaskInfo {
     private long tid;
     private String saveas;
+    private String proxy;
     private String url;
     private String data;
     private String title;
@@ -50,6 +51,15 @@ public class TaskInfo {
     private boolean withSystem;
     private int priority;
     private String extras;
+    private Response response;
+
+    public Response getResponse() {
+        return response;
+    }
+
+    public void setResponse(Response response) {
+        this.response = response;
+    }
 
     public String getSaveas() {
         return saveas;
@@ -57,6 +67,14 @@ public class TaskInfo {
 
     public void setSaveas(String saveas) {
         this.saveas = saveas;
+    }
+
+    public String getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(String proxy) {
+        this.proxy = proxy;
     }
 
     public String getUrl() {

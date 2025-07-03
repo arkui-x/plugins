@@ -241,6 +241,33 @@ napi_value Convert2JSValue(napi_env env, const Progress &progress)
     return value;
 }
 
+napi_value Convert2JSValue(napi_env env, const Response &response)
+{
+    napi_value value = nullptr;
+    napi_create_object(env, &value);
+
+    napi_set_named_property(env, value, "version", Convert2JSValue(env, response.version));
+    napi_set_named_property(env, value, "statusCode", Convert2JSValue(env, response.statusCode));
+    napi_set_named_property(env, value, "reason", Convert2JSValue(env, response.reason));
+
+    napi_value headers = nullptr;
+    napi_create_object(env, &headers);
+    
+    for (const auto &header : response.headers) {
+        const std::string &key = header.first;
+        const std::vector<std::string> &values = header.second;
+        napi_value jsValues = nullptr;
+        napi_create_array_with_length(env, values.size(), &jsValues);
+        for (size_t i = 0; i < values.size(); i++) {
+            napi_set_element(env, jsValues, i, Convert2JSValue(env, values[i]));
+        }
+        napi_set_named_property(env, headers, key.c_str(), jsValues);
+    }
+    napi_set_named_property(env, value, "headers", headers);
+    
+    return value;
+}
+
 napi_value Convert2JSValue(napi_env env, const std::vector<FileSpec> &files, const std::vector<FormItem> &forms)
 {
     napi_value data = nullptr;
@@ -361,6 +388,7 @@ napi_value Convert2JSValue(napi_env env, TaskInfo &taskInfo)
     napi_set_named_property(env, value, "mode", Convert2JSValue(env, static_cast<uint32_t>(taskInfo.mode)));
     napi_set_named_property(env, value, "mimeType", Convert2JSValue(env, taskInfo.mimeType));
     napi_set_named_property(env, value, "progress", Convert2JSValue(env, taskInfo.progress));
+    napi_set_named_property(env, value, "response", Convert2JSValue(env, taskInfo.response));
     napi_set_named_property(env, value, "gauge", Convert2JSValue(env, taskInfo.gauge));
     napi_set_named_property(env, value, "ctime", Convert2JSValue(env, taskInfo.ctime));
     napi_set_named_property(env, value, "mtime", Convert2JSValue(env, taskInfo.mtime));

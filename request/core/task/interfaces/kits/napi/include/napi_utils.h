@@ -53,6 +53,7 @@ napi_value Convert2JSValue(napi_env env, const std::map<std::string, std::string
 napi_value Convert2JSValue(napi_env env, const std::string &str);
 napi_value Convert2JSValue(napi_env env, const std::vector<TaskState> &taskStates);
 napi_value Convert2JSValue(napi_env env, const Progress &progress);
+napi_value Convert2JSValue(napi_env env, const Response &response);
 napi_value Convert2JSValue(napi_env env, TaskInfo &taskInfo);
 napi_value Convert2JSValue(napi_env env, const std::vector<FileSpec> &files, const std::vector<FormItem> &forms);
 napi_value Convert2JSHeadersAndBody(napi_env env, const std::map<std::string, std::string> &header,

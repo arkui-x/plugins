@@ -42,6 +42,11 @@ void ProgressNotify::HandleCallback(napi_env env, napi_value cb, const std::stri
         callbackValues[NapiUtils::SECOND_ARGV] = totalSize;
         napi_call_function(env, nullptr, cb, NapiUtils::TWO_ARG, callbackValues, &callbackResult);
     } else {
+        if (action_ == Action::DOWNLOAD) {
+            if (info.progress.lastProcessed > info.progress.processed) {
+                info.progress.processed = info.progress.lastProcessed;
+            }
+        }
         auto jsProgress = NapiUtils::Convert2JSValue(env, info.progress);
         callbackValues[NapiUtils::FIRST_ARGV] = jsProgress;
         napi_call_function(env, nullptr, cb, NapiUtils::ONE_ARG, callbackValues, &callbackResult);
