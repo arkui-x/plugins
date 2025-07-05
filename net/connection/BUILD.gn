@@ -46,6 +46,7 @@ template("plugin_net_connection_static") {
     } else if (platform == "ios") {
       defines += [ "IOS_PLATFORM" ]
       deps += [ "ios:net_connection_ios" ]
+      sources += [ "//commonlibrary/c_utils/base/src/datetime_ex.cpp" ]
     }
 
     subsystem_name = "plugins"
