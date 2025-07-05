@@ -38,8 +38,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * download manager
@@ -63,6 +64,7 @@ public class DownloadImpl {
     private static final int NETWORK_WIFI = 1;
     private static final int NETWORK_MOBILE = 2;
 
+    private boolean supportsBreakpoint = false;
     private boolean isIgnoreStatus = false;
     private final Context context;
     private DownloadManager.Request request;
@@ -144,6 +146,48 @@ public class DownloadImpl {
     }
 
     /**
+     * get http response
+     *
+     * @param HttpURLConnection HTTP connection
+     * @return response
+     */
+    public Response parseHttpResponse(HttpURLConnection connection) throws IOException {
+        Response response = new Response();
+
+        response.setStatusCode(connection.getResponseCode());
+        response.setReason(connection.getResponseMessage());
+
+        String protocol = connection.getHeaderField(null);
+        String version = protocol.split(" ")[0];
+        response.setVersion(version);
+
+        Map<String, List<String>> headers = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : connection.getHeaderFields().entrySet()) {
+            if (entry.getKey() != null) {
+                headers.put(entry.getKey(), entry.getValue());
+            }
+        }
+        response.setHeaders(headers);
+
+        Log.i(TAG, "HTTP Response: Version=" + response.getVersion()
+            + ", Status=" + response.getStatusCode()
+            + ", Reason=" + response.getReason());
+
+        Log.i(TAG, "  Headers:");
+        if (headers.isEmpty()) {
+            Log.i(TAG, "    (empty)");
+        } else {
+            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                String key = entry.getKey();
+                for (String value : entry.getValue()) {
+                    Log.i(TAG, " " + key + ":" + value);
+                }
+            }
+        }
+        return response;
+    }
+
+    /**
      * Start download with url
      *
      * @param taskInfo the task info
@@ -171,15 +215,19 @@ public class DownloadImpl {
             return;
         }
         Config finalConfig = config;
-        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> canMakeRequest(finalConfig.getUrl()));
-        boolean canMakeRequest = false;
-        try {
-            canMakeRequest = future.get();
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        if (!canMakeRequest) {
-            Log.d(TAG, "can not make request");
+
+        Response response = canMakeRequest(finalConfig.getUrl());
+        if (response != null) {
+            taskInfo.setResponse(response);
+            mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
+                EventType.RESPONSE, JsonUtil.convertTaskInfoToJson(taskInfo));
+            if (response.getStatusCode() != HttpURLConnection.HTTP_OK) {
+                Log.d(TAG, "can not make request, status code: " + response.getStatusCode());
+                sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
+                return;
+            }
+        } else {
+            Log.d(TAG, "can not make request, no response");
             sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
             return;
         }
@@ -219,6 +267,7 @@ public class DownloadImpl {
                 request.addRequestHeader(key, config.getHeaders().get(key));
             }
         }
+
         // set destination save file path
         String downloadFilePath = config.getSaveas();
         if (downloadFilePath == null) {
@@ -403,6 +452,7 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
+                    Log.i(TAG, "queryDownloadStatus: running:size: " + downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS,
                             JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     TaskDao.update(context, queryRunnable.taskInfo, true);
@@ -418,6 +468,7 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
+                    Log.i(TAG, "queryDownloadStatus: success:size: " + downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS,
                             JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.COMPLETED,
@@ -467,6 +518,7 @@ public class DownloadImpl {
                 bytesAndStatus[DOWNLOAD_COLUMN_REASON] =
                     cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON));
                 Log.i(TAG, "queryProgress status: " + bytesAndStatus[DOWNLOAD_STATUS]);
+                Log.i(TAG, "queryProgress reason: " + bytesAndStatus[DOWNLOAD_COLUMN_REASON]);
                 queryDownloadStatus(queryRunnable, bytesAndStatus[DOWNLOAD_STATUS], bytesAndStatus);
             } else {
                 stopQueryProgress(queryRunnable);
@@ -588,12 +640,17 @@ public class DownloadImpl {
      */
     public void pauseDownload(TaskInfo taskInfo) {
         Log.i(TAG, "execute pauseDownload, taskId: " + taskInfo.getTid());
-        taskInfo.getProgress().setState(State.PAUSED);
-        stopQueryProgress(taskInfo);
-        removeDownload(taskInfo);
-        TaskDao.update(context, taskInfo, false);
-        mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
-            EventType.PAUSE, JsonUtil.convertTaskInfoToJson(taskInfo));
+        if (taskInfo.getProgress().getState() == State.RUNNING) {
+            taskInfo.getProgress().setState(State.PAUSED);
+            if (taskInfo.getProgress().getLastProcessed() < taskInfo.getProgress().getProcessed()) {
+                taskInfo.getProgress().setLastProcessed(taskInfo.getProgress().getProcessed());
+            }
+            stopQueryProgress(taskInfo);
+            removeDownload(taskInfo);
+            TaskDao.update(context, taskInfo, false);
+            mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
+                EventType.PAUSE, JsonUtil.convertTaskInfoToJson(taskInfo));
+        }
     }
 
     /**
@@ -613,29 +670,34 @@ public class DownloadImpl {
      * @param urlString download url
      * @return true or false
      */
-    public boolean canMakeRequest(String urlString) {
+    public Response canMakeRequest(String urlString) {
         Log.i(TAG, "Download: start download manager service, downloadUrl: " + urlString);
+        supportsBreakpoint = false;
         try {
             URL url = new URL(urlString);
             URLConnection connection = url.openConnection();
             HttpURLConnection httpConnection = (HttpURLConnection) connection;
             httpConnection.setConnectTimeout(5000);
             httpConnection.connect();
+            Response response = parseHttpResponse(httpConnection);
+            httpConnection.disconnect();
 
-            int responseCode = httpConnection.getResponseCode();
-            Log.i(TAG, "Response Code: " + responseCode);
-
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                Log.i(TAG, "canMakeRequest success");
-                return true;
-            } else {
-                Log.i(TAG, "canMakeRequest failed with response code: " + responseCode);
-                return false;
+            int responseCode = response.getStatusCode();
+            if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_PARTIAL) {
+                Map<String, List<String>> headers = response.getHeaders();
+                if (headers != null) {
+                    List<String> acceptRangesList = headers.get("Accept-Ranges");
+                    String acceptRanges = (acceptRangesList != null && !acceptRangesList.isEmpty()) ?
+                        acceptRangesList.get(0) : null;
+                    supportsBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
+                    Log.i(TAG, "Breakpoint supported: " + supportsBreakpoint);
+                }
             }
+            return response;
         } catch (Exception e) {
             e.printStackTrace();
             Log.i(TAG, "canMakeRequest failed due to exception");
-            return false;
+            return null;
         }
     }
 

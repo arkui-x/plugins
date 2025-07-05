@@ -30,6 +30,7 @@ java_library("task_android_java") {
     "java/src/ohos/ace/plugin/taskmanagerplugin/Mode.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/Network.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/Progress.java",
+    "java/src/ohos/ace/plugin/taskmanagerplugin/Response.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/Reason.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/State.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/TaskDao.java",

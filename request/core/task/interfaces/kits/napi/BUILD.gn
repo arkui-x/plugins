@@ -49,6 +49,8 @@ ohos_source_set("task_napi") {
     "src/pause_notify.cpp",
     "src/progress_notify.cpp",
     "src/remove_notify.cpp",
+    "src/response_notify.cpp",
+    "src/resume_notify.cpp",
   ]
 
   configs = [ ":task_interfaces_config" ]

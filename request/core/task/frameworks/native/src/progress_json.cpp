@@ -20,6 +20,7 @@ namespace OHOS::Plugin::Request {
 const std::string JSON_STATE = "state";
 const std::string JSON_INDEX = "index";
 const std::string JSON_PROCESSED = "processed";
+const std::string JSON_LAST_PROCESSED = "lastProcessed";
 const std::string JSON_TOTAL_PROCESSED = "totalProcessed";
 const std::string JSON_SIZES = "sizes";
 const std::string JSON_EXTRAS = "extras";
@@ -30,6 +31,7 @@ void to_json(Json &json, const Progress &progress)
     json = Json({{JSON_STATE, progress.state},
                 {JSON_INDEX, progress.index},
                 {JSON_PROCESSED, progress.processed},
+                {JSON_LAST_PROCESSED, progress.lastProcessed},
                 {JSON_TOTAL_PROCESSED, progress.totalProcessed},
                 {JSON_SIZES, progress.sizes},
                 {JSON_EXTRAS, progress.extras},
@@ -46,6 +48,9 @@ void from_json(const Json &json, Progress &progress)
     }
     if (json.find(JSON_PROCESSED) != json.end() && json[JSON_PROCESSED].is_number()) {
         json.at(JSON_PROCESSED).get_to(progress.processed);
+    }
+    if (json.find(JSON_LAST_PROCESSED) != json.end() && json[JSON_LAST_PROCESSED].is_number()) {
+        json.at(JSON_LAST_PROCESSED).get_to(progress.lastProcessed);
     }
     if (json.find(JSON_TOTAL_PROCESSED) != json.end() && json[JSON_TOTAL_PROCESSED].is_number()) {
         json.at(JSON_TOTAL_PROCESSED).get_to(progress.totalProcessed);

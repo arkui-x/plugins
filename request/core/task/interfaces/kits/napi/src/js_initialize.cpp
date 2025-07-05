@@ -35,6 +35,7 @@ static constexpr const char *PARAM_KEY_BACKGROUND = "background";
 constexpr const std::uint32_t CONFIG_PARAM_POS = 1;
 static constexpr uint32_t FILE_PERMISSION = 0646;
 static constexpr uint32_t TITLE_MAXIMUM = 256;
+static constexpr uint32_t PROXY_MAXIMUM = 512;
 static constexpr uint32_t DESCRIPTION_MAXIMUM = 1024;
 static constexpr uint32_t URL_MAXIMUM = 2048;
 
@@ -97,6 +98,7 @@ ExceptionError JsInitialize::InitParam(napi_env env, napi_value* argv, Config &c
     REQUEST_HILOGI("config overwrite: %{public}d", static_cast<bool>(config.overwrite));
     REQUEST_HILOGI("config title: %{public}s", config.title.c_str());
     REQUEST_HILOGI("config saveas: %{public}s", config.saveas.c_str());
+    REQUEST_HILOGI("config proxy: %{public}s", config.proxy.c_str());
     REQUEST_HILOGI("config method: %{public}s", config.method.c_str());
     REQUEST_HILOGI("config token: %{public}s", config.token.c_str());
     REQUEST_HILOGI("config description: %{public}s", config.description.c_str());
@@ -241,6 +243,10 @@ bool JsInitialize::ParseConfig(napi_env env, napi_value jsConfig, Config &config
         errInfo = "parse action error";
         return false;
     }
+    if (!ParseProxy(env, jsConfig, config.proxy, errInfo)) {
+        errInfo = "parse proxy error";
+        return false;
+    }
     if (!ParseUrl(env, jsConfig, config.url)) {
         errInfo = "parse url error";
         return false;
@@ -377,6 +383,28 @@ void JsInitialize::ParseSaveas(napi_env env, napi_value jsConfig, Config &config
     }
 
     REQUEST_HILOGI("ParseSaveas: %{public}s", config.saveas.c_str());
+}
+
+
+bool JsInitialize::ParseProxy(napi_env env, napi_value jsConfig, std::string &proxy, std::string &errInfo)
+{
+    proxy = NapiUtils::Convert2String(env, jsConfig, "proxy");
+    if (proxy.empty()) {
+        return true;
+    }
+
+    if (proxy.size() > PROXY_MAXIMUM) {
+        REQUEST_HILOGE("The proxy exceeds the maximum length of 512");
+        errInfo = "Parameter verification failed, the length of config.proxy exceeds 512";
+        return false;
+    }
+
+    if (!regex_match(proxy, std::regex("^http:\\/\\/.+:\\d{1,5}$"))) {
+        REQUEST_HILOGE("ParseProxy error");
+        errInfo = "Parameter verification failed, the format of proxy is http(s)://<address or domain>:port";
+        return false;
+    }
+    return true;
 }
 
 int64_t JsInitialize::ParseBegins(napi_env env, napi_value jsConfig)

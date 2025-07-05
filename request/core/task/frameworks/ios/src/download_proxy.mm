@@ -109,6 +109,7 @@ bool DownloadProxy::CheckUrl(const string &strUrl)
     NSURLResponse *response = nil;  
     NSError *error = nil;  
     [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error]; 
+    OnResponseCallback(response);
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         return httpResponse.statusCode == 200;
@@ -177,6 +178,9 @@ int32_t DownloadProxy::Pause(int64_t taskId)
                 resumeData_ = resumeData;
             }
         }];
+        if (info_.progress.lastProcessed < info_.progress.processed ) {
+            info_.progress.lastProcessed = info_.progress.processed;
+        }
         OnPauseCallback();
     }
     return E_OK;
@@ -186,8 +190,12 @@ int32_t DownloadProxy::Resume(int64_t taskId)
 {
     NSLog(@"Resume download, taskId:%lld", taskId);
     if (resumeData_ == nil) {
-        NSLog(@"restore download, because resumeData is nil, download from begin.");
-        return Start(taskId);
+        int32_t ret = Start(taskId);
+        if (ret == E_OK) {
+            info_.progress.state = State::RUNNING;
+            callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
+        }
+        return ret;
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [sessionCtrl_ downloadTaskWithResumeData:resumeData_
@@ -202,6 +210,8 @@ int32_t DownloadProxy::Resume(int64_t taskId)
         }];
         [downloadTask_ resume];
     });
+    info_.progress.state = State::RUNNING;
+    callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
     return E_OK;
 }
 
@@ -320,6 +330,111 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
         callback_(taskId_, EVENT_PROGRESS, JsonUtils::TaskInfoToJsonString(info_));
         currentTime_ = now;
         IosTaskDao::UpdateDB(info_);
+    }
+}
+
+NSString* DownloadProxy::GetStandardHTTPReason(NSInteger statusCode) {
+    static NSDictionary<NSNumber *, NSString *> *reasonPhrases;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        reasonPhrases = @{
+            @100: @"Continue",
+            @101: @"Switching Protocols",
+            @200: @"OK",
+            @201: @"Created",
+            @202: @"Accepted",
+            @203: @"Non-Authoritative Information",
+            @204: @"No Content",
+            @205: @"Reset Content",
+            @206: @"Partial Content",
+            @300: @"Multiple Choices",
+            @301: @"Moved Permanently",
+            @302: @"Found",
+            @303: @"See Other",
+            @304: @"Not Modified",
+            @305: @"Use Proxy",
+            @307: @"Temporary Redirect",
+            @400: @"Bad Request",
+            @401: @"Unauthorized",
+            @402: @"Payment Required",
+            @403: @"Forbidden",
+            @404: @"Not Found",
+            @405: @"Method Not Allowed",
+            @406: @"Not Acceptable",
+            @407: @"Proxy Authentication Required",
+            @408: @"Request Timeout",
+            @409: @"Conflict",
+            @410: @"Gone",
+            @411: @"Length Required",
+            @412: @"Precondition Failed",
+            @413: @"Payload Too Large",
+            @414: @"URI Too Long",
+            @415: @"Unsupported Media Type",
+            @416: @"Range Not Satisfiable",
+            @417: @"Expectation Failed",
+            @426: @"Upgrade Required",
+            @500: @"Internal Server Error",
+            @501: @"Not Implemented",
+            @502: @"Bad Gateway",
+            @503: @"Service Unavailable",
+            @504: @"Gateway Timeout",
+            @505: @"HTTP Version Not Supported"
+        };
+    });
+    
+    return reasonPhrases[@(statusCode)] ?: [NSHTTPURLResponse localizedStringForStatusCode:statusCode];
+}
+
+void DownloadProxy::OnResponseCallback(NSURLResponse *response)
+{
+    NSLog(@"download OnResponseCallback");
+    if (callback_ == nullptr || response == nil) {
+        return;
+    }
+     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+         NSInteger statusCode = httpResponse.statusCode;
+         NSString *reason = GetStandardHTTPReason(statusCode);
+         NSMutableDictionary<NSString *, NSArray<NSString *> *> *multiValueHeaders = [NSMutableDictionary dictionary];
+         [httpResponse.allHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *value, BOOL *stop) {
+             if ([key.lowercaseString isEqualToString:@"set-cookie"]) {
+                 multiValueHeaders[key] = @[value];
+             } else {
+                 NSArray<NSString *> *values = [value componentsSeparatedByString:@","];
+                 multiValueHeaders[key] = values;
+             }
+         }];
+
+         NSString *httpVersion = @"HTTP/1.1";
+         NSString *description = [response description];
+         NSRegularExpression *regex =
+            [NSRegularExpression regularExpressionWithPattern:@"HTTP/(\\d\\.\\d) (\\d{3})\n" options:0 error:nil];
+         NSTextCheckingResult *match =
+            [regex firstMatchInString:description options:0 range:NSMakeRange(0, description.length)];
+         if (match) {
+             httpVersion = [description substringWithRange:match.range];
+         }
+         info_.response.version = httpVersion ? std::string([httpVersion UTF8String]) : "";
+         info_.response.statusCode = httpResponse.statusCode;
+         info_.response.reason = reason ? std::string([reason UTF8String]) : "";
+         info_.response.headers.clear();
+         for (NSString *ocKey in multiValueHeaders) {
+            NSArray<NSString *> *ocValues = multiValueHeaders[ocKey];
+            std::string cppKey = ocKey ? std::string([ocKey UTF8String]) : "";
+            std::vector<std::string> cppValues;
+            PushBackOcValues(ocValues, cppValues);
+            info_.response.headers[cppKey] = cppValues;
+         }
+        callback_(taskId_, EVENT_RESPONSE, JsonUtils::TaskInfoToJsonString(info_));
+     }
+}
+
+void DownloadProxy::PushBackOcValues(NSArray<NSString *> *ocValues, std::vector<std::string> &cppValues)
+{
+    for (NSString *ocValue in ocValues) {
+        if (ocValue) {
+            cppValues.push_back(std::string([ocValue UTF8String]));
+        }
     }
 }
 

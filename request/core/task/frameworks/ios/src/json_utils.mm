@@ -67,6 +67,7 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
         [dictProgress setValue:[NSNumber numberWithInteger:(int)info.progress.state] forKey:@"state"];
         [dictProgress setValue:[NSNumber numberWithInteger:(int)info.progress.index] forKey:@"index"];
         [dictProgress setValue:[NSNumber numberWithInteger:(int)info.progress.processed] forKey:@"processed"];
+        [dictProgress setValue:[NSNumber numberWithInteger:(int)info.progress.lastProcessed] forKey:@"lastProcessed"];
         [dictProgress setValue:[NSNumber numberWithInteger:(int)info.progress.totalProcessed] forKey:@"totalProcessed"];
         NSMutableArray *sizesArr = [NSMutableArray array];
         for (auto &size : info.progress.sizes) {
@@ -86,6 +87,23 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
         }
         [dictProgress setObject:bodyBytesArr forKey:@"bodyBytes"];
         [dict setObject:dictProgress forKey:@"progress"];
+        // response
+        NSMutableDictionary *dictResponse = [NSMutableDictionary dictionary];
+            [dictResponse setValue:CStringToNSString(info.response.version) forKey:@"version"];
+            [dictResponse setValue:@(info.response.statusCode) forKey:@"statusCode"];
+            [dictResponse setValue:CStringToNSString(info.response
+                                                     .reason) forKey:@"reason"];
+            NSMutableDictionary *dictHeaders = [NSMutableDictionary dictionary];
+            for (const auto &header : info.response.headers) {
+                NSString *key = CStringToNSString(header.first);
+                NSMutableArray *values = [NSMutableArray array];
+                for (const auto &val : header.second) {
+                    [values addObject:CStringToNSString(val)];
+                }
+                [dictHeaders setObject:values forKey:key];
+            }
+        [dictResponse setObject:dictHeaders forKey:@"headers"];
+        [dict setObject:dictResponse forKey:@"response"];
         [dict setValue:[NSNumber numberWithInteger:info.gauge] forKey:@"gauge"];
         [dict setValue:[NSNumber numberWithInteger:info.ctime] forKey:@"ctime"];
         [dict setValue:[NSNumber numberWithInteger:info.mtime] forKey:@"mtime"];

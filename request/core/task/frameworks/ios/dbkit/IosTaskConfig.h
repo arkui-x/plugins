@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) bool background;
 @property (nullable, nonatomic, copy) NSString *title;
 @property (nullable, nonatomic, copy) NSString *saveas;
+@property (nullable, nonatomic, copy) NSString *proxy;
 @property (nullable, nonatomic, copy) NSString *realPath;
 @property (nullable, nonatomic, copy) NSString *method;
 @property (nullable, nonatomic, copy) NSString *token;

@@ -164,6 +164,7 @@ public class JsonUtil {
             json.put("state", progress.getState());
             json.put("index", progress.getIndex());
             json.put("processed", progress.getProcessed());
+            json.put("lastProcessed", progress.getLastProcessed());
             if (progress.getSizes() != null) {
                 JSONArray sizeArray = new JSONArray();
                 for (long size : progress.getSizes()) {
@@ -199,6 +200,7 @@ public class JsonUtil {
             progress.setState(json.optInt("state"));
             progress.setIndex(json.optInt("index"));
             progress.setProcessed(json.optLong("processed"));
+            progress.setLastProcessed(json.optLong("lastProcessed"));
             JSONArray sizesArray = json.optJSONArray("sizes");
             if (sizesArray != null) {
                 List<Long> sizes = new ArrayList<>();
@@ -337,6 +339,7 @@ public class JsonUtil {
                 progressObj.put("state", progress.getState());
                 progressObj.put("index", progress.getIndex());
                 progressObj.put("processed", progress.getProcessed());
+                progressObj.put("lastProcessed", progress.getLastProcessed());
                 if (progress.getSizes() != null) {
                     JSONArray sizeArray = new JSONArray();
                     for (long size : progress.getSizes()) {
@@ -355,6 +358,23 @@ public class JsonUtil {
                 jsonTaskState.put("responseCode", taskState.getResponseCode());
                 jsonTaskState.put("message", taskState.getMessage());
                 jsonObj.put("taskStates", jsonTaskState);
+            }
+
+            Response response = taskInfo.getResponse();
+            if (response != null) {
+                JSONObject responseObj = new JSONObject();
+                responseObj.put("version", response.getVersion());
+                responseObj.put("statusCode", response.getStatusCode());
+                responseObj.put("reason", response.getReason());
+                if (response.getHeaders() != null) {
+                    JSONObject headersObj = new JSONObject();
+                    for (Map.Entry<String, List<String>> entry : response.getHeaders().entrySet()) {
+                        JSONArray valuesArray = new JSONArray(entry.getValue());
+                        headersObj.put(entry.getKey(), valuesArray);
+                    }
+                    responseObj.put("headers", headersObj);
+                }
+                jsonObj.put("response", responseObj);
             }
             return jsonObj.toString();
         } catch (JSONException e) {
@@ -452,6 +472,7 @@ public class JsonUtil {
                 progress.setState(progressObj.optInt("state"));
                 progress.setIndex(progressObj.optInt("index"));
                 progress.setProcessed(progressObj.optLong("processed"));
+                progress.setLastProcessed(progressObj.optLong("lastProcessed"));
                 JSONArray sizesArray = progressObj.optJSONArray("sizes");
                 if (sizesArray != null) {
                     List<Long> sizes = new ArrayList<>();

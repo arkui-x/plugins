@@ -29,6 +29,15 @@ public class Progress {
     private long processed;
     private List<Long> sizes;
     private Map<String, String> extras;
+    private long lastProcessed;
+
+    public long getLastProcessed() {
+        return lastProcessed;
+    }
+
+    public void setLastProcessed(long lastProcessed) {
+        this.lastProcessed = lastProcessed;
+    }
 
     public int getState() {
         return state;

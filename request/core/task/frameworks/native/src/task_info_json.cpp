@@ -18,6 +18,7 @@
 #include "log.h"
 #include "progress_json.h"
 #include "task_state_json.h"
+#include "response_json.h"
 
 namespace OHOS::Plugin::Request {
 const std::string JSON_VERSION = "version";
@@ -32,6 +33,7 @@ const std::string JSON_ACTION = "action";
 const std::string JSON_MODE = "mode";
 const std::string JSON_MIME_TYPE = "mimeType";
 const std::string JSON_PROGRESS = "progress";
+const std::string JSON_RESPONSE = "response";
 const std::string JSON_GAUGE = "gauge";
 const std::string JSON_CTIME = "ctime";
 const std::string JSON_MTIME = "mtime";
@@ -59,6 +61,7 @@ void to_json(Json &json, const TaskInfo &taskInfo)
                 {JSON_MODE, taskInfo.mode},
                 {JSON_MIME_TYPE, taskInfo.mimeType},
                 {JSON_PROGRESS, taskInfo.progress},
+                {JSON_RESPONSE, taskInfo.response},
                 {JSON_GAUGE, taskInfo.gauge},
                 {JSON_CTIME, taskInfo.ctime},
                 {JSON_MTIME, taskInfo.mtime},
@@ -109,6 +112,9 @@ void from_json(const Json &json, TaskInfo &taskInfo)
     }
     if (json.find(JSON_PROGRESS) != json.end() && json[JSON_PROGRESS].is_object()) {
         json.at(JSON_PROGRESS).get_to(taskInfo.progress);
+    }
+    if (json.find(JSON_RESPONSE) != json.end() && json[JSON_RESPONSE].is_object()) {
+        json.at(JSON_RESPONSE).get_to(taskInfo.response);
     }
     if (json.find(JSON_GAUGE) != json.end() && json[JSON_GAUGE].is_boolean()) {
         json.at(JSON_GAUGE).get_to(taskInfo.gauge);

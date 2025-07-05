@@ -36,6 +36,7 @@ private:
     void PutUpload();
     void PostUpload();
     void CompletionHandler(NSURLResponse *response, NSError *error);
+    void OnResponseCallback(NSURLResponse *response);
     void OnProgressCallback(NSProgress *progress, int32_t index);
     void OnCompletedCallback();
     void OnFailedCallback();
@@ -50,6 +51,8 @@ private:
     void PartPutUpload(NSURL *baseUrl, NSMutableDictionary *headers);
     void PutUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers);
     void PartPutUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers);
+    void PushBackOcValues(NSArray<NSString *> *ocValues, std::vector<std::string> &cppValues);
+    NSString* GetStandardHTTPReason(NSInteger statusCode);
 
 private:
     Config config_;

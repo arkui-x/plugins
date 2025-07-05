@@ -47,6 +47,7 @@ ohos_source_set("task_native") {
     "src/filter_json.cpp",
     "src/form_item_json.cpp",
     "src/progress_json.cpp",
+    "src/response_json.cpp",
     "src/request_utils.cpp",
     "src/task.cpp",
     "src/task_info_json.cpp",

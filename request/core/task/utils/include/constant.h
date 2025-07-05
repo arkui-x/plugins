@@ -167,10 +167,18 @@ struct Progress {
     State state {State::ANY};
     uint32_t index {0};
     int64_t processed {0};
+    int64_t lastProcessed {0};
     int64_t totalProcessed {0};
     std::vector<int64_t> sizes {};
     std::map<std::string, std::string> extras {};
     std::vector<uint8_t> bodyBytes {};
+};
+
+struct Response {
+    std::string version;
+    int32_t statusCode;
+    std::string reason;
+    std::map<std::string, std::vector<std::string>> headers;
 };
 
 struct TaskState {
@@ -218,6 +226,7 @@ struct Config {
     bool background {false};
     std::string title {""};
     std::string saveas {""};
+    std::string proxy {""};
     std::string method {""};
     std::string token {"null"};
     std::string description {""};
@@ -234,6 +243,7 @@ struct TaskInfo {
     Version version {Version::UNKNOWN};
     std::string url {""};
     std::string data {""};
+    std::string proxy {""};
     std::vector<FileSpec> files {};
     std::vector<FormItem> forms {};
     std::string tid {""};
@@ -243,6 +253,7 @@ struct TaskInfo {
     Mode mode {Mode::ANY};
     std::string mimeType {""};
     Progress progress {};
+    Response response {};
     bool gauge {false};
     uint64_t ctime {0};
     uint64_t mtime {0};
@@ -381,6 +392,7 @@ static constexpr const char *EVENT_PAUSE = "pause";
 static constexpr const char *EVENT_RESUME = "resume";
 static constexpr const char *EVENT_REMOVE = "remove";
 static constexpr const char *EVENT_HEADERRECEIVE = "headerReceive";
+static constexpr const char *EVENT_RESPONSE = "response";
 static constexpr const char *EVENT_PROGRESS = "progress";
 static constexpr const char *EVENT_COMPLETE = "complete";
 static constexpr const char *EVENT_FAIL = "fail";

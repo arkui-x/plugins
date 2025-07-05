@@ -38,6 +38,7 @@ const std::string JSON_PRECISE = "precise";
 const std::string JSON_BACKGROUND = "background";
 const std::string JSON_TITLE = "title";
 const std::string JSON_SAVEAS = "saveas";
+const std::string JSON_PROXY = "proxy";
 const std::string JSON_METHOD = "method";
 const std::string JSON_TOKEN = "token";
 const std::string JSON_DESCRIPTION = "description";
@@ -70,6 +71,7 @@ void to_json(Json &json, const Config &config)
         {JSON_BACKGROUND, config.background},
         {JSON_TITLE, config.title},
         {JSON_SAVEAS, config.saveas},
+        {JSON_PROXY, config.proxy},
         {JSON_METHOD, config.method},
         {JSON_TOKEN, config.token},
         {JSON_DESCRIPTION, config.description},
@@ -141,6 +143,9 @@ void from_json(const Json &json, Config &config)
     }
     if (json.find(JSON_SAVEAS) != json.end() && json[JSON_SAVEAS].is_string()) {
         json.at(JSON_SAVEAS).get_to(config.saveas);
+    }
+    if (json.find(JSON_PROXY) != json.end() && json[JSON_PROXY].is_string()) {
+        json.at(JSON_PROXY).get_to(config.proxy);
     }
     if (json.find(JSON_METHOD) != json.end() && json[JSON_METHOD].is_string()) {
         json.at(JSON_METHOD).get_to(config.method);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,15 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_REQUEST_I_UPLOAD_PROXY_H
-#define PLUGINS_REQUEST_I_UPLOAD_PROXY_H
+#ifndef PLUGINS_REQUEST_ANDROID_RESPONSE_JSON_H
+#define PLUGINS_REQUEST_ANDROID_RESPONSE_JSON_H
 
-#include <functional>
-#include <string>
+#include "constant.h"
+#include "nlohmann/json.hpp"
+using Json = nlohmann::json;
 
 namespace OHOS::Plugin::Request {
-using UploadCallback = std::function<void(int64_t taskId, const std::string &type, const std::string &params)>;
-class IUploadProxy {
-public:
-    virtual ~IUploadProxy() = default;
-    virtual bool Start(UploadCallback callback) = 0;
-    virtual bool Remove() = 0;
-    virtual bool Stop() = 0;
-    virtual bool Pause() = 0;
-    virtual bool Resume() = 0;
-};
+void to_json(Json &jsonResponse, const Response &response);
+void from_json(const Json &jsonResponse, Response &response);
 } // namespace OHOS::Plugin::Request
-#endif // PLUGINS_REQUEST_UPLOAD_PROXY_H
+#endif // PLUGINS_REQUEST_ANDROID_Response_JSON_H

@@ -29,6 +29,8 @@
 
 #define DECLARE_NAPI_METHOD(name, func) { name, 0, func, 0, 0, 0, napi_default, 0 }
 
+static constexpr const char *BROADCAST_EVENT_COMPLETE = "ohos.request.event.COMPLETE";
+
 namespace OHOS::Plugin::Request {
 static napi_value exception_permission = nullptr;
 static napi_value exception_parameter_check = nullptr;
@@ -149,6 +151,13 @@ static void NapiCreateFaults(napi_env env, napi_value &faults)
     NapiUtils::SetUint32Property(env, faults, "FSIO", static_cast<uint32_t>(Faults::FSIO));
 }
 
+static void NapiCreateBroadcastEvent(napi_env env, napi_value &broadcastEvent)
+{
+    napi_create_object(env, &broadcastEvent);
+    NapiUtils::SetStringPropertyUtf8(
+        env, broadcastEvent, "COMPLETE", static_cast<std::string>(BROADCAST_EVENT_COMPLETE));
+}
+
 static napi_value InitAgent(napi_env env, napi_value exports)
 {
     REQUEST_HILOGI("InitAgent in");
@@ -162,6 +171,8 @@ static napi_value InitAgent(napi_env env, napi_value exports)
     NapiCreateState(env, state);
     napi_value faults = nullptr;
     NapiCreateFaults(env, faults);
+    napi_value broadcastEvent = nullptr;
+    NapiCreateBroadcastEvent(env, broadcastEvent);
 
     napi_property_descriptor desc[] = {
         DECLARE_NAPI_PROPERTY("Action", action),
@@ -169,6 +180,7 @@ static napi_value InitAgent(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("Network", network),
         DECLARE_NAPI_PROPERTY("State", state),
         DECLARE_NAPI_PROPERTY("Faults", faults),
+        DECLARE_NAPI_PROPERTY("BroadcastEvent", broadcastEvent),
 
         DECLARE_NAPI_METHOD("create", NapiTask::Create),
         DECLARE_NAPI_METHOD("remove", NapiTask::Remove),
