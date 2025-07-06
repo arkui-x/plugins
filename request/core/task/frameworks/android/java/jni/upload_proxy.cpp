@@ -99,8 +99,8 @@ bool UploadProxy::Pause()
             REQUEST_HILOGI("Pause curl_easy_strerror handle: %{public}s", curl_easy_strerror(pauseRes));
         } else {
             REQUEST_HILOGI("upload Paused at position: %lld", info_.progress.processed);
-            isPause_ = true;
             ChangeState(State::PAUSED);
+            isPause_ = true;
             Notify(EVENT_PAUSE);
             return true;
         }
