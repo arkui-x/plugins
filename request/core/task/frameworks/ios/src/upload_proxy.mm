@@ -530,6 +530,7 @@ void UploadProxy::ChangeState(State state)
         }
         case State::RUNNING: {
             callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
+            IosTaskDao::UpdateDB(info_);
             break;
         }
         default: {
