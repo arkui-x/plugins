@@ -70,6 +70,7 @@ private:
     int64_t downloadTotalBytes_ = 0;
     int64_t currentTime_ = 0;
     bool isStopped_ = false;
+    bool isPause_ = false;
 };
 } // namespace OHOS::Plugin::Request
 #endif // PLUGINS_REQUEST_DOWNLOAD_PROXY_H

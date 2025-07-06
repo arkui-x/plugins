@@ -181,6 +181,7 @@ int32_t DownloadProxy::Pause(int64_t taskId)
         if (info_.progress.lastProcessed < info_.progress.processed ) {
             info_.progress.lastProcessed = info_.progress.processed;
         }
+        isPause_ = true;
         OnPauseCallback();
     }
     return E_OK;
@@ -194,6 +195,7 @@ int32_t DownloadProxy::Resume(int64_t taskId)
         if (ret == E_OK) {
             info_.progress.state = State::RUNNING;
             callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
+            IosTaskDao::UpdateDB(info_);
         }
         return ret;
     }
@@ -212,6 +214,7 @@ int32_t DownloadProxy::Resume(int64_t taskId)
     });
     info_.progress.state = State::RUNNING;
     callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
+    IosTaskDao::UpdateDB(info_);
     return E_OK;
 }
 
@@ -444,6 +447,11 @@ void DownloadProxy::OnFailedCallback()
         NSLog(@"download OnFailedCallback task is stopped");
         return;
     }
+    if (isPause_) {
+        NSLog(@"download OnFailedCallback task is pause");
+        return;
+    }
+
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {  
         if (callback_ != nullptr) {
             info_.progress.state = State::FAILED;
