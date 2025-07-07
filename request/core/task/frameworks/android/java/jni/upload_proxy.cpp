@@ -236,15 +236,13 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
         if (file.uri.empty()) {
             state.responseCode = E_FILE_PATH;
         }
-        if (file.filename.empty() || file.fd < 0) {
+        if (file.filename.empty()) {
             state.responseCode = E_FILE_IO;
         }
-        state.message = GetCodeMessage(state.responseCode);
         if (file.fd > 0) {
             const int64_t fileTotalSize = lseek(file.fd, 0, SEEK_END);
             int64_t fileSize = fileTotalSize;
             int64_t offset = 0;
-
             if (i == config.index) {
                 int64_t beginPos = config.begins;
                 int64_t endPos = config.ends;
@@ -274,11 +272,9 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
             } else {
                 REQUEST_HILOGI("Full upload[%d]: size=%lld", i, fileSize);
             }
-
             if (fileSize < 0) {
                 fileSize = 0;
                 state.responseCode = E_FILE_IO;
-                state.message = "Invalid file size calculation";
             }
             info.progress.sizes.emplace_back(fileSize);
             lseek(file.fd, offset, SEEK_SET);
@@ -286,9 +282,9 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
             info.progress.sizes.emplace_back(0);
             if (state.responseCode == E_OK) {
                 state.responseCode = E_FILE_IO;
-                state.message = "Invalid file descriptor";
             }
         }
+        state.message = GetCodeMessage(state.responseCode);
         info.taskStates.emplace_back(state);
     }
     ChangeState(State::INITIALIZED);
