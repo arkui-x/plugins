@@ -231,6 +231,8 @@ void UploadProxy::SetBehaviorOpt(CURL *curl)
 
 void UploadProxy::SetCallbackOpt(CURL *curl)
 {
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, OnWritingMemoryBody);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, this);
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HeaderCallback);
     curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, ProgressCallback);
@@ -438,7 +440,6 @@ size_t UploadProxy::HeaderCallback(char *buffer, size_t size, size_t nitems, voi
     auto pos = thiz->responseHead_.find(headEndFlag);
     if (pos != std::string::npos) {
         thiz->SplitHttpMessage(thiz->responseHead_);
-        thiz->Notify(EVENT_HEADERRECEIVE);
         thiz->responseHead_ = "";
     }
     return size * nitems;
@@ -478,6 +479,24 @@ size_t UploadProxy::ReadCallback(char *buffer, size_t size, size_t nitems, void 
     tRead.join();
 
     return readSize;
+}
+
+size_t UploadProxy::OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData)
+{
+    auto thiz = static_cast<UploadProxy*>(userData);
+    if (thiz == nullptr || thiz->isAbort_ || data == nullptr) {
+        REQUEST_HILOGE("OnWritingMemoryBody null");
+        return CURL_READFUNC_ABORT;
+    }
+    std::string tempString;
+    tempString.append(reinterpret_cast<const char *>(data), size * memBytes);
+
+    thiz->info_.progress.bodyBytes.clear();
+    thiz->info_.progress.bodyBytes.resize(tempString.length());
+    std::copy(tempString.begin(), tempString.end(), thiz->info_.progress.bodyBytes.begin());
+
+    thiz->Notify(EVENT_HEADERRECEIVE);
+    return size * memBytes;
 }
 
 void UploadProxy::ReportInfo(bool isChangeState)

@@ -52,6 +52,7 @@ private:
     static size_t HeaderCallback(char *buffer, size_t size, size_t nitems, void *userdata);
 
     static size_t ReadCallback(char *buffer, size_t size, size_t nitems, void *arg);
+    static size_t OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData);
     void ReportInfo(bool isChangeState);
 
     void SetSslOpt(CURL *curl, const std::string &url);
