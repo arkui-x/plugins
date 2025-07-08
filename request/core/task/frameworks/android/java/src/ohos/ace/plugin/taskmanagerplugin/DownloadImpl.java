@@ -209,8 +209,8 @@ public class DownloadImpl {
         String mimeType =
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(config.getUrl()));
         request.setMimeType(mimeType);
-        if (config.getMode() == Mode.FOREGROUND) {
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+        if (config.isBackground()) {
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
         } else {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         }
@@ -239,7 +239,12 @@ public class DownloadImpl {
             return;
         }
         Log.i(TAG, "startDownload,savePath: " + taskInfo.getSaveas() + ",downloadUrl:" + taskInfo.getUrl());
-        long downloadId = downloadManager.enqueue(request);
+        long downloadId = 0L;
+        try {
+            downloadId = downloadManager.enqueue(request);
+        } catch (SecurityException e) {
+            Log.e(TAG, "SecurityException error");
+        }
         Log.i(TAG, "Start to download task: " + downloadId);
         Progress progress = taskInfo.getProgress();
         if (progress == null) {
