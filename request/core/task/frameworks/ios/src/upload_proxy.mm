@@ -241,8 +241,15 @@ NSString *UploadProxy::GetUploadPartFile(const FileSpec &file)
     if (fileHandle) {  
         NSUInteger fileLength = [fileHandle seekToEndOfFile];  
         NSUInteger readPosition = config_.begins;
-        NSUInteger readLength = config_.ends - config_.begins; 
-        if (readPosition + readLength <= fileLength) {  
+        NSUInteger readLength = 0;
+        int64_t signedReadLength = config_.ends - config_.begins;
+        if (signedReadLength >= 0) {
+            readLength = signedReadLength;
+        }
+        if (readLength > fileLength) {
+            readLength = fileLength;
+        }
+        if (readPosition + readLength <= fileLength) {
             [fileHandle seekToFileOffset:readPosition];  
             NSData *data = [fileHandle readDataOfLength:readLength];
             NSLog(@"data:%@, data string:%@", data, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
@@ -367,6 +374,23 @@ void UploadProxy::PostUploadFile(const FileSpec &file, int32_t index, NSURL *bas
         NSString *fileName = JsonUtils::CStringToNSString(file.filename);
         NSURL *localPath = [NSURL fileURLWithPath:filePath];
         NSLog(@"PostUploadFile upload fieldName:%s, localPath:%s", fieldName.UTF8String, [localPath description].UTF8String);
+        if (config_.begins > 0) {
+            NSString *cachesDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+            NSString *partFilePath = [cachesDir stringByAppendingString:@"/temp.data"];
+            NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:filePath];
+            if (fileHandle) {
+                NSUInteger fileLength = [fileHandle seekToEndOfFile];
+                NSUInteger readPosition = config_.begins;
+                NSUInteger readLength = fileLength - config_.begins;
+                if (readPosition + readLength <= fileLength) {
+                    [fileHandle seekToFileOffset:readPosition];
+                    NSData *data = [fileHandle readDataOfLength:readLength];
+                    [data writeToFile:partFilePath atomically:YES];
+                }
+                [fileHandle closeFile];
+            }
+            localPath = [NSURL fileURLWithPath:partFilePath];
+        }
         [multipartStream appendWithFilePath:localPath
                                 fileName:fileName
                                 fieldName:fieldName
@@ -470,27 +494,52 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
         if (file.uri.empty()) {
             state.responseCode = E_FILE_PATH;
         }
-        if (file.filename.empty() || file.fd < 0) {
+        if (file.filename.empty()) {
             state.responseCode = E_FILE_IO;
         }
-        state.message = GetCodeMessage(state.responseCode);
         if (file.fd > 0) {
-            int64_t fileSize = lseek(file.fd, 0, SEEK_END);
+            const int64_t fileTotalSize = lseek(file.fd, 0, SEEK_END);
+            int64_t fileSize = fileTotalSize;
+            int64_t offset = 0;
             if (i == config.index) {
-                if (config.begins > 0) {
-                    fileSize -= config.begins;
+                int64_t beginPos = config.begins;
+                int64_t endPos = config.ends;
+                if (beginPos < 0) {
+                    beginPos = 0;
                 }
-                if (config.ends > 0) {
-                    fileSize = config.ends - config.begins + 1;
+                if (beginPos > fileTotalSize) {
+                    beginPos = fileTotalSize;
                 }
-                int64_t offset = 0;
-                if (config.begins > 0) {
-                    offset = config.begins;
+                if (endPos >= 0) {
+                    if (endPos > fileTotalSize) {
+                        endPos = fileTotalSize;
+                    }
+                    if (endPos < beginPos) {
+                        endPos = beginPos;
+                    }
+                    fileSize = endPos - beginPos;
+                    offset = beginPos;
+                } else if (endPos == -1) {
+                    fileSize = fileTotalSize - beginPos;
+                    offset = beginPos;
                 }
-                lseek(file.fd, offset, SEEK_SET);
+            } else {
+                NSLog(@"UploadProxy::InitTaskInfo uploadi:[%d]: size=%lld", i, fileSize);
             }
+            if (fileSize < 0) {
+                fileSize = 0;
+                state.responseCode = E_FILE_IO;
+            }
+            NSLog(@"UploadProxy::InitTaskInfo fileSize =%lld, offset=%lld", fileSize, offset);
             info.progress.sizes.emplace_back(fileSize);
+            lseek(file.fd, offset, SEEK_SET);
+        } else {
+            info.progress.sizes.emplace_back(0);
+            if (state.responseCode == E_OK) {
+                state.responseCode = E_FILE_IO;
+            }
         }
+        state.message = GetCodeMessage(state.responseCode);
         info.taskStates.emplace_back(state);
     }
     ChangeState(State::INITIALIZED);
