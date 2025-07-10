@@ -331,16 +331,16 @@ static int MkdirCore(const string &path)
 
 static NError MkdirExec(const string &path, bool recursion, bool hasOption)
 {
+    int ret = AccessCore(path, 0);
+    if (ret == ERRNO_NOERR) {
+        HILOGD("The path already exists");
+        return NError(EEXIST);
+    }
+    if (ret != -ENOENT) {
+        HILOGE("Failed to check for illegal path or request for heap memory");
+        return NError(ret);
+    }
     if (hasOption) {
-        int ret = AccessCore(path, 0);
-        if (ret == ERRNO_NOERR) {
-            HILOGD("The path already exists");
-            return NError(EEXIST);
-        }
-        if (ret != -ENOENT) {
-            HILOGE("Failed to check for illegal path or request for heap memory");
-            return NError(ret);
-        }
         ret = OHOS::FileManagement::ModuleFileIO::Mkdirs(path.c_str(), static_cast<MakeDirectionMode>(recursion));
         if (ret != 0) {
             HILOGE("Failed to create directories, error: %{public}d", ret);
@@ -355,7 +355,7 @@ static NError MkdirExec(const string &path, bool recursion, bool hasOption)
         return NError(ERRNO_NOERR);
     }
 
-    int ret = MkdirCore(path);
+    ret = MkdirCore(path);
     if (ret) {
         HILOGE("Failed to create directory");
         return NError(ret);
