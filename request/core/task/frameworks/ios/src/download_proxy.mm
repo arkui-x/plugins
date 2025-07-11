@@ -174,8 +174,11 @@ int32_t DownloadProxy::Pause(int64_t taskId)
     NSLog(@"Pause download, taskId:%lld", taskId);
     if (downloadTask_.state == NSURLSessionTaskStateRunning) {
         [downloadTask_ cancelByProducingResumeData:^(NSData *resumeData) {
+            NSLog(@"DownloadProxy::Pause resumeData=%@", resumeData);
             if (resumeData != nil) {
                 resumeData_ = resumeData;
+            } else {
+                resumeData_ = nil;
             }
         }];
         if (info_.progress.lastProcessed < info_.progress.processed ) {
@@ -205,7 +208,7 @@ int32_t DownloadProxy::Resume(int64_t taskId)
             OnProgressCallback(downloadProgress);
         } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
             NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
-            NSURL *destPath = [NSURL URLWithString:filePath];
+            NSURL *destPath = [NSURL fileURLWithPath:filePath];
             return destPath;
         } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
             CompletionHandler(response, filePath, error);
