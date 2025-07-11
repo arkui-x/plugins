@@ -176,9 +176,8 @@ int32_t DownloadProxy::Pause(int64_t taskId)
         [downloadTask_ cancelByProducingResumeData:^(NSData *resumeData) {
             if (resumeData != nil) {
                 resumeData_ = resumeData;
-            } else {
-                NSLog(@"DownloadProxy::Pause resumeData is nil");
             }
+            NSLog(@"DownloadProxy::Pause resumeData=%@", resumeData);
         }];
         if (info_.progress.lastProcessed < info_.progress.processed ) {
             info_.progress.lastProcessed = info_.progress.processed;
