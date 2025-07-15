@@ -101,40 +101,49 @@ void DownloadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
     }
 }
 
-bool DownloadProxy::CheckUrl(const string &strUrl)
+void DownloadProxy::SetProxy(const Config &config, NSURLSessionConfiguration **sessionConfig)
 {
-    NSLog(@"DownloadProxy::CheckUrl, strUrl:%s", strUrl.c_str());
-    NSURL *url = [NSURL URLWithString:JsonUtils::CStringToNSString(strUrl)];
-    NSURLRequest *request = [NSURLRequest requestWithURL:url];  
-    NSURLResponse *response = nil;  
-    NSError *error = nil;  
-    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error]; 
-    OnResponseCallback(response);
-    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        return httpResponse.statusCode == 200;
+    if (sessionConfig == nil) {
+        return;
     }
-    return false;
+    if (config.proxy.empty()) {
+        NSLog(@"Proxy empty");
+        return;
+    }
+    NSURLSessionConfiguration *newSessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+    newSessionConfig.HTTPCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    newSessionConfig.HTTPShouldSetCookies = YES;
+    NSString *proxyStr = JsonUtils::CStringToNSString(config.proxy);
+    NSURL *proxyUrl = [NSURL URLWithString:proxyStr];
+    if (proxyUrl && proxyUrl.host && proxyUrl.port) {
+        newSessionConfig.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        newSessionConfig.connectionProxyDictionary = @{
+            @"HTTPEnable": @(YES),
+            @"HTTPProxy": proxyUrl.host,
+            @"HTTPPort": proxyUrl.port,
+            @"HTTPSEnable": @(YES),
+            @"HTTPSProxy": proxyUrl.host,
+            @"HTTPSPort": proxyUrl.port
+        };
+        *sessionConfig = newSessionConfig;
+        NSLog(@"Proxy set: %@", proxyStr);
+    } else {
+        NSLog(@"Invalid proxy address: %@", proxyStr);
+    }
 }
 
 int32_t DownloadProxy::Start(int64_t taskId)
 {
     NSLog(@"start download, taskId:%lld, config_.saveas:%s", taskId, config_.saveas.c_str());
     @autoreleasepool {
-        if (!CheckUrl(config_.url)) {
-            NSLog(@"invalid download url:%s", config_.url.c_str());
-            info_.progress.totalProcessed = -1;
-            downloadTotalBytes_ = -1;
-            OnFailedCallback();
-            return E_OK;
-        }
-
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             NSLog(@"start download");
             NSString *urlStr = JsonUtils::CStringToNSString(config_.url);
             NSURL *url = [NSURL URLWithString:urlStr];
+            NSURLSessionConfiguration *sessionConfig = nil;
+            SetProxy(config_, &sessionConfig);
             NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-            sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
+            sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:sessionConfig];
             if ([url.scheme compare:@"https"] == NSOrderedSame) {
                 OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
             }
@@ -152,6 +161,7 @@ int32_t DownloadProxy::Start(int64_t taskId)
                     ReportMimeType([downloadTask_ response]);
                 }
             } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
+                OnResponseCallback(response);
                 NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
                 NSLog(@"download filePath:%@", filePath);
                 NSURL *destPath = [NSURL fileURLWithPath:filePath];
