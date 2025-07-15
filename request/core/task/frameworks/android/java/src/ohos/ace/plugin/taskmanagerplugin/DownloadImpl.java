@@ -65,7 +65,6 @@ public class DownloadImpl {
 
     private boolean isIgnoreStatus = false;
     private final Context context;
-    private DownloadManager.Request request;
     private DownloadManager downloadManager;
 
     private final List<QueryRunnable> queryRunnables = new ArrayList<>();
@@ -183,12 +182,14 @@ public class DownloadImpl {
             sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
             return;
         }
-        downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (downloadManager == null) {
+            downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        }
         if (downloadManager == null) {
             Log.e(TAG, "no http or https url");
             return;
         }
-        request = new DownloadManager.Request(Uri.parse(config.getUrl()));
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(config.getUrl()));
         request.setDescription(config.getDescription());
         request.setAllowedOverRoaming(config.isRoaming());
         if (networkState == NETWORK_WIFI) {
