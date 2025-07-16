@@ -258,7 +258,7 @@ public class DownloadImpl {
         String mimeType =
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(config.getUrl()));
         request.setMimeType(mimeType);
-        if (config.isBackground()) {
+        if (!config.isBackground()) {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
         } else {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);

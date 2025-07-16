@@ -138,6 +138,8 @@ public class TaskDao {
                 config.setTitle(title);
                 config.setSaveas(saveas);
                 config.setHeaders(headers);
+                boolean background = cursor.getInt(cursor.getColumnIndex("background")) == 1;
+                config.setBackground(background);
                 return config;
             }
         } catch (Exception e) {
