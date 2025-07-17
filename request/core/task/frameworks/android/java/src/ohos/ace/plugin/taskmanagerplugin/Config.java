@@ -59,7 +59,7 @@ public class Config {
     private String mimeType;
     private int priority;
     private boolean retry;
-    private boolean background = true;
+    private boolean background;
     private String forms;
     private String files;
     private String bodyFds;
