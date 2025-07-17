@@ -409,13 +409,29 @@ bool JsInitialize::ParseProxy(napi_env env, napi_value jsConfig, std::string &pr
 
 int64_t JsInitialize::ParseBegins(napi_env env, napi_value jsConfig)
 {
-    int64_t size = NapiUtils::Convert2Int64(env, jsConfig, "begins");
-    return size >= 0 ? size : 0;
+    if (!NapiUtils::HasNamedProperty(env, jsConfig, "begins")) {
+        REQUEST_HILOGW("Missing 'begins' property in configuration");
+        return -1;
+    }
+    napi_value beginsValue = NapiUtils::GetNamedProperty(env, jsConfig, "begins");
+    napi_valuetype valueType;
+    napi_status status = napi_typeof(env, beginsValue, &valueType);
+    if (status != napi_ok || valueType == napi_undefined) {
+        REQUEST_HILOGW("Invalid type for 'begins' property");
+        return -1;
+    }
+    return NapiUtils::Convert2Int64(env, jsConfig, "begins");
 }
 
 int64_t JsInitialize::ParseEnds(napi_env env, napi_value jsConfig)
 {
     if (!NapiUtils::HasNamedProperty(env, jsConfig, "ends")) {
+        return -1;
+    }
+    napi_value endsValue = NapiUtils::GetNamedProperty(env, jsConfig, "ends");
+    napi_valuetype valueType;
+    napi_status status = napi_typeof(env, endsValue, &valueType);
+    if (status != napi_ok || valueType == napi_undefined) {
         return -1;
     }
     return NapiUtils::Convert2Int64(env, jsConfig, "ends");

@@ -61,17 +61,15 @@ int32_t UploadProxy::Start(int64_t taskId)
 {
     NSLog(@"UploadProxy::Start, taskId:%lld", taskId);
     @autoreleasepool {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            string method = !config_.method.empty() ? config_.method : "POST"; // default: POST
-            NSLog(@"upload method:%s", method.c_str());
-            if (method == "POST") {
-                PostUpload();
-            } else if (method == "PUT") {
-                PutUpload();
-            } else {
-                NSLog(@"unsupport method: %s, accept: POST or PUT", method.c_str());
-            }
-        });
+        string method = !config_.method.empty() ? config_.method : "POST"; // default: POST
+        NSLog(@"upload method:%s", method.c_str());
+        if (method == "POST") {
+            PostUpload();
+        } else if (method == "PUT") {
+            PutUpload();
+        } else {
+            NSLog(@"unsupport method: %s, accept: POST or PUT", method.c_str());
+        }
     }
     return E_OK;
 }
@@ -206,7 +204,26 @@ void UploadProxy::PutUpload()
         return;
     }
     NSURL *baseUrl = [NSURL URLWithString:url];
-    sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
+    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+    if (!config_.proxy.empty()) {
+        NSString *proxyStr = JsonUtils::CStringToNSString(config_.proxy);
+        NSURL *proxyUrl = [NSURL URLWithString:proxyStr];
+        if (proxyUrl && proxyUrl.host && proxyUrl.port) {
+            sessionConfig.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+            sessionConfig.connectionProxyDictionary = @{
+                @"HTTPProxy": proxyUrl.host,
+                @"HTTPPort": proxyUrl.port,
+                @"HTTPSProxy": proxyUrl.host,
+                @"HTTPSPort": proxyUrl.port
+            };
+            NSLog(@"Proxy set: %@", proxyStr);
+        } else {
+            NSLog(@"Invalid proxy address: %@", proxyStr);
+        }
+    } else {
+        NSLog(@"Proxy empty");
+    }
+    sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:sessionConfig];
     
     NSMutableDictionary *headers = [[NSMutableDictionary alloc] init];
     [headers setValue:@"application/octet-stream" forKey:@"Content-Type"];
@@ -240,14 +257,23 @@ NSString *UploadProxy::GetUploadPartFile(const FileSpec &file)
     NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:filePath];  
     if (fileHandle) {  
         NSUInteger fileLength = [fileHandle seekToEndOfFile];  
-        NSUInteger readPosition = config_.begins;
+        NSUInteger readPosition = 0;
         NSUInteger readLength = 0;
-        int64_t signedReadLength = config_.ends - config_.begins;
-        if (signedReadLength >= 0) {
-            readLength = signedReadLength;
+        int64_t beginPos = config_.begins;
+        int64_t endPos = config_.ends;
+        if (config_.begins < 0 || config_.begins >= fileLength || config_.begins > config_.ends) {
+            beginPos = 0;
+            endPos = -1;
         }
-        if (readLength > fileLength) {
-            readLength = fileLength;
+        if (config_.ends >= fileLength) {
+            endPos = -1;
+        }
+        if (endPos == -1) {
+            readLength = fileLength - beginPos;
+            readPosition = beginPos;
+        } else {
+            readLength = endPos - beginPos + 1;
+            readPosition = beginPos;
         }
         if (readPosition + readLength <= fileLength) {
             [fileHandle seekToFileOffset:readPosition];  
@@ -331,7 +357,26 @@ void UploadProxy::PostUpload()
         return;
     }
     NSURL *baseUrl = [NSURL URLWithString:url];
-    sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:nil];
+    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+    if (!config_.proxy.empty()) {
+        NSString *proxyStr = JsonUtils::CStringToNSString(config_.proxy);
+        NSURL *proxyUrl = [NSURL URLWithString:proxyStr];
+        if (proxyUrl && proxyUrl.host && proxyUrl.port) {
+            sessionConfig.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+            sessionConfig.connectionProxyDictionary = @{
+                @"HTTPProxy": proxyUrl.host,
+                @"HTTPPort": proxyUrl.port,
+                @"HTTPSProxy": proxyUrl.host,
+                @"HTTPSPort": proxyUrl.port
+            };
+            NSLog(@"Proxy set: %@", proxyStr);
+        } else {
+            NSLog(@"Invalid proxy address: %@", proxyStr);
+        }
+    } else {
+        NSLog(@"Proxy empty");
+    }
+    sessionCtrl_ = [[OHSessionManager alloc] initWithConfiguration:sessionConfig];
     
     NSMutableDictionary *headers = [[NSMutableDictionary alloc] init];
     for (auto it = config_.headers.begin(); it != config_.headers.end(); it++) {
@@ -374,7 +419,7 @@ void UploadProxy::PostUploadFile(const FileSpec &file, int32_t index, NSURL *bas
         NSString *fileName = JsonUtils::CStringToNSString(file.filename);
         NSURL *localPath = [NSURL fileURLWithPath:filePath];
         NSLog(@"PostUploadFile upload fieldName:%s, localPath:%s", fieldName.UTF8String, [localPath description].UTF8String);
-        if (config_.begins > 0) {
+        if (config_.begins > 0 && config_.ends == -1) {
             NSString *cachesDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
             NSString *partFilePath = [cachesDir stringByAppendingString:@"/temp.data"];
             NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:filePath];
@@ -486,7 +531,7 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
     info.progress.index = 0;
     info.progress.processed = 0;
     info.progress.totalProcessed = 0;
-    for (int32_t i = 0; i < config.files.size(); ++i) {
+    for(auto i = 0; i < config.files.size(); i++) {
         auto file = config.files[i];
         TaskState state;
         state.path = file.filename;
@@ -504,33 +549,24 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
             if (i == config.index) {
                 int64_t beginPos = config.begins;
                 int64_t endPos = config.ends;
-                if (beginPos < 0) {
+                if (config.begins < 0 || config.begins >= fileTotalSize ||
+                    (config.begins > config.ends && config.ends >= 0) || config.ends < -1) {
                     beginPos = 0;
+                    endPos = -1;
                 }
-                if (beginPos > fileTotalSize) {
-                    beginPos = fileTotalSize;
+                if (config.ends >= fileTotalSize) {
+                    endPos = -1;
                 }
-                if (endPos >= 0) {
-                    if (endPos > fileTotalSize) {
-                        endPos = fileTotalSize;
-                    }
-                    if (endPos < beginPos) {
-                        endPos = beginPos;
-                    }
-                    fileSize = endPos - beginPos;
-                    offset = beginPos;
-                } else if (endPos == -1) {
+                if (endPos == -1) {
                     fileSize = fileTotalSize - beginPos;
+                    offset = beginPos;
+                } else {
+                    fileSize = endPos - beginPos + 1;
                     offset = beginPos;
                 }
             } else {
-                NSLog(@"UploadProxy::InitTaskInfo uploadi:[%d]: size=%lld", i, fileSize);
+                NSLog(@"Full upload[%d]: size=%lld", i, fileSize);
             }
-            if (fileSize < 0) {
-                fileSize = 0;
-                state.responseCode = E_FILE_IO;
-            }
-            NSLog(@"UploadProxy::InitTaskInfo fileSize =%lld, offset=%lld", fileSize, offset);
             info.progress.sizes.emplace_back(fileSize);
             lseek(file.fd, offset, SEEK_SET);
         } else {
