@@ -63,7 +63,7 @@ bool UploadProxy::Start(UploadCallback callback)
     REQUEST_HILOGI("upload start");
     std::lock_guard<std::mutex> guard(mutex_);
     callback_ = callback;
-    auto uploadThread = std::make_unique<std::thread>(&UploadProxy::Exec, this);
+    auto uploadThread = std::make_unique<std::thread>(&UploadProxy::Exec, shared_from_this());
     uploadThread->detach();
     return true;
 }
@@ -73,8 +73,8 @@ bool UploadProxy::Remove()
     REQUEST_HILOGI("upload remove");
     std::lock_guard<std::mutex> guard(mutex_);
     ChangeState(State::REMOVED);
-    Notify(EVENT_REMOVE);
     isAbort_ = true;
+    Notify(EVENT_REMOVE);
     return true;
 }
 
@@ -125,7 +125,7 @@ bool UploadProxy::Resume()
                 REQUEST_HILOGI("upload Resume at position: %lld", info_.progress.processed);
                 ChangeState(State::RUNNING);
                 Notify(EVENT_RESUME);
-                auto uploadThread = std::make_unique<std::thread>(&UploadProxy::Exec, this);
+                auto uploadThread = std::make_unique<std::thread>(&UploadProxy::Exec, shared_from_this());
                 uploadThread->detach();
                 return true;
             }
@@ -157,18 +157,36 @@ uint32_t UploadProxy::ExecInner()
             info_.progress.bodyBytes.clear();
             info_.progress.processed = 0;
             info_.progress.index = i;
-
             if (UploadOneFile(info_.progress.index, config_.files[i]) != E_OK) {
                 return E_SERVICE_ERROR;
             }
             ReportInfo(false);
+            if (isPause_) {
+                return E_OK;
+            }
         }
     } else {
-        for (size_t i = info_.progress.index; i < config_.files.size(); i++) {
-            if (ResumeUploadOneFile(info_.progress.index) != E_OK) {
-                return E_SERVICE_ERROR;
+        if (ResumeUploadOneFile(info_.progress.index) != E_OK) {
+            return E_SERVICE_ERROR;
+        }
+        ReportInfo(false);
+        if (isPause_) {
+            return E_OK;
+        }
+        if (info_.progress.index < config_.files.size() - 1) {
+            for (size_t i = info_.progress.index + 1; i < config_.files.size(); i++) {
+                info_.progress.extras.clear();
+                info_.progress.bodyBytes.clear();
+                info_.progress.processed = 0;
+                info_.progress.index = i;
+                if (UploadOneFile(info_.progress.index, config_.files[i]) != E_OK) {
+                    return E_SERVICE_ERROR;
+                }
+                ReportInfo(false);
+                if (isPause_) {
+                    return E_OK;
+                }
             }
-            ReportInfo(false);
         }
     }
     REQUEST_HILOGI("upload end");
@@ -246,35 +264,23 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
             if (i == config.index) {
                 int64_t beginPos = config.begins;
                 int64_t endPos = config.ends;
-                if (beginPos < 0) {
+                if (config.begins < 0 || config.begins >= fileTotalSize ||
+                    (config.begins > config.ends && config.ends >= 0) || config.ends < -1) {
                     beginPos = 0;
+                    endPos = -1;
                 }
-                if (beginPos > fileTotalSize) {
-                    beginPos = fileTotalSize;
+                if (config.ends >= fileTotalSize) {
+                    endPos = -1;
                 }
-                if (endPos >= 0) {
-                    if (endPos > fileTotalSize) {
-                        endPos = fileTotalSize;
-                    }
-                    if (endPos < beginPos) {
-                        endPos = beginPos;
-                    }
-                    fileSize = endPos - beginPos;
-                    offset = beginPos;
-                    REQUEST_HILOGI("partial upload: %{public}u, begins %{public}lld, ends %{public}lld",
-                        i, config.begins, config.ends);
-                } else if (endPos == -1) {
+                if (endPos == -1) {
                     fileSize = fileTotalSize - beginPos;
                     offset = beginPos;
-                    REQUEST_HILOGI("partial upload: %{public}u, begins %{public}lld, ends %{public}lld",
-                        i, config.begins, config.ends);
+                } else {
+                    fileSize = endPos - beginPos + 1;
+                    offset = beginPos;
                 }
             } else {
                 REQUEST_HILOGI("Full upload[%d]: size=%lld", i, fileSize);
-            }
-            if (fileSize < 0) {
-                fileSize = 0;
-                state.responseCode = E_FILE_IO;
             }
             info.progress.sizes.emplace_back(fileSize);
             lseek(file.fd, offset, SEEK_SET);
@@ -359,6 +365,12 @@ void UploadProxy::SetCurlOpt(CURL *curl, const Config &config)
     if (list_ != nullptr) {
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list_);
     }
+    std::string proxy = config.proxy;
+    if (!proxy.empty()) {
+        if (curl_easy_setopt(curl, CURLOPT_PROXY, proxy.c_str()) != CURLE_OK) {
+            REQUEST_HILOGE("Failed to set proxy: %s", proxy.c_str());
+        }
+    }
     SetNetworkOpt(curl, config.url);
     SetConnectionOpt(curl);
     SetSslOpt(curl, config.url);
@@ -411,7 +423,7 @@ int32_t UploadProxy::ResumeUploadOneFile(uint32_t index)
                 break;
             }
             curl_multi_perform(curlMulti_, &isRuning);
-        } while (isRuning && !isPause_);
+        } while (isRuning && !isPause_ && !isAbort_);
         if (!isRuning) {
             errorCode = CheckUploadStatus(curlMulti_);
             info_.taskStates[index].responseCode = errorCode;
@@ -464,7 +476,7 @@ int32_t UploadProxy::UploadOneFile(uint32_t index, const FileSpec &file)
                 break;
             }
             curl_multi_perform(curlMulti, &isRuning);
-        } while (isRuning && !isPause_);
+        } while (isRuning && !isPause_ && !isAbort_);
         REQUEST_HILOGI("isRuning = %{public}d", isRuning);
         if (!isRuning) {
             errorCode = CheckUploadStatus(curlMulti);

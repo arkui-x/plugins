@@ -372,7 +372,7 @@ int32_t JsTask::PauseExec(const std::shared_ptr<ExecContext> &context)
 
     TaskInfo info;
     auto ret = TaskManager::Get().GetTaskInfo(context->task->GetId(), "", info);
-    if (ret != E_OK ||
+    if (ret != E_OK || !context->task->IsStarted() ||
      !(info.progress.state == State::INITIALIZED || 
      info.progress.state == State::WAITING || 
      info.progress.state == State::RUNNING)) {
