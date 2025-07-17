@@ -209,6 +209,11 @@ int BluetoothBleCentralManagerImpl::ChangeScanParams(int32_t scannerId, const Bl
     return BT_NO_ERROR;
 }
 
+int BluetoothBleCentralManagerImpl::IsValidScannerId(int32_t scannerId, bool &isValid)
+{
+    return BT_NO_ERROR;
+}
+
 int BluetoothBleCentralManagerImpl::getCallBackScannerId()
 {
     scannerId_ += 1;

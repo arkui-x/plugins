@@ -55,6 +55,7 @@ public:
     int RemoveLpDeviceParam(const bluetooth::Uuid& uuid) override;
     int ChangeScanParams(int32_t scannerId, const BluetoothBleScanSettings &settings,
         const std::vector<BluetoothBleScanFilter> &filters, uint32_t filterAction) override;
+    int IsValidScannerId(int32_t scannerId, bool &isValid) override;
 
 private:
     int32_t scannerId_;

@@ -614,7 +614,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
                     channelDescription.owningPortUID, channelDescription.channelLabel);
             }
 
-            deviceInfo.audioStreamInfo_.samplingRate.insert(
+            deviceInfo.GetDeviceStreamInfo().samplingRate.insert(
                 static_cast<OHOS::AudioStandard::AudioSamplingRate>(audioSession.sampleRate));
             NSLog(@"sampleRate = %f", audioSession.sampleRate);
         }

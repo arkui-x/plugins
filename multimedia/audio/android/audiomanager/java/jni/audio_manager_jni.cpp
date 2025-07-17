@@ -466,10 +466,7 @@ void AudioManagerJni::ConvertDeviceInfoToAudioDeviceDescriptor(
     audioDeviceDescriptor->volumeGroupId_ = deviceInfo.volumeGroupId_;
     audioDeviceDescriptor->networkId_ = deviceInfo.networkId_;
     audioDeviceDescriptor->displayName_ = deviceInfo.displayName_;
-    audioDeviceDescriptor->audioStreamInfo_.samplingRate = deviceInfo.audioStreamInfo_.samplingRate;
-    audioDeviceDescriptor->audioStreamInfo_.encoding = deviceInfo.audioStreamInfo_.encoding;
-    audioDeviceDescriptor->audioStreamInfo_.format = deviceInfo.audioStreamInfo_.format;
-    audioDeviceDescriptor->audioStreamInfo_.channels = deviceInfo.audioStreamInfo_.channels;
+    audioDeviceDescriptor->audioStreamInfo_ = deviceInfo.audioStreamInfo_;
 }
 
 int32_t AudioManagerJni::AddDeviceChangeCallback(

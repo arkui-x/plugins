@@ -334,7 +334,7 @@ static void AudioRecordAQInputCallback(
                     channelDescription.channelLabel);
             }
 
-            deviceInfo.audioStreamInfo_.samplingRate.insert(
+            deviceInfo.GetDeviceStreamInfo().samplingRate.insert(
                 static_cast<OHOS::AudioStandard::AudioSamplingRate>(audioSession_.sampleRate));
             NSLog(@"sampleRate=%f", audioSession_.sampleRate);
         }

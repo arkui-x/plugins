@@ -32,14 +32,14 @@ public:
     void RegisterObserver(const sptr<IBluetoothHostObserver>& observer) override;
     void DeregisterObserver(const sptr<IBluetoothHostObserver>& observer) override;
     int32_t EnableBt() override;
-    int32_t DisableBt() override;
+    int32_t DisableBt(bool isAsync) override;
     sptr<IRemoteObject> GetProfile(const std::string& name) override;
     sptr<IRemoteObject> GetBleRemote(const std::string& name) override;
     int32_t BluetoothFactoryReset() override;
     int32_t GetBtState(int& state) override;
     int32_t GetLocalAddress(std::string& addr) override;
     int32_t DisableBle() override;
-    int32_t EnableBle(bool noAutoConnect = false) override;
+    int32_t EnableBle(bool noAutoConnect, bool isAsync) override;
     bool IsBrEnabled();
     bool IsBleEnabled();
     std::vector<uint32_t> GetProfileList() override;
@@ -121,12 +121,14 @@ public:
     int32_t GetLastConnectionTime(const std::string &address, int64_t &connectionTime) override;
     int32_t UpdateCloudBluetoothDevice(std::vector<BluetoothTrustPairDevice> &cloudDevices) override;
     int32_t GetCloudBondState(const std::string &address, int32_t &cloudBondState) override;
+    int32_t GetDeviceTransport(const std::string &address, int32_t &transport) override;
     int32_t UpdateRefusePolicy(const int32_t protocolType,
         const int32_t pid, const int64_t prohibitedSecondsTime) override;
     int32_t ProcessRandomDeviceIdCommand(
         int32_t command, std::vector<std::string> &deviceIdVec, bool &isValid) override;
     int32_t GetCarKeyDfxData(std::string &dfxData) override;
     int32_t SetCarKeyCardData(const std::string &address, int32_t action) override;
+    int32_t NotifyDialogResult(uint32_t dialogType, bool dialogResult) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;
