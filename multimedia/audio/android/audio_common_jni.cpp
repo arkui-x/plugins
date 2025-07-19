@@ -246,15 +246,17 @@ AudioDeviceDescriptor AudioCommonJni::GetDeviceInfo(jobject jDeviceInfo)
     deviceInfo.deviceName_ = GetDeviceName(env, jDeviceInfoCls, jDeviceInfo);
     // address
     deviceInfo.macAddress_ = GetDeviceAddress(env, jDeviceInfoCls, jDeviceInfo);
+    DeviceStreamInfo deviceStreamInfo;
     // sample rates
-    deviceInfo.audioStreamInfo_.samplingRate = GetDeviceSampleRates(env, jDeviceInfoCls, jDeviceInfo);
+    deviceStreamInfo.samplingRate = GetDeviceSampleRates(env, jDeviceInfoCls, jDeviceInfo);
     // channel counts
-    deviceInfo.audioStreamInfo_.channels = GetDeviceAudioChannels(env, jDeviceInfoCls, jDeviceInfo);
+    deviceStreamInfo.SetChannels(GetDeviceAudioChannels(env, jDeviceInfoCls, jDeviceInfo));
     // channel masks
     deviceInfo.channelMasks_ = GetDeviceChannelMask(env, jDeviceInfoCls, jDeviceInfo);
     // Encodings
-    deviceInfo.audioStreamInfo_.encoding = GetDeviceEncoding(env, jDeviceInfoCls, jDeviceInfo);
+    deviceStreamInfo.encoding = GetDeviceEncoding(env, jDeviceInfoCls, jDeviceInfo);
 
+    deviceInfo.audioStreamInfo_.push_back(deviceStreamInfo);
     env->DeleteLocalRef(jDeviceInfoCls);
 
     return deviceInfo;

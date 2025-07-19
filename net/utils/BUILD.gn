@@ -31,7 +31,10 @@ ohos_source_set("netstack_utils") {
     "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/native/base/event_handler/include",
   ]
 
-  defines = [ "ENABLE_EVENT_HANDLER" ]
+  defines = [
+    "ENABLE_EVENT_HANDLER",
+    "CROSS_PLATFORM",
+  ]
 
   sources = [
     "$SUBSYSTEM_DIR/netstack/utils/common_utils/src/netstack_common_utils.cpp",

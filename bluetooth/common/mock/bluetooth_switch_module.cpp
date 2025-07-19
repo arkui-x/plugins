@@ -45,7 +45,7 @@ static const char* ToString(BluetoothSwitchEvent event)
 
 void BluetoothSwitchModule::LogBluetoothSwitchEvent(BluetoothSwitchEvent event) {}
 
-int BluetoothSwitchModule::ProcessBluetoothSwitchEvent(BluetoothSwitchEvent event)
+int BluetoothSwitchModule::ProcessBluetoothSwitchEvent(BluetoothSwitchEvent event, bool isAsyn)
 {
     CHECK_AND_RETURN_LOG_RET(switchAction_, BT_ERR_INTERNAL_ERROR, "switchAction is nullptr");
 

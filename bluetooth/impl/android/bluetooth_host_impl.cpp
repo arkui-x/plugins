@@ -45,7 +45,7 @@ int32_t BluetoothHostImpl::EnableBt()
     return BluetoothJni::EnableBt();
 }
 
-int32_t BluetoothHostImpl::DisableBt()
+int32_t BluetoothHostImpl::DisableBt(bool isAsync)
 {
     return BluetoothJni::DisableBt();
 }
@@ -86,10 +86,10 @@ int32_t BluetoothHostImpl::GetLocalAddress(std::string& addr)
 
 int32_t BluetoothHostImpl::DisableBle()
 {
-    return DisableBt();
+    return DisableBt(false);
 }
 
-int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect)
+int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect, bool isAsync)
 {
     return EnableBt();
 }
@@ -505,6 +505,11 @@ int32_t BluetoothHostImpl::GetCloudBondState(const std::string &address, int32_t
     return 0;
 }
 
+int32_t BluetoothHostImpl::GetDeviceTransport(const std::string &address, int32_t &transport)
+{
+    return 0;
+}
+
 int BluetoothHostImpl::UpdateRefusePolicy(const int32_t protocolType,
     const int32_t pid, const int64_t prohibitedSecondsTime)
 {
@@ -523,6 +528,11 @@ int BluetoothHostImpl::GetCarKeyDfxData(std::string &dfxData)
 }
 
 int BluetoothHostImpl::SetCarKeyCardData(const std::string &address, int32_t action)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::NotifyDialogResult(uint32_t dialogType, bool dialogResult)
 {
     return 0;
 }

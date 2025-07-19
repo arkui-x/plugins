@@ -94,7 +94,7 @@ static AudioManagerImpl *sharedInstance = nil;
         for (AVAudioSessionPortDescription *portDescription in audioSession.availableInputs) {
             std::shared_ptr<OHOS::AudioStandard::AudioDeviceDescriptor> descriptor =
                 [self getDeviceInfo:portDescription role:OHOS::AudioStandard::DeviceRole::INPUT_DEVICE];
-            descriptor->audioStreamInfo_.samplingRate.clear();
+            descriptor->GetDeviceStreamInfo().samplingRate.clear();
             descriptors.push_back(descriptor);
         }
     }
@@ -122,7 +122,7 @@ static AudioManagerImpl *sharedInstance = nil;
             channelDescription.owningPortUID, channelDescription.channelLabel);
     }
 
-    descriptor->audioStreamInfo_.samplingRate.insert(
+    descriptor->GetDeviceStreamInfo().samplingRate.insert(
         static_cast<OHOS::AudioStandard::AudioSamplingRate>(audioSession.sampleRate));
     NSLog(@"sampleRate = %f", audioSession.sampleRate);
     return descriptor;

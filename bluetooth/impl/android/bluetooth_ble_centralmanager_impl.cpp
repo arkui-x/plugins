@@ -150,5 +150,11 @@ int BluetoothBleCentralManagerImpl::ChangeScanParams(int32_t scannerId, const Bl
     HILOGE("Not Supported");
     return 0;
 }
+
+int BluetoothBleCentralManagerImpl::IsValidScannerId(int32_t scannerId, bool &isValid)
+{
+    HILOGE("Not Supported");
+    return BT_NO_ERROR;
+}
 } // namespace Bluetooth
 } // namespace OHOS
