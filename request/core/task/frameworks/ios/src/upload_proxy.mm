@@ -261,11 +261,14 @@ NSString *UploadProxy::GetUploadPartFile(const FileSpec &file)
         NSUInteger readLength = 0;
         int64_t beginPos = config_.begins;
         int64_t endPos = config_.ends;
-        if (config_.begins < 0 || config_.begins >= fileLength || config_.begins > config_.ends) {
+        if (config_.begins >= fileLength) {
             beginPos = 0;
-            endPos = -1;
         }
         if (config_.ends >= fileLength) {
+            endPos = -1;
+        }
+        if (config_.begins > config_.ends && config_.ends >= 0) {
+            beginPos = 0;
             endPos = -1;
         }
         if (endPos == -1) {
@@ -549,12 +552,14 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
             if (i == config.index) {
                 int64_t beginPos = config.begins;
                 int64_t endPos = config.ends;
-                if (config.begins < 0 || config.begins >= fileTotalSize ||
-                    (config.begins > config.ends && config.ends >= 0) || config.ends < -1) {
+                if (config.begins >= fileTotalSize) {
                     beginPos = 0;
-                    endPos = -1;
                 }
                 if (config.ends >= fileTotalSize) {
+                    endPos = -1;
+                }
+                if (config.begins > config.ends && config.ends >= 0) {
+                    beginPos = 0;
                     endPos = -1;
                 }
                 if (endPos == -1) {
