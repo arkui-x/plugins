@@ -264,12 +264,14 @@ void UploadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
             if (i == config.index) {
                 int64_t beginPos = config.begins;
                 int64_t endPos = config.ends;
-                if (config.begins < 0 || config.begins >= fileTotalSize ||
-                    (config.begins > config.ends && config.ends >= 0) || config.ends < -1) {
+                if (config.begins >= fileTotalSize) {
                     beginPos = 0;
-                    endPos = -1;
                 }
                 if (config.ends >= fileTotalSize) {
+                    endPos = -1;
+                }
+                if (config.begins > config.ends && config.ends >= 0) {
+                    beginPos = 0;
                     endPos = -1;
                 }
                 if (endPos == -1) {
