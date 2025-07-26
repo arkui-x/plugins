@@ -422,7 +422,7 @@ void UploadProxy::PostUploadFile(const FileSpec &file, int32_t index, NSURL *bas
         NSString *fileName = JsonUtils::CStringToNSString(file.filename);
         NSURL *localPath = [NSURL fileURLWithPath:filePath];
         NSLog(@"PostUploadFile upload fieldName:%s, localPath:%s", fieldName.UTF8String, [localPath description].UTF8String);
-        if (config_.begins > 0 && config_.ends == -1) {
+        if (config_.begins > 0 && config_.ends == -1 && index == config_.index) {
             NSString *cachesDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
             NSString *partFilePath = [cachesDir stringByAppendingString:@"/temp.data"];
             NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:filePath];
