@@ -443,12 +443,6 @@ int32_t AudioSystemManager::AbandonAudioFocus(const AudioInterrupt& audioInterru
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::ReconfigureAudioChannel(const uint32_t& count, DeviceType deviceType)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
 int32_t AudioSystemManager::GetVolumeGroups(std::string networkId, std::vector<sptr<VolumeGroupInfo>>& infos)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
