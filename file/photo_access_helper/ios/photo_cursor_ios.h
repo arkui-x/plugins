@@ -16,7 +16,7 @@
 #ifndef PHOTO_CURSOR_IOS_H
 #define PHOTO_CURSOR_IOS_H
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
 
 NS_ASSUME_NONNULL_BEGIN
