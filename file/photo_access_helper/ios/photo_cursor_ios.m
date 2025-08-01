@@ -17,6 +17,14 @@
 
 #define SUCCESS_CODE 0
 #define INVALID_POS -1
+#ifndef dispatch_main_async_safe
+#define dispatch_main_async_safe(block) \
+if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())) { \
+    block(); \
+} else { \
+    dispatch_async(dispatch_get_main_queue(), block); \
+}
+#endif
 
 @interface photoCursorIos()
 
@@ -105,7 +113,28 @@
     } else if ([field isEqualToString:@"hidden"]) {
         return (int)self.cursorAsset.hidden;
     } else if ([field isEqualToString:@"orientation"]) {
-        return [[self.cursorAsset valueForKey:@"orientation"] integerValue];
+        __block NSInteger orientation = -1;
+        PHImageManager *manager = [PHImageManager defaultManager];
+        PHImageRequestOptions *options = [PHImageRequestOptions new];
+        options.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+        dispatch_main_async_safe(^{
+            [manager requestImageForAsset:self.cursorAsset 
+                               targetSize:PHImageManagerMaximumSize
+                              contentMode:PHImageContentModeDefault
+                                  options:options
+                            resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+                if (!result) {
+                    NSLog(@"request image failed.");
+                } else {
+                    orientation = result.imageOrientation;
+                }
+                dispatch_semaphore_signal(semaphore);
+            }];
+        });
+        dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC));
+        dispatch_semaphore_wait(semaphore, timeout);
+        return orientation;
     } else {
         return 0;
     }
