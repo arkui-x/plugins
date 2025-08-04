@@ -631,6 +631,8 @@ size_t UploadProxy::HeaderCallback(char *buffer, size_t size, size_t nitems, voi
     const std::string headEndFlag = "\r\n\r\n";
     auto pos = thiz->responseHead_.find(headEndFlag);
     if (pos != std::string::npos) {
+        thiz->SplitHttpMessage(thiz->responseHead_);
+        thiz->Notify(EVENT_HEADERRECEIVE);
         std::string headers = thiz->responseHead_.substr(0, pos);
         if (!headers.empty()) {
             thiz->ParseHttpHeaders(headers);
