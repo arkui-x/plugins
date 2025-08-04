@@ -78,12 +78,6 @@ bool IsValidLocaleTag(icu::Locale &locale)
     static std::unordered_set<std::string> allValidLocalesLanguageTag;
     GetAllValidLocalesTag(allValidLocalesLanguageTag);
     std::string languageTag = locale.getLanguage();
-    std::string elementSum = "";
-    for (const auto& element : allValidLocalesLanguageTag) {
-        elementSum += ", " + element;
-    }
-    LOGE("allValidLocalesLanguageTag size is: %{public}d", allValidLocalesLanguageTag.size());
-    LOGE("allValidLocalesLanguageTag have: %{public}s", elementSum.c_str());
     if (allValidLocalesLanguageTag.find(languageTag) == allValidLocalesLanguageTag.end()) {
         LOGE("GetTimePeriodName does not support this languageTag: %{public}s", languageTag.c_str());
         return false;
