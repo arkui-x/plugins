@@ -162,6 +162,32 @@ napi_value Convert2JSValue(napi_env env, const std::vector<std::string> &ids)
     return value;
 }
 
+napi_value Convert2JSHeaders(napi_env env, const Progress &progress)
+{
+    std::vector<uint8_t> bodyBytes = progress.bodyBytes;
+    napi_value headers = nullptr;
+    napi_create_object(env, &headers);
+    for (const auto &cInt : progress.extras) {
+        napi_set_named_property(env, headers, cInt.first.c_str(), Convert2JSValue(env, cInt.second));
+    }
+    napi_value body = nullptr;
+    if (IsTextUTF8(bodyBytes)) {
+        napi_create_string_utf8(env, reinterpret_cast<const char *>(bodyBytes.data()), bodyBytes.size(), &body);
+    } else {
+        uint8_t *data = nullptr;
+        napi_create_arraybuffer(env, bodyBytes.size(), reinterpret_cast<void **>(&data), &body);
+        if (memcpy_s(data, bodyBytes.size(), bodyBytes.data(), bodyBytes.size()) == 0) {
+            REQUEST_HILOGW("Body data memcpy_s error");
+        }
+    }
+
+    napi_value object = nullptr;
+    napi_create_object(env, &object);
+    napi_set_named_property(env, object, "headers", headers);
+    napi_set_named_property(env, object, "body", body);
+    return object;
+}
+
 napi_value Convert2JSHeadersAndBody(napi_env env, const std::map<std::string, std::string> &header,
     const std::vector<uint8_t> &bodyBytes, bool isSeparate)
 {
