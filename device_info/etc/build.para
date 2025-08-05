@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 const.ohos.releasetype=Release
-const.ohos.apiversion=18
-const.ohos.version.security_patch=2025/07/01
-const.ohos.fullname=OpenHarmony-5.1.0.126
+const.ohos.apiversion=19
+const.ohos.version.security_patch=2025/08/01
+const.ohos.fullname=OpenHarmony-5.1.1.208
 const.ohos.buildroothash=default
 const.product.firstapiversion=1
