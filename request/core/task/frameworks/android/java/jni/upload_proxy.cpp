@@ -382,19 +382,23 @@ void UploadProxy::SetCurlOpt(CURL *curl, const Config &config)
 
 void UploadProxy::SetMimePost(CURL *curl, curl_mime *mime, const FileSpec &file, int64_t fileSize)
 {
-    curl_mimepart *part = curl_mime_addpart(mime);
-    if (!config_.forms.empty()) {
-        REQUEST_HILOGI("the size of config_.forms: %{public}zu", config_.forms.size());
-        curl_mime_name(part, config_.forms[0].name.c_str());
-        curl_mime_data(part, config_.forms[0].value.c_str(), config_.forms[0].value.size());
-        config_.forms.erase(config_.forms.begin());
-    } else {
-        curl_mime_name(part, "file");
+    for (const auto& form : config_.forms) {
+        curl_mimepart *formPart = curl_mime_addpart(mime);
+        curl_mime_name(formPart, form.name.c_str());
+        curl_mime_data(formPart, form.value.c_str(), form.value.size());
+        REQUEST_HILOGI("Added form field: %{public}s=%{public}s",
+            form.name.c_str(), form.value.c_str());
     }
-    curl_mime_type(part, file.type.c_str());
-    curl_mime_filename(part, file.filename.c_str());
-    curl_mime_data_cb(part, fileSize, ReadCallback, nullptr, nullptr, this);
+
+    curl_mimepart *filePart = curl_mime_addpart(mime);
+    curl_mime_name(filePart, file.name.empty() ? "file" : file.name.c_str());
+    curl_mime_type(filePart, file.type.c_str());
+    curl_mime_filename(filePart, file.filename.c_str());
+    curl_mime_data_cb(filePart, fileSize, ReadCallback, nullptr, nullptr, this);
+
     curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+    REQUEST_HILOGI("Added file: %{public}s, type: %{public}s, size: %{public}lld)",
+        file.filename.c_str(), file.type.c_str(), fileSize);
 }
 
 void UploadProxy::SetHttpPut(CURL *curl, const FileSpec &file, int64_t fileSize)
