@@ -19,6 +19,7 @@
 #import "IosTaskDao.h"
 #import "json_utils.h"
 #include "request_utils.h"
+#import <UserNotifications/UserNotifications.h>
 
 namespace OHOS::Plugin::Request {
 using namespace std;
@@ -105,10 +106,10 @@ bool DownloadProxy::CheckUrl(const string &strUrl)
 {
     NSLog(@"DownloadProxy::CheckUrl, strUrl:%s", strUrl.c_str());
     NSURL *url = [NSURL URLWithString:JsonUtils::CStringToNSString(strUrl)];
-    NSURLRequest *request = [NSURLRequest requestWithURL:url];  
-    NSURLResponse *response = nil;  
-    NSError *error = nil;  
-    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error]; 
+    NSURLRequest *request = [NSURLRequest requestWithURL:url];
+    NSURLResponse *response = nil;
+    NSError *error = nil;
+    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         return httpResponse.statusCode == 200;
@@ -156,7 +157,7 @@ int32_t DownloadProxy::Start(int64_t taskId)
                 NSURL *destPath = [NSURL fileURLWithPath:filePath];
                 NSLog(@"download destPath:%@", destPath);
                 return destPath;
-            } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {        
+            } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
                 CompletionHandler(response, filePath, error);
             }];
             [downloadTask_ resume];
@@ -232,7 +233,7 @@ void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, 
     if (error == nil) {
         NSLog(@"success download file to: %@", [filePath description]);
         OnCompletedCallback();
-    } else {        
+    } else {
         NSLog(@"failed download file to: %s, error:%s, error_code:%ld",
             [filePath description].UTF8String, [error description].UTF8String, error.code);
         OnFailedCallback();
@@ -254,22 +255,47 @@ void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, 
 
 void DownloadProxy::PushNotification(NSString *fileName, NSValue *result)
 {
-    if ([UIDevice currentDevice].systemVersion.floatValue >= 8.0) {
+    BOOL isFailed = FALSE;
+    [result getValue:&isFailed];
+    NSString *res = !isFailed ? @"成功" : @"失败";
+    NSString *msg = [NSString stringWithFormat:@"下载%@", res];
+
+    if (@available(iOS 10.0, *)) {
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        [center requestAuthorizationWithOptions:UNAuthorizationOptionBadge|UNAuthorizationOptionSound|
+            UNAuthorizationOptionAlert|
+            UNAuthorizationOptionCarPlay completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if (granted) {
+                UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+                content.title = msg;
+                content.body = fileName;
+                content.sound = [UNNotificationSound defaultSound];
+
+                UNTimeIntervalNotificationTrigger *trigger =
+                    [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:0.1 repeats:NO];
+
+                NSString *identifier = [NSString stringWithFormat:@"download_%@_%@", fileName, [[NSUUID UUID] UUIDString]];
+                UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier
+                                                                                      content:content
+                                                                                      trigger:trigger];
+                [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
+                    if (error) {
+                        NSLog(@"Failed to show notification: %@", error);
+                    }
+                }];
+            }
+        }];
+    } else if ([UIDevice currentDevice].systemVersion.floatValue >= 8.0) {
         UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:
             UIUserNotificationTypeBadge | UIUserNotificationTypeAlert | UIUserNotificationTypeSound
             categories:nil];
         [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+        UILocalNotification *notification = [[UILocalNotification alloc] init];
+        notification.alertBody = msg;
+        notification.alertAction = @"View";
+        notification.soundName = UILocalNotificationDefaultSoundName;
+        [[UIApplication sharedApplication] presentLocalNotificationNow:notification];
     }
-
-    BOOL isFailed = FALSE;
-    [result getValue:&isFailed];
-    NSString *res = !isFailed ? @"Completed." : @"Failed.";
-    NSString *msg = [NSString stringWithFormat:@"Download %@ %@", fileName, res];
-    UILocalNotification *notification = [[UILocalNotification alloc] init]; 
-    notification.alertBody = msg;
-    notification.alertAction = msg;
-    notification.soundName = UILocalNotificationDefaultSoundName;
-    [[UIApplication sharedApplication] presentLocalNotificationNow:notification];
 }
 
 void DownloadProxy::ReportMimeType(NSURLResponse *response)
@@ -308,6 +334,56 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
     if (callback_ == nullptr || progress == nil) {
         return;
     }
+    if (config_.background && @available(iOS 10.0, *)) {
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        [center requestAuthorizationWithOptions:UNAuthorizationOptionBadge|UNAuthorizationOptionSound|
+            UNAuthorizationOptionAlert|
+            UNAuthorizationOptionCarPlay completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if (granted) {
+                NSString *fileName = JsonUtils::CStringToNSString(GetFileName(config_.url));
+                UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+                if(progress.totalUnitCount > 0) {
+                    content.title =  [NSString stringWithFormat:@"下载文件 %.2f%",
+                        progress.completedUnitCount/progress.totalUnitCount * 100];
+                } else if (progress.completedUnitCount < 1024) {
+                    content.title =  [NSString stringWithFormat:@"下载文件 %lldB",
+                        progress.completedUnitCount];
+                } else if (progress.completedUnitCount < 1024 * 1024) {
+                    content.title =  [NSString stringWithFormat:@"下载文件 %.2fKB",
+                        (double)progress.completedUnitCount/1024.0];
+                } else if (progress.completedUnitCount < 1024 * 1024 * 1024) {
+                    content.title =  [NSString stringWithFormat:@"下载文件 %.2fMB",
+                        (double)progress.completedUnitCount/1024.0/1024.0];
+                } else if (progress.completedUnitCount < 1024 * 1024 * 1024) {
+                    content.title =  [NSString stringWithFormat:@"下载文件 %.2fGB",
+                        (double)progress.completedUnitCount/1024.0/1024.0/1024.0];
+                }
+                content.body = fileName;
+                content.sound = nil;
+                if (@available(iOS 12.0, *)) {
+                    content.threadIdentifier = @"download_group";
+                    content.summaryArgument = @"文件下载";
+                    content.summaryArgumentCount = 1;
+                }
+
+                UNTimeIntervalNotificationTrigger *trigger =
+                    [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:0.1 repeats:NO];
+                NSString *identifier = [NSString stringWithFormat:@"progress_%lld", taskId_];
+                UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier
+                                                                                      content:content
+                                                                                      trigger:trigger];
+                [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
+                    if (error) {
+                        NSLog(@"Failed to show notification: %@", error);
+                    }
+                }];
+                if (info_.progress.state == State::COMPLETED) {
+                    [center removePendingNotificationRequestsWithIdentifiers:@[identifier]];
+                    [center removeDeliveredNotificationsWithIdentifiers:@[identifier]];
+                }
+            }
+        }];
+    }
     info_.progress.processed = progress.completedUnitCount;
     info_.progress.totalProcessed = progress.totalUnitCount;
     downloadTotalBytes_ = progress.totalUnitCount;
@@ -329,7 +405,7 @@ void DownloadProxy::OnFailedCallback()
         NSLog(@"download OnFailedCallback task is stopped");
         return;
     }
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {  
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
         if (callback_ != nullptr) {
             info_.progress.state = State::FAILED;
             info_.code = Reason::OTHERS_ERROR;

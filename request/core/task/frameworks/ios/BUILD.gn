@@ -68,6 +68,10 @@ ohos_source_set("task_ios") {
     "ohnetworkkit",
     "dbkit",
   ]
+  
+  frameworks = [
+    "UserNotifications.framework",
+  ]
 
   configs = [
     ":task_ios_config",
