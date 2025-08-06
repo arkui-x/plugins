@@ -35,8 +35,9 @@ private:
     void InitTaskInfo(const Config &config, TaskInfo &info);
     void PutUpload();
     void PostUpload();
-    void CompletionHandler(NSURLResponse *response, NSError *error);
+    void CompletionHandler(NSURLResponse *response, id responseObject, NSError *error);
     void OnResponseCallback(NSURLResponse *response);
+    void OnHeaderReceiveCallback(NSURLResponse *response, id responseObject);
     void OnProgressCallback(NSProgress *progress, int32_t index);
     void OnCompletedCallback();
     void OnFailedCallback();
