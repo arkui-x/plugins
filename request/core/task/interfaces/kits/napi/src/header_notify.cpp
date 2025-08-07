@@ -39,7 +39,7 @@ void HeaderNotify::HandleCallback(napi_env env, napi_value cb, const std::string
     auto info = infoJson.get<TaskInfo>();
     napi_value callbackResult = nullptr;
     napi_value callbackValues[NapiUtils::TWO_ARG] = { 0 };
-    auto jsProgress = NapiUtils::Convert2JSValue(env, info.progress);
+    auto jsProgress = NapiUtils::Convert2JSHeaders(env, info.progress);
     callbackValues[NapiUtils::FIRST_ARGV] = jsProgress;
     napi_call_function(env, nullptr, cb, NapiUtils::ONE_ARG, callbackValues, &callbackResult);
 

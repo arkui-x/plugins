@@ -52,6 +52,7 @@ private:
     void SplitHttpMessage(const std::string &stmp);
     static int ProgressCallback(void *clientp,
         curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+    static size_t OnWritingMemoryBody(const void *data, size_t size, size_t memBytes, void *userData);
     static size_t HeaderCallback(char *buffer, size_t size, size_t nitems, void *userdata);
 
     static size_t ReadCallback(char *buffer, size_t size, size_t nitems, void *arg);
