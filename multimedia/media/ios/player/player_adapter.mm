@@ -74,7 +74,7 @@
     } else {
         self.avPlayer = [AVPlayer playerWithPlayerItem: playerItem];
     }
-    [playerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];
+    [playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
     if (self.avPlayer) {
         NSLog(@"Successfully created a AVPlayer!");
         if (@available(iOS 15.0, *)) {
@@ -97,13 +97,12 @@
         }
     }
 
-    if ([keyPath isEqualToString:@"loadedTimeRanges"] && [object isKindOfClass:[AVPlayerItem class]]) {
+    if ([keyPath isEqualToString:@"status"] && [object isKindOfClass:[AVPlayerItem class]]) {
+        AVPlayerItemStatus status = (AVPlayerItemStatus)[change[NSKeyValueChangeNewKey] integerValue];
         AVPlayerItem * item = (AVPlayerItem *)object;
-        if (item) {
-            if (item.loadedTimeRanges.count > 0) {
-                [self notifyDurationUpdate];
-                [item removeObserver:self forKeyPath:@"loadedTimeRanges"];
-            }
+        if (item && status == AVPlayerItemStatusReadyToPlay) {
+            [self notifyDurationUpdate];
+            [item removeObserver:self forKeyPath:@"status"];
         }
     }
 }
