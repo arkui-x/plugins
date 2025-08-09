@@ -360,56 +360,6 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
     if (callback_ == nullptr || progress == nil) {
         return;
     }
-    if (config_.background && @available(iOS 10.0, *)) {
-        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-        [center requestAuthorizationWithOptions:UNAuthorizationOptionBadge|UNAuthorizationOptionSound|
-            UNAuthorizationOptionAlert|
-            UNAuthorizationOptionCarPlay completionHandler:^(BOOL granted, NSError * _Nullable error) {
-            if (granted) {
-                NSString *fileName = JsonUtils::CStringToNSString(GetFileName(config_.url));
-                UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
-                if(progress.totalUnitCount > 0) {
-                    content.title =  [NSString stringWithFormat:@"下载文件 %.2f%",
-                        progress.completedUnitCount/progress.totalUnitCount * 100];
-                } else if (progress.completedUnitCount < 1024) {
-                    content.title =  [NSString stringWithFormat:@"下载文件 %lldB",
-                        progress.completedUnitCount];
-                } else if (progress.completedUnitCount < 1024 * 1024) {
-                    content.title =  [NSString stringWithFormat:@"下载文件 %.2fKB",
-                        (double)progress.completedUnitCount/1024.0];
-                } else if (progress.completedUnitCount < 1024 * 1024 * 1024) {
-                    content.title =  [NSString stringWithFormat:@"下载文件 %.2fMB",
-                        (double)progress.completedUnitCount/1024.0/1024.0];
-                } else if (progress.completedUnitCount < 1024 * 1024 * 1024) {
-                    content.title =  [NSString stringWithFormat:@"下载文件 %.2fGB",
-                        (double)progress.completedUnitCount/1024.0/1024.0/1024.0];
-                }
-                content.body = fileName;
-                content.sound = nil;
-                if (@available(iOS 12.0, *)) {
-                    content.threadIdentifier = @"download_group";
-                    content.summaryArgument = @"文件下载";
-                    content.summaryArgumentCount = 1;
-                }
-
-                UNTimeIntervalNotificationTrigger *trigger =
-                    [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:0.1 repeats:NO];
-                NSString *identifier = [NSString stringWithFormat:@"progress_%lld", taskId_];
-                UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier
-                                                                                      content:content
-                                                                                      trigger:trigger];
-                [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
-                    if (error) {
-                        NSLog(@"Failed to show notification: %@", error);
-                    }
-                }];
-                if (info_.progress.state == State::COMPLETED) {
-                    [center removePendingNotificationRequestsWithIdentifiers:@[identifier]];
-                    [center removeDeliveredNotificationsWithIdentifiers:@[identifier]];
-                }
-            }
-        }];
-    }
     info_.progress.processed = progress.completedUnitCount;
     info_.progress.totalProcessed = progress.totalUnitCount;
     downloadTotalBytes_ = progress.totalUnitCount;
