@@ -1369,7 +1369,6 @@ jobject WebviewControllerJni::OnReceiveJavascriptExecuteCall(
     jsize length = env->GetArrayLength(argsList);
     for (jsize i = 0; i < length; i++) {
         jobject element = env->GetObjectArrayElement(argsList, i);
-        CHECK_NULL_RETURN(element, nullptr);
         std::shared_ptr<Ace::WebJSValue> resultValue = WebviewControllerJni::ProcessJavaObject(env, element);
         CHECK_NULL_RETURN(resultValue, nullptr);
         argsValue.emplace_back(resultValue);
