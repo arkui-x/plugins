@@ -89,5 +89,10 @@ int ResetQosForOtherThread(int tid)
 {
     return QosController::GetInstance().ResetThreadQosForOtherThread(tid);
 }
+
+int GetThreadQos(enum QosLevel &level)
+{
+    return QosController::GetInstance().GetThreadQosForOtherThread(level, getpid());
+}
 } // namespace QOS
 } // namespace OHOS
