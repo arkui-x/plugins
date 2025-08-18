@@ -22,9 +22,10 @@ web_include = [
   "$FOUNDATUION_DIR/frameworks/core/components/web/resource",
   "$SUBSYSTEM_DIR/interfaces/kits/napi/common",
   "$SUBSYSTEM_DIR/interfaces/native",
+  "$SUBSYSTEM_DIR/interfaces/kits/nativecommon",
 ]
 
 web_source = [
-  "$SUBSYSTEM_DIR/interfaces/kits/napi/common/web_errors.cpp",
+  "$SUBSYSTEM_DIR/interfaces/kits/nativecommon/web_errors.cpp",
   "$SUBSYSTEM_DIR/interfaces/kits/napi/common/business_error.cpp",
 ]
