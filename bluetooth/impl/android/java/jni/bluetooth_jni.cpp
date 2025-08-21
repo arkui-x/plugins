@@ -759,7 +759,8 @@ void BluetoothJni::NativeOnConnectionStateChanged(JNIEnv* env, jobject jobj, jin
     BluetoothImplUtils::GetOhHostBtStateFromBluetoothAdapter(static_cast<int32_t>(state), btState);
     BluetoothImplUtils::GetOhHostBtStateFromBluetoothAdapter(static_cast<int32_t>(newState), btNewState);
     std::lock_guard<std::mutex> lock(gattClientLock_);
-    gattClientData->callback_->OnConnectionStateChanged(btState, btNewState);
+    gattClientData->callback_->OnConnectionStateChanged(
+        btState, btNewState, static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
 }
 
 std::string BluetoothJni::ConvertJStringToCString(JNIEnv* env, jstring jStr)

@@ -87,6 +87,11 @@ public:
         { return 0; }
     int32_t GetNetIdByIdentifier(const std::string &ident, std::list<int32_t> &netIdList)
         { return 0; }
+    int32_t SetProxyMode(const int mode)
+        { return 0; }
+
+    int32_t GetProxyMode(int& mode)
+        { return 0; }
 };
 } // namespace OHOS::NetManagerStandard
 #endif // PLUGINS_NETMANAGER_CONNECTION_I_NET_CONN_CLIENT_H

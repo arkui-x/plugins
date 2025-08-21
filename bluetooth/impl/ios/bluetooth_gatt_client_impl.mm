@@ -526,16 +526,20 @@ void BluetoothGattClientImpl::ChangeConnectState(int32_t appId, int ret, int sta
     }
     switch (state) {
         case CBPeripheralStateConnecting:
-            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::CONNECTING));
+            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::CONNECTING),
+                static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
             break;
         case CBPeripheralStateConnected:
-            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::CONNECTED));
+            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::CONNECTED),
+                static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
             break;
         case CBPeripheralStateDisconnecting:
-            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::DISCONNECTING));
+            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::DISCONNECTING),
+                static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
             break;
         default:
-            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::DISCONNECTED));
+            callback->OnConnectionStateChanged(ret, static_cast<int>(BTConnectState::DISCONNECTED),
+                static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
             break;
     }
 }
