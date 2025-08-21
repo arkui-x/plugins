@@ -40,16 +40,19 @@ static DBManager *instance;
 }
 
 - (BOOL)initDB {
+    if (db_) {
+        return YES;
+    }
     // 获得沙盒中的数据库文件名
     dbPath_ = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]
         stringByAppendingPathComponent:@"task.db"];
-    
+
     sqlite3_shutdown();
     if (sqlite3_config(SQLITE_CONFIG_SERIALIZED) != SQLITE_OK) {
         NSLog(@"failed to sqlite3_config serialized");
     }
     sqlite3_initialize();
-    
+
     if (![self openDB]) {
         return NO;
     }
@@ -118,7 +121,7 @@ static DBManager *instance;
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
         NSLog(@"failed to execute sqlite3_prepare_v2");
-        sqlite3_finalize(stmt);
+        [self releaseStmt:stmt];
         return -1;
     }
     sqlite3_bind_text(stmt, 1, taskInfo.saveas.UTF8String, -1, NULL);
@@ -160,13 +163,14 @@ static DBManager *instance;
     sqlite3_bind_int(stmt, 37, taskInfo.code);
     sqlite3_bind_int(stmt, 38, taskInfo.withSystem);
     sqlite3_bind_text(stmt, 39, taskInfo.extras.UTF8String, -1, NULL);
-    
-    if (sqlite3_step(stmt) != SQLITE_DONE) {  
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
         NSLog(@"failed to insert record: %s", sqlite3_errmsg(db_));
-        sqlite3_finalize(stmt);
+        [self releaseStmt:stmt];
         return -1;
     }
-    int64_t tid = sqlite3_last_insert_rowid(db_); // 获取最后插入的记录的主键值 
+    int64_t tid = sqlite3_last_insert_rowid(db_); // 获取最后插入的记录的主键值
+    [self releaseStmt:stmt];
     NSLog(@"insert db ok, tid:%lld", tid);
     return tid;
 }
@@ -419,7 +423,7 @@ static DBManager *instance;
         taskInfo.retry = sqlite3_column_int(stmt, 26);
         taskInfo.redirect = sqlite3_column_int(stmt, 27);
         taskInfo.gauge = sqlite3_column_int(stmt, 28);
-        taskInfo.precise = sqlite3_column_int(stmt, 39);
+        taskInfo.precise = sqlite3_column_int(stmt, 29);
         taskInfo.background = sqlite3_column_int(stmt, 30);
         taskInfo.method = [NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, 31)];
         taskInfo.forms = [NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, 32)];
@@ -438,7 +442,6 @@ static DBManager *instance;
 
 - (void)releaseStmt:(sqlite3_stmt *)stmt {
     sqlite3_finalize(stmt);
-    sqlite3_close(db_);
     NSLog(@"releaseStmt ok");
 }
 
