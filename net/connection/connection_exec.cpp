@@ -872,4 +872,36 @@ void ConnectionExec::FillDns(napi_env env, napi_value connectionProperties, NetL
         NapiUtils::SetNamedProperty(env, connectionProperties, KEY_DNSES, dnsList);
     }
 }
+
+bool ConnectionExec::ExecGetProxyMode(ProxyModeContext* context)
+{
+    int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->GetProxyMode(context->mode_);
+    if (errorCode != NET_CONN_SUCCESS) {
+        NETMANAGER_BASE_LOGE("exec GetProxyMode failed errorCode: %{public}d", errorCode);
+        context->SetErrorCode(errorCode);
+        return false;
+    }
+    return true;
+}
+
+bool ConnectionExec::ExecSetProxyMode(ProxyModeContext* context)
+{
+    int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->SetProxyMode(context->mode_);
+    if (errorCode != NET_CONN_SUCCESS) {
+        NETMANAGER_BASE_LOGE("exec SetProxyMode failed errorCode: %{public}d", errorCode);
+        context->SetErrorCode(errorCode);
+        return false;
+    }
+    return true;
+}
+
+napi_value ConnectionExec::GetProxyModeCallback(ProxyModeContext* context)
+{
+    return NapiUtils::CreateInt32(context->GetEnv(), context->mode_);
+}
+
+napi_value ConnectionExec::SetProxyModeCallback(ProxyModeContext* context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
 } // namespace OHOS::NetManagerStandard

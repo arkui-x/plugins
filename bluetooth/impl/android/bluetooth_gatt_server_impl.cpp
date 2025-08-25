@@ -174,7 +174,8 @@ void BluetoothGattServerImpl::OnConnectionStateChanged(
 {
     std::lock_guard<std::mutex> lock(gattServerMutex_);
     if (gattServerCallbackMap_[appId] != nullptr) {
-        gattServerCallbackMap_[appId]->OnConnectionStateChanged(device, ret, state);
+        gattServerCallbackMap_[appId]->OnConnectionStateChanged(
+            device, ret, state, static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
     }
 }
 

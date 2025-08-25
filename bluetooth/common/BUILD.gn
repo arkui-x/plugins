@@ -176,6 +176,7 @@ ohos_source_set("bt_framework_crossplatform") {
     "//plugins/bluetooth/common/include",
     "//plugins/bluetooth/common/mock",
     "$bluetooth_napi_root/src",
+    "$bluetooth_napi_root/src/parser",
   ]
 
   sources = FwkCrossPlatformSrc
