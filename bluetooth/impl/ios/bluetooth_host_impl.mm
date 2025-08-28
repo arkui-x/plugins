@@ -60,7 +60,7 @@ int32_t BluetoothHostImpl::EnableBt()
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::DisableBt(bool isAsync)
+int32_t BluetoothHostImpl::DisableBt(bool isAsync, const std::string &callingName)
 {
     return BT_NO_ERROR;
 }
@@ -104,7 +104,7 @@ int32_t BluetoothHostImpl::DisableBle()
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect, bool isAsync)
+int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect, bool isAsync, const std::string &callingNam)
 {
     return BT_NO_ERROR;
 }
@@ -450,7 +450,7 @@ int32_t BluetoothHostImpl::OnPairStatusChangedCallBack(
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(void)
+int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(const std::string &callingName)
 {
     return BT_NO_ERROR;
 }

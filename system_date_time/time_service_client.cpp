@@ -291,5 +291,10 @@ sptr<ITimeService> TimeServiceClient::GetProxy()
 void TimeServiceClient::SetProxy(sptr<ITimeService> proxy) {}
 
 void TimeServiceClient::ClearProxy() {}
+
+int32_t TimeServiceClient::SetAutoTime(bool autoTime)
+{
+    return 0;
+}
 } // namespace MiscServices
 } // namespace OHOS

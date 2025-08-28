@@ -165,5 +165,7 @@ bool BluetoothProfileManager::IsBluetoothServiceOn()
     return isBluetoothServiceOn_.load();
 }
 
+void BluetoothProfileManager::ClearSystemAbility() {}
+
 } // namespace Bluetooth
 } // namespace OHOS
