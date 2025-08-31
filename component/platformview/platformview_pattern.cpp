@@ -46,7 +46,7 @@ void PlatformViewPattern::RequestFocus()
 {
     auto host = GetHost();
     CHECK_NULL_VOID(host);
-    auto eventHub = host->GetOrCreateEventHub<PlatformViewEventHub>();
+    auto eventHub = host->GetEventHub<PlatformViewEventHub>();
     CHECK_NULL_VOID(eventHub);
     auto focusHub = eventHub->GetOrCreateFocusHub();
     CHECK_NULL_VOID(focusHub);
@@ -335,7 +335,7 @@ void PlatformViewPattern::PlatformViewSizeInit()
     CHECK_NULL_VOID(context);
     auto host = GetHost();
     CHECK_NULL_VOID(host);
-    auto eventHub = host->GetOrCreateEventHub<PlatformViewEventHub>();
+    auto eventHub = host->GetEventHub<PlatformViewEventHub>();
     CHECK_NULL_VOID(eventHub);
     LOGI("PlatformView[%{public}s] triggers onLoad and OnSurfaceCreated callback", id_.c_str());
     eventHub->FireSurfaceInitEvent(id_, host->GetId());
@@ -360,7 +360,7 @@ void PlatformViewPattern::InitEvent()
 {
     auto host = GetHost();
     CHECK_NULL_VOID(host);
-    auto eventHub = host->GetOrCreateEventHub<PlatformViewEventHub>();
+    auto eventHub = host->GetEventHub<PlatformViewEventHub>();
     CHECK_NULL_VOID(eventHub);
     eventHub->SetOnSurfaceInitEvent(CreateExternalEvent());
     auto gestureHub = eventHub->GetOrCreateGestureEventHub();

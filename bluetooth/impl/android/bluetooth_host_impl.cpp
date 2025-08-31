@@ -45,7 +45,7 @@ int32_t BluetoothHostImpl::EnableBt()
     return BluetoothJni::EnableBt();
 }
 
-int32_t BluetoothHostImpl::DisableBt(bool isAsync)
+int32_t BluetoothHostImpl::DisableBt(bool isAsync, const std::string &callingName)
 {
     return BluetoothJni::DisableBt();
 }
@@ -86,10 +86,10 @@ int32_t BluetoothHostImpl::GetLocalAddress(std::string& addr)
 
 int32_t BluetoothHostImpl::DisableBle()
 {
-    return DisableBt(false);
+    return DisableBt(false, "");
 }
 
-int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect, bool isAsync)
+int32_t BluetoothHostImpl::EnableBle(bool noAutoConnect, bool isAsync, const std::string &callingName)
 {
     return EnableBt();
 }
@@ -479,7 +479,7 @@ int32_t BluetoothHostImpl::SetFastScanLevel(int level)
     return 0;
 }
 
-int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(void)
+int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(const std::string &callingName)
 {
     return 0;
 }
