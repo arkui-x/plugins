@@ -284,7 +284,8 @@ int32_t AudioSystemManager::SelectInputDevice(
 }
 
 int32_t AudioSystemManager::SelectOutputDevice(sptr<AudioRendererFilter> audioRendererFilter,
-    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors) const
+    std::vector<std::shared_ptr<AudioDeviceDescriptor>> audioDeviceDescriptors,
+    const int32_t audioDeviceSelectMode) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
     return ERR_NOT_SUPPORTED;

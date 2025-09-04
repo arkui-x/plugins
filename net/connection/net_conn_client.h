@@ -90,7 +90,7 @@ public:
     int32_t SetProxyMode(const int mode)
         { return 0; }
 
-    int32_t GetProxyMode(int& mode)
+    int32_t GetProxyMode(OHOS::NetManagerStandard::ProxyModeType &mode)
         { return 0; }
 };
 } // namespace OHOS::NetManagerStandard

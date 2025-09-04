@@ -72,7 +72,7 @@ public:
     int32_t SetMediaSource(const std::shared_ptr<AVMediaSource> &mediaSource, AVPlayStrategy strategy) override;
     int32_t SetPlaybackStrategy(AVPlayStrategy playbackStrategy) override;
     int32_t SetMediaMuted(OHOS::Media::MediaType mediaType, bool isMuted) override;
-    void ReleaseClientListener() override;
+    bool ReleaseClientListener() override;
     int32_t Init();
 };
 } // namespace Media

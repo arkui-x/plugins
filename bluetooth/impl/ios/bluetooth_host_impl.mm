@@ -507,5 +507,7 @@ int32_t BluetoothHostImpl::NotifyDialogResult(uint32_t dialogType, bool dialogRe
 {
     return 0;
 }
+
+void BluetoothHostImpl::SetCallingPackageName(const std::string& address, const std::string& packageName) {}
 } // namespace Bluetooth
 } // namespace OHOS
