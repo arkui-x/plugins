@@ -494,6 +494,7 @@ void DownloadProxy::OnFailedCallback()
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
         if (callback_ != nullptr) {
             info_.progress.state = State::FAILED;
+            info_.progress.processed = 0;
             info_.code = Reason::OTHERS_ERROR;
             SetSizes(downloadTotalBytes_);
             NSLog(@"download OnFailedCallback start");
