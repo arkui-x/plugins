@@ -42,7 +42,7 @@ int32_t AudioRoutingManager::GetPreferredInputDeviceForCapturerInfo(AudioCapture
 }
 
 int32_t AudioRoutingManager::SetPreferredOutputDeviceChangeCallback(AudioRendererInfo rendererInfo,
-    const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback>& callback)
+    const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback>& callback, const int32_t uid)
 {
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, ERR_INVALID_PARAM, "callback is null");
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];

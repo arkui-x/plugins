@@ -54,8 +54,8 @@ int32_t AudioRoutingManager::GetPreferredInputDeviceForCapturerInfo(
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioRoutingManager::SetPreferredOutputDeviceChangeCallback(
-    AudioRendererInfo rendererInfo, const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback>& callback)
+int32_t AudioRoutingManager::SetPreferredOutputDeviceChangeCallback(AudioRendererInfo rendererInfo,
+    const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback>& callback, const int32_t uid)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;

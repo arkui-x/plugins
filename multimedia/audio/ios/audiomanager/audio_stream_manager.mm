@@ -153,5 +153,12 @@ bool AudioStreamManager::IsCapturerFocusAvailable(const AudioCapturerInfo &captu
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return false;
 }
+
+bool AudioStreamManager::IsIntelligentNoiseReductionEnabledForCurrentDevice(SourceType sourceType)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
 } // namespace AudioStandard
 } // namespace OHOS
