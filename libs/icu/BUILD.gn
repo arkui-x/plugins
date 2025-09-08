@@ -18,7 +18,12 @@ template("icu_deps") {
   forward_variables_from(invoker, "*")
 
   ohos_source_set(target_name) {
-    public_configs = [ "$ace_flutter_engine_root/icu:icu_config_$platform" ]
+    include_dirs = [
+      "//third_party/icu/icu4c/source/common",
+      "//third_party/icu/icu4c/source/i18n",
+      "//third_party/icu/icu4c/source/ohos",
+      "//third_party/icu/icu4c/source",
+    ]
 
     if (defined(config.libace_target)) {
       deps = [ config.libace_target ]
@@ -31,7 +36,6 @@ template("icu_deps") {
 
 foreach(item, ace_platforms) {
   icu_deps("icu_" + item.name) {
-    platform = item.name
     config = {
     }
 
