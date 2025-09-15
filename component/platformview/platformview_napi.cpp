@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -51,7 +51,14 @@ napi_value JsCreate(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
     NAPI_ASSERT(env, argc >= PluginUtilsNApi::ARG_NUM_1, "Wrong number of arguments");
     std::string id = PluginUtilsNApi::GetStringFromValueUtf8(env, argv[PluginUtilsNApi::ARG_NUM_0]);
-    NG::PlatformViewModelNG::GetInstance()->Create(id);
+    std::optional<std::string> data = std::nullopt;
+    auto napiData = argv[PluginUtilsNApi::ARG_NUM_1];
+    napi_valuetype paramType;
+    napi_typeof(env, napiData, &paramType);
+    if (argc == PluginUtilsNApi::ARG_NUM_2 && paramType == napi_string) {
+        data = PluginUtilsNApi::GetStringFromValueUtf8(env, napiData);
+    }
+    NG::PlatformViewModelNG::GetInstance()->Create(id, data);
     return PluginUtilsNApi::CreateNull(env);
 }
 

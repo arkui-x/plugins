@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,16 +21,15 @@
 
 #include "core/components_ng/base/view_stack_processor.h"
 #include "core/components_v2/inspector/inspector_constants.h"
-
 namespace OHOS::Ace::NG {
 const std::string PLATFORMVIEW_ETS_TAG = "PlatformView";
-void PlatformViewModelNG::Create(const std::string& id)
+void PlatformViewModelNG::Create(const std::string& id, const std::optional<std::string>& data)
 {
     auto* stack = ViewStackProcessor::GetInstance();
     auto nodeId = stack->ClaimNodeId();
     ACE_LAYOUT_SCOPED_TRACE("Create[%s][self:%d]", PLATFORMVIEW_ETS_TAG.c_str(), nodeId);
     auto frameNode = FrameNode::GetOrCreateFrameNode(
-        PLATFORMVIEW_ETS_TAG, nodeId, [id]() { return AceType::MakeRefPtr<PlatformViewPattern>(id); });
+        PLATFORMVIEW_ETS_TAG, nodeId, [id, data]() { return AceType::MakeRefPtr<PlatformViewPattern>(id, data); });
     stack->Push(frameNode);
 }
 } // namespace OHOS::Ace::NG

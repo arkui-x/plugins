@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,20 +17,17 @@
 #define PLUGINS_COMPONENT_PLATFORMVIEW_PLATFORM_VIEW_PLATFORM_VIEW_IMPL_H
 
 #include "platform_view_interface.h"
-#include "resource/platform_view_delegate.h"
 #include "base/memory/referenced.h"
 #include "base/utils/noncopyable.h"
-
 #include "core/components_ng/render/ext_surface_callback_interface.h"
+#include "resource/platform_view_delegate.h"
 
 namespace OHOS::Ace::NG {
 class PlatformViewImpl : public PlatformViewInterface, public ExtSurfaceCallbackInterface {
     DECLARE_ACE_TYPE(PlatformViewImpl, NG::PlatformViewInterface)
 public:
     PlatformViewImpl() = default;
-    explicit PlatformViewImpl(const std::string& id)
-        : id_(id)
-    {}
+    explicit PlatformViewImpl(const std::string& id, const std::optional<std::string>& data) : id_(id), data_(data) {}
     ~PlatformViewImpl() override;
 
     void InitPlatformView() override;
@@ -56,6 +53,7 @@ public:
 
 private:
     std::string id_;
+    std::optional<std::string> data_;
     std::mutex callbackLock_;
     WeakPtr<RenderSurface> renderSurface_;
     RefPtr<PlatformViewDelegate> platformViewDelegate_;

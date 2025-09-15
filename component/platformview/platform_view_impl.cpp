@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,7 +44,7 @@ void PlatformViewImpl::InitPlatformView()
         uiTaskExecutor.PostSyncTask([weak, errorId, param] {}, "ArkUI-XPlatformViewImplInitPlatformView");
     };
     platformViewDelegate_ = AceType::MakeRefPtr<PlatformViewDelegate>(container->GetPipelineContext(), errorCallback);
-    platformViewDelegate_->Create(id_);
+    platformViewDelegate_->Create(id_, data_);
     platformViewDelegate_->SetPlatformViewReadyCallback([weak = WeakClaim(this)]() {
         auto delegate_ = weak.Upgrade();
         CHECK_NULL_VOID(delegate_);

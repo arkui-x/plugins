@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,8 +15,12 @@
 
 const __PlatformView__ = requireInternal('platformview');
 class PlatformView extends JSViewAbstract {
-    static create(value) {
-        __PlatformView__.create(value);
+    static create(id, data) {
+        if (data === undefined || data === null) {
+            __PlatformView__.create(id);
+        } else {
+            __PlatformView__.create(id, data);
+        }
     }
     
     static onAppear(value) {

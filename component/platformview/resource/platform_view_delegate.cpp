@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -36,6 +36,8 @@ const char PLATFORM_VIEW_LEFT[] = "platformViewLeft";
 const char PLATFORM_VIEW_TOUCH_POINT_OFFSET_X[] = "platformViewTouchPointOffsetX";
 const char PLATFORM_VIEW_TOUCH_POINT_OFFSET_Y[] = "platformViewTouchPointOffsetY";
 const char VIEW_TAG[] = "viewTag";
+const char DATA_TAG[] = "dataTag";
+const char DATA_EMPTY_TAG[] = "dataEmptyTag";
 const char TEXTURE_ID[] = "textureId";
 const char INSTANCE_ID[] = "instanceId";
 const char PLATFORM_VIEW_ERROR_CODE_CREATEFAIL[] = "error_platform_view_000001";
@@ -62,23 +64,23 @@ PlatformViewDelegate::~PlatformViewDelegate()
     }
 }
 
-void PlatformViewDelegate::Create(const std::string& viewTag)
+void PlatformViewDelegate::Create(const std::string& viewTag, const std::optional<std::string>& data)
 {
     auto context = context_.Upgrade();
     CHECK_NULL_VOID(context);
 
     auto platformTaskExecutor = SingleTaskExecutor::Make(context->GetTaskExecutor(), TaskExecutor::TaskType::PLATFORM);
     platformTaskExecutor.PostSyncTask(
-        [weak = WeakClaim(this), viewTag] {
+        [weak = WeakClaim(this), viewTag, data] {
             auto platformView = weak.Upgrade();
             if (platformView) {
-                platformView->CreatePlatformView(viewTag);
+                platformView->CreatePlatformView(viewTag, data);
             }
         },
         "ArkUI-XPlatformViewDelegateCreate");
 }
 
-void PlatformViewDelegate::CreatePlatformView(const std::string& viewTag)
+void PlatformViewDelegate::CreatePlatformView(const std::string& viewTag, const std::optional<std::string>& data)
 {
     auto context = context_.Upgrade();
     CHECK_NULL_VOID(context);
@@ -86,6 +88,10 @@ void PlatformViewDelegate::CreatePlatformView(const std::string& viewTag)
     CHECK_NULL_VOID(resRegister);
     std::stringstream paramStream;
     paramStream << VIEW_TAG << PLATFORM_VIEW_PARAM_EQUALS << viewTag;
+    if (data.has_value()) {
+        paramStream << PLATFORM_VIEW_PARAM_AND << DATA_TAG << PLATFORM_VIEW_PARAM_EQUALS << data.value();
+        paramStream << PLATFORM_VIEW_PARAM_AND << DATA_EMPTY_TAG << PLATFORM_VIEW_PARAM_EQUALS << data->empty();
+    }
     std::string param = paramStream.str();
     id_ = resRegister->CreateResource(type_, param);
     if (id_ == PLATFORM_VIEW_INVALID_ID) {
