@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -141,6 +141,7 @@ struct MediaLibraryAsyncContext : public NapiError {
     bool hiddenOnly = false;
     int32_t hiddenAlbumFetchMode = -1;
     std::string formId;
+    MediaType mediaType;
 };
 
 struct MediaLibraryInitContext : public NapiError  {

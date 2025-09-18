@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ohos.ace.plugin.photoaccesshelper;
 
 import android.content.Context;
@@ -29,14 +30,25 @@ import android.content.ContentQueryMap;
 import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 
+import android.provider.MediaStore.MediaColumns;
+import android.content.ContentValues;
+import android.os.Environment;
+import android.webkit.MimeTypeMap;
+
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import java.util.Random;
+
 import java.util.List;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import ohos.ace.plugin.photoaccesshelper.AlbumValues;
 
@@ -46,6 +58,16 @@ import ohos.ace.plugin.photoaccesshelper.AlbumValues;
  * @since 2024-06-24
  */
 public class PhotoPlugin {
+    private static final int MEDIA_TYPE_IMAGE = 1;
+
+    private static final int MEDIA_TYPE_VIDEO = 2;
+
+    private static final int VERSION_Q_API_LEVEL = 29;
+
+    private static final String RELATIVE_PATH = "relative_path";
+
+    private static final String SCHEME_CONTENT = "content";
+
     private static String TAG = "photoPlugin";
 
     private static String IMAGE_PREFIX = "file://";
@@ -123,6 +145,26 @@ public class PhotoPlugin {
                 Log.e(TAG, "not has permission");
                 return false;
             }
+        }
+    }
+
+    /**
+     * checkWritePermission
+     *
+     * @return boolean
+     */
+    public boolean checkWritePermission() {
+        if (mContext == null) {
+            Log.e(TAG, "mContext is null");
+            return false;
+        }
+        PackageManager pm = mContext.getPackageManager();
+        if (pm.checkPermission("android.permission.WRITE_EXTERNAL_STORAGE",
+            mContext.getPackageName()) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            Log.e(TAG, "not has permission");
+            return false;
         }
     }
 
@@ -370,6 +412,113 @@ public class PhotoPlugin {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * createPhoto
+     *
+     * @param photoType photoType
+     * @param extension extension
+     * @param title title
+     * @return String
+     */
+    public String createPhoto(int photoType, String extension, String title) {
+        if (mContext == null) {
+            Log.e(TAG, "mContext is null");
+            return null;
+        }
+        if (mResolver == null) {
+            mResolver = mContext.getContentResolver();
+        }
+
+        String cleanExtension = extension;
+        int lastDotIndex = extension.lastIndexOf('.');
+        if (lastDotIndex >= 0) {
+            cleanExtension = extension.substring(lastDotIndex + 1).toLowerCase(Locale.ROOT);
+        }
+
+        ContentValues values = new ContentValues();
+
+        String displayName = generateDisplayName(photoType, title, cleanExtension);
+        String mimeType = getMimeTypeFromExtension(cleanExtension);
+        if (mimeType == null) {
+            Log.e(TAG, "extension not supported");
+            return null;
+        }
+        values.put(MediaColumns.DISPLAY_NAME, displayName);
+        values.put(MediaColumns.MIME_TYPE, mimeType);
+
+        return insertAsset(photoType, cleanExtension, title, values, displayName);
+    }
+
+    private String insertAsset(int photoType, String extension, String title, ContentValues values,
+            String displayName) {
+        String uniqueId = Long.toString(System.currentTimeMillis());
+        String packageName = mContext.getPackageName();
+        Random random = new Random();
+        int randomSuffix = random.nextInt(900) + 100;
+        String uniqueDir = uniqueId + "_" + randomSuffix;
+
+        try {
+            if (Build.VERSION.SDK_INT >= VERSION_Q_API_LEVEL) {
+                values.put(RELATIVE_PATH, Environment.DIRECTORY_DCIM + "/" + packageName + "/" + uniqueDir);
+            } else {
+                String filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) +
+                    "/" + packageName + "/" + uniqueDir + "/" + displayName;
+                values.put(MediaColumns.DATA, filePath);
+
+                File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+                    packageName + "/" + uniqueDir);
+                if (!directory.exists() && !directory.mkdirs()) {
+                    Log.e(TAG, "Failed to create directory");
+                    return null;
+                }
+            }
+
+            Uri uri = null;
+            if (photoType == MEDIA_TYPE_IMAGE) {
+                uri = mResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            } else {
+                uri = mResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+            }
+
+            if (uri == null) {
+                Log.e(TAG, "Error uri is null");
+                return null;
+            } else {
+                return uri.toString();
+            }
+        } catch (SecurityException | OutOfMemoryError e) {
+            Log.e(TAG, "Error creating media asset: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String generateDisplayName(int photoType, String title, String extension) {
+        if (extension == null || extension.isEmpty()) {
+            Log.e(TAG, "extension is null");
+            return null;
+        }
+        if (title == null || title.isEmpty()) {
+            return generateDefaultAssetName(photoType, extension);
+        }
+        return title + "." + extension;
+    }
+
+    private String generateDefaultAssetName(int photoType, String extension) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmssSSS", Locale.getDefault());
+        String timestamp = sdf.format(new Date());
+        String prefix = (photoType == MEDIA_TYPE_IMAGE) ? "IMG_" : "VID_";
+        return prefix + timestamp + "." + extension;
+    }
+
+    private String getMimeTypeFromExtension(String extension) {
+        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        if (mimeType == null || mimeType.isEmpty()) {
+            Log.e(TAG, "extension not supported");
+            return null;
+        }
+        return mimeType;
     }
 
     /**

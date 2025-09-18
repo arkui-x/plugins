@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -203,6 +203,9 @@ const std::string SCREEN_RECORD_PATH = "Videos/ScreenRecordings/";
 const std::string CAMERA_ALBUM_NAME = "Camera";
 const std::string SCREEN_SHOT_ALBUM_NAME = "Screenshots";
 const std::string SCREEN_RECORD_ALBUM_NAME = "ScreenRecordings";
+
+// extension
+const std::string ASSET_EXTENTION = "extention";
 
 // edit param
 const std::string EDIT_DATA_REQUEST = "edit_data_request";  // MEDIA_OPERN_KEYWORD=EDIT_DATA_REQUEST

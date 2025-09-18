@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,6 +40,9 @@ public:
     EXPORT int Update(std::string &uri, const std::string &predicates,
         const std::string &value) override;
     EXPORT void startPhotoPicker(std::string &type) override;
+    EXPORT std::string InsertExt(int photoType, const std::string &extension,
+        const std::string &title, int &errCode) override;
+    EXPORT std::string GetMimeTypeFromExtension(const std::string &extension) override;
 };
 }
 }
