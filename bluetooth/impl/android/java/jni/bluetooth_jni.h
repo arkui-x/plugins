@@ -90,7 +90,7 @@ public:
         uint16_t duration, bool isRawData);
     static int StopAdvertising(int32_t advHandle);
 
-    static int32_t StartPair(const std::string& address);
+    static int32_t StartPair(const BluetoothRawAddress &bluetoothRawAddress);
     static int32_t GetBtProfileConnState(uint32_t profileId, int& state);
     static int32_t GetBtProfileConnState(int& state);
     static int32_t GetDeviceName(const std::string& address, std::string& name);

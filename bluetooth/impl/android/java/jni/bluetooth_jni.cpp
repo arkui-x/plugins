@@ -955,14 +955,14 @@ int BluetoothJni::StopAdvertising(int32_t advHandle)
     return ret;
 }
 
-int32_t BluetoothJni::StartPair(const std::string& address)
+int32_t BluetoothJni::StartPair(const BluetoothRawAddress &bluetoothRawAddress)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, BT_ERR_INTERNAL_ERROR);
     CHECK_NULL_RETURN(g_bluetoothClass.globalRef, BT_ERR_INTERNAL_ERROR);
     CHECK_NULL_RETURN(g_bluetoothClass.startPair, BT_ERR_INTERNAL_ERROR);
 
-    jstring javaString = env->NewStringUTF(address.c_str());
+    jstring javaString = env->NewStringUTF(bluetoothRawAddress.GetAddress().c_str());
     jint retJint = env->CallIntMethod(g_bluetoothClass.globalRef, g_bluetoothClass.startPair, javaString);
     env->DeleteLocalRef(javaString);
     return static_cast<int>(retJint);
