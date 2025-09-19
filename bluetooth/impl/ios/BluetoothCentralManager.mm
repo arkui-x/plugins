@@ -17,6 +17,15 @@
 
 #include "bluetooth_def.h"
 
+#ifndef dispatch_main_async_safe
+#define dispatch_main_async_safe(block) \
+if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())) { \
+    block(); \
+} else { \
+    dispatch_async(dispatch_get_main_queue(), block); \
+}
+#endif
+
 @implementation BluetoothCentralManager
 
 static NSString* strYes = @"1";
@@ -28,9 +37,6 @@ static NSString* strNo = @"0";
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
       bluetoothCentralManager = [[BluetoothCentralManager alloc] init];
-      bluetoothCentralManager.centralManager = [[CBCentralManager alloc] initWithDelegate:bluetoothCentralManager
-                                                                                     queue:nil
-                                                                                   options:nil];
     });
 
     return bluetoothCentralManager;
@@ -93,8 +99,21 @@ static NSString* strNo = @"0";
 
 - (int)getBleState
 {
-    return bluetoothState;
+    if (self.centralManager) {
+        return bluetoothState;
+    }
+    return 0;
 }
+
+- (CBCentralManager *)centralManager {
+    if (!_centralManager) {
+        dispatch_main_async_safe(^{
+            _centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+        });
+    }
+    return _centralManager;
+}
+
 
 - (bool)isBleEnabled
 {

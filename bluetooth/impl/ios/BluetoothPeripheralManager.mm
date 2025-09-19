@@ -15,6 +15,15 @@
 
 #import "BluetoothPeripheralManager.h"
 
+#ifndef dispatch_main_async_safe
+#define dispatch_main_async_safe(block) \
+if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())) { \
+    block(); \
+} else { \
+    dispatch_async(dispatch_get_main_queue(), block); \
+}
+#endif
+
 @implementation BluetoothPeripheralManager
 
 typedef NS_ENUM(NSInteger, CharacterSubscribe) {
@@ -61,10 +70,17 @@ typedef NS_ENUM(NSInteger, CharacterSubscribe) {
     dispatch_once(&onceToken, ^{
       bluetoothPeripheralManager = [[BluetoothPeripheralManager alloc] init];
       bluetoothPeripheralManager.appId = 0;
-      [bluetoothPeripheralManager createPeripheralManager];
     });
-
     return bluetoothPeripheralManager;
+}
+
+- (CBPeripheralManager *)peripheralManager {
+    if (_peripheralManager == nil) {
+        dispatch_main_async_safe(^{
+            _peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil options:nil];
+        });
+    }
+    return _peripheralManager;
 }
 
 - (void)createPeripheralManager
