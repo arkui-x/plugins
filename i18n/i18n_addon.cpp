@@ -258,7 +258,8 @@ napi_value I18nAddon::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("TimeZone", CreateTimeZoneObject(env, initStatus)),
         DECLARE_NAPI_PROPERTY("System", CreateSystemObject(env, initStatus)),
         DECLARE_NAPI_PROPERTY("Normalizer", CreateI18nNormalizerObject(env, initStatus)),
-        DECLARE_NAPI_PROPERTY("NormalizerMode", CreateI18NNormalizerModeEnum(env, initStatus))
+        DECLARE_NAPI_PROPERTY("NormalizerMode", CreateI18NNormalizerModeEnum(env, initStatus)),
+        DECLARE_NAPI_FUNCTION("getSystemLanguage", GetSystemLanguage),
     };
     initStatus = napi_define_properties(env, exports, sizeof(properties) \
         / sizeof(napi_property_descriptor), properties);
