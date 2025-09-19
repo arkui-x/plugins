@@ -224,6 +224,11 @@ int32_t BluetoothHostImpl::GetBleMaxAdvertisingDataLength()
     return 0;
 }
 
+int32_t BluetoothHostImpl::GetConnectedBLEDevices(int32_t bleProfile, std::vector<std::string>& connectedDevices)
+{
+    return BT_NO_ERROR;
+}
+
 int32_t BluetoothHostImpl::GetDeviceType(int32_t transport, const std::string& address)
 {
     return 0;
@@ -279,9 +284,9 @@ int32_t BluetoothHostImpl::GetPairState(int32_t transport, const std::string& ad
     return BluetoothJni::GetPairState(address, pairState);
 }
 
-int32_t BluetoothHostImpl::StartPair(int32_t transport, const std::string& address)
+int32_t BluetoothHostImpl::StartPair(int32_t transport, const BluetoothRawAddress &bluetoothRawAddress)
 {
-    return BluetoothJni::StartPair(address);
+    return BluetoothJni::StartPair(bluetoothRawAddress);
 }
 
 int32_t BluetoothHostImpl::StartCrediblePair(int32_t transport, const std::string& address)
