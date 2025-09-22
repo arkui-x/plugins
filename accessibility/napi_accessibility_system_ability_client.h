@@ -55,6 +55,8 @@ public:
     static napi_value IsOpenAccessibilitySync(napi_env env, napi_callback_info info);
     static napi_value SubscribeState(napi_env env, napi_callback_info info);
     static napi_value UnsubscribeState(napi_env env, napi_callback_info info);
+    static napi_value IsScreenReaderOpenSync(napi_env env, napi_callback_info info);
+    static napi_value SendAccessibilityEvent(napi_env env, napi_callback_info info);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGIN_ACCESSIBILITY_NAPI_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_H

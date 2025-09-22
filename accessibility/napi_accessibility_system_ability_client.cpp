@@ -18,6 +18,9 @@
 #include "accessibility_system_ability_event_callback.h"
 #include "log.h"
 
+#include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
+#include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
+
 #ifdef IOS_PLATFORM
 #include "ios/accessibilitySystemAbilityBridge.h"
 #endif
@@ -89,6 +92,65 @@ napi_value NAccessibilityClient::IsOpenAccessibilitySync(napi_env env, napi_call
     napi_value result = nullptr;
     napi_get_boolean(env, status, &result);
     return result;
+}
+
+napi_value NAccessibilityClient::IsScreenReaderOpenSync(napi_env env, napi_callback_info info)
+{
+    bool status = false;
+    napi_value result = nullptr;
+    napi_get_boolean(env, status, &result);
+    return result;
+}
+
+napi_value NAccessibilityClient::SendAccessibilityEvent(napi_env env, napi_callback_info info)
+{
+    size_t argc = ARGS_SIZE_TWO;
+    napi_value args[ARGS_SIZE_TWO] = { 0 };
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+    napi_value promise = nullptr;
+    napi_deferred deferred = nullptr;
+    bool usePromise = false;
+    napi_ref callbackRef = nullptr;
+    napi_value callback = nullptr;
+    napi_async_work async_work = nullptr;
+    if (argc == PluginUtilsNApi::ARG_NUM_2) {
+        callback = args[PluginUtilsNApi::ARG_NUM_1];
+        NAPI_CALL(env, napi_create_reference(env, callback, 1, &callbackRef));
+    } else {
+        usePromise = true;
+        NAPI_CALL(env, napi_create_promise(env, &deferred, &promise));
+    }
+    struct AsyncContext {
+        napi_ref callbackRef;
+        napi_deferred deferred;
+        bool isPromise;
+    };
+    AsyncContext* context = new AsyncContext { callbackRef, deferred, usePromise };
+    napi_value resource_name;
+    NAPI_CALL(env, napi_create_string_utf8(env, "sendAccessibilityEvent", NAPI_AUTO_LENGTH, &resource_name));
+    napi_status status = napi_create_async_work(env, nullptr, resource_name, [](napi_env env, void* data) {},
+        [](napi_env env, napi_status status, void* data) {
+            AsyncContext* context = static_cast<AsyncContext*>(data);
+            if (context != nullptr) {
+                if (context->isPromise) {
+                    napi_resolve_deferred(env, context->deferred, PluginUtilsNApi::CreateUndefined(env));
+                } else if (context->callbackRef != nullptr) {
+                    napi_value callback;
+                    napi_get_reference_value(env, context->callbackRef, &callback);
+                    napi_call_function(env, PluginUtilsNApi::CreateUndefined(env), callback, 0, nullptr, nullptr);
+                    napi_delete_reference(env, context->callbackRef);
+                }
+                delete context;
+            }
+        }, context, &async_work);
+    if (status != napi_ok) {
+        delete context;
+    }
+    status = napi_queue_async_work(env, async_work);
+    if (status != napi_ok) {
+        delete context;
+    }
+    return usePromise ? promise : PluginUtilsNApi::CreateUndefined(env);
 }
 
 napi_value NAccessibilityClient::SubscribeState(napi_env env, napi_callback_info info)

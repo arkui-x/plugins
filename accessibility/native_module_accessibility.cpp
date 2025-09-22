@@ -29,6 +29,8 @@ static napi_value Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isOpenAccessibilitySync", NAccessibilityClient::IsOpenAccessibilitySync),
         DECLARE_NAPI_FUNCTION("on", NAccessibilityClient::SubscribeState),
         DECLARE_NAPI_FUNCTION("off", NAccessibilityClient::UnsubscribeState),
+        DECLARE_NAPI_FUNCTION("isScreenReaderOpenSync", NAccessibilityClient::IsScreenReaderOpenSync),
+        DECLARE_NAPI_FUNCTION("sendAccessibilityEvent", NAccessibilityClient::SendAccessibilityEvent),
     };
 
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
