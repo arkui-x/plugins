@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,8 +31,8 @@ public:
         : PlatformViewResource("platformview", context, std::move(onError)) {}
     ~PlatformViewDelegate() override;
 
-    void Create(const std::string& viewTag);
-    void CreatePlatformView(const std::string& viewTag);
+    void Create(const std::string& viewTag, const std::optional<std::string>& data);
+    void CreatePlatformView(const std::string& viewTag, const std::optional<std::string>& data);
     void RegisterPlatformViewTexture(int64_t textureId, std::string& viewTag);
     void UpdatePlatformViewLayout(const NG::SizeF& drawSize, const NG::OffsetF& offset);
     void ExchangeBind();

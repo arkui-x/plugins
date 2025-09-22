@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,7 +39,8 @@ class PlatformViewPattern : public Pattern {
 
 public:
     PlatformViewPattern() = default;
-    PlatformViewPattern(const std::string& id);
+    PlatformViewPattern(const std::string& id, const std::optional<std::string>& data);
+
     ~PlatformViewPattern() override = default;
 
     RefPtr<LayoutProperty> CreateLayoutProperty() override
@@ -62,10 +63,7 @@ public:
         return { FocusType::NODE, false };
     }
 
-    void PlatformViewSizeInit();
     void PlatformViewSizeChange(const RectF& surfaceRect, bool needFireNativeEvent);
-    void FireExternalEvent(RefPtr<NG::PipelineContext> context, const std::string& componentId, const uint32_t nodeId,
-        const bool isDestroy);
     void UpdateSurfaceBounds(bool needForceRender, bool frameOffsetChange = false);
 
 private:
@@ -86,7 +84,6 @@ private:
     void InitTouchEvent(const RefPtr<GestureEventHub>& gestureHub);
     void HandleTouchEvent(const TouchEventInfo& info);
     void InitFocusEvent(const RefPtr<FocusHub>& focusHub);
-    ExternalEvent CreateExternalEvent();
 
     void RequestFocus();
     void PlatformViewInitialize();
@@ -99,6 +96,7 @@ private:
     void UpdatePlatformViewLayoutIfNeeded();
 
     std::string id_;
+    std::optional<std::string> data_;
     RefPtr<RenderSurface> renderSurface_;
     WeakPtr<RenderSurface> renderSurfaceWeakPtr_;
     RefPtr<RenderContext> renderContextForPlatformView_;
