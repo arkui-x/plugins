@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,6 +39,7 @@ public:
     EXPORT static int32_t CheckAlbumName(const std::string &albumName);
     EXPORT static int32_t CheckDisplayName(const std::string &displayName);
     EXPORT static int32_t CheckFileDisplayName(const std::string &displayName);
+    EXPORT static int32_t CheckTitleCompatible(const std::string &title);
     EXPORT static void FormatRelativePath(std::string &relativePath);
     EXPORT static std::string GetNetworkIdFromUri(const std::string &uri);
     EXPORT static std::string UpdatePath(const std::string &path, const std::string &uri);

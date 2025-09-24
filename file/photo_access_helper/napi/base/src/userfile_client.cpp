@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,6 +40,25 @@ void UserFileClient::startPhotoPicker(std::string &type) {
     if (plugin != nullptr) {
         plugin->startPhotoPicker(type);
     }
+}
+
+std::string UserFileClient::InsertExt(int photoType, const std::string &extension,
+    const std::string &title, int &errCode)
+{
+    if (!IsValid()) {
+        LOGE("InsertExt fail, helper null");
+        return "";
+    }
+    return plugin->InsertExt(photoType, extension, title, errCode);
+}
+
+std::string UserFileClient::GetMimeTypeFromExtension(const std::string &extension)
+{
+    if (!IsValid()) {
+        LOGE("GetMimeTypeFromExtension fail, helper null");
+        return "";
+    }
+    return plugin->GetMimeTypeFromExtension(extension);
 }
 
 shared_ptr<ResultSet> UserFileClient::QueryAlbum(DataShare::DataSharePredicates &predicates,

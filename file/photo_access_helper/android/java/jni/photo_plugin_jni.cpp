@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -43,6 +43,9 @@ struct {
     jmethodID queryPhoto;
     jmethodID queryAlbum;
     jmethodID checkPermission;
+    jmethodID checkWritePermission;
+    jmethodID createPhoto;
+    jmethodID getMimeTypeFromExtension;
     jobject globalRef;
 } g_pluginClass;
 } // namespace
@@ -84,6 +87,17 @@ void PhotoPluginJni::NativeInit(JNIEnv* env, jobject jobj)
 
     g_pluginClass.checkPermission = env->GetMethodID(cls, "checkPermission", "()Z");
     CHECK_NULL_VOID(g_pluginClass.checkPermission);
+
+    g_pluginClass.checkWritePermission = env->GetMethodID(cls, "checkWritePermission", "()Z");
+    CHECK_NULL_VOID(g_pluginClass.checkWritePermission);
+
+    g_pluginClass.createPhoto = env->GetMethodID(cls, "createPhoto",
+        "(ILjava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    CHECK_NULL_VOID(g_pluginClass.createPhoto);
+
+    g_pluginClass.getMimeTypeFromExtension = env->GetMethodID(cls, "getMimeTypeFromExtension",
+        "(Ljava/lang/String;)Ljava/lang/String;");
+    CHECK_NULL_VOID(g_pluginClass.getMimeTypeFromExtension);
 
     env->DeleteLocalRef(cls);
 }
@@ -252,6 +266,43 @@ std::shared_ptr<Media::ResultSet> PhotoPluginJni::queryAlbum(const NativeRdb::Rd
     return resultSet;
 }
 
+std::string PhotoPluginJni::CreatePhoto(int photoType, const std::string &extension, const std::string &title)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    std::string result = "";
+
+    if (!(env) || !g_pluginClass.globalRef || !g_pluginClass.createPhoto) {
+        LOGE("CreatePhoto get none ptr error");
+        return result;
+    }
+
+    jint jPhotoType = photoType;
+    jstring jExtension = StringToJavaString(env, extension);
+    jstring jTitle = StringToJavaString(env, title);
+
+    jstring jOutUri = static_cast<jstring>(env->CallObjectMethod(
+        g_pluginClass.globalRef, g_pluginClass.createPhoto, jPhotoType, jExtension, jTitle));
+    if (jOutUri != nullptr) {
+        const char* uriStr = env->GetStringUTFChars(jOutUri, nullptr);
+        if (uriStr != nullptr) {
+            result = uriStr;
+            env->ReleaseStringUTFChars(jOutUri, uriStr);
+        } else {
+            LOGE("CreatePhoto GetStringUTFChars failed");
+        }
+        env->DeleteLocalRef(jOutUri);
+    }
+
+    if (env->ExceptionCheck()) {
+        LOGE("Java exception occurred in CreatePhoto");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    env->DeleteLocalRef(jExtension);
+    env->DeleteLocalRef(jTitle);
+    return result;
+}
+
 bool PhotoPluginJni::checkPermission() {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_pluginClass.globalRef) || !(g_pluginClass.checkPermission)) {
@@ -264,6 +315,60 @@ bool PhotoPluginJni::checkPermission() {
         env->ExceptionDescribe();
         env->ExceptionClear();
     }
+    return result;
+}
+
+bool PhotoPluginJni::CheckWritePermission()
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!env || !g_pluginClass.globalRef || !g_pluginClass.checkWritePermission) {
+        LOGE("checkWritePermission get none ptr error");
+        return false;
+    }
+    jboolean result = env->CallBooleanMethod(g_pluginClass.globalRef, g_pluginClass.checkWritePermission);
+    if (env->ExceptionCheck()) {
+        LOGE("checkWritePermission: call createAsset failed");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    return result;
+}
+
+std::string PhotoPluginJni::GetMimeTypeFromExtension(const std::string &extension)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    std::string result = "";
+
+    if (!env || !g_pluginClass.globalRef || !g_pluginClass.getMimeTypeFromExtension) {
+        LOGE("GetMimeTypeFromExtension get none ptr error");
+        return result;
+    }
+
+    jstring jExtension = StringToJavaString(env, extension);
+    if (jExtension == nullptr) {
+        LOGE("GetMimeTypeFromExtension jExtension is null");
+        return result;
+    }
+
+    jstring jMimeType = static_cast<jstring>(env->CallObjectMethod(
+        g_pluginClass.globalRef, g_pluginClass.getMimeTypeFromExtension, jExtension));
+    if (jMimeType != nullptr) {
+        const char* mimeType = env->GetStringUTFChars(jMimeType, nullptr);
+        if (mimeType != nullptr) {
+            result = mimeType;
+            env->ReleaseStringUTFChars(jMimeType, mimeType);
+        } else {
+            LOGE("GetMimeTypeFromExtension GetStringUTFChars failed");
+        }
+        env->DeleteLocalRef(jMimeType);
+    }
+    
+    if (env->ExceptionCheck()) {
+        LOGE("Java exception occurred in GetMimeTypeFromExtension");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    env->DeleteLocalRef(jExtension);
     return result;
 }
 } // namespace OHOS::Plugin

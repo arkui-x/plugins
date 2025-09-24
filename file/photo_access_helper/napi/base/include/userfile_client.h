@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,7 +44,9 @@ public:
     EXPORT static int Update(std::string &uri, const DataShare::DataSharePredicates &predicates,
         const DataShare::DataShareValuesBucket &value);
     EXPORT static void startPhotoPicker(std::string &type);
-
+    EXPORT static std::string InsertExt(int photoType, const std::string &extension,
+        const std::string &title, int &errCode);
+    EXPORT static std::string GetMimeTypeFromExtension(const std::string &extension);
 private:
     static std::shared_ptr<PhotoClient> plugin;
 };

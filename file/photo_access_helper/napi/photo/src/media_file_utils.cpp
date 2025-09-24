@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,8 +33,10 @@
 #include "medialibrary_db_const.h"
 #include "medialibrary_errno.h"
 #include "medialibrary_type_const.h"
+#include "mimetype_utils.h"
 #include "string_ex.h"
 #include "media_file_utils.h"
+#include "userfile_client.h"
 
 using namespace std;
 
@@ -140,6 +142,27 @@ int32_t MediaFileUtils::CheckFileDisplayName(const string &displayName)
     return E_OK;
 }
 
+int32_t MediaFileUtils::CheckTitleCompatible(const string &title)
+{
+    if (title.empty()) {
+        LOGE("Title is empty.");
+        return -EINVAL;
+    }
+
+    int err = CheckStringSize(title, DISPLAYNAME_MAX);
+    if (err < 0) {
+        return err;
+    }
+
+    static const string titleRegexCheck = R"([\.\\/:*?"'`<>|{}\[\]])";
+    if (RegexCheck(title, titleRegexCheck)) {
+        LOGE("Failed to check title regex: %{private}s", title.c_str());
+        return -EINVAL;
+    }
+
+    return E_OK;
+}
+
 void MediaFileUtils::FormatRelativePath(string &relativePath)
 {
     if (relativePath.empty()) {
@@ -226,7 +249,10 @@ MediaType MediaFileUtils::GetMediaType(const string &filePath)
     if (filePath.empty()) {
         return MEDIA_TYPE_ALL;
     }
-    return Media::MEDIA_TYPE_IMAGE;
+
+    string extention = GetExtensionFromPath(filePath);
+    string mimeType = UserFileClient::GetMimeTypeFromExtension(extention);
+    return MimeTypeUtils::GetMediaTypeFromMimeType(mimeType);
 }
 
 string MediaFileUtils::SplitByChar(const string &str, const char split)
