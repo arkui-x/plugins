@@ -41,10 +41,13 @@ template("plugin_statvfs_static") {
       "$libn_dirs/include/n_async",
       "$libhilog_dirs",
       "$utils_dirs/common/include",
+      "$fs_dirs/src/common",
     ]
 
     sources = libn_src
     sources += [
+      "$fs_dirs/src/common/file_api_debug.cpp",
+      "$fs_dirs/src/common/file_fs_trace.cpp",
       "$fs_dirs/src/mod_statvfs/statvfs_n_exporter.cpp",
       "$fs_dirs/src/mod_statvfs/statvfs_napi.cpp",
     ]
