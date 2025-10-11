@@ -50,7 +50,9 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
     std::string proxyHost;
     int32_t proxprot;
     std::string exclusionList;
-    requestOptions.GetSpecifiedHttpProxy(proxyHost, proxprot, exclusionList);
+    NapiUtils::SecureData username;
+    NapiUtils::SecureData password;
+    requestOptions.GetSpecifiedHttpProxy(proxyHost, proxprot, exclusionList, username, password);
 
     requestParam.proxyhost = [NSString stringWithCString:proxyHost.c_str() encoding:NSUTF8StringEncoding];
     requestParam.proxyport = (NSInteger)proxprot;
