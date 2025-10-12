@@ -635,21 +635,27 @@ void HttpExec::GetGlobalHttpProxyInfo(std::string &host, int32_t &port, std::str
 #endif
 }
 
-void HttpExec::GetHttpProxyInfo(RequestContext *context, std::string &host, int32_t &port, std::string &exclusions)
+void HttpExec::GetHttpProxyInfo(RequestContext* context, std::string& host, int32_t& port, std::string& exclusions,
+    NapiUtils::SecureData& username, NapiUtils::SecureData& password)
 {
     if (context->options.GetUsingHttpProxyType() == UsingHttpProxyType::USE_DEFAULT) {
 #ifdef HAS_NETMANAGER_BASE
-        using namespace NetManagerStandard;
-        HttpProxy httpProxy;
-        NetConnClient::GetInstance().GetDefaultHttpProxy(httpProxy);
+        NetManagerStandard::HttpProxy httpProxy;
+        NetManagerStandard::NetConnClient::GetInstance().GetDefaultHttpProxy(httpProxy);
         host = httpProxy.GetHost();
         port = httpProxy.GetPort();
         exclusions = CommonUtils::ToString(httpProxy.GetExclusionList());
+        NetManagerStandard::SecureData usernameTmp = httpProxy.GetUsername();
+        NetManagerStandard::SecureData passwordTmp = httpProxy.GetPassword();
+        username = usernameTmp.c_str();
+        password = passwordTmp.c_str();
 #else
         GetGlobalHttpProxyInfo(host, port, exclusions);
+        username = "";
+        password = "";
 #endif
     } else if (context->options.GetUsingHttpProxyType() == UsingHttpProxyType::USE_SPECIFIED) {
-        context->options.GetSpecifiedHttpProxy(host, port, exclusions);
+        context->options.GetSpecifiedHttpProxy(host, port, exclusions, username, password);
     }
 }
 
@@ -682,7 +688,9 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
     std::string url = context->options.GetUrl();
     std::string host, exclusions;
     int32_t port = 0;
-    GetHttpProxyInfo(context, host, port, exclusions);
+    NapiUtils::SecureData username;
+    NapiUtils::SecureData password;
+    GetHttpProxyInfo(context, host, port, exclusions, username, password);
     if (!host.empty() && !CommonUtils::IsHostNameExcluded(url, exclusions, ",")) {
         NETSTACK_LOGD("Set CURLOPT_PROXY: %{public}s:%{public}d, %{public}s", host.c_str(), port, exclusions.c_str());
         NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXY, host.c_str(), context);
@@ -691,6 +699,10 @@ bool HttpExec::SetOtherOption(CURL *curl, OHOS::NetStack::Http::RequestContext *
         NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_HTTPPROXYTUNNEL, curlTunnelValue, context);
         auto proxyType = (host.find("https://") != std::string::npos) ? CURLPROXY_HTTPS : CURLPROXY_HTTP;
         NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXYTYPE, proxyType, context);
+        if (!username.empty() && !password.empty()) {
+            NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXYUSERNAME, username.c_str(), context);
+            NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_PROXYPASSWORD, password.c_str(), context);
+        }
     }
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2, context);
     NETSTACK_CURL_EASY_SET_OPTION(curl, CURLOPT_SSL_CIPHER_LIST, TLS12_SECURITY_CIPHER_SUITE, context);
