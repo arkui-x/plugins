@@ -234,4 +234,23 @@ void WebviewControllerIOS::DeleteJavaScriptRegister(const std::string& objName)
 {
     deleteJavaScriptRegisterOC(webId_, objName);
 }
+
+bool WebviewControllerIOS::SetWebSchemeHandler(const char* scheme, WebSchemeHandler* handler)
+{
+    if (!handler || !scheme) {
+        return false;
+    }
+    auto arkHandler = WebSchemeHandler::GetArkWebSchemeHandler(handler);
+    return setWebSchemeHandlerOC(webId_, scheme, arkHandler);
+}
+
+bool WebviewControllerIOS::ClearWebSchemeHandler()
+{
+    return clearWebSchemeHandlerOC(webId_);
+}
+
+std::string WebviewControllerIOS::GetUserAgent()
+{
+    return getUserAgentOC();
+}
 } // namespace OHOS::Plugin

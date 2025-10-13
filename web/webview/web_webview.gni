@@ -28,4 +28,6 @@ web_include = [
 web_source = [
   "$SUBSYSTEM_DIR/interfaces/kits/nativecommon/web_errors.cpp",
   "$SUBSYSTEM_DIR/interfaces/kits/napi/common/business_error.cpp",
+  "$SUBSYSTEM_DIR/interfaces/kits/napi/web_net_error_code/napi_web_net_errorcode.cpp",
+  "$SUBSYSTEM_DIR/interfaces/kits/napi/web_net_error_code/napi_web_net_errorcode_module.cpp",
 ]

@@ -14,6 +14,14 @@
 import("//build/ohos.gni")
 import("//plugins/web/webview/web_webview.gni")
 
+java_library("android_asset_android_java") {
+  java_files = [
+    "src/ohos/ace/plugin/webviewplugin/androidasset/AndroidAssetPlugin.java",
+  ]
+  subsystem_name = "plugins"
+  part_name = "web_webview"
+}
+
 java_library("cookie_manager_android_java") {
   java_files =
       [ "src/ohos/ace/plugin/webviewplugin/webcookie/WebCookiePlugin.java" ]
@@ -30,6 +38,7 @@ java_library("web_storage_android_java") {
 
 ohos_combine_jars("web_webview_java") {
   deps = [
+    ":android_asset_android_java",
     ":cookie_manager_android_java",
     ":web_storage_android_java",
   ]
@@ -40,6 +49,7 @@ ohos_combine_jars("web_webview_java") {
 
 ohos_source_set("web_webview_android_jni") {
   sources = [
+    "jni/android_asset_helper_jni.cpp",
     "jni/geolocation_permissions_android.cpp",
     "jni/geolocation_permissions_jni.cpp",
     "jni/web_cookie_manager_android.cpp",
@@ -50,6 +60,7 @@ ohos_source_set("web_webview_android_jni") {
     "jni/web_download_item_jni.cpp",
     "jni/web_download_manager_android.cpp",
     "jni/web_message_port_android.cpp",
+    "jni/web_scheme_handler_jni.cpp",
     "jni/web_storage_android.cpp",
     "jni/web_storage_jni.cpp",
     "jni/webview_controller_android.cpp",
