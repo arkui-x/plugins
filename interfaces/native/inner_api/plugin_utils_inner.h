@@ -46,6 +46,15 @@
         }                                                               \
     } while (0)
 
+#define CHECK_NULL_VOID_DELREF(ptr, env, cls)                           \
+    do {                                                                \
+        if (!(ptr)) {                                                   \
+            LOGW(#ptr " is null, return on line %{public}d", __LINE__); \
+            env->DeleteLocalRef(cls);                                   \
+            return;                                                     \
+        }                                                               \
+    } while (0)
+
 namespace OHOS::Plugin {
 using RegisterCallback = bool (*)(void*);
 using Task = std::function<void()>;
