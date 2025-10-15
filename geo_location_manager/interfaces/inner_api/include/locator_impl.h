@@ -63,7 +63,8 @@ public:
      * @param requestConfig Indicates the location request parameters.
      * @param callback Indicates the callback for reporting the location result.
      */
-    LocationErrCode StartLocating(std::unique_ptr<RequestConfig>& requestConfig, sptr<LocatorCallbackNapi>& locatorCallbackHost);
+    LocationErrCode StartLocating(std::unique_ptr<RequestConfig>& requestConfig,
+        sptr<LocatorCallbackNapi>& locatorCallbackHost);
 
     /**
      * @brief Unsubscribe location changed.
@@ -178,7 +179,8 @@ public:
      * @param data Indicates the reverse geocode query parameters.
      * @param replyList Indicates the result of the address info.
      */
-    void GetAddressByCoordinate(std::unique_ptr<ReverseGeoCodeRequest>& request, std::list<std::shared_ptr<GeoAddress>>& replyList);
+    void GetAddressByCoordinate(std::unique_ptr<ReverseGeoCodeRequest>& request,
+        std::list<std::shared_ptr<GeoAddress>>& replyList);
 
     /**
      * @brief Obtain latitude and longitude info from location address.
@@ -186,7 +188,8 @@ public:
      * @param data Indicates the geocode query parameters.
      * @param replyList Indicates the result of the address info.
      */
-    void GetAddressByLocationName(std::unique_ptr<GeoCodeRequest> &request, std::list<std::shared_ptr<GeoAddress>>& replyList);
+    void GetAddressByLocationName(std::unique_ptr<GeoCodeRequest> &request,
+        std::list<std::shared_ptr<GeoAddress>>& replyList);
 
     /**
      * @brief Obtain the number of cached GNSS locations.
@@ -334,7 +337,8 @@ public:
      * @param callback Indicates the callback for reporting the location error result.
      * @return Returns ERRCODE_SUCCESS if subscribe error changed succeed.
      */
-    LocationErrCode SubscribeBluetoothScanResultChange(sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost);
+    LocationErrCode SubscribeBluetoothScanResultChange(
+        sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost);
 
     /**
      * @brief Unsubscribe bluetooth scan result change.
@@ -342,7 +346,8 @@ public:
      * @param callback Indicates the callback for reporting the bluetooth scan result.
      * @return Returns ERRCODE_SUCCESS if subscribe error changed succeed.
      */
-    LocationErrCode UnSubscribeBluetoothScanResultChange(sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost);
+    LocationErrCode UnSubscribeBluetoothScanResultChange(
+        sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost);
 
     /**
      * @brief Unsubscribe location errorcode changed.

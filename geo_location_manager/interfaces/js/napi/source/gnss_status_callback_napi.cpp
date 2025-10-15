@@ -140,18 +140,15 @@ void GnssStatusCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
             GnssStatusAsyncContext *context = nullptr;
             napi_handle_scope scope = nullptr;
             if (work == nullptr) {
-                LBSLOGE(LOCATOR_CALLBACK, "work is nullptr!");
                 return;
             }
             context = static_cast<GnssStatusAsyncContext *>(work->data);
             if (context == nullptr || context->env == nullptr) {
-                LBSLOGE(LOCATOR_CALLBACK, "context is nullptr!");
                 delete work;
                 return;
             }
             NAPI_CALL_RETURN_VOID(context->env, napi_open_handle_scope(context->env, &scope));
             if (scope == nullptr) {
-                LBSLOGE(GNSS_STATUS_CALLBACK, "scope is nullptr");
                 delete context;
                 delete work;
                 return;
@@ -172,8 +169,6 @@ void GnssStatusCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
                     CHK_NAPI_ERR_CLOSE_SCOPE(context->env,
                         napi_get_reference_value(context->env, context->callback[0], &handler), scope, context, work);
                     ret = napi_call_function(context->env, nullptr, handler, 1, &jsEvent, &undefine);
-                } else {
-                    LBSLOGE(GNSS_STATUS_CALLBACK, "no valid callback");
                 }
                 if (ret != napi_ok) {
                     LBSLOGE(GNSS_STATUS_CALLBACK, "Report event failed");

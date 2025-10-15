@@ -27,8 +27,10 @@ public:
     explicit GeofenceManager();
     ~GeofenceManager();
 
-    LocationErrCode AddGnssGeofence(std::shared_ptr<GeofenceRequest>& request, sptr<LocationGnssGeofenceCallbackNapi> callback);
-    LocationErrCode RemoveGnssGeofence(std::shared_ptr<GeofenceRequest>& request, sptr<LocationGnssGeofenceCallbackNapi> callback);
+    LocationErrCode AddGnssGeofence(std::shared_ptr<GeofenceRequest>& request,
+        sptr<LocationGnssGeofenceCallbackNapi> callback);
+    LocationErrCode RemoveGnssGeofence(std::shared_ptr<GeofenceRequest>& request,
+        sptr<LocationGnssGeofenceCallbackNapi> callback);
     LocationErrCode GetGeofenceSupportedCoordTypes(
         std::vector<CoordinateSystemType>& coordinateSystemTypes);
 private:

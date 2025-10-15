@@ -40,7 +40,7 @@ void ArkUIRemoveCountryCodeCallbackByHost(void* callbackHost);
 void ArkUIAddBluetoothScanResultCallback(void* callbackHost);
 void ArkUIRemoveBluetoothScanResultCallbackByHost(void* callbackHost);
 void ArkUIConfigureLocation(int scenario, int priority, int timeInterval,
-	double distanceInterval, float maxAccuracy);
+    double distanceInterval, float maxAccuracy);
 #ifdef __cplusplus
 }
 #endif

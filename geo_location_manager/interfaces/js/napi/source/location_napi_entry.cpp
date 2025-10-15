@@ -301,7 +301,6 @@ static napi_module g_locationManagerModule = {
 #ifdef ANDROID_PLATFORM
 static void LocationPluginJniRegister()
 {
-    LBSLOGI(LOCATION_NAPI, "LocationPluginJniRegister Start!");
     const char className[] = "ohos.ace.plugin.locationserviceplugin.LocationService";
     ARKUI_X_Plugin_RegisterJavaPlugin(&Plugin::LocationServiceJni::Register, className);
 }

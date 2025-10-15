@@ -36,7 +36,7 @@
 #include "location_log.h"
 #include "location_service_ios.h"
 #if !defined(PLUGIN_INTERFACE_NATIVE_LOG_H)
-#define LogLevel GEOLOC_PLUGIN_LogLevel_Renamed__
+#define LogLevel GEOLOC_PLUGIN_LOGLEVEL_REMAED__
 #define GEOLOC_PLUGIN_LOGLEVEL_RENAMED
 #endif
 #include "notification_request.h"
@@ -67,20 +67,25 @@ static inline int64_t NowSinceBootNs()
 #ifdef NOTIFICATION_ENABLE
 static void RequestNotificationAuthorizationIfNeeded()
 {
-    if (@available(iOS 10.0, *)) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-            [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
-                UNAuthorizationStatus st = settings.authorizationStatus;
-                if (st == UNAuthorizationStatusNotDetermined) {
-                    UNAuthorizationOptions opts = (UNAuthorizationOptions)(UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge);
-                    [center requestAuthorizationWithOptions:opts completionHandler:^(BOOL granted, NSError * _Nullable error) {
-                        NSLog(@"ios notification requestAuthorization granted=%d error=%@", granted, error);
-                    }];
-                }
-            }];
-        });
+    if (!@available(iOS 10.0, *)) {
+        return;
     }
+    auto execBlock = ^{
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
+            if (!(settings && settings.authorizationStatus == UNAuthorizationStatusNotDetermined)) {
+                return;
+            }
+            UNAuthorizationOptions opts = (UNAuthorizationOptions)(
+                UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge);
+            [center requestAuthorizationWithOptions:opts completionHandler:nil];
+        }];
+    };
+    if ([NSThread isMainThread]) {
+        execBlock();
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), execBlock);
 }
 #endif
 
@@ -159,24 +164,26 @@ static void PublishFenceNotificationNow(const std::shared_ptr<OHOS::Notification
 }
 #endif
 
+// Helper to load persisted fence id; isolated to keep GenerateFenceIdIOS nesting shallow.
+static inline void ArkUILoadFenceIdIfNeeded() {
+    if (g_fenceIdLoaded) { return; }
+    @autoreleasepool {
+        NSNumber *saved = [[NSUserDefaults standardUserDefaults] objectForKey:@"arkui_geo_fence_id_counter"];
+        if (saved && [saved isKindOfClass:[NSNumber class]]) {
+            int64_t v = [saved longLongValue];
+            if (v >= 0 && v <= FENCE_MAX_ID) {
+                g_fenceIdCounter = static_cast<int32_t>(v);
+            }
+        }
+    }
+    g_fenceIdLoaded = true;
+}
+
 static int32_t GenerateFenceIdIOS()
 {
     std::lock_guard<std::mutex> lock(g_fenceIdMutex);
-    if (!g_fenceIdLoaded) {
-        @autoreleasepool {
-            NSNumber *saved = [[NSUserDefaults standardUserDefaults] objectForKey:@"arkui_geo_fence_id_counter"];
-            if (saved && [saved isKindOfClass:[NSNumber class]]) {
-                int64_t v = [saved longLongValue];
-                if (v >= 0 && v <= FENCE_MAX_ID) {
-                    g_fenceIdCounter = (int32_t)v;
-                }
-            }
-        }
-        g_fenceIdLoaded = true;
-    }
-    if (g_fenceIdCounter >= FENCE_MAX_ID) {
-        g_fenceIdCounter = 0;
-    }
+    ArkUILoadFenceIdIfNeeded();
+    if (g_fenceIdCounter >= FENCE_MAX_ID) { g_fenceIdCounter = 0; }
     ++g_fenceIdCounter;
     @autoreleasepool {
         [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithLongLong:g_fenceIdCounter]
@@ -561,7 +568,6 @@ static void BuildFormatted(CLPlacemark *pm, Location::GeoAddress &dst)
 Location::LocationErrCode LocatorCrossplatformServiceIosImpl::GetAddressByLocationName(std::unique_ptr<Location::GeoCodeRequest> &request,
     std::list<std::shared_ptr<Location::GeoAddress>>& replyList)
 {
-    NSLog(@"Get address by location name");
     if (!request) {
         return Location::LocationErrCode::ERRCODE_INVALID_PARAM;
     }

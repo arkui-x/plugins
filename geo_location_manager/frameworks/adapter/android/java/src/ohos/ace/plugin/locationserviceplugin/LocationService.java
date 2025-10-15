@@ -34,7 +34,6 @@ import android.Manifest;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.bluetooth.BluetoothAdapter;
-import android.text.TextUtils;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -44,14 +43,11 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.location.GnssStatus;
 import android.location.OnNmeaMessageListener;
-import android.database.ContentObserver;
-import android.net.Uri;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 
 import java.util.concurrent.CountDownLatch;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -93,9 +89,11 @@ public class LocationService {
     private final Object geofenceLock = new Object();
     private Location currentLocation;
     private final CountDownLatch latch = new CountDownLatch(1);
-    private static final long TIMEOUT = 10000;
+
+    private static final long TIMEOUT = 10000L;
     private volatile boolean pendingGnssStatusRegister = false;
     private Activity mActivity;
+
     private static final int REQUEST_BLUETOOTH_RELATED_PERM = 102;
 
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
@@ -103,6 +101,7 @@ public class LocationService {
     private static final int ERR_PROVIDER_TEMP_UNAVAILABLE = 2002;
     private static final int ERR_PROVIDER_DISABLED = 2003;
     private static final int ERR_NO_PERMISSION = 201;
+    private static final int ERR_DISABLED = -4;
     private static final int PRIORITY_ACCURACY_HIGH = 0;
     private static final int PRIORITY_ACCURACY_BALANCED = 1;
     private static final int PRIORITY_ACCURACY_LOW = 2;
@@ -254,7 +253,7 @@ public class LocationService {
             try {
                 locationManager.removeUpdates(locationListener);
             } catch (SecurityException e) {
-                e.printStackTrace();
+                Log.w("LocationManager", "SecurityException occurred while removing updates", e);
             }
         }
     }
@@ -304,8 +303,8 @@ public class LocationService {
             Log.e(LOG_TAG, "getAddressByCoordinate geocoder IO error: " + e.getMessage());
         } catch (IllegalArgumentException iae) {
             Log.e(LOG_TAG, "getAddressByCoordinate invalid lat/lon: " + iae.getMessage());
-        } catch (Throwable t) {
-            Log.e(LOG_TAG, "getAddressByCoordinate unexpected: " + t.getMessage());
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "getAddressByCoordinate unexpected: " + e.getMessage());
         }
         return out.toArray(new Address[0]);
     }
@@ -315,16 +314,16 @@ public class LocationService {
             if (countryCodeRegistered) {
                 return;
             }
-            String code = "";
-            int type = 1;
-            resolveCountryCode(code, type);
-            nativeOnCountryCodeChanged(code, type);
+            final String[] codeHolder = {""};
+            final int[] typeHolder = {1}; 
+            typeHolder[0] = resolveCountryCode(codeHolder[0]);
+            nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
             if (localeReceiver == null) {
                 localeReceiver = new BroadcastReceiver() {
                     @Override
                     public void onReceive(android.content.Context ctx, android.content.Intent intent) {
-                        resolveCountryCode(code, type);
-                        nativeOnCountryCodeChanged(code, type);
+                        typeHolder[0] = resolveCountryCode(codeHolder[0]);
+                        nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
                     }
                 };
             }
@@ -345,42 +344,47 @@ public class LocationService {
                 if (localeReceiver != null) {
                     context.unregisterReceiver(localeReceiver);
                 }
-            } catch (Throwable ignore) {}
+            } catch (IllegalArgumentException | SecurityException e) {}
             countryCodeRegistered = false;
         }
     }
 
-    private void resolveCountryCode(String code, int type) {
-        try {
-            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            if (tm != null) {
-                String simIso = tm.getSimCountryIso();
-                if (simIso != null && !simIso.isEmpty()) {
-                    code = simIso;
-                    type = 2;
-                } else {
-                    String netIso = tm.getNetworkCountryIso();
-                    if (netIso != null && !netIso.isEmpty()) {
-                        code = netIso;
-                        type = 4;
-                    }
+    private int resolveCountryCode(String code) {
+        int type = 1;
+        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        if (tm != null) {
+            String simIso = tm.getSimCountryIso();
+            if (simIso != null && !simIso.isEmpty()) {
+                String simTempCode = simIso;
+                code = simTempCode;
+                type = 2;
+            } else {
+                String netIso = tm.getNetworkCountryIso();
+                if (netIso != null && !netIso.isEmpty()) {
+                    String netTempCode = netIso;
+                    code = netTempCode;
+                    type = 4;
                 }
             }
-        } catch (Throwable ignore) {}
+        }
+        String defaultCode = Locale.getDefault().getCountry();
         if (code == null || code.isEmpty()) {
-            code = Locale.getDefault().getCountry();
+            code = defaultCode;
         }
         if (code == null) {
             code = "";
             type = 1;
         }
+        return type;
     }
 
     public void registerNmeaMessageCallback() {
         if (locationManager == null) {
             return;
         }
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return;
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         synchronized (nmeaLock) {
             if (nmeaRegistered) {
                 return;
@@ -400,7 +404,9 @@ public class LocationService {
     }
 
     public void unregisterNmeaMessageCallback() {
-        if (locationManager == null) return;
+        if (locationManager == null) {
+            return;
+        }
         synchronized (nmeaLock) {
             if (!nmeaRegistered || nmeaListener == null) {
                 return;
@@ -491,16 +497,16 @@ public class LocationService {
                         } else {
                             Log.w(LOG_TAG, "GPS provider disabled, skip force request");
                         }
-                    } catch (Throwable t) {
-                        Log.e(LOG_TAG, "Force GPS request failed: " + t.getMessage());
+                    } catch (SecurityException e) {
+                        Log.e(LOG_TAG, "Force GPS request failed: " + e.getMessage());
                     }
                 } else {
                     Log.w(LOG_TAG, "GNSS status callback not supported on this API (<24)");
                 }
             } catch (SecurityException se) {
                 Log.e(LOG_TAG, "registerGnssStatusCallback security: " + se.getMessage());
-            } catch (Throwable t) {
-                Log.e(LOG_TAG, "registerGnssStatusCallback ex: " + t.getMessage());
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                Log.e(LOG_TAG, "registerGnssStatusCallback ex: " + e.getMessage());
             }
         }
     }
@@ -518,8 +524,8 @@ public class LocationService {
                 if (gnssStatusCallback != null) {
                     locationManager.unregisterGnssStatusCallback(gnssStatusCallback);
                 }
-            } catch (Throwable t) {
-                Log.e(LOG_TAG, "unregisterGnssStatusCallback exception: " + t.getMessage());
+            } catch (IllegalArgumentException | SecurityException e) {
+                Log.e(LOG_TAG, "unregisterGnssStatusCallback exception: " + e.getMessage());
             }
             gnssStatusRegistered = false;
         }
@@ -566,7 +572,7 @@ public class LocationService {
             bluetoothLeScanner.startScan(scanCallback);
             Log.e(LOG_TAG, "BLE scan started");
             return 0;
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "startScan exception: " + e.getMessage());
             return -1;
         }
@@ -578,7 +584,7 @@ public class LocationService {
         }
         try {
             bluetoothLeScanner.stopScan(scanCallback);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "stopScan exception: " + e.getMessage());
         }
     }
@@ -676,16 +682,6 @@ public class LocationService {
             int timeoutMs,
             boolean needPoi,
             boolean needLocation) {
-        Log.i(LOG_TAG, "registerLocationChangeCallbackWithConfig scenario=" + scenario
-                + " priority=" + priority
-                + " intervalSec=" + timeIntervalSec
-                + " distance=" + distanceIntervalMeter
-                + " accuracy=" + maxAccuracy
-                + " fixNumber=" + fixNumber
-                + " timeout=" + timeoutMs
-                + " needPoi=" + needPoi
-                + " needLocation=" + needLocation);
-
         if (locationManager == null) {
             return -1;
         }
@@ -711,8 +707,8 @@ public class LocationService {
         } catch (SecurityException se) {
             Log.e(LOG_TAG, "registerLocationChangeCallbackWithConfig security: " + se.getMessage());
             return -3;
-        } catch (Throwable t) {
-            Log.e(LOG_TAG, "registerLocationChangeCallbackWithConfig ex: " + t.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            Log.e(LOG_TAG, "registerLocationChangeCallbackWithConfig ex: " + e.getMessage());
             return -4;
         }
     }
@@ -742,8 +738,8 @@ public class LocationService {
             Log.i(LOG_TAG, "registerLocationErrorCallback success, provider=" + provider);
         } catch (SecurityException se) {
             nativeOnLocationError(ERR_NO_PERMISSION);
-        } catch (Throwable t) {
-            nativeOnLocationError(ERR_PROVIDER_DISABLED);
+        } catch (Exception e) {
+            nativeOnLocationError(ERR_DISABLED);
         }
     }
 
@@ -754,8 +750,8 @@ public class LocationService {
         if (locationManager != null) {
             try {
                 locationManager.removeUpdates(statusListener);
-            } catch (Throwable t) {
-                Log.i(LOG_TAG, "removeUpdates exception: " + t.getMessage());
+            } catch (Exception e) {
+                Log.i(LOG_TAG, "removeUpdates exception: " + e.getMessage());
             }
         }
         errorListenerRegistered = false;
@@ -798,7 +794,9 @@ public class LocationService {
     private final LocationListener statusListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location loc) {
-            if (loc == null) return;
+            if (loc == null) {
+                return;
+            }
             nativeOnLocationChanged(
                 loc.getLatitude(),
                 loc.getLongitude(),
@@ -854,8 +852,8 @@ public class LocationService {
                     internalLocationListener, locationHandler.getLooper());
             locatingStarted = true;
             return 0;
-        } catch (Throwable t) {
-            Log.e(LOG_TAG, "startLocating error: " + t.getMessage());
+        } catch (SecurityException | IllegalArgumentException | IllegalStateException e) {
+            Log.e(LOG_TAG, "startLocating error: " + e.getMessage());
             return -2;
         }
     }
@@ -868,8 +866,8 @@ public class LocationService {
             if (locationManager != null && internalLocationListener != null) {
                 locationManager.removeUpdates(internalLocationListener);
             }
-        } catch (Throwable t) {
-            Log.w(LOG_TAG, "stopLocating removeUpdates warn: " + t.getMessage());
+        } catch (SecurityException | IllegalArgumentException e) {
+            Log.w(LOG_TAG, "stopLocating removeUpdates warn");
         }
         locatingStarted = false;
         receivedFixCount = 0;
@@ -912,11 +910,15 @@ public class LocationService {
     }
 
     private void createListenerIfNeed() {
-        if (internalLocationListener != null) return;
+        if (internalLocationListener != null) {
+            return;
+        }
         internalLocationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location loc) {
-                if (loc == null) return;
+                if (loc == null) {
+                    return;
+                }
                 nativeOnLocationChanged(
                     loc.getLatitude(),
                     loc.getLongitude(),
@@ -931,11 +933,15 @@ public class LocationService {
                     receivedFixCount++;
                 }
             }
-            @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
-            @Override public void onProviderEnabled(String provider) {}
-            @Override public void onProviderDisabled(String provider) {}
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            @Override
+            public void onProviderEnabled(String provider) {}
+            @Override
+            public void onProviderDisabled(String provider) {}
         };
     }
+
     public int getSwitchState() {
         Log.i(LOG_TAG, "getSwitchState called");
         try {
@@ -949,7 +955,6 @@ public class LocationService {
                 return 1;
             }
             } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
                 return 0;
         }
     }
@@ -997,8 +1002,8 @@ public class LocationService {
             if (list != null) {
                 out.addAll(list);
             }
-        } catch (Throwable t) {
-            android.util.Log.e(LOG_TAG, "getAddressByLocationName error: " + t.getMessage());
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "getAddressByLocationName error: " + e.getMessage());
         }
 
         for (Address address : out) {
@@ -1016,34 +1021,34 @@ public class LocationService {
         if (tm != null) {
             simCountry = tm.getSimCountryIso();
             if (simCountry != null && !simCountry.isEmpty()) {
-                return simCountry.toUpperCase();
+                return simCountry.toUpperCase((Locale.ROOT));
             }
         }
-        return Locale.getDefault().getCountry().toUpperCase();
+        return Locale.getDefault().getCountry().toUpperCase((Locale.ROOT));
     }
 
     public void addGnssGeofence(double latitude, double longitude, float radius, long expiration, int fenceId) {
         Log.i(LOG_TAG, "addGnssGeofence called with fenceId: " + fenceId);
         try {
-            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-            if (locationManager == null) {
+            LocationManager locationManagerInstance = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            if (locationManagerInstance == null) {
                 Log.e(LOG_TAG, "无法获取LocationManager实例");
                 return;
             }
-            ensureGeofenceReceiverRegistered(); 
+            ensureGeofenceReceiverRegistered();
 
             PendingIntent oldPi = geofencePendingIntents.remove(fenceId);
             if (oldPi != null) {
                 try {
-                    locationManager.removeProximityAlert(oldPi);
-                } catch (Throwable t) {
-                    Log.w(LOG_TAG, "remove old proximity alert fail fenceId=" + fenceId + " msg=" + t.getMessage());
+                    locationManagerInstance.removeProximityAlert(oldPi);
+                } catch (SecurityException | IllegalArgumentException e) {
+                    Log.w(LOG_TAG, "remove old proximity alert fail fenceId=" + fenceId);
                 }
             }
 
             Intent intent = createGeofenceIntent(fenceId);
             PendingIntent pi = createPendingIntent(fenceId, intent);
-            locationManager.addProximityAlert(latitude, longitude, radius, expiration, pi);
+            locationManagerInstance.addProximityAlert(latitude, longitude, radius, expiration, pi);
             geofencePendingIntents.put(fenceId, pi);
             Log.i(LOG_TAG, "地理围栏添加成功: fenceId = " + fenceId);
             nativeOnGeofenceEvent(fenceId);
@@ -1084,8 +1089,8 @@ public class LocationService {
     public void removeGnssGeofence(int fenceId) {
         Log.i(LOG_TAG, "removeGnssGeofence called with fenceId: " + fenceId);
         try {
-            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-            if (locationManager == null) {
+            LocationManager locationManagerService = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            if (locationManagerService == null) {
                 Log.e(LOG_TAG, "无法获取LocationManager实例");
                 return;
             }
@@ -1093,9 +1098,8 @@ public class LocationService {
             Intent intent = createGeofenceIntent(fenceId);
             PendingIntent pi = createPendingIntent(fenceId, intent);
 
-            locationManager.removeProximityAlert(pi);
+            locationManagerService.removeProximityAlert(pi);
             Log.i(LOG_TAG, "地理围栏已移除: fenceId = " + fenceId);
-            
         } catch (SecurityException e) {
             Log.e(LOG_TAG, "移除地理围栏失败：权限错误", e);
         } catch (Exception e) {
@@ -1188,8 +1192,8 @@ public class LocationService {
     }
 
     private boolean isInvalidBssid(String bssid) {
-        return bssid == null 
-                || bssid.trim().isEmpty() 
+        return bssid == null
+                || bssid.trim().isEmpty()
                 || "02:00:00:00:00:00".equals(bssid);
     }
     
@@ -1210,28 +1214,34 @@ public class LocationService {
             Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
             Field mActivities = activityThreadClass.getDeclaredField("mActivities");
             mActivities.setAccessible(true);
-            Map activitiesMap = (Map) mActivities.get(activityThread);
-            for (Object activityClientRecord : activitiesMap.values()) {
-                Class activityClientRecordClass = activityClientRecord.getClass();
-                Field paused = activityClientRecordClass.getDeclaredField("paused");
-                paused.setAccessible(true);
-                if (!paused.getBoolean(activityClientRecord)) {
-                    Field activityField = activityClientRecordClass.getDeclaredField("activity");
-                    activityField.setAccessible(true);
-                    Activity activity = (Activity) activityField.get(activityClientRecord);
-                    return activity;
+            Object mActivitiesObj = mActivities.get(activityThread);
+            if (mActivitiesObj instanceof Map) {
+                Map activitiesMap = (Map) mActivitiesObj;
+                for (Object activityClientRecord : activitiesMap.values()) {
+                    Class activityClientRecordClass = activityClientRecord.getClass();
+                    Field paused = activityClientRecordClass.getDeclaredField("paused");
+                    paused.setAccessible(true);
+                    if (!paused.getBoolean(activityClientRecord)) {
+                        Field activityField = activityClientRecordClass.getDeclaredField("activity");
+                        activityField.setAccessible(true);
+                        Object activityObj = activityField.get(activityClientRecord);
+                        if (activityObj instanceof Activity) {
+                            Activity activity = (Activity) activityObj;
+                            return activity;
+                        }
+                    }
                 }
             }
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            Log.e("TAG", "ClassNotFoundException occurred.");
         } catch (InvocationTargetException ex) {
-            ex.printStackTrace();
+            Log.e("TAG", "InvocationTargetException occurred.");
         } catch (NoSuchMethodException ex) {
-            ex.printStackTrace();
+            Log.e("TAG", "NoSuchMethodException occurred.");
         } catch (NoSuchFieldException ex) {
-            ex.printStackTrace();
+            Log.e("TAG", "Exception occurred.");
         } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
+            Log.e("TAG", "IllegalAccessException occurred.");
         }
         return null;
     }

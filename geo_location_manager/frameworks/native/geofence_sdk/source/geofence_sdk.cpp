@@ -32,14 +32,16 @@ GeofenceManager::GeofenceManager()
 GeofenceManager::~GeofenceManager()
 {}
 
-LocationErrCode GeofenceManager::AddGnssGeofence(std::shared_ptr<GeofenceRequest>& request, sptr<LocationGnssGeofenceCallbackNapi> callback)
+LocationErrCode GeofenceManager::AddGnssGeofence(std::shared_ptr<GeofenceRequest>& request,
+    sptr<LocationGnssGeofenceCallbackNapi> callback)
 {
     LBSLOGI(GEOFENCE_SDK, "GeofenceManager_AddGnssGeofence called.");
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();
     return service->AddGnssGeofence(*request, callback);
 }
 
-LocationErrCode GeofenceManager::RemoveGnssGeofence(std::shared_ptr<GeofenceRequest>& request, sptr<LocationGnssGeofenceCallbackNapi> callback)
+LocationErrCode GeofenceManager::RemoveGnssGeofence(std::shared_ptr<GeofenceRequest>& request,
+    sptr<LocationGnssGeofenceCallbackNapi> callback)
 {
     LBSLOGI(GEOFENCE_SDK, "GeofenceManager_RemoveGnssGeofence called.");
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();

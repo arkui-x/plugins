@@ -72,7 +72,8 @@ bool LocatorImpl::IsLocationEnabled()
     return state;
 }
 
-LocationErrCode LocatorImpl::StartLocating(std::unique_ptr<RequestConfig>& requestConfig, sptr<LocatorCallbackNapi>& locatorCallbackHost)
+LocationErrCode LocatorImpl::StartLocating(std::unique_ptr<RequestConfig>& requestConfig,
+    sptr<LocatorCallbackNapi>& locatorCallbackHost)
 {
     LBSLOGI(LOCATOR_STANDARD, "LocatorImpl_StartLocating enter");
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();
@@ -195,7 +196,8 @@ bool LocatorImpl::IsGeoServiceAvailable()
     return res;
 }
 
-void LocatorImpl::GetAddressByCoordinate(std::unique_ptr<ReverseGeoCodeRequest>& request, std::list<std::shared_ptr<GeoAddress>>& replyList)
+void LocatorImpl::GetAddressByCoordinate(std::unique_ptr<ReverseGeoCodeRequest>& request,
+    std::list<std::shared_ptr<GeoAddress>>& replyList)
 {
     LBSLOGI(LOCATOR_STANDARD, "GetAddressByCoordinate called.");
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();
@@ -205,7 +207,8 @@ void LocatorImpl::GetAddressByCoordinate(std::unique_ptr<ReverseGeoCodeRequest>&
     service->GetAddressByCoordinate(request, replyList);
 }
 
-void LocatorImpl::GetAddressByLocationName(std::unique_ptr<GeoCodeRequest> &request, std::list<std::shared_ptr<GeoAddress>>& replyList)
+void LocatorImpl::GetAddressByLocationName(std::unique_ptr<GeoCodeRequest> &request,
+    std::list<std::shared_ptr<GeoAddress>>& replyList)
 {
     LBSLOGI(LOCATOR_STANDARD, "GetAddressByLocationName called.");
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();
@@ -354,7 +357,8 @@ LocationErrCode LocatorImpl::GetIsoCountryCodeV9(std::shared_ptr<CountryCode>& c
     return ERRCODE_SUCCESS;
 }
 
-LocationErrCode LocatorImpl::SubscribeBluetoothScanResultChange(sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost)
+LocationErrCode LocatorImpl::SubscribeBluetoothScanResultChange(
+    sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost)
 {
     LBSLOGI(LOCATOR_STANDARD, "LocatorImpl::SubscribeBluetoothScanResultChange()");
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();
@@ -364,7 +368,8 @@ LocationErrCode LocatorImpl::SubscribeBluetoothScanResultChange(sptr<BluetoothSc
     return service->SubscribeBluetoothScanResultChange(bluetoothScanResultCallbackHost);
 }
 
-LocationErrCode LocatorImpl::UnSubscribeBluetoothScanResultChange(sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost)
+LocationErrCode LocatorImpl::UnSubscribeBluetoothScanResultChange(
+    sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost)
 {
     LBSLOGI(LOCATOR_STANDARD, "LocatorImpl::UnSubscribeBluetoothScanResultChange()");
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();

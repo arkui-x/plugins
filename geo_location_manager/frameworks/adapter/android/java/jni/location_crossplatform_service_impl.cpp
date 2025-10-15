@@ -24,8 +24,8 @@
 
 namespace OHOS {
 namespace Plugin {
-static constexpr OHOS::HiviewDFX::HiLogLabel LOCATION_CROSSPLATFORM_SERVICE_IMPL = 
-    {LOG_CORE, LOCATION_LOG_DOMAIN, "LocationCrossplatformServiceImpl"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LOCATION_CROSSPLATFORM_SERVICE_IMPL = { LOG_CORE, LOCATION_LOG_DOMAIN,
+    "LocationCrossplatformServiceImpl" };
 
 std::shared_ptr<LocationCrossplatformService> LocationCrossplatformService::Get()
 {
@@ -96,7 +96,7 @@ Location::LocationErrCode LocatorCrossplatformServiceImpl::RegisterSwitchCallbac
     sptr<Location::LocationSwitchCallbackNapi>& switchCallbackHost)
 {
     LBSLOGI(LOCATION_CROSSPLATFORM_SERVICE_IMPL, "LocatorCrossplatformServiceImpl::RegisterSwitchCallback");
-    return LocationServiceJni::RegisterSwitchCallback(switchCallbackHost); 
+    return LocationServiceJni::RegisterSwitchCallback(switchCallbackHost);
 }
 
 Location::LocationErrCode LocatorCrossplatformServiceImpl::UnregisterSwitchCallback(
@@ -124,7 +124,6 @@ Location::LocationErrCode LocatorCrossplatformServiceImpl::RegisterGnssStatusCal
     sptr<Location::GnssStatusCallbackNapi>& cb)
 {
     LBSLOGI(LOCATION_CROSSPLATFORM_SERVICE_IMPL, "LocatorCrossplatformServiceImpl::RegisterGnssStatusCallback");
-    LBSLOGE(LOCATION_CROSSPLATFORM_SERVICE_IMPL, "RegisterGnssStatusCallback enter");
     return LocationServiceJni::RegisterGnssStatusCallback(cb);
 }
 

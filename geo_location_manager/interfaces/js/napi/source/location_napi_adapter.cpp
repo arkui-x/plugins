@@ -337,7 +337,6 @@ void CreateGeocodeAsyncContext(GeoCodeAsyncContext* asyncContext)
 
 napi_value GetAddressesFromLocation(napi_env env, napi_callback_info info)
 {
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation called.");
     LBSLOGI(LOCATOR_STANDARD, "%{public}s called.", __func__);
     size_t argc = MAXIMUM_JS_PARAMS;
     napi_value argv[MAXIMUM_JS_PARAMS];
@@ -350,21 +349,18 @@ napi_value GetAddressesFromLocation(napi_env env, napi_callback_info info)
         HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
         return UndefinedNapiValue(env);
     }
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation1 called.");
 #else
     NAPI_ASSERT(env, argc >= 1, "Wrong number of arguments");
 #endif
 
     napi_valuetype valueType;
     NAPI_CALL(env, napi_typeof(env, argv[0], &valueType));
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation2 called.");
 #ifdef ENABLE_NAPI_MANAGER
     if (valueType != napi_object) {
         HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
         return UndefinedNapiValue(env);
     }
 #else
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation3 called.");
     NAPI_ASSERT(env, valueType == napi_object, "Wrong argument type, object is expected for parameter 1.");
 #endif
     auto asyncContext = new ReverseGeoCodeAsyncContext(env);
@@ -375,15 +371,8 @@ napi_value GetAddressesFromLocation(napi_env env, napi_callback_info info)
         delete asyncContext;
         return nullptr;
     }
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation4 called.");
     int ret = JsObjToReverseGeoCodeRequest(env, argv[0], asyncContext->reverseGeoCodeRequest);
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation5 called.");
-#ifdef ENABLE_NAPI_MANAGER
     asyncContext->errCode = (ret == SUCCESS) ? ERRCODE_SUCCESS : ERRCODE_INVALID_PARAM;
-#else
-    asyncContext->errCode = (ret == SUCCESS) ? SUCCESS : INPUT_PARAMS_ERROR;
-#endif
-LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation6 called.");
 #ifdef ENABLE_NAPI_MANAGER
     if (asyncContext->errCode != SUCCESS) {
         int code = asyncContext->errCode;
@@ -393,16 +382,13 @@ LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation6 called.");
         return UndefinedNapiValue(env);
     }
 #endif
-LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocation7 called.");
     CreateReverseGeocodeAsyncContext(asyncContext);
-
     size_t objectArgsNum = 1;
     return DoAsyncWork(env, asyncContext, argc, argv, objectArgsNum);
 }
 
 napi_value GetAddressesFromLocationName(napi_env env, napi_callback_info info)
 {
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocationName called.");
     LBSLOGI(LOCATOR_STANDARD, "%{public}s called.", __func__);
     size_t argc = MAXIMUM_JS_PARAMS;
     napi_value argv[MAXIMUM_JS_PARAMS];
@@ -416,7 +402,6 @@ napi_value GetAddressesFromLocationName(napi_env env, napi_callback_info info)
         return UndefinedNapiValue(env);
     }
 #else
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocationName1 called.");
     NAPI_ASSERT(env, argc >= 1, "Wrong number of arguments");
 #endif
 
@@ -428,7 +413,6 @@ napi_value GetAddressesFromLocationName(napi_env env, napi_callback_info info)
         return UndefinedNapiValue(env);
     }
 #else
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocationName2 called.");
     NAPI_ASSERT(env, valueType == napi_object, "Wrong argument type, object is expected for parameter 1.");
 #endif
     auto asyncContext = new (std::nothrow) GeoCodeAsyncContext(env);
@@ -440,8 +424,6 @@ napi_value GetAddressesFromLocationName(napi_env env, napi_callback_info info)
         delete asyncContext;
         return nullptr;
     }
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocationName3 called.");
-
     asyncContext->errCode = JsObjToGeoCodeRequest(env, argv[0], asyncContext->geoCodeRequest);
 #ifdef ENABLE_NAPI_MANAGER
     if (asyncContext->errCode == INPUT_PARAMS_ERROR) {
@@ -451,7 +433,6 @@ napi_value GetAddressesFromLocationName(napi_env env, napi_callback_info info)
         return UndefinedNapiValue(env);
     }
 #endif
-    LBSLOGI(LOCATOR_STANDARD, "GetAddressesFromLocationName4 called.");
     asyncContext->beginTime = CommonUtils::GetCurrentTimeMilSec();
     CreateGeocodeAsyncContext(asyncContext);
     size_t objectArgsNum = 1;

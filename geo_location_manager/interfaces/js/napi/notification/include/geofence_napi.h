@@ -22,7 +22,7 @@
 #include "napi_util.h"
 #include "geofence_request.h"
 #if !defined(PLUGIN_INTERFACE_NATIVE_LOG_H)
-#define LogLevel GEOLOC_PLUGIN_LogLevel_Renamed__
+#define LogLevel GEOLOC_PLUGIN_LOGLEVEL_REMAED__
 #define GEOLOC_PLUGIN_LOGLEVEL_RENAMED
 #endif
 #ifdef NOTIFICATION_ENABLE

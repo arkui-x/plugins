@@ -558,7 +558,8 @@ LocationErrCode SubscribeBluetoothScanResultChange(const napi_env& env,
     return g_locatorProxy->SubscribeBluetoothScanResultChange(bluetoothScanResultCallbackHost);
 }
 
-LocationErrCode UnSubscribeBluetoothScanResultChange(sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost)
+LocationErrCode UnSubscribeBluetoothScanResultChange(
+    sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost)
 {
     return g_locatorProxy->UnSubscribeBluetoothScanResultChange(bluetoothScanResultCallbackHost);
 }
@@ -1402,17 +1403,10 @@ napi_value GetCurrentLocation(napi_env env, napi_callback_info cbinfo)
     if (argc == PARAM2) {
         if (valueType[PARAM1] != napi_function) {
             argc--;
-        }
-#ifdef ENABLE_NAPI_MANAGER
-        else if (valueType[PARAM0] != napi_object) {
+        } else if (valueType[PARAM0] != napi_object) {
             HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
             return UndefinedNapiValue(env);
         }
-#else
-        else {
-            NAPI_ASSERT(env, valueType[PARAM0] == napi_object, "type mismatch for parameter 1");
-        }
-#endif
     }
     if (argc == PARAM1) {
         if (valueType[PARAM0] != napi_function && valueType[PARAM0] != napi_object) {

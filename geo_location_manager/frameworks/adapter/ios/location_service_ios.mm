@@ -130,7 +130,7 @@ static std::unique_ptr<OHOS::Location::Location> ArkUIBuildLocationFromCL(CLLoca
             [self stopScan];
             break;
         default:
-            NSLog(@"Bluetooth state=%ld", (long)central.state);
+            NSLog(@"Bluetooth state=%ld", static_cast<long>(central.state));
             break;
     }
 }
@@ -152,7 +152,7 @@ static std::unique_ptr<OHOS::Location::Location> ArkUIBuildLocationFromCL(CLLoca
 }
 
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral
-     advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
+    advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)rssi
 {
     OHOS::Location::BluetoothScanResult result;
     NSString *uuidStr = peripheral.identifier.UUIDString;
@@ -165,8 +165,8 @@ static std::unique_ptr<OHOS::Location::Location> ArkUIBuildLocationFromCL(CLLoca
     } else {
         result.SetDeviceName([name UTF8String]);
     }
-    if (RSSI) {
-        result.SetRssi((int64_t)[RSSI integerValue]);
+    if (rssi) {
+        result.SetRssi((int64_t)[rssi integerValue]);
     }
     NSNumber *connectable = advertisementData[CBAdvertisementDataIsConnectable];
     if (connectable) {
@@ -174,8 +174,9 @@ static std::unique_ptr<OHOS::Location::Location> ArkUIBuildLocationFromCL(CLLoca
     }
     NSData *mfg = advertisementData[CBAdvertisementDataManufacturerDataKey];
     if (mfg && mfg.length > 0) {
-        std::vector<uint8_t> bytes(mfg.length);
-        memcpy(bytes.data(), mfg.bytes, mfg.length);
+        std::vector<uint8_t> bytes(
+            static_cast<const uint8_t*>(mfg.bytes),
+            static_cast<const uint8_t*>(mfg.bytes) + mfg.length);
         result.SetData(bytes);
     }
     g_lastBtScanResult = std::make_unique<OHOS::Location::BluetoothScanResult>(result);
@@ -232,7 +233,7 @@ static ArkUILocationServiceDelegate *g_delegate = nil;
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
-    NSLog(@"didFailWithError: %ld", (long)error.code);
+    NSLog(@"didFailWithError: %ld", static_cast<long>(error.code));
     if (g_errorSubscribed) {
         std::vector<OHOS::sptr<OHOS::Location::LocationErrorCallbackNapi>> copy;
         {
@@ -641,7 +642,6 @@ void ArkUIAddBluetoothScanResultCallback(void* callbackHost)
         [g_btDelegate startScanIfPossible];
     }
     if (g_lastBtScanResult) {
-        auto hostPtrAddr = static_cast<OHOS::sptr<OHOS::Location::BluetoothScanResultCallbackNapi>*>(callbackHost);
         if (hostPtrAddr && *hostPtrAddr) {
             auto singleCb = *hostPtrAddr;
             auto resPtr = std::make_unique<OHOS::Location::BluetoothScanResult>(*g_lastBtScanResult);

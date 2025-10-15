@@ -158,7 +158,6 @@ void NmeaMessageCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
             }
             NAPI_CALL_RETURN_VOID(context->env, napi_open_handle_scope(context->env, &scope));
             if (scope == nullptr) {
-                LBSLOGE(NMEA_MESSAGE_CALLBACK, "scope is nullptr");
                 delete context;
                 delete work;
                 return;
@@ -178,8 +177,6 @@ void NmeaMessageCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
                         napi_get_reference_value(context->env, context->callback[0], &handler),
                         scope, context, work);
                     ret = napi_call_function(context->env, nullptr, handler, 1, &jsEvent, &undefine);
-                } else {
-                    LBSLOGE(NMEA_MESSAGE_CALLBACK, "no valid callback");
                 }
                 if (ret != napi_ok) {
                     LBSLOGE(NMEA_MESSAGE_CALLBACK, "Report event failed");

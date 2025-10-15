@@ -151,7 +151,6 @@ void CachedLocationsCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
             }
             NAPI_CALL_RETURN_VOID(context->env, napi_open_handle_scope(context->env, &scope));
             if (scope == nullptr) {
-                LBSLOGE(CACHED_LOCATIONS_CALLBACK, "scope is nullptr");
                 delete context;
                 delete work;
                 return;

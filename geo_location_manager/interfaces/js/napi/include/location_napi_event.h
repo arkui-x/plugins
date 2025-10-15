@@ -106,7 +106,8 @@ LocationErrCode SubscribeLocationError(const napi_env& env,
     const napi_ref& handlerRef, sptr<LocationErrorCallbackNapi>& locationErrorCallbackHost);
 LocationErrCode SubscribeBluetoothScanResultChange(const napi_env& env,
     const napi_ref& handlerRef, sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost);
-LocationErrCode UnSubscribeBluetoothScanResultChange(sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost);
+LocationErrCode UnSubscribeBluetoothScanResultChange(
+    sptr<BluetoothScanResultCallbackNapi>& bluetoothScanResultCallbackHost);
 LocationErrCode UnSubscribeLocationError(sptr<LocationErrorCallbackNapi>& locationErrorCallbackHost);
 napi_value RequestLocationOnceV9(const napi_env& env, const size_t argc, const napi_value* argv);
 LocationErrCode CheckLocationSwitchEnable();

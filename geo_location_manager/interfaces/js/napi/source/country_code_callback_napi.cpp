@@ -113,18 +113,15 @@ void CountryCodeCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
             CountryCodeContext *context = nullptr;
             napi_handle_scope scope = nullptr;
             if (work == nullptr) {
-                LBSLOGE(COUNTRY_CODE_CALLBACK, "work is nullptr!");
                 return;
             }
             context = static_cast<CountryCodeContext *>(work->data);
             if (context == nullptr || context->env == nullptr) {
-                LBSLOGE(COUNTRY_CODE_CALLBACK, "context is nullptr!");
                 delete work;
                 return;
             }
             NAPI_CALL_RETURN_VOID(context->env, napi_open_handle_scope(context->env, &scope));
             if (scope == nullptr) {
-                LBSLOGE(COUNTRY_CODE_CALLBACK, "scope is nullptr");
                 delete context;
                 delete work;
                 return;
@@ -134,8 +131,6 @@ void CountryCodeCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
                 scope, context, work);
             if (context->country) {
                 CountryCodeToJs(context->env, context->country, jsEvent);
-            } else {
-                LBSLOGE(LOCATOR_STANDARD, "country is nullptr!");
             }
             if (context->callback[0] != nullptr) {
                 napi_value undefine;
@@ -148,8 +143,6 @@ void CountryCodeCallbackNapi::UvQueueWork(uv_loop_s* loop, uv_work_t* work)
                         napi_get_reference_value(context->env, context->callback[SUCCESS_CALLBACK], &handler),
                         scope, context, work);
                     ret = napi_call_function(context->env, nullptr, handler, 1, &jsEvent, &undefine);
-                } else {
-                    LBSLOGE(COUNTRY_CODE_CALLBACK, "no valid callback");
                 }
                 if (ret != napi_ok) {
                     LBSLOGE(COUNTRY_CODE_CALLBACK, "Report event failed");

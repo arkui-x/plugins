@@ -17,11 +17,18 @@
 #include "ans_inner_errors.h"
 #include "location_log.h"
 #include "napi_util.h"
+// Minimal inline content parsing (plan B) for BASIC_TEXT without depending on full notification_manager common code.
 
 #include <string>
 
+// Assume BASIC_TEXT content type numeric constant; if integration with full enum later, replace with real value.
+// We will attempt to read either 'notificationContentType' or fallback to 'contentType'.
+
+
 namespace OHOS {
 namespace Location {
+const int MAX_TITLE_LENGTH = 255;
+const int MAX_TEXT_LENGTH = 511;
 
 napi_value NotificationNapi::NapiGetNull(napi_env env)
 {
@@ -40,7 +47,6 @@ napi_value NotificationNapi::GetNotificationId(
     int32_t notificationId = 0;
     NAPI_CALL(env, napi_has_named_property(env, value, "id", &hasProperty));
     if (!hasProperty) {
-        // 默认 0
         request.SetNotificationId(0);
         return NotificationNapi::NapiGetNull(env);
     }
@@ -86,12 +92,20 @@ napi_value NotificationNapi::GetNotificationDeliveryTime(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse deliveryTime");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; int64_t deliveryTime = 0;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    int64_t deliveryTime = 0;
     NAPI_CALL(env, napi_has_named_property(env, value, "deliveryTime", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "deliveryTime", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_number) { LBSLOGE(NAPI_UTILS, "deliveryTime type error"); return nullptr; }
+    if (valuetype != napi_number) {
+        LBSLOGE(NAPI_UTILS, "deliveryTime type error");
+        return nullptr;
+    }
     napi_get_value_int64(env, result, &deliveryTime);
     request.SetDeliveryTime(deliveryTime);
     return NotificationNapi::NapiGetNull(env);
@@ -101,12 +115,20 @@ napi_value NotificationNapi::GetNotificationShowDeliveryTime(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse showDeliveryTime");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; bool showDeliveryTime = false;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    bool showDeliveryTime = false;
     NAPI_CALL(env, napi_has_named_property(env, value, "showDeliveryTime", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "showDeliveryTime", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_boolean) { LBSLOGE(NAPI_UTILS, "showDeliveryTime type error"); return nullptr; }
+    if (valuetype != napi_boolean) {
+        LBSLOGE(NAPI_UTILS, "showDeliveryTime type error");
+        return nullptr;
+    }
     napi_get_value_bool(env, result, &showDeliveryTime);
     request.SetShowDeliveryTime(showDeliveryTime);
     return NotificationNapi::NapiGetNull(env);
@@ -116,12 +138,20 @@ napi_value NotificationNapi::GetNotificationIsAlertOnce(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse isAlertOnce");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; bool isAlertOnce = false;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    bool isAlertOnce = false;
     NAPI_CALL(env, napi_has_named_property(env, value, "isAlertOnce", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "isAlertOnce", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_boolean) { LBSLOGE(NAPI_UTILS, "isAlertOnce type error"); return nullptr; }
+    if (valuetype != napi_boolean) {
+        LBSLOGE(NAPI_UTILS, "isAlertOnce type error");
+        return nullptr;
+    }
     napi_get_value_bool(env, result, &isAlertOnce);
     request.SetAlertOneTime(isAlertOnce);
     return NotificationNapi::NapiGetNull(env);
@@ -131,12 +161,20 @@ napi_value NotificationNapi::GetNotificationAutoDeletedTime(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse autoDeletedTime");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; int64_t autoDeletedTime = 0;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    int64_t autoDeletedTime = 0;
     NAPI_CALL(env, napi_has_named_property(env, value, "autoDeletedTime", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "autoDeletedTime", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_number) { LBSLOGE(NAPI_UTILS, "autoDeletedTime type error"); return nullptr; }
+    if (valuetype != napi_number) {
+        LBSLOGE(NAPI_UTILS, "autoDeletedTime type error");
+        return nullptr;
+    }
     napi_get_value_int64(env, result, &autoDeletedTime);
     request.SetAutoDeletedTime(autoDeletedTime);
     return NotificationNapi::NapiGetNull(env);
@@ -146,12 +184,20 @@ napi_value NotificationNapi::GetNotificationGroupName(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse groupName");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; size_t strLen = 0;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    size_t strLen = 0;
     NAPI_CALL(env, napi_has_named_property(env, value, "groupName", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "groupName", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_string) { LBSLOGE(NAPI_UTILS, "groupName type error"); return nullptr; }
+    if (valuetype != napi_string) {
+        LBSLOGE(NAPI_UTILS, "groupName type error");
+        return nullptr;
+    }
     char str[STR_MAX_SIZE] = {0};
     NAPI_CALL(env, napi_get_value_string_utf8(env, result, str, STR_MAX_SIZE - 1, &strLen));
     request.SetGroupName(str);
@@ -162,12 +208,20 @@ napi_value NotificationNapi::GetNotificationIsStopwatch(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse isStopwatch");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; bool isStopwatch = false;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    bool isStopwatch = false;
     NAPI_CALL(env, napi_has_named_property(env, value, "isStopwatch", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "isStopwatch", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_boolean) { LBSLOGE(NAPI_UTILS, "isStopwatch type error"); return nullptr; }
+    if (valuetype != napi_boolean) {
+        LBSLOGE(NAPI_UTILS, "isStopwatch type error");
+        return nullptr;
+    }
     napi_get_value_bool(env, result, &isStopwatch);
     request.SetShowStopwatch(isStopwatch);
     return NotificationNapi::NapiGetNull(env);
@@ -177,12 +231,20 @@ napi_value NotificationNapi::GetNotificationIsCountDown(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse isCountDown");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; bool isCountDown = false;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    bool isCountDown = false;
     NAPI_CALL(env, napi_has_named_property(env, value, "isCountDown", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "isCountDown", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_boolean) { LBSLOGE(NAPI_UTILS, "isCountDown type error"); return nullptr; }
+    if (valuetype != napi_boolean) {
+        LBSLOGE(NAPI_UTILS, "isCountDown type error");
+        return nullptr;
+    }
     napi_get_value_bool(env, result, &isCountDown);
     request.SetCountdownTimer(isCountDown);
     return NotificationNapi::NapiGetNull(env);
@@ -192,12 +254,20 @@ napi_value NotificationNapi::GetNotificationtapDismissed(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse tapDismissed");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; bool tapDismissed = true;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    bool tapDismissed = true;
     NAPI_CALL(env, napi_has_named_property(env, value, "tapDismissed", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "tapDismissed", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_boolean) { LBSLOGE(NAPI_UTILS, "tapDismissed type error"); return nullptr; }
+    if (valuetype != napi_boolean) {
+        LBSLOGE(NAPI_UTILS, "tapDismissed type error");
+        return nullptr;
+    }
     napi_get_value_bool(env, result, &tapDismissed);
     request.SetTapDismissed(tapDismissed);
     return NotificationNapi::NapiGetNull(env);
@@ -207,12 +277,20 @@ napi_value NotificationNapi::GetNotificationIsOngoing(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "parse isOngoing");
-    napi_value result = nullptr; bool hasProperty = false; napi_valuetype valuetype = napi_undefined; bool isOngoing = false;
+    napi_value result = nullptr;
+    bool hasProperty = false;
+    napi_valuetype valuetype = napi_undefined;
+    bool isOngoing = false;
     NAPI_CALL(env, napi_has_named_property(env, value, "isOngoing", &hasProperty));
-    if (!hasProperty) { return NotificationNapi::NapiGetNull(env); }
+    if (!hasProperty) {
+        return NotificationNapi::NapiGetNull(env);
+    }
     napi_get_named_property(env, value, "isOngoing", &result);
     NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-    if (valuetype != napi_boolean) { LBSLOGE(NAPI_UTILS, "isOngoing type error"); return nullptr; }
+    if (valuetype != napi_boolean) {
+        LBSLOGE(NAPI_UTILS, "isOngoing type error");
+        return nullptr;
+    }
     napi_get_value_bool(env, result, &isOngoing);
     request.SetInProgress(isOngoing);
     return NotificationNapi::NapiGetNull(env);
@@ -238,8 +316,6 @@ napi_value NotificationNapi::GetNotificationContentType(const napi_env &env, con
         napi_get_value_int32(env, contentResult, &type);
 
         return NapiGetNull(env);
-    } else {
-        LBSLOGE(NAPI_UTILS, "Property notificationContentType expected.");
     }
 
     NAPI_CALL(env, napi_has_named_property(env, result, "contentType", &hasContentType));
@@ -259,46 +335,73 @@ napi_value NotificationNapi::GetNotificationContentType(const napi_env &env, con
     }
 }
 
+static bool getStr(const char *key, size_t maxLen, std::string &out, napi_value normal, napi_env env)
+{
+    napi_value v = nullptr;
+    bool h = false;
+    napi_valuetype t;
+    NAPI_CALL_BASE(env, napi_has_named_property(env, normal, key, &h), false);
+    if (!h) {
+        return false;
+    }
+    napi_get_named_property(env, normal, key, &v);
+    napi_typeof(env, v, &t);
+    if (t != napi_string) {
+        return false;
+    }
+    std::vector<char> buf(maxLen + 1, '\0');
+    size_t len = 0;
+    napi_get_value_string_utf8(env, v, buf.data(), maxLen, &len);
+    if (len == 0) {
+        return false;
+    }
+    out.assign(buf.data(), len);
+    return true;
+}
+
 napi_value NotificationNapi::GetNotificationContent(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
-    // 精简版：仅支持 BASIC_TEXT(normal.title + normal.text)，直接使用 N-API 访问属性，避免依赖 GetPropertyValueByPropertyName
     bool hasContent = false;
     napi_value content = nullptr;
     NAPI_CALL(env, napi_has_named_property(env, value, "content", &hasContent));
-    if (!hasContent) { LBSLOGE(NAPI_UTILS, "content missing"); return nullptr; }
+    if (!hasContent) {
+        LBSLOGE(NAPI_UTILS, "content missing");
+        return nullptr;
+    }
     napi_get_named_property(env, value, "content", &content);
-    napi_valuetype vt; napi_typeof(env, content, &vt);
+    napi_valuetype vt;
+    napi_typeof(env, content, &vt);
     if (vt != napi_object) {
         LBSLOGE(NAPI_UTILS, "content not object");
         return nullptr;
     }
-    bool has = false; napi_value normal = nullptr;
+    bool has = false;
+    napi_value normal = nullptr;
     NAPI_CALL(env, napi_has_named_property(env, content, "normal", &has));
-    if (!has) { LBSLOGE(NAPI_UTILS, "normal missing"); return nullptr; }
+    if (!has) {
+        LBSLOGE(NAPI_UTILS, "normal missing");
+        return nullptr;
+    }
     napi_get_named_property(env, content, "normal", &normal);
-    napi_typeof(env, normal, &vt); if (vt != napi_object) { LBSLOGE(NAPI_UTILS, "normal not object"); return nullptr; }
-
-    auto getStr = [&](const char *key, size_t maxLen, std::string &out) -> bool {
-        napi_value v = nullptr; bool h = false; napi_valuetype t;
-        NAPI_CALL_BASE(env, napi_has_named_property(env, normal, key, &h), false);
-        if (!h) { LBSLOGE(NAPI_UTILS, "%{public}s missing", key); return false; }
-        napi_get_named_property(env, normal, key, &v);
-        napi_typeof(env, v, &t); if (t != napi_string) { LBSLOGE(NAPI_UTILS, "%{public}s not string", key); return false; }
-        std::vector<char> buf(maxLen + 1, '\0'); size_t len = 0; napi_get_value_string_utf8(env, v, buf.data(), maxLen, &len);
-        if (len == 0) { LBSLOGE(NAPI_UTILS, "%{public}s empty", key); return false; }
-        out.assign(buf.data(), len); return true;
-    };
-
-    std::string title, text;
-    if (!getStr("title", 255, title) || !getStr("text", 511, text)) return nullptr;
-
+    napi_typeof(env, normal, &vt);
+    if (vt != napi_object) {
+        LBSLOGE(NAPI_UTILS, "normal not object");
+        return nullptr;
+    }
+    std::string title;
+    std::string text;
+    if (!getStr("title", MAX_TITLE_LENGTH, title, normal, env) ||
+        !getStr("text", MAX_TEXT_LENGTH, text, normal, env)) {
+        return nullptr;
+    }
     auto normalContent = std::make_shared<NotificationNormalContent>();
-    if (!normalContent) { LBSLOGE(NAPI_UTILS, "alloc normalContent failed"); return nullptr; }
+    if (!normalContent) {
+        return nullptr;
+    }
     normalContent->SetTitle(title);
     normalContent->SetText(text);
     request.SetContent(std::make_shared<NotificationContent>(normalContent));
-    LBSLOGI(NAPI_UTILS, "GetNotificationContent BASIC_TEXT title=%{public}s text=%{public}s", title.c_str(), text.c_str());
     return NapiGetNull(env);
 }
 
@@ -306,18 +409,42 @@ napi_value NotificationNapi::GetNotificationRequest(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "enter (trimmed)");
-    if (!GetNotificationId(env, value, request)) return nullptr;
-    if (!GetNotificationBadgeNumber(env, value, request)) return nullptr;
-    if (!GetNotificationDeliveryTime(env, value, request)) return nullptr;
-    if (!GetNotificationShowDeliveryTime(env, value, request)) return nullptr;
-    if (!GetNotificationIsAlertOnce(env, value, request)) return nullptr;
-    if (!GetNotificationAutoDeletedTime(env, value, request)) return nullptr;
-    if (!GetNotificationGroupName(env, value, request)) return nullptr;
-    if (!GetNotificationIsStopwatch(env, value, request)) return nullptr;
-    if (!GetNotificationIsCountDown(env, value, request)) return nullptr;
-    if (!GetNotificationtapDismissed(env, value, request)) return nullptr;
-    if (!GetNotificationIsOngoing(env, value, request)) return nullptr;
-    if (!GetNotificationContent(env, value, request)) return nullptr;
+    if (!GetNotificationId(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationBadgeNumber(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationDeliveryTime(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationShowDeliveryTime(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationIsAlertOnce(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationAutoDeletedTime(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationGroupName(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationIsStopwatch(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationIsCountDown(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationtapDismissed(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationIsOngoing(env, value, request)) {
+        return nullptr;
+    }
+    if (!GetNotificationContent(env, value, request)) {
+        return nullptr;
+    }
     return NotificationNapi::NapiGetNull(env);
 }
 }
