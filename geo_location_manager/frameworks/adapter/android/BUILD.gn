@@ -1,0 +1,55 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//plugins/geo_location_manager/geolocationmanager.gni")
+
+java_library("geolocationmanager_android_java") {
+  java_files =
+      [ "java/src/ohos/ace/plugin/locationserviceplugin/LocationService.java" ]
+  subsystem_name = "plugins"
+  part_name = "geo_location_manager"
+}
+
+ohos_combine_jars("geolocationmanager_java") {
+  deps = [ ":geolocationmanager_android_java" ]
+  subsystem_name = "plugins"
+  part_name = "geo_location_manager"
+  jar_path = "${root_out_dir}/plugins/geo_location_manager/frameworks/adapter/arkui_geolocationmanager_service.jar"
+}
+
+ohos_source_set("geolocationmanager_android_jni") {
+  include_dirs = geoLocationManager_include
+  include_dirs += [ 
+    "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/inner_api",
+    "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/android/java/jni",
+    "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/utils",
+    ]
+
+  sources = [
+    "java/jni/location_crossplatform_service_impl.cpp",
+    "java/jni/location_service_jni.cpp",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  deps = [
+    ":geolocationmanager_java",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_android",
+    "//plugins/interfaces/native:plugin_log",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "geo_location_manager"
+}
