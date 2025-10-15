@@ -128,7 +128,7 @@ public:
     virtual void DeleteJavaScriptRegister(const std::string& objName) = 0;
     virtual bool SetWebSchemeHandler(const char* scheme, WebSchemeHandler* handler) = 0;
     virtual bool ClearWebSchemeHandler() = 0;
-	virtual std::string GetUserAgent() = 0;
+    virtual std::string GetUserAgent() = 0;
     virtual ErrCode ClearHistory() {
         return NWebError::NO_ERROR;
     }

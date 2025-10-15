@@ -108,7 +108,7 @@ public:
     WebResourceHandler(napi_env env, const ArkWeb_ResourceHandler* handler);
     ~WebResourceHandler();
     int32_t DidReceiveResponse(const ArkWeb_Response* response);
-    int32_t DidReceiveResponseBody(const uint8_t* WebResourceHandlerbuffer, int64_t buflen);
+    int32_t DidReceiveResponseBody(const uint8_t* webResourceHandlerbuffer, int64_t bufferLen);
     int32_t DidFinish();
     int32_t DidFailWithError(ArkWeb_NetError errorCode, const std::string errorDescription, bool completeIfNoResponse);
     void DestroyArkWebResourceHandler();

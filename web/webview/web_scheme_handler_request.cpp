@@ -1,10 +1,10 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,7 @@ static void RequestStopAfterWorkCb(uv_work_t* work, int status);
 
 std::unordered_map<WebSchemeHandler*, ArkWeb_SchemeHandler*> g_web_scheme_handler_map;
 std::unordered_map<ArkWeb_SchemeHandler*, WebSchemeHandler*> g_arkui_web_scheme_handler_map;
-std::mutex g_mutex_for_handler_map;
+std::mutex g_mutexForHandlerMap;
 
 void OnRequestStart(ArkWeb_SchemeHandler* schemeHandler, ArkWeb_ResourceRequest* resourceRequest,
     ArkWeb_ResourceHandler* resourceHandler, bool* intercept)
@@ -80,9 +80,8 @@ int32_t WebResourceHandler::DidReceiveResponse(const ArkWeb_Response* response)
     return ARKWEB_NET_OK;
 }
 
-int32_t WebResourceHandler::DidReceiveResponseBody(const uint8_t* WebResourceHandlerbuffer, int64_t buflen)
+int32_t WebResourceHandler::DidReceiveResponseBody(const uint8_t* webResourceHandlerbuffer, int64_t bufferLen)
 {
-    LOGI("WebResourceHandler::DidReceiveResponseBody called, buflen=%{public}ld", buflen);
     if (isFinished_) {
         LOGI("WebResourceHandler::DidReceiveResponseBody already finished");
         return ARKWEB_ERROR_UNKNOWN;
@@ -91,7 +90,7 @@ int32_t WebResourceHandler::DidReceiveResponseBody(const uint8_t* WebResourceHan
         LOGE("WebResourceHandler::DidReceiveResponseBody handler_ is null");
         return ARKWEB_INVALID_PARAM;
     }
-    if (handler_->DidReceiveData(WebResourceHandlerbuffer, buflen) != NWebError::NO_ERROR) {
+    if (handler_->DidReceiveData(webResourceHandlerbuffer, bufferLen) != NWebError::NO_ERROR) {
         return ARKWEB_INVALID_PARAM;
     }
     return ARKWEB_NET_OK;
@@ -408,7 +407,7 @@ WebSchemeHandler::WebSchemeHandler(napi_env env) : env_(env)
     if (!handler) {
         return;
     }
-    std::lock_guard<std::mutex> auto_lock(g_mutex_for_handler_map);
+    std::lock_guard<std::mutex> auto_lock(g_mutexForHandlerMap);
     g_web_scheme_handler_map.insert(std::make_pair(this, handler));
     g_arkui_web_scheme_handler_map.insert(std::make_pair(handler, this));
 }
@@ -416,7 +415,10 @@ WebSchemeHandler::WebSchemeHandler(napi_env env) : env_(env)
 WebSchemeHandler::~WebSchemeHandler()
 {
     ArkWeb_SchemeHandler* handler = const_cast<ArkWeb_SchemeHandler*>(GetArkWebSchemeHandler(this));
-    if (!handler) {
+    if (handler) {
+        std::lock_guard<std::mutex> auto_lock(g_mutexForHandlerMap);
+        g_web_scheme_handler_map.erase(this);
+        g_arkui_web_scheme_handler_map.erase(handler);
 #ifdef IOS_PLATFORM
         AceWebSchemeHandler::destroySchemeHandler(handler);
 #endif
@@ -424,9 +426,6 @@ WebSchemeHandler::~WebSchemeHandler()
         WebSchemeHandlerJni::DeleteArkSchemeHandler(handler);
 #endif
     }
-    std::lock_guard<std::mutex> auto_lock(g_mutex_for_handler_map);
-    g_web_scheme_handler_map.erase(this);
-    g_arkui_web_scheme_handler_map.erase(handler);
 }
 
 ArkWeb_SchemeHandler* WebSchemeHandler::GetArkWebSchemeHandler(WebSchemeHandler* handler)
@@ -434,7 +433,7 @@ ArkWeb_SchemeHandler* WebSchemeHandler::GetArkWebSchemeHandler(WebSchemeHandler*
     if (!handler) {
         return nullptr;
     }
-    std::lock_guard<std::mutex> lock(g_mutex_for_handler_map);
+    std::lock_guard<std::mutex> lock(g_mutexForHandlerMap);
     auto it = g_web_scheme_handler_map.find(handler);
     if (it != g_web_scheme_handler_map.end()) {
         return it->second;
@@ -447,7 +446,7 @@ WebSchemeHandler* WebSchemeHandler::GetWebSchemeHandler(ArkWeb_SchemeHandler* ar
     if (!arkHandler) {
         return nullptr;
     }
-    std::lock_guard<std::mutex> lock(g_mutex_for_handler_map);
+    std::lock_guard<std::mutex> lock(g_mutexForHandlerMap);
     auto it = g_arkui_web_scheme_handler_map.find(arkHandler);
     if (it != g_arkui_web_scheme_handler_map.end()) {
         return it->second;
@@ -457,7 +456,7 @@ WebSchemeHandler* WebSchemeHandler::GetWebSchemeHandler(ArkWeb_SchemeHandler* ar
 
 void WebSchemeHandler::ClearWebSchemeHandler()
 {
-    std::lock_guard<std::mutex> lock(g_mutex_for_handler_map);
+    std::lock_guard<std::mutex> lock(g_mutexForHandlerMap);
     g_web_scheme_handler_map.clear();
     g_arkui_web_scheme_handler_map.clear();
 }
@@ -525,10 +524,7 @@ void WebSchemeHandler::RequestStart(
     NapiWebSchemeHandlerRequest::DefineProperties(env_, &requestValue[0]);
     napi_wrap(
         env_, requestValue[1], resourceHandler.get(),
-        [](napi_env /* env */, void* data, void* /* hint */) {
-            // WebResourceHandler will be managed by shared_ptr, no need to delete here
-        },
-        nullptr, nullptr);
+        [](napi_env /* env */, void* data, void* /* hint */) {}, nullptr, nullptr);
     NapiWebResourceHandler::DefineProperties(env_, &requestValue[1]);
     napi_value result = nullptr;
     status = napi_call_function(env_, nullptr, callbackFunc, paramCount, requestValue, &result);

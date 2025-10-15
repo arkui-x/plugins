@@ -60,12 +60,14 @@ void AndroidAssetHelperJni::NativeInit(JNIEnv* env, jobject jobj)
     CHECK_NULL_VOID(cls);
     g_webWebviewClass.existsVirtualAsset = env->GetMethodID(cls, METHOD_EXISTS_VIRTUAL_ASSET,
         SIGNATURE_EXISTS_VIRTUAL_ASSET);
+    env->DeleteLocalRef(cls);
 }
 
 bool AndroidAssetHelperJni::ExistsVirtualAsset(const std::string& url)
 {
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.existsVirtualAsset)) {
+        LOGE("AndroidAssetHelperJni JNI: call ExistsVirtualAsset env fail");
         return false;
     }
     jstring jUrl = env->NewStringUTF(url.c_str());

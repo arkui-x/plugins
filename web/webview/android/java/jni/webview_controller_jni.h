@@ -97,7 +97,7 @@ public:
     static jobject ConvertWebDictionaryToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
     static bool SetWebSchemeHandler(int id, const std::string& scheme);
     static void ClearWebSchemeHandler(int id);
-	static std::string GetUserAgent(int id);
+    static std::string GetUserAgent(int id);
 };
 }
 

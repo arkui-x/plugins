@@ -1,10 +1,10 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,11 +23,11 @@
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
-static constexpr const int PARAM_COOUNT_ZERO = 0;
-static constexpr const int PARAM_COOUNT_ONE = 1;
-static constexpr const int PARAM_COOUNT_TWO = 2;
-static constexpr const int PARAM_COOUNT_THREE = 3;
-static constexpr const int PARAM_COOUNT_FOUR = 4;
+static constexpr const int PARAM_COUNT_ZERO = 0;
+static constexpr const int PARAM_COUNT_ONE = 1;
+static constexpr const int PARAM_COUNT_TWO = 2;
+static constexpr const int PARAM_COUNT_THREE = 3;
+static constexpr const int PARAM_COUNT_FOUR = 4;
 std::map<std::string, ArkWeb_SchemeHandler*> WebSchemeHandlerJni::g_schemeRequestHandlerMap_;
 ArkWeb_SchemeHandler* WebSchemeHandlerJni::handler_ = nullptr;
 ArkWeb_ResourceRequest* WebSchemeHandlerJni::resourceRequest_ = nullptr;
@@ -223,10 +223,10 @@ void WebSchemeHandlerJni::DestroyArkResourceRequest(ArkWeb_ResourceRequest* requ
 void WebSchemeHandlerJni::IterateAndFillHeaders(JNIEnv* env, jobject iterator, const jmethodID* methodIds,
     std::map<std::string, std::string>& headers)
 {
-    while (env->CallBooleanMethod(iterator, methodIds[PARAM_COOUNT_ZERO])) {
-        jobject entry = env->CallObjectMethod(iterator, methodIds[PARAM_COOUNT_ONE]);
-        jobject key = env->CallObjectMethod(entry, methodIds[PARAM_COOUNT_TWO]);
-        jobject value = env->CallObjectMethod(entry, methodIds[PARAM_COOUNT_THREE]);
+    while (env->CallBooleanMethod(iterator, methodIds[PARAM_COUNT_ZERO])) {
+        jobject entry = env->CallObjectMethod(iterator, methodIds[PARAM_COUNT_ONE]);
+        jobject key = env->CallObjectMethod(entry, methodIds[PARAM_COUNT_TWO]);
+        jobject value = env->CallObjectMethod(entry, methodIds[PARAM_COUNT_THREE]);
         if (key != nullptr && value != nullptr) {
             const char* keyStr = env->GetStringUTFChars(static_cast<jstring>(key), nullptr);
             const char* valueStr = env->GetStringUTFChars(static_cast<jstring>(value), nullptr);
@@ -252,12 +252,12 @@ bool WebSchemeHandlerJni::GetIteratorAndEntryMethodIds(
     if (methodIds == nullptr) {
         return false;
     }
-    methodIds[PARAM_COOUNT_ZERO] = env->GetMethodID(iteratorClass, "hasNext", "()Z");
-    methodIds[PARAM_COOUNT_ONE] = env->GetMethodID(iteratorClass, "next", "()Ljava/lang/Object;");
-    methodIds[PARAM_COOUNT_TWO] = env->GetMethodID(entryClass, "getKey", "()Ljava/lang/Object;");
-    methodIds[PARAM_COOUNT_THREE] = env->GetMethodID(entryClass, "getValue", "()Ljava/lang/Object;");
-    return (methodIds[PARAM_COOUNT_ZERO] != nullptr) && (methodIds[PARAM_COOUNT_ONE] != nullptr) &&
-           (methodIds[PARAM_COOUNT_TWO] != nullptr) && (methodIds[PARAM_COOUNT_THREE] != nullptr);
+    methodIds[PARAM_COUNT_ZERO] = env->GetMethodID(iteratorClass, "hasNext", "()Z");
+    methodIds[PARAM_COUNT_ONE] = env->GetMethodID(iteratorClass, "next", "()Ljava/lang/Object;");
+    methodIds[PARAM_COUNT_TWO] = env->GetMethodID(entryClass, "getKey", "()Ljava/lang/Object;");
+    methodIds[PARAM_COUNT_THREE] = env->GetMethodID(entryClass, "getValue", "()Ljava/lang/Object;");
+    return (methodIds[PARAM_COUNT_ZERO] != nullptr) && (methodIds[PARAM_COUNT_ONE] != nullptr) &&
+           (methodIds[PARAM_COUNT_TWO] != nullptr) && (methodIds[PARAM_COUNT_THREE] != nullptr);
 }
 
 std::map<std::string, std::string> WebSchemeHandlerJni::GetRequestHeader(JNIEnv* env, jobject jHeadersMap)
@@ -277,7 +277,7 @@ std::map<std::string, std::string> WebSchemeHandlerJni::GetRequestHeader(JNIEnv*
         return headers;
     }
 
-    jmethodID methodIds[PARAM_COOUNT_FOUR] = { nullptr };
+    jmethodID methodIds[PARAM_COUNT_FOUR] = { nullptr };
     if (GetIteratorAndEntryMethodIds(env, iteratorClass, entryClass, methodIds)) {
         IterateAndFillHeaders(env, iterator, methodIds, headers);
     }
@@ -449,16 +449,13 @@ ErrCode ArkWeb_ResourceHandler::DidReceiveResponse(const ArkWeb_Response* respon
         return NWebError::PARAM_CHECK_ERROR;
     }
     jstring jsReasonPhrase = env_->NewStringUTF(response->statusText_.c_str());
-    if (jsReasonPhrase == nullptr) {
-        env_->DeleteLocalRef(jsMimeType);
-        env_->DeleteLocalRef(jsEncoding);
-        return NWebError::PARAM_CHECK_ERROR;
-    }
     jstring jsData = env_->NewStringUTF(response->data_.c_str());
-    if (jsData == nullptr) {
+    if (jsReasonPhrase == nullptr || jsData == nullptr) {
         env_->DeleteLocalRef(jsMimeType);
         env_->DeleteLocalRef(jsEncoding);
-        env_->DeleteLocalRef(jsReasonPhrase);
+        if (jsReasonPhrase != nullptr) {
+            env_->DeleteLocalRef(jsReasonPhrase);
+        }
         return NWebError::PARAM_CHECK_ERROR;
     }
     jobject headers = ConvertMapToJavaMap(env_, response->headers_);
@@ -468,10 +465,10 @@ ErrCode ArkWeb_ResourceHandler::DidReceiveResponse(const ArkWeb_Response* respon
     env_->DeleteLocalRef(jsEncoding);
     env_->DeleteLocalRef(jsReasonPhrase);
     env_->DeleteLocalRef(jsData);
+    env_->DeleteLocalRef(headers);
     if (env_->ExceptionCheck()) {
         env_->ExceptionDescribe();
         env_->ExceptionClear();
-        return NWebError::PARAM_CHECK_ERROR;
     }
     return NWebError::NO_ERROR;
 }

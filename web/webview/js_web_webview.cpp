@@ -1844,11 +1844,11 @@ napi_value NapiWebviewController::ClearWebSchemeHandler(napi_env env, napi_callb
         return nullptr;
     }
 
-    int32_t ret = webviewController->ClearWebSchemeHandler();
-    if (ret != 0) {
+    if (!webviewController->ClearWebSchemeHandler()) {
         LOGE("NapiWebviewController::ClearWebSchemeHandler failed");
     }
     NAPI_CALL(env, napi_get_undefined(env, &result));
+    napi_get_undefined(env, &result);
     return result;
 }
 
@@ -1951,7 +1951,7 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("jsProxy", NapiWebviewController::RegisterJavaScriptProxy),
         DECLARE_NAPI_FUNCTION("setWebSchemeHandler", NapiWebviewController::SetWebSchemeHandler),
         DECLARE_NAPI_FUNCTION("clearWebSchemeHandler", NapiWebviewController::ClearWebSchemeHandler),
-		DECLARE_NAPI_FUNCTION("getUserAgent", NapiWebviewController::GetUserAgent),
+        DECLARE_NAPI_FUNCTION("getUserAgent", NapiWebviewController::GetUserAgent),
     };
 
     napi_value constructor = nullptr;
@@ -4211,6 +4211,10 @@ napi_value NapiWebSchemeHandler::JS_RequestStop(napi_env env, napi_callback_info
     void *data = nullptr;
     WebSchemeHandler *handler = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
 
     napi_unwrap(env, thisVar, (void **)&handler);
     if (!handler) {
@@ -4221,7 +4225,7 @@ napi_value NapiWebSchemeHandler::JS_RequestStop(napi_env env, napi_callback_info
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[0], &valueType);
 
-    if (argc != INTEGER_ONE || valueType != napi_function) {
+    if (valueType != napi_function) {
         BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
         return nullptr;
     }

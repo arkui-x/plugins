@@ -148,7 +148,7 @@ private:
 
     static napi_value ClearWebSchemeHandler(napi_env env, napi_callback_info info);
 
-	static napi_value GetUserAgent(napi_env env, napi_callback_info info);
+    static napi_value GetUserAgent(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {

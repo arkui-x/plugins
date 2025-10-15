@@ -66,7 +66,8 @@ private:
     static jobject GetHeaderIterator(JNIEnv* env, jobject jHeadersMap);
     static void IterateAndFillHeaders(JNIEnv* env, jobject iterator, const jmethodID* methodIds,
     std::map<std::string, std::string>& headers);
-    static bool GetIteratorAndEntryMethodIds(JNIEnv* env, jclass iteratorClass, jclass entryClass, jmethodID* methodIds);
+    static bool GetIteratorAndEntryMethodIds(
+        JNIEnv* env, jclass iteratorClass, jclass entryClass, jmethodID* methodIds);
 
 public:
     static ArkWeb_SchemeHandler* handler_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -505,6 +505,7 @@ napi_value NapiWebSchemeHandlerRequest::JS_HasGesture(napi_env env, napi_callbac
 
     napi_value value;
     NAPI_CALL(env, napi_get_boolean(env, request->GetHasGesture(), &value));
+    napi_get_undefined(env, &value);
     return value;
 }
 
@@ -556,8 +557,8 @@ napi_value NapiWebSchemeHandlerRequest::JS_GetFrameUrl(napi_env env, napi_callba
 napi_status NapiWebSchemeHandlerRequest::ExportEnumWebResourceType(napi_env env, napi_value* value)
 {
     napi_value enumValue = nullptr;
-    const std::string NPI_WEB_RESOURCE_TYPE_ENUM_NAME = "WebResourceType";
-    return napi_set_named_property(env, *value, NPI_WEB_RESOURCE_TYPE_ENUM_NAME.c_str(), enumValue);
+    const std::string napiWebResourceTypeEnumName = "WebResourceType";
+    return napi_set_named_property(env, *value, napiWebResourceTypeEnumName.c_str(), enumValue);
 }
 
 napi_value NapiWebSchemeHandlerResponse::Init(napi_env env, napi_value exports)
@@ -596,7 +597,11 @@ napi_value NapiWebSchemeHandlerResponse::JS_Constructor(napi_env env, napi_callb
     void* data = nullptr;
     napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, &data);
 
-    WebSchemeHandlerResponse* response = new WebSchemeHandlerResponse(env);
+    WebSchemeHandlerResponse* response = new (std::nothrow) WebSchemeHandlerResponse(env);
+    if (response == nullptr) {
+        LOGE("NapiWebSchemeHandlerResponse::JS_Constructor response is nullptr");
+        return nullptr;
+    }
 
     napi_wrap(
         env, thisVar, response,
@@ -861,7 +866,7 @@ napi_value NapiWebSchemeHandlerResponse::JS_GetHeaderByName(napi_env env, napi_c
 
     napi_unwrap(env, thisVar, (void**)&response);
     if (!response) {
-        LOGE("NapiWebSchemeHandlerResponse::JS_GetEncoding response is nullptr");
+        LOGE("NapiWebSchemeHandlerResponse::JS_GetHeaderByName response is nullptr");
         return nullptr;
     }
 
@@ -1141,10 +1146,10 @@ napi_value NapiWebResourceHandler::JS_DidFailWithError(napi_env env, napi_callba
     }
 
     int32_t errorCode;
-    static constexpr int LEVEL_20_COUNT = 2;
+    static constexpr int LEVEL_COUNT = 2;
     if (!NapiParseUtils::ParseInt32(env, argv[0], errorCode)) {
         LOGE("JS_DidFailWithError unwrap error code failed");
-        if (argc < LEVEL_20_COUNT) {
+        if (argc < LEVEL_COUNT) {
             NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::PARAM_CHECK_ERROR,
                 NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "code", "int"));
         } else {
@@ -1156,7 +1161,7 @@ napi_value NapiWebResourceHandler::JS_DidFailWithError(napi_env env, napi_callba
     }
  
     NetErrorInfo errorInfo = ValidateAndGetNetErrorName(errorCode);
-    if (argc >= LEVEL_20_COUNT && (!errorInfo.isValid || errorCode == ARKWEB_NET_OK)) {
+    if (argc >= LEVEL_COUNT && (!errorInfo.isValid || errorCode == ARKWEB_NET_OK)) {
         NWebError::BusinessError::ThrowErrorByErrcode(env, NWebError::INVALID_NET_ERROR,
             NWebError::GetErrMsgByErrCode(NWebError::INVALID_NET_ERROR));
         return nullptr;
