@@ -511,7 +511,9 @@ napi_value NapiWebSchemeHandlerRequest::JS_HasGesture(napi_env env, napi_callbac
 
 napi_value NapiWebSchemeHandlerRequest::JS_HttpBodyStream(napi_env env, napi_callback_info cbinfo)
 {
-    return nullptr;
+    napi_value value = nullptr;
+    napi_get_undefined(env, &value);
+    return value;
 }
 
 napi_value NapiWebSchemeHandlerRequest::JS_GetRequestResourceType(napi_env env, napi_callback_info cbinfo)
@@ -600,7 +602,8 @@ napi_value NapiWebSchemeHandlerResponse::JS_Constructor(napi_env env, napi_callb
     WebSchemeHandlerResponse* response = new (std::nothrow) WebSchemeHandlerResponse(env);
     if (response == nullptr) {
         LOGE("NapiWebSchemeHandlerResponse::JS_Constructor response is nullptr");
-        return nullptr;
+        NAPI_CALL(env, napi_get_undefined(env, &thisVar));
+        return thisVar;
     }
 
     napi_wrap(

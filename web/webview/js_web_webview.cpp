@@ -1841,14 +1841,14 @@ napi_value NapiWebviewController::ClearWebSchemeHandler(napi_env env, napi_callb
     napi_value result = nullptr;
     WebviewController *webviewController = GetWebviewController(env, info);
     if (!webviewController) {
-        return nullptr;
+        napi_get_undefined(env, &result);
+        return result;
     }
 
     if (!webviewController->ClearWebSchemeHandler()) {
         LOGE("NapiWebviewController::ClearWebSchemeHandler failed");
     }
     NAPI_CALL(env, napi_get_undefined(env, &result));
-    napi_get_undefined(env, &result);
     return result;
 }
 
