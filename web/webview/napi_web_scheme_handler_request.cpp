@@ -364,17 +364,17 @@ napi_value NapiWebSchemeHandlerRequest::JS_GetHeader(napi_env env, napi_callback
         return nullptr;
     }
 
+    napi_handle_scope scope;
+    napi_status status_scope = napi_open_handle_scope(env, &scope);
+    if (status_scope != napi_ok) {
+        LOGE("scheme handler RequestStart scope is nullptr");
+        return nullptr;
+    }
     WebHeaderList list = request->GetHeaderList();
     napi_value result = nullptr;
     napi_create_array(env, &result);
     size_t headerSize = list.size();
     for (size_t index = 0; index < headerSize; index++) {
-        napi_handle_scope scope;
-        napi_status status_scope = napi_open_handle_scope(env, &scope);
-        if (status_scope != napi_ok) {
-            LOGE("scheme handler RequestStart scope is nullptr");
-            return nullptr;
-        }
         napi_value webHeaderObj = nullptr;
         napi_value headerKey = nullptr;
         napi_value headerValue = nullptr;
@@ -385,6 +385,7 @@ napi_value NapiWebSchemeHandlerRequest::JS_GetHeader(napi_env env, napi_callback
         napi_set_named_property(env, webHeaderObj, "headerValue", headerValue);
         napi_set_element(env, result, index, webHeaderObj);
     }
+    napi_close_handle_scope(env, scope);
     return result;
 }
 
