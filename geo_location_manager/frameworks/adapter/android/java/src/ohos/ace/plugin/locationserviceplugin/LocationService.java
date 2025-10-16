@@ -59,17 +59,35 @@ import java.lang.reflect.Field;
 /**
  * LocationService 类提供了与位置服务相关的功能，包括获取当前位置、注册位置变化回调、
  * 注册国家代码回调、注册NMEA消息回调、注册GNSS状态回调、注册蓝牙扫描结果回调等。
+ * @since 2025-10-20
  */
 public class LocationService {
     private static final String LOG_TAG = "LocationService";
     private static final String ACTION_GEOFENCE = "com.example.geofence";
     private static final String FENCE_ID = "fence_id";
-    private final Map<Integer, PendingIntent> geofencePendingIntents = new ConcurrentHashMap<>();
+    private static final long TIMEOUT = 10000L;
+    private static final int REQUEST_BLUETOOTH_RELATED_PERM = 102;
+    private static final int REQUEST_LOCATION_PERMISSION = 1001;
+    private static final int ERR_PROVIDER_OUT_OF_SERVICE = 801;
+    private static final int ERR_PROVIDER_TEMP_UNAVAILABLE = 2002;
+    private static final int ERR_PROVIDER_DISABLED = 2003;
+    private static final int ERR_NO_PERMISSION = 201;
+    private static final int ERR_DISABLED = -4;
+    private static final int PRIORITY_ACCURACY_HIGH = 0;
+    private static final int PRIORITY_ACCURACY_BALANCED = 1;
+    private static final int PRIORITY_ACCURACY_LOW = 2;
+    private static final int FLAG_MUTABLE = 1 << 25;
+    private static final int VERSION_CODES_S = 31;
+
     private volatile boolean geofenceReceiverRegistered = false;
+    private volatile boolean locatingStarted = false;
+    private volatile boolean pendingGnssStatusRegister = false;
+
     private BroadcastReceiver geofenceReceiver;
     private Context context;
     private LocationManager locationManager;
     private String currentCountryCode;
+    private final Map<Integer, PendingIntent> geofencePendingIntents = new ConcurrentHashMap<>();
     private final Map<Integer, Boolean> countryCodeCallbacks = new ConcurrentHashMap<>();
     private final Map<Integer, Boolean> locationChangeCallbacks = new ConcurrentHashMap<>();
     private boolean isMonitoring = false;
@@ -85,7 +103,6 @@ public class LocationService {
     private boolean countryCodeRegistered = false;
     private final Object countryLock = new Object();
     private BroadcastReceiver localeReceiver;
-    private volatile boolean locatingStarted = false;
     private LocationListener internalLocationListener;
     private HandlerThread locationThread;
     private android.os.Handler locationHandler;
@@ -93,24 +110,81 @@ public class LocationService {
     private final Object geofenceLock = new Object();
     private Location currentLocation;
     private final CountDownLatch latch = new CountDownLatch(1);
-
-    private static final long TIMEOUT = 10000L;
-    private volatile boolean pendingGnssStatusRegister = false;
     private Activity mActivity;
 
-    private static final int REQUEST_BLUETOOTH_RELATED_PERM = 102;
+    private final LocationListener statusListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location loc) {
+            if (loc == null) {
+                return;
+            }
+            nativeOnLocationChanged(
+                loc.getLatitude(),
+                loc.getLongitude(),
+                loc.hasAccuracy() ? loc.getAccuracy() : 0f,
+                loc.hasAltitude() ? loc.getAltitude() : 0.0,
+                loc.hasSpeed() ? loc.getSpeed() : 0f,
+                loc.hasBearing() ? loc.getBearing() : 0f,
+                loc.getTime(),
+                loc.getBearingAccuracyDegrees(),
+                loc.getProvider());
+        }
 
-    private static final int REQUEST_LOCATION_PERMISSION = 1001;
-    private static final int ERR_PROVIDER_OUT_OF_SERVICE = 801;
-    private static final int ERR_PROVIDER_TEMP_UNAVAILABLE = 2002;
-    private static final int ERR_PROVIDER_DISABLED = 2003;
-    private static final int ERR_NO_PERMISSION = 201;
-    private static final int ERR_DISABLED = -4;
-    private static final int PRIORITY_ACCURACY_HIGH = 0;
-    private static final int PRIORITY_ACCURACY_BALANCED = 1;
-    private static final int PRIORITY_ACCURACY_LOW = 2;
-    private static final int FLAG_MUTABLE = 1 << 25;
-    private static final int VERSION_CODES_S = 31;
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            if (status == android.location.LocationProvider.OUT_OF_SERVICE) {
+                nativeOnLocationError(ERR_PROVIDER_OUT_OF_SERVICE);
+            } else if (status == android.location.LocationProvider.TEMPORARILY_UNAVAILABLE) {
+                nativeOnLocationError(ERR_PROVIDER_TEMP_UNAVAILABLE);
+            }
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            nativeOnLocationError(ERR_PROVIDER_DISABLED);
+        }
+    };
+
+    private final ScanCallback scanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            Log.i(LOG_TAG, "onScanResult called");
+            if (result == null) {
+                return;
+            }
+            String deviceId = (result.getDevice() != null) ? result.getDevice().getAddress() : "";
+            String deviceName = (result.getDevice() != null && result.getDevice().getName() != null)
+                ? result.getDevice().getName() : "";
+            int rssi = result.getRssi();
+            byte[] adv = (result.getScanRecord() != null && result.getScanRecord().getBytes() != null)
+                ? result.getScanRecord().getBytes() : new byte[0];
+            boolean connectable = true;
+            nativeOnBluetoothScanResult(deviceId, deviceName, rssi, adv, connectable);
+            Log.i(LOG_TAG, "onScanResult processed");
+        }
+    };
+
+    private final LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+        }
+    };
 
     public LocationService(Context context) {
         this.context = context;
@@ -123,6 +197,7 @@ public class LocationService {
 
     /**
      * 请求并检查位置权限。
+     * 
      * @return 返回是否成功请求位置权限。
      */
     public boolean requestAndCheckLocationPermission() {
@@ -209,7 +284,7 @@ public class LocationService {
         try {
             latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            Log.i(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
         } finally {
             stopListener(listener);
         }
@@ -271,11 +346,11 @@ public class LocationService {
      * 
      * @param latitude  纬度
      * @param longitude 经度
-     *                  maxItems 返回的最大地址数量
+     * @param maxItems  返回的最大地址数量
      * @param locale    语言环境
      * @param country   国家
      * @param transId   事务ID
-     *                  return 匹配的地址数组
+     * @return          匹配的地址数组
      */
     public Address[] getAddressByCoordinate(double latitude,
                                             double longitude,
@@ -283,10 +358,10 @@ public class LocationService {
                                             String locale,
                                             String country,
                                             String transId) {
-        if (maxItems <= 0) {
+        int tempMaxItems = maxItems;
+        if (tempMaxItems <= 0) {
             maxItems = 1;
-        }
-        if (maxItems > 10) {
+        } else {
             maxItems = 10;
         }
         Locale loc;
@@ -333,28 +408,38 @@ public class LocationService {
      */
     public void registerCountryCodeCallback() {
         synchronized (countryLock) {
-            if (countryCodeRegistered) {
-                return;
-            }
-            final String[] codeHolder = {""};
-            final int[] typeHolder = {1};
-            typeHolder[0] = resolveCountryCode(codeHolder[0]);
-            nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
-            if (localeReceiver == null) {
-                localeReceiver = new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(android.content.Context context, android.content.Intent intent) {
-                        typeHolder[0] = resolveCountryCode(codeHolder[0]);
-                        nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
-                    }
-                };
-            }
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(Intent.ACTION_LOCALE_CHANGED);
-            filter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
-            context.registerReceiver(localeReceiver, filter);
-            countryCodeRegistered = true;
+            handleCountryCodeRegistration();
         }
+    }
+
+    /**
+     * 处理同步块内的所有注册逻辑（仅拆分为这一个子方法）
+     */
+    private void handleCountryCodeRegistration() {
+        if (countryCodeRegistered) {
+            return;
+        }
+
+        final String[] codeHolder = {""};
+        final int[] typeHolder = {1};
+        typeHolder[0] = resolveCountryCode(codeHolder[0]);
+        nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
+
+        if (localeReceiver == null) {
+            localeReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    typeHolder[0] = resolveCountryCode(codeHolder[0]);
+                    nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
+                }
+            };
+        }
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_LOCALE_CHANGED);
+        filter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+        context.registerReceiver(localeReceiver, filter);
+        countryCodeRegistered = true;
     }
 
     /**
@@ -378,18 +463,16 @@ public class LocationService {
 
     private int resolveCountryCode(String code) {
         int type = 1;
-        TelephonyManager telephonyManager  = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        if (telephonyManager  != null) {
-            String simIso = telephonyManager .getSimCountryIso();
+        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        if (telephonyManager != null) {
+            String simIso = telephonyManager.getSimCountryIso();
             if (simIso != null && !simIso.isEmpty()) {
-                String simTempCode = simIso;
-                code = simTempCode;
+                code = simIso;
                 type = 2;
             } else {
-                String netIso = telephonyManager .getNetworkCountryIso();
+                String netIso = telephonyManager.getNetworkCountryIso();
                 if (netIso != null && !netIso.isEmpty()) {
-                    String netTempCode = netIso;
-                    code = netTempCode;
+                    code = netIso;
                     type = 4;
                 }
             }
@@ -415,24 +498,34 @@ public class LocationService {
         if (locationManager == null) {
             return;
         }
-        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED) {
             return;
         }
+
         synchronized (nmeaLock) {
-            if (nmeaRegistered) {
-                return;
-            }
-            if (nmeaListener == null) {
-                nmeaListener = (message, ts) -> {
-                    if (message != null) {
-                        nativeOnNmeaMessage(ts, message);
-                    }
-                };
-            }
-            boolean ok = locationManager.addNmeaListener(nmeaListener);
-            if (ok) {
-                nmeaRegistered = true;
-            }
+            doRegisterNmeaListener();
+        }
+    }
+
+    /**
+     * 同步块内的核心注册逻辑，抽取为子方法降低嵌套深度
+     */
+    private void doRegisterNmeaListener() {
+        if (nmeaRegistered) {
+            return;
+        }
+        if (nmeaListener == null) {
+            nmeaListener = (message, ts) -> {
+                if (message != null) {
+                    nativeOnNmeaMessage(ts, message);
+                }
+            };
+        }
+
+        boolean ok = locationManager.addNmeaListener(nmeaListener);
+        if (ok) {
+            nmeaRegistered = true;
         }
     }
 
@@ -460,96 +553,127 @@ public class LocationService {
      */
     public void registerGnssStatusCallback() {
         Log.i(LOG_TAG, "registerGnssStatusCallback called");
-        if (locationManager == null) {
-            Log.e(LOG_TAG, "registerGnssStatusCallback locationManager null");
+        if (!checkRegisterPreconditions()) {
             return;
         }
-        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "registerGnssStatusCallback no fine location permission");
-            return;
-        }
-        int fine = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION);
-        int coarse = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (fine != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG,
-                "registerGnssStatusCallback no fine location permission (fine=" + fine + ", coarse=" + coarse + ")");
-            pendingGnssStatusRegister = true;
-            return;
-        }
+
         synchronized (gnssStatusCbLock) {
             if (gnssStatusRegistered) {
                 Log.i(LOG_TAG, "GNSS status already registered");
                 return;
             }
-            if (gnssStatusCallback == null) {
-                gnssStatusCallback = new android.location.GnssStatus.Callback() {
-                    @Override
-                    public void onSatelliteStatusChanged(android.location.GnssStatus status) {
-                        Log.i(LOG_TAG, "onSatelliteStatusChanged called");
-                        if (status == null) {
-                            return;
-                        }
-                        int count = status.getSatelliteCount();
-                        Log.i(LOG_TAG, "onSatelliteStatusChanged count=" + count);
-                        if (count <= 0) {
-                            nativeOnGnssStatusChanged(0,
-                                    new int[0], new double[0], new double[0],
-                                    new double[0], new double[0], new int[0], new int[0]);
-                            return;
-                        }
-                        int[] ids = new int[count];
-                        double[] cn0 = new double[count];
-                        double[] elevationsAsAltitudes = new double[count];
-                        double[] azimuths = new double[count];
-                        double[] freqs = new double[count];
-                        int[] constellationTypes = new int[count];
-                        int[] additionalInfo = new int[count];
-                        for (int i = 0; i < count; i++) {
-                            ids[i] = status.getSvid(i);
-                            cn0[i] = status.getCn0DbHz(i);
-                            elevationsAsAltitudes[i] = status.getElevationDegrees(i); // 以仰角代填 altitude
-                            azimuths[i] = status.getAzimuthDegrees(i);
-                            constellationTypes[i] = status.getConstellationType(i);
-                            additionalInfo[i] = status.usedInFix(i) ? 1 : 0;
-                            freqs[i] = status.hasCarrierFrequencyHz(i) ? status.getCarrierFrequencyHz(i) : -1.0;
-                        }
-                        nativeOnGnssStatusChanged(count,
-                                ids, cn0, elevationsAsAltitudes, azimuths, freqs,
-                                constellationTypes, additionalInfo);
-                        Log.i(LOG_TAG, "onSatelliteStatusChanged processed");
-                    }
-                };
-            }
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    locationManager.registerGnssStatusCallback(gnssStatusCallback,
-                        new android.os.Handler(Looper.getMainLooper()));
-                    gnssStatusRegistered = true;
-                    pendingGnssStatusRegister = false;
-                    Log.i(LOG_TAG, "GNSS status registered success");
+            initGnssStatusCallback();
+            registerGnssCallbackWithSdkCheck();
+        }
+    }
 
-                    try {
-                        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                            locationManager.requestLocationUpdates(
-                                LocationManager.GPS_PROVIDER,
-                                1000L,
-                                0f,
-                                locationListener);
-                            Log.i(LOG_TAG, "Force GPS request to trigger GNSS scan");
-                        } else {
-                            Log.i(LOG_TAG, "GPS provider disabled, skip force request");
-                        }
-                    } catch (SecurityException e) {
-                        Log.e(LOG_TAG, "Force GPS request failed: " + e.getMessage());
-                    }
-                } else {
-                    Log.e(LOG_TAG, "GNSS status callback not supported on this API (<24)");
+    /**
+     * 检查GNSS注册的前置条件（locationManager、权限）
+     * 
+     * @return true：条件满足；false：条件不满足
+     */
+    private boolean checkRegisterPreconditions() {
+        if (locationManager == null) {
+            Log.e(LOG_TAG, "registerGnssStatusCallback locationManager null");
+            return false;
+        }
+
+        int finePerm = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION);
+        int coarsePerm = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        if (finePerm != PackageManager.PERMISSION_GRANTED) {
+            pendingGnssStatusRegister = true;
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 初始化GNSS状态回调（仅当回调为null时创建）
+     */
+    private void initGnssStatusCallback() {
+        if (gnssStatusCallback != null) {
+            return;
+        }
+
+        gnssStatusCallback = new android.location.GnssStatus.Callback() {
+            @Override
+            public void onSatelliteStatusChanged(android.location.GnssStatus status) {
+                Log.i(LOG_TAG, "onSatelliteStatusChanged called");
+                if (status == null) return;
+
+                int satelliteCount = status.getSatelliteCount();
+                Log.i(LOG_TAG, "onSatelliteStatusChanged count=" + satelliteCount);
+                if (satelliteCount <= 0) {
+                    nativeOnGnssStatusChanged(0, new int[0], new double[0], new double[0],
+                        new double[0], new double[0], new int[0], new int[0]);
+                    return;
                 }
-            } catch (SecurityException se) {
-                Log.e(LOG_TAG, "registerGnssStatusCallback security: " + se.getMessage());
-            } catch (IllegalArgumentException | IllegalStateException e) {
-                Log.e(LOG_TAG, "registerGnssStatusCallback ex: " + e.getMessage());
+
+                int[] ids = new int[satelliteCount];
+                double[] cn0 = new double[satelliteCount];
+                double[] elevations = new double[satelliteCount];
+                double[] azimuths = new double[satelliteCount];
+                double[] freqs = new double[satelliteCount];
+                int[] constellations = new int[satelliteCount];
+                int[] usedInFix = new int[satelliteCount];
+                for (int i = 0; i < satelliteCount; i++) {
+                    ids[i] = status.getSvid(i);
+                    cn0[i] = status.getCn0DbHz(i);
+                    elevations[i] = status.getElevationDegrees(i);
+                    azimuths[i] = status.getAzimuthDegrees(i);
+                    constellations[i] = status.getConstellationType(i);
+                    usedInFix[i] = status.usedInFix(i) ? 1 : 0;
+                    freqs[i] = status.hasCarrierFrequencyHz(i) ? status.getCarrierFrequencyHz(i) : -1.0;
+                }
+
+                nativeOnGnssStatusChanged(satelliteCount, ids, cn0, elevations, azimuths,
+                    freqs, constellations, usedInFix);
+                Log.i(LOG_TAG, "onSatelliteStatusChanged processed");
             }
+        };
+    }
+
+    /**
+     * 按SDK版本注册GNSS回调（仅支持Android N及以上）
+     */
+    private void registerGnssCallbackWithSdkCheck() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                locationManager.registerGnssStatusCallback(gnssStatusCallback,
+                    new android.os.Handler(Looper.getMainLooper()));
+                gnssStatusRegistered = true;
+                pendingGnssStatusRegister = false;
+                Log.i(LOG_TAG, "GNSS status registered success");
+
+                forceGpsLocationUpdate();
+            } else {
+                Log.e(LOG_TAG, "GNSS status callback not supported on this API (<24)");
+            }
+        } catch (SecurityException se) {
+            Log.e(LOG_TAG, "registerGnssStatusCallback security: " + se.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            Log.e(LOG_TAG, "registerGnssStatusCallback ex: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 强制请求GPS位置更新（触发GNSS扫描）
+     */
+    private void forceGpsLocationUpdate() {
+        try {
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    1000L,
+                    0f,
+                    locationListener);
+                Log.i(LOG_TAG, "Force GPS request to trigger GNSS scan");
+            } else {
+                Log.i(LOG_TAG, "GPS provider disabled, skip force request");
+            }
+        } catch (SecurityException e) {
+            Log.e(LOG_TAG, "Force GPS request failed: " + e.getMessage());
         }
     }
 
@@ -692,43 +816,20 @@ public class LocationService {
         mActivity.requestPermissions(permissionsToRequest, REQUEST_BLUETOOTH_RELATED_PERM);
     }
 
-    private final ScanCallback scanCallback = new ScanCallback() {
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            Log.i(LOG_TAG, "onScanResult called");
-            if (result == null) {
-                return;
-            }
-            String deviceId = (result.getDevice() != null) ? result.getDevice().getAddress() : "";
-            String deviceName = (result.getDevice() != null && result.getDevice().getName() != null)
-                ? result.getDevice().getName() : "";
-            int rssi = result.getRssi();
-            byte[] adv = (result.getScanRecord() != null && result.getScanRecord().getBytes() != null)
-                ? result.getScanRecord().getBytes() : new byte[0];
-            boolean connectable = true;
-            nativeOnBluetoothScanResult(deviceId, deviceName, rssi, adv, connectable);
-            Log.i(LOG_TAG, "onScanResult processed");
-        }
-    };
-
-    private final LocationListener locationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-        }
-    };
-
+    /**
+     * 注册位置变化回调函数，使用指定的配置参数。
+     * 
+     * @param scenario            场景类型
+     * @param priority            优先级
+     * @param timeIntervalSec     时间间隔（秒）
+     * @param distanceIntervalMeter 距离间隔（米）
+     * @param maxAccuracy         最大精度
+     * @param fixNumber           定位次数
+     * @param timeoutMs          超时时间（毫秒）
+     * @param needPoi            是否需要兴趣点
+     * @param needLocation       是否需要位置
+     * @return                   成功返回0，失败返回负值错误码
+     */
     public int registerLocationChangeCallbackWithConfig(
             int scenario,
             int priority,
@@ -805,6 +906,10 @@ public class LocationService {
         }
     }
 
+    /**
+     * 注销位置回调。
+     * 如果错误监听器未注册直接返回。如果位置管理器不为空尝试注销监听器。
+     */
     public synchronized void unregisterLocationErrorCallback() {
         if (!errorListenerRegistered) {
             return;
@@ -837,8 +942,10 @@ public class LocationService {
     }
 
     private boolean hasLocationPermission() {
-        return (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-            || (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
+        return (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED)
+            || (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED);
     }
 
     private int checkSelfPermission(String perm) {
@@ -853,45 +960,9 @@ public class LocationService {
         }
     }
 
-    private final LocationListener statusListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location loc) {
-            if (loc == null) {
-                return;
-            }
-            nativeOnLocationChanged(
-                loc.getLatitude(),
-                loc.getLongitude(),
-                loc.hasAccuracy() ? loc.getAccuracy() : 0f,
-                loc.hasAltitude() ? loc.getAltitude() : 0.0,
-                loc.hasSpeed() ? loc.getSpeed() : 0f,
-                loc.hasBearing() ? loc.getBearing() : 0f,
-                loc.getTime(),
-                loc.getBearingAccuracyDegrees(),
-                loc.getProvider());
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            if (status == android.location.LocationProvider.OUT_OF_SERVICE) {
-                nativeOnLocationError(ERR_PROVIDER_OUT_OF_SERVICE);
-            } else if (status == android.location.LocationProvider.TEMPORARILY_UNAVAILABLE) {
-                nativeOnLocationError(ERR_PROVIDER_TEMP_UNAVAILABLE);
-            }
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            nativeOnLocationError(ERR_PROVIDER_DISABLED);
-        }
-    };
-
     /**
      * 开始定位
+     * 
      * @return 返回0表示成功，其他值表示失败
      */
     public int startLocating() {
@@ -926,6 +997,7 @@ public class LocationService {
 
     /**
      * 停止定位功能。
+     * 
      * @return 返回0表示成功，非0表示失败。
      */
     public int stopLocating() {
@@ -1013,10 +1085,10 @@ public class LocationService {
     }
 
     /**
-    * 获取开关状态。
-    * 
-    * @return 开关状态的整数值。
-    */
+     * 获取开关状态。
+     * 
+     * @return 开关状态的整数值。
+     */
     public int getSwitchState() {
         Log.i(LOG_TAG, "getSwitchState called");
         try {
@@ -1035,9 +1107,10 @@ public class LocationService {
     }
 
     /**
-    * 检查地理转换服务是否可用。
-    * @return 如果转换服务可用，返回true；否则返回false。
-    */
+     * 检查地理转换服务是否可用。
+     * 
+     * @return 如果转换服务可用，返回true；否则返回false。
+     */
     public boolean isGeoConvertAvailable() {
         Log.i(LOG_TAG, "isGeoConvertAvailable called");
         return Geocoder.isPresent();
@@ -1066,10 +1139,10 @@ public class LocationService {
                                                            double maxLat,
                                                            double maxLon,
                                                            String transId) {
-        if (maxItems <= 0) {
+        int tempMaxItems = maxItems;
+        if (tempMaxItems <= 0) {
             maxItems = 1;
-        }
-        if (maxItems > 10) {
+        } else {
             maxItems = 10;
         }
         java.util.Locale loc;
@@ -1123,6 +1196,7 @@ public class LocationService {
 
     /**
      * 添加一个GNSS地理围栏。
+     * 
      * @param latitude  围栏中心的纬度。
      * @param longitude 围栏中心的经度。
      * @param radius    围栏的半径（以米为单位）。
@@ -1132,7 +1206,8 @@ public class LocationService {
     public void addGnssGeofence(double latitude, double longitude, float radius, long expiration, int fenceId) {
         Log.i(LOG_TAG, "addGnssGeofence called with fenceId: " + fenceId);
         try {
-            LocationManager locationManagerInstance = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            LocationManager locationManagerInstance =
+                (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             if (locationManagerInstance == null) {
                 Log.e(LOG_TAG, "无法获取LocationManager实例");
                 return;
@@ -1187,15 +1262,17 @@ public class LocationService {
         geofenceReceiverRegistered = true;
         Log.i(LOG_TAG, "Geofence receiver registered");
     }
-    
+
     /**
      * 移除指定ID的GNSS地理围栏。
+     * 
      * @param fenceId 要移除的地理栏的ID。
      */
     public void removeGnssGeofence(int fenceId) {
         Log.i(LOG_TAG, "removeGnssGeofence called with fenceId: " + fenceId);
         try {
-            LocationManager locationManagerService = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            LocationManager locationManagerService =
+                (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             if (locationManagerService == null) {
                 Log.e(LOG_TAG, "无法获取LocationManager实例");
                 return;
@@ -1236,6 +1313,7 @@ public class LocationService {
 
     /**
      * 获取当前用于定位的WiFi BSSID。
+     * 
      * @return 当前WiFi BSSID，如果获取失败则返回 " Denied"。
      */
     public String getCurrentWifiBssidForLocating() {
@@ -1309,7 +1387,9 @@ public class LocationService {
 
     /**
      * 注册开关回调
-     @param callback 回调对象
+     * 
+     * @param callback 回调对象
+     * 
      * @return 返回结果
      */
     public int registerSwitchCallback(Object callback) {
@@ -1319,7 +1399,9 @@ public class LocationService {
 
     /**
      * 注册开关回调
-     @param callback 回调对象
+     * 
+     * @param callback 回调对象
+     * 
      * @return 返回结果
      */
     public int unregisterSwitchCallback(Object callback) {
@@ -1329,40 +1411,55 @@ public class LocationService {
 
     private Activity getMainActivity() {
         try {
-            Class activityThreadClass = Class.forName("android.app.ActivityThread");
+            Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
             Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
-            Field mActivities = activityThreadClass.getDeclaredField("mActivities");
-            mActivities.setAccessible(true);
-            Object mActivitiesObj = mActivities.get(activityThread);
-            if (mActivitiesObj instanceof Map) {
-                Map activitiesMap = (Map) mActivitiesObj;
-                for (Object activityClientRecord : activitiesMap.values()) {
-                    Class activityClientRecordClass = activityClientRecord.getClass();
-                    Field paused = activityClientRecordClass.getDeclaredField("paused");
-                    paused.setAccessible(true);
-                    if (!paused.getBoolean(activityClientRecord)) {
-                        Field activityField = activityClientRecordClass.getDeclaredField("activity");
-                        activityField.setAccessible(true);
-                        Object activityObj = activityField.get(activityClientRecord);
-                        if (activityObj instanceof android.app.Activity) {
-                            Activity activityInstance = (Activity) activityObj;
-                            return activityInstance;
-                        }
-                    }
+            
+            Field mActivitiesField = activityThreadClass.getDeclaredField("mActivities");
+            mActivitiesField.setAccessible(true);
+            Object mActivitiesObj = mActivitiesField.get(activityThread);
+            
+            if (!(mActivitiesObj instanceof Map)) {
+                return null;
+            }
+            Map<?, ?> activitiesMap = (Map<?, ?>) mActivitiesObj;
+            
+            for (Object activityClientRecord : activitiesMap.values()) {
+                Activity activity = getNonPausedActivity(activityClientRecord);
+                if (activity != null) {
+                    return activity;
                 }
             }
         } catch (ClassNotFoundException ex) {
-            Log.e("TAG", "ClassNotFoundException occurred.");
+            Log.e("TAG", "ClassNotFoundException occurred: " + ex.getMessage());
         } catch (InvocationTargetException ex) {
-            Log.e("TAG", "InvocationTargetException occurred.");
+            Log.e("TAG", "InvocationTargetException occurred: " + ex.getMessage());
         } catch (NoSuchMethodException ex) {
-            Log.e("TAG", "NoSuchMethodException occurred.");
+            Log.e("TAG", "NoSuchMethodException occurred: " + ex.getMessage());
         } catch (NoSuchFieldException ex) {
-            Log.e("TAG", "Exception occurred.");
+            Log.e("TAG", "NoSuchFieldException occurred: " + ex.getMessage());
         } catch (IllegalAccessException ex) {
-            Log.e("TAG", "IllegalAccessException occurred.");
+            Log.e("TAG", "IllegalAccessException occurred: " + ex.getMessage());
         }
         return null;
+    }
+
+    /**
+     * 从ActivityClientRecord中提取非暂停状态的Activity
+     */
+    private Activity getNonPausedActivity(Object activityClientRecord) 
+            throws NoSuchFieldException, IllegalAccessException {
+        Class<?> recordClass = activityClientRecord.getClass();
+        Field pausedField = recordClass.getDeclaredField("paused");
+        pausedField.setAccessible(true);
+        if (pausedField.getBoolean(activityClientRecord)) {
+            return null;
+        }
+        
+        Field activityField = recordClass.getDeclaredField("activity");
+        activityField.setAccessible(true);
+        Object activityObj = activityField.get(activityClientRecord);
+        
+        return (activityObj instanceof Activity) ? (Activity) activityObj : null;
     }
 
     /**
