@@ -56,10 +56,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 
+/**
+ * LocationService 类提供了与位置服务相关的功能，包括获取当前位置、注册位置变化回调、
+ * 注册国家代码回调、注册NMEA消息回调、注册GNSS状态回调、注册蓝牙扫描结果回调等。
+ */
 public class LocationService {
     private static final String LOG_TAG = "LocationService";
-    private static final String ACTION_GEOFENCE = "com.example.GEOFENCE_ALERT";
-    private static final String EXTRA_FENCE_ID = "extra_fence_id";
+    private static final String ACTION_GEOFENCE = "com.example.geofence";
+    private static final String FENCE_ID = "fence_id";
     private final Map<Integer, PendingIntent> geofencePendingIntents = new ConcurrentHashMap<>();
     private volatile boolean geofenceReceiverRegistered = false;
     private BroadcastReceiver geofenceReceiver;
@@ -117,19 +121,23 @@ public class LocationService {
         nativeInit();
     }
 
+    /**
+     * 请求并检查位置权限。
+     * @return 返回是否成功请求位置权限。
+     */
     public boolean requestAndCheckLocationPermission() {
         Log.i(LOG_TAG, "Java requestLocationPermission called");
-        Activity activity = getActivity();
+        Activity activity = getMainActivity();
         if (activity == null) {
-            Log.i(LOG_TAG, "Java activity is null");
+            Log.e(LOG_TAG, "当前 Java 活动为空");
             return false;
         }
 
-        if (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
+        if (activity.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED &&
-            activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            activity.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED &&
-            activity.checkSelfPermission(Manifest.permission.ACCESS_WIFI_STATE) ==
+            activity.checkSelfPermission(android.Manifest.permission.ACCESS_WIFI_STATE) ==
                 PackageManager.PERMISSION_GRANTED) {
             Log.i(LOG_TAG, "All required permissions are granted");
             return true;
@@ -138,9 +146,9 @@ public class LocationService {
         Log.i(LOG_TAG, "Java requestPermissions start");
         activity.requestPermissions(
             new String[]{
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_WIFI_STATE
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                android.Manifest.permission.ACCESS_WIFI_STATE
             },
             REQUEST_LOCATION_PERMISSION
         );
@@ -253,11 +261,22 @@ public class LocationService {
             try {
                 locationManager.removeUpdates(locationListener);
             } catch (SecurityException e) {
-                Log.w("LocationManager", "SecurityException occurred while removing updates", e);
+                Log.e("LocationManager", "SecurityException occurred while removing updates", e);
             }
         }
     }
 
+    /**
+     * 根据经纬度地址信息。
+     * 
+     * @param latitude  纬度
+     * @param longitude 经度
+     *                  maxItems 返回的最大地址数量
+     * @param locale    语言环境
+     * @param country   国家
+     * @param transId   事务ID
+     *                  return 匹配的地址数组
+     */
     public Address[] getAddressByCoordinate(double latitude,
                                             double longitude,
                                             int maxItems,
@@ -309,19 +328,22 @@ public class LocationService {
         return out.toArray(new Address[0]);
     }
 
+    /**
+     * 注册国家代码回调函数。
+     */
     public void registerCountryCodeCallback() {
         synchronized (countryLock) {
             if (countryCodeRegistered) {
                 return;
             }
             final String[] codeHolder = {""};
-            final int[] typeHolder = {1}; 
+            final int[] typeHolder = {1};
             typeHolder[0] = resolveCountryCode(codeHolder[0]);
             nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
             if (localeReceiver == null) {
                 localeReceiver = new BroadcastReceiver() {
                     @Override
-                    public void onReceive(android.content.Context ctx, android.content.Intent intent) {
+                    public void onReceive(android.content.Context context, android.content.Intent intent) {
                         typeHolder[0] = resolveCountryCode(codeHolder[0]);
                         nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
                     }
@@ -335,6 +357,9 @@ public class LocationService {
         }
     }
 
+    /**
+     * 取消注册国家代码回调。
+     */
     public void unregisterCountryCodeCallback() {
         synchronized (countryLock) {
             if (!countryCodeRegistered) {
@@ -344,22 +369,24 @@ public class LocationService {
                 if (localeReceiver != null) {
                     context.unregisterReceiver(localeReceiver);
                 }
-            } catch (IllegalArgumentException | SecurityException e) {}
+            } catch (IllegalArgumentException | SecurityException e) {
+                Log.e(LOG_TAG, "unregisterCountryCodeCallback exception: " + e.getMessage());
+            }
             countryCodeRegistered = false;
         }
     }
 
     private int resolveCountryCode(String code) {
         int type = 1;
-        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        if (tm != null) {
-            String simIso = tm.getSimCountryIso();
+        TelephonyManager telephonyManager  = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        if (telephonyManager  != null) {
+            String simIso = telephonyManager .getSimCountryIso();
             if (simIso != null && !simIso.isEmpty()) {
                 String simTempCode = simIso;
                 code = simTempCode;
                 type = 2;
             } else {
-                String netIso = tm.getNetworkCountryIso();
+                String netIso = telephonyManager .getNetworkCountryIso();
                 if (netIso != null && !netIso.isEmpty()) {
                     String netTempCode = netIso;
                     code = netTempCode;
@@ -368,7 +395,7 @@ public class LocationService {
             }
         }
         String defaultCode = Locale.getDefault().getCountry();
-        if (code == null || code.isEmpty()) {
+        if (code.isEmpty()) {
             code = defaultCode;
         }
         if (code == null) {
@@ -378,11 +405,17 @@ public class LocationService {
         return type;
     }
 
+    /**
+     * 注册NMEA消息回调
+     * 
+     * 该方法用于注册NMEA消息的回调，在接收到NMEA消息时进行处理。
+     * 
+     */
     public void registerNmeaMessageCallback() {
         if (locationManager == null) {
             return;
         }
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         synchronized (nmeaLock) {
@@ -403,6 +436,10 @@ public class LocationService {
         }
     }
 
+    /**
+     * 注销NMEA消息回调。
+     * 该方法用于取消注册NMEA消息的回调，停止接收NMEA消息。
+     */
     public void unregisterNmeaMessageCallback() {
         if (locationManager == null) {
             return;
@@ -415,19 +452,24 @@ public class LocationService {
             nmeaRegistered = false;
         }
     }
-    
+
+    /**
+     * 
+     * 注册GNSS状态回调。
+     * 此方法用于向LocationManager注册GNSS状态监听器。
+     */
     public void registerGnssStatusCallback() {
         Log.i(LOG_TAG, "registerGnssStatusCallback called");
         if (locationManager == null) {
             Log.e(LOG_TAG, "registerGnssStatusCallback locationManager null");
             return;
         }
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.e(LOG_TAG, "registerGnssStatusCallback no fine location permission");
             return;
         }
-        int fine = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION);
-        int coarse = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
+        int fine = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION);
+        int coarse = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION);
         if (fine != PackageManager.PERMISSION_GRANTED) {
             Log.e(LOG_TAG,
                 "registerGnssStatusCallback no fine location permission (fine=" + fine + ", coarse=" + coarse + ")");
@@ -495,13 +537,13 @@ public class LocationService {
                                 locationListener);
                             Log.i(LOG_TAG, "Force GPS request to trigger GNSS scan");
                         } else {
-                            Log.w(LOG_TAG, "GPS provider disabled, skip force request");
+                            Log.i(LOG_TAG, "GPS provider disabled, skip force request");
                         }
                     } catch (SecurityException e) {
                         Log.e(LOG_TAG, "Force GPS request failed: " + e.getMessage());
                     }
                 } else {
-                    Log.w(LOG_TAG, "GNSS status callback not supported on this API (<24)");
+                    Log.e(LOG_TAG, "GNSS status callback not supported on this API (<24)");
                 }
             } catch (SecurityException se) {
                 Log.e(LOG_TAG, "registerGnssStatusCallback security: " + se.getMessage());
@@ -511,6 +553,9 @@ public class LocationService {
         }
     }
 
+    /**
+     * 注销GNSS状态回调。
+     */
     public void unregisterGnssStatusCallback() {
         Log.i(LOG_TAG, "unregisterGnssStatusCallback called");
         if (locationManager == null) {
@@ -531,11 +576,17 @@ public class LocationService {
         }
     }
 
+    /**
+     * 注册开关回调方法，根据位置服务的开启状态调用原生方法更新状态。
+     */
     public void registerSwitchCallback() {
     int enabled = isLocationEnabled() ? 1 : 0;
     nativeOnSwitchStateChanged(enabled);
     }
 
+    /**
+     * 取消注册开关回调方法。
+     */
     public void unregisterSwitchCallback() {
     }
 
@@ -545,8 +596,8 @@ public class LocationService {
     if (lm == null) {
         return false;
     }
-    return lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+    return lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
+        || lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER);
     }
     
     private static native void nativeOnLocationChanged(
@@ -555,6 +606,11 @@ public class LocationService {
 
     private static native void nativeOnLocationError(int errorCode);
     
+    /**
+     * 注册蓝牙扫描结果回调函数。
+     *
+     * @return 成功返回0，失败返回-1。
+     */
     public int registerBluetoothScanResultCallback() {
         if (bluetoothLeScanner == null) {
             Log.e(LOG_TAG, "BLE scanner null");
@@ -578,6 +634,9 @@ public class LocationService {
         }
     }
 
+    /**
+     * 注销蓝牙扫描结果回调函数。
+     */
     public void unregisterBluetoothScanResultCallback() {
         if (bluetoothLeScanner == null) {
             return;
@@ -596,13 +655,13 @@ public class LocationService {
         }
 
         if (Build.VERSION.SDK_INT >= 31) { // Android 12+
-            if (mActivity.checkSelfPermission("android.permission.BLUETOOTH_SCAN") !=
+            if (mActivity.checkSelfPermission("Manifest.permission.BLUETOOTH_SCAN") !=
                     PackageManager.PERMISSION_GRANTED) {
                 Log.e(LOG_TAG, "BLUETOOTH_SCAN permission not granted");
                 return false;
             }
         } else {
-            if (mActivity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
+            if (mActivity.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
                     PackageManager.PERMISSION_GRANTED) {
                 Log.e(LOG_TAG, "ACCESS_FINE_LOCATION permission not granted");
                 return false;
@@ -619,7 +678,7 @@ public class LocationService {
         }
 
         if (checkBluetoothScanPermissions()) {
-            Log.d(LOG_TAG, "Permissions already granted, skip request");
+            Log.i(LOG_TAG, "Permissions already granted, skip request");
             return;
         }
 
@@ -627,7 +686,7 @@ public class LocationService {
         if (Build.VERSION.SDK_INT >= 31) { // Android 12+
             permissionsToRequest = new String[]{"android.permission.BLUETOOTH_SCAN"};
         } else {
-            permissionsToRequest = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+            permissionsToRequest = new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION};
         }
 
         mActivity.requestPermissions(permissionsToRequest, REQUEST_BLUETOOTH_RELATED_PERM);
@@ -636,7 +695,7 @@ public class LocationService {
     private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            Log.e(LOG_TAG, "onScanResult called");
+            Log.i(LOG_TAG, "onScanResult called");
             if (result == null) {
                 return;
             }
@@ -647,10 +706,8 @@ public class LocationService {
             byte[] adv = (result.getScanRecord() != null && result.getScanRecord().getBytes() != null)
                 ? result.getScanRecord().getBytes() : new byte[0];
             boolean connectable = true;
-            Log.e(LOG_TAG, "BLE scan result: id=" + deviceId + ", name=" + deviceName + ", rssi=" + rssi
-                + ", advLen=" + adv.length + ", connectable=" + connectable);
             nativeOnBluetoothScanResult(deviceId, deviceName, rssi, adv, connectable);
-            Log.e(LOG_TAG, "onScanResult processed");
+            Log.i(LOG_TAG, "onScanResult processed");
         }
     };
 
@@ -687,7 +744,7 @@ public class LocationService {
         }
         if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED
-            && checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+            || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             Log.e(LOG_TAG, "No location permission");
             return -2;
@@ -713,9 +770,14 @@ public class LocationService {
         }
     }
 
+    /**
+     * 注册位置错误回调。
+     * 如果错误监听器已经注册，则记录日志并返回。
+     * 如果位置管理器为空记录日志并返回。
+     */
     public synchronized void registerLocationErrorCallback() {
         if (errorListenerRegistered) {
-            Log.i(LOG_TAG, "Location error listener already registered");
+            Log.e(LOG_TAG, "Location error listener already registered");
             return;
         }
         if (locationManager == null) {
@@ -750,8 +812,8 @@ public class LocationService {
         if (locationManager != null) {
             try {
                 locationManager.removeUpdates(statusListener);
-            } catch (Exception e) {
-                Log.i(LOG_TAG, "removeUpdates exception: " + e.getMessage());
+            } catch (IllegalArgumentException | SecurityException e) {
+                Log.e(LOG_TAG, "removeUpdates exception: " + e.getMessage());
             }
         }
         errorListenerRegistered = false;
@@ -768,20 +830,20 @@ public class LocationService {
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 return LocationManager.NETWORK_PROVIDER;
             }
-        } catch (Exception e) {
-            Log.i(LOG_TAG, "chooseProvider exception: " + e.getMessage());
+        } catch (IllegalArgumentException | SecurityException e) {
+            Log.e(LOG_TAG, "chooseProvider exception: " + e.getMessage());
         }
         return null;
     }
 
     private boolean hasLocationPermission() {
-        return (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-            || (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
+        return (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            || (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
 
     private int checkSelfPermission(String perm) {
         if (context == null) {
-            Log.i(LOG_TAG, "checkSelfPermission: context null, treat as denied");
+            Log.e(LOG_TAG, "checkSelfPermission: context null, treat as denied");
             return PackageManager.PERMISSION_DENIED;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -828,6 +890,10 @@ public class LocationService {
         }
     };
 
+    /**
+     * 开始定位
+     * @return 返回0表示成功，其他值表示失败
+     */
     public int startLocating() {
         Log.i(LOG_TAG, "Java startLocating called");
         if (locatingStarted) {
@@ -837,7 +903,7 @@ public class LocationService {
             Log.e(LOG_TAG, "startLocating: locationManager null");
             return -1;
         }
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED) {
             Log.e(LOG_TAG, "startLocating: no fine location permission");
             return -1;
@@ -858,6 +924,10 @@ public class LocationService {
         }
     }
 
+    /**
+     * 停止定位功能。
+     * @return 返回0表示成功，非0表示失败。
+     */
     public int stopLocating() {
         if (!locatingStarted) {
             return 0;
@@ -867,7 +937,7 @@ public class LocationService {
                 locationManager.removeUpdates(internalLocationListener);
             }
         } catch (SecurityException | IllegalArgumentException e) {
-            Log.w(LOG_TAG, "stopLocating removeUpdates warn");
+            Log.e(LOG_TAG, "stopLocating removeUpdates warn");
         }
         locatingStarted = false;
         receivedFixCount = 0;
@@ -942,6 +1012,11 @@ public class LocationService {
         };
     }
 
+    /**
+    * 获取开关状态。
+    * 
+    * @return 开关状态的整数值。
+    */
     public int getSwitchState() {
         Log.i(LOG_TAG, "getSwitchState called");
         try {
@@ -959,12 +1034,30 @@ public class LocationService {
         }
     }
 
+    /**
+    * 检查地理转换服务是否可用。
+    * @return 如果转换服务可用，返回true；否则返回false。
+    */
     public boolean isGeoConvertAvailable() {
         Log.i(LOG_TAG, "isGeoConvertAvailable called");
         return Geocoder.isPresent();
     }
     
-    public android.location.Address[] getAddressByLocationName(String desc,
+    /**
+     * 根据位置名称获取地址信息。
+     * 
+     * @param desc       位置描述
+     * @param maxItems   返回的最大地址数量
+     * @param localeStr  语言环境
+     * @param country    国家
+     * @param minLat     最小纬度
+     * @param minLon     最小经度
+     * @param maxLat     最大纬度
+     * @param maxLon     最大经度
+     * @param transId    事务ID
+     * @return           匹配的地址数组
+     */
+    public android.location.Address[] getAddressByLocationName(String description,
                                                            int maxItems,
                                                            String localeStr,
                                                            String country,
@@ -987,35 +1080,36 @@ public class LocationService {
             String region = "";
             if (localeStr.contains("_")) {
                 String[] p = localeStr.split("_", 2);
-                lang = p[0]; region = p[1];
+                lang = p[0];
+                region = p[1];
             } else if (localeStr.contains("-")) {
                 String[] p = localeStr.split("-", 2);
-                lang = p[0]; region = p[1];
+                lang = p[0];
+                region = p[1];
             }
             loc = region.isEmpty() ? new java.util.Locale(lang) : new java.util.Locale(lang, region);
         }
-        java.util.ArrayList<android.location.Address> out = new java.util.ArrayList<>();
+        java.util.ArrayList<android.location.Address> addresses = new java.util.ArrayList<>();
         try {
             android.location.Geocoder geocoder = new android.location.Geocoder(context, loc);
-            java.util.List<android.location.Address> list =
-                geocoder.getFromLocationName(desc, maxItems, minLat, minLon, maxLat, maxLon);
-            if (list != null) {
-                out.addAll(list);
+            java.util.List<android.location.Address> addressList =
+                geocoder.getFromLocationName(description, maxItems, minLat, minLon, maxLat, maxLon);
+            if (addressList != null) {
+                addresses.addAll(addressList);
             }
         } catch (IOException e) {
             Log.e(LOG_TAG, "getAddressByLocationName error: " + e.getMessage());
         }
-
-        for (Address address : out) {
-            Log.i(LOG_TAG, "Address: " + address.getAddressLine(0));
-        }
-
-        return out.toArray(new android.location.Address[0]);
+        return addresses.toArray(new android.location.Address[0]);
     }
 
-
+    /**
+     * 获取ISO国家代码。
+     * 
+     * @return ISO国家代码的字符串表示。
+     */
     public String getIsoCountryCode() {
-        Log.i(LOG_TAG, "getIsoCountryCode called");
+        Log.i(LOG_TAG, "获取ISO国家代码");
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         String simCountry = null;
         if (tm != null) {
@@ -1027,6 +1121,14 @@ public class LocationService {
         return Locale.getDefault().getCountry().toUpperCase((Locale.ROOT));
     }
 
+    /**
+     * 添加一个GNSS地理围栏。
+     * @param latitude  围栏中心的纬度。
+     * @param longitude 围栏中心的经度。
+     * @param radius    围栏的半径（以米为单位）。
+     * @param expiration 围栏的过期时间（以毫秒为单位）。
+     * @param fenceId   围栏的唯一标识符。
+     */
     public void addGnssGeofence(double latitude, double longitude, float radius, long expiration, int fenceId) {
         Log.i(LOG_TAG, "addGnssGeofence called with fenceId: " + fenceId);
         try {
@@ -1042,20 +1144,20 @@ public class LocationService {
                 try {
                     locationManagerInstance.removeProximityAlert(oldPi);
                 } catch (SecurityException | IllegalArgumentException e) {
-                    Log.w(LOG_TAG, "remove old proximity alert fail fenceId=" + fenceId);
+                    Log.e(LOG_TAG, "remove old proximity alert fail fenceId=" + fenceId);
                 }
             }
 
-            Intent intent = createGeofenceIntent(fenceId);
-            PendingIntent pi = createPendingIntent(fenceId, intent);
-            locationManagerInstance.addProximityAlert(latitude, longitude, radius, expiration, pi);
-            geofencePendingIntents.put(fenceId, pi);
-            Log.i(LOG_TAG, "地理围栏添加成功: fenceId = " + fenceId);
+            Intent geofenceIntent = createGeofenceIntent(fenceId);
+            PendingIntent geofencePendingIntent = createPendingIntent(fenceId, geofenceIntent);
+            locationManagerInstance.addProximityAlert(latitude, longitude, radius, expiration, geofencePendingIntent);
+            geofencePendingIntents.put(fenceId, geofencePendingIntent);
+            Log.i(LOG_TAG, "Geofence added successfully: fenceId " + fenceId);
             nativeOnGeofenceEvent(fenceId);
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "添加地理围栏失败：权限错误", e);
+            Log.e(LOG_TAG, "Geofence addition failed: permission error", e);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "添加地理围栏时发生意外错误", e);
+            Log.e(LOG_TAG, "Geofence addition encountered an unexpected error", e);
         }
     }
 
@@ -1065,13 +1167,13 @@ public class LocationService {
         }
         geofenceReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context ctx, Intent intent) {
+            public void onReceive(Context context, Intent intent) {
                 if (intent == null || !ACTION_GEOFENCE.equals(intent.getAction())) {
                     return;
                 }
-                int fenceId = intent.getIntExtra(EXTRA_FENCE_ID, -1);
+                int fenceId = intent.getIntExtra(FENCE_ID, -1);
                 if (fenceId <= 0) {
-                    Log.w(LOG_TAG, "GeofenceReceiver invalid fenceId");
+                    Log.e(LOG_TAG, "GeofenceReceiver invalid fenceId");
                     return;
                 }
                 boolean entering = intent.getBooleanExtra(
@@ -1085,7 +1187,11 @@ public class LocationService {
         geofenceReceiverRegistered = true;
         Log.i(LOG_TAG, "Geofence receiver registered");
     }
-
+    
+    /**
+     * 移除指定ID的GNSS地理围栏。
+     * @param fenceId 要移除的地理栏的ID。
+     */
     public void removeGnssGeofence(int fenceId) {
         Log.i(LOG_TAG, "removeGnssGeofence called with fenceId: " + fenceId);
         try {
@@ -1095,10 +1201,10 @@ public class LocationService {
                 return;
             }
 
-            Intent intent = createGeofenceIntent(fenceId);
-            PendingIntent pi = createPendingIntent(fenceId, intent);
+            Intent geofenceIntent = createGeofenceIntent(fenceId);
+            PendingIntent geofencePendingIntent = createPendingIntent(fenceId, geofenceIntent);
 
-            locationManagerService.removeProximityAlert(pi);
+            locationManagerService.removeProximityAlert(geofencePendingIntent);
             Log.i(LOG_TAG, "地理围栏已移除: fenceId = " + fenceId);
         } catch (SecurityException e) {
             Log.e(LOG_TAG, "移除地理围栏失败：权限错误", e);
@@ -1108,13 +1214,13 @@ public class LocationService {
     }
 
     private Intent createGeofenceIntent(int fenceId) {
-        Intent intent = new Intent(ACTION_GEOFENCE);
-        intent.setPackage(context.getPackageName());
-        intent.putExtra(EXTRA_FENCE_ID, fenceId);
-        return intent;
+        Intent geofenceIntent = new Intent(ACTION_GEOFENCE);
+        geofenceIntent.setPackage(context.getApplicationInfo().packageName);
+        geofenceIntent.putExtra(FENCE_ID, fenceId);
+        return geofenceIntent;
     }
 
-    private PendingIntent createPendingIntent(int fenceId, Intent intent) {
+    private PendingIntent createPendingIntent(int fenceId, Intent broadcastIntent) {
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= VERSION_CODES_S) {
             flags |= FLAG_MUTABLE;
@@ -1123,51 +1229,55 @@ public class LocationService {
         return PendingIntent.getBroadcast(
             context,
             fenceId,
-            intent,
+            broadcastIntent,
             flags
         );
     }
 
+    /**
+     * 获取当前用于定位的WiFi BSSID。
+     * @return 当前WiFi BSSID，如果获取失败则返回 " Denied"。
+     */
     public String getCurrentWifiBssidForLocating() {
         Log.i(LOG_TAG, "getCurrentWifiBssidForLocating called");
 
         if (!checkRequiredPermissions()) {
-            Log.e(LOG_TAG, "获取 WiFi BSSID 失败：缺少必需权限");
+            Log.e(LOG_TAG, "Missing necessary permissions, unable to obtain WiFi BSSID.");
             return "Permission Denied";
         }
 
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (wifiManager == null) {
-            Log.e(LOG_TAG, "获取 WiFi BSSID 失败：设备不支持 WiFi 功能");
+            Log.e(LOG_TAG, "WiFi Manager is null, cannot obtain WiFi BSSID.");
             return "WiFi Not Supported";
         }
 
         try {
             if (!wifiManager.isWifiEnabled()) {
-                Log.w(LOG_TAG, "获取 WiFi BSSID 失败：WiFi 未开启");
+                Log.e(LOG_TAG, "WiFi is disabled.");
                 return "WiFi Disabled";
             }
 
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
             if (wifiInfo == null) {
-                Log.w(LOG_TAG, "获取 WiFi BSSID 失败：未连接任何 WiFi 热点");
+                Log.e(LOG_TAG, "Failed to get WiFi connection info: WifiInfo is null.");
                 return "No WiFi Connection";
             }
 
             String bssid = wifiInfo.getBSSID();
             if (isInvalidBssid(bssid)) {
-                Log.w(LOG_TAG, "获取 WiFi BSSID 失败：BSSID 无效（值：" + bssid + "）");
+                Log.e(LOG_TAG, "Invalid or placeholder BSSID received: " + bssid);
                 return "Invalid BSSID";
             }
 
-            Log.i(LOG_TAG, "成功获取 WiFi BSSID：" + bssid);
+            Log.i(LOG_TAG, "Successfully obtained WiFi BSSID: " + bssid);
             return bssid;
 
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "获取 WiFi BSSID 失败：权限异常", e);
+            Log.e(LOG_TAG, "Failed to get WiFi BSSID: Security exception - missing permissions.", e);
             return "Security Exception";
         } catch (Exception e) {
-            Log.e(LOG_TAG, "获取 WiFi BSSID 失败：未知错误", e);
+            Log.e(LOG_TAG, "Failed to get WiFi BSSID: Unexpected exception.", e);
             return "Unknown Error";
         }
     }
@@ -1182,10 +1292,10 @@ public class LocationService {
         ) == PackageManager.PERMISSION_GRANTED;
 
         if (!hasLocationPerm) {
-            Log.e(LOG_TAG, "缺少必需权限：ACCESS_FINE_LOCATION（精确定位权限）");
+            Log.e(LOG_TAG, "Missing required permission: ACCESS_FINE_LOCATION (Fine Location Permission)");
         }
         if (!hasWifiPerm) {
-            Log.e(LOG_TAG, "缺少必需权限：ACCESS_WIFI_STATE（WiFi 状态权限）");
+            Log.e(LOG_TAG, "Missing required permission: ACCESS_WIFI_STATE (WiFi State Permission)");
         }
 
         return hasLocationPerm && hasWifiPerm;
@@ -1196,19 +1306,28 @@ public class LocationService {
                 || bssid.trim().isEmpty()
                 || "02:00:00:00:00:00".equals(bssid);
     }
-    
 
+    /**
+     * 注册开关回调
+     @param callback 回调对象
+     * @return 返回结果
+     */
     public int registerSwitchCallback(Object callback) {
         Log.i(LOG_TAG, "registerSwitchCallback called");
         return 0;
     }
 
+    /**
+     * 注册开关回调
+     @param callback 回调对象
+     * @return 返回结果
+     */
     public int unregisterSwitchCallback(Object callback) {
         Log.i(LOG_TAG, "unregisterSwitchCallback called");
         return 0;
     }
 
-    private Activity getActivity() {
+    private Activity getMainActivity() {
         try {
             Class activityThreadClass = Class.forName("android.app.ActivityThread");
             Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
@@ -1225,9 +1344,9 @@ public class LocationService {
                         Field activityField = activityClientRecordClass.getDeclaredField("activity");
                         activityField.setAccessible(true);
                         Object activityObj = activityField.get(activityClientRecord);
-                        if (activityObj instanceof Activity) {
-                            Activity activity = (Activity) activityObj;
-                            return activity;
+                        if (activityObj instanceof android.app.Activity) {
+                            Activity activityInstance = (Activity) activityObj;
+                            return activityInstance;
                         }
                     }
                 }
@@ -1246,9 +1365,9 @@ public class LocationService {
         return null;
     }
 
-    public void debugLog(String msg) {
-        Log.i(LOG_TAG, msg);
-    }
-
+    /**
+     * 初始化本地方法。
+     * native void nativeInit();
+     */
     protected native void nativeInit();
 }

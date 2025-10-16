@@ -298,7 +298,10 @@ Location::LocationErrCode LocationServiceJni::GetSwitchState(int32_t &state)
     if (errCode != Location::LocationErrCode::ERRCODE_SUCCESS) {
         return errCode;
     }
-
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getSwitchState) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "GetSwitchState: getSwitchState method is null");
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
     state = static_cast<int>(env->CallIntMethod(
         g_locationservicepluginClass.globalRef, g_locationservicepluginClass.getSwitchState));
     if (env->ExceptionCheck()) {
@@ -360,12 +363,6 @@ static std::unique_ptr<Location::Location> ExtractLocation(JNIEnv* env, jobject 
         return nullptr;
     }
 
-    double latitude = env->CallDoubleMethod(res, getLatitude);
-    double longitude = env->CallDoubleMethod(res, getLongitude);
-    float accuracy = env->CallFloatMethod(res, getAccuracy);
-    double altitude = env->CallDoubleMethod(res, getAltitude);
-    float speed = env->CallFloatMethod(res, getSpeed);
-    float bearing = env->CallFloatMethod(res, getBearing);
     jlong timeMs = env->CallLongMethod(res, getTime);
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
@@ -373,12 +370,12 @@ static std::unique_ptr<Location::Location> ExtractLocation(JNIEnv* env, jobject 
         return nullptr;
     }
     auto loc = std::make_unique<Location::Location>();
-    loc->SetLatitude(latitude);
-    loc->SetLongitude(longitude);
-    loc->SetAccuracy(accuracy);
-    loc->SetAltitude(altitude);
-    loc->SetSpeed(speed);
-    loc->SetDirection(bearing);
+    loc->SetLatitude(env->CallDoubleMethod(res, getLatitude));
+    loc->SetLongitude(env->CallDoubleMethod(res, getLongitude));
+    loc->SetAccuracy(env->CallFloatMethod(res, getAccuracy));
+    loc->SetAltitude(env->CallDoubleMethod(res, getAltitude));
+    loc->SetSpeed(env->CallFloatMethod(res, getSpeed));
+    loc->SetDirection(env->CallFloatMethod(res, getBearing));
     loc->SetTimeStamp(static_cast<int64_t>(timeMs));
     return loc;
 }
@@ -391,7 +388,11 @@ static Location::LocationErrCode HandleSingleFix(JNIEnv* env,
         g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.debugLog,
         env->NewStringUTF("StartLocating continuous mode"));
-
+    
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getCurrentLocation) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "StartLocating: getCurrentLocation method is null");
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
     auto res = env->CallObjectMethod(g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.getCurrentLocation);
     if (env->ExceptionCheck()) {
@@ -440,6 +441,10 @@ static void RegisterLocatorCallback(JNIEnv* env, const sptr<Location::LocatorCal
         g_locatorCallbacks.push_back(sptr<Location::LocatorCallbackNapi>(locatorCallbackHost));
     }
     if (needObserver) {
+        if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.startLocating) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "StartLocating: startLocating method is null");
+            return;
+        }
         env->CallIntMethod(g_locationservicepluginClass.globalRef, g_locationservicepluginClass.startLocating);
     }
 }
@@ -447,6 +452,11 @@ static void RegisterLocatorCallback(JNIEnv* env, const sptr<Location::LocatorCal
 Location::LocationErrCode RegisterLocationChangeCallback(JNIEnv* env,
     const std::unique_ptr<RequestConfig>& requestConfig)
 {
+    if (!g_locationservicepluginClass.globalRef ||
+        !g_locationservicepluginClass.registerLocationChangeCallbackWithConfig) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "StartLocating: registerLocationChangeCallbackWithConfig method is null");
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
     jint ret = env->CallIntMethod(
         g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.registerLocationChangeCallbackWithConfig,
@@ -593,6 +603,11 @@ Location::LocationErrCode LocationServiceJni::StopLocating(sptr<Location::Locato
         emptyNow = vec.empty();
     }
     if (emptyNow) {
+        if (!env || !g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.stopLocating) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "StopLocating env/globalRef/method null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallIntMethod(g_locationservicepluginClass.globalRef,
             g_locationservicepluginClass.stopLocating);
         if (env->ExceptionCheck()) {
@@ -627,7 +642,7 @@ Location::LocationErrCode LocationServiceJni::IsGeoConvertAvailable(bool& isAvai
     return Location::LocationErrCode::ERRCODE_SUCCESS;
 }
 
-static inline bool CreateJavaStrings(JNIEnv* env, const std::unique_ptr<Location::ReverseGeoCodeRequest>& data,
+static bool CreateJavaStrings(JNIEnv* env, const std::unique_ptr<Location::ReverseGeoCodeRequest>& data,
     jstring& jLocale, jstring& jCountry, jstring& jTransId)
 {
     const char* localeCStr = data->locale_.empty() ? "" : data->locale_.c_str();
@@ -637,17 +652,12 @@ static inline bool CreateJavaStrings(JNIEnv* env, const std::unique_ptr<Location
     jLocale = env->NewStringUTF(localeCStr);
     jCountry = env->NewStringUTF(countryCStr);
     jTransId = env->NewStringUTF(transIdCStr);
+
     if (!jLocale || !jCountry || !jTransId) {
         LBSLOGE(LOCATION_SERVICE_JNI, "Failed to create Java strings");
-        if (jLocale) {
-            env->DeleteLocalRef(jLocale);
-        }
-        if (jCountry) {
-            env->DeleteLocalRef(jCountry);
-        }
-        if (jTransId) {
-            env->DeleteLocalRef(jTransId);
-        }
+        if (jLocale) env->DeleteLocalRef(jLocale);
+        if (jCountry) env->DeleteLocalRef(jCountry);
+        if (jTransId) env->DeleteLocalRef(jTransId);
         return false;
     }
     return true;
@@ -721,9 +731,13 @@ static inline bool ValidateCoordinates(double lat, double lon)
     return true;
 }
 
-static inline jobjectArray GetAddressArray(JNIEnv* env, const std::unique_ptr<Location::ReverseGeoCodeRequest>& data,
+static jobjectArray GetAddressArray(JNIEnv* env, const std::unique_ptr<Location::ReverseGeoCodeRequest>& data,
     jstring jLocale, jstring jCountry, jstring jTransId)
 {
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getAddressByCoordinate) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "GetAddressByCoordinate: globalRef or method ID is null");
+        return nullptr;
+    }
     return static_cast<jobjectArray>(env->CallObjectMethod(
         g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.getAddressByCoordinate,
@@ -762,11 +776,9 @@ Location::LocationErrCode LocationServiceJni::GetAddressByCoordinate(
     LBSLOGI(LOCATION_SERVICE_JNI, "LocationServiceJni::GetAddressByCoordinate");
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!env) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "GetAddressByCoordinate: failed to get jni env");
         return Location::LocationErrCode::ERRCODE_REVERSE_GEOCODING_FAIL;
     }
     if (!data) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "GetAddressByCoordinate request null");
         return Location::LocationErrCode::ERRCODE_INVALID_PARAM;
     }
     if (!ValidateCoordinates(data->latitude_, data->longitude_)) {
@@ -810,8 +822,6 @@ Location::LocationErrCode LocationServiceJni::GetAddressByCoordinate(
     env->DeleteLocalRef(clsAddress);
     env->DeleteLocalRef(jAddrArray);
     ReleaseJavaStrings(env, jLocale, jCountry, jTransId);
-
-    LBSLOGI(LOCATION_SERVICE_JNI, "GetAddressByCoordinate done size=%zu", replyList.size());
     return result;
 }
 
@@ -855,7 +865,7 @@ static inline void ReleaseJavaStrings(JNIEnv* env, jstring jDesc, jstring jLocal
     if (jTransId) env->DeleteLocalRef(jTransId);
 }
 
-static inline void ParseAddress(JNIEnv* env, jobject jAddr, jclass clsAddress,
+static void ParseAddress(JNIEnv* env, jobject jAddr, jclass clsAddress,
     const std::unique_ptr<Location::GeoCodeRequest>& request,
     std::list<std::shared_ptr<Location::GeoAddress>>& replyList)
 {
@@ -902,7 +912,7 @@ static inline void ParseAddress(JNIEnv* env, jobject jAddr, jclass clsAddress,
     replyList.push_back(geo);
 }
 
-static inline Location::LocationErrCode ProcessAddressArray(JNIEnv* env, jobjectArray jAddrArray, jclass clsAddress,
+static Location::LocationErrCode ProcessAddressArray(JNIEnv* env, jobjectArray jAddrArray, jclass clsAddress,
     const std::unique_ptr<Location::GeoCodeRequest>& request,
     std::list<std::shared_ptr<Location::GeoAddress>>& replyList, jint maxItems)
 {
@@ -914,7 +924,6 @@ static inline Location::LocationErrCode ProcessAddressArray(JNIEnv* env, jobject
         if (!jAddr) {
             continue;
         }
-
         ParseAddress(env, jAddr, clsAddress, request, replyList);
         env->DeleteLocalRef(jAddr);
 
@@ -941,6 +950,11 @@ static Location::LocationErrCode PrepareAndProcessAddress(JNIEnv* env,
     std::list<std::shared_ptr<Location::GeoAddress>>& replyList,
     jstring jDesc, jstring jLocale, jstring jCountry, jstring jTransId)
 {
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getAddressByLocationName) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "GetAddressByLocationName: globalRef or method ID is null");
+        ReleaseJavaStrings(env, jDesc, jLocale, jCountry, jTransId);
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
     jobjectArray jAddrArray = (jobjectArray)env->CallObjectMethod(
         g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.getAddressByLocationName,
@@ -1014,6 +1028,10 @@ std::shared_ptr<Location::CountryCode> LocationServiceJni::GetIsoCountryCode()
         LBSLOGE(LOCATION_SERVICE_JNI, "GetIsoCountryCode: failed to get jni env");
         return nullptr;
     }
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getIsoCountryCode) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "GetIsoCountryCode: globalRef or method ID is null");
+        return nullptr;
+    }
     auto countryCodeFromJava = env->CallObjectMethod(
         g_locationservicepluginClass.globalRef, g_locationservicepluginClass.getIsoCountryCode);
     if (env->ExceptionCheck()) {
@@ -1064,7 +1082,7 @@ static int32_t GenerateFenceId()
     return g_fenceIdCounter;
 }
 
-static inline int64_t ComputeRemainingExpirationMs(GeofenceRequest& request)
+static int64_t ComputeRemainingExpirationMs(GeofenceRequest& request)
 {
     int64_t abs = request.GetRequestExpirationTime();
     if (abs <= 0) {
@@ -1172,6 +1190,11 @@ static inline void ReportInvalidGeofenceParams(
 static bool CallAddGnssGeofence(JNIEnv* env, const Location::GeoFence& geofence,
     int64_t expirationMs, int32_t fenceId)
 {
+    if (!env || !g_locationservicepluginClass.globalRef ||
+        !g_locationservicepluginClass.addGnssGeofence) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "AddGnssGeofence env/globalRef/method null");
+        return false;
+    }
     env->CallVoidMethod(
         g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.addGnssGeofence,
@@ -1331,7 +1354,6 @@ Location::LocationErrCode LocationServiceJni::RemoveGnssGeofence(int32_t fenceId
     LBSLOGI(LOCATION_SERVICE_JNI, "LocationServiceJni::RemoveGnssGeofence fenceId=%d", fenceId);
     auto env = ARKUI_X_Plugin_GetJniEnv();
     if (!env) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "RemoveGnssGeofence: failed to get jni env");
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
     }
     auto errCode = CheckLocationPermission(env);
@@ -1339,7 +1361,6 @@ Location::LocationErrCode LocationServiceJni::RemoveGnssGeofence(int32_t fenceId
         return errCode;
     }
     if (fenceId <= 0 || !callback) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "RemoveGnssGeofence invalid param fenceId=%d", fenceId);
         if (callback) {
             callback->OnReportOperationResult(fenceId,
                 (int)Location::GnssGeofenceOperateType::GNSS_GEOFENCE_OPT_TYPE_DELETE,
@@ -1347,19 +1368,21 @@ Location::LocationErrCode LocationServiceJni::RemoveGnssGeofence(int32_t fenceId
         }
         return Location::LocationErrCode::ERRCODE_INVALID_PARAM;
     }
-    if (!g_locationservicepluginClass.globalRef ||
-        !g_locationservicepluginClass.removeGnssGeofence) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "RemoveGnssGeofence env/globalRef/method null");
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.removeGnssGeofence) {
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
     }
-
+    if (!GetGeofenceCallback(fenceId)) {
+        callback->OnReportOperationResult(fenceId,
+            (int)Location::GnssGeofenceOperateType::GNSS_GEOFENCE_OPT_TYPE_DELETE,
+            (int)Location::GnssGeofenceOperateResult::GNSS_GEOFENCE_OPERATION_ERROR_PARAMS_INVALID);
+        return Location::LocationErrCode::ERRCODE_INVALID_PARAM;
+    }
     env->CallVoidMethod(
         g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.removeGnssGeofence,
         (jint)fenceId);
 
     if (env->ExceptionCheck()) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "RemoveGnssGeofence JNI exception");
         env->ExceptionDescribe();
         env->ExceptionClear();
         callback->OnReportOperationResult(fenceId,
@@ -1378,7 +1401,6 @@ Location::LocationErrCode LocationServiceJni::RemoveGnssGeofence(int32_t fenceId
         (int)Location::GnssGeofenceOperateType::GNSS_GEOFENCE_OPT_TYPE_DELETE,
         (int)Location::GnssGeofenceOperateResult::GNSS_GEOFENCE_OPERATION_SUCCESS);
 
-    LBSLOGI(LOCATION_SERVICE_JNI, "RemoveGnssGeofence success fenceId=%d", fenceId);
     return Location::LocationErrCode::ERRCODE_SUCCESS;
 }
 
@@ -1394,7 +1416,10 @@ Location::LocationErrCode LocationServiceJni::GetCurrentWifiBssidForLocating(std
     if (errCode != Location::LocationErrCode::ERRCODE_SUCCESS) {
         return errCode;
     }
-
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getCurrentWifiBssidForLocating) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "GetCurrentWifiBssidForLocating: globalRef or method ID is null");
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
     auto result = env->CallObjectMethod(
         g_locationservicepluginClass.globalRef, g_locationservicepluginClass.getCurrentWifiBssidForLocating);
     if (env->ExceptionCheck()) {
@@ -1445,6 +1470,11 @@ Location::LocationErrCode LocationServiceJni::RegisterSwitchCallback(
         g_switchCallbacks.push_back(sptr<Location::LocationSwitchCallbackNapi>(switchCallbackHost));
     }
     if (needObserver) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.registerSwitchCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "RegisterSwitchCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(
             g_locationservicepluginClass.globalRef, g_locationservicepluginClass.registerSwitchCallback);
         if (env->ExceptionCheck()) {
@@ -1484,6 +1514,11 @@ Location::LocationErrCode LocationServiceJni::UnregisterSwitchCallback(
         emptyNow = vec.empty();
     }
     if (emptyNow) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.unregisterSwitchCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "UnregisterSwitchCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(
             g_locationservicepluginClass.globalRef, g_locationservicepluginClass.unregisterSwitchCallback);
         if (env->ExceptionCheck()) {
@@ -1535,8 +1570,12 @@ Location::LocationErrCode LocationServiceJni::RegisterCountryCodeCallback(
         g_countryCodeCallbacks.push_back(sptr<Location::CountryCodeCallbackNapi>(callbackHost));
     }
     if (needObserver) {
-        env->CallVoidMethod(g_locationservicepluginClass.globalRef,
-            g_locationservicepluginClass.registerCountryCodeCallback);
+        if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.registerCountryCodeCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "RegisterCountryCodeCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
+        env->CallVoidMethod(
+            g_locationservicepluginClass.globalRef, g_locationservicepluginClass.registerCountryCodeCallback);
         if (env->ExceptionCheck()) {
             env->ExceptionDescribe();
             env->ExceptionClear();
@@ -1574,6 +1613,11 @@ Location::LocationErrCode LocationServiceJni::UnregisterCountryCodeCallback(
         becameEmpty = vec.empty();
     }
     if (becameEmpty) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.unregisterCountryCodeCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "UnregisterCountryCodeCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(
             g_locationservicepluginClass.globalRef, g_locationservicepluginClass.unregisterCountryCodeCallback);
         if (env->ExceptionCheck()) {
@@ -1639,6 +1683,11 @@ Location::LocationErrCode LocationServiceJni::RegisterGnssStatusCallback(sptr<Lo
         g_gnssStatusCallbacks.push_back(sptr<Location::GnssStatusCallbackNapi>(cb));
     }
     if (needObserver) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.registerGnssStatusCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "RegisterGnssStatusCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(g_locationservicepluginClass.globalRef,
             g_locationservicepluginClass.registerGnssStatusCallback);
         if (env->ExceptionCheck()) {
@@ -1679,6 +1728,11 @@ Location::LocationErrCode LocationServiceJni::UnregisterGnssStatusCallback(
         emptyNow = vec.empty();
     }
     if (emptyNow) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.unregisterGnssStatusCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "UnregisterGnssStatusCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(g_locationservicepluginClass.globalRef,
             g_locationservicepluginClass.unregisterGnssStatusCallback);
         if (env->ExceptionCheck()) {
@@ -1718,6 +1772,11 @@ Location::LocationErrCode LocationServiceJni::RegisterNmeaMessageCallback(sptr<L
         g_nmeaCallbacks.push_back(sptr<Location::NmeaMessageCallbackNapi>(cb));
     }
     if (needObserver) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.registerNmeaMessageCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "RegisterNmeaMessageCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(g_locationservicepluginClass.globalRef,
             g_locationservicepluginClass.registerNmeaMessageCallback);
         if (env->ExceptionCheck()) {
@@ -1756,6 +1815,11 @@ Location::LocationErrCode LocationServiceJni::UnregisterNmeaMessageCallback(sptr
         emptyNow = vec.empty();
     }
     if (emptyNow) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.unregisterNmeaMessageCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "UnregisterNmeaMessageCallback: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(g_locationservicepluginClass.globalRef,
             g_locationservicepluginClass.unregisterNmeaMessageCallback);
         if (env->ExceptionCheck()) {
@@ -1892,6 +1956,11 @@ Location::LocationErrCode LocationServiceJni::SubscribeLocationError(
         }
     }
     if (needObserver) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.registerLocationErrorCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "SubscribeLocationError: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(g_locationservicepluginClass.globalRef,
             g_locationservicepluginClass.registerLocationErrorCallback);
     }
@@ -1927,6 +1996,11 @@ Location::LocationErrCode LocationServiceJni::UnsubscribeLocationError(
         emptyNow = vec.empty();
     }
     if (emptyNow) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.unregisterLocationErrorCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "UnsubscribeLocationError: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallVoidMethod(
             g_locationservicepluginClass.globalRef, g_locationservicepluginClass.unregisterLocationErrorCallback);
         if (env->ExceptionCheck()) {
@@ -1983,6 +2057,11 @@ Location::LocationErrCode LocationServiceJni::SubscribeBluetoothScanResultChange
     LBSLOGI(LOCATION_SERVICE_JNI,
         "LocationServiceJni::SubscribeBluetoothScanResultChange needObserver=%d", needObserver ? 1 : 0);
     if (needObserver) {
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.registerBluetoothScanResultCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "SubscribeBluetoothScanResultChange: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
         env->CallIntMethod(g_locationservicepluginClass.globalRef,
             g_locationservicepluginClass.registerBluetoothScanResultCallback);
     }
@@ -2018,8 +2097,14 @@ Location::LocationErrCode LocationServiceJni::UnsubscribeBluetoothScanResultChan
         emptyNow = vec.empty();
     }
     if (emptyNow) {
-        env->CallVoidMethod(g_locationservicepluginClass.globalRef,
-             g_locationservicepluginClass.unregisterBluetoothScanResultCallback);
+        if (!g_locationservicepluginClass.globalRef ||
+            !g_locationservicepluginClass.unregisterBluetoothScanResultCallback) {
+            LBSLOGE(LOCATION_SERVICE_JNI, "UnsubscribeBluetoothScanResultChange: globalRef or method ID is null");
+            return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+        }
+        env->CallVoidMethod(
+            g_locationservicepluginClass.globalRef,
+            g_locationservicepluginClass.unregisterBluetoothScanResultCallback);
         if (env->ExceptionCheck()) {
             env->ExceptionDescribe();
             env->ExceptionClear();
