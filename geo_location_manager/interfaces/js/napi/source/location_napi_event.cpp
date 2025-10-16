@@ -165,7 +165,6 @@ void GenerateExecuteContext(SingleLocationAsyncContext* context)
         }
         UpdatePoiErrorCode(isNeedLocation, context);
         callbackHost->SetCount(1);
-        context->errCode = LOCATION_SWITCH_ERROR;
     }
 }
 

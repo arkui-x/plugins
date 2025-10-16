@@ -139,7 +139,6 @@ void BluetoothScanResultCallbackNapi::DoSendWork(uv_loop_s*& loop, uv_work_t*& w
 void BluetoothScanResultCallbackNapi::OnBluetoothScanResultChange(
     const std::unique_ptr<BluetoothScanResult>& bluetoothScanResult)
 {
-    LBSLOGI(BLUETOOTH_CALLBACK, "CountryCodeCallbackNapi::OnCountryCodeChange");
     std::unique_lock<std::mutex> guard(mutex_);
     uv_loop_s *loop = nullptr;
     if (env_ == nullptr) {
