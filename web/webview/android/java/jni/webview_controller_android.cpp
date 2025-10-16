@@ -15,6 +15,7 @@
 
 #include "webview_controller_android.h"
 
+#include "inner_api/plugin_utils_inner.h"
 #include "log.h"
 #include "plugins/web/webview/android/java/jni/webview_controller_jni.h"
 
@@ -216,5 +217,27 @@ void WebviewControllerAndroid::RegisterJavaScriptProxy(const RegisterJavaScriptP
 void WebviewControllerAndroid::DeleteJavaScriptRegister(const std::string& objName)
 {
     WebviewControllerJni::DeleteJavaScriptRegister(webId_, objName);
+}
+
+bool WebviewControllerAndroid::SetWebSchemeHandler(const char* scheme, WebSchemeHandler* handler)
+{
+    CHECK_NULL_RETURN(scheme, false);
+    CHECK_NULL_RETURN(handler, false);
+    std::string schemeStr(scheme);
+    auto arkHandler = WebSchemeHandler::GetArkWebSchemeHandler(handler);
+    WebSchemeHandlerJni::InsertSchemeRequestHandler(schemeStr, arkHandler);
+    return WebviewControllerJni::SetWebSchemeHandler(webId_, schemeStr);
+}
+
+bool WebviewControllerAndroid::ClearWebSchemeHandler()
+{
+    WebSchemeHandlerJni::ClearSchemeRequestHandler();
+    WebviewControllerJni::ClearWebSchemeHandler(webId_);
+    return true;
+}
+
+std::string WebviewControllerAndroid::GetUserAgent()
+{
+    return WebviewControllerJni::GetUserAgent(webId_);
 }
 }

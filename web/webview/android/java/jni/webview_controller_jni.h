@@ -95,6 +95,9 @@ public:
     static jobject ConvertWebStringToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
     static jobject ConvertWebListToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
     static jobject ConvertWebDictionaryToJava(JNIEnv* env, std::shared_ptr<Ace::WebJSValue>& ret);
+    static bool SetWebSchemeHandler(int id, const std::string& scheme);
+    static void ClearWebSchemeHandler(int id);
+    static std::string GetUserAgent(int id);
 };
 }
 

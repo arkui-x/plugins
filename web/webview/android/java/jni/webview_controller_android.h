@@ -62,6 +62,9 @@ public:
     void StartDownload(const std::string& url) override;
     void RegisterJavaScriptProxy(const RegisterJavaScriptProxyParam& param) override;
     void DeleteJavaScriptRegister(const std::string& objName) override;
+    bool SetWebSchemeHandler(const char* scheme, WebSchemeHandler* handler) override;
+    bool ClearWebSchemeHandler() override;
+    std::string GetUserAgent() override;
 };
 }
 #endif

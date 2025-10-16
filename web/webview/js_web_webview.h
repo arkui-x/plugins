@@ -143,6 +143,12 @@ private:
     static napi_value RegisterJavaScriptProxy(napi_env env, napi_callback_info info);
 
     static napi_value DeleteJavaScriptRegister(napi_env env, napi_callback_info info);
+
+    static napi_value SetWebSchemeHandler(napi_env env, napi_callback_info info);
+
+    static napi_value ClearWebSchemeHandler(napi_env env, napi_callback_info info);
+
+    static napi_value GetUserAgent(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {
@@ -366,6 +372,17 @@ private:
         
     static void CreateGetStoredGeolocationAsyncWork(napi_env env,
         const std::shared_ptr<GeolocationPermissionsResultCallbackInfo> &callbackInfo);
+};
+
+class NapiWebSchemeHandler {
+public:
+    NapiWebSchemeHandler() = default;
+    ~NapiWebSchemeHandler() = default;
+
+    static napi_value Init(napi_env env, napi_value exports);
+    static napi_value JS_Constructor(napi_env env, napi_callback_info info);
+    static napi_value JS_RequestStart(napi_env env, napi_callback_info info);
+    static napi_value JS_RequestStop(napi_env env, napi_callback_info info);
 };
 }
 #endif

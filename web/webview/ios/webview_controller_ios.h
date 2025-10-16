@@ -18,6 +18,7 @@
 
 #include "plugins/web/webview/webview_controller.h"
 #include "plugins/web/webview/web_download_delegate.h"
+#include "plugins/web/webview/web_scheme_handler_request.h"
 
 namespace OHOS::Plugin {
 class WebviewControllerIOS : public WebviewController {
@@ -61,6 +62,9 @@ public:
     void StartDownload(const std::string& url) override;
     void RegisterJavaScriptProxy(const RegisterJavaScriptProxyParam& param) override;
     void DeleteJavaScriptRegister(const std::string& objName) override;
+    bool SetWebSchemeHandler(const char* scheme, WebSchemeHandler* handler) override;
+    bool ClearWebSchemeHandler() override;
+    std::string GetUserAgent() override;
 };
 } // namespace OHOS::Plugin
 #endif

@@ -30,6 +30,7 @@
 #include "log.h"
 #include "napi_parse_utils.h"
 #include "napi_web_message_ext.h"
+#include "napi_web_scheme_handler_request.h"
 #include "plugin_utils.h"
 #include "web_download_delegate.h"
 #include "web_download_item.h"
@@ -37,7 +38,9 @@
 #include "web_message_port.h"
 #include "webview_controller.h"
 #include "webview_javascript_async_work_callback.h"
+#include "web_scheme_handler_request.h"
 #ifdef ANDROID_PLATFORM
+#include "android/java/jni/android_asset_helper_jni.h"
 #include "android/java/jni/web_cookie_manager_android.h"
 #include "android/java/jni/web_cookie_manager_jni.h"
 #include "android/java/jni/web_data_base_android.h"
@@ -51,6 +54,7 @@
 #include "android/java/jni/web_storage_jni.h"
 #include "android/java/jni/webview_controller_android.h"
 #include "android/java/jni/webview_controller_jni.h"
+#include "android/java/jni/web_scheme_handler_jni.h"
 #endif
 #ifdef IOS_PLATFORM
 #include "ios/webview_controller_ios.h"
@@ -67,9 +71,11 @@ thread_local napi_ref g_classWebMsgPort;
 thread_local napi_ref g_jsMsgExtClassRef;
 thread_local int32_t g_asyncCallbackInfoId = 0;
 constexpr int32_t MAX_COUNT_ID = 1024;
+const std::string ANDROID_ASSET = "file:///android_asset/";
+const std::string ARKUIX_PATH_MARKER = "files/arkui-x/";
 const std::string HTTP = "http://";
 const std::string HTTPS = "https://";
-const std::string RESOURCE = "resource://rawfile";
+const std::string RESOURCE = "resource://rawfile/";
 const std::string FILE = "file";
 constexpr int32_t MAX_WEB_STRING_LENGTH = 40960;
 constexpr uint32_t URL_MAXIMUM = 2048;
@@ -79,6 +85,24 @@ const char* rawfile = "resource://rawfile/";
 const char* replacement = "file:///";
 std::regex reg("^(https?|file)://[\\w.-/]+(:\\d+)?(/.*)?$");
 
+bool ExistsWebFileUrl(const std::string &webFileUrl)
+{
+#ifdef ANDROID_PLATFORM
+    if (webFileUrl.substr(INTEGER_ZERO, ANDROID_ASSET.size()) == ANDROID_ASSET) {
+        return AndroidAssetHelperJni::ExistsVirtualAsset(webFileUrl);
+    }
+#endif
+
+    std::string fileProtocolName = "file";
+    if (webFileUrl.substr(INTEGER_ZERO, fileProtocolName.size()) == "file") {
+        std::string filePath = webFileUrl;
+        std::string fileProtocol = "file:///";
+        filePath.erase(INTEGER_ZERO, fileProtocol.size());
+        return access(filePath.c_str(), F_OK) != -1;
+    }
+
+    return true;
+}
 
 bool GetRawFileUrl(const std::string &fileName, std::string &result)
 {
@@ -86,7 +110,19 @@ bool GetRawFileUrl(const std::string &fileName, std::string &result)
         return false;
     }
     result = NapiWebviewController::appHapPath_ + "/resources/rawfile/" + fileName;
-    LOGE("The parsed url is: %{public}s", result.c_str());
+
+#ifdef ANDROID_PLATFORM
+    size_t pos = NapiWebviewController::appHapPath_.find(ARKUIX_PATH_MARKER);
+    if (pos != std::string::npos) {
+        std::string assetPath = ANDROID_ASSET +
+            NapiWebviewController::appHapPath_.substr(pos + std::strlen("files/")) + "/resources/rawfile/" + fileName;
+        if (AndroidAssetHelperJni::ExistsVirtualAsset(assetPath)) {
+            result = assetPath;
+        }
+    }
+#endif
+
+    LOGD("The parsed url is: %{public}s", result.c_str());
     return true;
 }
 
@@ -307,15 +343,8 @@ napi_value NapiWebviewController::LoadUrl(napi_env env, napi_callback_info info)
         LOGE("ParseUrl failed");
         return nullptr;
     }
-    std::string fileProtocolName = "file";
-    if (webSrc.substr(INTEGER_ZERO, fileProtocolName.size()) == "file") {
-        std::string filePath = webSrc;
-        std::string fileProtocol = "file:///";
-        filePath.erase(INTEGER_ZERO, fileProtocol.size());
-        int isFileExist = access(filePath.c_str(), F_OK);
-        if (isFileExist == -1) {
-            BusinessError::ThrowErrorByErrcode(env, INVALID_RESOURCE);
-        }
+    if (!ExistsWebFileUrl(webSrc)) {
+        BusinessError::ThrowErrorByErrcode(env, INVALID_RESOURCE);
     }
     if (argc == INTEGER_ONE) {
         ErrCode ret = webviewController->LoadUrl(webSrc);
@@ -1770,6 +1799,59 @@ napi_value NapiWebviewController::RegisterJavaScriptProxy(napi_env env, napi_cal
     return result;
 }
 
+napi_value NapiWebviewController::SetWebSchemeHandler(napi_env env, napi_callback_info info)
+{
+    size_t argc = 2;
+    napi_value argv[2] = {0};
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+
+    WebviewController *webviewController = nullptr;
+    NAPI_CALL(env, napi_unwrap(env, thisVar, (void **)&webviewController));
+    if (webviewController == nullptr || !webviewController->IsInit()) {
+        BusinessError::ThrowErrorByErrcode(env, INIT_ERROR);
+        LOGE("create message port failed, napi unwrap webviewController failed");
+        return nullptr;
+    }
+
+    std::string scheme = "";
+    if (!NapiParseUtils::ParseString(env, argv[0], scheme)) {
+        LOGE("NapiWebviewController::SetWebSchemeHandler parse scheme failed");
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "scheme", "string"));
+        return nullptr;
+    }
+
+    WebSchemeHandler* handler = nullptr;
+    napi_value obj = argv[1];
+    napi_unwrap(env, obj, (void**)&handler);
+    if (!handler) {
+        LOGE("NapiWebviewController::SetWebSchemeHandler handler is null");
+        return nullptr;
+    }
+    if (!webviewController->SetWebSchemeHandler(scheme.c_str(), handler)) {
+        LOGE("NapiWebviewController::SetWebSchemeHandler failed");
+    }
+    return nullptr;
+}
+
+napi_value NapiWebviewController::ClearWebSchemeHandler(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    WebviewController *webviewController = GetWebviewController(env, info);
+    if (!webviewController) {
+        napi_get_undefined(env, &result);
+        return result;
+    }
+
+    if (!webviewController->ClearWebSchemeHandler()) {
+        LOGE("NapiWebviewController::ClearWebSchemeHandler failed");
+    }
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    return result;
+}
+
 napi_value NapiWebviewController::DeleteJavaScriptRegister(napi_env env, napi_callback_info info)
 {
     napi_value thisVar = nullptr;
@@ -1806,6 +1888,21 @@ napi_value NapiWebviewController::DeleteJavaScriptRegister(napi_env env, napi_ca
 
     controller->DeleteJavaScriptRegister(objName);
     WebviewController::DeleteJavaScriptProxy(objName);
+    return result;
+}
+
+napi_value NapiWebviewController::GetUserAgent(napi_env env, napi_callback_info info)
+{
+    napi_value result = nullptr;
+    WebviewController *webviewController = GetWebviewController(env, info);
+    if (!webviewController) {
+        return nullptr;
+    }
+
+    std::string userAgent = "";
+    userAgent = webviewController->GetUserAgent();
+    napi_create_string_utf8(env, userAgent.c_str(), userAgent.length(), &result);
+
     return result;
 }
 
@@ -1852,6 +1949,9 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("registerJavaScriptProxy", NapiWebviewController::RegisterJavaScriptProxy),
         DECLARE_NAPI_FUNCTION("deleteJavaScriptRegister", NapiWebviewController::DeleteJavaScriptRegister),
         DECLARE_NAPI_FUNCTION("jsProxy", NapiWebviewController::RegisterJavaScriptProxy),
+        DECLARE_NAPI_FUNCTION("setWebSchemeHandler", NapiWebviewController::SetWebSchemeHandler),
+        DECLARE_NAPI_FUNCTION("clearWebSchemeHandler", NapiWebviewController::ClearWebSchemeHandler),
+        DECLARE_NAPI_FUNCTION("getUserAgent", NapiWebviewController::GetUserAgent),
     };
 
     napi_value constructor = nullptr;
@@ -2072,6 +2172,9 @@ static napi_value WebWebviewExport(napi_env env, napi_value exports)
     NapiWebDownloadManager::Init(env, exports);
     NapiWebDownloadItem::Init(env, exports);
     NapiWebMessageExt::Init(env, exports);
+    NapiWebSchemeHandler::Init(env, exports);
+    NapiWebSchemeHandlerRequest::Init(env, exports);
+    NapiWebSchemeHandlerResponse::Init(env, exports);
     return exports;
 }
 
@@ -2102,6 +2205,10 @@ static void WebWebviewJniRegister()
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDownloadDelegateJni::Register, webDownloadDelegateClassName);
     const char webDownloadItemClassName[] = "ohos.ace.adapter.capability.web.AceWebPluginBase";
     ARKUI_X_Plugin_RegisterJavaPlugin(&WebDownloadItemJni::Register, webDownloadItemClassName);
+    const char webSchemeRequestClassName[] = "ohos.ace.adapter.capability.web.AceWebPluginBase";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&WebSchemeHandlerJni::Register, webSchemeRequestClassName);
+    const char AndroidAssetClassName[] = "ohos.ace.plugin.webviewplugin.androidasset.AndroidAssetPlugin";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&AndroidAssetHelperJni::Register, AndroidAssetClassName);
 }
 #endif
 
@@ -4027,5 +4134,103 @@ napi_status NapiWebDownloadItem::DefineProperties(napi_env env, napi_value* obje
         DECLARE_NAPI_FUNCTION("getGuid", JS_GetGuid),
     };
     return napi_define_properties(env, *object, sizeof(properties) / sizeof(properties[0]), properties);
+}
+
+napi_value NapiWebSchemeHandler::Init(napi_env env, napi_value exports)
+{
+    napi_property_descriptor properties[] = {
+        DECLARE_NAPI_FUNCTION("onRequestStart", JS_RequestStart),
+        DECLARE_NAPI_FUNCTION("onRequestStop", JS_RequestStop),
+    };
+    napi_value webSchemeHandler = nullptr;
+    napi_define_class(env, WEB_SCHEME_HANDLER.c_str(), WEB_SCHEME_HANDLER.length(),
+        JS_Constructor, nullptr,
+        sizeof(properties) / sizeof(properties[0]), properties, &webSchemeHandler);
+    napi_set_named_property(env, exports, WEB_SCHEME_HANDLER.c_str(),
+        webSchemeHandler);
+    return exports;
+}
+
+napi_value NapiWebSchemeHandler::JS_Constructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, &data);
+
+    WebSchemeHandler *handler = new WebSchemeHandler(env);
+
+    napi_wrap(
+        env, thisVar, handler,
+        [](napi_env /* env */, void *data, void * /* hint */) {
+            WebSchemeHandler *handler = (WebSchemeHandler *)data;
+            delete handler;
+        },
+        nullptr, nullptr);
+
+    return thisVar;
+}
+
+napi_value NapiWebSchemeHandler::JS_RequestStart(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    WebSchemeHandler *handler = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+
+    napi_unwrap(env, thisVar, (void **)&handler);
+    if (!handler) {
+        LOGE("webSchemeHandler is null");
+        return thisVar;
+    }
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::PARAM_NUMBERS_ERROR_ONE, "one"));
+        return nullptr;
+    }
+    if (valueType != napi_function) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR,
+            NWebError::FormatString(ParamCheckErrorMsgTemplate::TYPE_ERROR, "callback", "function"));
+        return nullptr;
+    }
+
+    handler->PutRequestStart(env, argv[0]);
+    return thisVar;
+}
+
+napi_value NapiWebSchemeHandler::JS_RequestStop(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = {0};
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    WebSchemeHandler *handler = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (argc != INTEGER_ONE) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    napi_unwrap(env, thisVar, (void **)&handler);
+    if (!handler) {
+        LOGE("webSchemeHandler is null");
+        return thisVar;
+    }
+
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[0], &valueType);
+
+    if (valueType != napi_function) {
+        BusinessError::ThrowErrorByErrcode(env, PARAM_CHECK_ERROR);
+        return nullptr;
+    }
+
+    handler->PutRequestStop(env, argv[0]);
+    return thisVar;
 }
 } // namespace OHOS::Plugin

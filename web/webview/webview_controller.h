@@ -26,6 +26,7 @@
 #include "web_value.h"
 #include "webview_async_work_callback.h"
 #include "webview_javascript_async_work_callback.h"
+#include "web_scheme_handler_request.h"
 
 namespace OHOS::Plugin {
 struct WebHistoryItem final {
@@ -125,6 +126,9 @@ public:
     virtual int32_t GetPageHeight() = 0;
     virtual void RegisterJavaScriptProxy(const RegisterJavaScriptProxyParam& param) = 0;
     virtual void DeleteJavaScriptRegister(const std::string& objName) = 0;
+    virtual bool SetWebSchemeHandler(const char* scheme, WebSchemeHandler* handler) = 0;
+    virtual bool ClearWebSchemeHandler() = 0;
+    virtual std::string GetUserAgent() = 0;
     virtual ErrCode ClearHistory() {
         return NWebError::NO_ERROR;
     }

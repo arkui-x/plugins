@@ -28,6 +28,8 @@ template("plugin_web_webview_static") {
       "//commomlibrary/c_utils/base/include",
       "//plugins/interfaces/native",
     ]
+    include_dirs +=
+      [ "//foundation/arkui/ace_engine/adapter/ios/capability/web/" ]
 
     sources = web_source
     sources += [
@@ -36,12 +38,14 @@ template("plugin_web_webview_static") {
       "js_web_webview.cpp",
       "napi_parse_utils.cpp",
       "napi_web_message_ext.cpp",
+      "napi_web_scheme_handler_request.cpp",
       "web_cookie_manager.cpp",
       "web_cookie_manager_callback.cpp",
       "web_download_delegate.cpp",
       "web_download_item.cpp",
       "web_download_manager.cpp",
       "web_message_port.cpp",
+      "web_scheme_handler_request.cpp",
       "web_storage.cpp",
       "web_storage_callback.cpp",
       "webview_async_work_callback.cpp",

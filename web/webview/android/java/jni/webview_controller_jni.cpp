@@ -126,6 +126,12 @@ static const char METHOD_REGISTERJAVASCRIPTPROXY[] = "registerJavaScriptProxy";
 
 static const char METHOD_DELETEJAVASCRIPTREGISTER[] = "deleteJavaScriptRegister";
 
+static const char METHOD_SET_WEB_SCHEME_HANDLER[] = "setWebSchemeHandler";
+
+static const char METHOD_CLEAR_WEB_SCHEME_HANDLER[] = "clearWebSchemeHandler";
+
+static const char METHOD_GET_USER_AGENT[] = "getUserAgent";
+
 static const char SIGNATURE_LOADURL[] = "(JLjava/lang/String;Ljava/util/HashMap;)V";
 
 static const char SIGNATURE_LOADDATA[] = "(JLjava/util/HashMap;)V";
@@ -209,6 +215,12 @@ static const char SIGNATURE_REGISTERJAVASCRIPTPROXY[] =
 
 static const char SIGNATURE_DELETEJAVASCRIPTREGISTER[] = "(JLjava/lang/String;)V";
 
+static const char SIGNATURE_SET_WEB_SCHEME_HANDLER[] = "(JLjava/lang/String;)Z";
+
+static const char SIGNATURE_CLEAR_WEB_SCHEME_HANDLER[] = "(J)V";
+
+static const char SIGNATURE_GET_USER_AGENT[] = "(J)Ljava/lang/String;";
+
 bool _webDebuggingAccessInit = false;
 
 struct {
@@ -253,6 +265,9 @@ struct {
     jmethodID onWebMessagePortEventExt;
     jmethodID registerJavaScriptProxy;
     jmethodID deleteJavaScriptRegister;
+    jmethodID setWebSchemeHandler;
+    jmethodID clearWebSchemeHandler;
+    jmethodID getUserAgent;
     jobject globalRef;
 } g_webWebviewClass;
 }
@@ -320,6 +335,11 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
         env->GetMethodID(cls, METHOD_REGISTERJAVASCRIPTPROXY, SIGNATURE_REGISTERJAVASCRIPTPROXY);
     g_webWebviewClass.deleteJavaScriptRegister =
         env->GetMethodID(cls, METHOD_DELETEJAVASCRIPTREGISTER, SIGNATURE_DELETEJAVASCRIPTREGISTER);
+    g_webWebviewClass.setWebSchemeHandler =
+        env->GetMethodID(cls, METHOD_SET_WEB_SCHEME_HANDLER, SIGNATURE_SET_WEB_SCHEME_HANDLER);
+    g_webWebviewClass.clearWebSchemeHandler =
+        env->GetMethodID(cls, METHOD_CLEAR_WEB_SCHEME_HANDLER, SIGNATURE_CLEAR_WEB_SCHEME_HANDLER);
+    g_webWebviewClass.getUserAgent = env->GetMethodID(cls, METHOD_GET_USER_AGENT, SIGNATURE_GET_USER_AGENT);
     env->DeleteLocalRef(cls);
 }
 
@@ -1751,5 +1771,59 @@ void WebviewControllerJni::DeleteJavaScriptRegister(int id, const std::string& o
         env->ExceptionDescribe();
         env->ExceptionClear();
     }
+}
+
+bool WebviewControllerJni::SetWebSchemeHandler(int id, const std::string& scheme)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, false);
+    CHECK_NULL_RETURN(g_webWebviewClass.globalRef, false);
+    CHECK_NULL_RETURN(g_webWebviewClass.setWebSchemeHandler, false);
+    jstring jsScheme = env->NewStringUTF(scheme.c_str());
+    bool ret = env->CallBooleanMethod(g_webWebviewClass.globalRef, g_webWebviewClass.setWebSchemeHandler, id, jsScheme);
+    env->DeleteLocalRef(jsScheme);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+    return ret;
+}
+
+void WebviewControllerJni::ClearWebSchemeHandler(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_VOID(env);
+    CHECK_NULL_VOID(g_webWebviewClass.globalRef);
+    CHECK_NULL_VOID(g_webWebviewClass.clearWebSchemeHandler);
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.clearWebSchemeHandler, id);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+}
+
+std::string WebviewControllerJni::GetUserAgent(int id)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, "");
+    CHECK_NULL_RETURN(g_webWebviewClass.globalRef, "");
+    CHECK_NULL_RETURN(g_webWebviewClass.getUserAgent, "");
+    jstring jResult = static_cast<jstring>(
+        env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getUserAgent, id));
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return "";
+    }
+    std::string result = "";
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    if (jResult != nullptr) {
+        env->DeleteLocalRef(jResult);
+    }
+    return result;
 }
 }
