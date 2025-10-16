@@ -41,7 +41,10 @@ ohos_source_set("geolocationmanager_android_jni") {
     "java/jni/location_service_jni.cpp",
   ]
 
-  defines = [ "ANDROID_PLATFORM" ]
+  defines = [
+    "ANDROID_PLATFORM",
+    "NOTIFICATION_ENABLE"
+  ]
 
   deps = [
     ":geolocationmanager_java",

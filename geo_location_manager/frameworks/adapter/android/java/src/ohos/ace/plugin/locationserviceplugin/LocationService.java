@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -59,6 +59,7 @@ import java.lang.reflect.Field;
 /**
  * LocationService 类提供了与位置服务相关的功能，包括获取当前位置、注册位置变化回调、
  * 注册国家代码回调、注册NMEA消息回调、注册GNSS状态回调、注册蓝牙扫描结果回调等。
+ * 
  * @since 2025-10-20
  */
 public class LocationService {
@@ -192,7 +193,7 @@ public class LocationService {
         BluetoothManager bm = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter adapter = (bm == null) ? null : bm.getAdapter();
         bluetoothLeScanner = (adapter == null) ? null : adapter.getBluetoothLeScanner();
-        nativeInit();
+        init();
     }
 
     /**
@@ -600,7 +601,9 @@ public class LocationService {
             @Override
             public void onSatelliteStatusChanged(android.location.GnssStatus status) {
                 Log.i(LOG_TAG, "onSatelliteStatusChanged called");
-                if (status == null) return;
+                if (status == null) {
+                    return;
+                }
 
                 int satelliteCount = status.getSatelliteCount();
                 Log.i(LOG_TAG, "onSatelliteStatusChanged count=" + satelliteCount);
@@ -1115,7 +1118,7 @@ public class LocationService {
         Log.i(LOG_TAG, "isGeoConvertAvailable called");
         return Geocoder.isPresent();
     }
-    
+
     /**
      * 根据位置名称获取地址信息。
      * 
@@ -1389,7 +1392,6 @@ public class LocationService {
      * 注册开关回调
      * 
      * @param callback 回调对象
-     * 
      * @return 返回结果
      */
     public int registerSwitchCallback(Object callback) {
@@ -1401,7 +1403,6 @@ public class LocationService {
      * 注册开关回调
      * 
      * @param callback 回调对象
-     * 
      * @return 返回结果
      */
     public int unregisterSwitchCallback(Object callback) {
@@ -1413,16 +1414,16 @@ public class LocationService {
         try {
             Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
             Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
-            
+
             Field mActivitiesField = activityThreadClass.getDeclaredField("mActivities");
             mActivitiesField.setAccessible(true);
             Object mActivitiesObj = mActivitiesField.get(activityThread);
-            
+
             if (!(mActivitiesObj instanceof Map)) {
                 return null;
             }
             Map<?, ?> activitiesMap = (Map<?, ?>) mActivitiesObj;
-            
+
             for (Object activityClientRecord : activitiesMap.values()) {
                 Activity activity = getNonPausedActivity(activityClientRecord);
                 if (activity != null) {
@@ -1445,8 +1446,11 @@ public class LocationService {
 
     /**
      * 从ActivityClientRecord中提取非暂停状态的Activity
+     * 
+     * @param activityClientRecord ActivityClientRecord对象
+     * @return 非暂停状态的Activity对象，如果没有则返回null
      */
-    private Activity getNonPausedActivity(Object activityClientRecord) 
+    private Activity getNonPausedActivity(Object activityClientRecord)
             throws NoSuchFieldException, IllegalAccessException {
         Class<?> recordClass = activityClientRecord.getClass();
         Field pausedField = recordClass.getDeclaredField("paused");
@@ -1454,11 +1458,11 @@ public class LocationService {
         if (pausedField.getBoolean(activityClientRecord)) {
             return null;
         }
-        
+
         Field activityField = recordClass.getDeclaredField("activity");
         activityField.setAccessible(true);
         Object activityObj = activityField.get(activityClientRecord);
-        
+
         return (activityObj instanceof Activity) ? (Activity) activityObj : null;
     }
 
@@ -1467,4 +1471,8 @@ public class LocationService {
      * native void nativeInit();
      */
     protected native void nativeInit();
+
+    private void init() {
+        nativeInit();
+    }
 }

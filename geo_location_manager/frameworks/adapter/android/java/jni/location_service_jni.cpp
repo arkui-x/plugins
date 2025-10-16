@@ -956,17 +956,9 @@ static Location::LocationErrCode PrepareAndProcessAddress(JNIEnv* env,
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
     }
     jobjectArray jAddrArray = (jobjectArray)env->CallObjectMethod(
-        g_locationservicepluginClass.globalRef,
-        g_locationservicepluginClass.getAddressByLocationName,
-        jDesc,
-        (jint)request->maxItems_,
-        jLocale,
-        jCountry,
-        (jdouble)request->minLatitude_,
-        (jdouble)request->minLongitude_,
-        (jdouble)request->maxLatitude_,
-        (jdouble)request->maxLongitude_,
-        jTransId);
+        g_locationservicepluginClass.globalRef, g_locationservicepluginClass.getAddressByLocationName, jDesc,
+        (jint)request->maxItems_, jLocale, jCountry, (jdouble)request->minLatitude_, (jdouble)request->minLongitude_,
+        (jdouble)request->maxLatitude_, (jdouble)request->maxLongitude_, jTransId);
 
     if (env->ExceptionCheck() || !jAddrArray) {
         HandleJniExceptionAndRelease(env, jDesc, jLocale, jCountry, jTransId);
