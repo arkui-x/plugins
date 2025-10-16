@@ -1122,16 +1122,16 @@ public class LocationService {
     /**
      * 根据位置名称获取地址信息。
      * 
-     * @param desc       位置描述
-     * @param maxItems   返回的最大地址数量
-     * @param localeStr  语言环境
-     * @param country    国家
-     * @param minLat     最小纬度
-     * @param minLon     最小经度
-     * @param maxLat     最大纬度
-     * @param maxLon     最大经度
-     * @param transId    事务ID
-     * @return           匹配的地址数组
+     * @param description 位置描述
+     * @param maxItems    返回的最大地址数量
+     * @param localeStr   语言环境
+     * @param country     国家
+     * @param minLat      最小纬度
+     * @param minLon      最小经度
+     * @param maxLat      最大纬度
+     * @param maxLon      最大经度
+     * @param transId     事务ID
+     * @return            匹配的地址数组
      */
     public android.location.Address[] getAddressByLocationName(String description,
                                                            int maxItems,

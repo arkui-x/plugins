@@ -648,11 +648,9 @@ static bool CreateJavaStrings(JNIEnv* env, const std::unique_ptr<Location::Rever
     const char* localeCStr = data->locale_.empty() ? "" : data->locale_.c_str();
     const char* countryCStr = data->country_.empty() ? "" : data->country_.c_str();
     const char* transIdCStr = data->transId_.empty() ? "" : data->transId_.c_str();
-
     jLocale = env->NewStringUTF(localeCStr);
     jCountry = env->NewStringUTF(countryCStr);
     jTransId = env->NewStringUTF(transIdCStr);
-
     if (!jLocale || !jCountry || !jTransId) {
         LBSLOGE(LOCATION_SERVICE_JNI, "Failed to create Java strings");
         if (jLocale) env->DeleteLocalRef(jLocale);
@@ -959,7 +957,6 @@ static Location::LocationErrCode PrepareAndProcessAddress(JNIEnv* env,
         g_locationservicepluginClass.globalRef, g_locationservicepluginClass.getAddressByLocationName, jDesc,
         (jint)request->maxItems_, jLocale, jCountry, (jdouble)request->minLatitude_, (jdouble)request->minLongitude_,
         (jdouble)request->maxLatitude_, (jdouble)request->maxLongitude_, jTransId);
-
     if (env->ExceptionCheck() || !jAddrArray) {
         HandleJniExceptionAndRelease(env, jDesc, jLocale, jCountry, jTransId);
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;

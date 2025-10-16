@@ -27,7 +27,6 @@
 #include "gnss_status_callback_napi.h"
 #include "ilocator_callback.h"
 #include "iremote_object.h"
-#include "ilocator_service.h"
 #include "location.h"
 #include "location_error_callback_napi.h"
 #include "locator_callback_napi.h"
