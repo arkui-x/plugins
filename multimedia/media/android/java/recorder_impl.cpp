@@ -147,6 +147,11 @@ int32_t RecorderImpl::SetAudioEncodingBitRate(int32_t sourceId, int32_t bitRate)
     return Plugin::RecorderJni::SetAudioEncodingBitRate(long(this), bitRate);
 }
 
+int32_t RecorderImpl::SetAudioAacProfile(int32_t sourceId, AacProfile aacProfile)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::SetDataSource(DataSourceType dataType, int32_t &sourceId)
 {
     return MSERR_OK;
