@@ -42,7 +42,7 @@ public:
     ~LocationServiceJni() = delete;
     static bool Register(void* env);
     static void NativeInit(JNIEnv* env, jobject jobj);
-    
+
     static Location::LocationErrCode GetSwitchState(int32_t& state);
     static Location::LocationErrCode StartLocating(
         std::unique_ptr<Location::RequestConfig>& requestConfig,
