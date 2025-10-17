@@ -57,10 +57,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 
 /**
- * LocationService 类提供了与位置服务相关的功能，包括获取当前位置、注册位置变化回调、
- * 注册国家代码回调、注册NMEA消息回调、注册GNSS状态回调、注册蓝牙扫描结果回调等。
- * 
- * @since 2025-10-20
+ * The LocationService class provides functions related to location services, including obtaining the current location,
+ * registering location change callbacks, registering country code callbacks, registering NMEA message callbacks,
+ * registering GNSS status callbacks, registering Bluetooth scan result callbacks, etc.
  */
 public class LocationService {
     private static final String LOG_TAG = "LocationService";
@@ -199,9 +198,9 @@ public class LocationService {
     }
 
     /**
-     * 请求并检查位置权限。
-     * 
-     * @return 返回是否成功请求位置权限。
+     * Requests and checks location permissions.
+     *
+     * @return Returns whether the location permission request was successful.
      */
     public boolean requestAndCheckLocationPermission() {
         Log.i(LOG_TAG, "Java requestLocationPermission called");
@@ -228,7 +227,7 @@ public class LocationService {
                                                            int rssi,
                                                            byte[] data,
                                                            boolean connectable);
-                                    
+
     private native void nativeOnSwitchStateChanged(int enabled);
 
     private native void nativeOnGnssStatusChanged(int satNum,
@@ -334,15 +333,15 @@ public class LocationService {
     }
 
     /**
-     * 根据经纬度地址信息。
-     * 
-     * @param latitude  纬度
-     * @param longitude 经度
-     * @param maxItems  返回的最大地址数量
-     * @param locale    语言环境
-     * @param country   国家
-     * @param transId   事务ID
-     * @return          匹配的地址数组
+     * Obtains address information based on latitude and longitude.
+     *
+     * @param latitude  Latitude
+     * @param longitude Longitude
+     * @param maxItems  Maximum number of addresses to return
+     * @param locale    Language locale
+     * @param country   Country
+     * @param transId   Transaction ID
+     * @return          Array of matching addresses
      */
     public Address[] getAddressByCoordinate(double latitude,
                                             double longitude,
@@ -350,17 +349,10 @@ public class LocationService {
                                             String locale,
                                             String country,
                                             String transId) {
-        int tempMaxItems = maxItems;
-        if (tempMaxItems <= 0) {
-            maxItems = 1;
-        } else {
-            maxItems = 10;
-        }
         Locale loc;
         if (locale == null || locale.isEmpty()) {
             loc = Locale.getDefault();
         } else {
-            // 支持 "zh_CN" / "en-US"
             String lang = locale;
             String region = "";
             if (locale.contains("_")) {
@@ -396,7 +388,7 @@ public class LocationService {
     }
 
     /**
-     * 注册国家代码回调函数。
+     * Registers the country code callback function.
      */
     public void registerCountryCodeCallback() {
         synchronized (countryLock) {
@@ -405,7 +397,7 @@ public class LocationService {
     }
 
     /**
-     * 处理同步块内的所有注册逻辑（仅拆分为这一个子方法）
+     * Handles all registration logic within the synchronized block (split into this single sub-method only)
      */
     private void handleCountryCodeRegistration() {
         if (countryCodeRegistered) {
@@ -435,7 +427,7 @@ public class LocationService {
     }
 
     /**
-     * 取消注册国家代码回调。
+     * Unregisters the country code callback.
      */
     public void unregisterCountryCodeCallback() {
         synchronized (countryLock) {
@@ -459,32 +451,36 @@ public class LocationService {
         if (telephonyManager != null) {
             String simIso = telephonyManager.getSimCountryIso();
             if (simIso != null && !simIso.isEmpty()) {
-                code = simIso;
+                String tempCode = simIso;
+                code = tempCode;
                 type = 2;
             } else {
                 String netIso = telephonyManager.getNetworkCountryIso();
                 if (netIso != null && !netIso.isEmpty()) {
-                    code = netIso;
+                    String tempCode = netIso;
+                    code = tempCode;
                     type = 4;
                 }
             }
         }
         String defaultCode = Locale.getDefault().getCountry();
         if (code.isEmpty()) {
-            code = defaultCode;
+            String tempCode = defaultCode;
+            code = tempCode;
         }
         if (code == null) {
-            code = "";
+            String tempCode = "";
+            code = tempCode;
             type = 1;
         }
         return type;
     }
 
     /**
-     * 注册NMEA消息回调
-     * 
-     * 该方法用于注册NMEA消息的回调，在接收到NMEA消息时进行处理。
-     * 
+     * Register NMEA message callback
+     *
+     * This method is used to register a callback for NMEA messages, which will process the messages when they are received.
+     *
      */
     public void registerNmeaMessageCallback() {
         if (locationManager == null) {
@@ -501,7 +497,7 @@ public class LocationService {
     }
 
     /**
-     * 同步块内的核心注册逻辑，抽取为子方法降低嵌套深度
+     * The core registration logic within the synchronized block, extracted as a sub-method to reduce nesting depth
      */
     private void doRegisterNmeaListener() {
         if (nmeaRegistered) {
@@ -522,8 +518,8 @@ public class LocationService {
     }
 
     /**
-     * 注销NMEA消息回调。
-     * 该方法用于取消注册NMEA消息的回调，停止接收NMEA消息。
+     * Unregister NMEA message callback.
+     * This method is used to unregister the callback for NMEA messages and stop receiving NMEA messages.
      */
     public void unregisterNmeaMessageCallback() {
         if (locationManager == null) {
@@ -539,9 +535,9 @@ public class LocationService {
     }
 
     /**
-     * 
-     * 注册GNSS状态回调。
-     * 此方法用于向LocationManager注册GNSS状态监听器。
+     *
+     * Register GNSS status callback.
+     * This method is used to register a GNSS status listener with the LocationManager.
      */
     public void registerGnssStatusCallback() {
         Log.i(LOG_TAG, "registerGnssStatusCallback called");
@@ -560,9 +556,9 @@ public class LocationService {
     }
 
     /**
-     * 检查GNSS注册的前置条件（locationManager、权限）
-     * 
-     * @return true：条件满足；false：条件不满足
+     * Check the prerequisites for GNSS registration (locationManager, permissions)
+     *
+     * @return true: Prerequisites are met; false: Prerequisites are not met
      */
     private boolean checkRegisterPreconditions() {
         if (locationManager == null) {
@@ -581,7 +577,7 @@ public class LocationService {
     }
 
     /**
-     * 初始化GNSS状态回调（仅当回调为null时创建）
+     * Initialize the GNSS status callback (create only when the callback is null)
      */
     private void initGnssStatusCallback() {
         if (gnssStatusCallback != null) {
@@ -629,7 +625,7 @@ public class LocationService {
     }
 
     /**
-     * 按SDK版本注册GNSS回调（仅支持Android N及以上）
+     * Register GNSS callback by SDK version (only supports Android N and above)
      */
     private void registerGnssCallbackWithSdkCheck() {
         try {
@@ -652,7 +648,7 @@ public class LocationService {
     }
 
     /**
-     * 强制请求GPS位置更新（触发GNSS扫描）
+     * Force request GPS location updates (trigger GNSS scanning)
      */
     private void forceGpsLocationUpdate() {
         try {
@@ -672,7 +668,7 @@ public class LocationService {
     }
 
     /**
-     * 注销GNSS状态回调。
+     * Unregister GNSS status callback.
      */
     public void unregisterGnssStatusCallback() {
         Log.i(LOG_TAG, "unregisterGnssStatusCallback called");
@@ -695,7 +691,7 @@ public class LocationService {
     }
 
     /**
-     * 注册开关回调方法，根据位置服务的开启状态调用原生方法更新状态。
+     * Register switch callback method, call native method to update status based on location service state.
      */
     public void registerSwitchCallback() {
     int enabled = isLocationEnabled() ? 1 : 0;
@@ -717,17 +713,17 @@ public class LocationService {
     return lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
         || lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER);
     }
-    
+
     private static native void nativeOnLocationChanged(
         double latitude, double longitude, float accuracy,
         double altitude, float speed, float bearing, long timeMs, float uncertaintyOfTimeSinceBoot, String sourceType);
 
     private static native void nativeOnLocationError(int errorCode);
-    
+
     /**
-     * 注册蓝牙扫描结果回调函数。
-     * 
-     * @return 成功返回0，失败返回-1。
+     * Register Bluetooth scan result callback function.
+     *
+     * @return Success returns 0, failure returns -1.
      */
     public int registerBluetoothScanResultCallback() {
         if (bluetoothLeScanner == null) {
@@ -747,7 +743,7 @@ public class LocationService {
     }
 
     /**
-     * 注销蓝牙扫描结果回调函数。
+     * Unregister Bluetooth scan result callback function.
      */
     public void unregisterBluetoothScanResultCallback() {
         if (bluetoothLeScanner == null) {
@@ -761,18 +757,18 @@ public class LocationService {
     }
 
     /**
-     * 注册位置变化回调函数，使用指定的配置参数。
-     * 
-     * @param scenario            场景类型
-     * @param priority            优先级
-     * @param timeIntervalSec     时间间隔（秒）
-     * @param distanceIntervalMeter 距离间隔（米）
-     * @param maxAccuracy         最大精度
-     * @param fixNumber           定位次数
-     * @param timeoutMs          超时时间（毫秒）
-     * @param needPoi            是否需要兴趣点
-     * @param needLocation       是否需要位置
-     * @return                   成功返回0，失败返回负值错误码
+     * Register location change callback function with specified configuration parameters.
+     *
+     * @param scenario            Scene type
+     * @param priority            Priority
+     * @param timeIntervalSec     Time interval (seconds)
+     * @param distanceIntervalMeter Distance interval (meters)
+     * @param maxAccuracy         Maximum accuracy
+     * @param fixNumber           Fix number
+     * @param timeoutMs          Timeout (milliseconds)
+     * @param needPoi            Whether to need POI
+     * @param needLocation       Whether to need location
+     * @return                   Success returns SUCCESS, failure returns negative error code
      */
     public int registerLocationChangeCallbackWithConfig(
             int scenario,
@@ -787,7 +783,7 @@ public class LocationService {
         if (locationManager == null) {
             return FAIL;
         }
-        
+
         try {
             String provider = LocationManager.NETWORK_PROVIDER;
             if (priority == 1 && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -809,9 +805,9 @@ public class LocationService {
     }
 
     /**
-     * 注册位置错误回调。
-     * 如果错误监听器已经注册，则记录日志并返回。
-     * 如果位置管理器为空记录日志并返回。
+     * Register location error callback.
+     * If the error listener is already registered, log and return.
+     * If the location manager is null, log and return.
      */
     public synchronized void registerLocationErrorCallback() {
         if (errorListenerRegistered) {
@@ -844,8 +840,9 @@ public class LocationService {
     }
 
     /**
-     * 注销位置回调。
-     * 如果错误监听器未注册直接返回。如果位置管理器不为空尝试注销监听器。
+     * Unregister location callback.
+     * If the error listener is not registered, return directly.
+     * If the location manager is not null, try to unregister the listener.
      */
     public synchronized void unregisterLocationErrorCallback() {
         if (!errorListenerRegistered) {
@@ -898,9 +895,9 @@ public class LocationService {
     }
 
     /**
-     * 开始定位
-     * 
-     * @return 返回0表示成功，其他值表示失败
+     * Start positioning
+     *
+     * @return Returns SUCCESS for success, other values for failure
      */
     public int startLocating() {
         Log.i(LOG_TAG, "Java startLocating called");
@@ -928,9 +925,9 @@ public class LocationService {
     }
 
     /**
-     * 停止定位功能。
-     * 
-     * @return 返回0表示成功，非0表示失败。
+     * Stop positioning.
+     *
+     * @return Returns SUCCESS for success, other values for failure.
      */
     public int stopLocating() {
         if (!locatingStarted) {
@@ -1017,9 +1014,9 @@ public class LocationService {
     }
 
     /**
-     * 获取开关状态。
-     * 
-     * @return 开关状态的整数值。
+     * Obtain the switch status.
+     *
+     * @return Returns the integer value of the switch state.
      */
     public int getSwitchState() {
         Log.i(LOG_TAG, "getSwitchState called");
@@ -1039,9 +1036,9 @@ public class LocationService {
     }
 
     /**
-     * 检查地理转换服务是否可用。
-     * 
-     * @return 如果转换服务可用，返回true；否则返回false。
+     * Check if the geographic conversion service is available.
+     *
+     * @return Returns true if the conversion service is available; otherwise, returns false.
      */
     public boolean isGeoConvertAvailable() {
         Log.i(LOG_TAG, "isGeoConvertAvailable called");
@@ -1049,18 +1046,18 @@ public class LocationService {
     }
 
     /**
-     * 根据位置名称获取地址信息。
-     * 
-     * @param description 位置描述
-     * @param maxItems    返回的最大地址数量
-     * @param localeStr   语言环境
-     * @param country     国家
-     * @param minLat      最小纬度
-     * @param minLon      最小经度
-     * @param maxLat      最大纬度
-     * @param maxLon      最大经度
-     * @param transId     事务ID
-     * @return            匹配的地址数组
+     * Obtain address information based on location name.
+     *
+     * @param description Location description
+     * @param maxItems    Maximum number of addresses to return
+     * @param localeStr   Language locale string
+     * @param country     Country
+     * @param minLat      Minimum latitude
+     * @param minLon      Minimum longitude
+     * @param maxLat      Maximum latitude
+     * @param maxLon      Maximum longitude
+     * @param transId     Transaction ID
+     * @return            Array of matching addresses
      */
     public android.location.Address[] getAddressByLocationName(String description,
                                                            int maxItems,
@@ -1071,12 +1068,6 @@ public class LocationService {
                                                            double maxLat,
                                                            double maxLon,
                                                            String transId) {
-        int tempMaxItems = maxItems;
-        if (tempMaxItems <= 0) {
-            maxItems = 1;
-        } else {
-            maxItems = 10;
-        }
         java.util.Locale loc;
         if (localeStr == null || localeStr.isEmpty()) {
             loc = java.util.Locale.getDefault();
@@ -1109,9 +1100,9 @@ public class LocationService {
     }
 
     /**
-     * 获取ISO国家代码。
-     * 
-     * @return ISO国家代码的字符串表示。
+     * Get the ISO country code.
+     *
+     * @return The string representation of the ISO country code.
      */
     public String getIsoCountryCode() {
         Log.i(LOG_TAG, "获取ISO国家代码");
@@ -1127,13 +1118,13 @@ public class LocationService {
     }
 
     /**
-     * 添加一个GNSS地理围栏。
-     * 
-     * @param latitude  围栏中心的纬度。
-     * @param longitude 围栏中心的经度。
-     * @param radius    围栏的半径（以米为单位）。
-     * @param expiration 围栏的过期时间（以毫秒为单位）。
-     * @param fenceId   围栏的唯一标识符。
+     * Add a GNSS geofence.
+     *
+     * @param latitude  Latitude of the geofence center.
+     * @param longitude Longitude of the geofence center.
+     * @param radius    Radius of the geofence (in meters).
+     * @param expiration Expiration time of the geofence (in milliseconds).
+     * @param fenceId   Unique identifier of the geofence.
      */
     public void addGnssGeofence(double latitude, double longitude, float radius, long expiration, int fenceId) {
         Log.i(LOG_TAG, "addGnssGeofence called with fenceId: " + fenceId);
@@ -1196,9 +1187,9 @@ public class LocationService {
     }
 
     /**
-     * 移除指定ID的GNSS地理围栏。
-     * 
-     * @param fenceId 要移除的地理栏的ID。
+     * Remove the GNSS geofence with the specified ID.
+     *
+     * @param fenceId The ID of the geofence to be removed.
      */
     public void removeGnssGeofence(int fenceId) {
         Log.i(LOG_TAG, "removeGnssGeofence called with fenceId: " + fenceId);
@@ -1244,9 +1235,9 @@ public class LocationService {
     }
 
     /**
-     * 获取当前用于定位的WiFi BSSID。
-     * 
-     * @return 当前WiFi BSSID，如果获取失败则返回 " Denied"。
+     * Get the WiFi BSSID currently used for positioning.
+     *
+     * @return The current WiFi BSSID; returns "Denied" if the acquisition fails.
      */
     public String getCurrentWifiBssidForLocating() {
         Log.i(LOG_TAG, "getCurrentWifiBssidForLocating called");
@@ -1318,10 +1309,10 @@ public class LocationService {
     }
 
     /**
-     * 注册开关回调
-     * 
-     * @param callback 回调对象
-     * @return 返回结果
+     * Register switch callback
+     *
+     * @param callback Callback object
+     * @return Return result
      */
     public int registerSwitchCallback(Object callback) {
         Log.i(LOG_TAG, "registerSwitchCallback called");
@@ -1329,10 +1320,10 @@ public class LocationService {
     }
 
     /**
-     * 注册开关回调
-     * 
-     * @param callback 回调对象
-     * @return 返回结果
+     * Register switch callback
+     *
+     * @param callback Callback object
+     * @return Return result
      */
     public int unregisterSwitchCallback(Object callback) {
         Log.i(LOG_TAG, "unregisterSwitchCallback called");
@@ -1374,12 +1365,12 @@ public class LocationService {
     }
 
     /**
-     * 从ActivityClientRecord中提取非暂停状态的Activity
-     * 
-     * @param activityClientRecord ActivityClientRecord对象
-     * @return 非暂停状态的Activity对象，如果没有则返回null
-     * @throws NoSuchFieldException    如果字段不存在
-     * @throws IllegalAccessException  如果无法访问字段
+     * Extract the Activity in non-paused state from ActivityClientRecord
+     *
+     * @param activityClientRecord The ActivityClientRecord object
+     * @return The Activity object in non-paused state; returns null if none exists
+     * @throws NoSuchFieldException If the field does not exist
+     * @throws IllegalAccessException If the field cannot be accessed
      */
     private Activity getNonPausedActivity(Object activityClientRecord)
             throws NoSuchFieldException, IllegalAccessException {
@@ -1398,7 +1389,7 @@ public class LocationService {
     }
 
     /**
-     * 初始化本地方法。
+     * Initialize native methods.
      * native void nativeInit();
      */
     protected native void nativeInit();
