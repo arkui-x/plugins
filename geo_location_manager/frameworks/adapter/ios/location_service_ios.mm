@@ -48,6 +48,7 @@ static std::vector<OHOS::sptr<OHOS::Location::LocatorCallbackNapi>> g_locatorCal
 static std::mutex g_locatorCallbacksMutex;
 static int g_locationTimeIntervalSec = 0;
 static int64_t g_lastLocationDispatchMs = 0;
+static constexpr int64_t SEC_TO_NANOS = 1000000000LL;
 @interface ArkUIBluetoothScanDelegate : NSObject<CBCentralManagerDelegate>
 @property(nonatomic, strong) CBCentralManager *central;
 - (void)startScanIfPossible;
@@ -98,7 +99,7 @@ static std::unique_ptr<OHOS::Location::Location> ArkUIBuildLocationFromCL(CLLoca
     locationObj->SetIsFromMock(0);
     locationObj->SetLocationSourceType(2);
     NSTimeInterval uptimeSec = [NSProcessInfo processInfo].systemUptime;
-    int64_t sinceBootNs = (int64_t)(uptimeSec * 1000000000.0);
+    int64_t sinceBootNs = (int64_t)(uptimeSec * SEC_TO_NANOS);
     locationObj->SetTimeSinceBoot(sinceBootNs);
     return locationObj;
 }
@@ -415,6 +416,7 @@ static void ArkUIMaybeDispatchCountryChange()
         }
     }
 }
+
 void ArkUIRegisterCountryCodeObserver()
 {
     if (g_countryCodeSubscribed) {
@@ -422,10 +424,14 @@ void ArkUIRegisterCountryCodeObserver()
     }
     g_countryCodeSubscribed = YES;
     g_lastCountry = [[[NSLocale currentLocale] objectForKey:NSLocaleCountryCode] copy];
-    g_localeObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSCurrentLocaleDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+    g_localeObserver = [[NSNotificationCenter defaultCenter]
+        addObserverForName:NSCurrentLocaleDidChangeNotification object:nil queue:[NSOperationQueue mainQueue]
+        usingBlock:^(NSNotification * _Nonnull note) {
         ArkUIMaybeDispatchCountryChange();
     }];
-    g_appActiveObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidBecomeActiveNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+    g_appActiveObserver = [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidBecomeActiveNotification object:nil queue:[NSOperationQueue mainQueue]
+        usingBlock:^(NSNotification * _Nonnull note) {
         ArkUIMaybeDispatchCountryChange();
     }];
 }
