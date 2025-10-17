@@ -31,6 +31,7 @@ static void InitPermissionMap()
     g_permissionMap["ohos.permission.READ_IMAGEVIDEO"] = "android.permission.READ_EXTERNAL_STORAGE";
     g_permissionMap["ohos.permission.WRITE_IMAGEVIDEO"] = "android.permission.WRITE_EXTERNAL_STORAGE";
     g_permissionMap["ohos.permission.APPROXIMATELY_LOCATION"] = "android.permission.ACCESS_COARSE_LOCATION";
+    g_permissionMap["ohos.permission.LOCATION"] = "android.permission.ACCESS_FINE_LOCATION";
 
     // add bluetooth permission
     std::vector<std::string> bluetoothPermission;
