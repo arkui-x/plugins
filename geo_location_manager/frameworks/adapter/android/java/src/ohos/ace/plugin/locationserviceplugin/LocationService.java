@@ -218,17 +218,6 @@ public class LocationService {
             Log.i(LOG_TAG, "All required permissions are granted");
             return true;
         }
-
-        Log.i(LOG_TAG, "Java requestPermissions start");
-        activity.requestPermissions(
-            new String[]{
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.ACCESS_WIFI_STATE
-            },
-            REQUEST_LOCATION_PERMISSION
-        );
-        Log.i(LOG_TAG, "Java requestPermissions finish");
         return false;
     }
 

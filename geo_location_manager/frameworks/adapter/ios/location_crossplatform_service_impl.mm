@@ -228,7 +228,7 @@ static int32_t GenerateFenceIdIOS()
             s = [CLLocationManager authorizationStatus];
         }
         if (s == kCLAuthorizationStatusNotDetermined) {
-            [_manager requestWhenInUseAuthorization];
+            NSLog(@"No location auth, need request");
         }
     });
 }
