@@ -57,6 +57,9 @@ typedef void (*IosCb)(CallbackInfo* info, bool isLast, int result);
 
 -(bool)CheckPhotoPermission;
 -(void)RequestPhotoPermission:(IosCb)callback :(CallbackInfo*)data :(bool)isLast;
+
+-(bool)CheckLocationPermission;
+-(void)RequestLocationPermission:(IosCb)callback :(CallbackInfo*)data :(bool)isLast;
 @end
 
 NS_ASSUME_NONNULL_END

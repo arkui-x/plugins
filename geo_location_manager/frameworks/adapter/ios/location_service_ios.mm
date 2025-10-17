@@ -299,10 +299,6 @@ void ArkUILocationServiceStart()
     if (!g_delegate) {
         g_delegate = [[ArkUILocationServiceDelegate alloc] init];
     }
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-    if (status == kCLAuthorizationStatusNotDetermined) {
-        [g_delegate.manager requestWhenInUseAuthorization];
-    }
     if (!g_locationActive) {
         [g_delegate.manager startUpdatingLocation];
         g_locationActive = YES;
