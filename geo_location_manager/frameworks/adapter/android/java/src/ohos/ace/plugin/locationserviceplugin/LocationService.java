@@ -79,6 +79,8 @@ public class LocationService {
     private static final int PRIORITY_ACCURACY_LOW = 2;
     private static final int FLAG_MUTABLE = 1 << 25;
     private static final int VERSION_CODES_S = 31;
+    private static final int SUCCESS = 0;
+    private static final int FAIL = -1;
 
     private volatile boolean geofenceReceiverRegistered = false;
     private volatile boolean locatingStarted = false;
@@ -205,7 +207,7 @@ public class LocationService {
         Log.i(LOG_TAG, "Java requestLocationPermission called");
         Activity activity = getMainActivity();
         if (activity == null) {
-            Log.e(LOG_TAG, "当前 Java 活动为空");
+            Log.e(LOG_TAG, "Java activity is null");
             return false;
         }
 
@@ -730,23 +732,17 @@ public class LocationService {
     public int registerBluetoothScanResultCallback() {
         if (bluetoothLeScanner == null) {
             Log.e(LOG_TAG, "BLE scanner null");
-            return -1;
-        }
-
-        if (!checkBluetoothScanPermissions()) {
-            Log.e(LOG_TAG, "Missing required permissions for BLE scan");
-            requestBluetoothScanPermissions();
-            return -1;
+            return FAIL;
         }
 
         try {
             Log.e(LOG_TAG, "Starting BLE scan");
             bluetoothLeScanner.startScan(scanCallback);
             Log.e(LOG_TAG, "BLE scan started");
-            return 0;
+            return SUCCESS;
         } catch (IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "startScan exception: " + e.getMessage());
-            return -1;
+            return FAIL;
         }
     }
 
@@ -762,50 +758,6 @@ public class LocationService {
         } catch (IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "stopScan exception: " + e.getMessage());
         }
-    }
-
-    private boolean checkBluetoothScanPermissions() {
-        if (mActivity == null) {
-            Log.e(LOG_TAG, "Activity is null, cannot check permissions");
-            return false;
-        }
-
-        if (Build.VERSION.SDK_INT >= 31) { // Android 12+
-            if (mActivity.checkSelfPermission("Manifest.permission.BLUETOOTH_SCAN") !=
-                    PackageManager.PERMISSION_GRANTED) {
-                Log.e(LOG_TAG, "BLUETOOTH_SCAN permission not granted");
-                return false;
-            }
-        } else {
-            if (mActivity.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
-                    PackageManager.PERMISSION_GRANTED) {
-                Log.e(LOG_TAG, "ACCESS_FINE_LOCATION permission not granted");
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private void requestBluetoothScanPermissions() {
-        if (mActivity == null) {
-            Log.e(LOG_TAG, "Activity is null, cannot request permissions");
-            return;
-        }
-
-        if (checkBluetoothScanPermissions()) {
-            Log.i(LOG_TAG, "Permissions already granted, skip request");
-            return;
-        }
-
-        String[] permissionsToRequest;
-        if (Build.VERSION.SDK_INT >= 31) { // Android 12+
-            permissionsToRequest = new String[]{"android.permission.BLUETOOTH_SCAN"};
-        } else {
-            permissionsToRequest = new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION};
-        }
-
-        mActivity.requestPermissions(permissionsToRequest, REQUEST_BLUETOOTH_RELATED_PERM);
     }
 
     /**
@@ -833,16 +785,9 @@ public class LocationService {
             boolean needPoi,
             boolean needLocation) {
         if (locationManager == null) {
-            return -1;
+            return FAIL;
         }
-        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-            || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "No location permission");
-            return -2;
-        }
-
+        
         try {
             String provider = LocationManager.NETWORK_PROVIDER;
             if (priority == 1 && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -853,13 +798,13 @@ public class LocationService {
             float minDistance = (float) Math.max(0.0, distanceIntervalMeter);
 
             locationManager.requestLocationUpdates(provider, minTimeMs, minDistance, locationListener);
-            return 0;
+            return SUCCESS;
         } catch (SecurityException se) {
             Log.e(LOG_TAG, "registerLocationChangeCallbackWithConfig security: " + se.getMessage());
-            return -3;
+            return FAIL;
         } catch (IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "registerLocationChangeCallbackWithConfig ex: " + e.getMessage());
-            return -4;
+            return FAIL;
         }
     }
 
@@ -960,16 +905,11 @@ public class LocationService {
     public int startLocating() {
         Log.i(LOG_TAG, "Java startLocating called");
         if (locatingStarted) {
-            return 0;
+            return SUCCESS;
         }
         if (locationManager == null) {
             Log.e(LOG_TAG, "startLocating: locationManager null");
-            return -1;
-        }
-        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "startLocating: no fine location permission");
-            return -1;
+            return FAIL;
         }
         ensureLocationThread();
         createListenerIfNeed();
@@ -980,10 +920,10 @@ public class LocationService {
             locationManager.requestLocationUpdates(provider, minTimeMs, minDistanceM,
                     internalLocationListener, locationHandler.getLooper());
             locatingStarted = true;
-            return 0;
+            return SUCCESS;
         } catch (SecurityException | IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "startLocating error: " + e.getMessage());
-            return -2;
+            return FAIL;
         }
     }
 

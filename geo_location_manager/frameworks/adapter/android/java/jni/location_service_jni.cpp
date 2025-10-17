@@ -1331,6 +1331,8 @@ void LocationServiceJni::NativeOnNotificationEvent(JNIEnv *env, jobject,
 #ifdef NOTIFICATION_ENABLE
         auto list = GetFenceNotifications(fenceId);
         if (!list.empty()) {
+            LBSLOGI(LOCATION_SERVICE_JNI, "NativeOnNotificationEvent fenceId=%d entering=%d size=%zu",
+                fenceId, (int)entering, list.size());
             for (auto &n : list) {
                 PublishFenceNotificationNow(n);
             }

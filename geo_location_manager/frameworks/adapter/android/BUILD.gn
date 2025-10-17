@@ -28,6 +28,50 @@ ohos_combine_jars("geolocationmanager_java") {
   jar_path = "${root_out_dir}/plugins/geo_location_manager/frameworks/adapter/arkui_geolocationmanager_service.jar"
 }
 
+ohos_source_set("notification_manager_static_android") {
+    include_dirs = [
+      "//base/notification/distributed_notification_service/frameworks/core/include",
+      "//plugins/interfaces/native",
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/js/napi/napi_common",
+      "//plugins/notification_manager",
+      "//third_party/json/include",
+    ]
+
+    sources = [
+      "//plugins/notification_manager/ans_convert_enum.cpp",
+      "//plugins/notification_manager/common.cpp",
+      "//plugins/notification_manager/common_convert_content.cpp",
+      "//plugins/notification_manager/common_convert_request.cpp",
+      "//plugins/notification_manager/common_utils.cpp",
+      "//plugins/notification_manager/constant.cpp",
+      "//plugins/notification_manager/napi_cancel.cpp",
+      "//plugins/notification_manager/napi_display_badge.cpp",
+      "//plugins/notification_manager/napi_enable_notification.cpp",
+      "//plugins/notification_manager/napi_publish.cpp",
+      "//plugins/notification_manager/notification_basic_content.cpp",
+      "//plugins/notification_manager/notification_content.cpp",
+      "//plugins/notification_manager/notification_helper.cpp",
+      "//plugins/notification_manager/notification_long_text_content.cpp",
+      "//plugins/notification_manager/notification_multiline_content.cpp",
+      "//plugins/notification_manager/notification_normal_content.cpp",
+      "//plugins/notification_manager/notification_request.cpp",
+    ]
+
+    deps = [
+      "//commonlibrary/c_utils/base:utilsbase",
+      "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/napi_base_context:napi_base_context",
+      "//plugins/interfaces/native:ace_plugin_util_android",
+      "//plugins/interfaces/native:napi_common",
+      "//plugins/interfaces/native:plugin_log",
+    ]
+
+    
+    deps += [ "//plugins/notification_manager/android/java:notification_manager_android_jni" ]
+  
+    subsystem_name = "plugins"
+    part_name = "notification_manager"
+}
+
 ohos_source_set("geolocationmanager_android_jni") {
   include_dirs = geoLocationManager_include
   include_dirs += [ 
@@ -51,7 +95,7 @@ ohos_source_set("geolocationmanager_android_jni") {
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_android",
     "//plugins/interfaces/native:plugin_log",
-    "//plugins/notification_manager:notification_manager_static_android",
+    ":notification_manager_static_android",
   ]
 
   subsystem_name = "plugins"
