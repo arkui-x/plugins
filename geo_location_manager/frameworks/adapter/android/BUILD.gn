@@ -51,6 +51,7 @@ ohos_source_set("geolocationmanager_android_jni") {
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_android",
     "//plugins/interfaces/native:plugin_log",
+    "//plugins/notification_manager:notification_manager_static_android",
   ]
 
   subsystem_name = "plugins"

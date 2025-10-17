@@ -735,7 +735,7 @@ public class LocationService {
     
     /**
      * 注册蓝牙扫描结果回调函数。
-     *
+     * 
      * @return 成功返回0，失败返回-1。
      */
     public int registerBluetoothScanResultCallback() {
@@ -1449,6 +1449,8 @@ public class LocationService {
      * 
      * @param activityClientRecord ActivityClientRecord对象
      * @return 非暂停状态的Activity对象，如果没有则返回null
+     * @throws NoSuchFieldException    如果字段不存在
+     * @throws IllegalAccessException  如果无法访问字段
      */
     private Activity getNonPausedActivity(Object activityClientRecord)
             throws NoSuchFieldException, IllegalAccessException {

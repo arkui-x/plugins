@@ -32,6 +32,15 @@
 #include "location_log.h"
 #include "plugin_utils.h"
 #include "refbase.h"
+#if !defined(PLUGIN_INTERFACE_NATIVE_LOG_H)
+#define LogLevel GEOLOC_PLUGIN_LOGLEVEL_REMAED__
+#define GEOLOC_PLUGIN_LOGLEVEL_RENAMED
+#endif
+#include "notification_request.h"
+#include "notification_helper.h"
+#ifdef GEOLOC_PLUGIN_LOGLEVEL_RENAMED
+#undef LogLevel
+#endif
 
 namespace OHOS::Plugin {
 namespace {
@@ -128,7 +137,6 @@ struct {
     jmethodID unregisterNmeaMessageCallback;
     jmethodID getCurrentLocation;
     jmethodID requestAndCheckLocationPermission;
-    jmethodID debugLog;
     jobject globalRef;
 } g_locationservicepluginClass;
 } //namespace
@@ -244,7 +252,6 @@ static inline void RegisterUtilityMethodIDs(JNIEnv *env, jclass cls)
         GetMethodID(env, cls, "getCurrentLocation", "()Landroid/location/Location;");
     g_locationservicepluginClass.requestAndCheckLocationPermission =
         GetMethodID(env, cls, "requestAndCheckLocationPermission", "()Z");
-    g_locationservicepluginClass.debugLog = GetMethodID(env, cls, "debugLog", "(Ljava/lang/String;)V");
 }
 
 static inline void RegisterMethodIDs(JNIEnv *env, jclass cls)
@@ -384,11 +391,6 @@ static Location::LocationErrCode HandleSingleFix(JNIEnv* env,
     const std::unique_ptr<RequestConfig>& requestConfig,
     const sptr<Location::LocatorCallbackNapi>& locatorCallbackHost)
 {
-    env->CallVoidMethod(
-        g_locationservicepluginClass.globalRef,
-        g_locationservicepluginClass.debugLog,
-        env->NewStringUTF("StartLocating continuous mode"));
-    
     if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getCurrentLocation) {
         LBSLOGE(LOCATION_SERVICE_JNI, "StartLocating: getCurrentLocation method is null");
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
@@ -1133,7 +1135,7 @@ static inline void PublishFenceNotificationNow(const std::shared_ptr<OHOS::Notif
     if (!reqPtr) {
         return;
     }
-    Notification::NotificationHelper::PublishNotification(
+    OHOS::Notification::NotificationHelper::PublishNotification(
         *reqPtr,
         nullptr,
         [](void*, int32_t code) {
@@ -1329,7 +1331,6 @@ void LocationServiceJni::NativeOnNotificationEvent(JNIEnv *env, jobject,
 #ifdef NOTIFICATION_ENABLE
         auto list = GetFenceNotifications(fenceId);
         if (!list.empty()) {
-            NSLog(@"[iOS] Geofence enter publish %lu notifications", (unsigned long)list.size());
             for (auto &n : list) {
                 PublishFenceNotificationNow(n);
             }

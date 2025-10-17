@@ -45,14 +45,14 @@ public:
     
     static Location::LocationErrCode GetSwitchState(int32_t& state);
     static Location::LocationErrCode StartLocating(
-        std::unique_ptr<RequestConfig>& requestConfig,
+        std::unique_ptr<Location::RequestConfig>& requestConfig,
         sptr<Location::LocatorCallbackNapi>& locatorCallbackHost);
     static Location::LocationErrCode StopLocating(sptr<Location::LocatorCallbackNapi>& locatorCallbackHost);
     static Location::LocationErrCode IsGeoConvertAvailable(bool& isAvailable);
     static Location::LocationErrCode GetAddressByCoordinate(std::unique_ptr<Location::ReverseGeoCodeRequest>& data,
         std::list<std::shared_ptr<Location::GeoAddress>>& replyList);
     static std::shared_ptr<Location::CountryCode> GetIsoCountryCode();
-    static Location::LocationErrCode AddGnssGeofence(GeofenceRequest& request,
+    static Location::LocationErrCode AddGnssGeofence(Location::GeofenceRequest& request,
         sptr<Location::LocationGnssGeofenceCallbackNapi>& callback);
     static Location::LocationErrCode RemoveGnssGeofence(int32_t fenceId,
         sptr<Location::LocationGnssGeofenceCallbackNapi>& callback);
