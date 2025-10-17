@@ -342,10 +342,6 @@ int32_t ArkUIRequestSingleLocation(void* locatorCallbackHost)
     if (!g_delegate) {
         g_delegate = [[ArkUILocationServiceDelegate alloc] init];
     }
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-    if (status == kCLAuthorizationStatusNotDetermined) {
-        [g_delegate.manager requestWhenInUseAuthorization];
-    }
     CLLocation *cached = g_delegate.manager.location;
     [g_delegate.manager startUpdatingLocation];
     g_locationActive = YES;
