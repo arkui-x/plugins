@@ -36,12 +36,19 @@ public:
     AccessibilitySystemAbilityEventCallback() = default;
     virtual ~AccessibilitySystemAbilityEventCallback() = default;
 
+    static bool HasCallback();
     static void InsetEventCallback(const napi_env& env, const napi_ref& eventCallback, const std::string& eventName);
     static void DeleteEventCallback(const std::string& eventName);
-    static void ExcuteEventCallback(const std::string& eventName, const bool state);
+    static void ExcuteEventCallback(const bool state);
+    static bool HasStateCallback();
+    static void InsetStateEventCallback(
+        const napi_env& env, const napi_ref& eventCallback, const std::string& eventName);
+    static void DeleteStateEventCallback(const std::string& eventName);
+    static void ExcuteStateEventCallback(const bool state);
 
 private:
     static std::map<std::string, std::shared_ptr<AccessibilitySystemAbilityEventCallbackInfo>> callbackMap_;
+    static std::map<std::string, std::shared_ptr<AccessibilitySystemAbilityEventCallbackInfo>> stateCallbackMap_;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_ACCESSIBILITY_ACCESSIBILITY_SYSTEM_ABILITY_EVENT_CALLBACK_H

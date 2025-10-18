@@ -18,10 +18,14 @@
 
 #include <jni.h>
 #include <mutex>
+#include <vector>
 #include <string>
 #include <unordered_map>
 
+#include "foundation/arkui/ace_engine/adapter/android/osal/accessibility_event_manager.h"
+
 namespace OHOS::Plugin {
+
 class AccessibilityClientJni {
 public:
     AccessibilityClientJni() = default;
@@ -31,7 +35,24 @@ public:
     static bool IsEnable();
     static bool RegisterStateListener();
     static void UnregisterStateListener();
-    static void OnStateChangedCallback(JNIEnv* env, jobject jobj, bool state);
+    static bool IsTouchExplorationEnable();
+    static bool RegisterTouchExplorationListener();
+    static void UnregisterTouchExplorationListener();
+    static void OnStateChangedCallback(JNIEnv* env, jobject jobj, bool state, jstring jEventName);
+    static std::vector<OHOS::Ace::Framework::AccessibilityAbilityInfo> GetAccessibilityExtensionListSync(
+        const std::string& abilityType, const std::string& stateType);
+
+private:
+    static jobject CallJavaMethod(JNIEnv* env, jstring jAbilityType, jstring jStateType);
+    static void ProcessJavaListResult(
+        JNIEnv* env, jobject jList, std::vector<OHOS::Ace::Framework::AccessibilityAbilityInfo>& result);
+    static void ProcessJavaInfoObject(JNIEnv* env, jobject jInfo, OHOS::Ace::Framework::AccessibilityAbilityInfo& info);
+    static void ExtractBasicFields(
+        JNIEnv* env, jobject jInfo, jclass infoClass, OHOS::Ace::Framework ::AccessibilityAbilityInfo& info);
+    static void ExtractListFields(
+        JNIEnv* env, jobject jInfo, jclass infoClass, OHOS::Ace::Framework ::AccessibilityAbilityInfo& info);
+    static void ExtractStringListField(
+        JNIEnv* env, jobject jInfo, jfieldID fieldId, std::vector<std::string>& targetVector);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGIN_ACCESSIBILITY_ANDROID_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_JNI_H
