@@ -1566,6 +1566,8 @@ Location::LocationErrCode LocationServiceJni::RegisterCountryCodeCallback(
             LBSLOGE(LOCATION_SERVICE_JNI, "RegisterCountryCodeCallback: globalRef or method ID is null");
             return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
         }
+        auto code = GetIsoCountryCode();
+        callbackHost->OnCountryCodeChange(code);
         env->CallVoidMethod(
             g_locationservicepluginClass.globalRef, g_locationservicepluginClass.registerCountryCodeCallback);
         if (env->ExceptionCheck()) {
@@ -1845,6 +1847,36 @@ void LocationServiceJni::NativeOnNmeaMessage(JNIEnv *env, jobject, jlong timesta
     }
 }
 
+static inline void FillIntArray(JNIEnv* env, jintArray arr,
+    const std::function<void(std::vector<int>&)>& setter)
+{
+    if (!arr) {
+        return;
+    }
+    jsize len = env->GetArrayLength(arr);
+    if (len <= 0) {
+        return;
+    }
+    std::vector<int> vec(len);
+    env->GetIntArrayRegion(arr, 0, len, vec.data());
+    setter(vec);
+}
+
+static inline void FillDoubleArray(JNIEnv* env, jdoubleArray arr,
+    const std::function<void(std::vector<double>&)>& setter)
+{
+    if (!arr) {
+        return;
+    }
+    jsize len = env->GetArrayLength(arr);
+    if (len <= 0) {
+        return;
+    }
+    std::vector<double> vec(len);
+    env->GetDoubleArrayRegion(arr, 0, len, vec.data());
+    setter(vec);
+}
+
 void LocationServiceJni::NativeOnGnssStatusChanged(JNIEnv *env, jobject,
     jint satellitesNumber,
     jintArray jIds,
@@ -1860,7 +1892,6 @@ void LocationServiceJni::NativeOnGnssStatusChanged(JNIEnv *env, jobject,
     if (list.empty()) {
         return;
     }
-
     for (auto &cb : list) {
         if (!cb) {
             continue;
@@ -1868,50 +1899,25 @@ void LocationServiceJni::NativeOnGnssStatusChanged(JNIEnv *env, jobject,
         auto status = std::make_unique<Location::SatelliteStatus>();
         status->SetSatellitesNumber((int)satellitesNumber);
 
-        auto fillIntArray = [&](jintArray arr, auto batchSetter) {
-            if (!arr) {
-                return;
-            }
-            jsize len = env->GetArrayLength(arr);
-            if (len <= 0) {
-                return;
-            }
-            std::vector<int> vec(len);
-            env->GetIntArrayRegion(arr, 0, len, vec.data());
-            batchSetter(vec);
-        };
-        auto fillDoubleArray = [&](jdoubleArray arr, auto batchSetter) {
-            if (!arr) {
-                return;
-            }
-            jsize len = env->GetArrayLength(arr);
-            if (len <= 0) {
-                return;
-            }
-            std::vector<double> vec(len);
-            env->GetDoubleArrayRegion(arr, 0, len, vec.data());
-            batchSetter(vec);
-        };
-
-        fillIntArray(jIds, [&](std::vector<int>& v) {
+        FillIntArray(env, jIds, [&](std::vector<int>& v) {
             status->SetSatelliteIds(v);
         });
-        fillDoubleArray(jCn0, [&](std::vector<double>& v) {
+        FillDoubleArray(env, jCn0, [&](std::vector<double>& v) {
             status->SetCarrierToNoiseDensitys(v);
         });
-        fillDoubleArray(jAltitudes, [&](std::vector<double>& v) {
+        FillDoubleArray(env, jAltitudes, [&](std::vector<double>& v) {
             status->SetAltitudes(v);
         });
-        fillDoubleArray(jAzimuths, [&](std::vector<double>& v) {
+        FillDoubleArray(env, jAzimuths, [&](std::vector<double>& v) {
             status->SetAzimuths(v);
         });
-        fillDoubleArray(jCarrierFreqs, [&](std::vector<double>& v) {
+        FillDoubleArray(env, jCarrierFreqs, [&](std::vector<double>& v) {
             status->SetCarrierFrequencies(v);
         });
-        fillIntArray(jConstellationTypes, [&](std::vector<int>& v) {
+        FillIntArray(env, jConstellationTypes, [&](std::vector<int>& v) {
             status->SetConstellationTypes(v);
         });
-        fillIntArray(jAdditionalInfo, [&](std::vector<int>& v) {
+        FillIntArray(env, jAdditionalInfo, [&](std::vector<int>& v) {
             status->SetSatelliteAdditionalInfoList(v);
         });
 

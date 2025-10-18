@@ -60,6 +60,7 @@ import java.lang.reflect.Field;
  * The LocationService class provides functions related to location services, including obtaining the current location,
  * registering location change callbacks, registering country code callbacks, registering NMEA message callbacks,
  * registering GNSS status callbacks, registering Bluetooth scan result callbacks, etc.
+ * @since version 6.0
  */
 public class LocationService {
     private static final String LOG_TAG = "LocationService";
@@ -113,6 +114,15 @@ public class LocationService {
     private Location currentLocation;
     private final CountDownLatch latch = new CountDownLatch(1);
     private Activity mActivity;
+
+    private static class CountryResult {
+        int type;
+        String code;
+        CountryResult(int type, String code) {
+            this.type = type;
+            this.code = code;
+        }
+    }
 
     private final LocationListener statusListener = new LocationListener() {
         @Override
@@ -404,17 +414,15 @@ public class LocationService {
             return;
         }
 
-        final String[] codeHolder = {""};
-        final int[] typeHolder = {1};
-        typeHolder[0] = resolveCountryCode(codeHolder[0]);
-        nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
+        CountryResult res = resolveCountryCode();
+        nativeOnCountryCodeChanged(res.code, res.type);
 
         if (localeReceiver == null) {
             localeReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    typeHolder[0] = resolveCountryCode(codeHolder[0]);
-                    nativeOnCountryCodeChanged(codeHolder[0], typeHolder[0]);
+                    CountryResult res = resolveCountryCode();
+                    nativeOnCountryCodeChanged(res.code, res.type);
                 }
             };
         }
@@ -445,7 +453,8 @@ public class LocationService {
         }
     }
 
-    private int resolveCountryCode(String code) {
+    private CountryResult resolveCountryCode() {
+        String code = "";
         int type = 1;
         TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         if (telephonyManager != null) {
@@ -454,12 +463,14 @@ public class LocationService {
                 String tempCode = simIso;
                 code = tempCode;
                 type = 2;
+                return new CountryResult(type, code);
             } else {
                 String netIso = telephonyManager.getNetworkCountryIso();
                 if (netIso != null && !netIso.isEmpty()) {
                     String tempCode = netIso;
                     code = tempCode;
                     type = 4;
+                    return new CountryResult(type, code);
                 }
             }
         }
@@ -473,13 +484,14 @@ public class LocationService {
             code = tempCode;
             type = 1;
         }
-        return type;
+        return new CountryResult(type, code);
     }
 
     /**
      * Register NMEA message callback
      *
-     * This method is used to register a callback for NMEA messages, which will process the messages when they are received.
+     * This method is used to register a callback for NMEA messages, which will process the messages when
+     * they are received.
      *
      */
     public void registerNmeaMessageCallback() {
@@ -568,7 +580,7 @@ public class LocationService {
 
         int finePerm = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION);
         int coarsePerm = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (finePerm != PackageManager.PERMISSION_GRANTED) {
+        if (finePerm != PackageManager.PERMISSION_GRANTED || coarsePerm != PackageManager.PERMISSION_GRANTED) {
             pendingGnssStatusRegister = true;
             return false;
         }
@@ -625,7 +637,7 @@ public class LocationService {
     }
 
     /**
-     * Register GNSS callback by SDK version (only supports Android N and above)
+     * Register GNSS callback by SDK version (only supports API 24 and above)
      */
     private void registerGnssCallbackWithSdkCheck() {
         try {
@@ -694,8 +706,8 @@ public class LocationService {
      * Register switch callback method, call native method to update status based on location service state.
      */
     public void registerSwitchCallback() {
-    int enabled = isLocationEnabled() ? 1 : 0;
-    nativeOnSwitchStateChanged(enabled);
+        int enabled = isLocationEnabled() ? 1 : 0;
+        nativeOnSwitchStateChanged(enabled);
     }
 
     /**
@@ -738,6 +750,9 @@ public class LocationService {
             return SUCCESS;
         } catch (IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "startScan exception: " + e.getMessage());
+            return FAIL;
+        } catch (SecurityException e) {
+            Log.e(LOG_TAG, "startScan missing permission: " + e.getMessage());
             return FAIL;
         }
     }
@@ -1306,28 +1321,6 @@ public class LocationService {
         return bssid == null
                 || bssid.trim().isEmpty()
                 || "02:00:00:00:00:00".equals(bssid);
-    }
-
-    /**
-     * Register switch callback
-     *
-     * @param callback Callback object
-     * @return Return result
-     */
-    public int registerSwitchCallback(Object callback) {
-        Log.i(LOG_TAG, "registerSwitchCallback called");
-        return 0;
-    }
-
-    /**
-     * Register switch callback
-     *
-     * @param callback Callback object
-     * @return Return result
-     */
-    public int unregisterSwitchCallback(Object callback) {
-        Log.i(LOG_TAG, "unregisterSwitchCallback called");
-        return 0;
     }
 
     private Activity getMainActivity() {
