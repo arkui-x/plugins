@@ -274,7 +274,6 @@ void LocationServiceJni::NativeInit(JNIEnv *env, jobject jobj)
     }
     jclass cls = env->GetObjectClass(jobj);
     if (!cls) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "NativeInit: failed to get object class");
         return;
     }
     RegisterMethodIDs(env, cls);
@@ -306,7 +305,6 @@ Location::LocationErrCode LocationServiceJni::GetSwitchState(int32_t &state)
         return errCode;
     }
     if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getSwitchState) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "GetSwitchState: getSwitchState method is null");
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
     }
     state = static_cast<int>(env->CallIntMethod(
@@ -398,7 +396,6 @@ static Location::LocationErrCode HandleSingleFix(JNIEnv* env,
     auto res = env->CallObjectMethod(g_locationservicepluginClass.globalRef,
         g_locationservicepluginClass.getCurrentLocation);
     if (env->ExceptionCheck()) {
-        LBSLOGE(LOCATION_SERVICE_JNI, "getCurrentLocation JNI exception");
         env->ExceptionDescribe();
         env->ExceptionClear();
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
@@ -444,7 +441,6 @@ static void RegisterLocatorCallback(JNIEnv* env, const sptr<Location::LocatorCal
     }
     if (needObserver) {
         if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.startLocating) {
-            LBSLOGE(LOCATION_SERVICE_JNI, "StartLocating: startLocating method is null");
             return;
         }
         env->CallIntMethod(g_locationservicepluginClass.globalRef, g_locationservicepluginClass.startLocating);
@@ -507,14 +503,14 @@ Location::LocationErrCode LocationServiceJni::StartLocating(std::unique_ptr<Requ
 static inline std::string JStringToCppString(JNIEnv* env, jstring jstr)
 {
     if (!jstr) {
-        return ""; // 如果 jstring 为空，返回空字符串
+        return "";
     }
-    const char* cStr = env->GetStringUTFChars(jstr, nullptr); // 获取 UTF-8 编码的 C 字符串
+    const char* cStr = env->GetStringUTFChars(jstr, nullptr);
     if (!cStr) {
-        return ""; // 如果转换失败，返回空字符串
+        return "";
     }
-    std::string cppStr(cStr); // 将 C 字符串转换为 std::string
-    env->ReleaseStringUTFChars(jstr, cStr); // 释放 UTF-8 字符串资源
+    std::string cppStr(cStr);
+    env->ReleaseStringUTFChars(jstr, cStr);
     return cppStr;
 }
 
@@ -572,7 +568,6 @@ void LocationServiceJni::NativeOnLocationChanged(JNIEnv *env, jobject,
         cb->SetSingleLocation(copyLoc);
         cb->OnLocationReport(copyLoc);
     }
-    LBSLOGI(LOCATION_SERVICE_JNI, "NativeOnLocationChanged dispatched count=%zu", list.size());
 }
 
 Location::LocationErrCode LocationServiceJni::StopLocating(sptr<Location::LocatorCallbackNapi>& locatorCallbackHost)
