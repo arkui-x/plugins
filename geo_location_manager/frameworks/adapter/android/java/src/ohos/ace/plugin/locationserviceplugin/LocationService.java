@@ -60,7 +60,8 @@ import java.lang.reflect.Field;
  * The LocationService class provides functions related to location services, including obtaining the current location,
  * registering location change callbacks, registering country code callbacks, registering NMEA message callbacks,
  * registering GNSS status callbacks, registering Bluetooth scan result callbacks, etc.
- * @since version 6.0
+ * 
+ * @since 2025-10
  */
 public class LocationService {
     private static final String LOG_TAG = "LocationService";
@@ -112,17 +113,19 @@ public class LocationService {
     private int receivedFixCount = 0;
     private final Object geofenceLock = new Object();
     private Location currentLocation;
-    private final CountDownLatch latch = new CountDownLatch(1);
-    private Activity mActivity;
 
     private static class CountryResult {
         int type;
         String code;
+
         CountryResult(int type, String code) {
             this.type = type;
             this.code = code;
         }
     }
+
+    private final CountDownLatch latch = new CountDownLatch(1);
+    private Activity mActivity;
 
     private final LocationListener statusListener = new LocationListener() {
         @Override
