@@ -28,7 +28,7 @@ bool getAccessibilityEnabledOC()
 void subscribeStateOC()
 {
     [[AccessibilitySystemAbilityClient sharedInstance] subscribeState:^(bool state) {
-        OHOS::Plugin::AccessibilitySystemAbilityEventCallback::ExcuteEventCallback("accessibilityStateChange", state);
+        OHOS::Plugin::AccessibilitySystemAbilityEventCallback::ExcuteEventCallback(state);
     }];
 }
 

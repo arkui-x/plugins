@@ -16,6 +16,8 @@
 #ifndef PLUGIN_ACCESSIBILITY_ANDROID_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_IMPL_H
 #define PLUGIN_ACCESSIBILITY_ANDROID_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_IMPL_H
 
+#include "accessibility_system_ability_client_jni.h"
+
 namespace OHOS::Plugin {
 class AccessibilitySystemAbilityClientImpl {
 public:
@@ -23,8 +25,13 @@ public:
     ~AccessibilitySystemAbilityClientImpl() = default;
 
     static bool IsEnable();
-    static int RegisterAccessibilityStateListener();
+    static bool RegisterAccessibilityStateListener();
     static void UnregisterAccessibilityStateListener();
+    static bool IsTouchExplorationEnable();
+    static bool RegisterTouchExplorationListener();
+    static void UnregisterTouchExplorationListener();
+    static std::vector<OHOS::Ace::Framework::AccessibilityAbilityInfo> GetAccessibilityExtensionListSync(
+        const std::string& abilityType, const std::string& stateType);
 };
 } // namespace OHOS::Plugin
 #endif // PLUGIN_ACCESSIBILITY_ANDROID_ACCESSIBILITY_SYSTEM_ABILITY_CLIENT_IMPL_H
