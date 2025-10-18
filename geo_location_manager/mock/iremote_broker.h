@@ -42,7 +42,7 @@ public:
 class IRemoteBroker : public virtual RefBase {
 public:
     IRemoteBroker() = default;
-    virtual ~IRemoteBroker() override = default;
+    ~IRemoteBroker() override = default;
     virtual sptr<IRemoteObject> AsObject() = 0;
 };
 
