@@ -205,10 +205,6 @@ public class LocationService {
 
     public LocationService(Context context) {
         this.context = context;
-        this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        BluetoothManager bm = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter adapter = (bm == null) ? null : bm.getAdapter();
-        bluetoothLeScanner = (adapter == null) ? null : adapter.getBluetoothLeScanner();
         init();
     }
 
@@ -263,6 +259,9 @@ public class LocationService {
     private static native void nativeOnNotificationEvent(int fenceId, boolean entering);
 
     public Location getCurrentLocation() {
+        if (this.locationManager = = null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
         Location lastKnownLocation = getLastKnownLocation();
         if (lastKnownLocation != null) {
             return lastKnownLocation;
@@ -317,6 +316,9 @@ public class LocationService {
     }
 
     private void registerListener(LocationListener listener) {
+        if (this.locationManager = = null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             locationManager.requestLocationUpdates(
                     LocationManager.NETWORK_PROVIDER,
@@ -364,6 +366,9 @@ public class LocationService {
                                             String locale,
                                             String country,
                                             String transId) {
+        if (this.locationManager = = null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
         Locale loc;
         if (locale == null || locale.isEmpty()) {
             loc = Locale.getDefault();
@@ -743,6 +748,9 @@ public class LocationService {
      * @return Success returns 0, failure returns -1.
      */
     public int registerBluetoothScanResultCallback() {
+        BluetoothManager bm = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter adapter = (bm == null) ? null : bm.getAdapter();
+        bluetoothLeScanner = (adapter == null) ? null : adapter.getBluetoothLeScanner();
         if (bluetoothLeScanner == null) {
             Log.e(LOG_TAG, "BLE scanner null");
             return FAIL;
@@ -1152,7 +1160,7 @@ public class LocationService {
             LocationManager locationManagerInstance =
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             if (locationManagerInstance == null) {
-                Log.e(LOG_TAG, "无法获取LocationManager实例");
+                Log.e(LOG_TAG, "Get locationManager failed");
                 return;
             }
             ensureGeofenceReceiverRegistered();
