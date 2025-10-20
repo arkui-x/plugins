@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "bridge_event_handle.h"
 #include "buffer_mapping.h"
 #include "error_code.h"
 #include "method_data.h"
@@ -30,16 +31,19 @@
 namespace OHOS::Plugin::Bridge {
 class Bridge {
 public:
-    Bridge(const std::string& bridgeName, int32_t instanceId, const CodecType& type);
+    Bridge(const std::string& bridgeName, const CodecType& type);
     ~Bridge();
 
-    static bool BridgeNameExists(const std::string& bridgeName, const int32_t instanceId);
+    static bool BridgeNameExists(const std::string& bridgeName);
     const std::string& GetBridgeName(void);
-    int32_t GetInstanceID(void);
     ErrorCode RegisterBridge(const std::string& bridgeName);
     void UnRegisterBridge(const std::string& bridgeName);
     void UnRegisterBridge(void);
     ErrorCode CallMethod(const std::string& methodName, const std::shared_ptr<MethodData>& methodData);
+    ErrorCode CallMethodSync(napi_env env, const std::string& methodName,
+        const std::shared_ptr<MethodData>& methodData, std::shared_ptr<MethodResult>& methodResult);
+    ErrorCode CallMethodSyncBinary(
+        const std::string& methodName, const std::shared_ptr<MethodData>& methodData, MethodResult& methodResult);
     ErrorCode SendMethodResult(const std::string& methodName, const std::string& result);
     ErrorCode SendMessage(const std::string& data, std::shared_ptr<MethodData>& methodData);
     ErrorCode SendMessageResponse(const std::string& data);
@@ -54,11 +58,11 @@ public:
     void SetTerminate(bool terminate);
 
     ErrorCode SendMessageBinary(const std::vector<uint8_t>& data, std::shared_ptr<MethodData>& methodData);
+    CodecType SetCodecType(const CodecType& codecType) { return codecType_ = codecType; };
     CodecType GetCodecType() { return codecType_; };
-  
+
 private:
     std::string bridgeName_;
-    int32_t instanceId_;
     CodecType codecType_ = CodecType::JSON_CODEC;
     bool available_ = false;
     bool terminate_ = false;
@@ -70,6 +74,7 @@ private:
     std::mutex platformMethodDataListLock_;
     std::mutex jsMethodDataListLock_;
     std::mutex jsSendMessageDataListLock_;
+    std::shared_ptr<BridgeEventHandle> taskExecutor_ = BridgeEventHandle::GetInstance();
 
     std::shared_ptr<MethodData> FindPlatformMethodData(const std::string& methodName);
     std::shared_ptr<MethodData> FindJSMethodData(const std::string& methodName);
@@ -84,7 +89,11 @@ private:
     void OnPlatformMethodResultBinary(const std::string& methodName, int errorCode,
         const std::string& errorMessage, std::unique_ptr<Ace::Platform::BufferMapping> result);
     void OnPlatformCallMethodBinary(const std::string& methodName, std::unique_ptr<Ace::Platform::BufferMapping> data);
+    std::unique_ptr<Ace::Platform::BufferMapping> OnPlatformCallMethodSyncBinary(
+        const std::string& methodName, std::unique_ptr<Ace::Platform::BufferMapping> data, int32_t& errorCode);
     void OnPlatformSendMessageBinary(std::unique_ptr<Ace::Platform::BufferMapping> data);
+
+    std::string OnPlatformCallMethodSync(const std::string& methodName, const std::string& parameter);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif

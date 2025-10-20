@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,7 +19,6 @@
 #include "plugins/interfaces/native/inner_api/plugin_utils_inner.h"
 
 namespace OHOS::Plugin::Bridge {
-static constexpr const char* BRIDGE_NAME_ID_SEP = "$";
 
 BridgeWrap& BridgeWrap::GetInstance()
 {
@@ -27,20 +26,18 @@ BridgeWrap& BridgeWrap::GetInstance()
     return instance;
 }
 
-std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridgeNameWithId)
+std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridgeName)
 {
-    auto data = bridgeList_->find(bridgeNameWithId);
+    auto data = bridgeList_->find(bridgeName);
     if (data == bridgeList_->end()) {
         return nullptr;
     }
-
     return data->second;
 }
 
-Bridge* BridgeWrap::BuildBridge(
-    const std::string& bridgeName, const CodecType& codecType, const std::string& dataKey, int32_t instanceId)
+Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& codecType)
 {
-    auto bridge = new (std::nothrow) Bridge(bridgeName, instanceId, codecType);
+    auto bridge = new (std::nothrow) Bridge(bridgeName, codecType);
     if (bridge == nullptr) {
         return nullptr;
     }
@@ -48,14 +45,17 @@ Bridge* BridgeWrap::BuildBridge(
     std::shared_ptr<Data> data = std::make_shared<BridgeWrap::Data>();
     data->ref_++;
     data->bridge_ = bridge;
-    (*bridgeList_)[dataKey] = data;
+    (*bridgeList_)[bridgeName] = data;
     return bridge;
 }
 
-Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data)
+Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data, const CodecType& codecType)
 {
     if (data) {
         data->ref_++;
+        if (data->bridge_) {
+            data->bridge_->SetCodecType(codecType);
+        }
         return data->bridge_;
     }
     return nullptr;
@@ -64,27 +64,24 @@ Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data)
 Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
 {
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
-    int32_t instanceId = Ace::Platform::BridgeManager::GetCurrentInstanceId();
-    std::string key(GetBridgeNameWithID(bridgeName, instanceId));
-    auto data = findData(key);
+    auto data = findData(bridgeName);
     if (data == nullptr) {
-        LOGI("BuildBridge instanceId is %{public}d bridgeName is %{public}s," , instanceId, bridgeName.c_str());
-        return BuildBridge(bridgeName, codecType, key, instanceId);
+        LOGI("BuildBridge bridgeName is %{public}s,", bridgeName.c_str());
+        return BuildBridge(bridgeName, codecType);
     }
-    LOGI("CopyBridge instanceId is %{public}d bridgeName is %{public}s," , instanceId, bridgeName.c_str());
-    return CopyBridge(data);
+    LOGI("CopyBridge bridgeName is %{public}s,", bridgeName.c_str());
+    return CopyBridge(data, codecType);
 }
 
-void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
+void BridgeWrap::DeleteBridge(const std::string& bridgeName)
 {
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
-    LOGI("DeleteBridge instanceId is %{public}d bridgeName is %{public}s," , instanceId, bridgeName.c_str());
-    std::string bridgeNameWithId = GetBridgeNameWithID(bridgeName, instanceId);
-    auto data = findData(bridgeNameWithId);
+    auto data = findData(bridgeName);
     if (data == nullptr) {
         return;
     }
 
+    LOGI("DeleteBridge bridgeName is %{public}s,", bridgeName.c_str());
     data->ref_--;
     if (data->ref_ == 0) {
         if (data->bridge_) {
@@ -92,19 +89,10 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName, int32_t instanceId)
             delete data->bridge_;
             data->bridge_ = nullptr;
         }
-
-        auto it = bridgeList_->find(bridgeNameWithId);
+        auto it = bridgeList_->find(bridgeName);
         if (it != bridgeList_->end()) {
             bridgeList_->erase(it);
         }
     }
-}
-
-std::string BridgeWrap::GetBridgeNameWithID(const std::string& bridgeName, int32_t instanceId)
-{
-    std::string bridgeNameWithId(bridgeName);
-    bridgeNameWithId.append(BRIDGE_NAME_ID_SEP);
-    bridgeNameWithId.append(std::to_string(instanceId));
-    return bridgeNameWithId;
 }
 } // namespace OHOS::Plugin::Bridge

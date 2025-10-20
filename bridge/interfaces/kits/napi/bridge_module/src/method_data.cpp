@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,7 +35,6 @@ static constexpr const char* JS_REGISTER_METHOD_FUNCTION = "method";
 
 MethodData::MethodData(napi_env env, const CodecType& type) : env_(env), codecType_(type)
 {
-    instanceId_ = PluginUtilsInner::GetInstanceId();
 }
 
 std::shared_ptr<MethodData> MethodData::CreateMethodData(napi_env env, const CodecType& type)
@@ -250,25 +249,33 @@ void MethodData::InitEventSuccessForMethod(void)
         return;
     }
 
-    auto event = [instanceId = instanceId_, codecType = codecType_](napi_env env, const std::string& bridgeName,
+    auto event = [this, codecType = codecType_](napi_env env, const std::string& bridgeName,
                      const std::string& methodName, napi_value resultValue) {
         MethodResult result;
         result.SetErrorCode(0);
         result.SetMethodName(methodName);
         if (codecType == CodecType::JSON_CODEC) {
             result.ParseJSMethodResult(env, resultValue);
-            auto task = [instanceId, platformResult = result.GetResult(), bridgeName, methodName]() {
-                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platformResult);
+            auto task = [platformResult = result.GetResult(), bridgeName, methodName]() {
+                Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platformResult);
             };
-            PluginUtilsInner::RunTaskOnPlatform(task);
+            if (!taskExecutor_) {
+                LOGE("InitEventSuccessForMethod(JSON): taskExecutor_ is null.");
+            } else {
+                taskExecutor_->RunTaskOnBridgeThread(task);
+            }
         } else if (codecType == CodecType::BINARY_CODEC) {
             result.ParseJSMethodResultBinary(env, resultValue);
-            auto task = [instanceId, resulthold = result.GetResultBinary(), bridgeName, methodName]() {
-                std::unique_ptr<std::vector<uint8_t>> resultData { resulthold };
+            auto task = [resultHold = result.GetResultBinary(), bridgeName, methodName]() {
+                std::unique_ptr<std::vector<uint8_t>> resultData { resultHold };
                 Ace::Platform::BridgeManager::JSSendMethodResultBinary(
-                    instanceId, bridgeName, methodName, 0, "", std::move(resultData));
+                    bridgeName, methodName, 0, "", std::move(resultData));
             };
-            PluginUtilsInner::RunTaskOnPlatform(task);
+            if (!taskExecutor_) {
+                LOGE("InitEventSuccessForMethod(Binary): taskExecutor_ is null.");
+            } else {
+                taskExecutor_->RunTaskOnBridgeThread(task);
+            }
         }
     };
     asyncEvent_->SetAsyncEventSuccess(event);
@@ -281,24 +288,32 @@ void MethodData::InitEventErrorForMethod(void)
         return;
     }
 
-    auto event = [instanceId = instanceId_, codecType = codecType_](
+    auto event = [this, codecType = codecType_](
                      napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
         MethodResult result;
         result.SetErrorCode(errorCode);
         result.SetMethodName(methodName);
         if (codecType == CodecType::JSON_CODEC) {
             result.ParseJSMethodResult(env, nullptr);
-            auto task = [instanceId, platformResult = result.GetResult(), bridgeName, methodName]() {
-                Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platformResult);
+            auto task = [platformResult = result.GetResult(), bridgeName, methodName]() {
+                Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platformResult);
             };
-            PluginUtilsInner::RunTaskOnPlatform(task);
+            if (!taskExecutor_) {
+                LOGE("InitEventErrorForMethod(JSON): taskExecutor_ is null.");
+            } else {
+                taskExecutor_->RunTaskOnBridgeThread(task);
+            }
         } else if (codecType == CodecType::BINARY_CODEC) {
-            auto task = [instanceId, errorCode = result.GetErrorCode(), errorMessage = result.GetErrorMessage(),
+            auto task = [errorCode = result.GetErrorCode(), errorMessage = result.GetErrorMessage(),
                             bridgeName, methodName]() {
                 Ace::Platform::BridgeManager::JSSendMethodResultBinary(
-                    instanceId, bridgeName, methodName, errorCode, errorMessage, nullptr);
+                    bridgeName, methodName, errorCode, errorMessage, nullptr);
             };
-            PluginUtilsInner::RunTaskOnPlatform(task);
+            if (!taskExecutor_) {
+                LOGE("InitEventErrorForMethod(Binary): taskExecutor_ is null.");
+            } else {
+                taskExecutor_->RunTaskOnBridgeThread(task);
+            }
         }
     };
     asyncEvent_->SetAsyncEventError(event);
@@ -311,14 +326,18 @@ void MethodData::InitEventSuccessForMessage(void)
         return;
     }
 
-    auto event = [instanceId = instanceId_](napi_env env, const std::string& bridgeName, const std::string& methodName,
+    auto event = [this](napi_env env, const std::string& bridgeName, const std::string& methodName,
                      napi_value resultValue) {
         NapiRawValue rawValue { .env = env, .value = resultValue };
         auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
-        auto task = [instanceId, data = encoded->value, bridgeName]() {
-            Ace::Platform::BridgeManager::JSSendMessageResponse(instanceId, bridgeName, data);
+        auto task = [data = encoded->value, bridgeName]() {
+            Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
         };
-        PluginUtilsInner::RunTaskOnPlatform(task);
+        if (!taskExecutor_) {
+            LOGE("InitEventSuccessForMessage: taskExecutor_ is null.");
+        } else {
+            taskExecutor_->RunTaskOnBridgeThread(task);
+        }
     };
     asyncEvent_->SetAsyncEventSuccess(event);
 }
@@ -330,13 +349,16 @@ void MethodData::InitEventErrorForMessage(void)
         return;
     }
 
-    auto event = [instanceId = instanceId_](
-                     napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
+    auto event = [this](napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
         auto data = BridgeJsonCodec::ParseNullParams("{}");
-        auto task = [instanceId, data, bridgeName]() {
-            Ace::Platform::BridgeManager::JSSendMessageResponse(instanceId, bridgeName, data);
+        auto task = [data, bridgeName]() {
+            Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
         };
-        PluginUtilsInner::RunTaskOnPlatform(task);
+        if (!taskExecutor_) {
+            LOGE("InitEventErrorForMessage: taskExecutor_ is null.");
+        } else {
+            taskExecutor_->RunTaskOnBridgeThread(task);
+        }
     };
     asyncEvent_->SetAsyncEventError(event);
 }
@@ -509,22 +531,31 @@ void MethodData::PlatformCallMethod(const std::string& parameter)
         result.SetMethodName(methodName_);
         result.ParseJSMethodResult(env_, nullptr);
 
-        auto task = [instanceId = instanceId_, platformResult = result.GetResult(), bridgeName = bridgeName_,
-                        methodName = methodName_]() {
-            Ace::Platform::BridgeManager::JSSendMethodResult(instanceId, bridgeName, methodName, platformResult);
+        auto task = [platformResult = result.GetResult(), bridgeName = bridgeName_, methodName = methodName_]() {
+            Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platformResult);
         };
-        PluginUtilsInner::RunTaskOnPlatform(task);
+        if (!taskExecutor_) {
+            LOGE("PlatformCallMethod(error path): taskExecutor_ is null.");
+        } else {
+            taskExecutor_->RunTaskOnBridgeThread(task);
+        }
         return;
     }
 
+    if (asyncEvent_ == nullptr) {
+        LOGE("PlatformCallMethod(Posted Task): asyncEvent_ became null.");
+        return;
+    }
     asyncEvent_->SetMethodParameter(parameter);
     asyncEvent_->SetBridgeName(bridgeName_);
     AsyncWorkComplete jsCallback = [](napi_env env, napi_status status, void* data) {
         NAPIAsyncEvent* event = static_cast<NAPIAsyncEvent*>(data);
         event->AsyncWorkCallMethod();
     };
-    asyncEvent_->CreateAsyncWork(
-        methodName_, [](napi_env env, void* data) {}, jsCallback);
+    bool ret = asyncEvent_->CreateAsyncWork(methodName_, [](napi_env env, void* data) {}, jsCallback);
+    if (!ret) {
+        LOGE("PlatformCallMethod: CreateAsyncWork failed for method %{public}s", methodName_.c_str());
+    }
 }
 
 void MethodData::PlatformCallMethodBinary(std::unique_ptr<Ace::Platform::BufferMapping> data)
@@ -536,11 +567,15 @@ void MethodData::PlatformCallMethodBinary(std::unique_ptr<Ace::Platform::BufferM
         result.SetMethodName(methodName_);
 
         auto task = [errorCode = result.GetErrorCode(), errorMessage = result.GetErrorMessage(),
-                        bridgeName = bridgeName_, methodName = methodName_, instanceId = instanceId_]() {
+                        bridgeName = bridgeName_, methodName = methodName_]() {
             Ace::Platform::BridgeManager::JSSendMethodResultBinary(
-                instanceId, bridgeName, methodName, errorCode, errorMessage, nullptr);
+                bridgeName, methodName, errorCode, errorMessage, nullptr);
         };
-        PluginUtilsInner::RunTaskOnPlatform(task);
+        if (!taskExecutor_) {
+            LOGE("PlatformCallMethodBinary failed taskExecutor_ is null.");
+        } else {
+            taskExecutor_->RunTaskOnBridgeThread(task);
+        }
         return;
     }
 
@@ -585,6 +620,7 @@ void MethodData::PlatformSendMessage(const std::string& data)
     asyncEvent_->SetRefErrorData(resultValue.GetErrorResult());
     asyncEvent_->SetRefData(decoded->value);
     asyncEvent_->SetBridgeName(bridgeName_);
+
     asyncEvent_->AsyncWorkMessage();
 }
 
@@ -599,6 +635,7 @@ void MethodData::PlatformSendMessageBinary(std::unique_ptr<Ace::Platform::Buffer
     napi_value binaryResult = MethodDataConverter::ConvertToNapiValue(env_, *decoded);
     asyncEvent_->SetRefData(binaryResult);
     asyncEvent_->SetBridgeName(bridgeName_);
+
     asyncEvent_->AsyncWorkMessage();
 }
 
@@ -637,5 +674,68 @@ void MethodData::UpdateMethodName(void)
     if (!methodName_.empty()) {
         methodName_ = MethodID::MakeMethodNameID(methodName_);
     }
+}
+
+MethodResult MethodData::PlatformCallMethodSync(const std::string& parameter)
+{
+    LOGD("MethodData::PlatformCallMethodSync called for method '%{public}s'", methodName_.c_str());
+    MethodResult result;
+    result.SetMethodName(methodName_);
+
+    if (asyncEvent_ == nullptr || !asyncEvent_->IsCallback()) {
+        LOGE("PlatformCallMethodSync: No callback registered for method '%{public}s'", methodName_.c_str());
+        result.SetErrorCode(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+        result.CreateMethodResultForError();
+        return result;
+    }
+
+    napi_value methodResultValue = asyncEvent_->AsyncWorkCallMethodSync(parameter);
+    if (methodResultValue != nullptr) {
+        result.ParseJSMethodResult(env_, methodResultValue);
+        LOGD("PlatformCallMethodSync: Successfully called method '%{public}s'", methodName_.c_str());
+    } else {
+        LOGE("PlatformCallMethodSync: JavaScript method returned null for method '%{public}s'", methodName_.c_str());
+        result.SetErrorCode(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+        result.CreateMethodResultForError();
+    }
+
+    return result;
+}
+
+MethodResult MethodData::PlatformCallMethodSyncBinary(std::unique_ptr<Ace::Platform::BufferMapping> parameter)
+{
+    LOGD("MethodData::PlatformCallMethodSyncBinary called for method '%{public}s'", methodName_.c_str());
+    MethodResult result;
+    result.SetMethodName(methodName_);
+
+    if (codecType_ != CodecType::BINARY_CODEC) {
+        LOGE("PlatformCallMethodSyncBinary: codec type not binary");
+        result.SetErrorCode(static_cast<int>(ErrorCode::BRIDGE_CODEC_TYPE_MISMATCH));
+        result.CreateMethodResultForError();
+        return result;
+    }
+
+    if (asyncEvent_ == nullptr || !asyncEvent_->IsCallback()) {
+        LOGE("PlatformCallMethodSyncBinary: No callback registered for method '%{public}s'", methodName_.c_str());
+        result.SetErrorCode(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+        result.CreateMethodResultForError();
+        return result;
+    }
+
+    uint8_t* dataPtr = nullptr;
+    size_t dataSize = 0;
+    if (parameter) {
+        dataPtr = const_cast<uint8_t*>(parameter->GetMapping());
+        dataSize = parameter->GetSize();
+    }
+    napi_value methodResultValue = asyncEvent_->AsyncWorkCallMethodSyncBinary(dataPtr, dataSize);
+    if (methodResultValue != nullptr) {
+        result.ParseJSMethodResultBinary(env_, methodResultValue);
+    } else {
+        LOGE("PlatformCallMethodSyncBinary: JS returned null");
+        result.SetErrorCode(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+        result.CreateMethodResultForError();
+    }
+    return result;
 }
 } // namespace OHOS::Plugin::Bridge

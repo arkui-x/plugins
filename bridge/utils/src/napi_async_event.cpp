@@ -20,6 +20,9 @@
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
+#include "buffer_mapping.h"
+#include "bridge_binary_codec.h"
+#include "method_data_converter.h"
 
 namespace OHOS::Plugin::Bridge {
 NAPIAsyncEvent::NAPIAsyncEvent(napi_env env) : env_(env) {}
@@ -307,5 +310,77 @@ void NAPIAsyncEvent::AsyncWorkMessage(void)
     PluginUtilsNApi::DetachArrayBufferFromTypedArray(env_, data);
     DeleteRefData();
     DeleteRefErrorData();
+}
+
+napi_value NAPIAsyncEvent::AsyncWorkCallMethodSync(const std::string& parameter)
+{
+    SetErrorCode(0);
+    if (callback_ == nullptr) {
+        LOGE("AsyncWorkCallMethodSync: No callback registered");
+        return nullptr;
+    }
+
+    napi_value callback = nullptr;
+    napi_get_reference_value(env_, callback_, &callback);
+
+    if (callback == nullptr) {
+        LOGE("AsyncWorkCallMethodSync: Failed to get callback reference");
+        return nullptr;
+    }
+
+    napi_value methodResultValue = nullptr;
+    if (parameter.empty()) {
+        methodResultValue = PluginUtilsNApi::CallFunction(
+            env_, PluginUtilsNApi::CreateUndefined(env_), callback, 0, nullptr);
+    } else {
+        size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+        napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
+        bool ret = NAPIUtils::JsonStringToNapiValues(env_, parameter, argc, argv);
+        if (!ret) {
+            LOGE("AsyncWorkCallMethodSync: Failed to parse parameters");
+            return nullptr;
+        }
+        methodResultValue = PluginUtilsNApi::CallFunction(
+            env_, PluginUtilsNApi::CreateUndefined(env_), callback, argc, argv);
+    }
+
+    LOGD("AsyncWorkCallMethodSync: Successfully called method");
+    return methodResultValue;
+}
+
+napi_value NAPIAsyncEvent::AsyncWorkCallMethodSyncBinary(uint8_t* data, size_t size)
+{
+    LOGD("NAPIAsyncEvent::AsyncWorkCallMethodSyncBinary called, size=%{public}zu", size);
+    SetErrorCode(0);
+    if (callback_ == nullptr) {
+        LOGE("AsyncWorkCallMethodSyncBinary: No callback registered");
+        return nullptr;
+    }
+
+    napi_value callback = nullptr;
+    napi_get_reference_value(env_, callback_, &callback);
+    if (callback == nullptr) {
+        LOGE("AsyncWorkCallMethodSyncBinary: Failed to get callback reference");
+        return nullptr;
+    }
+
+    napi_value methodResultValue = nullptr;
+    if (data == nullptr || size == 0) {
+        methodResultValue = PluginUtilsNApi::CallFunction(
+            env_, PluginUtilsNApi::CreateUndefined(env_), callback, 0, nullptr);
+        return methodResultValue;
+    }
+
+    auto decoded = BridgeBinaryCodec::GetInstance().DecodeBuffer(data, size);
+    if (!decoded) {
+        LOGE("AsyncWorkCallMethodSyncBinary: Decode buffer failed");
+        return nullptr;
+    }
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
+    MethodDataConverter::ConvertToNapiValues(env_, *decoded, argc, argv);
+    methodResultValue = PluginUtilsNApi::CallFunction(
+        env_, PluginUtilsNApi::CreateUndefined(env_), callback, argc, argv);
+    return methodResultValue;
 }
 } // namespace OHOS::Plugin::Bridge

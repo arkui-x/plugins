@@ -71,6 +71,9 @@ public:
     void AsyncWorkCallMethod(size_t argc, const napi_value* argv);
     void AsyncWorkMessage(void);
 
+    napi_value AsyncWorkCallMethodSync(const std::string& parameter);
+    napi_value AsyncWorkCallMethodSyncBinary(uint8_t* data, size_t size);
+
 private:
     napi_env env_ = nullptr;
     napi_ref callback_ = nullptr;
