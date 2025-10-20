@@ -184,7 +184,7 @@ ErrorCode Bridge::CallMethodSync(napi_env env, const std::string& methodName,
     } else if (codecType_ == CodecType::BINARY_CODEC) {
         const auto& data = methodData->GetMethodParamNameBinary();
         auto result = BridgeManager::JSCallMethodBinarySync(bridgeName_, methodName, data);
-        methodResult->ParsePlatformMethodResultBinary(env, 0, "", std::move(result));
+        methodResult->ParsePlatformMethodResultBinary(env, result.errorCode, "", std::move(result.buffer));
     }
     return ErrorCode::BRIDGE_ERROR_NO;
 }

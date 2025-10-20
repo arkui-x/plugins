@@ -32,7 +32,7 @@ public:
     static napi_value NAPI_GetParams(napi_env env, Json json);
     static Json PlatformParams(napi_env env, napi_value value);
     static int NAPI_GetErrorCodeFromJson(Json json);
-    static napi_value CreateErrorMessage(napi_env env, ErrorCode errorCode);
+    static napi_value CreateErrorMessage(napi_env env, int32_t errorCode);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif // PLUGINS_BRIDGE_NAPI_UTILS_H
