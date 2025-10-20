@@ -96,7 +96,7 @@ public class LocationService {
     private final Map<Integer, Boolean> locationChangeCallbacks = new ConcurrentHashMap<>();
     private boolean isMonitoring = false;
     private HandlerThread locationHandlerThread;
-    private final BluetoothLeScanner bluetoothLeScanner;
+    private BluetoothLeScanner bluetoothLeScanner;
     private boolean errorListenerRegistered = false;
     private boolean gnssStatusRegistered = false;
     private final Object gnssStatusCbLock = new Object();
@@ -259,7 +259,7 @@ public class LocationService {
     private static native void nativeOnNotificationEvent(int fenceId, boolean entering);
 
     public Location getCurrentLocation() {
-        if (this.locationManager = = null) {
+        if (this.locationManager == null) {
             this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         }
         Location lastKnownLocation = getLastKnownLocation();
@@ -300,7 +300,9 @@ public class LocationService {
     private Location getLastKnownLocation() {
         Location gpsLocation = null;
         Location networkLocation = null;
-
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         }
@@ -316,7 +318,7 @@ public class LocationService {
     }
 
     private void registerListener(LocationListener listener) {
-        if (this.locationManager = = null) {
+        if (this.locationManager == null) {
             this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         }
         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
@@ -334,6 +336,9 @@ public class LocationService {
     }
 
     private void stopListener(LocationListener listener) {
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
         if (listener != null) {
             locationManager.removeUpdates(listener);
         }
@@ -366,7 +371,7 @@ public class LocationService {
                                             String locale,
                                             String country,
                                             String transId) {
-        if (this.locationManager = = null) {
+        if (this.locationManager == null) {
             this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         }
         Locale loc;
@@ -505,8 +510,8 @@ public class LocationService {
      *
      */
     public void registerNmeaMessageCallback() {
-        if (locationManager == null) {
-            return;
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         }
         if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
             PackageManager.PERMISSION_GRANTED) {
@@ -650,6 +655,9 @@ public class LocationService {
      * Register GNSS callback by SDK version (only supports API 24 and above)
      */
     private void registerGnssCallbackWithSdkCheck() {
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 locationManager.registerGnssStatusCallback(gnssStatusCallback,
@@ -808,8 +816,8 @@ public class LocationService {
             int timeoutMs,
             boolean needPoi,
             boolean needLocation) {
-        if (locationManager == null) {
-            return FAIL;
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         }
 
         try {
@@ -887,8 +895,8 @@ public class LocationService {
     }
 
     private String chooseProvider() {
-        if (locationManager == null) {
-            return null;
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         }
         try {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -932,9 +940,8 @@ public class LocationService {
         if (locatingStarted) {
             return SUCCESS;
         }
-        if (locationManager == null) {
-            Log.e(LOG_TAG, "startLocating: locationManager null");
-            return FAIL;
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         }
         ensureLocationThread();
         createListenerIfNeed();
@@ -974,6 +981,9 @@ public class LocationService {
     }
 
     private String mapPriorityToProvider(int priority) {
+        if (this.locationManager == null) {
+            this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
         switch (priority) {
             case PRIORITY_ACCURACY_LOW:
                 if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
