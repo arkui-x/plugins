@@ -1,0 +1,65 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+java_library("vibrator_plugin_android_java") {
+  java_files = [
+    "src/ohos/ace/plugin/vibratorplugin/VibratorPlugin.java",
+  ]
+  subsystem_name = "plugins"
+  part_name = "vibrator"
+}
+
+ohos_combine_jars("vibrator_plugin_java") {
+  deps = [ ":vibrator_plugin_android_java" ]
+
+  subsystem_name = "plugins"
+  part_name = "vibrator"
+  jar_path = "${root_out_dir}/plugins/vibrator/ace_vibrator_plugin_android.jar"
+}
+
+ohos_source_set("vibrator_plugin_android_jni") {
+  sources = [
+    "jni/android_service.cpp",
+    "jni/vibrator_plugin_jni.cpp",
+    "../../../utils/haptic_decoder/interface/vibrator_decoder_creator.cpp",
+    "../../../utils/haptic_decoder/oh_json/src/default_vibrator_decoder.cpp",
+    "../../../utils/haptic_decoder/oh_json/src/default_vibrator_decoder_factory.cpp",
+    "../../../utils/haptic_decoder/he_json/src/he_vibrator_decoder.cpp",
+    "../../../utils/haptic_decoder/he_json/src/he_vibrator_decoder_factory.cpp",
+    "../../../utils/common/src/json_parser.cpp",
+  ]
+
+  include_dirs = [
+    "//plugins/vibrator/frameworks/adapter",
+    "//plugins/vibrator/utils/common/include",
+    "//plugins/vibrator/mock",
+    "//plugins/vibrator/utils/haptic_decoder/interface",
+    "//plugins/vibrator/utils/haptic_decoder/oh_json/include",
+    "//plugins/vibrator/utils/haptic_decoder/he_json/include",
+  ]
+
+  defines = [ "ANDROID_PLATFORM" ]
+
+  deps = [
+    ":vibrator_plugin_java",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+    "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_android",
+    "//third_party/cJSON:cjson",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "vibrator"
+}
