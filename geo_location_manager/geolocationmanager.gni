@@ -1,0 +1,70 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+GEOLOCATIONMANAGER_ROOT = "//plugins/geo_location_manager"
+c_utils_root = "//commonlibrary/c_utils"
+
+geoLocationManager_include = [
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/inner_api",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/android/java/jni",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/ios",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/include",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/inner_api/include",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/notification/include",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/native/locator_sdk/include",
+  "$GEOLOCATIONMANAGER_ROOT/mock",
+  "//commonlibrary/c_utils/base/include",
+  "//plugins/common_event_manager",
+  "//plugins/notification_manager",
+  "//plugins/data/datasharepredicates/data_share",
+  "//third_party/cJSON",
+  "//third_party/json/single_include/",
+  "//foundation/distributeddatamgr/preferences/frameworks/native/mock/ability_runtime/dataobs_manager/include"
+]
+
+geoLocationManager_source = [
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/bluetooth_scan_result_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/cached_locations_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/country_code_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/geofence_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/gnss_status_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_error_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_gnss_geofence_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_hiappevent.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_napi_adapter.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_napi_entry.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_napi_errcode.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_napi_event.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/location_switch_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/locator_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/napi_util.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/nmea_message_callback_napi.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/interfaces/js/napi/source/notification_napi_convert_request.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/location_common/common/source/beacon_fence_request.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/location_common/common/source/beacon_fence.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/location_common/common/source/bluetooth_scan_result.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/location_common/common/source/common_utils.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/location_common/common/source/geo_address.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/location_common/common/source/geocode_convert_address_request.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/base_module/source/location.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/base_module/source/request_config.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/base_module/source/satellite_status.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/native/locator_sdk/source/locator.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/native/locator_sdk/source/locator_impl.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/native/locator_sdk/source/cached_location_manager.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/native/geofence_sdk/source/geofence_request.cpp",
+  "$GEOLOCATIONMANAGER_ROOT/frameworks/native/geofence_sdk/source/geofence_sdk.cpp",
+]
