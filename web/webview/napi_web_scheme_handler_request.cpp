@@ -506,7 +506,6 @@ napi_value NapiWebSchemeHandlerRequest::JS_HasGesture(napi_env env, napi_callbac
 
     napi_value value;
     NAPI_CALL(env, napi_get_boolean(env, request->GetHasGesture(), &value));
-    napi_get_undefined(env, &value);
     return value;
 }
 
