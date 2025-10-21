@@ -205,6 +205,7 @@ napi_value NAccessibilityClient::SendAccessibilityEvent(napi_env env, napi_callb
         delete asyncContext;
         return nullptr;
     }
+    status = napi_queue_async_work(env, asyncContext->asyncWork);
     if (status != napi_ok) {
         delete asyncContext;
         return nullptr;
@@ -495,8 +496,6 @@ napi_value NAccessibilityClient::HandleCallbackCall(
     napi_env env, napi_value* args, const std::string& abilityTypeStr, const std::string& stateTypeStr)
 {
     if (PluginUtilsNApi::IsMatchType(args[PluginUtilsNApi::ARG_NUM_2], napi_function, env) != TYPE_CHECK_SUCCESS) {
-        napi_value err = CreateBusinessError(env, RET_ERR_INVALID_PARAM);
-        napi_throw(env, err);
         return nullptr;
     }
     bool isValidParam = !IsValidAbilityType(abilityTypeStr) || !IsValidStateType(stateTypeStr) ||
