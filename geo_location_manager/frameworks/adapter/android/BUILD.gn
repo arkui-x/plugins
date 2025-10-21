@@ -1,0 +1,103 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//plugins/geo_location_manager/geolocationmanager.gni")
+
+java_library("geolocationmanager_android_java") {
+  java_files =
+      [ "java/src/ohos/ace/plugin/locationserviceplugin/LocationService.java" ]
+  subsystem_name = "plugins"
+  part_name = "geo_location_manager"
+}
+
+ohos_combine_jars("geolocationmanager_java") {
+  deps = [ ":geolocationmanager_android_java" ]
+  subsystem_name = "plugins"
+  part_name = "geo_location_manager"
+  jar_path = "${root_out_dir}/plugins/geo_location_manager/frameworks/adapter/arkui_geolocationmanager_service.jar"
+}
+
+ohos_source_set("notification_manager_static_android") {
+    include_dirs = [
+      "//base/notification/distributed_notification_service/frameworks/core/include",
+      "//plugins/interfaces/native",
+      "//foundation/appframework/ability/ability_runtime/cross_platform/frameworks/js/napi/napi_common",
+      "//plugins/notification_manager",
+      "//third_party/json/include",
+    ]
+
+    sources = [
+      "//plugins/notification_manager/ans_convert_enum.cpp",
+      "//plugins/notification_manager/common.cpp",
+      "//plugins/notification_manager/common_convert_content.cpp",
+      "//plugins/notification_manager/common_convert_request.cpp",
+      "//plugins/notification_manager/common_utils.cpp",
+      "//plugins/notification_manager/constant.cpp",
+      "//plugins/notification_manager/napi_cancel.cpp",
+      "//plugins/notification_manager/napi_display_badge.cpp",
+      "//plugins/notification_manager/napi_enable_notification.cpp",
+      "//plugins/notification_manager/napi_publish.cpp",
+      "//plugins/notification_manager/notification_basic_content.cpp",
+      "//plugins/notification_manager/notification_content.cpp",
+      "//plugins/notification_manager/notification_helper.cpp",
+      "//plugins/notification_manager/notification_long_text_content.cpp",
+      "//plugins/notification_manager/notification_multiline_content.cpp",
+      "//plugins/notification_manager/notification_normal_content.cpp",
+      "//plugins/notification_manager/notification_request.cpp",
+    ]
+
+    deps = [
+      "//commonlibrary/c_utils/base:utilsbase",
+      "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/napi_base_context:napi_base_context",
+      "//plugins/interfaces/native:ace_plugin_util_android",
+      "//plugins/interfaces/native:napi_common",
+      "//plugins/interfaces/native:plugin_log",
+    ]
+
+    
+    deps += [ "//plugins/notification_manager/android/java:notification_manager_android_jni" ]
+  
+    subsystem_name = "plugins"
+    part_name = "notification_manager"
+}
+
+ohos_source_set("geolocationmanager_android_jni") {
+  include_dirs = geoLocationManager_include
+  include_dirs += [ 
+    "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/inner_api",
+    "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/android/java/jni",
+    "$GEOLOCATIONMANAGER_ROOT/frameworks/adapter/utils",
+    ]
+
+  sources = [
+    "java/jni/location_crossplatform_service_impl.cpp",
+    "java/jni/location_service_jni.cpp",
+  ]
+
+  defines = [
+    "ANDROID_PLATFORM",
+    "NOTIFICATION_ENABLE"
+  ]
+
+  deps = [
+    ":geolocationmanager_java",
+    "//plugins/interfaces/native:ace_plugin_util_android",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_android",
+    "//plugins/interfaces/native:plugin_log",
+    ":notification_manager_static_android",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "geo_location_manager"
+}
