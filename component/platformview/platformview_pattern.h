@@ -106,7 +106,9 @@ private:
     SizeF lastDrawSize_;
     OffsetF lastOffset_;
     bool hasPlatformViewInit_ = false;
+#ifdef IOS_PLATFORM
     bool isTextureReady = false;
+#endif
     RefPtr<TouchEventImpl> touchEvent_;
     OffsetF localPosition_;
     SizeF drawSize_;
