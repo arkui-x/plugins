@@ -70,7 +70,9 @@ void PlatformViewPattern::OnTextureRefresh(void* surface)
     CHECK_NULL_VOID(renderContextForPlatformView);
     renderContextForPlatformView->MarkNewFrameAvailable(surface);
     UpdatePlatformViewLayoutIfNeeded();
+#ifdef IOS_PLATFORM
     isTextureReady = true;
+#endif
 }
 
 void PlatformViewPattern::RegisterPlatformViewEvent()
@@ -284,7 +286,9 @@ void PlatformViewPattern::BeforeSyncGeometryProperties(const DirtySwapConfig& co
         hasPlatformViewInit_ = true;
     }
     UpdateSurfaceBounds(false, config.frameOffsetChange);
+#ifdef IOS_PLATFORM
     isTextureReady = false;
+#endif
     UpdatePlatformViewLayoutIfNeeded();
     host->MarkNeedSyncRenderTree();
 }
@@ -297,9 +301,11 @@ void PlatformViewPattern::UpdatePlatformViewLayoutIfNeeded()
     OffsetF offset = localPosition_ + transformRelativeOffset;
     if (lastDrawSize_ != drawSize_ || lastOffset_ != offset) {
         platformView_->UpdatePlatformViewLayout(drawSize_, offset);
+#ifdef IOS_PLATFORM
         if (!isTextureReady) {
             return;
         }
+#endif
         if (renderContextForPlatformView_) {
             renderContextForPlatformView_->SetBounds(
                 localPosition_.GetX(), localPosition_.GetY(), drawSize_.Width(), drawSize_.Height());
