@@ -24,8 +24,6 @@ namespace OHOS::Plugin {
 static const std::string CAMERA_PERMISSION = "ohos.permission.CAMERA";
 static const std::string MICROPHONE_PERMISSION = "ohos.permission.MICROPHONE";
 static const std::string PHOTO_PERMISSION = "ohos.permission.READ_IMAGEVIDEO";
-static const std::string LOCATION_PERMISSION = "ohos.permission.LOCATION";
-static const std::string APPROXIMATELY_LOCATION_PERMISSION = "ohos.permission.APPROXIMATELY_LOCATION";
 
 std::unique_ptr<AbilityAccessCtrl> AbilityAccessCtrl::Create()
 {
@@ -46,12 +44,6 @@ bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
     }
     if (permission == PHOTO_PERMISSION) {
         bool res =  [[abilityAccessCtrlIOS shareinstance] CheckPhotoPermission];
-        LOGI(" %{public}s check result %{public}d.", permission.c_str(), res);
-        return res;
-    }
-    if (permission == LOCATION_PERMISSION ||
-        permission == APPROXIMATELY_LOCATION_PERMISSION) {
-        bool res =  [[abilityAccessCtrlIOS shareinstance] CheckLocationPermission];
         LOGI(" %{public}s check result %{public}d.", permission.c_str(), res);
         return res;
     }
@@ -99,11 +91,6 @@ void AbilityAccessCtrlImpl::RequestPermission(
     }
     if (permission == PHOTO_PERMISSION) {
         [[abilityAccessCtrlIOS shareinstance] RequestPhotoPermission:func :cbInfo :isLast];
-        return;
-    }
-    if (permission == LOCATION_PERMISSION ||
-        permission == APPROXIMATELY_LOCATION_PERMISSION) {
-        [[abilityAccessCtrlIOS shareinstance] RequestLocationPermission:func :cbInfo :isLast];
         return;
     }
     IosCallback(cbInfo, isLast, GrantResultType::INVALID_OPER);
