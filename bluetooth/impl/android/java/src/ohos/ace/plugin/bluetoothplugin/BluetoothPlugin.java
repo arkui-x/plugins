@@ -485,15 +485,20 @@ public class BluetoothPlugin {
             Log.e(LOG_TAG, "getDeviceName failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
-            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
-            if (device == null) {
-                Log.e(LOG_TAG, "getDeviceName failed, BluetoothDevice is null");
-                errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
-            } else {
-                name[0] = device.getName();
-                if (name[0] == null) {
+            try {
+                BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
+                if (device == null) {
+                    Log.e(LOG_TAG, "getDeviceName failed, BluetoothDevice is null");
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
+                } else {
+                    name[0] = device.getName();
+                    if (name[0] == null) {
+                        errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
+                    }
                 }
+            } catch (IllegalArgumentException e) {
+                Log.e(LOG_TAG, "getDeviceName failed, IllegalArgumentException is " + e);
+                return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
             }
         }
         return errCode.getId();
@@ -1516,16 +1521,22 @@ public class BluetoothPlugin {
         if (btManager_ == null) {
             return result;
         }
-        BluetoothDevice device = btManager_.findBluetoothDevice(address);
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
-        if (device == null) {
-            Log.e(LOG_TAG, "gattClientConnect failed, Device not found");
-        } else if (bluetoothAdapter == null) {
+        if (bluetoothAdapter == null) {
             Log.e(LOG_TAG, "gattClientConnect failed, The device does not support Bluetooth");
         } else if (!bluetoothAdapter.isEnabled()) {
             Log.e(LOG_TAG, "gattClientConnect failed, User not enabled Bluetooth switch");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
+            BluetoothDevice device = btManager_.findBluetoothDevice(address);
+            if (device == null) {
+                Log.d(LOG_TAG, "It simply creates a BluetoothDevice object based on the MAC address");
+                device = bluetoothAdapter.getRemoteDevice(address);
+                if (device == null) {
+                    Log.e(LOG_TAG, "gattClientConnect failed, Device not found");
+                    return result;
+                }
+            }
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
             if (bluetoothGattClient == null) {
                 bluetoothGattClient = new BluetoothGattClient(appId);
