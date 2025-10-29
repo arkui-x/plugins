@@ -48,6 +48,7 @@ public:
         const BluetoothGattDevice& device, BluetoothGattDescriptor* descriptor, int32_t ret) override;
     int RespondDescriptorWrite(
         const BluetoothGattDevice& device, const BluetoothGattDescriptor& descriptor, int32_t ret) override;
+    int GetConnectedState(const std::string &deviceId, int &state) override;
 
 private:
     int32_t appId_;

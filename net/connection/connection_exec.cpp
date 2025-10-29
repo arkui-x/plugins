@@ -104,6 +104,25 @@ napi_value ConnectionExec::CreateConnectionProperties(napi_env env, NetLinkInfo 
     return connectionProperties;
 }
 
+napi_value ConnectionExec::CreateIpNeighTable(napi_env env, const NetIpMacInfo &ipNeighTable)
+{
+    napi_value jsIpNeigh = NapiUtils::CreateObject(env);
+    if (NapiUtils::GetValueType(env, jsIpNeigh) != napi_object) {
+        return NapiUtils::GetUndefined(env);
+    }
+
+    napi_value jsNetAddress = NapiUtils::CreateObject(env);
+    if (NapiUtils::GetValueType(env, jsNetAddress) != napi_object) {
+        return NapiUtils::GetUndefined(env);
+    }
+
+    FillNetAddressInfo(env, jsNetAddress, ipNeighTable);
+    NapiUtils::SetNamedProperty(env, jsIpNeigh, KEY_IP_ADDRESS, jsNetAddress);
+    NapiUtils::SetStringPropertyUtf8(env, jsIpNeigh, KEY_IFACE_NAME, ipNeighTable.iface_);
+    NapiUtils::SetStringPropertyUtf8(env, jsIpNeigh, KEY_MAC_ADDRESS, ipNeighTable.macAddress_);
+    return jsIpNeigh;
+}
+
 bool ConnectionExec::ExecGetAddressByName(GetAddressByNameContext *context)
 {
     return NetHandleExec::ExecGetAddressesByName(context);
@@ -529,6 +548,27 @@ napi_value ConnectionExec::SetInterfaceIpAddrCallback(SetInterfaceIpAddrContext 
     return NapiUtils::GetUndefined(context->GetEnv());
 }
 
+bool ConnectionExec::ExecGetIpNeighTable(GetIpNeighTableContext *context)
+{
+    return false;
+}
+
+napi_value ConnectionExec::GetIpNeighTableCallback(GetIpNeighTableContext *context)
+{
+    napi_value array = NapiUtils::CreateArray(context->GetEnv(), context->ipMacInfo_.size());
+    if (context->ipMacInfo_.empty()) {
+        NETMANAGER_BASE_LOGE("ip neighbor table is empty!");
+        return array;
+    }
+    uint32_t index = 0;
+    std::for_each(context->ipMacInfo_.begin(), context->ipMacInfo_.end(),
+        [array, &index, context](const NetIpMacInfo &ipMacInfo) {
+        NapiUtils::SetArrayElement(context->GetEnv(), array, index, CreateIpNeighTable(context->GetEnv(), ipMacInfo));
+        ++index;
+    });
+    return array;
+}
+
 bool ConnectionExec::ExecAddNetworkRoute(AddNetworkRouteContext *context)
 {
     return false;
@@ -870,6 +910,21 @@ void ConnectionExec::FillDns(napi_env env, napi_value connectionProperties, NetL
             NapiUtils::SetArrayElement(env, dnsList, index, netAddr);
         }
         NapiUtils::SetNamedProperty(env, connectionProperties, KEY_DNSES, dnsList);
+    }
+}
+
+void ConnectionExec::FillNetAddressInfo(napi_env env, napi_value jsNetAddress, const NetIpMacInfo &ipNeighTable)
+{
+    if (ipNeighTable.family_ == FAMILY_INVALID) {
+        NETMANAGER_BASE_LOGE("Fill NetAddressInfo failed, family is invalid");
+        return;
+    }
+
+    NapiUtils::SetStringPropertyUtf8(env, jsNetAddress, KEY_ADDRESS, ipNeighTable.ipAddress_);
+    if (ipNeighTable.family_ == FAMILY_V4) {
+        NapiUtils::SetUint32Property(env, jsNetAddress, KEY_FAMILY, static_cast<uint32_t>(NetAddress::Family::IPv4));
+    } else if (ipNeighTable.family_ == FAMILY_V6) {
+        NapiUtils::SetUint32Property(env, jsNetAddress, KEY_FAMILY, static_cast<uint32_t>(NetAddress::Family::IPv6));
     }
 }
 

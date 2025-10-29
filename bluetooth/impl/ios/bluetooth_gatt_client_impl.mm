@@ -502,6 +502,11 @@ int BluetoothGattClientImpl::RequestNotification(int32_t appId, uint16_t charact
     return BT_NO_ERROR;
 }
 
+int BluetoothGattClientImpl::GetConnectedState(const std::string &deviceId, int &state)
+{
+    return BT_NO_ERROR;
+}
+
 int BluetoothGattClientImpl::GetGattClientAppId()
 {
     appId_ += 1;

@@ -267,6 +267,12 @@ int BluetoothGattClientImpl::RequestNotification(int32_t appId, uint16_t charact
     return BT_NO_ERROR;
 }
 
+int BluetoothGattClientImpl::GetConnectedState(const std::string &deviceId, int &state)
+{
+    HILOGI("NOT SUPPORT NOW");
+    return BT_NO_ERROR;
+}
+
 std::shared_ptr<GattClientData> BluetoothGattClientImpl::GetGattClientData(int32_t appId)
 {
     std::lock_guard<std::mutex> lock(gattClientMutex_);

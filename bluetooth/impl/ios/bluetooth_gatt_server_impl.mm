@@ -379,6 +379,11 @@ int BluetoothGattServerImpl::RespondDescriptorWrite(
     return BT_NO_ERROR;
 }
 
+int BluetoothGattServerImpl::GetConnectedState(const std::string& deviceId, int& state)
+{
+    return BT_NO_ERROR;
+}
+
 int32_t BluetoothGattServerImpl::GetGattServerAppId()
 {
     appId_ += 1;
