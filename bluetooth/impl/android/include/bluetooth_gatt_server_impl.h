@@ -60,6 +60,7 @@ public:
     void ClearServices(int appId) override;
     int Connect(int appId, const BluetoothGattDevice& device, bool isDirect) override;
     int CancelConnection(int appId, const BluetoothGattDevice& device) override;
+    int GetConnectedState(const std::string &deviceId, int &state) override;
 
 private:
     int32_t applicationIdInc_ = 0;

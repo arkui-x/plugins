@@ -54,6 +54,7 @@ connection_include = [
   "$WORK_DIR/options/include",
   "$INNERKITS_ROOT/netconnclient/include/proxy",
   "$INNERKITS_ROOT/netconnclient/include",
+  "$INNERKITS_ROOT/netmanagernative/include",
   "$INNERKITS_ROOT/include",
   "//plugins/net/connection",
   "//plugins/net",

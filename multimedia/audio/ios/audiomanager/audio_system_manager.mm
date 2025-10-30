@@ -357,6 +357,20 @@ int32_t AudioSystemManager::UnregisterVolumeKeyEventCallback(const int32_t clien
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSystemManager::RegisterVolumeDegreeCallback(const int32_t clientPid,
+    const std::shared_ptr<VolumeKeyEventCallback> &callback, API_VERSION api_v)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnregisterVolumeDegreeCallback(const int32_t clientPid,
+    const std::shared_ptr<VolumeKeyEventCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioSystemManager::SetAudioManagerInterruptCallback(const std::shared_ptr<AudioManagerCallback> &callback)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
@@ -628,6 +642,24 @@ int32_t AudioSystemManager::UnregisterSystemVolumeChangeCallback(const int32_t c
 }
 
 int32_t AudioSystemManager::ForceVolumeKeyControlType(AudioVolumeType volumeType, int32_t duration)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::SetVolumeDegree(AudioVolumeType volumeType, int32_t degree, int32_t uid)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetVolumeDegree(AudioVolumeType volumeType, int32_t uid)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetMinVolumeDegree(AudioVolumeType volumeType)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;

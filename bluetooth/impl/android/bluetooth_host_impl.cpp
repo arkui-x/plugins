@@ -542,6 +542,16 @@ int32_t BluetoothHostImpl::NotifyDialogResult(uint32_t dialogType, bool dialogRe
     return 0;
 }
 
-void BluetoothHostImpl::SetCallingPackageName(const std::string& address, const std::string& packageName) {}
+void BluetoothHostImpl::SetCallingPackageName(const std::string &address, const std::string &packageName) {}
+
+int32_t BluetoothHostImpl::StartRemoteSdpSearch(const std::string &address, const std::string &uuid)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::GetRemoteServices(const std::string &address)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

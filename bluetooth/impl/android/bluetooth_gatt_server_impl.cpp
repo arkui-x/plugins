@@ -192,7 +192,13 @@ int BluetoothGattServerImpl::Connect(int appId, const BluetoothGattDevice& devic
 
 int BluetoothGattServerImpl::CancelConnection(int appId, const BluetoothGattDevice& device)
 {
-    HILOGE("Unsupport GattServer Connect");
+    HILOGE("Unsupport GattServer CancelConnection");
+    return BT_ERR_INTERNAL_ERROR;
+}
+
+int BluetoothGattServerImpl::GetConnectedState(const std::string& deviceId, int& state)
+{
+    HILOGE("Unsupport GattServer GetConnectedState");
     return BT_ERR_INTERNAL_ERROR;
 }
 } // namespace Bluetooth
