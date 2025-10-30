@@ -20,6 +20,7 @@ constexpr int32_t ERROR = -1;
 constexpr int32_t SUCCESS = 0;
 constexpr int32_t PARAMETER_ERROR = 401;
 constexpr int32_t TIEM_OUT_MAX = 1800000;
+constexpr float POINT_SHARPNESS = 50.0f;
 
 @implementation VibratorInfoObject
 @end
@@ -607,7 +608,7 @@ constexpr int32_t TIEM_OUT_MAX = 1800000;
                                            eventTime:(NSTimeInterval)eventTime {
     NSTimeInterval eventDuration = (NSTimeInterval)event.duration / 1000.0;
     float intensity = event.intensity / 100.0f;
-    float sharpness = [self mapFrequencyToSharpness:event.frequency];
+    float sharpness = event.frequency / 100.0f;
     NSArray<CHHapticEventParameter *> *parameters = @[
         [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticIntensity value:intensity],
         [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticSharpness value:sharpness]
@@ -634,8 +635,11 @@ constexpr int32_t TIEM_OUT_MAX = 1800000;
 
     for (const OHOS::Sensors::VibrateCurvePoint &point : sortedPoints) {
         NSTimeInterval pointTime = eventTime + (point.time / 1000.0);
-        float pointIntensity = point.intensity / 100.0f;
-        float pointSharpness = [self mapFrequencyToSharpness:point.frequency];
+        float pointIntensity = event.intensity * point.intensity / 100.0f;
+        float pointSharpness = (event.frequency + point.frequency) / 100.0f;
+        if (pointSharpness < 0.0f) {
+            pointSharpness = POINT_SHARPNESS / 100.0f;
+        }
         CHHapticParameterCurveControlPoint *intensityControlPoint = [[CHHapticParameterCurveControlPoint alloc]
             initWithRelativeTime:pointTime
             value:pointIntensity];
@@ -685,17 +689,6 @@ constexpr int32_t TIEM_OUT_MAX = 1800000;
     }
     self.patternPlayer = player;
     self.isVibrating = YES;
-}
-
-- (float)mapFrequencyToSharpness:(int32_t)frequency {
-    int32_t absFrequency = std::abs(frequency);
-    float baseSharpness = absFrequency / 100.0f;
-
-    if (frequency < 0) {
-        return 0.1f + (baseSharpness * 0.4f);
-    } else {
-        return 0.5f + (baseSharpness * 0.5f);
-    }
 }
 
 - (void)appDidEnterBackground:(NSNotification *)notification {

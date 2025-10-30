@@ -24,6 +24,7 @@
 namespace OHOS::Sensors {
 namespace {
 const char VIBRATOR_PLUGIN_CLASS_NAME[] = "ohos/ace/plugin/vibratorplugin/VibratorPlugin";
+constexpr int32_t DEFAULT_FREQUENCY = 127;
 static const JNINativeMethod METHODS[] = {
     {
         .name = "nativeInit",
@@ -494,7 +495,8 @@ void VibratorJni::ConvertToWaveformParams(const VibratePatternTrans &pattern, st
             for (int32_t i = 0; i < event.points.size() - 1; i++) {
                 int32_t partAllDuration = event.points[i + 1].time - event.points[i].time;
                 int32_t partAllAmplitude = ClampAmplitude(event.points[i].intensity);
-                int32_t transFrequency = event.frequency + event.points[i].frequency;
+                int32_t tempFrequency = event.frequency + event.points[i].frequency;
+                int32_t transFrequency = tempFrequency > 0 ? tempFrequency : DEFAULT_FREQUENCY;
                 int32_t arraySize = transFrequency * partAllDuration * VIBRATOR_MIN_UNIT / VIBRATOR_DEFAULT_DURATION;
                 arraySize = 0 ? 1 : arraySize;
                 AddTimeAmplitudePairs(partAllDuration, partAllAmplitude, arraySize, timeAmplitudePairs);
