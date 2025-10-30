@@ -566,21 +566,21 @@ napi_value BridgeModule::BridgeObject::CallMethodSync(napi_env env, napi_callbac
 
     if (argc == PluginUtilsNApi::ARG_NUM_0 || argc > PluginUtilsNApi::MAX_ARG_NUM) {
         LOGE("BridgeObject::CallMethodSync: Method parameter error.");
-        napi_throw(env, NAPIUtils::CreateErrorMessage(env, ErrorCode::BRIDGE_METHOD_NAME_ERROR));
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_NAME_ERROR)));
         return nullptr;
     }
 
     Bridge* bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::CallMethodSync: Failed to obtain the Bridge object.");
-        napi_throw(env, NAPIUtils::CreateErrorMessage(env, ErrorCode::BRIDGE_INVALID));
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_INVALID)));
         return nullptr;
     }
 
     auto methodData = MethodData::CreateMethodData(env, bridge->GetCodecType());
     if (!methodData->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
         LOGE("BridgeObject::CallMethodSync: Parsing the method name failed.");
-        napi_throw(env, NAPIUtils::CreateErrorMessage(env, ErrorCode::BRIDGE_METHOD_NAME_ERROR));
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_NAME_ERROR)));
         return nullptr;
     }
 
@@ -594,14 +594,16 @@ napi_value BridgeModule::BridgeObject::CallMethodSync(napi_env env, napi_callbac
     }
     if (!ret) {
         LOGE("BridgeObject::CallMethodSync: Parsing the method parameters failed.");
-        napi_throw(env, NAPIUtils::CreateErrorMessage(env, ErrorCode::BRIDGE_METHOD_PARAM_ERROR));
+        napi_throw(env,
+            NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_PARAM_ERROR)));
         return nullptr;
     }
 
     methodData->UpdateMethodName();
     auto methodResult = CallMethodSyncInner(env, thisVal, methodData);
     if (methodResult && methodResult->GetErrorCode() != 0) {
-        napi_throw(env, methodResult->GetErrorResult());
+        LOGE("BridgeObject::CallMethodSync: Call platform method failed.");
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, methodResult->GetErrorCode()));
         return nullptr;
     }
     return methodResult->GetOkResult();
