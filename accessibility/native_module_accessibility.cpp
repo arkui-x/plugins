@@ -26,9 +26,16 @@ namespace OHOS::Plugin {
 static napi_value Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
-        DECLARE_NAPI_FUNCTION("isOpenAccessibilitySync", NAccessibilityClient::IsOpenAccessibilitySync),
+        DECLARE_NAPI_FUNCTION("isOpenAccessibilitySync", NAccessibilityClient::IsOpenStateAccessibilitySync),
+        DECLARE_NAPI_FUNCTION("isOpenTouchGuideSync", NAccessibilityClient::IsOpenAccessibilitySync),
+        DECLARE_NAPI_FUNCTION("isScreenReaderOpenSync", NAccessibilityClient::IsOpenAccessibilitySync),
+        DECLARE_NAPI_FUNCTION("getTouchModeSync", NAccessibilityClient::GetTouchModeSync),
+        DECLARE_NAPI_FUNCTION("sendAccessibilityEvent", NAccessibilityClient::SendAccessibilityEvent),
         DECLARE_NAPI_FUNCTION("on", NAccessibilityClient::SubscribeState),
         DECLARE_NAPI_FUNCTION("off", NAccessibilityClient::UnsubscribeState),
+        DECLARE_NAPI_FUNCTION("getAccessibilityExtensionListSync",
+            NAccessibilityClient::GetAccessibilityExtensionListSync),
+        DECLARE_NAPI_FUNCTION("getAccessibilityExtensionList", NAccessibilityClient::GetAccessibilityExtensionList),
     };
 
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));

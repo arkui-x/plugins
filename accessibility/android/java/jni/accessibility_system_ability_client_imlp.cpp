@@ -15,7 +15,7 @@
 
 #include "accessibility_system_ability_client_imlp.h"
 
-#include "accessibility_system_ability_client_jni.h"
+using namespace OHOS::Ace::Framework;
 
 namespace OHOS::Plugin {
 bool AccessibilitySystemAbilityClientImpl::IsEnable()
@@ -23,7 +23,7 @@ bool AccessibilitySystemAbilityClientImpl::IsEnable()
     return AccessibilityClientJni::IsEnable();
 }
 
-int AccessibilitySystemAbilityClientImpl::RegisterAccessibilityStateListener()
+bool AccessibilitySystemAbilityClientImpl::RegisterAccessibilityStateListener()
 {
     return AccessibilityClientJni::RegisterStateListener();
 }
@@ -31,5 +31,26 @@ int AccessibilitySystemAbilityClientImpl::RegisterAccessibilityStateListener()
 void AccessibilitySystemAbilityClientImpl::UnregisterAccessibilityStateListener()
 {
     AccessibilityClientJni::UnregisterStateListener();
+}
+
+bool AccessibilitySystemAbilityClientImpl::IsTouchExplorationEnable()
+{
+    return AccessibilityClientJni::IsTouchExplorationEnable();
+}
+
+bool AccessibilitySystemAbilityClientImpl::RegisterTouchExplorationListener()
+{
+    return AccessibilityClientJni::RegisterTouchExplorationListener();
+}
+
+void AccessibilitySystemAbilityClientImpl::UnregisterTouchExplorationListener()
+{
+    AccessibilityClientJni::UnregisterTouchExplorationListener();
+}
+
+std::vector<AccessibilityAbilityInfo> AccessibilitySystemAbilityClientImpl::GetAccessibilityExtensionListSync(
+    const std::string& abilityType, const std::string& stateType)
+{
+    return AccessibilityClientJni::GetAccessibilityExtensionListSync(abilityType, stateType);
 }
 } // namespace OHOS::Plugin
