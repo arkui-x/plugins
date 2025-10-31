@@ -51,6 +51,8 @@ void BluetoothHostImpl::RegisterObserver(const sptr<IBluetoothHostObserver>& obs
 {
     BluetoothCentralManager* centralManager = [BluetoothCentralManager sharedInstance];
     [centralManager getBleState];
+    BluetoothPeripheralManager* pripheraManager = [BluetoothPeripheralManager sharedInstance];
+    [pripheraManager createPeripheralManager];
     std::lock_guard<std::mutex> lock(observerMutex_);
     registerObserverCallBack_ = observer;
 }
