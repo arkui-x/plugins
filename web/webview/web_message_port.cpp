@@ -127,6 +127,7 @@ void WebMessagePort::HandleArrayType(NapiJsCallBackParmExt* param, WebMessageExt
 
 void WebMessagePort::UvJsExtCallbackThreadWorker(uv_work_t* work, int status)
 {
+    LOGI("WebMessagePort UvJsExtCallbackThreadWorker called");
     if (work == nullptr) {
         return;
     }
@@ -140,6 +141,7 @@ void WebMessagePort::UvJsExtCallbackThreadWorker(uv_work_t* work, int status)
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(param->env, &scope);
     if (scope == nullptr) {
+        delete param;
         delete work;
         work = nullptr;
         return;
@@ -247,8 +249,14 @@ void WebMessagePort::OnMessage(int32_t webId, const std::string& portHandle, con
             LOGE("new uv work failed");
             return;
         }
-
-        work->data = reinterpret_cast<void*>(param.get());
+        auto workData = new (std::nothrow) NapiJsCallBackParm(*param);
+        if (workData == nullptr) {
+            LOGE("new NapiJsCallBackParm failed");
+            delete work;
+            return;
+        }
+        workData->result_ = result;
+        work->data = workData;
         int ret = uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, UvJsCallbackThreadWorker,
             uv_qos_user_initiated);
         if (ret != 0) {
@@ -279,8 +287,13 @@ void WebMessagePort::OnMessageExt(
         CHECK_NULL_VOID(param);
         CHECK_NULL_VOID(param->env);
 
-        param->result_ = std::make_shared<WebMessageExt>(*webMessage);
-        CHECK_NULL_VOID(param->result_);
+        auto workData = new (std::nothrow) NapiJsCallBackParmExt(*param);
+        if (workData == nullptr) {
+            LOGE("new NapiJsCallBackParmExt failed");
+            return;
+        }
+        workData->result_ = std::make_shared<WebMessageExt>(*webMessage);
+        CHECK_NULL_VOID(workData->result_);
         uv_loop_s* loop = nullptr;
         uv_work_t* work = nullptr;
         napi_get_uv_event_loop(param->env, &loop);
@@ -293,8 +306,7 @@ void WebMessagePort::OnMessageExt(
             LOGE("new uv work failed");
             return;
         }
-
-        work->data = reinterpret_cast<void*>(param.get());
+        work->data = reinterpret_cast<void*>(workData);
         int ret = uv_queue_work_with_qos(
             loop, work, [](uv_work_t* work) {}, UvJsExtCallbackThreadWorker, uv_qos_user_initiated);
         if (ret != 0) {
