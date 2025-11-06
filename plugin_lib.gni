@@ -97,7 +97,6 @@ common_plugin_libs = [
   "test_plugin",
   "timer",
   "console",
-  "vibrator",
   "web/webview",
   "zlib",
   "security/cryptoframework",
