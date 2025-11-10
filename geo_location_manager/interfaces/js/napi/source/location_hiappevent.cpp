@@ -49,7 +49,6 @@ void LocationHiAppEvent::WriteEndEvent(const int64_t beginTime, const int result
 {
 #ifdef LOCATION_HIAPPEVENT_ENABLE
     AddProcessor();
-    // 非应用不支持打点
     if (processorId_ == HA_NOT_SUPPORT_PROCESS_ID) {
         LBSLOGI(LOCATION_HIAPPEVENT, "not support");
         return;
