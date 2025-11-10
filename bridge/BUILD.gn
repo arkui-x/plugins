@@ -23,14 +23,12 @@ template("plugin_bridge_static") {
     cflags_cc += invoker.cflags_cc
     include_dirs = [
       "//foundation/arkui/ace_engine/",
-      "//foundation/arkui/ace_engine/interfaces/inner_api/ace_kit/include",
-      "//plugins/bridge/utils/include",
       "//foundation/arkui/ace_engine/frameworks",
+      "//foundation/arkui/ace_engine/interfaces/inner_api/ace_kit/include",
       "//plugins/bridge/interfaces/kits/napi/bridge_module/include",
       "//plugins/bridge/interfaces/kits/native/include",
+      "//plugins/bridge/utils/include",
       "//third_party/json/include",
-
-      # "//foundation/arkui/ace_engine/interfaces/inner_api/ace",
     ]
 
     if (platform == "android") {
@@ -48,6 +46,7 @@ template("plugin_bridge_static") {
       "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_data_converter.cpp",
       "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_id.cpp",
       "//plugins/bridge/interfaces/kits/napi/bridge_module/src/method_result.cpp",
+      "//plugins/bridge/utils/src/bridge_event_handle.cpp",
       "//plugins/bridge/utils/src/napi_async_event.cpp",
       "//plugins/bridge/utils/src/napi_utils.cpp",
     ]

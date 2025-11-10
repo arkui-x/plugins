@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,8 +16,9 @@
 #ifndef PLUGINS_BRIDGE_BRIDGE_MODULE_H
 #define PLUGINS_BRIDGE_BRIDGE_MODULE_H
 
-#include "napi/native_api.h"
 #include "bridge_wrap.h"
+#include "method_result.h"
+#include "napi/native_api.h"
 
 namespace OHOS::Plugin::Bridge {
 class BridgeModule {
@@ -31,6 +32,7 @@ public:
         static constexpr const char* FUNCTION_SEND_MESSAGE = "sendMessage";
         static constexpr const char* FUNCTION_REGISTER_ON_MESSAGE = "setMessageListener";
         static constexpr const char* FUNCTION_CALL_METHOD_CALLBACK = "callMethodWithCallback";
+        static constexpr const char* FUNCTION_CALL_METHOD_SYNC = "callMethodSync";
 
         static napi_value GetBridgeName(napi_env env, napi_callback_info info);
         static napi_value CallMethod(napi_env env, napi_callback_info info);
@@ -39,6 +41,7 @@ public:
         static napi_value SendMessage(napi_env env, napi_callback_info info);
         static napi_value SetMessageListener(napi_env env, napi_callback_info info);
         static napi_value CallMethodWithCallBack(napi_env env, napi_callback_info info);
+        static napi_value CallMethodSync(napi_env env, napi_callback_info info);
     };
 
     static constexpr const char* FUNCTION_CREATE_PLUGIN_BRIDGE = "createBridge";
@@ -54,6 +57,9 @@ private:
     static void InitBridgeProperties(napi_env env, napi_value exports);
     static Bridge* GetBridge(napi_env env, napi_value thisVal);
     static void CallMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> methodData);
+    static std::shared_ptr<MethodResult> CallMethodSyncInner(napi_env env,
+        napi_value thisVal,
+        std::shared_ptr<MethodData> methodData);
     static void RegisterMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> methodData,
         std::shared_ptr<MethodData> callback);
     static void UnRegisterMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> callback);

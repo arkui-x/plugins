@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "bridge_event_handle.h"
 #include "buffer_mapping.h"
 #include "method_result.h"
 #include "napi/native_api.h"
@@ -80,15 +81,18 @@ public:
     void SendAsyncCallback(int errorCode, napi_value okArg);
     void UpdateMethodName(void);
 
+    MethodResult PlatformCallMethodSync(const std::string& parameter);
+    MethodResult PlatformCallMethodSyncBinary(std::unique_ptr<Ace::Platform::BufferMapping> parameter);
+
 private:
     NAPIAsyncEvent* asyncEvent_ = nullptr;
-    int32_t instanceId_ = -1;
     std::string bridgeName_;
     std::string methodName_;
     napi_env env_ = nullptr;
     bool isMessageEvent_ = false;
     int64_t startTime_ = 0;
     CodecType codecType_ = CodecType::JSON_CODEC;
+    std::shared_ptr<BridgeEventHandle> taskExecutor_ = BridgeEventHandle::GetInstance();
 
     // for json codec
     std::string jsonParameter_;

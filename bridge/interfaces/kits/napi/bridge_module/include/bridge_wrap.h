@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,16 +37,14 @@ public:
     };
     static BridgeWrap& GetInstance();
     Bridge* CreateBridge(const std::string& bridgeName, const CodecType& codecType);
-    void DeleteBridge(const std::string& bridgeName, int32_t instanceId);
-    std::string GetBridgeNameWithID(const std::string& bridgeName, int32_t instanceId);
+    void DeleteBridge(const std::string& bridgeName);
 private:
     std::map<std::string, std::shared_ptr<Data>> *bridgeList_ = new std::map<std::string, std::shared_ptr<Data>>;
     std::mutex *bridgeListLock_ = new std::mutex;
 
     std::shared_ptr<Data> findData(const std::string& bridgeNameWithID);
-    Bridge* BuildBridge(
-        const std::string& bridgeName, const CodecType& codecType, const std::string& dataKey, int32_t instanceId);
-    Bridge* CopyBridge(std::shared_ptr<Data> data);
+    Bridge* BuildBridge(const std::string& bridgeName, const CodecType& codecType);
+    Bridge* CopyBridge(std::shared_ptr<Data> data, const CodecType& codecType);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif

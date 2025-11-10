@@ -30,7 +30,10 @@ enum class ErrorCode {
     BRIDGE_METHOD_PARAM_ERROR,
     BRIDGE_METHOD_EXISTS,
     BRIDGE_DATA_ERROR,
-    BRIDGE_METHOD_NOT_EXISTS,
+    BRIDGE_EXCEEDS_SAFE_INTEGER,
+    BRIDGE_CODEC_TYPE_MISMATCH,
+    BRIDGE_CODEC_INVALID,
+    BRIDGE_CALL_METHOD_SYNC_TIMEOUT,
     BRIDGE_END
 };
 
@@ -45,7 +48,10 @@ static constexpr const char* CodeMessage[static_cast<int>(ErrorCode::BRIDGE_END)
     "Method parameter error!",
     "Method already exists!",
     "Data error!",
-    "Method is not exists!"
+    "Data exceeds safe integer",
+    "Bridge codec type mismatch",
+    "Bridge codec is invalid",
+    "Bridge callMethodSync timeout!"
 };
 } // namespace OHOS::Plugin::Bridge
 #endif
