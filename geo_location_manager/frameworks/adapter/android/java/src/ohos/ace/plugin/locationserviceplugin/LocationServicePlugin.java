@@ -153,6 +153,8 @@ public class LocationServicePlugin {
                 nativeOnLocationError(ERR_PROVIDER_OUT_OF_SERVICE);
             } else if (status == android.location.LocationProvider.TEMPORARILY_UNAVAILABLE) {
                 nativeOnLocationError(ERR_PROVIDER_TEMP_UNAVAILABLE);
+            } else {
+                Log.i(LOG_TAG, "status is available");
             }
         }
 
@@ -471,10 +473,8 @@ public class LocationServicePlugin {
         if (telephonyManager != null) {
             String simIso = telephonyManager.getSimCountryIso();
             if (simIso != null && !simIso.isEmpty()) {
-                String tempCode = simIso;
-                code = tempCode;
                 type = 2;
-                return new CountryResult(type, code);
+                return new CountryResult(type, simIso);
             } else {
                 String netIso = telephonyManager.getNetworkCountryIso();
                 if (netIso != null && !netIso.isEmpty()) {
@@ -486,14 +486,14 @@ public class LocationServicePlugin {
             }
         }
         String defaultCode = Locale.getDefault().getCountry();
-        if (code.isEmpty()) {
-            String tempCode = defaultCode;
-            code = tempCode;
-        }
         if (code == null) {
             String tempCode = "";
             code = tempCode;
             type = 1;
+        }
+        if (code.isEmpty()) {
+            String tempCode = defaultCode;
+            code = tempCode;
         }
         return new CountryResult(type, code);
     }
@@ -935,6 +935,9 @@ public class LocationServicePlugin {
             long minTimeMs = 5000L;
             float minDistanceM = 10f;
             String provider = chooseProvider();
+            if (provider == null) {
+                return FAIL;
+            }
             locationManager.requestLocationUpdates(provider, minTimeMs, minDistanceM,
                     internalLocationListener, locationHandler.getLooper());
             locatingStarted = true;
@@ -952,7 +955,7 @@ public class LocationServicePlugin {
      */
     public int stopLocating() {
         if (!locatingStarted) {
-            return 0;
+            return FAIL;
         }
         try {
             if (locationManager != null && internalLocationListener != null) {
@@ -960,10 +963,11 @@ public class LocationServicePlugin {
             }
         } catch (SecurityException | IllegalArgumentException e) {
             Log.e(LOG_TAG, "stopLocating removeUpdates warn");
+            return FAIL;
         }
         locatingStarted = false;
         receivedFixCount = 0;
-        return 0;
+        return SUCCESS;
     }
 
     private String mapPriorityToProvider(int priority) {
@@ -1052,8 +1056,8 @@ public class LocationServicePlugin {
             } else {
                 return 1;
             }
-            } catch (Settings.SettingNotFoundException e) {
-                return 0;
+        } catch (Settings.SettingNotFoundException e) {
+            return 0;
         }
     }
 
@@ -1149,7 +1153,6 @@ public class LocationServicePlugin {
      * @param fenceId   Unique identifier of the geofence.
      */
     public void addGnssGeofence(double latitude, double longitude, float radius, long expiration, int fenceId) {
-        Log.i(LOG_TAG, "addGnssGeofence called with fenceId: " + fenceId);
         try {
             LocationManager locationManagerInstance =
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -1164,7 +1167,7 @@ public class LocationServicePlugin {
                 try {
                     locationManagerInstance.removeProximityAlert(oldPi);
                 } catch (SecurityException | IllegalArgumentException e) {
-                    Log.e(LOG_TAG, "remove old proximity alert fail fenceId=" + fenceId);
+                    Log.e(LOG_TAG, "remove old proximity alert fail");
                 }
             }
 
@@ -1172,7 +1175,6 @@ public class LocationServicePlugin {
             PendingIntent geofencePendingIntent = createPendingIntent(fenceId, geofenceIntent);
             locationManagerInstance.addProximityAlert(latitude, longitude, radius, expiration, geofencePendingIntent);
             geofencePendingIntents.put(fenceId, geofencePendingIntent);
-            Log.i(LOG_TAG, "Geofence added successfully: fenceId " + fenceId);
             nativeOnGeofenceEvent(fenceId);
         } catch (SecurityException e) {
             Log.e(LOG_TAG, "Geofence addition failed: permission error", e);
@@ -1198,7 +1200,6 @@ public class LocationServicePlugin {
                 }
                 boolean entering = intent.getBooleanExtra(
                         LocationManager.KEY_PROXIMITY_ENTERING, false);
-                Log.i(LOG_TAG, "Geofence event fenceId=" + fenceId + " entering=" + entering);
                 nativeOnNotificationEvent(fenceId, entering);
             }
         };
@@ -1227,7 +1228,6 @@ public class LocationServicePlugin {
             PendingIntent geofencePendingIntent = createPendingIntent(fenceId, geofenceIntent);
 
             locationManagerService.removeProximityAlert(geofencePendingIntent);
-            Log.i(LOG_TAG, "Geofence has been removed: fenceId = " + fenceId);
         } catch (SecurityException e) {
             Log.e(LOG_TAG, "Failed to remove geofence: Permission error", e);
         } catch (Exception e) {
