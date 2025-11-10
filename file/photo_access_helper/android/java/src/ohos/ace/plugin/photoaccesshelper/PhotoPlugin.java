@@ -64,6 +64,8 @@ public class PhotoPlugin {
 
     private static final int VERSION_Q_API_LEVEL = 29;
 
+    private static final int VERSION_T_API_LEVEL = 33;
+
     private static final String RELATIVE_PATH = "relative_path";
 
     private static final String SCHEME_CONTENT = "content";
@@ -157,6 +159,9 @@ public class PhotoPlugin {
         if (mContext == null) {
             Log.e(TAG, "mContext is null");
             return false;
+        }
+        if (Build.VERSION.SDK_INT >= VERSION_T_API_LEVEL) {
+            return true;
         }
         PackageManager pm = mContext.getPackageManager();
         if (pm.checkPermission("android.permission.WRITE_EXTERNAL_STORAGE",
