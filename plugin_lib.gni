@@ -117,7 +117,6 @@ common_plugin_libs = [
   "arkui/advanced/composetitlebar",
   "arkui/advanced/selecttitlebar",
   "arkui/advanced/selectionmenu",
-  "geo_location_manager",
   "vibrator",
 ]
 
