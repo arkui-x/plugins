@@ -57,7 +57,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 
 /**
- * The LocationServicePlugin class provides functions related to location services, including obtaining the current location,
+ * The LocationServicePlugin class provides functions related to location services,
+ * including obtaining the current location,
  * registering location change callbacks, registering country code callbacks, registering NMEA message callbacks,
  * registering GNSS status callbacks, registering Bluetooth scan result callbacks, etc.
  *
