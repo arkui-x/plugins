@@ -105,6 +105,7 @@ bool GeofenceRequest::GetWantAgentParcelData(Parcel& data)
         free(tempBuffer);
         return false;
     }
+    free(tempBuffer);
     return result;
 }
 
