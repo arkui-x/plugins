@@ -220,8 +220,7 @@ void LocatorImpl::GetAddressByLocationName(std::unique_ptr<GeoCodeRequest> &requ
 
 int LocatorImpl::GetCachedGnssLocationsSize()
 {
-    int size = -1;
-    return size;
+    return -1;
 }
 
 int LocatorImpl::FlushCachedGnssLocations()
@@ -242,11 +241,11 @@ std::shared_ptr<CountryCode> LocatorImpl::GetIsoCountryCode()
 LocationErrCode LocatorImpl::IsLocationEnabledV9(bool &isEnabled)
 {
     LBSLOGI(LOCATOR_STANDARD, "LocatorImpl::IsLocationEnabledV9()");
-    int32_t state = DEFAULT_SWITCH_STATE;
     std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();
     if (!service) {
         return ERRCODE_SERVICE_UNAVAILABLE;
     }
+    int32_t state = DEFAULT_SWITCH_STATE;
     LocationErrCode code = service->GetSwitchState(state);
     isEnabled = (state == 1);
     return code;
