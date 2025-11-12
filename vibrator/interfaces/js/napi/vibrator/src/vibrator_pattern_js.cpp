@@ -142,7 +142,7 @@ bool VibratorPatternBuilder::ParseOptions(const napi_env &env, const napi_value 
     status = napi_has_named_property(env, value, "index", &exist);
     if ((status == napi_ok) && exist) {
         napi_value index = nullptr;
-        CHKCF((napi_get_named_property(env, value, "index", &index) == napi_ok), "napi get frequency fail");
+        CHKCF((napi_get_named_property(env, value, "index", &index) == napi_ok), "napi get index fail");
         CHKCF(IsMatchType(env, index, napi_number), "The index parameter type is incorrect. napi_number expected");
         CHKCF(GetInt32Value(env, index, event.index), "Get int number frequency fail");
     } else {
@@ -322,7 +322,7 @@ napi_value VibratorPatternBuilder::ConvertEventArrayToNapiValue(napi_env env,
         CHKCP((napi_set_element(env, eventsArray, i, eventObj) == napi_ok), "napi_set_element fail");
     }
     CHKCP((napi_set_named_property(env, result, "events", eventsArray) == napi_ok),
-        "napi_setnapi_set_named_property_element fail");
+        "napi_set_named_property fail");
     return result;
 }
 
