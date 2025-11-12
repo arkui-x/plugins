@@ -183,8 +183,8 @@ int32_t StopVibrator(const char *mode)
 int32_t StopVibratorEnhanced(const VibratorIdentifier identifier, const char *mode)
 {
     CHKPR(mode, PARAMETER_ERROR);
-    if (strncmp(mode, "time", sizeof("time")) != 0 &&
-        strncmp(mode, "preset", sizeof("preset")) != 0) {
+    if (strncmp(mode, "time", strlen("time")) != 0 &&
+        strncmp(mode, "preset", strlen("preset")) != 0) {
         MISC_HILOGE("Input parameter invalid, mode is %{public}s", mode);
         return PARAMETER_ERROR;
     }
@@ -388,7 +388,6 @@ int32_t PlayPrimitiveEffectEnhanced(const VibratorIdentifier identifier, const c
 int32_t GetVibratorList(const VibratorIdentifier &identifier, std::vector<VibratorInfos> &vibratorInfo)
 {
     CALL_LOG_ENTER;
-    CHKCR(&identifier, PARAMETER_ERROR, "Invalid parameters");
     auto &client = VibratorServiceClient::GetInstance();
     int32_t ret = client.GetVibratorList(identifier, vibratorInfo);
     if (ret != ERR_OK) {
@@ -401,14 +400,13 @@ int32_t GetVibratorList(const VibratorIdentifier &identifier, std::vector<Vibrat
 int32_t GetEffectInfo(const VibratorIdentifier &identifier, const std::string &effectType, EffectInfo &effectInfo)
 {
     CALL_LOG_ENTER;
-    CHKCR(&identifier, PARAMETER_ERROR, "Invalid parameters");
     auto &client = VibratorServiceClient::GetInstance();
     int32_t ret = client.GetEffectInfo(identifier, effectType, effectInfo);
     if (ret != ERR_OK) {
         effectInfo.isSupportEffect = false;
         MISC_HILOGW("Get effect info failed, ret:%{public}d", ret);
     }
-    return SUCCESS;
+    return ret;
 }
 
 int32_t SubscribeVibratorPlug(const VibratorUser &user)
