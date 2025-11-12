@@ -118,6 +118,11 @@ int32_t VibratorServiceClient::PlayVibratorCustom(const VibratorIdentifier &iden
 int32_t VibratorServiceClient::StopVibrator(const VibratorIdentifier &identifier, const std::string &mode)
 {
     MISC_HILOGI("StopVibrator begin, mode:%{public}s", mode.c_str());
+    if (strncmp(mode.c_str(), "time", strlen("time")) != 0 &&
+        strncmp(mode.c_str(), "preset", strlen("preset")) != 0) {
+        MISC_HILOGE("Input parameter invalid, mode is %{public}s", mode.c_str());
+        return ERROR;
+    }
     InitServiceClient();
     VibratorIdentifierData vibrateIdentifier;
     vibrateIdentifier.deviceId = identifier.deviceId;
