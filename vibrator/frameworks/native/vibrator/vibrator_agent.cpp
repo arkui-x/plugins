@@ -414,7 +414,7 @@ int32_t SubscribeVibratorPlug(const VibratorUser &user)
     return SUCCESS;
 }
 
-int32_t UnSubscribeVibratorPlug(const VibratorUser &user)
+int32_t UnsubscribeVibratorPlug(const VibratorUser &user)
 {
     return SUCCESS;
 }
