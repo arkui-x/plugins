@@ -284,6 +284,9 @@ static bool ParseVibratorPattern(napi_env env, napi_value args[], VibrateInfo &i
         new (&events[j]) VibratorEvent();
         if (!ParseVibrateEvent(env, eventArray, j, events[j])) {
             MISC_HILOGE("ParseVibrateEvent failed");
+            for (uint32_t i = 0; i <= j; ++i) {
+                events[i].~VibratorEvent();
+            }
             free(events);
             events = nullptr;
             return false;
