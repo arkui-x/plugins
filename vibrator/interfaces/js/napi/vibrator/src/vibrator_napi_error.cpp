@@ -59,10 +59,6 @@ void ThrowErr(const napi_env &env, const int32_t errCode, const std::string &pri
     }
     napi_value error = CreateBusinessError(env, errCode, msg.value());
     napi_throw(env, error);
-    status = napi_close_handle_scope(env, scope);
-    if (status != napi_ok) {
-        MISC_HILOGE("Failed to close handle scope");
-    }
 }
 } // namespace Sensors
 } // namespace OHOS
