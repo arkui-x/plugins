@@ -914,6 +914,7 @@ static napi_value GetSupportEffectInfoSync(napi_env env, napi_callback_info info
 static bool IsSubscribed(const napi_env &env, const std::string &vibratorEvent, napi_value callback)
 {
     CALL_LOG_ENTER;
+    std::lock_guard<std::mutex> onSubscribeLock(g_Mutex);
     MISC_HILOGI("g_onCallbackInfos.size() = %{public}zu", g_onCallbackInfos.size());
     if (g_onCallbackInfos.empty()) {
         return false;
