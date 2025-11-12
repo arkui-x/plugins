@@ -69,7 +69,7 @@ inline const char *VIBRATOR_TYPE_LONG_PRESS_MEDIUM = "haptic.long_press_medium";
  *
  * @since 11
  */
-inline const char *VIBRATOR_TYPE_LONG_PRESS_HEAVY = "haptic.long_press_medium";
+inline const char *VIBRATOR_TYPE_LONG_PRESS_HEAVY = "haptic.long_press_heavy";
 
 /**
  * @brief Describes the vibration effect of the vibrator when slide.
