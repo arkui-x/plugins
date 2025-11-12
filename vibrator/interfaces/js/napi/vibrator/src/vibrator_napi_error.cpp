@@ -52,10 +52,17 @@ void ThrowErr(const napi_env &env, const int32_t errCode, const std::string &pri
         return;
     }
     napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env, &scope);
+    napi_status status = napi_open_handle_scope(env, &scope);
+    if (status != napi_ok) {
+        MISC_HILOGE("Failed to open handle scope");
+        return;
+    }
     napi_value error = CreateBusinessError(env, errCode, msg.value());
     napi_throw(env, error);
-    napi_close_handle_scope(env, scope);
+    status = napi_close_handle_scope(env, scope);
+    if (status != napi_ok) {
+        MISC_HILOGE("Failed to close handle scope");
+    }
 }
 } // namespace Sensors
 } // namespace OHOS
