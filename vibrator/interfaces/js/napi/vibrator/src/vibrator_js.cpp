@@ -400,7 +400,7 @@ bool ParseVibratorIdentifier(napi_env env, napi_value value, VibratorIdentifier 
     CALL_LOG_ENTER;
     bool deviceIdResult = GetPropertyInt32(env, value, "deviceId", identifier.deviceId);
     bool vibratorIdResult = GetPropertyInt32(env, value, "vibratorId", identifier.vibratorId);
-    if (deviceIdResult || vibratorIdResult) {
+    if (deviceIdResult && vibratorIdResult) {
         MISC_HILOGI("Get vibrate identifier success");
         return true;
     }
