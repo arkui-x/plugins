@@ -259,7 +259,7 @@ bool GetPropertyInt32(const napi_env &env, const napi_value &value, const std::s
     bool exist = false;
     napi_status status = napi_has_named_property(env, value, type.c_str(), &exist);
     if (status != napi_ok || !exist) {
-        MISC_HILOGD("Can not find %{public}s property", type.c_str());
+        MISC_HILOGE("Can not find %{public}s property", type.c_str());
         return false;
     }
     CHKCF((napi_get_named_property(env, value, type.c_str(), &item) == napi_ok), "napi get property fail");
