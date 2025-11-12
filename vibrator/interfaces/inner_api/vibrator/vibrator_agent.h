@@ -33,10 +33,6 @@
 #include "vibrator_agent_type.h"
 #define VIBRATOR_AGENT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 namespace OHOS {
 namespace Sensors {
 /**
@@ -481,8 +477,5 @@ int32_t PlayPackageBySessionId(uint32_t sessionId, const VibratorPackage &packag
 int32_t StopVibrateBySessionId(uint32_t sessionId);
 } // namespace Sensors
 } // namespace OHOS
-#ifdef __cplusplus
-};
-#endif
 /** @} */
 #endif // endif VIBRATOR_AGENT_H
