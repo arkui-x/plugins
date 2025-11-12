@@ -73,7 +73,6 @@ int32_t OH_Vibrator_PlayVibrationCustom(Vibrator_FileDescription fileDescription
  * @permission ohos.permission.VIBRATE
  * @return Returns <b>0</b> if the operation is successful; returns a non-zero value otherwise.
  * For details, see {@link Vibrator_ErrorCode}.
- * @permission ohos.permission.VIBRATE
  *
  * @since 11
  */
