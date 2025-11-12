@@ -454,7 +454,7 @@ int32_t SubscribeVibratorPlug(const VibratorUser &user);
  *
  * @since 19
  */
-int32_t UnSubscribeVibratorPlug(const VibratorUser &user);
+int32_t UnsubscribeVibratorPlug(const VibratorUser &user);
 
 /**
  * @brief Play the vibration sequence.
