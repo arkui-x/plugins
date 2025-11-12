@@ -349,7 +349,7 @@ int32_t VibratorServiceClient::GetVibratorList(const VibratorIdentifier &identif
         resInfo.isLocalVibrator = info.isLocalVibrator;
         vibratorInfo.push_back(resInfo);
     }
-    return OHOS::Sensors::SUCCESS;
+    return ret;
 }
 
 int32_t VibratorServiceClient::GetEffectInfo(const VibratorIdentifier &identifier,
@@ -362,7 +362,7 @@ int32_t VibratorServiceClient::GetEffectInfo(const VibratorIdentifier &identifie
     EffectInfoData resInfo;
     int32_t ret = miscdeviceProxy_->GetEffectInfo(param, effectType, resInfo);
     effectInfo.isSupportEffect = resInfo.isSupportEffect;
-    return OHOS::Sensors::SUCCESS;
+    return ret;
 }
 
 } // namespace Sensors
