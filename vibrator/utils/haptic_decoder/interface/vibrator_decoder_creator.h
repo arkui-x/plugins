@@ -17,6 +17,7 @@
 #define VIBRATOR_DECODER_MANAGER_H
 
 #include "i_vibrator_decoder.h"
+#include <memory>
 
 namespace OHOS {
 namespace Sensors {
@@ -25,7 +26,7 @@ class VibratorDecoderCreator {
 public:
     VibratorDecoderCreator() = default;
     virtual ~VibratorDecoderCreator() = default;
-    IVibratorDecoder *CreateDecoder(const JsonParser &parser);
+    std::unique_ptr<IVibratorDecoder> CreateDecoder(const JsonParser &parser);
 
 private:
     bool CheckJsonMetadata(const JsonParser &parser) const;
