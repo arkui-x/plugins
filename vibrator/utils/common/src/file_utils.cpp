@@ -114,11 +114,19 @@ int32_t GetFileName(const int32_t &fd, std::string &fileName)
         return ERROR;
     }
 
-    ret = readlink(buf, filePath, FILE_PATH_MAX);
-    if (ret < 0 || ret >= FILE_PATH_MAX) {
+    ret = readlink(buf, filePath, sizeof(filePath) - 1);
+    if (ret < 0) {
         MISC_HILOGE("readlink failed with %{public}d", errno);
         return ERROR;
     }
+
+    if (ret >= (sizeof(filePath) - 1)) {
+        MISC_HILOGE("file path too long, truncated");
+        filePath[sizeof(filePath) - 1] = '\0';
+        return ERROR;
+    }
+
+    filePath[ret] = '\0';
 
     fileName = filePath;
     std::size_t firstSlash = fileName.rfind("/");
