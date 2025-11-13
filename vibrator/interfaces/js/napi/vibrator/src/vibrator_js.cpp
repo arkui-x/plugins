@@ -609,7 +609,7 @@ static napi_value Cancel(napi_env env, napi_callback_info info)
         napi_valuetype argType;
         napi_typeof(env, args[0], &argType);
         if (argType != napi_function && argType != napi_object) {
-           asyncCallbackInfo->error.code = PARAMETER_ERROR;
+            asyncCallbackInfo->error.code = PARAMETER_ERROR;
             return EmitAsyncWork(args[0], asyncCallbackInfo);
         }
     }
