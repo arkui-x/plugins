@@ -92,6 +92,7 @@ template<typename T>
 class DelayedRefSingleton : public NoCopyable {
 public:
     static T& GetInstance();
+    static void DestroyInstance();
 
 private:
     static T* instance_;
@@ -114,6 +115,16 @@ T& DelayedRefSingleton<T>::GetInstance()
         }
     }
     return *instance_;
+}
+
+template<typename T>
+void DelayedRefSingleton<T>::DestroyInstance()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (instance_ != nullptr) {
+        delete instance_;
+        instance_ = nullptr;
+    }
 }
 
 template<typename T>
