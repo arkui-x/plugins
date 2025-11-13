@@ -46,7 +46,7 @@ typedef struct VibratorEffectParameter {
 typedef struct PrimitiveEffect {
     int32_t intensity = 0;
     int32_t usage = 0;
-    bool systemUsage;
+    bool systemUsage = false;
     int32_t count = 0;
 } PrimitiveEffect;
 
