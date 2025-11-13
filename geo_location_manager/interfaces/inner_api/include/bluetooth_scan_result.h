@@ -33,7 +33,7 @@ public:
         return deviceId_;
     }
 
-    inline void SetDeviceId(std::string deviceId)
+    inline void SetDeviceId(const std::string &deviceId)
     {
         deviceId_ = deviceId;
     }
