@@ -71,7 +71,6 @@ public:
     }
 
     bool Marshalling(Parcel& parcel) const override;
-    mutable std::mutex beaconFenceMutex_;
     std::string identifier_;
     BeaconFenceInfoType type_;
     BeaconManufactureData manufactureData_;
