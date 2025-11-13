@@ -182,7 +182,7 @@ public class LocationServicePlugin {
             int rssi = result.getRssi();
             byte[] adv = (result.getScanRecord() != null && result.getScanRecord().getBytes() != null)
                 ? result.getScanRecord().getBytes() : new byte[0];
-            boolean connectable = true;
+            boolean connectable = result.isConnectable();
             nativeOnBluetoothScanResult(deviceId, deviceName, rssi, adv, connectable);
             Log.i(LOG_TAG, "onScanResult processed");
         }
@@ -267,42 +267,47 @@ public class LocationServicePlugin {
         }
     }
 
-    public Location getCurrentLocation() {
-        ensureLocationManagerInitialized();
-        Location lastKnownLocation = getLastKnownLocation();
-        if (lastKnownLocation != null) {
-            return lastKnownLocation;
-        }
-
-        LocationListener listener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                currentLocation = location;
-                latch.countDown();
-                stopListener();
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-            @Override
-            public void onProviderEnabled(String provider) {}
-
-            @Override
-            public void onProviderDisabled(String provider) {}
-        };
-        registerListener(listener);
-
-        try {
-            latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Log.i(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
-        } finally {
-            stopListener(listener);
-        }
-
-        return currentLocation;
+public Location getCurrentLocation() {
+    ensureLocationManagerInitialized();
+    Location lastKnownLocation = getLastKnownLocation();
+    if (lastKnownLocation != null) {
+        return lastKnownLocation;
     }
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    final Location[] resultLocation = new Location[1];
+
+    LocationListener listener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            resultLocation[0] = location;
+            latch.countDown();
+            stopListener();
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+        @Override
+        public void onProviderEnabled(String provider) {}
+
+        @Override
+        public void onProviderDisabled(String provider) {}
+    };
+
+    registerListener(listener);
+
+    try {
+        latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+        Log.e(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
+        Thread.currentThread().interrupt();
+    } finally {
+        stopListener(listener);
+    }
+
+    return resultLocation[0];
+}
 
     private Location getLastKnownLocation() {
         Location gpsLocation = null;
@@ -758,9 +763,9 @@ public class LocationServicePlugin {
         }
 
         try {
-            Log.e(LOG_TAG, "Starting BLE scan");
+            Log.i(LOG_TAG, "Starting BLE scan");
             bluetoothLeScanner.startScan(scanCallback);
-            Log.e(LOG_TAG, "BLE scan started");
+            Log.i(LOG_TAG, "BLE scan started");
             return SUCCESS;
         } catch (IllegalArgumentException | IllegalStateException e) {
             Log.e(LOG_TAG, "startScan exception: " + e.getMessage());
@@ -1027,9 +1032,7 @@ public class LocationServicePlugin {
                     loc.getTime(),
                     loc.getBearingAccuracyDegrees(),
                     loc.getProvider());
-                if (receivedFixCount >= 0) {
                     receivedFixCount++;
-                }
             }
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {}
