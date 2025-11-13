@@ -48,7 +48,7 @@ RequestConfig::RequestConfig(const int scenario) : scenario_(scenario)
     isNeedLocation_ = true;
 }
 
-void RequestConfig::Set(RequestConfig& requestConfig)
+void RequestConfig::Set(const RequestConfig& requestConfig)
 {
     scenario_ = requestConfig.GetScenario();
     priority_ = requestConfig.GetPriority();
@@ -62,7 +62,7 @@ void RequestConfig::Set(RequestConfig& requestConfig)
     isNeedLocation_ = requestConfig.GetIsNeedLocation();
 }
 
-bool RequestConfig::IsSame(RequestConfig& requestConfig)
+bool RequestConfig::IsSame(const RequestConfig& requestConfig)
 {
     if (scenario_ != requestConfig.GetScenario()) {
         return false;
