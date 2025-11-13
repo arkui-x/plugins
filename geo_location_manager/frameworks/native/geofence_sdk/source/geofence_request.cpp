@@ -124,9 +124,7 @@ void GeofenceRequest::SetGeofenceTransitionEvent(GeofenceTransitionEvent status)
 void GeofenceRequest::SetGeofenceTransitionEventList(std::vector<GeofenceTransitionEvent> statusList)
 {
     std::unique_lock<std::mutex> lock(geofenceRequestMutex_);
-    for (auto it = statusList.begin(); it != statusList.end(); ++it) {
-        transitionStatusList_.push_back(*it);
-    }
+    transitionStatusList_.insert(transitionStatusList_.end(), statusList.begin(), statusList.end());
 }
 
 #ifdef NOTIFICATION_ENABLE
