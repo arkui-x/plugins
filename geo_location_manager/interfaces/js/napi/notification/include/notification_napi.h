@@ -603,7 +603,7 @@ public:
      * @brief Gets a content type of notification from specified js object
      *
      * @param env Indicates the environment that the API is invoked under
-     * @param value Indicates a js object to be converted
+     * @param result Indicates a js object to be converted
      * @param type Indicates a the content type of notification from specified js object
      * @return Returns the null object if success, returns the null value otherwise
      */
@@ -773,7 +773,7 @@ public:
      * @param errCode Indicates specified err code
      * @return Returns a napi value with specified error object for callback
      */
-    static napi_value CreateErrorValue(napi_env env, int32_t errCode, bool newType);
+    static napi_value CreateErrorValue(const napi_env &env, int32_t errCode, bool newType);
 
     /**
      * @brief Gets the notificationBundleOption of NotificationRequest object from specified js object
