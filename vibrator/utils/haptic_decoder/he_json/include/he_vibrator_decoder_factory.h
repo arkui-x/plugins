@@ -17,6 +17,7 @@
 #define HE_VIBRATOR_DECODER_FACTORY_H
 
 #include "i_vibrator_decoder_factory.h"
+#include <memory>
 
 namespace OHOS {
 namespace Sensors {
@@ -24,7 +25,7 @@ class HEVibratorDecoderFactory : public IVibratorDecoderFactory {
 public:
     HEVibratorDecoderFactory() = default;
     ~HEVibratorDecoderFactory() = default;
-    IVibratorDecoder *CreateDecoder() override;
+    std::unique_ptr<IVibratorDecoder> CreateDecoder() override;
 };
 } // namespace Sensors
 } // namespace OHOS
