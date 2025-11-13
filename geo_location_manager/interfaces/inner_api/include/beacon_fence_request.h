@@ -43,7 +43,7 @@ public:
         callback_ = callback;
     }
 
-    inline std::string GetFenceExtensionAbilityName() const
+    inline const std::string& GetFenceExtensionAbilityName() const
     {
         return fenceExtensionAbilityName_;
     }
