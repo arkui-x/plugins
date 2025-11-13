@@ -24,7 +24,7 @@ SatelliteStatus::SatelliteStatus()
     satellitesNumber_ = 0;
 }
 
-SatelliteStatus::SatelliteStatus(SatelliteStatus& satelliteStatus)
+SatelliteStatus::SatelliteStatus(const SatelliteStatus& satelliteStatus)
 {
     satellitesNumber_ = satelliteStatus.GetSatellitesNumber();
     satelliteIds_ = satelliteStatus.GetSatelliteIds();
