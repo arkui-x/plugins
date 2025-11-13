@@ -58,11 +58,11 @@ napi_ref GnssStatusCallbackNapi::GetHandleCb()
 
 void GnssStatusCallbackNapi::SetHandleCb(const napi_ref& handlerCb)
 {
+    std::unique_lock<std::mutex> globalGuard(g_regCallbackMutex);
     {
         std::unique_lock<std::mutex> guard(mutex_);
         handlerCb_ = handlerCb;
     }
-    std::unique_lock<std::mutex> guard(g_regCallbackMutex);
     g_registerCallbacks.emplace_back(handlerCb);
 }
 
