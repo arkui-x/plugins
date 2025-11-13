@@ -96,18 +96,18 @@ int32_t HEVibratorDecoder::ParsePatternList(const JsonParser &parser, cJSON *pat
         MISC_HILOGE("The size of pattern list  %{public}d is invalid!", size);
         return ERROR;
     }
-    int32_t previousPattternTime = -1;
+    int32_t previousPatternTime = -1;
     for (int32_t i = 0; i < size; i++) {
         cJSON *patternListItemJSON = parser.GetArrayItem(patternListJSON, i);
         CHKPR(patternListItemJSON, ERROR);
         cJSON *timeJSON = parser.GetObjectItem(patternListItemJSON, "AbsoluteTime");
         CHKPR(timeJSON, ERROR);
         int32_t time = cJSON_IsNumber(timeJSON) ? timeJSON->valueint : -1;
-        if (time <= previousPattternTime) {
+        if (time <= previousPatternTime) {
             MISC_HILOGE("The value of absolute time %{public}d is invalid!", time);
             return ERROR;
         }
-        previousPattternTime = time;
+        previousPatternTime = time;
         cJSON *patternJSON = parser.GetObjectItem(patternListItemJSON, "Pattern");
         CHKPR(patternJSON, ERROR);
         VibratePattern pattern;
@@ -301,12 +301,12 @@ bool HEVibratorDecoder::CheckContinuousParameters(const VibrateEvent &event)
         return false;
     }
     if (event.points[0].time != 0 || event.points[0].intensity != 0) {
-        MISC_HILOGE("The fist curve point is invalivd, time %{public}d, insentsity %{public}d", event.points[0].time,
+        MISC_HILOGE("The fist curve point is invalivd, time %{public}d, intensity %{public}d", event.points[0].time,
             event.points[0].intensity);
         return false;
     }
     if (event.points[pointNum - 1].time != event.duration || event.points[pointNum - 1].intensity != 0) {
-        MISC_HILOGE("The last curve point is invalivd, time %{public}d, insentsity %{public}d",
+        MISC_HILOGE("The last curve point is invalivd, time %{public}d, intensity %{public}d",
             event.points[pointNum - 1].time, event.points[pointNum - 1].intensity);
         return false;
     }
