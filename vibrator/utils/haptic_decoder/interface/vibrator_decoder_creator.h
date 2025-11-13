@@ -28,7 +28,7 @@ public:
     IVibratorDecoder *CreateDecoder(const JsonParser &parser);
 
 private:
-    bool CheckJsonMetadata(const JsonParser &parser);
+    bool CheckJsonMetadata(const JsonParser &parser) const;
 };
 } // namespace Sensors
 } // namespace OHOS
