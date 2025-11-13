@@ -27,7 +27,7 @@ namespace Sensors {
 IVibratorDecoder *DefaultVibratorDecoderFactory::CreateDecoder()
 {
     CALL_LOG_ENTER;
-    return new DefaultVibratorDecoder();
+    return std::make_unique<DefaultVibratorDecoder>();
 }
 } // namespace Sensors
 } // namespace OHOS
