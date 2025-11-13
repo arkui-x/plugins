@@ -55,9 +55,7 @@ LocatorImpl::~LocatorImpl()
 std::unique_ptr<Location> LocatorImpl::GetCachedLocation()
 {
     LBSLOGI(LOCATOR_STANDARD, "LocatorImpl_GetCachedLocation");
-    auto locationObj = std::make_unique<Location>();
-    locationObj = CachedLocationManager::GetInstance().GetLastLocation();
-    return locationObj;
+    return CachedLocationManager::GetInstance().GetLastLocation();
 }
 
 bool LocatorImpl::IsLocationEnabled()
@@ -420,7 +418,7 @@ LocationErrCode LocatorImpl::GetDistanceBetweenLocations(const Location& locatio
 bool LocatorImpl::IsSatelliteStatusChangeCallbackRegistered(const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
-        return true;
+        return false;
     }
     std::unique_lock<std::mutex> lock(g_gnssStatusInfoCallbacksMutex);
     for (auto gnssStatusCallback : g_gnssStatusInfoCallbacks) {
@@ -440,12 +438,7 @@ void LocatorImpl::AddSatelliteStatusChangeCallBack(const sptr<IRemoteObject>& ca
 void LocatorImpl::RemoveSatelliteStatusChangeCallBack(const sptr<IRemoteObject>& callback)
 {
     std::unique_lock<std::mutex> lock(g_gnssStatusInfoCallbacksMutex);
-    for (auto iter = g_gnssStatusInfoCallbacks.begin(); iter != g_gnssStatusInfoCallbacks.end(); iter++) {
-        if (callback == *iter) {
-            g_gnssStatusInfoCallbacks.erase(callback);
-            break;
-        }
-    }
+    g_gnssStatusInfoCallbacks.erase(callback);
 }
 
 }  // namespace Location
