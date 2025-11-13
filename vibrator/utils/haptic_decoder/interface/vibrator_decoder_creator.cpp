@@ -26,7 +26,7 @@ namespace Sensors {
 namespace {
 const std::string JSON_TAG = "Channels";
 } // namespace
-IVibratorDecoder *VibratorDecoderCreator::CreateDecoder(const JsonParser &parser)
+std::unique_ptr<IVibratorDecoder> VibratorDecoderCreator::CreateDecoder(const JsonParser &parser)
 {
     CALL_LOG_ENTER;
     if (CheckJsonMetadata(parser)) {
@@ -48,15 +48,13 @@ bool VibratorDecoderCreator::CheckJsonMetadata(const JsonParser &parser) const
 extern "C" IVibratorDecoder *Create(const JsonParser &parser)
 {
     VibratorDecoderCreator creator;
-    return creator.CreateDecoder(parser);
+    std::unique_ptr<IVibratorDecoder> decoder = creator.CreateDecoder(parser);
+    return decoder.release();
 }
 
 extern "C" void Destroy(IVibratorDecoder *decoder)
 {
-    if (decoder != nullptr) {
-        delete decoder;
-        decoder = nullptr;
-    }
+    delete decoder;
 }
 } // namespace Sensors
 } // namespace OHOS
