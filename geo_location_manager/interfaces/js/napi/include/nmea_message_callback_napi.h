@@ -34,7 +34,7 @@ public:
     NmeaMessageCallbackNapi();
     virtual ~NmeaMessageCallbackNapi();
     bool IsRemoteDied();
-    bool Send(const std::string msg);
+    bool Send(const std::string &msg);
     napi_value PackResult(const std::string msg);
     void OnMessageChange(int64_t timestamp, const std::string msg) override;
     void DeleteHandler();
