@@ -183,8 +183,8 @@ int32_t StopVibrator(const char *mode)
 int32_t StopVibratorEnhanced(const VibratorIdentifier identifier, const char *mode)
 {
     CHKPR(mode, PARAMETER_ERROR);
-    if (strncmp(mode, "time", strlen("time")) != 0 &&
-        strncmp(mode, "preset", strlen("preset")) != 0) {
+    std::string modeStr(mode);
+    if (modeStr != "time" && modeStr != "preset") {
         MISC_HILOGE("Input parameter invalid, mode is %{public}s", mode);
         return PARAMETER_ERROR;
     }
