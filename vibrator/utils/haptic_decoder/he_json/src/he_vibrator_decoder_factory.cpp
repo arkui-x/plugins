@@ -26,7 +26,7 @@ namespace Sensors {
 IVibratorDecoder *HEVibratorDecoderFactory::CreateDecoder()
 {
     CALL_LOG_ENTER;
-    return new HEVibratorDecoder();
+    return std::make_unique<HEVibratorDecoder>();
 }
 } // namespace Sensors
 } // namespace OHOS
