@@ -165,11 +165,13 @@ static bool GetCallbackInfo(const napi_env &env, napi_value args[],
 static napi_value VibrateMode(napi_env env, napi_value args[], size_t argc)
 {
     MISC_HILOGI("VibrateMode Start.");
+    napi_value result;
+    napi_get_undefined(env, &result);
     if (argc == 0) {
         if (StartVibratorOnce(VIBRATE_LONG_DURATION) != 0) {
             MISC_HILOGE("Vibrate long mode fail");
         }
-        return nullptr;
+        return result;
     }
     sptr<AsyncCallbackInfo> asyncCallbackInfo = new (std::nothrow) AsyncCallbackInfo(env);
     CHKPP(asyncCallbackInfo);
@@ -177,7 +179,7 @@ static napi_value VibrateMode(napi_env env, napi_value args[], size_t argc)
     string mode = "long";
     if (!GetCallbackInfo(env, args, asyncCallbackInfo, mode)) {
         MISC_HILOGE("Get callback info fail");
-        return nullptr;
+        return result;
     }
     int32_t duration = ((mode == "long") ? VIBRATE_LONG_DURATION : VIBRATE_SHORT_DURATION);
     asyncCallbackInfo->error.code = StartVibratorOnce(duration);
@@ -185,7 +187,7 @@ static napi_value VibrateMode(napi_env env, napi_value args[], size_t argc)
         asyncCallbackInfo->error.message = "Vibrator vibrate fail";
     }
     EmitAsyncCallbackWork(asyncCallbackInfo);
-    return nullptr;
+    return result;
 }
 
 static bool ParseVibratorCurvePoint(napi_env env, napi_value pointsArray, uint32_t index, VibratorCurvePoint &point)
@@ -976,7 +978,9 @@ static void UpdateCallbackInfos(const napi_env &env, const std::string &vibrator
 
 static napi_value On(napi_env env, napi_callback_info info)
 {
-    return nullptr;
+    napi_value result;
+    napi_get_null(env, &result);
+    return result;
 }
 
 static int32_t RemoveAllCallback(const napi_env &env, const std::string &eventType)
@@ -1035,7 +1039,9 @@ static int32_t RemoveCallback(napi_env env, const std::string &eventType, napi_v
 
 static napi_value Off(napi_env env, napi_callback_info info)
 {
-    return nullptr;
+    napi_value result;
+    napi_get_null(env, &result);
+    return result;
 }
 
 static napi_value CreateEnumHapticFeedback(const napi_env env, napi_value exports)
