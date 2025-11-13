@@ -37,7 +37,7 @@ std::string GeocodeConvertAddressRequest::GetLocale()
     return locale_;
 }
 
-void GeocodeConvertAddressRequest::SetLocale(std::string locale)
+void GeocodeConvertAddressRequest::SetLocale(const std::string &locale)
 {
     locale_ = locale;
 }
@@ -107,7 +107,7 @@ std::string GeocodeConvertAddressRequest::GetTransId()
     return transId_;
 }
 
-void GeocodeConvertAddressRequest::SetTransId(std::string transId)
+void GeocodeConvertAddressRequest::SetTransId(const std::string &transId)
 {
     transId_ = transId;
 }
@@ -117,7 +117,7 @@ std::string GeocodeConvertAddressRequest::GetCountry()
     return country_;
 }
 
-void GeocodeConvertAddressRequest::SetCountry(std::string country)
+void GeocodeConvertAddressRequest::SetCountry(const std::string &country)
 {
     country_ = country;
 }
