@@ -129,8 +129,8 @@ public:
 
     bool Marshalling(Parcel& parcel) const override;
     std::string ToString() const;
-    void Set(RequestConfig& requestConfig);
-    bool IsSame(RequestConfig& requestConfig);
+    void Set(const RequestConfig& requestConfig);
+    bool IsSame(const RequestConfig& requestConfig);
     bool IsRequestForAccuracy();
 private:
     int scenario_;
