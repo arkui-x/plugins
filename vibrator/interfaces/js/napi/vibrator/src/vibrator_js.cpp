@@ -639,6 +639,11 @@ static napi_value Stop(napi_env env, napi_callback_info info)
             ThrowErr(env, PARAMETER_ERROR, "Parameters invalid");
             return nullptr;
         }
+        if (mode != "time" && mode != "preset") {
+            MISC_HILOGE("Input parameter invalid, mode is %{public}s", mode.c_str());
+            ThrowErr(env, PARAMETER_ERROR, "Parameters invalid");
+            return nullptr;
+        }
         sptr<AsyncCallbackInfo> asyncCallbackInfo = new (std::nothrow) AsyncCallbackInfo(env);
         CHKPP(asyncCallbackInfo);
         asyncCallbackInfo->error.code = StopVibratorEnhanced(identifier, mode.c_str());
