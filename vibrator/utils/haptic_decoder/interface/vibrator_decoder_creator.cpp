@@ -40,7 +40,7 @@ IVibratorDecoder *VibratorDecoderCreator::CreateDecoder(const JsonParser &parser
     }
 }
 
-bool VibratorDecoderCreator::CheckJsonMetadata(const JsonParser &parser)
+bool VibratorDecoderCreator::CheckJsonMetadata(const JsonParser &parser) const
 {
     return parser.HasObjectItem(JSON_TAG);
 }
