@@ -30,7 +30,7 @@ public:
     GeocodeConvertAddressRequest();
     ~GeocodeConvertAddressRequest();
     std::string GetLocale();
-    void SetLocale(std::string locale);
+    void SetLocale(const std::string &locale);
     int32_t GetMaxItems();
     void SetMaxItems(int32_t maxItems);
     std::string GetDescription();
@@ -44,9 +44,9 @@ public:
     double GetMinLongitude();
     void SetMinLongitude(double minLongitude);
     std::string GetTransId();
-    void SetTransId(std::string transId);
+    void SetTransId(const std::string &transId);
     std::string GetCountry();
-    void SetCountry(std::string country);
+    void SetCountry(const std::string &country);
 
     bool Marshalling(Parcel& parcel) const;
 private:
