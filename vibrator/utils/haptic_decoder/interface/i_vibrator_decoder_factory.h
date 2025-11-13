@@ -24,7 +24,7 @@ class IVibratorDecoderFactory {
 public:
     IVibratorDecoderFactory() = default;
     virtual ~IVibratorDecoderFactory() = default;
-    virtual IVibratorDecoder *CreateDecoder() = 0;
+    virtual std::unique_ptr<IVibratorDecoder> CreateDecoder() = 0;
 };
 } // namespace Sensors
 } // namespace OHOS
