@@ -771,6 +771,7 @@ public:
      *
      * @param env Indicates the environment that the API is invoked under
      * @param errCode Indicates specified err code
+     * @param newType Is newType
      * @return Returns a napi value with specified error object for callback
      */
     static napi_value CreateErrorValue(const napi_env &env, int32_t errCode, bool newType);
