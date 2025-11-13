@@ -93,16 +93,17 @@ bool RequestConfig::IsRequestForAccuracy()
 
 std::string RequestConfig::ToString() const
 {
-    std::string str = "scenario : " + std::to_string(scenario_) +
-        ", location priority : " + std::to_string(priority_) +
-        ", timeInterval : " + std::to_string(timeInterval_) +
-        ", distanceInterval : " + std::to_string(distanceInterval_) +
-        ", maxAccuracy : " + std::to_string(maxAccuracy_) +
-        ", fixNumber : " + std::to_string(fixNumber_) +
-        ", timeOut : " + std::to_string(timeOut_) +
-        ", isNeedPoiInfomation : " + std::to_string(isNeedPoi_) +
-        ", isNeedLocation : " + std::to_string(isNeedLocation_);
-    return str;
+    std::ostringstream oss;
+    oss << "scenario : " << scenario_
+        << ", location priority : " << priority_
+        << ", timeInterval : " << timeInterval_
+        << ", distanceInterval : " << distanceInterval_
+        << ", maxAccuracy : " << maxAccuracy_
+        << ", fixNumber : " << fixNumber_
+        << ", timeOut : " << timeOut_
+        << ", isNeedPoiInformation : " << isNeedPoi_
+        << ", isNeedLocation : " << isNeedLocation_;
+    return oss.str();
 }
 } // namespace Location
 } // namespace OHOS
