@@ -603,6 +603,14 @@ static napi_value Cancel(napi_env env, napi_callback_info info)
         asyncCallbackInfo->error.code = PARAMETER_ERROR;
         return EmitAsyncWork(args[0], asyncCallbackInfo);
     }
+    if (argc > 0) {
+        napi_valuetype argType;
+        napi_typeof(env, args[0], &argType);
+        if (argType != napi_function && argType != napi_object) {
+           asyncCallbackInfo->error.code = PARAMETER_ERROR;
+            return EmitAsyncWork(args[0], asyncCallbackInfo);
+        }
+    }
     if ((argc > 0) && (IsMatchType(env, args[0], napi_function))) {
         asyncCallbackInfo->error.code = CancelEnhanced(identifier);
         return EmitAsyncWork(args[0], asyncCallbackInfo);
