@@ -115,18 +115,19 @@ void Bridge::UnRegisterBridge(void)
 
 ErrorCode Bridge::CallMethod(const std::string& methodName, const std::shared_ptr<MethodData>& methodData)
 {
-    if (!GetAvailable()) {
-        LOGE("CallMethod: The bridge is unavailable.");
-        return ErrorCode::BRIDGE_INVALID;
-    }
     if (methodName.empty()) {
-        LOGE("SendMethodResult: The methodName is empty.");
+        LOGE("CallMethod: The methodName is empty.");
         return ErrorCode::BRIDGE_METHOD_NAME_ERROR;
     }
 
     if (methodData == nullptr) {
-        LOGE("SendMethodResult: The methodData is null.");
+        LOGE("CallMethod: The methodData is null.");
         return ErrorCode::BRIDGE_METHOD_PARAM_ERROR;
+    }
+
+    if (!GetAvailable() || !taskExecutor_) {
+        LOGE("CallMethod: %s", GetAvailable() ? "taskExecutor_ is null." : "The bridge is unavailable.");
+        return ErrorCode::BRIDGE_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
@@ -138,21 +139,13 @@ ErrorCode Bridge::CallMethod(const std::string& methodName, const std::shared_pt
         auto task = [bridgeName = this->bridgeName_, methodName, parameter = methodData->GetMethodParamName()]() {
             BridgeManager::JSCallMethod(bridgeName, methodName, parameter);
         };
-        if (!taskExecutor_) {
-            LOGE("CallMethod(JSON): taskExecutor_ is null.");
-        } else {
-            taskExecutor_->RunTaskOnBridgeThread(task);
-        }
+        taskExecutor_->RunTaskOnBridgeThread(task);
     } else if (codecType_ == CodecType::BINARY_CODEC) {
         const auto& data = methodData->GetMethodParamNameBinary();
         auto task = [bridgeName = this->bridgeName_, methodName, &data]() {
             BridgeManager::JSCallMethodBinary(bridgeName, methodName, data);
         };
-        if (!taskExecutor_) {
-            LOGE("CallMethod(Binary): taskExecutor_ is null.");
-        } else {
-            taskExecutor_->RunTaskOnBridgeThread(task);
-        }
+        taskExecutor_->RunTaskOnBridgeThread(task);
     }
 
     return ErrorCode::BRIDGE_ERROR_NO;
@@ -240,14 +233,15 @@ ErrorCode Bridge::SendMethodResult(const std::string& methodName, const std::str
         return ErrorCode::BRIDGE_INVALID;
     }
 
+    if (!taskExecutor_) {
+        LOGE("SendMethodResult: taskExecutor_ is null.");
+        return ErrorCode::BRIDGE_INVALID;
+    }
     auto task = [bridgeName = this->bridgeName_, methodName, result]() {
         BridgeManager::JSSendMethodResult(bridgeName, methodName, result);
     };
-    if (!taskExecutor_) {
-        LOGE("SendMethodResult: taskExecutor_ is null.");
-    } else {
-        taskExecutor_->RunTaskOnBridgeThread(task);
-    }
+    taskExecutor_->RunTaskOnBridgeThread(task);
+
     return ErrorCode::BRIDGE_ERROR_NO;
 }
 
@@ -258,16 +252,18 @@ ErrorCode Bridge::SendMessage(const std::string& data, std::shared_ptr<MethodDat
         return ErrorCode::BRIDGE_INVALID;
     }
 
+    if (!taskExecutor_) {
+        LOGE("SendMessage: taskExecutor_ is null.");
+        return ErrorCode::BRIDGE_INVALID;
+    }
+
     std::lock_guard<std::mutex> lock(jsSendMessageDataListLock_);
     jsSendMessageDataList_.push_back(methodData);
+
     auto task = [bridgeName = this->bridgeName_, data]() {
         BridgeManager::JSSendMessage(bridgeName, data);
     };
-    if (!taskExecutor_) {
-        LOGE("SendMessage: taskExecutor_ is null.");
-    } else {
-        taskExecutor_->RunTaskOnBridgeThread(task);
-    }
+    taskExecutor_->RunTaskOnBridgeThread(task);
 
     return ErrorCode::BRIDGE_ERROR_NO;
 }
@@ -275,7 +271,12 @@ ErrorCode Bridge::SendMessage(const std::string& data, std::shared_ptr<MethodDat
 ErrorCode Bridge::SendMessageBinary(const std::vector<uint8_t>& data, std::shared_ptr<MethodData>& methodData)
 {
     if (!GetAvailable()) {
-        LOGE("SendMessage: The bridge is unavailable.");
+        LOGE("SendMessageBinary: The bridge is unavailable.");
+        return ErrorCode::BRIDGE_INVALID;
+    }
+
+    if (!taskExecutor_) {
+        LOGE("SendMessageBinary: taskExecutor_ is null.");
         return ErrorCode::BRIDGE_INVALID;
     }
 
@@ -284,11 +285,7 @@ ErrorCode Bridge::SendMessageBinary(const std::vector<uint8_t>& data, std::share
     auto task = [bridgeName = this->bridgeName_, &data]() {
         BridgeManager::JSSendMessageBinary(bridgeName, data);
     };
-    if (!taskExecutor_) {
-        LOGE("SendMessageBinary: taskExecutor_ is null.");
-    } else {
-        taskExecutor_->RunTaskOnBridgeThread(task);
-    }
+    taskExecutor_->RunTaskOnBridgeThread(task);
 
     return ErrorCode::BRIDGE_ERROR_NO;
 }
@@ -310,9 +307,9 @@ ErrorCode Bridge::SendMessageResponse(const std::string& data)
     };
     if (!taskExecutor_) {
         LOGE("SendMessageResponse: taskExecutor_ is null.");
-    } else {
-        taskExecutor_->RunTaskOnBridgeThread(task);
+        return ErrorCode::BRIDGE_DATA_ERROR;
     }
+    taskExecutor_->RunTaskOnBridgeThread(task);
     return ErrorCode::BRIDGE_ERROR_NO;
 }
 
@@ -346,14 +343,14 @@ ErrorCode Bridge::RegisterMethod(const std::string& methodName, const std::share
 
 ErrorCode Bridge::UnRegisterMethod(const std::string& methodName)
 {
-    if (!GetAvailable()) {
-        LOGE("UnRegisterMethod: The bridge is unavailable.");
-        return ErrorCode::BRIDGE_INVALID;
-    }
-
     if (methodName.empty()) {
         LOGE("UnRegisterMethod: The methodName is null.");
         return ErrorCode::BRIDGE_METHOD_NAME_ERROR;
+    }
+
+    if (!GetAvailable() || !taskExecutor_) {
+        LOGE("UnRegisterMethod: %s", GetAvailable() ? "taskExecutor_ is null." : "The bridge is unavailable.");
+        return ErrorCode::BRIDGE_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(platformMethodDataListLock_);
@@ -363,11 +360,7 @@ ErrorCode Bridge::UnRegisterMethod(const std::string& methodName)
         auto task = [bridgeName = this->bridgeName_, methodName]() {
             BridgeManager::JSCancelMethod(bridgeName, methodName);
         };
-        if (!taskExecutor_) {
-            LOGE("UnRegisterMethod: taskExecutor_ is null.");
-        } else {
-            taskExecutor_->RunTaskOnBridgeThread(task);
-        }
+        taskExecutor_->RunTaskOnBridgeThread(task);
         return ErrorCode::BRIDGE_ERROR_NO;
     }
     return ErrorCode::BRIDGE_METHOD_UNIMPL;
@@ -403,6 +396,7 @@ std::shared_ptr<MethodData> Bridge::FindPlatformMethodData(const std::string& me
 
 std::shared_ptr<MethodData> Bridge::FindJSMethodData(const std::string& methodName)
 {
+    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
     auto iter = jsMethodDataList_.find(methodName);
     if (iter != jsMethodDataList_.end()) {
         return iter->second;
@@ -420,14 +414,14 @@ void Bridge::EraseJSMethodData(const std::string& methodName)
 
 void Bridge::EraseJSMessageData(void)
 {
-    if (jsSendMessageDataList_.size() > 0) {
-        jsSendMessageDataList_.erase(jsSendMessageDataList_.begin());
+    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
+    if (!jsSendMessageDataList_.empty()) {
+        jsSendMessageDataList_.pop_front();
     }
 }
 
 void Bridge::RemoveJSMethodData(const std::string& methodName)
 {
-    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
     EraseJSMethodData(methodName);
 }
 
@@ -561,7 +555,6 @@ std::unique_ptr<BufferMapping> Bridge::OnPlatformCallMethodSyncBinary(
 
 void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::string& result)
 {
-    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
     std::shared_ptr<MethodData> jsMethodData = FindJSMethodData(methodName);
     if (jsMethodData == nullptr) {
         LOGE("OnPlatformCallMethod: The jsMethodData is null.");
@@ -592,7 +585,6 @@ void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::st
 void Bridge::OnPlatformMethodResultBinary(const std::string& methodName, int errorCode,
     const std::string& errorMessage, std::unique_ptr<BufferMapping> result)
 {
-    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
     std::shared_ptr<MethodData> jsMethodData = FindJSMethodData(methodName);
     if (jsMethodData == nullptr) {
         LOGE("OnPlatformMethodResultBinary: The jsMethodData is null.");
@@ -676,7 +668,7 @@ void Bridge::OnPlatformSendMessageResponse(const std::string& data)
             return;
         }
 
-        methodData = jsSendMessageDataList_[0];
+        methodData = jsSendMessageDataList_.front();
         EraseJSMessageData();
     }
 
