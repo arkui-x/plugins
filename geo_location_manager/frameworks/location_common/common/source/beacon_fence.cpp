@@ -24,7 +24,7 @@ BeaconFence::BeaconFence()
     manufactureData_.manufactureId = 0;
 }
 
-BeaconFence::BeaconFence(BeaconFence& beaconFence)
+BeaconFence::BeaconFence(const BeaconFence& beaconFence)
 {
     identifier_ = beaconFence.GetIdentifier();
     type_ = beaconFence.GetBeaconFenceInfoType();
