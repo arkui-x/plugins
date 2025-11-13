@@ -17,6 +17,7 @@
 #define VIBRATOR_DECODER_FACTORY_H
 
 #include "i_vibrator_decoder.h"
+#include <memory>
 
 namespace OHOS {
 namespace Sensors {
