@@ -38,7 +38,7 @@ enum {
     MODULE_MISCDEVICE_DEVICE = 0x01,
     MODULE_MISCDEVICE_UTILS = 0x02,
     MODULE_MISCDEVICE_SERVICE = 0x03,
-    MODULE_MISCDEVICE_NATIVE = 0X04,
+    MODULE_MISCDEVICE_NATIVE = 0x04,
 };
 
 // Error code for common
@@ -160,7 +160,7 @@ private:
 #define CHKPB(cond) \
     { \
         if ((cond) == nullptr) { \
-            MISC_HILOGW("%{public}s, (%{public}d), CHKPC(%{public}s) is null, skip then break", \
+            MISC_HILOGW("%{public}s, (%{public}d), CHKPB(%{public}s) is null, skip then break", \
                 __FILE__, __LINE__, #cond); \
             break; \
         } \
