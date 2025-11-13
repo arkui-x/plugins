@@ -34,4 +34,4 @@ public:
 };
 } // namespace Location
 } // namespace OHOS
-#endif // FEATURE_GEOCODE_SUPPORT
+#endif // GEO_CONVERT_CALLBACK_HOST_H
