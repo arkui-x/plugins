@@ -137,9 +137,7 @@ public:
         if (!ifAppend) {
             std::vector<std::string>().swap(additions_);
         }
-        for (auto it = additions.begin(); it != additions.end(); ++it) {
-            additions_.push_back(*it);
-        }
+        additions_ = std::move(additions);
     }
 
     inline int64_t GetAdditionSize() const
@@ -157,7 +155,7 @@ public:
         return isFromMock_;
     }
 
-    inline void SetIsFromMock(int fromMock)
+    inline void SetIsFromMock(bool fromMock)
     {
         isFromMock_ = fromMock;
     }
