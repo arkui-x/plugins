@@ -93,14 +93,14 @@ bool NmeaMessageCallbackNapi::IsRemoteDied()
     return remoteDied_;
 }
 
-napi_value NmeaMessageCallbackNapi::PackResult(const std::string msg)
+napi_value NmeaMessageCallbackNapi::PackResult(const std::string &msg)
 {
     napi_value result;
     NAPI_CALL(env_, napi_create_string_utf8(env_, msg.c_str(), NAPI_AUTO_LENGTH, &result));
     return result;
 }
 
-bool NmeaMessageCallbackNapi::Send(const std::string msg)
+bool NmeaMessageCallbackNapi::Send(const std::string &msg)
 {
     std::unique_lock<std::mutex> guard(mutex_);
     uv_loop_s *loop = nullptr;
