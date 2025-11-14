@@ -25,16 +25,14 @@ Locator::~Locator()
 
 std::shared_ptr<LocatorImpl> Locator::GetInstance()
 {
-    std::shared_ptr<LocatorImpl> instance = std::atomic_load(&instance_);
-    if (instance == nullptr) {
+    if (instance_ == nullptr) {
         std::unique_lock<std::mutex> lock(mutex_);
-        instance = std::atomic_load(&instance_);
-        if (instance == nullptr) {
-            instance = std::make_shared<LocatorImpl>();
-            std::atomic_store(&instance_, instance);
+        if (instance_ == nullptr) {
+            std::shared_ptr<LocatorImpl> locator = std::make_shared<LocatorImpl>();
+            instance_ = locator;
         }
     }
-    return instance;
+    return instance_;
 }
 }  // namespace Location
 }  // namespace OHOS
