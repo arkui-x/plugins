@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <unordered_set>
+
 #include "location_switch_callback_napi.h"
 #include "common_utils.h"
 #include "location_log.h"
