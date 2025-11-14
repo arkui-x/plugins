@@ -16,6 +16,7 @@
 #include "request_config.h"
 
 #include <parcel.h>
+#include <sstream>
 
 #include "constant_definition.h"
 
@@ -48,7 +49,7 @@ RequestConfig::RequestConfig(const int scenario) : scenario_(scenario)
     isNeedLocation_ = true;
 }
 
-void RequestConfig::Set(RequestConfig& requestConfig)
+void RequestConfig::Set(const RequestConfig& requestConfig)
 {
     scenario_ = requestConfig.GetScenario();
     priority_ = requestConfig.GetPriority();
