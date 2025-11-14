@@ -42,7 +42,7 @@ public:
         priority_ = priority;
     }
 
-    inline int GetPriority()
+    inline int GetPriority() const
     {
         return priority_;
     }
@@ -130,7 +130,7 @@ public:
     bool Marshalling(Parcel& parcel) const override;
     std::string ToString() const;
     void Set(RequestConfig& requestConfig);
-    bool IsSame(RequestConfig& requestConfig);
+    bool IsSame(const RequestConfig& requestConfig);
     bool IsRequestForAccuracy();
 private:
     int scenario_;
