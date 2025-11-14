@@ -31,7 +31,7 @@ public:
     void DeleteCallback(const napi_env& env, const napi_value& handler);
     sptr<T> GetCallbackPtr(const napi_env& env, const napi_value& handler);
     void DeleteCallbackByEnv(const napi_env& env);
-    const std::map<napi_env, std::map<napi_ref, sptr<T>>> GetCallbackMap() const;
+    const std::map<napi_env, std::map<napi_ref, sptr<T>>> GetCallbackMap();
     bool RegCallback(const napi_env& env, const size_t argc, const napi_value* argv);
     LocationErrCode SubscribeChange(const napi_env& env, const napi_ref& handlerRef, sptr<T>& callbackHost);
 private:
@@ -40,7 +40,7 @@ private:
 };
 
 template <typename T>
-const std::map<napi_env, std::map<napi_ref, sptr<T>>> CallbackManager<T>::GetCallbackMap() const
+const std::map<napi_env, std::map<napi_ref, sptr<T>>> CallbackManager<T>::GetCallbackMap()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     return callbackMap_;
