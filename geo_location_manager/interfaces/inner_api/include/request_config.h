@@ -82,7 +82,7 @@ public:
         fixNumber_ = fixNumber;
     }
 
-    inline int GetFixNumber()
+    inline int GetFixNumber() const
     {
         return fixNumber_;
     }
@@ -92,7 +92,7 @@ public:
         timeOut_ = time;
     }
 
-    inline int GetTimeOut()
+    inline int GetTimeOut() const
     {
         return timeOut_;
     }
@@ -102,7 +102,7 @@ public:
         timestamp_ = time;
     }
 
-    inline int64_t GetTimeStamp()
+    inline int64_t GetTimeStamp() const
     {
         return timestamp_;
     }
@@ -112,7 +112,7 @@ public:
         isNeedPoi_ = isNeedPoi;
     }
  
-    inline bool GetIsNeedPoi()
+    inline bool GetIsNeedPoi() const
     {
         return isNeedPoi_;
     }
@@ -122,14 +122,14 @@ public:
         isNeedLocation_ = isNeedLocation;
     }
  
-    inline bool GetIsNeedLocation()
+    inline bool GetIsNeedLocation() const
     {
         return isNeedLocation_;
     }
 
     bool Marshalling(Parcel& parcel) const override;
     std::string ToString() const;
-    void Set(RequestConfig& requestConfig);
+    void Set(const RequestConfig& requestConfig);
     bool IsSame(const RequestConfig& requestConfig);
     bool IsRequestForAccuracy();
 private:
