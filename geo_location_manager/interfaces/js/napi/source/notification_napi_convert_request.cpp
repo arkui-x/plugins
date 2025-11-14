@@ -351,7 +351,7 @@ static bool getStr(const char *key, size_t maxLen, std::string &out, napi_value 
     }
     std::vector<char> buf(maxLen + 1, '\0');
     size_t len = 0;
-    napi_get_value_string_utf8(env, v, buf.data(), maxLen, &len);
+    napi_get_value_string_utf8(env, v, buf.data(), buf.size(), &len);
     if (len == 0) {
         return false;
     }
@@ -409,41 +409,43 @@ napi_value NotificationNapi::GetNotificationRequest(
     const napi_env &env, const napi_value &value, NotificationRequest &request)
 {
     LBSLOGD(NAPI_UTILS, "enter (trimmed)");
+    napi_value result = nullptr;
+    napi_get_null(env, &result);
     if (!GetNotificationId(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationBadgeNumber(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationDeliveryTime(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationShowDeliveryTime(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationIsAlertOnce(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationAutoDeletedTime(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationGroupName(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationIsStopwatch(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationIsCountDown(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationtapDismissed(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationIsOngoing(env, value, request)) {
-        return nullptr;
+        return result;
     }
     if (!GetNotificationContent(env, value, request)) {
-        return nullptr;
+        return result;
     }
     return NotificationNapi::NapiGetNull(env);
 }
