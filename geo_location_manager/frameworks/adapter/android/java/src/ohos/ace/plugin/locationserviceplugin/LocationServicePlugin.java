@@ -281,46 +281,41 @@ public class LocationServicePlugin {
     }
 
 public Location getCurrentLocation() {
-    ensureLocationManagerInitialized();
-    Location lastKnownLocation = getLastKnownLocation();
-    if (lastKnownLocation != null) {
-        return lastKnownLocation;
-    }
-
-    final CountDownLatch latch = new CountDownLatch(1);
-    final Location[] resultLocation = new Location[1];
-
-    LocationListener listener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            resultLocation[0] = location;
-            latch.countDown();
-            stopListener();
+        ensureLocationManagerInitialized();
+        Location lastKnownLocation = getLastKnownLocation();
+        if (lastKnownLocation != null) {
+            return lastKnownLocation;
         }
 
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {}
+        LocationListener listener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                currentLocation = location;
+                latch.countDown();
+                stopListener();
+            }
 
-        @Override
-        public void onProviderEnabled(String provider) {}
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
 
-        @Override
-        public void onProviderDisabled(String provider) {}
-    };
+            @Override
+            public void onProviderEnabled(String provider) {}
 
-    registerListener(listener);
+            @Override
+            public void onProviderDisabled(String provider) {}
+        };
+        registerListener(listener);
 
-    try {
-        latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-        Log.e(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
-        Thread.currentThread().interrupt();
-    } finally {
-        stopListener(listener);
+        try {
+            latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Log.i(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
+        } finally {
+            stopListener(listener);
+        }
+
+        return currentLocation;
     }
-
-    return resultLocation[0];
-}
 
     private Location getLastKnownLocation() {
         Location gpsLocation = null;
