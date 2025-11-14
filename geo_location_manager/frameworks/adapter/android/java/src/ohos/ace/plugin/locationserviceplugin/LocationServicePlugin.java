@@ -309,7 +309,7 @@ public Location getCurrentLocation() {
         try {
             latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            Log.i(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
+            Log.e(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
         } finally {
             stopListener(listener);
         }
