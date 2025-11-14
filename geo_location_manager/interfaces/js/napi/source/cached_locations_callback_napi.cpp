@@ -14,8 +14,9 @@
  */
 #include "cached_locations_callback_napi.h"
 
-#include "napi/native_common.h"
+#include <unordered_set>
 
+#include "napi/native_common.h"
 #include "common_utils.h"
 #include "location_log.h"
 #include "napi_util.h"
