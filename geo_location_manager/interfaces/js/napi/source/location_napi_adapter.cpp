@@ -811,7 +811,7 @@ void SetCompleteFuncForRemoveGnssGeofenceContext(GnssGeofenceAsyncContext* async
             }
         }
         g_hiAppEventClient->WriteEndEvent(
-            context->beginTime, context->errCode == ERRCODE_SUCCESS ? 0 : 1, context->errCode, "remoceGnssGeofence");
+            context->beginTime, context->errCode == ERRCODE_SUCCESS ? 0 : 1, context->errCode, "removeGnssGeofence");
         LBSLOGI(LOCATOR_STANDARD, "Push RemoveGnssGeofence result to client");
     };
 }
