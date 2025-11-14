@@ -20,7 +20,7 @@
 namespace OHOS {
 namespace Location {
 static std::mutex g_regCallbackMutex;
-static std::vector<napi_ref> g_registerCallbacks;
+static std::unordered_set<napi_ref> g_registerCallbacks;
 LocationSwitchCallbackNapi::LocationSwitchCallbackNapi()
 {
     env_ = nullptr;
@@ -58,28 +58,19 @@ void LocationSwitchCallbackNapi::SetHandleCb(const napi_ref& handlerCb)
         std::unique_lock<std::mutex> guard(mutex_);
         handlerCb_ = handlerCb;
     }
-    g_registerCallbacks.emplace_back(handlerCb);
+    g_registerCallbacks.insert(handlerCb);
 }
 
 bool FindSwitchCallback(napi_ref cb)
 {
     std::unique_lock<std::mutex> guard(g_regCallbackMutex);
-    auto iter = std::find(g_registerCallbacks.begin(), g_registerCallbacks.end(), cb);
-    if (iter == g_registerCallbacks.end()) {
-        return false;
-    }
-    return true;
+    return g_registerCallbacks.find(cb) != g_registerCallbacks.end();
 }
 
 void DeleteSwitchCallback(napi_ref cb)
 {
     std::unique_lock<std::mutex> guard(g_regCallbackMutex);
-    for (auto iter = g_registerCallbacks.begin(); iter != g_registerCallbacks.end(); iter++) {
-        if (*iter == cb) {
-            iter = g_registerCallbacks.erase(iter);
-            break;
-        }
-    }
+    g_registerCallbacks.erase(cb);
     LBSLOGW(SWITCH_CALLBACK, "after DeleteSwitchCallback, callback size %{public}s",
         std::to_string(g_registerCallbacks.size()).c_str());
 }
