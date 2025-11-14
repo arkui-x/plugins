@@ -37,7 +37,7 @@ typedef struct {
 class BeaconFence : public Parcelable {
 public:
     BeaconFence();
-    BeaconFence(BeaconFence &BeaconFence);
+    BeaconFence(const BeaconFence &BeaconFence);
     ~BeaconFence();
 
     inline std::string GetIdentifier() const
