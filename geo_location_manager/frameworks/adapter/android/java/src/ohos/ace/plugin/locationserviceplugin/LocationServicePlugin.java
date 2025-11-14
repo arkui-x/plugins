@@ -191,6 +191,19 @@ public class LocationServicePlugin {
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            if (location == null) {
+                return;
+            }
+            nativeOnLocationChanged(
+                location.getLatitude(),
+                location.getLongitude(),
+                location.hasAccuracy() ? location.getAccuracy() : 0f,
+                location.hasAltitude() ? location.getAltitude() : 0.0,
+                location.hasSpeed() ? location.getSpeed() : 0f,
+                location.hasBearing() ? location.getBearing() : 0f,
+                location.getTime(),
+                location.getBearingAccuracyDegrees(),
+                location.getProvider());
         }
 
         @Override
