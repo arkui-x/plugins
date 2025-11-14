@@ -55,11 +55,11 @@ napi_ref LocationSwitchCallbackNapi::GetHandleCb()
 
 void LocationSwitchCallbackNapi::SetHandleCb(const napi_ref& handlerCb)
 {
-    std::unique_lock<std::mutex> guard(g_regCallbackMutex);
     {
         std::unique_lock<std::mutex> guard(mutex_);
         handlerCb_ = handlerCb;
     }
+    std::unique_lock<std::mutex> guard(g_regCallbackMutex);
     g_registerCallbacks.insert(handlerCb);
 }
 
