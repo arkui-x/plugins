@@ -55,6 +55,7 @@ common_plugin_libs = [
   "worker",
   "request",
   "buffer",
+  "fastbuffer",
   "convertxml",
   "process",
   "system_date_time",
