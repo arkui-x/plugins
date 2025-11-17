@@ -20,7 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <vector>
+#include <deque>
 
 #include "bridge_event_handle.h"
 #include "buffer_mapping.h"
@@ -69,7 +69,7 @@ private:
     napi_env env_ = nullptr;
     std::map<std::string, std::shared_ptr<MethodData>> platformMethodDataList_;
     std::map<std::string, std::shared_ptr<MethodData>> jsMethodDataList_;
-    std::vector<std::shared_ptr<MethodData>> jsSendMessageDataList_;
+    std::deque<std::shared_ptr<MethodData>> jsSendMessageDataList_;
     std::shared_ptr<MethodData> messageCallback_;
     std::mutex platformMethodDataListLock_;
     std::mutex jsMethodDataListLock_;
