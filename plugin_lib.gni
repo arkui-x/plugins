@@ -48,6 +48,7 @@ common_plugin_libs = [
   "file/photo_access_helper",
   "file/picker",
   "file/streamrw",
+  "geo_location_manager",
   "common_event_manager",
   "data/datasharepredicates",
   "data/preferences",
