@@ -100,14 +100,11 @@ void CallbackManager<T>::DeleteCallback(const napi_env& env, const napi_value& h
     for (auto innerIter = iter->second.begin(); innerIter != iter->second.end(); innerIter++) {
         auto ref = innerIter->first;
         if (IsCallbackEquals(env, handler, ref)) {
-            napi_delete_reference(env, ref);
             innerIter = iter->second.erase(innerIter);
-            if (iter->second.empty()) {
+            if (iter->second.size() == 0) {
                 callbackMap_.erase(iter);
             }
             break;
-        } else {
-            ++innerIter;
         }
     }
 }
