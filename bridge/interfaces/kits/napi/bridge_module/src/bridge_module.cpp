@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #include "bridge_module.h"
 
 #include <cstddef>
+#include <memory>
 
 #include "log.h"
 #include "napi/native_api.h"
@@ -69,6 +70,9 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
     CodecType codecType = CodecType::JSON_CODEC;
     if (argc == PluginUtilsNApi::ARG_NUM_2) {
         codecType = static_cast<CodecType>(PluginUtilsNApi::GetCInt32(argv[PluginUtilsNApi::ARG_NUM_1], env));
+        if (codecType != CodecType::JSON_CODEC && codecType != CodecType::BINARY_CODEC) {
+            return PluginUtilsNApi::CreateUndefined(env);
+        }
     }
     LOGI("bridge codec type : %d", static_cast<int32_t>(codecType));
 
@@ -84,7 +88,7 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
             bool isTerminate = bridge->GetTerminate();
             if (!isTerminate) {
                 LOGI("Delete bridge object");
-                BridgeWrap::GetInstance().DeleteBridge(bridge->GetBridgeName(), bridge->GetInstanceID());
+                BridgeWrap::GetInstance().DeleteBridge(bridge->GetBridgeName());
             }
         },
         nullptr, nullptr);
@@ -101,6 +105,7 @@ void BridgeModule::DefinePluginBridgeObjectClass(napi_env env, napi_value export
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_SEND_MESSAGE, BridgeObject::SendMessage),
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_REGISTER_ON_MESSAGE, BridgeObject::SetMessageListener),
         DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_CALL_METHOD_CALLBACK, BridgeObject::CallMethodWithCallBack),
+        DECLARE_NAPI_FUNCTION(BridgeObject::FUNCTION_CALL_METHOD_SYNC, BridgeObject::CallMethodSync),
     };
     PluginUtilsNApi::DefineClass(env, exports, properties, INTERFACE_PLUGIN_BRIDGE_OBJECT);
 }
@@ -139,7 +144,7 @@ void BridgeModule::CallMethodInner(napi_env env, napi_value thisVal, std::shared
         methodData->SetBridgeName(bridge->GetBridgeName());
         code = bridge->CallMethod(methodData->GetMethodName(), methodData);
         LOGI("CallMethodInner:success, BridgeName is %{public}s, MethodName is %{public}s,",
-        bridge->GetBridgeName().c_str(), methodData->GetMethodName().c_str());
+            bridge->GetBridgeName().c_str(), methodData->GetMethodName().c_str());
     } else {
         code = ErrorCode::BRIDGE_INVALID;
         LOGE("CallMethodInner:Failed to obtain the Bridge object.");
@@ -154,6 +159,34 @@ void BridgeModule::CallMethodInner(napi_env env, napi_value thisVal, std::shared
             bridge->RemoveJSMethodData(methodData->GetMethodName());
         }
     }
+}
+
+std::shared_ptr<MethodResult> BridgeModule::CallMethodSyncInner(napi_env env,
+    napi_value thisVal,
+    std::shared_ptr<MethodData> methodData)
+{
+    ErrorCode code { ErrorCode::BRIDGE_ERROR_NO };
+    auto methodResult = std::make_shared<MethodResult>();
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge != nullptr) {
+        methodData->SetBridgeName(bridge->GetBridgeName());
+        code = bridge->CallMethodSync(env, methodData->GetMethodName(), methodData, methodResult);
+        LOGI("CallMethodSyncInner:success, BridgeName is %{public}s, MethodName is %{public}s,",
+            bridge->GetBridgeName().c_str(), methodData->GetMethodName().c_str());
+    } else {
+        code = ErrorCode::BRIDGE_INVALID;
+        LOGE("CallMethodSyncInner:Failed to obtain the Bridge object.");
+    }
+
+    if (code != ErrorCode::BRIDGE_ERROR_NO) {
+        methodResult->SetErrorCode(static_cast<int>(code));
+        methodResult->CreateDefaultJsonString();
+        methodResult->ParsePlatformMethodResult(env, methodResult->GetResult());
+        if (bridge) {
+            bridge->RemoveJSMethodData(methodData->GetMethodName());
+        }
+    }
+    return methodResult;
 }
 
 void BridgeModule::RegisterMethodInner(
@@ -522,6 +555,58 @@ napi_value BridgeModule::BridgeObject::CallMethodWithCallBack(napi_env env, napi
     RegisterMethodInner(env, thisVal, methodData, callback);
     auto result = CallMethodWithCallBackInner(env, info);
     return result;
+}
+
+napi_value BridgeModule::BridgeObject::CallMethodSync(napi_env env, napi_callback_info info)
+{
+    napi_value thisVal = nullptr;
+    size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
+    napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
+
+    if (argc == PluginUtilsNApi::ARG_NUM_0 || argc > PluginUtilsNApi::MAX_ARG_NUM) {
+        LOGE("BridgeObject::CallMethodSync: Method parameter error.");
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_NAME_ERROR)));
+        return nullptr;
+    }
+
+    Bridge* bridge = GetBridge(env, thisVal);
+    if (bridge == nullptr) {
+        LOGE("BridgeObject::CallMethodSync: Failed to obtain the Bridge object.");
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_INVALID)));
+        return nullptr;
+    }
+
+    auto methodData = MethodData::CreateMethodData(env, bridge->GetCodecType());
+    if (!methodData->GetName(argv[PluginUtilsNApi::ARG_NUM_0])) {
+        LOGE("BridgeObject::CallMethodSync: Parsing the method name failed.");
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_NAME_ERROR)));
+        return nullptr;
+    }
+
+    size_t paramCount = (argc > PluginUtilsNApi::ARG_NUM_1) ?
+                        argc - PluginUtilsNApi::ARG_NUM_1 : PluginUtilsNApi::ARG_NUM_0;
+    bool ret = false;
+    if (paramCount > PluginUtilsNApi::ARG_NUM_0) {
+        ret = methodData->GetParamsByRecord(paramCount, &argv[PluginUtilsNApi::ARG_NUM_1]);
+    } else {
+        ret = methodData->GetParamsByRecord(PluginUtilsNApi::ARG_NUM_0, nullptr);
+    }
+    if (!ret) {
+        LOGE("BridgeObject::CallMethodSync: Parsing the method parameters failed.");
+        napi_throw(env,
+            NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_PARAM_ERROR)));
+        return nullptr;
+    }
+
+    methodData->UpdateMethodName();
+    auto methodResult = CallMethodSyncInner(env, thisVal, methodData);
+    if (methodResult && methodResult->GetErrorCode() != 0) {
+        LOGE("BridgeObject::CallMethodSync: Call platform method failed.");
+        napi_throw(env, NAPIUtils::CreateErrorMessage(env, methodResult->GetErrorCode()));
+        return nullptr;
+    }
+    return methodResult->GetOkResult();
 }
 
 static napi_module BridgeModule = {

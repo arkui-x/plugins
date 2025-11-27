@@ -15,11 +15,13 @@
 
 #include "napi_utils.h"
 
+#include <cmath>
+
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 #include "plugins/interfaces/native/plugin_utils.h"
 
 namespace OHOS::Plugin::Bridge {
-static constexpr double double_min_value = 0.00001;
+static constexpr double DOUBLE_MIN_VALUE = 0.00001;
 
 bool NAPIUtils::JsonStringToNapiValues(napi_env env, const std::string& str, size_t& argc, napi_value* argv)
 {
@@ -52,12 +54,13 @@ napi_value NAPIUtils::NAPI_GetParams(napi_env env, Json json)
     } else if (json.is_boolean()) {
         result = PluginUtilsNApi::CreateBoolean(env, json.get<bool>());
     } else if (json.is_number()) {
-        float okResultFloat = json.get<float>();
+        double okResultDouble = json.get<double>();
         int okResultInt = json.get<int>();
-        if (okResultFloat - okResultInt < double_min_value) {
+        double diff = std::fabs(okResultDouble - static_cast<double>(okResultInt));
+        if (diff < DOUBLE_MIN_VALUE) {
             result = PluginUtilsNApi::CreateInt32(env, okResultInt);
         } else {
-            result = PluginUtilsNApi::CreateDouble(env, okResultFloat);
+            result = PluginUtilsNApi::CreateDouble(env, okResultDouble);
         }
     } else if (json.is_array()) {
         result = PluginUtilsNApi::CreateArray(env);
@@ -90,7 +93,8 @@ Json NAPIUtils::PlatformParams(napi_env env, napi_value value)
         case napi_number: {
             int intValue = PluginUtilsNApi::GetCInt32(value, env);
             double numberValue = PluginUtilsNApi::GetDouble(env, value);
-            if (numberValue - intValue > double_min_value) {
+            double diff = std::fabs(numberValue - static_cast<double>(intValue));
+            if (diff > DOUBLE_MIN_VALUE) {
                 result = numberValue;
             } else {
                 result = intValue;
@@ -136,5 +140,17 @@ int NAPIUtils::NAPI_GetErrorCodeFromJson(Json json)
         ret = json.get<int>();
     }
     return ret;
+}
+
+napi_value NAPIUtils::CreateErrorMessage(napi_env env, int32_t codeId)
+{
+    napi_value result = nullptr;
+    napi_value eCode = PluginUtilsNApi::GetNapiInt32(codeId, env);
+    napi_value eMsg = nullptr;
+    napi_create_string_utf8(env, CodeMessage[codeId], strlen(CodeMessage[codeId]), &eMsg);
+    napi_create_error(env, nullptr, eMsg, &result);
+    napi_set_named_property(env, result, "code", eCode);
+    napi_set_named_property(env, result, "message", eMsg);
+    return result;
 }
 } // namespace OHOS::Plugin::Bridge
