@@ -16,7 +16,7 @@ import("//build/ohos.gni")
 import("//foundation/arkui/ace_engine/ace_config.gni")
 import("//foundation/arkui/ace_engine/build/ace_gen_obj.gni")
 
-chipgroup_path = "//plugins/arkui/advanced/chipgroup/chipgroup.js"
+chipgroup_path = "$ace_root/advanced_ui_component/chipgroup/interfaces/chipgroup.js"
 
 es2abc_gen_abc("gen_chipgroup_abc") {
   src_js = rebase_path("$chipgroup_path")
