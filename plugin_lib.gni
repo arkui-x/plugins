@@ -104,6 +104,7 @@ common_plugin_libs = [
   "arkui/advanced/composetitlebar",
   "arkui/advanced/selecttitlebar",
   "arkui/advanced/selectionmenu",
+  "vibrator",
 ]
 
 template("plugin_lib") {
