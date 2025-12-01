@@ -18,6 +18,7 @@
 #import <AVFoundation/AVCaptureDevice.h>
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
+#import <CoreLocation/CoreLocation.h>
 
 @implementation abilityAccessCtrlIOS
 
@@ -74,6 +75,24 @@
         }
         case PHAuthorizationStatusLimited:
         case PHAuthorizationStatusAuthorized: {
+            return YES;
+        }
+        default:
+            break;
+    }
+    return NO;
+}
+
+-(bool)CheckLocationPermission{
+    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+    switch (status) {
+        case kCLAuthorizationStatusNotDetermined:
+        case kCLAuthorizationStatusRestricted:
+        case kCLAuthorizationStatusDenied: {
+            return NO;
+        }
+        case kCLAuthorizationStatusAuthorizedAlways:
+        case kCLAuthorizationStatusAuthorizedWhenInUse: {
             return YES;
         }
         default:
@@ -173,6 +192,32 @@
             return;
         }
         case PHAuthorizationStatusRestricted:
+        default:
+            break;
+    }
+    callback(data, isLast, GrantResultType::INVALID_OPER);
+    return;
+}
+
+-(void)RequestLocationPermission: (IosCb)callback :(CallbackInfo*)data :(bool)isLast{
+    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+    switch (status) {
+        case kCLAuthorizationStatusNotDetermined: {
+            CLLocationManager* locationManager = [[CLLocationManager alloc] init];
+            [locationManager requestWhenInUseAuthorization];
+            callback(data, isLast, GrantResultType::GRANTED);
+            return;
+        }
+        case kCLAuthorizationStatusAuthorizedAlways:
+        case kCLAuthorizationStatusAuthorizedWhenInUse: {
+            callback(data, isLast, GrantResultType::GRANTED);
+            return;
+        }
+        case kCLAuthorizationStatusDenied: {
+            callback(data, isLast, GrantResultType::DENIED_BY_USER);
+            return;
+        }
+        case kCLAuthorizationStatusRestricted:
         default:
             break;
     }
