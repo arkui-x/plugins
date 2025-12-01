@@ -1,0 +1,65 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//plugins/geo_location_manager/geolocationmanager.gni")
+
+ohos_source_set("geolocationmanager_ios") {
+  include_dirs = geoLocationManager_include
+  include_dirs += [
+    "${GEOLOCATIONMANAGER_ROOT}/frameworks/adapter/inner_api",
+    "${GEOLOCATIONMANAGER_ROOT}/frameworks/adapter/ios",
+  ]
+
+  sources = [
+    "location_crossplatform_service_impl.mm",
+    "location_service_ios.mm",
+  ]
+
+  defines = [
+    "IOS_PLATFORM",
+    "NOTIFICATION_ENABLE"
+  ]
+
+  if (target_cpu == "arm64") {
+    defines += [ "_ARM64_" ]
+  }
+
+  configs = [ "$ace_root:ace_config" ]
+
+  cflags_objc = [
+    "-fvisibility=default",
+    "-fobjc-weak",
+    "-fno-objc-exceptions",
+  ]
+  cflags_objcc = cflags_objc
+
+  deps = [
+    "//plugins/interfaces/native:ace_plugin_util_ios",
+    "//plugins/interfaces/native:plugin_log",
+    "//plugins/libs/napi:napi_ios",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_ios",
+    "//plugins/notification_manager:notification_manager_static_ios",
+  ]
+
+  frameworks = [
+    "SystemConfiguration.framework",
+    "CoreLocation.framework",
+    "CoreBluetooth.framework",
+    "MapKit.framework"
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "geo_location_manager"
+}
