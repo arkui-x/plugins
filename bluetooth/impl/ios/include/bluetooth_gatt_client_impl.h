@@ -40,7 +40,8 @@ public:
     int Disconnect(int32_t appId) override;
     int DiscoveryServices(int32_t appId) override;
     int ReadCharacteristic(int32_t appId, const BluetoothGattCharacteristic& characteristic) override;
-    int WriteCharacteristic(int32_t appId, BluetoothGattCharacteristic* characteristic, bool withoutRespond) override;
+    int WriteCharacteristic(int32_t appId, BluetoothGattCharacteristic *characteristic, bool withoutRespond,
+        bool isWithContext) override;
     int SignedWriteCharacteristic(int32_t appId, BluetoothGattCharacteristic* characteristic) override;
     int ReadDescriptor(int32_t appId, const BluetoothGattDescriptor& descriptor) override;
     int WriteDescriptor(int32_t appId, BluetoothGattDescriptor* descriptor) override;

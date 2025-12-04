@@ -18,6 +18,7 @@ ohos_source_set("bluetooth_ble_static") {
     "//plugins/bluetooth/common/include",
     "//plugins/bluetooth/common/mock",
     "$bluetooth_napi_root/src",
+    "$bluetooth_inner_root/ipc/parcel",
   ]
 
   defines = [

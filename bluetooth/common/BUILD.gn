@@ -98,6 +98,7 @@ IpcCrossPlatformSrc = [
   "$bluetooth_inner_root/ipc/parcel/bluetooth_device_battery_info.cpp",
   "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_characteristic_parcel.cpp",
   "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_descriptor_parcel.cpp",
+  "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_rsp_context_parcel.cpp",
   "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_device.cpp",
   "$bluetooth_inner_root/ipc/parcel/bluetooth_gatt_service_parcel.cpp",
   "$bluetooth_inner_root/ipc/parcel/bluetooth_hfp_hf_call.cpp",
@@ -124,6 +125,7 @@ config("bt_framework_public_config") {
   include_dirs = [
     "$bluetooth_inner_root/include",
     "$bluetooth_inner_root/ipc/include",
+    "$bluetooth_inner_root/ipc/parcel",
     "$bluetooth_napi_root/include",
     "$subsystem_root/bluetooth/interfaces/inner_api/include",
     "$subsystem_root/bluetooth/interfaces/inner_api/include/c_header",

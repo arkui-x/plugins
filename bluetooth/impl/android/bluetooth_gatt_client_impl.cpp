@@ -133,7 +133,7 @@ int BluetoothGattClientImpl::ReadCharacteristic(int32_t appId, const BluetoothGa
 }
 
 int BluetoothGattClientImpl::WriteCharacteristic(
-    int32_t appId, BluetoothGattCharacteristic* characteristic, bool withoutRespond)
+    int32_t appId, BluetoothGattCharacteristic* characteristic, bool withoutRespond, bool isWithContext)
 {
     int32_t result = BT_NO_ERROR;
     auto gattClientData = BluetoothGattClientImpl::GetGattClientData(appId);

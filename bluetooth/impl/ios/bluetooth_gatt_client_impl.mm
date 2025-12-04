@@ -227,7 +227,7 @@ int BluetoothGattClientImpl::ReadCharacteristic(int32_t appId, const BluetoothGa
 }
 
 int BluetoothGattClientImpl::WriteCharacteristic(
-    int32_t appId, BluetoothGattCharacteristic* characteristic, bool withoutRespond)
+    int32_t appId, BluetoothGattCharacteristic* characteristic, bool withoutRespond, bool isWithContext)
 {
     BluetoothGattCharacteristic gattCharacteristic = BluetoothGattCharacteristic(*characteristic);
     uint8_t* rawData = gattCharacteristic.value_.get();
@@ -242,6 +242,7 @@ int BluetoothGattClientImpl::WriteCharacteristic(
     CBMutableCharacteristic* chara = GetClientCurrentCharacteristic(gattCharacteristic.handle_, service);
 
     BluetoothCentralManager* centralManager = [BluetoothCentralManager sharedInstance];
+    BluetoothGattRspContext rspContext;
     int ret = [centralManager
         writeCharacteristic:appId
                 serviceUuid:serviceUuid
@@ -260,7 +261,7 @@ int BluetoothGattClientImpl::WriteCharacteristic(
                         if (callback == nullptr) {
                             return;
                         }
-                        callback->OnCharacteristicWrite(ret, gattCharacteristic);
+                        callback->OnCharacteristicWrite(ret, gattCharacteristic, rspContext);
                       }];
     return ret;
 }
@@ -281,6 +282,7 @@ int BluetoothGattClientImpl::SignedWriteCharacteristic(int32_t appId, BluetoothG
     CBMutableCharacteristic* chara = GetClientCurrentCharacteristic(gattCharacteristic.handle_, service);
 
     BluetoothCentralManager* centralManager = [BluetoothCentralManager sharedInstance];
+    BluetoothGattRspContext rspContext;
     int ret = [centralManager
         writeCharacteristic:appId
                 serviceUuid:serviceUuid
@@ -299,7 +301,7 @@ int BluetoothGattClientImpl::SignedWriteCharacteristic(int32_t appId, BluetoothG
                         if (callback == nullptr) {
                             return;
                         }
-                        callback->OnCharacteristicWrite(ret, gattCharacteristic);
+                        callback->OnCharacteristicWrite(ret, gattCharacteristic, rspContext);
                       }];
     return ret;
 }
