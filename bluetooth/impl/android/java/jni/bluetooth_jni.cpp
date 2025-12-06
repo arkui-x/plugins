@@ -712,7 +712,8 @@ void BluetoothJni::NativeOnCharacteristicWrite(JNIEnv* env, jobject jobj, jint a
     BluetoothImplUtils::ParseCharacteristicFromJson(jsonCString, characteristic);
     std::lock_guard<std::mutex> lock(gattClientLock_);
     BluetoothGattCharacteristic gattCharacteristic = BluetoothGattCharacteristic(characteristic);
-    gattClientData->callback_->OnCharacteristicWrite(status, gattCharacteristic);
+    BluetoothGattRspContext rspContext;
+    gattClientData->callback_->OnCharacteristicWrite(status, gattCharacteristic, rspContext);
 }
 
 void BluetoothJni::NativeOnDescriptorWrite(JNIEnv* env, jobject jobj, jint appId, jstring jsonString, jint status)
