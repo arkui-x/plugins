@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -178,6 +178,21 @@ std::shared_ptr<ResultSet> PhotoClientImpl::Query(DataShare::DataSharePredicates
     std::vector<std::string> androidColumns;
     ChangeColumnToAndroid(columns, androidColumns);
     return OHOS::Plugin::PhotoPluginJni::queryPhoto(rdbPredicates, args, androidColumns);
+}
+
+std::string PhotoClientImpl::InsertExt(int photoType, const std::string &extension,
+    const std::string &title, int &errCode)
+{
+    if (!OHOS::Plugin::PhotoPluginJni::CheckWritePermission()) {
+        errCode = Media::E_PERMISSION_DENIED;
+        return "";
+    }
+    return OHOS::Plugin::PhotoPluginJni::CreatePhoto(photoType, extension, title);
+}
+
+std::string PhotoClientImpl::GetMimeTypeFromExtension(const std::string &extension)
+{
+    return OHOS::Plugin::PhotoPluginJni::GetMimeTypeFromExtension(extension);
 }
 
 int PhotoClientImpl::Update(std::string &uri, const std::string &predicates,
