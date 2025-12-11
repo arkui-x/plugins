@@ -546,8 +546,18 @@ int32_t AudioRendererPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timest
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioRendererPrivate::SetLoopTimes(int64_t bufferLoopTimes)
+{
+    return ERR_NOT_SUPPORTED;
+}
+
 void AudioRendererPrivate::SetFastStatusChangeCallback(
     const std::shared_ptr<AudioRendererFastStatusChangeCallback>& callback)
 {}
+
+int32_t AudioRendererPrivate::GetLatencyWithFlag(uint64_t &latency, LatencyFlag flag) const
+{
+    return ERR_NOT_SUPPORTED;
+}
 }  // namespace AudioStandard
 }  // namespace OHOS

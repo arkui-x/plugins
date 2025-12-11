@@ -37,6 +37,7 @@ public:
     void CreateAudioTrack(const AudioRendererOptions &rendererOptions);
     int32_t GetFrameCount(uint32_t &frameCount) const override;
     int32_t GetLatency(uint64_t &latency) const override;
+    int32_t GetLatencyWithFlag(uint64_t &latency, LatencyFlag flag) const override;
     void SetAudioPrivacyType(AudioPrivacyType privacyType) override;
     AudioPrivacyType GetAudioPrivacyType() override { return PRIVACY_TYPE_PRIVATE; };
     int32_t SetParams(const AudioRendererParams params) override;
@@ -127,6 +128,8 @@ public:
     int32_t SetDefaultOutputDevice(DeviceType deviceType) override{ return ERR_NOT_SUPPORTED; }
 
     int32_t GetAudioTimestampInfo(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
+
+    int32_t SetLoopTimes(int64_t bufferLoopTimes) override;
 
     void SetFastStatusChangeCallback(const std::shared_ptr<AudioRendererFastStatusChangeCallback> &callback) override;
     
