@@ -69,6 +69,20 @@ int32_t AudioSpatializationManager::SetSpatializationEnabled(
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSpatializationManager::SetAdaptiveSpatialRenderingEnabled(
+    const std::shared_ptr<AudioDeviceDescriptor> &selectedAudioDevice, const bool enable)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+bool AudioSpatializationManager::IsAdaptiveSpatialRenderingEnabled(
+    const std::shared_ptr<AudioDeviceDescriptor> &selectedAudioDevice)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
 bool AudioSpatializationManager::IsHeadTrackingEnabled()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
@@ -116,6 +130,13 @@ int32_t AudioSpatializationManager::RegisterHeadTrackingEnabledEventListener(
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSpatializationManager::RegisterAdaptiveSpatialRenderingEnabledEventListener(
+    const std::shared_ptr<AudioAdaptiveSpatialRenderingEnabledChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioSpatializationManager::UnregisterSpatializationEnabledEventListener()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
@@ -131,6 +152,12 @@ int32_t AudioSpatializationManager::UnregisterSpatializationEnabledForCurrentDev
 int32_t AudioSpatializationManager::UnregisterHeadTrackingEnabledEventListener()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSpatializationManager::UnregisterAdaptiveSpatialRenderingEnabledEventListener()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 

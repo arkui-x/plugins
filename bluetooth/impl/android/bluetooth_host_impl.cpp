@@ -553,5 +553,10 @@ int32_t BluetoothHostImpl::GetRemoteServices(const std::string &address)
 {
     return 0;
 }
+
+int32_t BluetoothHostImpl::SetConnectionPriority(const std::string &address, int32_t priority)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

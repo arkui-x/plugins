@@ -131,6 +131,7 @@ public:
     void SetCallingPackageName(const std::string &address, const std::string &packageName) override;
     int32_t StartRemoteSdpSearch(const std::string &address, const std::string &uuid) override;
     int32_t GetRemoteServices(const std::string &address) override;
+    int32_t SetConnectionPriority(const std::string &address, int32_t priority) override;
 
 private:
     std::mutex observerMutex_;
