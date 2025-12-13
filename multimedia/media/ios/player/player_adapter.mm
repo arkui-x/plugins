@@ -143,6 +143,7 @@
             _surfaceInceId = inceId;
             CALayer *caLayer = [aceSurfaceHolderClass getLayerWithId:_surfaceLayerId inceId:_surfaceInceId];
             if (caLayer) {
+                [self removeAVPlayerLayersFromLayer:caLayer];
                 self.avPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.avPlayer];
                 self.avPlayerLayer.videoGravity = AVLayerVideoGravityResize;
                 self.avPlayerLayer.frame = caLayer.bounds;
@@ -293,16 +294,21 @@
             return;
         }
         CALayer *caLayer = [aceSurfaceHolderClass getLayerWithId:_surfaceLayerId inceId:_surfaceInceId];
-        if (!caLayer) {
-            return;
-        }
-        NSArray<CALayer *> *sublayersCopy = [caLayer.sublayers copy];
-        for (CALayer *subLayer in sublayersCopy) {
-            if ([subLayer isKindOfClass:[AVPlayerLayer class]]) {
-                [subLayer removeFromSuperlayer];
-            }
-        }
+        [self removeAVPlayerLayersFromLayer:caLayer];
     });
+}
+
+- (void)removeAVPlayerLayersFromLayer:(CALayer *)caLayer
+{
+    if (!caLayer) {
+        return;
+    }
+    NSArray<CALayer *> *sublayersCopy = [caLayer.sublayers copy];
+    for (CALayer *subLayer in sublayersCopy) {
+        if ([subLayer isKindOfClass:[AVPlayerLayer class]]) {
+            [subLayer removeFromSuperlayer];
+        }
+    }
 }
 
 - (void)setVolume:(float)volume
