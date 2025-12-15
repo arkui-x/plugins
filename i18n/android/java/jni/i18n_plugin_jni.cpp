@@ -17,6 +17,7 @@
 
 #include <jni.h>
 #include <string>
+#include <map>
 
 #include "inner_api/plugin_utils_inner.h"
 #include "log.h"
@@ -29,22 +30,6 @@ const char I18N_PLUGIN_CLASS_NAME[] = "ohos/ace/plugin/i18nplugin/I18NPlugin";
 static const JNINativeMethod METHODS[] = {
     { "nativeInit", "()V", reinterpret_cast<void*>(I18NPluginJni::NativeInit) },
 };
-
-const char METHOD_IS24HOUR_CLOCK[] = "is24HourClock";
-const char METHOD_GET_SYSTEM_LOCALE[] = "getSystemLocale";
-const char METHOD_GET_SYSTEM_LANGUAGE[] = "getSystemLanguage";
-const char METHOD_GET_SYSTEM_REGION[] = "getSystemRegion";
-const char METHOD_GET_SYSTEM_TIMEZONE[] = "getSystemTimezone";
-const char METHOD_GET_APP_PREFERRED_LANGUAGE[] = "getAppPreferredLanguage";
-const char METHOD_SET_APP_PREFERRED_LANGUAGE[] = "setAppPreferredLanguage";
-
-const char SIGNATURE_IS24HOUR_CLOCK[] = "()Z";
-const char SIGNATURE_GET_SYSTEM_LOCALE[] = "()Ljava/lang/String;";
-const char SIGNATURE_GET_SYSTEM_LANGUAGE[] = "()Ljava/lang/String;";
-const char SIGNATURE_GET_SYSTEM_REGION[] = "()Ljava/lang/String;";
-const char SIGNATURE_GET_SYSTEM_TIMEZONE[] = "()Ljava/lang/String;";
-const char SIGNATURE_GET_APP_PREFERRED_LANGUAGE[] = "()Ljava/lang/String;";
-const char SIGNATURE_SET_APP_PREFERRED_LANGUAGE[] = "(Ljava/lang/String;)V";
 
 struct {
     jmethodID is24HourClock;
@@ -81,28 +66,20 @@ void I18NPluginJni::NativeInit(JNIEnv* env, jobject jobj)
     jclass cls = env->GetObjectClass(jobj);
     CHECK_NULL_VOID(cls);
 
-    g_pluginClass.is24HourClock = env->GetMethodID(cls, METHOD_IS24HOUR_CLOCK, SIGNATURE_IS24HOUR_CLOCK);
-    CHECK_NULL_VOID(g_pluginClass.is24HourClock);
+    static std::map<const char*, std::pair<jmethodID&, const char*>> jniFuncMap = {
+        {"is24HourClock", {g_pluginClass.is24HourClock, "()Z"}},
+        {"getSystemLocale", {g_pluginClass.getSystemLocale, "()Ljava/lang/String;"}},
+        {"getSystemLanguage", {g_pluginClass.getSystemLanguage, "()Ljava/lang/String;"}},
+        {"getSystemRegion", {g_pluginClass.getSystemRegion, "()Ljava/lang/String;"}},
+        {"getSystemTimezone", {g_pluginClass.getSystemTimezone, "()Ljava/lang/String;"}},
+        {"getAppPreferredLanguage", {g_pluginClass.getAppPreferredLanguage, "()Ljava/lang/String;"}},
+        {"setAppPreferredLanguage", {g_pluginClass.setAppPreferredLanguage, "(Ljava/lang/String;)V"}},
+    };
 
-    g_pluginClass.getSystemLocale = env->GetMethodID(cls, METHOD_GET_SYSTEM_LOCALE, SIGNATURE_GET_SYSTEM_LOCALE);
-    CHECK_NULL_VOID(g_pluginClass.getSystemLocale);
-
-    g_pluginClass.getSystemLanguage = env->GetMethodID(cls, METHOD_GET_SYSTEM_LANGUAGE, SIGNATURE_GET_SYSTEM_LANGUAGE);
-    CHECK_NULL_VOID(g_pluginClass.getSystemLanguage);
-
-    g_pluginClass.getSystemRegion = env->GetMethodID(cls, METHOD_GET_SYSTEM_REGION, SIGNATURE_GET_SYSTEM_REGION);
-    CHECK_NULL_VOID(g_pluginClass.getSystemRegion);
-
-    g_pluginClass.getSystemTimezone = env->GetMethodID(cls, METHOD_GET_SYSTEM_TIMEZONE, SIGNATURE_GET_SYSTEM_TIMEZONE);
-    CHECK_NULL_VOID(g_pluginClass.getSystemTimezone);
-
-    g_pluginClass.getAppPreferredLanguage =
-        env->GetMethodID(cls, METHOD_GET_APP_PREFERRED_LANGUAGE, SIGNATURE_GET_APP_PREFERRED_LANGUAGE);
-    CHECK_NULL_VOID(g_pluginClass.getAppPreferredLanguage);
-
-    g_pluginClass.setAppPreferredLanguage =
-        env->GetMethodID(cls, METHOD_SET_APP_PREFERRED_LANGUAGE, SIGNATURE_SET_APP_PREFERRED_LANGUAGE);
-    CHECK_NULL_VOID(g_pluginClass.getAppPreferredLanguage);
+    for (auto& jniInterface : jniFuncMap) {
+        jniInterface.second.first = env->GetMethodID(cls, jniInterface.first, jniInterface.second.second);
+        CHECK_NULL_VOID(jniInterface.second.first);
+    }
 
     env->DeleteLocalRef(cls);
 }
