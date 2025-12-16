@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #import <Photos/Photos.h>
 #import "photoPluginManager.h"
 
+#include <string>
 #include <vector>
 #include "photo_client_impl.h"
 #include "result_set_album.h"
@@ -134,6 +135,17 @@ int PhotoClientImpl::Update(std::string &uri, const std::string &predicates,
     const std::string &value)
 {
     return RESULT_OK;
+}
+
+std::string PhotoClientImpl::InsertExt(int photoType, const std::string &extension,
+    const std::string &title, int &errCode)
+{
+    return "";
+}
+
+std::string PhotoClientImpl::GetMimeTypeFromExtension(const std::string &extension)
+{
+    return "";
 }
 } // namespace Media
 } // namespace OHOS
