@@ -133,6 +133,16 @@ napi_value ConnectionExec::GetAddressByNameCallback(GetAddressByNameContext *con
     return NetHandleExec::GetAddressesByNameCallback(context);
 }
 
+bool ConnectionExec::ExecGetAddressesByNameWithOptions(GetAddressByNameWithOptionsContext *context)
+{
+    return NetHandleExec::ExecGetAddressesByNameWithOptions(context);
+}
+
+napi_value ConnectionExec::GetAddressesByNameWithOptionsCallback(GetAddressByNameWithOptionsContext *context)
+{
+    return NetHandleExec::GetAddressesByNameWithOptionsCallback(context);
+}
+
 bool ConnectionExec::ExecGetDefaultNet(GetDefaultNetContext *context)
 {
     auto ret = DelayedSingleton<NetConnClient>::GetInstance()->GetDefaultNet(context->netHandle_);
@@ -722,6 +732,22 @@ bool ConnectionExec::NetHandleExec::ExecGetAddressByName(GetAddressByNameContext
     }
     freeaddrinfo(res);
     return true;
+}
+
+napi_value ConnectionExec::NetHandleExec::GetAddressesByNameWithOptionsCallback(
+    GetAddressByNameWithOptionsContext *context)
+{
+    napi_value addresses = NapiUtils::CreateArray(context->GetEnv(), context->addresses_.size());
+    for (uint32_t index = 0; index < context->addresses_.size(); ++index) {
+        napi_value obj = MakeNetAddressJsValue(context->GetEnv(), context->addresses_[index]);
+        NapiUtils::SetArrayElement(context->GetEnv(), addresses, index, obj);
+    }
+    return addresses;
+}
+
+bool ConnectionExec::NetHandleExec::ExecGetAddressesByNameWithOptions(GetAddressByNameWithOptionsContext *context)
+{
+    return false;
 }
 
 napi_value ConnectionExec::NetHandleExec::GetAddressByNameCallback(GetAddressByNameContext *context)

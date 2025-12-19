@@ -29,13 +29,18 @@ public:
     int32_t SetSource(const std::string &uri, int32_t usage) override;
     int32_t SetSource(int32_t fd, int64_t offset, int64_t size, int32_t usage) override;
     int32_t SetSource(const std::shared_ptr<IMediaDataSource> &dataSrc) override;
+    int32_t CancelAllFetchFrames() override;
     void SetScene(Scene scene) override;
     std::string ResolveMetadata(int32_t key) override;
     std::unordered_map<int32_t, std::string> ResolveMetadata() override;
     std::shared_ptr<AVSharedMemory> FetchArtPicture() override;
     std::shared_ptr<PixelMap> FetchFrameAtTime(int64_t timeUs, int32_t option, const PixelMapParams &param) override;
     std::shared_ptr<PixelMap> FetchFrameYuv(int64_t timeUs, int32_t option, const PixelMapParams &param) override;
+    int32_t FetchScaledFrameYuvs(const std::vector<int64_t>& timeUs,
+        int32_t option, const PixelMapParams &param) override;
     std::shared_ptr<PixelMap> FetchScaledFrameYuv(int64_t timeUs, int32_t option, const PixelMapParams &param) override;
+    std::shared_ptr<PixelMap> ProcessPixelMap(const std::shared_ptr<AVBuffer> &frameBuffer,
+        const PixelMapParams &param, int32_t scaleMode) override;
     std::shared_ptr<Meta> GetAVMetadata() override;
     void Release() override;
     int32_t Init();

@@ -47,7 +47,10 @@ template("hiviewdfx_hiappevent_static") {
       "//plugins/hiviewdfx/hiappevent/frameworks/native/libhiappevent/utility/app_event_stat.cpp",
     ]
 
-    deps = [ "//plugins/interfaces/native:ace_plugin_util_${platform}" ]
+    deps = [
+      "//plugins/interfaces/native:ace_plugin_util_${platform}",
+      "//third_party/jsoncpp:jsoncpp_static",
+    ]
 
     subsystem_name = "plugins"
     part_name = "hiviewdfx_hiappevent"
