@@ -183,7 +183,7 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 {
     [self.mutableData appendData:data];
     if (self.downloadProgress) {
-        self.downloadProgress(self.context, dataTask.countOfBytesReceived, dataTask.countOfBytesExpectedToReceive);
+        self.downloadProgress(self.context, dataTask.countOfBytesExpectedToReceive, dataTask.countOfBytesReceived);
     }
     if (self.memoryBodyBlock) {
         self.memoryBodyBlock(data, self.context);
@@ -210,7 +210,7 @@ NSString* PercentEscapedStringFromString(NSString* string) {
     totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend
 {
     if (self.uploadProgress) {
-        self.uploadProgress(self.context, totalBytesSent, totalBytesExpectedToSend);
+        self.uploadProgress(self.context, totalBytesExpectedToSend, totalBytesSent);
     }
 }
 
