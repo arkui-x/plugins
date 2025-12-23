@@ -48,6 +48,7 @@ ohos_source_set("vibrator_plugin_android_jni") {
     "//plugins/vibrator/utils/haptic_decoder/interface",
     "//plugins/vibrator/utils/haptic_decoder/oh_json/include",
     "//plugins/vibrator/utils/haptic_decoder/he_json/include",
+    "//third_party/cJSON",
   ]
 
   defines = [ "ANDROID_PLATFORM" ]
@@ -57,7 +58,6 @@ ohos_source_set("vibrator_plugin_android_jni") {
     "//plugins/interfaces/native:ace_plugin_util_android",
     "//foundation/graphic/graphic_2d/rosen/modules/platform:utils",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_android",
-    "//third_party/cJSON:cjson",
   ]
 
   subsystem_name = "plugins"
