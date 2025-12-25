@@ -24,6 +24,8 @@ using namespace std;
 const map<pair<ContentType, StreamUsage>, AudioStreamType> AudioSystemManager::streamTypeMap_
     = AudioSystemManager::CreateStreamMap();
 
+static vector<std::shared_ptr<AudioGroupManager>> groupManagerMap_;
+
 AudioSystemManager::AudioSystemManager()
 {
     AUDIO_DEBUG_LOG("AudioSystemManager start");
