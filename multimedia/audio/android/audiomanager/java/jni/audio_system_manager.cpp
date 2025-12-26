@@ -23,6 +23,8 @@ namespace OHOS {
 namespace AudioStandard {
 using namespace std;
 
+static vector<std::shared_ptr<AudioGroupManager>> groupManagerMap_;
+
 AudioSystemManager::AudioSystemManager() {}
 
 AudioSystemManager::~AudioSystemManager() {}
@@ -527,12 +529,6 @@ DeviceType AudioSystemManager::GetTypeValueFromPin(AudioPin pin) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return DEVICE_TYPE_NONE;
-}
-
-int32_t AudioSystemManager::RegisterWakeupSourceCallback()
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
 }
 
 int32_t AudioSystemManager::SetAudioCapturerSourceCallback(const std::shared_ptr<AudioCapturerSourceCallback>& callback)
