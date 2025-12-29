@@ -59,6 +59,7 @@ Note:If the text contains special characters, please escape them according to th
 				<policyitem type="license" name="BSD-3-Clause" path=".*" desc="不影响兼容性"/>
                 <policyitem type="license" name="curl" path="net/http/ios/curl_slist.cpp" desc="不影响兼容性"/>
                 <policyitem type="license" name="curl" path="net/http/ios/curl_slist.h" desc="不影响兼容性"/>
+                <policyitem type="copyright" name="Shanghai Ruisheng Kaitai Acoustic Science Co., Ltd." path="vibrator/utils/haptic_decoder/he_json/.*" desc=""/>
             </policy>
 		</policylist>
         <filefilterlist>
