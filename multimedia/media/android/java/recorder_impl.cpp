@@ -149,6 +149,8 @@ int32_t RecorderImpl::SetAudioEncodingBitRate(int32_t sourceId, int32_t bitRate)
 
 int32_t RecorderImpl::SetAudioAacProfile(int32_t sourceId, AacProfile aacProfile)
 {
+    (void)sourceId;
+    (void)aacProfile;
     return MSERR_OK;
 }
 

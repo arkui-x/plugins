@@ -140,11 +140,16 @@ int PhotoClientImpl::Update(std::string &uri, const std::string &predicates,
 std::string PhotoClientImpl::InsertExt(int photoType, const std::string &extension,
     const std::string &title, int &errCode)
 {
+    (void)photoType;
+    (void)extension;
+    (void)title;
+    (void)errCode;
     return "";
 }
 
 std::string PhotoClientImpl::GetMimeTypeFromExtension(const std::string &extension)
 {
+    (void)extension;
     return "";
 }
 } // namespace Media

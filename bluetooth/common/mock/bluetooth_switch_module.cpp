@@ -45,8 +45,11 @@ static const char* ToString(BluetoothSwitchEvent event)
 
 void BluetoothSwitchModule::LogBluetoothSwitchEvent(BluetoothSwitchEvent event) {}
 
-int BluetoothSwitchModule::ProcessBluetoothSwitchEvent(BluetoothSwitchEvent event, std::string callingName, bool isAsyn)
+int BluetoothSwitchModule::ProcessBluetoothSwitchEvent(
+    BluetoothSwitchEvent event, std::string callingName, bool isAsync)
 {
+    (void)callingName;
+    (void)isAsync;
     CHECK_AND_RETURN_LOG_RET(switchAction_, BT_ERR_INTERNAL_ERROR, "switchAction is nullptr");
 
     std::lock_guard<std::mutex> lock(bluetoothSwitchEventMutex_);
