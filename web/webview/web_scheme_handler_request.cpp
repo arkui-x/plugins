@@ -582,6 +582,7 @@ void WebSchemeHandler::RequestStop(ArkWeb_ResourceRequest* resourceRequest)
 
 static void RequestStopAfterWorkCb(uv_work_t* work, int status)
 {
+    (void)status;
     RequestStopParam* param = reinterpret_cast<RequestStopParam*>(work->data);
     if (param == nullptr) {
         delete work;

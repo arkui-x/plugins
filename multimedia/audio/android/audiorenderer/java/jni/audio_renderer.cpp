@@ -408,7 +408,9 @@ int32_t AudioRendererPrivate::SetLoopTimes(int64_t bufferLoopTimes)
 
 void AudioRendererPrivate::SetFastStatusChangeCallback(
     const std::shared_ptr<AudioRendererFastStatusChangeCallback>& callback)
-{}
+{
+    (void)callback;
+}
 
 int32_t AudioRendererPrivate::GetLatencyWithFlag(uint64_t &latency, LatencyFlag flag) const
 {
