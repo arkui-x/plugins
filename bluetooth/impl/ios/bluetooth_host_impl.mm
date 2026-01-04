@@ -300,7 +300,8 @@ int32_t BluetoothHostImpl::GetPairState(int32_t transport, const std::string& ad
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::StartPair(int32_t transport, const BluetoothRawAddress &bluetoothRawAddress)
+int32_t BluetoothHostImpl::StartPair(int32_t transport, const BluetoothRawAddress &bluetoothRawAddress,
+    const BluetoothOobData &oobData)
 {
     return BT_NO_ERROR;
 }

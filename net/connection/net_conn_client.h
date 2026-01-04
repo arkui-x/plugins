@@ -92,6 +92,15 @@ public:
 
     int32_t GetProxyMode(OHOS::NetManagerStandard::ProxyModeType &mode)
         { return 0; }
+    
+    int32_t CreateVlan(const std::string &ifName, uint32_t vlanId)
+        { return 0; }
+
+    int32_t DestroyVlan(const std::string &ifName, uint32_t vlanId)
+        { return 0; }
+
+    int32_t SetVlanIp(const std::string &ifName, uint32_t vlanId, const std::string &ip, uint32_t mask)
+        { return 0; }
 };
 } // namespace OHOS::NetManagerStandard
 #endif // PLUGINS_NETMANAGER_CONNECTION_I_NET_CONN_CLIENT_H
