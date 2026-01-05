@@ -579,6 +579,66 @@ napi_value ConnectionExec::GetIpNeighTableCallback(GetIpNeighTableContext *conte
     return array;
 }
 
+bool ConnectionExec::ExecCreateVlan(CreateVlanContext *context)
+{
+    NETMANAGER_BASE_LOGI("ExecCreateVlan");
+    if (context == nullptr) {
+        return false;
+    }
+    int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->CreateVlan(context->ifName_, context->vlanId_);
+    if (errorCode != NET_CONN_SUCCESS) {
+        context->SetErrorCode(errorCode);
+        return false;
+    }
+    return true;
+}
+
+napi_value ConnectionExec::CreateVlanCallback(CreateVlanContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecDestroyVlan(DestroyVlanContext *context)
+{
+    NETMANAGER_BASE_LOGI("ExecDestroyVlan");
+    if (context == nullptr) {
+        return false;
+    }
+    int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->DestroyVlan(context->ifName_, context->vlanId_);
+    if (errorCode != NET_CONN_SUCCESS) {
+        context->SetErrorCode(errorCode);
+        return false;
+    }
+    return true;
+}
+
+napi_value ConnectionExec::DestroyVlanCallback(DestroyVlanContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
+bool ConnectionExec::ExecSetVlanIp(SetVlanIpContext *context)
+{
+    NETMANAGER_BASE_LOGI("ExecSetVlanIp");
+    if (context == nullptr) {
+        return false;
+    }
+    std::string ip = context->address_.address_;
+    uint32_t mask = context->address_.prefixlen_;
+    int32_t errorCode = DelayedSingleton<NetConnClient>::GetInstance()->SetVlanIp(context->ifName_, context->vlanId_,
+        ip, mask);
+    if (errorCode != NET_CONN_SUCCESS) {
+        context->SetErrorCode(errorCode);
+        return false;
+    }
+    return true;
+}
+
+napi_value ConnectionExec::SetVlanIpCallback(SetVlanIpContext *context)
+{
+    return NapiUtils::GetUndefined(context->GetEnv());
+}
+
 bool ConnectionExec::ExecAddNetworkRoute(AddNetworkRouteContext *context)
 {
     return false;

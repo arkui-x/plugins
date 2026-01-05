@@ -284,7 +284,8 @@ int32_t BluetoothHostImpl::GetPairState(int32_t transport, const std::string& ad
     return BluetoothJni::GetPairState(address, pairState);
 }
 
-int32_t BluetoothHostImpl::StartPair(int32_t transport, const BluetoothRawAddress &bluetoothRawAddress)
+int32_t BluetoothHostImpl::StartPair(int32_t transport, const BluetoothRawAddress &bluetoothRawAddress,
+    const BluetoothOobData &oobData)
 {
     return BluetoothJni::StartPair(bluetoothRawAddress);
 }
