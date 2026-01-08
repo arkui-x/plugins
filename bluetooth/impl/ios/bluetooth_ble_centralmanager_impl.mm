@@ -152,7 +152,7 @@ int BluetoothBleCentralManagerImpl::StopScan(int32_t scannerId)
 
 void BluetoothBleCentralManagerImpl::RemoveScanFilter(int32_t scannerId) {}
 
-bool BluetoothBleCentralManagerImpl::FreezeByRss(std::set<int> pidSet, bool isProxy)
+bool BluetoothBleCentralManagerImpl::FreezeByRss(std::set<int> pidSet, bool isProxy, uint8_t freezeType)
 {
     return BT_NO_ERROR;
 }
