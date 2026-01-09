@@ -122,7 +122,7 @@ int32_t AudioSystemManager::SetRingerMode(AudioRingerMode ringMode)
 AudioRingerMode AudioSystemManager::GetRingerMode()
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
-    return ringModeBackup_;
+    return RINGER_MODE_NORMAL;
 }
 
 int32_t AudioSystemManager::SetAudioScene(const AudioScene &scene)

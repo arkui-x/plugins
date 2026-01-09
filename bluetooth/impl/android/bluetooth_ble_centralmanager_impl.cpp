@@ -83,7 +83,7 @@ void BluetoothBleCentralManagerImpl::RemoveScanFilter(int32_t scannerId)
     return;
 }
 
-bool BluetoothBleCentralManagerImpl::FreezeByRss(std::set<int> pidSet, bool isProxy)
+bool BluetoothBleCentralManagerImpl::FreezeByRss(std::set<int> pidSet, bool isProxy, uint8_t freezeType)
 {
     HILOGE("Not Supported");
     return 0;

@@ -49,7 +49,7 @@ public:
     void OnScanResult(int32_t scannerId, const BluetoothBleScanResult& scanResult);
 
     void RemoveScanFilter(int32_t scannerId) override;
-    bool FreezeByRss(std::set<int> pidSet, bool isProxy) override;
+    bool FreezeByRss(std::set<int> pidSet, bool isProxy, uint8_t freezeType) override;
     bool ResetAllProxy() override;
     int SetLpDeviceAdvParam(int duration, int maxExtAdvEvents, int window, int interval, int advHandle) override;
     int SetScanReportChannelToLpDevice(int32_t scannerId, bool enable) override;

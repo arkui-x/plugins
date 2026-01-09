@@ -55,11 +55,6 @@ AudioStreamType AudioSystemManager::GetStreamType(ContentType contentType, Strea
     return STREAM_DEFAULT;
 }
 
-void AudioSystemManager::AudioServerDied(pid_t pid, pid_t uid)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-}
-
 int32_t AudioSystemManager::SetRingerMode(AudioRingerMode ringMode)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
