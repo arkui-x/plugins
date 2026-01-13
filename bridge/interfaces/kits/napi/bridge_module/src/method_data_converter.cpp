@@ -16,12 +16,16 @@
 #include "method_data_converter.h"
 
 #include <array>
+#include <cmath>
+#include <cinttypes>
+#include <cstdint>
 
 #include "log.h"
 #include "plugins/interfaces/native/inner_api/plugin_utils_napi.h"
 
 namespace OHOS::Plugin::Bridge {
-static constexpr int32_t MAX_INT_32 = std::numeric_limits<int>::max();
+static constexpr int64_t MAX_INT_32 = static_cast<int64_t>(std::numeric_limits<int32_t>::max());
+static constexpr int64_t MIN_INT_32 = static_cast<int64_t>(std::numeric_limits<int32_t>::min());
 static constexpr double DOUBLE_MIN_VALUE = 0.00001;
 
 CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_value value)
@@ -43,15 +47,15 @@ CodecableValue MethodDataConverter::ConvertToCodecableValue(napi_env env, napi_v
             int64_t int64Value = PluginUtilsNApi::GetCInt64(value, env);
             double doubleValue = PluginUtilsNApi::GetDouble(env, value);
 
-            if (doubleValue - int64Value > DOUBLE_MIN_VALUE) {
+            const bool isDouble = std::fabs(doubleValue - static_cast<double>(int64Value)) >= DOUBLE_MIN_VALUE;
+            if (isDouble) {
                 return CodecableValue(doubleValue);
-            } else {
-                if (int64Value > MAX_INT_32) {
-                    return CodecableValue(int64Value);
-                } else {
-                    return CodecableValue(int32Value);
-                }
             }
+
+            if (int64Value > MAX_INT_32 || int64Value < MIN_INT_32) {
+                return CodecableValue(int64Value);
+            }
+            return CodecableValue(static_cast<int32_t>(int64Value));
         }
         case napi_string: {
             return CodecableValue(PluginUtilsNApi::GetStringFromValueUtf8(env, value));
