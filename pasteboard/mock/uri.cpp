@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -79,7 +79,7 @@ bool Uri::CheckScheme()
 
     auto isAlpha = [](char ch) -> bool { return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'); };
     auto isDigit = [](char ch) -> bool { return (ch >= '0' && ch <= '9'); };
-    auto isSchemeChar = [&](char ch) -> bool {
+    auto isSchemeChar = [&isAlpha, &isDigit](char ch) -> bool {
         return isAlpha(ch) || isDigit(ch) || ch == '+' || ch == '-' || ch == '.';
     };
 

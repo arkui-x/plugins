@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_MISCSERVICES_PASTEBOARDTYPES_H
-#define OHOS_MISCSERVICES_PASTEBOARDTYPES_H
+#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_TYPES_H
+#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_TYPES_H
 
 #include <cstdbool>
 #include <cstdint>
@@ -58,4 +58,4 @@ enum class DisposableType : uint32_t {
 } // namespace MiscServices
 } // namespace OHOS
 
-#endif // OHOS_MISCSERVICES_PASTEBOARDTYPES_H
+#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_TYPES_H

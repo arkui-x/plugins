@@ -234,6 +234,9 @@ bool ReadOnlyBuffer::ReadValue(Object& value, const TLVHead& head)
 {
     PASTEBOARD_CHECK_AND_RETURN_RET_LOGE(
         HasExpectBuffer(head.len), false, PASTEBOARD_MODULE_COMMON, "read mapEnd failed, tag=%{public}hu", head.tag);
+    RecursiveGuard guard;
+    PASTEBOARD_CHECK_AND_RETURN_RET_LOGE(guard.IsValid(), false,
+        PASTEBOARD_MODULE_COMMON, "recursive overflow, tag=%{public}hu", head.tag);
     auto mapEnd = cursor_ + head.len;
     while (cursor_ < mapEnd) {
         TLVHead keyHead {};

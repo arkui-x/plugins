@@ -1,4 +1,4 @@
-# Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+# Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -50,7 +50,7 @@ ohos_source_set("pasteboard_android_jni") {
     "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:cross_platform_want_params",
     "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
     "//plugins/interfaces/native:ace_plugin_util_android",
-    "//plugins/pasteboard/framework/innerkits:arkui_x_pasteboard_data",
+    "//plugins/pasteboard/framework/innerkits:pasteboard_data",
   ]
 
   include_dirs = [

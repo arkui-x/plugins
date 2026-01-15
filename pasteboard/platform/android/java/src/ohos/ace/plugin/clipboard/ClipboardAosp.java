@@ -46,7 +46,6 @@ import java.util.Map;
  */
 public class ClipboardAosp {
     private static final String LOG_TAG = "ClipboardPlugin";
-    private static final long CLIPBOARD_CHANGE_DELAY_MS = 50L;
     private static final int VERSION_CODE_P = 28;
     private static final String MULTI_TYPE_DATA_MIME = "arkuix/multipletypedata";
     private static final String ARKUI_X_DATA_FLAG = "arkuix/pastedataflag";
@@ -68,21 +67,18 @@ public class ClipboardAosp {
         MIME_TYPE_MAPPING.put(MIME_OH_TEXT_WANT, MIME_PLATFORM_TEXT_INTENT);
     }
 
-    long localTimeStamp = System.currentTimeMillis();
-
     private long timeStamp = 0L;
     private final AtomicInteger subscribeCount = new AtomicInteger(0);
     private ClipboardManager.OnPrimaryClipChangedListener listener = null;
     private ClipboardManager clipManager;
     private Runnable pasteboardChangeRunnable = () -> {
         onPasteboardChanged();
-        timeStamp = 0;
     };
     private Handler mainHandler;
     private Context context;
 
     /**
-     * ClipboardPlugin on AOSP platform
+     * ClipboardPlugin on platform
      *
      * @param context context of the application
      */
@@ -405,19 +401,19 @@ public class ClipboardAosp {
     }
 
     private String[] getDescriptionMimeTypes() {
+        ArrayList<String> mimeTypes = new ArrayList<>();
         if (!ensureClipManagerAvailable()) {
-            return null;
+            return mimeTypes.toArray(new String[0]);
         }
         ClipData clipData = clipManager.getPrimaryClip();
         if (clipData != null) {
             ClipDescription clipDescription = clipData.getDescription();
             if (clipDescription == null) {
-                return null;
+                return mimeTypes.toArray(new String[0]);
             }
             boolean isMultiTypeData = clipDescription.hasMimeType(MULTI_TYPE_DATA_MIME);
             boolean isArkUIXData = clipDescription.hasMimeType(ARKUI_X_DATA_FLAG);
             int mimeCount = clipDescription.getMimeTypeCount();
-            ArrayList<String> mimeTypes = new ArrayList<>();
             for (int i = 0; i < mimeCount; i++) {
                 String mimeType = clipDescription.getMimeType(i);
                 if (mimeType == null || MULTI_TYPE_DATA_MIME.equals(mimeType) || ARKUI_X_DATA_FLAG.equals(mimeType)) {
@@ -429,9 +425,8 @@ public class ClipboardAosp {
                     mimeTypes.add(mimeType);
                 }
             }
-            return mimeTypes.toArray(new String[0]);
         }
-        return null;
+        return mimeTypes.toArray(new String[0]);
     }
 
     /**
@@ -440,43 +435,40 @@ public class ClipboardAosp {
      * @return An array of MIME types, or null if no data is available.
      */
     public String[] getMimeTypes() {
+        ArrayList<String> mimeTypes = new ArrayList<>();
         if (!ensureClipManagerAvailable()) {
-            return null;
+            return mimeTypes.toArray(new String[0]);
         }
         ClipData clipData = clipManager.getPrimaryClip();
         if (clipData == null) {
-            return null;
+            return mimeTypes.toArray(new String[0]);
         }
         ClipDescription clipDescription = clipData.getDescription();
         if (clipDescription == null) {
-            return null;
+            return mimeTypes.toArray(new String[0]);
         }
         boolean isMultiTypeData = clipDescription.hasMimeType(MULTI_TYPE_DATA_MIME);
         boolean isArkUIXData = clipDescription.hasMimeType(ARKUI_X_DATA_FLAG);
-        if (clipData != null) {
-            ArrayList<String> mimeTypes = new ArrayList<>();
-            int itemCount = clipData.getItemCount();
-            for (int i = 0; i < itemCount; i++) {
-                ClipData.Item item = clipData.getItemAt(i);
-                if (item == null) {
-                    continue;
-                }
-                if (item.getText() != null) {
-                    mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_PLAIN));
-                }
-                if (item.getHtmlText() != null) {
-                    mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_HTML));
-                }
-                if (item.getUri() != null) {
-                    mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_URI_LIST));
-                }
-                if (item.getIntent() != null && isArkUIXData && !isMultiTypeData) {
-                    mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_INTENT));
-                }
+        int itemCount = clipData.getItemCount();
+        for (int i = 0; i < itemCount; i++) {
+            ClipData.Item item = clipData.getItemAt(i);
+            if (item == null) {
+                continue;
             }
-            return mimeTypes.toArray(new String[0]);
+            if (item.getText() != null) {
+                mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_PLAIN));
+            }
+            if (item.getHtmlText() != null) {
+                mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_HTML));
+            }
+            if (item.getUri() != null) {
+                mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_URI_LIST));
+            }
+            if (item.getIntent() != null && isArkUIXData && !isMultiTypeData) {
+                mimeTypes.add(convertToOHMimeType(MIME_PLATFORM_TEXT_INTENT));
+            }
         }
-        return null;
+        return mimeTypes.toArray(new String[0]);
     }
 
     /**
@@ -509,6 +501,25 @@ public class ClipboardAosp {
         return false;
     }
 
+    private void initListener() {
+        this.listener = new ClipboardManager.OnPrimaryClipChangedListener() {
+            @Override
+            public void onPrimaryClipChanged() {
+                ClipDescription clipDescription = clipManager.getPrimaryClipDescription();
+                if (clipDescription == null) {
+                    mainHandler.post(pasteboardChangeRunnable);
+                    return;
+                }
+                long stampl = clipDescription.getTimestamp();
+                if (timeStamp != stampl) {
+                    timeStamp = stampl;
+                    mainHandler.removeCallbacks(pasteboardChangeRunnable);
+                    mainHandler.post(pasteboardChangeRunnable);
+                }
+            }
+        };
+    }
+
     /**
      * subscribePasteboardChange
      *
@@ -522,28 +533,8 @@ public class ClipboardAosp {
         if (subscribeCount.getAndIncrement() > 0) {
             return true;
         }
-        if (listener == null) {
-            listener = new ClipboardManager.OnPrimaryClipChangedListener() {
-                @Override
-                public void onPrimaryClipChanged() {
-                    if (clipManager.getPrimaryClipDescription() == null) {
-                        mainHandler.post(pasteboardChangeRunnable);
-                        return;
-                    }
-                    long stampl = clipManager.getPrimaryClipDescription().getTimestamp();
-
-                    if (timeStamp == 0) {
-                        timeStamp = stampl;
-                    }
-                    long temp = System.currentTimeMillis();
-                    if ((timeStamp == stampl
-                            && (temp - localTimeStamp) > CLIPBOARD_CHANGE_DELAY_MS) || (timeStamp != stampl)) {
-                        localTimeStamp = temp;
-                        mainHandler.removeCallbacks(pasteboardChangeRunnable);
-                        mainHandler.post(pasteboardChangeRunnable);
-                    }
-                }
-            };
+        if (this.listener == null) {
+            initListener();
         }
         clipManager.addPrimaryClipChangedListener(this.listener);
         return true;
@@ -636,7 +627,7 @@ public class ClipboardAosp {
     /**
      * Initialize clipboard plugin
      */
-    protected native void nativeInit();
+    protected final native void nativeInit();
 
     /**
      * onPasteboardChanged

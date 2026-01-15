@@ -13,30 +13,40 @@
  * limitations under the License.
  */
 
-#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
-#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#ifndef PLUGINS_PASTEBOARD_MOCK_APP_EVENT_H
+#define PLUGINS_PASTEBOARD_MOCK_APP_EVENT_H
 
 #include <cstdint>
 #include <string>
-#include <unordered_map>
-
-#include "message_parcel.h"
+#include <vector>
 
 namespace OHOS {
-class MessageOption;
-namespace MiscServices {
-class PasteboardDisposableObserverStub {
-public:
-    PasteboardDisposableObserverStub() {};
-    virtual ~PasteboardDisposableObserverStub() = default;
-    virtual int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
-    {
-        return 0;
-    };
+namespace HiviewDFX {
+class AppEventPack;
+namespace HiAppEvent {
 
-private:
-    virtual void OnTextReceived(const std::string& text, int32_t errCode) {};
+struct ReportConfig {
+    std::string name;
+    std::string configName;
 };
-} // namespace MiscServices
+
+class Event {
+public:
+    Event(const std::string& /*domain*/, const std::string& /*name*/, EventType /*type*/) {}
+
+    template<typename T>
+    void AddParam(const std::string& /*key*/, const T& /*value*/)
+    {}
+};
+
+class AppEventProcessorMgr {
+public:
+    static int64_t AddProcessor(const ReportConfig& /*config*/)
+    {
+        return -1;
+    }
+};
+} // namespace HiAppEvent
+} // namespace HiviewDFX
 } // namespace OHOS
-#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#endif // PLUGINS_PASTEBOARD_MOCK_APP_EVENT_H

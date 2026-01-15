@@ -26,17 +26,6 @@
 #include "plugin_utils.h"
 #include "want_params_wrapper.h"
 
-#define CHECK_NULL_VOID_RELEASE_CLAZZ(ptr, env, clazz)                      \
-    do {                                                                    \
-        if (!(ptr)) {                                                       \
-            LOGW(#ptr " is null, release clazz and return on line %{public}d", __LINE__); \
-            if ((env) != nullptr && (clazz) != nullptr) {                   \
-                (env)->DeleteLocalRef((clazz));                             \
-            }                                                               \
-            return;                                                         \
-        }                                                                   \
-    } while (0)
-
 using namespace OHOS::MiscServices;
 namespace OHOS::Plugin {
 namespace {
@@ -261,7 +250,7 @@ bool SetWantToJavaDataRecordDTO(
     if (env->ExceptionCheck()) {
         LOGE("SetWantToJavaDataRecordDTO: call setJsonWant failed");
         env->ExceptionDescribe();
-        env->ExceptionClear();    
+        env->ExceptionClear();
         return false;
     }
     return true;
@@ -279,6 +268,9 @@ jobject ToJavaDataRecordDTO(JNIEnv* env, const std::shared_ptr<OHOS::MiscService
         LOGE("ToJavaDataRecordDTO: create DataRecordDTO failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jRecord) {
+            env->DeleteLocalRef(jRecord);
+        }
         return nullptr;
     }
 
@@ -379,6 +371,9 @@ jobject ToJavaPropertyDTO(JNIEnv* env, const OHOS::MiscServices::PasteDataProper
         LOGE("ToJavaPropertyDTO: create PropertyDTO failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jProperty) {
+            env->DeleteLocalRef(jProperty);
+        }
         return nullptr;
     }
     std::string tag = property.tag;
@@ -420,6 +415,9 @@ jobject ToJavaPasteDataDTO(JNIEnv* env, const OHOS::MiscServices::PasteData& pas
         LOGE("ToJavaPasteDataDTO: create PasteDataDTO failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jPasteData) {
+            env->DeleteLocalRef(jPasteData);
+        }
         return nullptr;
     }
     OHOS::MiscServices::PasteDataProperty property = pasteData.GetProperty();
@@ -430,6 +428,7 @@ jobject ToJavaPasteDataDTO(JNIEnv* env, const OHOS::MiscServices::PasteData& pas
     CHECK_NULL_RETURN(jProperty, nullptr);
     if (!g_pasteDataDTO.setPropertyDTO) {
         env->DeleteLocalRef(jProperty);
+        env->DeleteLocalRef(jRecords);
         return nullptr;
     }
     env->CallVoidMethod(jPasteData, g_pasteDataDTO.setPropertyDTO, jProperty);
@@ -445,15 +444,13 @@ jobject ToJavaPasteDataDTO(JNIEnv* env, const OHOS::MiscServices::PasteData& pas
     return jPasteData;
 }
 
-bool GetJsonWantFromDataRecordDTO(
-    JNIEnv* env, const jobject& jrecord, OHOS::MiscServices::PasteDataRecord::Builder& builder,
-        std::vector<std::string> mimeTypes)
+bool GetJsonWantFromDataRecordDTO(JNIEnv* env, const jobject& jrecord,
+    OHOS::MiscServices::PasteDataRecord::Builder& builder, std::vector<std::string> mimeTypes)
 {
     CHECK_NULL_RETURN(env, false);
     CHECK_NULL_RETURN(jrecord, false);
     CHECK_NULL_RETURN(g_dataRecordDTO.clazz, false);
     CHECK_NULL_RETURN(g_dataRecordDTO.getJsonWant, false);
-
     jstring jJsonwant = static_cast<jstring>(env->CallObjectMethod(jrecord, g_dataRecordDTO.getJsonWant));
     if (env->ExceptionCheck()) {
         LOGE("GetWantFromRecordDTO: getUri failed");
@@ -470,24 +467,24 @@ bool GetJsonWantFromDataRecordDTO(
                 std::shared_ptr<OHOS::AAFwk::Want> want = nullptr;
                 builder.SetWant(want);
                 env->ReleaseStringUTFChars(jJsonwant, jsonWantStr);
+                env->DeleteLocalRef(jJsonwant);
                 return false;
             }
             std::shared_ptr<OHOS::AAFwk::Want> want = std::make_shared<OHOS::AAFwk::Want>();
-            if (jsonObject.contains("bundleName")) {
+            if (jsonObject.contains("bundleName") && jsonObject["bundleName"].is_string()) {
                 want->SetBundleName(jsonObject["bundleName"].get<std::string>());
             }
-            if (jsonObject.contains("abilityName")) {
+            if (jsonObject.contains("abilityName") && jsonObject["abilityName"].is_string()) {
                 want->SetAbilityName(jsonObject["abilityName"].get<std::string>());
             }
-            if (jsonObject.contains("moduleName")) {
+            if (jsonObject.contains("moduleName") && jsonObject["moduleName"].is_string()) {
                 want->SetModuleName(jsonObject["moduleName"].get<std::string>());
             }
-            if (jsonObject.contains("type")) {
+            if (jsonObject.contains("type") && jsonObject["type"].is_string()) {
                 want->SetType(jsonObject["type"].get<std::string>());
             }
             if (jsonObject.contains("params")) {
                 std::string wantParamsJson = "{\"params\":" + jsonObject["params"].dump() + "}";
-                LOGE("GetJsonWantFromDataRecordDTO: parse parameters: %{public}s", wantParamsJson.c_str());
                 want->ParseJson(wantParamsJson);
             }
             builder.SetWant(want);
@@ -527,9 +524,8 @@ bool GetUriFromDataRecordDTO(JNIEnv* env, const jobject& jrecord, OHOS::MiscServ
     return true;
 }
 
-bool GetPlainTextFromDataRecordDTO(
-    JNIEnv* env, const jobject& jrecord, OHOS::MiscServices::PasteDataRecord::Builder& builder, 
-        std::vector<std::string>& mimeTypes)
+bool GetPlainTextFromDataRecordDTO(JNIEnv* env, const jobject& jrecord,
+    OHOS::MiscServices::PasteDataRecord::Builder& builder, std::vector<std::string>& mimeTypes)
 {
     CHECK_NULL_RETURN(env, false);
     CHECK_NULL_RETURN(jrecord, false);
@@ -555,9 +551,8 @@ bool GetPlainTextFromDataRecordDTO(
     return true;
 }
 
-bool GetHtmlTextFromDataRecordDTO(
-    JNIEnv* env, const jobject& jrecord, OHOS::MiscServices::PasteDataRecord::Builder& builder,
-        std::vector<std::string>& mimeTypes)
+bool GetHtmlTextFromDataRecordDTO(JNIEnv* env, const jobject& jrecord,
+    OHOS::MiscServices::PasteDataRecord::Builder& builder, std::vector<std::string>& mimeTypes)
 {
     CHECK_NULL_RETURN(env, false);
     CHECK_NULL_RETURN(jrecord, false);
@@ -583,8 +578,8 @@ bool GetHtmlTextFromDataRecordDTO(
     return true;
 }
 
-bool ToDataRecord(JNIEnv* env, const jobject& jrecord, OHOS::MiscServices::PasteData& pasteData,
-    const std::string& mimeType)
+bool ToDataRecord(
+    JNIEnv* env, const jobject& jrecord, OHOS::MiscServices::PasteData& pasteData, const std::string& mimeType)
 {
     OHOS::MiscServices::PasteDataRecord::Builder builder("");
     std::vector<std::string> mimeTypes;
@@ -655,6 +650,9 @@ bool GetTagFromPropertyDTO(JNIEnv* env, const jobject& jproperty, std::string& t
         LOGE("GetTagFromPropertyDTO: getTag failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jTag) {
+            env->DeleteLocalRef(jTag);
+        }
         return false;
     }
     const char* tagStr = env->GetStringUTFChars(jTag, nullptr);
@@ -678,6 +676,9 @@ bool GetMimeTypesFromPropertyDTO(JNIEnv* env, const jobject& jproperty, std::vec
         LOGE("GetMimeTypesFromPropertyDTO: getMimeTypes failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jMimeTypes) {
+            env->DeleteLocalRef(jMimeTypes);
+        }
         return false;
     }
     jsize mimeLength = env->GetArrayLength(jMimeTypes);
@@ -773,6 +774,9 @@ bool ToPasteData(JNIEnv* env, const jobject& jPasteData, OHOS::MiscServices::Pas
         LOGE("ToPasteData: getPropertyDTO failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jproperty) {
+            env->DeleteLocalRef(jproperty);
+        }
         return false;
     }
     if (!GetPropertyFromPropertyDTO(env, jproperty, pasteData)) {
@@ -787,6 +791,9 @@ bool ToPasteData(JNIEnv* env, const jobject& jPasteData, OHOS::MiscServices::Pas
         LOGE("ToPasteData: getRecords failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jrecords) {
+            env->DeleteLocalRef(jrecords);
+        }
         return false;
     }
     if (!ToDataRecordArray(env, jrecords, pasteData)) {
@@ -828,6 +835,29 @@ bool ClipboardJni::Register(void* env)
     return true;
 }
 
+inline bool CheckNullAndReleaseClazz(const void* ptr, JNIEnv* env, jclass clazz, const char* ptrName)
+{
+    if (ptr == nullptr) {
+        LOGW("%s is null, release clazz and return on line", ptrName);
+        if (env != nullptr && clazz != nullptr) {
+            env->DeleteLocalRef(clazz);
+        }
+        return true;
+    }
+    return false;
+}
+
+inline bool CheckBatchMethodIDs(
+    JNIEnv* env, jclass clazz, std::initializer_list<std::pair<void*, const char*>> methodList)
+{
+    for (auto& [methodPtr, methodName] : methodList) {
+        if (CheckNullAndReleaseClazz(methodPtr, env, clazz, methodName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void ClipboardJni::NativeInit(JNIEnv* env, jobject object)
 {
     CHECK_NULL_VOID(env);
@@ -838,33 +868,30 @@ void ClipboardJni::NativeInit(JNIEnv* env, jobject object)
     CHECK_NULL_VOID(clazz);
 
     g_clipboard.setData = env->GetMethodID(clazz, METHOD_SET_DATA, SIGNATURE_SET_DATA);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.setData, env, clazz);
-
     g_clipboard.getData = env->GetMethodID(clazz, METHOD_GET_DATA, SIGNATURE_GET_DATA);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.getData, env, clazz);
-
     g_clipboard.hasData = env->GetMethodID(clazz, METHOD_HAS_DATA, SIGNATURE_HAS_DATA);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.hasData, env, clazz);
-
     g_clipboard.clear = env->GetMethodID(clazz, METHOD_CLEAR, SIGNATURE_CLEAR);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.clear, env, clazz);
-
     g_clipboard.subscribePasteboardChange =
         env->GetMethodID(clazz, METHOD_SUBSCRIBE_PASTEBOARD_CHANGE, SIGNATURE_SUBSCRIBE_PASTEBOARD_CHANGE);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.subscribePasteboardChange, env, clazz);
-
     g_clipboard.unsubscribePasteboardChange =
         env->GetMethodID(clazz, METHOD_UNSUBSCRIBE_PASTEBOARD_CHANGE, SIGNATURE_UNSUBSCRIBE_PASTEBOARD_CHANGE);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.unsubscribePasteboardChange, env, clazz);
-
     g_clipboard.detectPatterns = env->GetMethodID(clazz, METHOD_DETECT_PATTERNS, SIGNATURE_DETECT_PATTERNS);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.detectPatterns, env, clazz);
-
     g_clipboard.hasDataType = env->GetMethodID(clazz, METHOD_HAS_DATA_TYPE, SIGNATURE_HAS_DATA_TYPE);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.hasDataType, env, clazz);
-
     g_clipboard.getMimeTypes = env->GetMethodID(clazz, METHOD_GET_MIMETYPES, SIGNATURE_GET_MIMETYPES);
-    CHECK_NULL_VOID_RELEASE_CLAZZ(g_clipboard.getMimeTypes, env, clazz);
+
+    if (CheckBatchMethodIDs(env, clazz, {
+        { g_clipboard.setData, "g_clipboard.setData" },
+        { g_clipboard.getData, "g_clipboard.getData" },
+        { g_clipboard.hasData, "g_clipboard.hasData" },
+        { g_clipboard.clear, "g_clipboard.clear" },
+        { g_clipboard.subscribePasteboardChange, "g_clipboard.subscribePasteboardChange" },
+        { g_clipboard.unsubscribePasteboardChange, "g_clipboard.unsubscribePasteboardChange" },
+        { g_clipboard.detectPatterns, "g_clipboard.detectPatterns" },
+        { g_clipboard.hasDataType, "g_clipboard.hasDataType" },
+        { g_clipboard.getMimeTypes, "g_clipboard.getMimeTypes" }
+        })) {
+        return;
+    }
 
     env->DeleteLocalRef(clazz);
 
@@ -999,7 +1026,7 @@ int32_t ClipboardJni::SetData(const OHOS::MiscServices::PasteData& pasteData)
         LOGE("SetData: call setData has exception");
         env->ExceptionDescribe();
         env->ExceptionClear();
-        return false;
+        return static_cast<int32_t>(PasteboardError::OTHER_ERROR);
     }
     int32_t ret = static_cast<int32_t>(setDataRet);
     return ret;
@@ -1261,6 +1288,9 @@ bool ClipboardJni::GetMimeTypes(std::vector<std::string>& funcResult)
         LOGE("Clipborad: getMimeTypes failed");
         env->ExceptionDescribe();
         env->ExceptionClear();
+        if (jMimeTypes) {
+            env->DeleteLocalRef(jMimeTypes);
+        }
         return false;
     }
     std::set<std::string> mimeTypes;

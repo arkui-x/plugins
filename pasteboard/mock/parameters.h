@@ -13,30 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef PASTEBOARD_PROGRESS_SIGNAL_H
-#define PASTEBOARD_PROGRESS_SIGNAL_H
+#ifndef PLUGIN_PASTEBOARD_MOCK_PARAMETERS_H
+#define PLUGIN_PASTEBOARD_MOCK_PARAMETERS_H
 
-#include <atomic>
-
-#include "api/visibility.h"
+#include <limits>
+#include <string>
 
 namespace OHOS {
-namespace MiscServices {
-class API_EXPORT ProgressSignalClient {
-public:
-    static ProgressSignalClient& GetInstance();
-    void Cancel();
-    bool IsCanceled();
-    bool CheckCancelIfNeed();
-    void Init();
-    void SetRemoteTaskCancel();
+namespace system {
 
-private:
-    ProgressSignalClient() = default;
-    ~ProgressSignalClient() = default;
-    std::atomic_bool needCancel_ { false };
-    std::atomic_bool remoteTask_ { false };
-};
-} // namespace MiscServices
+constexpr size_t MIN_RAW_SIZE = 32 * 1024; // 32k
+
+static int64_t GetIntParameter(const std::string& parameterName, int64_t def)
+{
+    return MIN_RAW_SIZE;
+}
+} // namespace system
 } // namespace OHOS
-#endif // PASTEBOARD_PROGRESS_SIGNAL_H
+
+#endif // PLUGIN_PASTEBOARD_MOCK_PARAMETERS_H

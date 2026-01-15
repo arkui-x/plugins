@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -79,6 +78,9 @@ PasteData::PasteData(const PasteData& data)
 { // LCOV_EXCL_START
     this->props_ = data.props_;
     for (const auto& item : data.records_) {
+        if (item == nullptr) {
+            continue;
+        }
         this->records_.emplace_back(std::make_shared<PasteDataRecord>(*item));
     }
 } // LCOV_EXCL_STOP
@@ -112,6 +114,9 @@ PasteData& PasteData::operator=(const PasteData& data)
     this->deviceId_ = data.deviceId_;
     this->pasteId_ = data.pasteId_;
     for (const auto& item : data.records_) {
+        if (item == nullptr) {
+            continue;
+        }
         this->records_.emplace_back(std::make_shared<PasteDataRecord>(*item));
     }
     this->recordId_ = data.GetRecordId();
@@ -179,7 +184,7 @@ std::vector<std::string> PasteData::GetMimeTypes()
 { // LCOV_EXCL_START
     std::set<std::string> mimeTypes;
     for (const auto& item : records_) {
-        if (item->GetFrom() > 0 && item->GetRecordId() != item->GetFrom()) {
+        if (item != nullptr && item->GetFrom() > 0 && item->GetRecordId() != item->GetFrom()) {
             continue;
         }
         auto itemTypes = item->GetMimeTypes();

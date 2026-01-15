@@ -50,9 +50,12 @@ kv_store_path = "//foundation/distributeddatamgr/kv_store"
 
 pasteboard_root_path = "//foundation/distributeddatamgr/pasteboard"
 
+pasteboard_innerkits_path = "${pasteboard_root_path}/framework/innerkits"
+
 pasteboard_plugin_root_path = "//plugins/pasteboard"
 
-pasteboard_innerkits_path = "${pasteboard_plugin_root_path}/framework/innerkits"
+pasteboard_plugin_innerkits_path =
+    "${pasteboard_plugin_root_path}/framework/innerkits"
 
 pasteboard_framework_path = "${pasteboard_root_path}/framework/framework"
 
@@ -65,3 +68,5 @@ pasteboard_tlv_path = "${pasteboard_plugin_root_path}/framework/tlv"
 pasteboard_napi_path = "${pasteboard_root_path}/interfaces/kits/napi"
 
 pasteboard_platform_path = "${pasteboard_plugin_root_path}/platform"
+
+pasteboard_service_path = "${pasteboard_root_path}/services"

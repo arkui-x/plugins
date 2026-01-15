@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-#ifndef PASTE_BOARD_OBSERVER_STUB_H
-#define PASTE_BOARD_OBSERVER_STUB_H
+#ifndef PLUGIN_DATA_PASTEBOARD_MOCK_PASTE_BOARD_OBSERVER_STUB_H
+#define PLUGIN_DATA_PASTEBOARD_MOCK_PASTE_BOARD_OBSERVER_STUB_H
 
 #include <cstdint>
 #include <map>
 
+#include "iremote_object.h"
 #include "message_parcel.h"
 
 namespace OHOS {
@@ -37,20 +38,11 @@ public:
     };
     virtual void OnPasteboardChanged() = 0;
     virtual void OnPasteboardEvent(const PasteboardChangedEvent& event) = 0;
-
-private:
-    using PasteboardObserverFunc = int32_t (PasteboardObserverStub::*)(MessageParcel& data, MessageParcel& reply);
-
-    virtual int32_t OnPasteboardChangedStub(MessageParcel& data, MessageParcel& reply)
+    virtual sptr<IRemoteObject> AsObject()
     {
-        return 0;
-    };
-    virtual int32_t OnPasteboardEventStub(MessageParcel& data, MessageParcel& reply)
-    {
-        return 0;
-    };
-    std::map<uint32_t, PasteboardObserverFunc> memberFuncMap_;
+        return nullptr;
+    }
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // PASTE_BOARD_OBSERVER_STUB_H
+#endif // PLUGIN_DATA_PASTEBOARD_MOCK_PASTE_BOARD_OBSERVER_STUB_H

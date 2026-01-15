@@ -56,5 +56,27 @@ public:
 
     static std::shared_ptr<AAFwk::Want> Json2Want(const std::string& json);
 };
+
+class RecursiveGuard {
+public:
+    RecursiveGuard()
+    {
+        depth_++;
+    }
+
+    ~RecursiveGuard()
+    {
+        depth_--;
+    }
+
+    bool IsValid()
+    {
+        return depth_ <= gMaxDepth;
+    }
+
+private:
+    static constexpr uint32_t gMaxDepth = 10;
+    static thread_local inline uint32_t depth_ = 0;
+};
 } // namespace OHOS::MiscServices
 #endif // DISTRIBUTEDDATAMGR_PASTEBOARD_TLV_UTILS_H

@@ -13,30 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef PASTEBOARD_PROGRESS_SIGNAL_H
-#define PASTEBOARD_PROGRESS_SIGNAL_H
+#ifndef PLUGINS_PASTEBOARD_MOCK_APP_EVENT_PROCESSOR_MGR_H
+#define PLUGINS_PASTEBOARD_MOCK_APP_EVENT_PROCESSOR_MGR_H
 
-#include <atomic>
-
-#include "api/visibility.h"
+#include "app_event.h"
 
 namespace OHOS {
-namespace MiscServices {
-class API_EXPORT ProgressSignalClient {
-public:
-    static ProgressSignalClient& GetInstance();
-    void Cancel();
-    bool IsCanceled();
-    bool CheckCancelIfNeed();
-    void Init();
-    void SetRemoteTaskCancel();
+namespace HiviewDFX {
+namespace HiAppEvent {
 
-private:
-    ProgressSignalClient() = default;
-    ~ProgressSignalClient() = default;
-    std::atomic_bool needCancel_ { false };
-    std::atomic_bool remoteTask_ { false };
-};
-} // namespace MiscServices
+inline void Write(const Event& /*event*/) {}
+
+} // namespace HiAppEvent
+} // namespace HiviewDFX
 } // namespace OHOS
-#endif // PASTEBOARD_PROGRESS_SIGNAL_H
+
+#endif // PLUGINS_PASTEBOARD_MOCK_APP_EVENT_PROCESSOR_MGR_H

@@ -13,30 +13,24 @@
  * limitations under the License.
  */
 
-#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
-#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
-
-#include <cstdint>
-#include <string>
-#include <unordered_map>
-
-#include "message_parcel.h"
+#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_ENTRY_GETTER_CLIENT_H
+#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_ENTRY_GETTER_CLIENT_H
+#include "pasteboard_delay_getter.h"
 
 namespace OHOS {
-class MessageOption;
+namespace UDMF {
+class EntryGetter;
+}
 namespace MiscServices {
-class PasteboardDisposableObserverStub {
+class PasteboardEntryGetterClient {
 public:
-    PasteboardDisposableObserverStub() {};
-    virtual ~PasteboardDisposableObserverStub() = default;
-    virtual int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
+    explicit PasteboardEntryGetterClient(const std::map<uint32_t, std::shared_ptr<UDMF::EntryGetter>> entryGetters) {}
+    ~PasteboardEntryGetterClient() = default;
+    int32_t GetRecordValueByType(uint32_t recordId, PasteDataEntry& value)
     {
         return 0;
-    };
-
-private:
-    virtual void OnTextReceived(const std::string& text, int32_t errCode) {};
+    }
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_ENTRY_GETTER_CLIENT_H

@@ -13,20 +13,5 @@
  * limitations under the License.
  */
 
-#ifndef PASTE_BOARD_OBSERVER_H
-#define PASTE_BOARD_OBSERVER_H
-
-#include "pasteboard_observer_stub.h"
-
-namespace OHOS {
-namespace MiscServices {
-class PasteboardObserver : public PasteboardObserverStub {
-public:
-    PasteboardObserver() {};
-    ~PasteboardObserver() {};
-    void OnPasteboardChanged() override {};
-    void OnPasteboardEvent(const PasteboardChangedEvent& event) override {};
-};
-} // namespace MiscServices
-} // namespace OHOS
-#endif // PASTE_BOARD_OBSERVER_H
+#include <unistd.h>
+#include "foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/src/napi_pasteboard_observer.cpp"

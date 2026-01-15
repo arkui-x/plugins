@@ -25,12 +25,12 @@ namespace OHOS {
 namespace Plugin {
 
 static ClipboardProxy* g_instance = nullptr;
-static std::mutex g_instance_mutex;
+static std::mutex g_instanceMutex;
 
 EXPORT ClipboardProxy* ClipboardProxy::GetInstance()
 {
     if (g_instance == nullptr) {
-        std::lock_guard<std::mutex> lock(g_instance_mutex);
+        std::lock_guard<std::mutex> lock(g_instanceMutex);
         if (g_instance == nullptr) {
             g_instance = new ClipboardProxyImpl();
         }

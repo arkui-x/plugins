@@ -48,6 +48,10 @@ public:
         if (vectorEnd > data_.size()) {
             return false;
         }
+        RecursiveGuard guard;
+        if (!guard.IsValid()) {
+            return false;
+        }
         for (; cursor_ < vectorEnd;) {
             // V: item value
             TLVHead valueHead {};
@@ -65,6 +69,10 @@ public:
     template<typename T>
     bool ReadValue(std::shared_ptr<T>& value, const TLVHead& head)
     {
+        RecursiveGuard guard;
+        if (!guard.IsValid()) {
+            return false;
+        }
         value = std::make_shared<T>();
         if (value == nullptr) {
             return false;

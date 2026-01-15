@@ -13,30 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
-#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#ifndef ENTITY_RECOGNITION_OBSERVER_H
+#define ENTITY_RECOGNITION_OBSERVER_H
 
-#include <cstdint>
-#include <string>
-#include <unordered_map>
-
-#include "message_parcel.h"
+#include "pasteboard_types.h"
 
 namespace OHOS {
-class MessageOption;
 namespace MiscServices {
-class PasteboardDisposableObserverStub {
+class EntityRecognitionObserver {
 public:
-    PasteboardDisposableObserverStub() {};
-    virtual ~PasteboardDisposableObserverStub() = default;
-    virtual int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
-    {
-        return 0;
-    };
-
-private:
-    virtual void OnTextReceived(const std::string& text, int32_t errCode) {};
+    EntityRecognitionObserver() {}
+    ~EntityRecognitionObserver() {}
+    virtual void OnRecognitionEvent(EntityType entityType, std::string &entity) {}
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#endif // ENTITY_RECOGNITION_OBSERVER_H

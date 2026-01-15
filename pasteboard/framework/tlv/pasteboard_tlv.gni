@@ -14,9 +14,9 @@
 import("../../pasteboard.gni")
 
 pasteboard_tlv_sources = [
-  "${pasteboard_tlv_path}/message_parcel_warp.cpp",
+  "${pasteboard_plugin_root_path}/mock/uri.cpp",
+  "${pasteboard_root_path}/framework/tlv/message_parcel_warp.cpp",
   "${pasteboard_tlv_path}/tlv_readable.cpp",
   "${pasteboard_tlv_path}/tlv_utils.cpp",
   "${pasteboard_tlv_path}/tlv_writeable.cpp",
-  "${pasteboard_tlv_path}/uri.cpp",
 ]

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,8 +41,6 @@ struct RemoteRecordValue {
 class API_EXPORT PasteDataRecord : public TLVWriteable, public TLVReadable {
 public:
     static constexpr unsigned int NO_PERMISSION = 0;
-    static constexpr unsigned int READ_PERMISSION = 1;
-    static constexpr unsigned int READ_WRITE_PERMISSION = 2;
     PasteDataRecord();
     ~PasteDataRecord();
     PasteDataRecord(const PasteDataRecord& record);

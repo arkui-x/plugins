@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,12 +20,6 @@
 #include <cstdint>
 #ifdef IOS_PLATFORM
 #include <libkern/OSByteOrder.h>
-#define htole16(x) OSSwapHostToLittleInt16(x)
-#define htole32(x) OSSwapHostToLittleInt32(x)
-#define htole64(x) OSSwapHostToLittleInt64(x)
-#define le16toh(x) OSSwapLittleToHostInt16(x)
-#define le32toh(x) OSSwapLittleToHostInt32(x)
-#define le64toh(x) OSSwapLittleToHostInt64(x)
 #else
 #include <endian.h>
 #endif
@@ -36,78 +30,136 @@ inline int8_t HostToNet(int8_t value)
 {
     return value;
 }
+
 inline int16_t HostToNet(int16_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapHostToLittleInt16(value);
+#else
     return htole16(value);
+#endif
 }
 
 inline int16_t NetToHost(int16_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt16(value);
+#else
     return le16toh(value);
+#endif
 }
 
 inline int32_t HostToNet(int32_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapHostToLittleInt32(value);
+#else
     return htole32(value);
+#endif
 }
 
 inline int8_t NetToHost(int8_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt32(value);
+#else
     return le32toh(value);
+#endif
 }
 
 inline int32_t NetToHost(int32_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt32(value);
+#else
     return le32toh(value);
+#endif
 }
 
 inline int64_t HostToNet(int64_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapHostToLittleInt64(value);
+#else
     return htole64(value);
+#endif
 }
 
 inline int64_t NetToHost(int64_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt64(value);
+#else
     return le64toh(value);
+#endif
 }
 
 inline uint8_t HostToNet(uint8_t value)
 {
     return value;
 }
+
 inline uint16_t HostToNet(uint16_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapHostToLittleInt16(value);
+#else
     return htole16(value);
+#endif
 }
 
 inline uint16_t NetToHost(uint16_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt16(value);
+#else
     return le16toh(value);
+#endif
 }
 
 inline uint32_t HostToNet(uint32_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapHostToLittleInt32(value);
+#else
     return htole32(value);
+#endif
 }
 
 inline uint8_t NetToHost(uint8_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt32(value);
+#else
     return le32toh(value);
+#endif
 }
 
 inline uint32_t NetToHost(uint32_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt32(value);
+#else
     return le32toh(value);
+#endif
 }
 
 inline uint64_t HostToNet(uint64_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapHostToLittleInt64(value);
+#else
     return htole64(value);
+#endif
 }
 
 inline uint64_t NetToHost(uint64_t value)
 {
+#ifdef IOS_PLATFORM
+    return OSSwapLittleToHostInt64(value);
+#else
     return le64toh(value);
+#endif
 }
 
 inline bool HostToNet(bool value)

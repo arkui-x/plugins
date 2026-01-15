@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,26 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef PASTE_BOARD_CLIENT_H
-#define PASTE_BOARD_CLIENT_H
-#include <memory>
-#include <mutex>
-#include <singleton.h>
-#include <string>
-#include <vector>
+#ifndef PLUGIN_PASTEBOARD_FRAMEWORK_INNERKITS_INCLUDE_PASTEBOARD_CLIENT_H
+#define PLUGIN_PASTEBOARD_FRAMEWORK_INNERKITS_INCLUDE_PASTEBOARD_CLIENT_H
 
-#include "message_parcel_warp.h"
-#include "paste_data.h"
-#include "paste_data_entry.h"
-#include "paste_data_record.h"
-#include "pasteboard_delay_getter.h"
-#include "pasteboard_disposable_observer.h"
 #include "pasteboard_hilog.h"
+
+#include <singleton.h>
+
+#include "entity_recognition_observer.h"
+#include "message_parcel_warp.h"
+#include "pasteboard_delay_getter_client.h"
+#include "pasteboard_disposable_observer.h"
+#include "pasteboard_entry_getter_client.h"
 #include "pasteboard_observer.h"
 #include "pasteboard_progress_signal.h"
-#include "pasteboard_types.h"
-#include "unified_data.h"
-#include "unified_meta.h"
 
 namespace OHOS {
 namespace MiscServices {
@@ -43,9 +37,16 @@ enum ProgressStatus {
     PASTE_TIME_OUT = 2,
 };
 
-enum FileConflictOption { FILE_OVERWRITE = 0, FILE_SKIP = 1, FILE_RENAME = 2 };
+enum FileConflictOption {
+    FILE_OVERWRITE = 0,
+    FILE_SKIP = 1,
+    FILE_RENAME = 2
+};
 
-enum ProgressIndicator { NONE_PROGRESS_INDICATOR = 0, DEFAULT_PROGRESS_INDICATOR = 1 };
+enum ProgressIndicator {
+    NONE_PROGRESS_INDICATOR = 0,
+    DEFAULT_PROGRESS_INDICATOR = 1
+};
 
 struct PasteDataFromServiceInfo {
     pid_t pid;
@@ -72,21 +73,20 @@ struct GetDataParams {
     enum ProgressIndicator progressIndicator;
     struct ProgressListener listener;
     std::shared_ptr<ProgressSignalClient> progressSignal;
-    ProgressInfo* info;
+    ProgressInfo *info;
 };
 
 class API_EXPORT PasteboardClient {
 public:
     DISALLOW_COPY_AND_MOVE(PasteboardClient);
-    static PasteboardClient* GetInstance();
-    static void ClipboardJniRegister();
+    static PasteboardClient *GetInstance();
     /**
      * CreateHtmlTextRecord
      * @description Create Html Text Record.
      * @param std::string text.
      * @return PasteDataRecord.
      */
-    std::shared_ptr<PasteDataRecord> CreateHtmlTextRecord(const std::string& text);
+    std::shared_ptr<PasteDataRecord> CreateHtmlTextRecord(const std::string &text);
 
     /**
      * CreatePlainTextRecord
@@ -94,7 +94,7 @@ public:
      * @param std::string text.
      * @return PasteDataRecord.
      */
-    std::shared_ptr<PasteDataRecord> CreatePlainTextRecord(const std::string& text);
+    std::shared_ptr<PasteDataRecord> CreatePlainTextRecord(const std::string &text);
 
     /**
      * CreatePixelMapRecord
@@ -110,7 +110,7 @@ public:
      * @param OHOS::Uri uri.
      * @return PasteDataRecord.
      */
-    std::shared_ptr<PasteDataRecord> CreateUriRecord(const OHOS::Uri& uri);
+    std::shared_ptr<PasteDataRecord> CreateUriRecord(const OHOS::Uri &uri);
 
     /**
      * CreateWantRecord
@@ -128,7 +128,7 @@ public:
      * @return PasteDataRecord.
      */
     std::shared_ptr<PasteDataRecord> CreateKvRecord(
-        const std::string& mimeType, const std::vector<uint8_t>& arrayBuffer);
+        const std::string &mimeType, const std::vector<uint8_t> &arrayBuffer);
 
     /**
      * CreateMultiDelayRecord
@@ -146,7 +146,7 @@ public:
      * @param std::string text  .
      * @return PasteData.
      */
-    std::shared_ptr<PasteData> CreateHtmlData(const std::string& htmlText);
+    std::shared_ptr<PasteData> CreateHtmlData(const std::string &htmlText);
 
     /**
      * CreatePlainTextData
@@ -154,7 +154,7 @@ public:
      * @param std::string text .
      * @return PasteData.
      */
-    std::shared_ptr<PasteData> CreatePlainTextData(const std::string& text);
+    std::shared_ptr<PasteData> CreatePlainTextData(const std::string &text);
 
     /**
      * CreatePixelMapData
@@ -170,7 +170,7 @@ public:
      * @param OHOS::Uri uri .
      * @return PasteData.
      */
-    std::shared_ptr<PasteData> CreateUriData(const OHOS::Uri& uri);
+    std::shared_ptr<PasteData> CreateUriData(const OHOS::Uri &uri);
 
     /**
      * CreateWantData
@@ -187,7 +187,7 @@ public:
      * @param std::vector<uint8_t> arrayBuffer
      * @return PasteData.
      */
-    std::shared_ptr<PasteData> CreateKvData(const std::string& mimeType, const std::vector<uint8_t>& arrayBuffer);
+    std::shared_ptr<PasteData> CreateKvData(const std::string &mimeType, const std::vector<uint8_t> &arrayBuffer);
 
     /**
      * CreateMultiTypeData
@@ -197,8 +197,8 @@ public:
      * @return PasteData.
      */
     std::shared_ptr<PasteData> CreateMultiTypeData(
-        std::shared_ptr<std::map<std::string, std::shared_ptr<EntryValue>>> typeValueMap,
-        const std::string& recordMimeType = "");
+       std::shared_ptr<std::map<std::string, std::shared_ptr<EntryValue>>> typeValueMap,
+       const std::string &recordMimeType = "");
 
     /**
      * CreateMultiTypeDelayData
@@ -207,8 +207,8 @@ public:
      * @param std::shared_ptr<UDMF::EntryGetter> entryGetter
      * @return PasteData.
      */
-    std::shared_ptr<PasteData> CreateMultiTypeDelayData(
-        std::vector<std::string> mimeTypes, std::shared_ptr<UDMF::EntryGetter> entryGetter);
+    std::shared_ptr<PasteData> CreateMultiTypeDelayData(std::vector<std::string> mimeTypes,
+        std::shared_ptr<UDMF::EntryGetter> entryGetter);
 
     /**
      * GetChangeCount
@@ -216,7 +216,29 @@ public:
      * @param changeCount the changeCount of the PasteData.
      * @return int32_t.
      */
-    int32_t GetChangeCount(uint32_t& changeCount);
+    int32_t GetChangeCount(uint32_t &changeCount);
+
+    /**
+     * SubscribeEntityObserver
+     * @description Subscribe the EntityRecognitionObserver.
+     * @param entityType the type of recognized PasteData.
+     * @param expectedDataLength the length of PasteData expected to observer.
+     * @param observer callback observer when recognized PasteData.
+     * @return int32_t.
+     */
+    int32_t SubscribeEntityObserver(
+        EntityType entityType, uint32_t expectedDataLength, const sptr<EntityRecognitionObserver> &observer);
+
+    /**
+     * SubscribeEntityObserver
+     * @description Subscribe the EntityRecognitionObserver.
+     * @param entityType the type of recognized PasteData.
+     * @param expectedDataLength the length of PasteData expected to observer.
+     * @param observer callback observer when recognized PasteData.
+     * @return int32_t.
+     */
+    int32_t UnsubscribeEntityObserver(
+        EntityType entityType, uint32_t expectedDataLength, const sptr<EntityRecognitionObserver> &observer);
 
     /**
      * GetRecordValueByType
@@ -234,7 +256,7 @@ public:
      * @param pasteData the object of the PasteDate.
      * @return int32_t.
      */
-    int32_t GetPasteData(PasteData& pasteData);
+    int32_t GetPasteData(PasteData &pasteData);
 
     /**
      * GetMimeTypes
@@ -251,6 +273,13 @@ public:
     bool HasPasteData();
 
     /**
+     * HasRemoteData
+     * @description check remote paste data exist in the pasteboard.
+     * @return bool. True exists, false does not exist
+     */
+    bool HasRemoteData();
+
+    /**
      * Clear
      * @description Clear Current pasteboard data.
      * @return void.
@@ -262,7 +291,7 @@ public:
      * @description Clear Current pasteboard data by user.
      * @return void.
      */
-    void ClearByUser(int32_t uesrId) {}
+    void ClearByUser(int32_t uesrId);
 
     /**
      * SetPasteData
@@ -272,19 +301,25 @@ public:
      * @param pasteData the map of the EntryGetter.
      * @return int32_t.
      */
-    int32_t SetPasteData(PasteData& pasteData);
-
-    int32_t SetUnifiedData(
-        const UDMF::UnifiedData& unifiedData, std::shared_ptr<PasteboardDelayGetter> delayGetter = nullptr);
+    int32_t SetPasteData(PasteData &pasteData, std::shared_ptr<PasteboardDelayGetter> delayGetter = nullptr,
+        std::map<uint32_t, std::shared_ptr<UDMF::EntryGetter>> entryGetters = {});
 
     /**
-     *
      * SetPasteData
      * @description set paste data to the pasteboard.
      * @param unifiedData the object of the PasteDate.
      * @return int32_t.
      */
-    int32_t GetUnifiedData(UDMF::UnifiedData& unifiedData);
+    int32_t SetUnifiedData(
+        const UDMF::UnifiedData &unifiedData, std::shared_ptr<PasteboardDelayGetter> delayGetter = nullptr);
+
+    /**
+     * SetPasteData
+     * @description set paste data to the pasteboard.
+     * @param unifiedData the object of the PasteDate.
+     * @return int32_t.
+     */
+    int32_t GetUnifiedData(UDMF::UnifiedData &unifiedData);
 
     /**
      * SetUdsdData
@@ -292,7 +327,7 @@ public:
      * @param unifiedData the object of the PasteDate.
      * @return int32_t.
      */
-    int32_t SetUdsdData(const UDMF::UnifiedData& unifiedData);
+    int32_t SetUdsdData(const UDMF::UnifiedData &unifiedData);
 
     /**
      * GetUnifiedDataWithEntry
@@ -300,7 +335,7 @@ public:
      * @param unifiedData the object of the PasteDate.
      * @return int32_t.
      */
-    int32_t GetUdsdData(UDMF::UnifiedData& unifiedData);
+    int32_t GetUdsdData(UDMF::UnifiedData &unifiedData);
 
     /**
      * IsRemoteData
@@ -315,7 +350,7 @@ public:
      * @param std::string bundleName The package name of the application.
      * @return int32_t.
      */
-    int32_t GetDataSource(std::string& bundleName);
+    int32_t GetDataSource(std::string &bundleName);
 
     /**
      * HasDataType
@@ -323,7 +358,7 @@ public:
      * @param std::string mimeType Specified mimetype.
      * @return bool. True exists, false does not exist
      */
-    bool HasDataType(const std::string& mimeType);
+    bool HasDataType(const std::string &mimeType);
 
     /**
      * HasUtdType
@@ -331,7 +366,7 @@ public:
      * @param std::string utdType Specified mimetype.
      * @return bool. True exists, false does not exist
      */
-    bool HasUtdType(const std::string& utdType);
+    bool HasUtdType(const std::string &utdType);
 
     /**
      * DetectPatterns
@@ -339,31 +374,8 @@ public:
      * @param patternsToCheck A reference to an set of Pattern to check against the clipboard.
      * @return Returns DetectPatterns.
      */
-    std::set<Pattern> DetectPatterns(const std::set<Pattern>& patternsToCheck);
+    std::set<Pattern> DetectPatterns(const std::set<Pattern> &patternsToCheck);
 
-    /**
-     * SetGlobalShareOption
-     * @description Set globalShareOptions.
-     * @param globalShareOption globalShareOptions
-     * @return int32_t
-     */
-    int32_t SetGlobalShareOption(const std::map<uint32_t, ShareOption>& globalShareOptions);
-
-    /**
-     * RemoveGlobalShareOption
-     * @description Remove globalShareOptions.
-     * @param tokenId tokenIds
-     * @return int32_t
-     */
-    int32_t RemoveGlobalShareOption(const std::vector<uint32_t>& tokenIds);
-
-    /**
-     * GetGlobalShareOption
-     * @description Get globalShareOptions.
-     * @param tokenId tokenIds
-     * @return globalShareOptions
-     */
-    std::map<uint32_t, ShareOption> GetGlobalShareOption(const std::vector<uint32_t>& tokenIds);
     /**
      * Subscribe
      * @description
@@ -374,6 +386,22 @@ public:
     bool Subscribe(PasteboardObserverType type, sptr<PasteboardObserver> callback);
 
     /**
+     * AddPasteboardChangedObserver
+     * @description
+     * @param observer pasteboard change callback.
+     * @return void.
+     */
+    void AddPasteboardChangedObserver(sptr<PasteboardObserver> callback);
+
+    /**
+     * AddPasteboardEventObserver
+     * @description
+     * @param observer pasteboard event(read or change) callback.
+     * @return void.
+     */
+    void AddPasteboardEventObserver(sptr<PasteboardObserver> callback);
+
+    /**
      * Unsubscribe
      * @description
      * @param type observer type
@@ -381,13 +409,66 @@ public:
      * @return void.
      */
     void Unsubscribe(PasteboardObserverType type, sptr<PasteboardObserver> callback);
+
+    /**
+     * RemovePasteboardChangedObserver
+     * @description
+     * @param observer pasteboard change callback.
+     * @return void.
+     */
+    void RemovePasteboardChangedObserver(sptr<PasteboardObserver> callback);
+
+    /**
+     * RemovePasteboardEventObserver
+     * @description
+     * @param observer pasteboard event callback.
+     * @return void.
+     */
+    void RemovePasteboardEventObserver(sptr<PasteboardObserver> callback);
+
+    /**
+     * SubscribeDisposableObserver
+     * @description Subscribe the PasteboardDisposableObserver
+     * @param observer disposable observer which implements data received callback
+     * @param targetWindowId window id of subscribed app
+     * @param type type of subscribed data
+     * @param maxLength max length of subscribed data
+     * @return int32_t
+     */
+    int32_t SubscribeDisposableObserver(const sptr<PasteboardDisposableObserver> &observer,
+        int32_t targetWindowId, DisposableType type, uint32_t maxLength);
+
+    /**
+     * SetGlobalShareOption
+     * @description Set globalShareOptions.
+     * @param globalShareOption globalShareOptions
+     * @return int32_t
+     */
+    int32_t SetGlobalShareOption(const std::map<uint32_t, ShareOption> &globalShareOptions);
+
+    /**
+     * RemoveGlobalShareOption
+     * @description Remove globalShareOptions.
+     * @param tokenId tokenIds
+     * @return int32_t
+     */
+    int32_t RemoveGlobalShareOption(const std::vector<uint32_t> &tokenIds);
+
+    /**
+     * GetGlobalShareOption
+     * @description Get globalShareOptions.
+     * @param tokenId tokenIds
+     * @return globalShareOptions
+     */
+    std::map<uint32_t, ShareOption> GetGlobalShareOption(const std::vector<uint32_t> &tokenIds);
+
     /**
      * SetAppShareOptions
      * @description Sets a unified ShareOptions for the application.
      * @param shareOptions shareOptions
      * @return result
      */
-    int32_t SetAppShareOptions(const ShareOption& shareOptions);
+    int32_t SetAppShareOptions(const ShareOption &shareOptions);
 
     /**
      * RemoveAppShareOptions
@@ -402,7 +483,7 @@ public:
      *     to preserve the context and resources
      * @return void.
      */
-    void PasteStart(const std::string& pasteId) {}
+    void PasteStart(const std::string &pasteId);
 
     /**
      * PasteComplete
@@ -410,7 +491,7 @@ public:
      *     resources can be released for further usage
      * @return void.
      */
-    void PasteComplete(const std::string& deviceId, const std::string& pasteId) {}
+    void PasteComplete(const std::string& deviceId, const std::string& pasteId);
 
     /**
      * GetDataWithProgress
@@ -419,7 +500,7 @@ public:
      * @param params - Indicates the {@link GetDataParams}.
      * @returns int32_t
      */
-    int32_t GetDataWithProgress(PasteData& pasteData, std::shared_ptr<GetDataParams> params);
+    int32_t GetDataWithProgress(PasteData &pasteData, std::shared_ptr<GetDataParams> params);
 
     /**
      * GetUnifiedDataWithProgress
@@ -428,7 +509,7 @@ public:
      * @param params - Indicates the {@link GetDataParams}.
      * @returns int32_t
      */
-    int32_t GetUnifiedDataWithProgress(UDMF::UnifiedData& unifiedData, std::shared_ptr<GetDataParams> params);
+    int32_t GetUnifiedDataWithProgress(UDMF::UnifiedData &unifiedData, std::shared_ptr<GetDataParams> params);
 
     /**
      * HandleSignalValue
@@ -436,14 +517,14 @@ public:
      * @param std::string signalValue - the value of hap ipc proxy.
      * @returns int32_t
      */
-    int32_t HandleSignalValue(const std::string& signalValue);
+    int32_t HandleSignalValue(const std::string &signalValue);
 
     /**
      * ReleaseSaListener
      * @description Release Sa Listener.
      * @returns void
      */
-    void ReleaseSaListener() {}
+    void ReleaseSaListener();
 
     /**
      * DetachPasteboard
@@ -461,26 +542,45 @@ public:
 
 protected:
     friend class PasteboardSaMgrListener;
-    void Resubscribe() {}
+    void Resubscribe();
 
 private:
-    PasteboardClient() {}
-    ~PasteboardClient() {}
-    static int32_t SetProgressWithoutFile(std::string& progressKey, std::shared_ptr<GetDataParams> params);
-    int32_t GetPasteDataFromService(PasteData& pasteData, PasteDataFromServiceInfo& pasteDataFromServiceInfo,
-        std::string progressKey, std::shared_ptr<GetDataParams> params);
+    PasteboardClient();
+    ~PasteboardClient();
+    sptr<IPasteboardService> GetPasteboardService();
+    static void GetProgressByProgressInfo(std::shared_ptr<GetDataParams> params);
+    static int32_t SetProgressWithoutFile(std::string &progressKey, std::shared_ptr<GetDataParams> params);
+    static void ProgressSmoothToTwentyPercent(PasteData &pasteData, std::string &progressKey,
+       std::shared_ptr<GetDataParams> params);
+    int32_t GetPasteDataFromService(PasteData &pasteData, PasteDataFromServiceInfo &pasteDataFromServiceInfo,
+       std::string progressKey, std::shared_ptr<GetDataParams> params);
+    static void UpdateProgress(std::shared_ptr<GetDataParams> params, int progressValue);
     static std::atomic<uint64_t> progressStartTime_;
-    static int32_t ProgressAfterTwentyPercent(
-        PasteData& pasteData, std::shared_ptr<GetDataParams> params, std::string progressKey);
+    static void OnProgressAbnormal(int32_t result);
+    void ProgressRadarReport(PasteData &pasteData, PasteDataFromServiceInfo &pasteDataFromServiceInfo);
+    static int32_t ProgressAfterTwentyPercent(PasteData &pasteData, std::shared_ptr<GetDataParams> params,
+       std::string progressKey);
     static int32_t CheckProgressParam(std::shared_ptr<GetDataParams> params);
+    void ShowProgress(const std::string &progressKey);
+    std::string GetPasteDataInfoSummary(const PasteData &pasteData);
     int32_t ConvertErrCode(int32_t errCode);
-    int32_t WritePasteData(PasteData& pasteData, std::vector<uint8_t>& pasteDataTlv, int& fd, int64_t& tlvSize,
-        MessageParcelWarp& messageData, MessageParcel& parcelPata);
+    int32_t WritePasteData(PasteData &pasteData, std::vector<uint8_t> &pasteDataTlv, int &fd, int64_t &tlvSize,
+        MessageParcelWarp &messageData, MessageParcel &parcelPata);
+    void CreateGetterAgent(sptr<PasteboardDelayGetterClient> &delayGetterAgent,
+        std::shared_ptr<PasteboardDelayGetter> &delayGetter, sptr<PasteboardEntryGetterClient> &entryGetterAgent,
+        std::map<uint32_t, std::shared_ptr<UDMF::EntryGetter>> &entryGetters, PasteData &pasteData);
+    void ProcessRadarReport(int32_t ret, PasteData &pasteData, PasteDataFromServiceInfo &pasteDataFromServiceInfo,
+        int32_t syncTime);
+    void CloseSharedMemFd(int fd);
     template<typename T>
-    int32_t ProcessPasteData(T& data, int64_t rawDataSize, int fd, const std::vector<uint8_t>& recvTLV);
-    int32_t ProcessPasteDataFromService(
-        PasteData& pasteData, int64_t rawDataSize, int fd, const std::vector<uint8_t>& recvTLV);
-
+    int32_t ProcessPasteData(T &data, int64_t rawDataSize, int fd,
+        const std::vector<uint8_t> &recvTLV);
+    int32_t ProcessPasteDataFromService(PasteData &pasteData, int64_t rawDataSize, int fd,
+        const std::vector<uint8_t> &recvTLV);
+    void GetDataReport(PasteData &pasteData, int32_t syncTime, const std::string &currentId,
+        const std::string &currentPid, int32_t ret);
+    void SubscribePasteboardSA();
+    void UnSubscribePasteboardSA();
     static std::mutex instanceLock_;
     std::atomic<uint32_t> getSequenceId_ = 0;
     static std::atomic<bool> remoteTask_;
@@ -488,7 +588,19 @@ private:
     std::mutex observerSetMutex_;
     std::mutex saListenerMutex_;
     bool isSubscribeSa_ = false;
+
+    struct classcomp {
+        bool operator()(const std::pair<PasteboardObserverType, sptr<PasteboardObserver>> &l,
+            const std::pair<PasteboardObserverType, sptr<PasteboardObserver>> &r) const
+        {
+            if (l.first == r.first) {
+                return l.second->AsObject() < r.second->AsObject();
+            }
+            return l.first < r.first;
+        }
+    };
+    std::set<std::pair<PasteboardObserverType, sptr<PasteboardObserver>>, classcomp> observerSet_;
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // PASTE_BOARD_CLIENT_H
+#endif // PLUGIN_PASTEBOARD_FRAMEWORK_INNERKITS_INCLUDE_PASTEBOARD_CLIENT_H

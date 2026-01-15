@@ -13,30 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
-#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
-
-#include <cstdint>
-#include <string>
-#include <unordered_map>
-
-#include "message_parcel.h"
+#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DELAY_GETTER_CLIENT_H
+#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DELAY_GETTER_CLIENT_H
+#include "pasteboard_types.h"
+#include "pasteboard_delay_getter.h"
+#include "ipasteboard_service.h"
 
 namespace OHOS {
-class MessageOption;
 namespace MiscServices {
-class PasteboardDisposableObserverStub {
+class PasteboardDelayGetterClient {
 public:
-    PasteboardDisposableObserverStub() {};
-    virtual ~PasteboardDisposableObserverStub() = default;
-    virtual int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
-    {
-        return 0;
-    };
+    explicit PasteboardDelayGetterClient(std::shared_ptr<PasteboardDelayGetter> delayGetter) {}
+    ~PasteboardDelayGetterClient() = default;
 
-private:
-    virtual void OnTextReceived(const std::string& text, int32_t errCode) {};
+    void GetPasteData(const std::string &type, PasteData &data) {}
+    void GetUnifiedData(const std::string &type, UDMF::UnifiedData &data) {}
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DELAY_GETTER_CLIENT_H

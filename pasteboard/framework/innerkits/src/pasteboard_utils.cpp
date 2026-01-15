@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -53,7 +53,6 @@ std::shared_ptr<PasteData> PasteboardUtils::Convert(const UnifiedData& unifiedDa
 std::shared_ptr<UnifiedRecord> PasteboardUtils::ConvertToUnifiedRecord(const std::shared_ptr<PasteDataRecord>& record)
 {
     auto type = Convert(record->GetUDType(), record->GetMimeType());
-    PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "GCA to unified type is :%d", type);
     switch (type) {
         case UDMF::TEXT:
             return PasteRecord2Text(record);
@@ -113,8 +112,10 @@ std::shared_ptr<UnifiedData> PasteboardUtils::Convert(const PasteData& pasteData
 
 std::shared_ptr<PasteDataRecord> PasteboardUtils::ConvertToPasteDataRecord(const std::shared_ptr<UnifiedRecord>& record)
 {
+    if (record == nullptr) {
+        return nullptr;
+    }
     auto type = record->GetType();
-    PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "GCA to pasteData type is :%d", type);
     switch (type) {
         case UDMF::TEXT:
             return Text2PasteRecord(record);

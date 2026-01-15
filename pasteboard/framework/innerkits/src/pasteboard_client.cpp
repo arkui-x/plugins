@@ -17,14 +17,26 @@
 
 #include <charconv>
 #include <cstdint>
+#include <memory>
+#include <mutex>
 #include <regex>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "clipboard_proxy.h"
 #include "convert_utils.h"
 #include "nlohmann/json.hpp"
+#include "paste_data.h"
+#include "paste_data_entry.h"
+#include "paste_data_record.h"
+#include "pasteboard_delay_getter.h"
 #include "pasteboard_error.h"
+#include "pasteboard_pattern.h"
+#include "pasteboard_types.h"
 #include "pasteboard_utils.h"
+#include "unified_data.h"
+#include "unified_meta.h"
 
 using namespace OHOS::Media;
 using namespace OHOS::Plugin;
@@ -42,21 +54,16 @@ struct RadarReportIdentity {
     int32_t errorCode;
 };
 
-namespace {
-inline bool IsValid(const std::set<Pattern>& patterns)
-{
-    for (Pattern pattern : patterns) {
-        if (pattern >= Pattern::COUNT) {
-            return false;
-        }
-    }
-    return true;
-}
-} // namespace
-
 bool operator==(const RadarReportIdentity& lhs, const RadarReportIdentity& rhs)
 {
     return lhs.pid == rhs.pid && lhs.errorCode == rhs.errorCode;
+}
+
+PasteboardClient::PasteboardClient() {}
+
+PasteboardClient::~PasteboardClient()
+{
+    observerSet_.clear();
 }
 
 PasteboardClient* PasteboardClient::GetInstance()
@@ -182,9 +189,19 @@ int32_t PasteboardClient::GetChangeCount(uint32_t& changeCount)
         return static_cast<int32_t>(PasteboardError::UNKNOWN_ERROR);
     }
     int32_t ret = clipboardProxy->GetChangeCount(changeCount);
-    PASTEBOARD_HILOGI(PASTEBOARD_MODULE_CLIENT, "leave, ret=%{public}d", ret);
-    ret = ConvertErrCode(ret);
-    return ret;
+    return ConvertErrCode(ret);
+}
+
+int32_t PasteboardClient::SubscribeEntityObserver(
+    EntityType entityType, uint32_t expectedDataLength, const sptr<EntityRecognitionObserver>& observer)
+{
+    return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
+}
+
+int32_t PasteboardClient::UnsubscribeEntityObserver(
+    EntityType entityType, uint32_t expectedDataLength, const sptr<EntityRecognitionObserver>& observer)
+{
+    return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
 }
 
 int32_t PasteboardClient::GetRecordValueByType(uint32_t dataId, uint32_t recordId, PasteDataEntry& value)
@@ -198,6 +215,10 @@ void PasteboardClient::Clear()
     PASTEBOARD_CHECK_AND_RETURN_LOGE(clipboardProxy != nullptr, PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
     clipboardProxy->Clear();
 }
+
+void PasteboardClient::ClearByUser(int32_t userId) {}
+
+void PasteboardClient::CloseSharedMemFd(int fd) {}
 
 int32_t PasteboardClient::GetPasteData(PasteData& pasteData)
 {
@@ -214,10 +235,24 @@ int32_t PasteboardClient::GetPasteData(PasteData& pasteData)
     return static_cast<int32_t>(PasteboardError::E_OK);
 }
 
+void PasteboardClient::GetDataReport(
+    PasteData& pasteData, int32_t syncTime, const std::string& currentId, const std::string& currentPid, int32_t ret)
+{}
+
+void PasteboardClient::GetProgressByProgressInfo(std::shared_ptr<GetDataParams> params) {}
+
 int32_t PasteboardClient::SetProgressWithoutFile(std::string& progressKey, std::shared_ptr<GetDataParams> params)
 {
     return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
 }
+
+void PasteboardClient::ProgressSmoothToTwentyPercent(
+    PasteData& pasteData, std::string& progressKey, std::shared_ptr<GetDataParams> params)
+{}
+
+void PasteboardClient::UpdateProgress(std::shared_ptr<GetDataParams> params, int progressValue) {}
+
+void PasteboardClient::OnProgressAbnormal(int32_t result) {}
 
 int32_t PasteboardClient::GetPasteDataFromService(PasteData& pasteData,
     PasteDataFromServiceInfo& pasteDataFromServiceInfo, std::string progressKey, std::shared_ptr<GetDataParams> params)
@@ -230,6 +265,12 @@ int32_t PasteboardClient::ProcessPasteData(T& data, int64_t rawDataSize, int fd,
 {
     return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
 }
+
+void PasteboardClient::ProcessRadarReport(
+    int32_t ret, PasteData& pasteData, PasteDataFromServiceInfo& pasteDataFromServiceInfo, int32_t syncTime)
+{}
+
+void PasteboardClient::ProgressRadarReport(PasteData& pasteData, PasteDataFromServiceInfo& pasteDataFromServiceInfo) {}
 
 int32_t PasteboardClient::ProgressAfterTwentyPercent(
     PasteData& pasteData, std::shared_ptr<GetDataParams> params, std::string progressKey)
@@ -274,7 +315,7 @@ int32_t PasteboardClient::GetUdsdData(UDMF::UnifiedData& unifiedData)
 
 bool PasteboardClient::HasPasteData()
 {
-    auto clipboardProxy = ClipboardProxy::GetInstance();
+    auto clipboardProxy = Plugin::ClipboardProxy::GetInstance();
     if (clipboardProxy == nullptr) {
         PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
         return false;
@@ -287,20 +328,90 @@ bool PasteboardClient::HasPasteData()
     return ret;
 }
 
+bool PasteboardClient::HasRemoteData()
+{
+    return false;
+}
+
+void PasteboardClient::CreateGetterAgent(sptr<PasteboardDelayGetterClient>& delayGetterAgent,
+    std::shared_ptr<PasteboardDelayGetter>& delayGetter, sptr<PasteboardEntryGetterClient>& entryGetterAgent,
+    std::map<uint32_t, std::shared_ptr<UDMF::EntryGetter>>& entryGetters, PasteData& pasteData)
+{}
+
 int32_t PasteboardClient::WritePasteData(PasteData& pasteData, std::vector<uint8_t>& buffer, int& fd, int64_t& tlvSize,
     MessageParcelWarp& messageData, MessageParcel& parcelPata)
 {
     return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
 }
 
+int32_t PasteboardClient::SetPasteData(PasteData& pasteData, std::shared_ptr<PasteboardDelayGetter> delayGetter,
+    std::map<uint32_t, std::shared_ptr<UDMF::EntryGetter>> entryGetters)
+{
+    auto clipboardProxy = Plugin::ClipboardProxy::GetInstance();
+    if (clipboardProxy == nullptr) {
+        return static_cast<int32_t>(PasteboardError::UNKNOWN_ERROR);
+    }
+    int32_t ret = clipboardProxy->SetPasteData(pasteData);
+    PASTEBOARD_HILOGI(PASTEBOARD_MODULE_CLIENT, "leave, ret=%{public}d", ret);
+    return ConvertErrCode(ret);
+}
+
+int32_t PasteboardClient::SetUnifiedData(
+    const UDMF::UnifiedData& unifiedData, std::shared_ptr<PasteboardDelayGetter> delayGetter)
+{
+    auto pasteData = PasteboardUtils::GetInstance().Convert(unifiedData);
+    return SetPasteData(*pasteData);
+}
+
 int32_t PasteboardClient::SetUdsdData(const UDMF::UnifiedData& unifiedData)
 {
     auto pasteData = ConvertUtils::Convert(unifiedData);
-    int32_t ret = SetPasteData(*pasteData);
-    return ret;
+    return SetPasteData(*pasteData);
 }
 
+void PasteboardClient::SubscribePasteboardSA() {}
+
+void PasteboardClient::UnSubscribePasteboardSA() {}
+
+void PasteboardClient::ReleaseSaListener() {}
+
 int32_t PasteboardClient::DetachPasteboard()
+{
+    return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
+}
+
+void PasteboardClient::Resubscribe() {}
+
+bool PasteboardClient::Subscribe(PasteboardObserverType type, sptr<PasteboardObserver> callback)
+{
+    auto clipboardProxy = Plugin::ClipboardProxy::GetInstance();
+    if (clipboardProxy == nullptr) {
+        PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
+        return false;
+    }
+    return clipboardProxy->Subscribe(type, callback);
+}
+
+void PasteboardClient::AddPasteboardChangedObserver(sptr<PasteboardObserver> callback) {}
+
+void PasteboardClient::AddPasteboardEventObserver(sptr<PasteboardObserver> callback) {}
+
+void PasteboardClient::Unsubscribe(PasteboardObserverType type, sptr<PasteboardObserver> callback)
+{
+    auto clipboardProxy = Plugin::ClipboardProxy::GetInstance();
+    if (clipboardProxy == nullptr) {
+        PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
+        return;
+    }
+    clipboardProxy->Unsubscribe(type, callback);
+}
+
+void PasteboardClient::RemovePasteboardChangedObserver(sptr<PasteboardObserver> callback) {}
+
+void PasteboardClient::RemovePasteboardEventObserver(sptr<PasteboardObserver> callback) {}
+
+int32_t PasteboardClient::SubscribeDisposableObserver(
+    const sptr<PasteboardDisposableObserver>& observer, int32_t targetWindowId, DisposableType type, uint32_t maxLength)
 {
     return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
 }
@@ -335,25 +446,6 @@ bool PasteboardClient::IsRemoteData()
 {
     return false;
 }
-int32_t PasteboardClient::SetPasteData(PasteData& pasteData)
-{
-    PASTEBOARD_HILOGI(PASTEBOARD_MODULE_CLIENT, "enter");
-    auto clipboardProxy = ClipboardProxy::GetInstance();
-    if (clipboardProxy == nullptr) {
-        return static_cast<int32_t>(PasteboardError::UNKNOWN_ERROR);
-    }
-    int32_t ret = clipboardProxy->SetPasteData(pasteData);
-    PASTEBOARD_HILOGI(PASTEBOARD_MODULE_CLIENT, "leave, ret=%{public}d", ret);
-    ret = ConvertErrCode(ret);
-    return ret;
-}
-
-int32_t PasteboardClient::SetUnifiedData(
-    const UDMF::UnifiedData& unifiedData, std::shared_ptr<PasteboardDelayGetter> delayGetter)
-{
-    auto pasteData = PasteboardUtils::GetInstance().Convert(unifiedData);
-    return SetPasteData(*pasteData);
-}
 
 int32_t PasteboardClient::GetDataSource(std::string& bundleName)
 {
@@ -362,7 +454,7 @@ int32_t PasteboardClient::GetDataSource(std::string& bundleName)
 
 std::vector<std::string> PasteboardClient::GetMimeTypes()
 {
-    auto clipboardProxy = ClipboardProxy::GetInstance();
+    auto clipboardProxy = Plugin::ClipboardProxy::GetInstance();
     if (clipboardProxy == nullptr) {
         PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
         return {};
@@ -378,7 +470,7 @@ std::vector<std::string> PasteboardClient::GetMimeTypes()
 
 bool PasteboardClient::HasDataType(const std::string& mimeType)
 {
-    auto clipboardProxy = ClipboardProxy::GetInstance();
+    auto clipboardProxy = Plugin::ClipboardProxy::GetInstance();
     if (clipboardProxy == nullptr) {
         PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
         return false;
@@ -395,34 +487,14 @@ bool PasteboardClient::HasUtdType(const std::string& utdType)
 {
     return false;
 }
-bool PasteboardClient::Subscribe(PasteboardObserverType type, sptr<PasteboardObserver> callback)
-{
-    auto clipboardProxy = ClipboardProxy::GetInstance();
-    if (clipboardProxy == nullptr) {
-        PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
-        return false;
-    }
-    bool ret = clipboardProxy->Subscribe(type, callback);
-    return ret;
-}
-
-void PasteboardClient::Unsubscribe(PasteboardObserverType type, sptr<PasteboardObserver> callback)
-{
-    auto clipboardProxy = ClipboardProxy::GetInstance();
-    if (clipboardProxy == nullptr) {
-        PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
-        return;
-    }
-    clipboardProxy->Unsubscribe(type, callback);
-}
 
 std::set<Pattern> PasteboardClient::DetectPatterns(const std::set<Pattern>& patternsToCheck)
 {
-    if (!IsValid(patternsToCheck)) {
+    if (!PatternDetection::IsValid(patternsToCheck)) {
         PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "Invalid number in Pattern set!");
         return {};
     }
-    auto clipboardProxy = ClipboardProxy::GetInstance();
+    auto clipboardProxy = Plugin::ClipboardProxy::GetInstance();
     if (clipboardProxy == nullptr) {
         PASTEBOARD_HILOGE(PASTEBOARD_MODULE_CLIENT, "clipboardProxy is nullptr");
         return {};
@@ -438,14 +510,31 @@ std::set<Pattern> PasteboardClient::DetectPatterns(const std::set<Pattern>& patt
     return result;
 }
 
+sptr<IPasteboardService> PasteboardClient::GetPasteboardService()
+{
+    sptr<IPasteboardService> pasteboardService;
+    return pasteboardService;
+}
+
+void PasteboardClient::PasteStart(const std::string& pasteId) {}
+
+void PasteboardClient::PasteComplete(const std::string& deviceId, const std::string& pasteId) {}
+
 int32_t PasteboardClient::HandleSignalValue(const std::string& signalValue)
 {
     return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
 }
 
+void PasteboardClient::ShowProgress(const std::string& progressKey) {}
+
 int32_t PasteboardClient::SyncDelayedData()
 {
     return static_cast<int32_t>(PasteboardError::NOT_SUPPORT);
+}
+
+std::string PasteboardClient::GetPasteDataInfoSummary(const PasteData& pasteData)
+{
+    return std::string("");
 }
 
 int32_t PasteboardClient::ConvertErrCode(int32_t errCode)

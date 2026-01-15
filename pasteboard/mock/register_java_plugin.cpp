@@ -13,20 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef PASTE_BOARD_OBSERVER_H
-#define PASTE_BOARD_OBSERVER_H
+#include "clipboard_jni.h"
+#include "plugin_utils.h"
 
-#include "pasteboard_observer_stub.h"
-
-namespace OHOS {
-namespace MiscServices {
-class PasteboardObserver : public PasteboardObserverStub {
-public:
-    PasteboardObserver() {};
-    ~PasteboardObserver() {};
-    void OnPasteboardChanged() override {};
-    void OnPasteboardEvent(const PasteboardChangedEvent& event) override {};
-};
-} // namespace MiscServices
-} // namespace OHOS
-#endif // PASTE_BOARD_OBSERVER_H
+extern "C" __attribute__((constructor)) void RegisterAndroidClipboardPlugin(void)
+{
+    const char clipboardPluginName[] = "ohos.ace.plugin.clipboard.ClipboardAosp";
+    ARKUI_X_Plugin_RegisterJavaPlugin(&OHOS::Plugin::ClipboardJni::Register, clipboardPluginName);
+}

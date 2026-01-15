@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2026. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -373,7 +373,7 @@ void PasteDataRecord::ClearPixelMap()
 { // LCOV_EXCL_START
     this->pixelMap_ = nullptr;
     entries_.erase(std::remove_if(entries_.begin(), entries_.end(),
-                       [](const auto& entry) { return entry != nullptr && entry->GetMimeType() == MIMETYPE_PIXELMAP; }),
+        [](const auto& entry) { return entry != nullptr && entry->GetMimeType() == MIMETYPE_PIXELMAP; }),
         entries_.end());
 } // LCOV_EXCL_STOP
 
@@ -862,7 +862,7 @@ std::vector<std::string> PasteDataRecord::GetValidTypes(const std::vector<std::s
 bool PasteDataRecord::HasEmptyEntry() const
 { // LCOV_EXCL_START
     for (auto const& entry : GetEntries()) {
-        if (std::holds_alternative<std::monostate>(entry->GetValue())) {
+        if (entry != nullptr && std::holds_alternative<std::monostate>(entry->GetValue())) {
             return true;
         }
     }

@@ -13,30 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
-#define PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#ifndef PLUGIN_DATA_PASTEBOARD_MOCK_PASTE_BOARD_OBSERVER_H
+#define PLUGIN_DATA_PASTEBOARD_MOCK_PASTE_BOARD_OBSERVER_H
 
-#include <cstdint>
-#include <string>
-#include <unordered_map>
-
-#include "message_parcel.h"
+#include "pasteboard_observer_stub.h"
 
 namespace OHOS {
-class MessageOption;
 namespace MiscServices {
-class PasteboardDisposableObserverStub {
+class PasteboardObserver : public PasteboardObserverStub {
 public:
-    PasteboardDisposableObserverStub() {};
-    virtual ~PasteboardDisposableObserverStub() = default;
-    virtual int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
-    {
-        return 0;
-    };
-
-private:
-    virtual void OnTextReceived(const std::string& text, int32_t errCode) {};
+    PasteboardObserver() {};
+    ~PasteboardObserver() {};
+    void OnPasteboardChanged() override {};
+    void OnPasteboardEvent(const PasteboardChangedEvent& event) override {};
 };
 } // namespace MiscServices
 } // namespace OHOS
-#endif // PLUGIN_PASTEBOARD_MOCK_PASTEBOARD_DISPOSABLE_OBSERVER_STUB_H
+#endif // PASTE_BOARD_OBSERVER_H
