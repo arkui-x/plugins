@@ -1,0 +1,42 @@
+/*
+* Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+#include "clipboard_proxy.h"
+
+#include <mutex>
+
+#include "clipboard_proxy_impl.h"
+
+using namespace OHOS::MiscServices;
+
+namespace OHOS {
+namespace Plugin {
+
+static ClipboardProxy* g_instance = nullptr;
+static std::mutex g_instance_mutex;
+
+EXPORT ClipboardProxy* ClipboardProxy::GetInstance()
+{
+    if (g_instance == nullptr) {
+        std::lock_guard<std::mutex> lock(g_instance_mutex);
+        if (g_instance == nullptr) {
+            g_instance = new ClipboardProxyImpl();
+        }
+    }
+    return g_instance;
+}
+
+} // namespace Plugin
+} // namespace OHOS
