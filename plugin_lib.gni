@@ -51,6 +51,7 @@ common_plugin_libs = [
   "common_event_manager",
   "data/datasharepredicates",
   "data/preferences",
+  "pasteboard",
   "data/relationalstore",
   "data/unifieddatachannel",
   "data/uniformtypedescriptor",

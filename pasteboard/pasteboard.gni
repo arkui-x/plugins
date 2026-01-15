@@ -1,0 +1,67 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+ability_runtime_cross_platform_path =
+    "//foundation/appframework/ability/ability_runtime/cross_platform"
+
+ace_engine_path = "//foundation/arkui/ace_engine"
+
+c_utils_path = "//commonlibrary/c_utils"
+
+arkui_path = "//foundation/arkui"
+
+hilog_path = "//base/hiviewdfx/hilog"
+
+hiappevent_path = "//foundation/appframework/hiviewdfx/hiappevent"
+
+third_party_path = "//third_party"
+
+plugin_path = "//plugins"
+
+multimedia_path = "//foundation/multimedia"
+
+image_framework_path = "${multimedia_path}/image_framework"
+
+graphic_root_path = "//foundation/graphic"
+
+graphic_2d_path = "${graphic_root_path}/graphic_2d"
+
+graphic_surface_path = "${graphic_root_path}/graphic_surface"
+
+udmf_root_path = "//foundation/distributeddatamgr/udmf"
+
+udmf_framework_path = "${udmf_root_path}/framework"
+
+udmf_interfaces_path = "${udmf_root_path}/interfaces"
+
+udmf_service_path = "${udmf_root_path}/service"
+
+kv_store_path = "//foundation/distributeddatamgr/kv_store"
+
+pasteboard_root_path = "//foundation/distributeddatamgr/pasteboard"
+
+pasteboard_plugin_root_path = "//plugins/pasteboard"
+
+pasteboard_innerkits_path = "${pasteboard_plugin_root_path}/framework/innerkits"
+
+pasteboard_framework_path = "${pasteboard_root_path}/framework/framework"
+
+pasteboard_utils_path = "${pasteboard_root_path}/utils"
+
+pasteboard_interfaces_path = "${pasteboard_plugin_root_path}/interfaces"
+
+pasteboard_tlv_path = "${pasteboard_plugin_root_path}/framework/tlv"
+
+pasteboard_napi_path = "${pasteboard_root_path}/interfaces/kits/napi"
+
+pasteboard_platform_path = "${pasteboard_plugin_root_path}/platform"
