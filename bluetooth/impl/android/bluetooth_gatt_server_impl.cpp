@@ -201,5 +201,18 @@ int BluetoothGattServerImpl::GetConnectedState(const std::string& deviceId, int&
     HILOGE("Unsupport GattServer GetConnectedState");
     return BT_ERR_INTERNAL_ERROR;
 }
+
+int BluetoothGattServerImpl::SetPhy(int32_t appId, const std::string &deviceId,
+    int32_t txPhy, int32_t rxPhy, int32_t phyOptions)
+{
+    HILOGE("Unsupport GattServer SetPhy");
+    return BT_ERR_INTERNAL_ERROR;
+}
+
+int BluetoothGattServerImpl::ReadPhy(int32_t appId, const std::string &deviceId)
+{
+    HILOGE("Unsupport GattServer ReadPhy");
+    return BT_ERR_INTERNAL_ERROR;
+}
 } // namespace Bluetooth
 } // namespace OHOS

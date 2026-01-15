@@ -71,6 +71,7 @@ connection_sources = [
   "$NETCONNMANAGER_INNERKITS_SOURCE_DIR/src/net_specifier.cpp",
   "$NETCONNMANAGER_INNERKITS_SOURCE_DIR/src/route.cpp",
   "$NETMANAGER_BASE_ROOT/frameworks/native/netconnclient/src/proxy/net_conn_callback_stub.cpp",
+  "$NETMANAGER_BASE_ROOT/frameworks/native/netmanagernative/net_conn_info.cpp",
   "$WORK_DIR/async_context/src/bindsocket_context.cpp",
   "$WORK_DIR/async_context/src/deletecustomdnsrule_context.cpp",
   "$WORK_DIR/async_context/src/deletecustomdnsrules_context.cpp",
