@@ -61,6 +61,9 @@ public:
     int Connect(int appId, const BluetoothGattDevice& device, bool isDirect) override;
     int CancelConnection(int appId, const BluetoothGattDevice& device) override;
     int GetConnectedState(const std::string &deviceId, int &state) override;
+    int SetPhy(int32_t appId,
+        const std::string &deviceId, int32_t txPhy, int32_t rxPhy, int32_t phyOptions) override;
+    int ReadPhy(int32_t appId, const std::string &deviceId) override;
 
 private:
     int32_t applicationIdInc_ = 0;

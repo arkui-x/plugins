@@ -20,6 +20,8 @@
 #include "net_specifier.h"
 #include "net_conn_callback_observer.h"
 #include "http_proxy.h"
+#include "net_conn_info.h"
+#include "net_port_states_info.h"
 #include "net_supplier_callback_base.h"
 #include "net_supplier_info.h"
 #include "net_conn_constants.h"
@@ -99,7 +101,16 @@ public:
     int32_t DestroyVlan(const std::string &ifName, uint32_t vlanId)
         { return 0; }
 
-    int32_t SetVlanIp(const std::string &ifName, uint32_t vlanId, const std::string &ip, uint32_t mask)
+    int32_t AddVlanIp(const std::string &ifName, uint32_t vlanId, const std::string &ip, uint32_t mask)
+        { return 0; }
+
+    int32_t DeleteVlanIp(const std::string &ifName, uint32_t vlanId, const std::string &ip, uint32_t mask)
+        { return 0; }
+
+    int32_t GetConnectOwnerUid(const NetConnInfo &netConnInfo, int32_t &ownerUid)
+        { return 0; }
+
+    int32_t GetSystemNetPortStates(NetPortStatesInfo &netPortStatesInfo)
         { return 0; }
 };
 } // namespace OHOS::NetManagerStandard

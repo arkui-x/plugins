@@ -384,6 +384,17 @@ int BluetoothGattServerImpl::GetConnectedState(const std::string& deviceId, int&
     return BT_NO_ERROR;
 }
 
+int BluetoothGattServerImpl::SetPhy(int32_t appId, const std::string &deviceId,
+    int32_t txPhy, int32_t rxPhy, int32_t phyOptions)
+{
+    return BT_NO_ERROR;
+}
+
+int BluetoothGattServerImpl::ReadPhy(int32_t appId, const std::string &deviceId)
+{
+    return BT_NO_ERROR;
+}
+
 int32_t BluetoothGattServerImpl::GetGattServerAppId()
 {
     appId_ += 1;
