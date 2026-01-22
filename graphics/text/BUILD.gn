@@ -1,0 +1,117 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/config/config.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+graphic_2d_root = "//foundation/graphic/graphic_2d"
+rosen_text_root = "//foundation/graphic/graphic_2d/frameworks/text"
+
+ohos_source_set("graphics_text_static") {
+
+  configs = [
+    "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/kits/native/ability:abilitykit_native_config",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/kits/native/appkit:appkit_native_config",
+    "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/inner_api/hilog:ability_cross_platform_hilog_config",
+    "$graphic_2d_root/frameworks/text/service:rosen_text_public_config"
+  ]
+
+  include_dirs = [
+    "$graphic_2d_root/frameworks/text",
+    "$graphic_2d_root/interfaces/kits/napi/graphic/drawing",
+    "$graphic_2d_root/rosen/modules/platform/image_native",
+    "$rosen_text_root/adapter/skia",
+    "$rosen_text_root/interface/export/rosen_text",
+    "$rosen_text_root/interface/mlb",
+    "$rosen_text_root/interface/mlb/napi",
+    "$rosen_text_root/interface/mlb/napi/fontdescriptor_napi/include",
+    "$rosen_text_root/interface/mlb/napi/utils",
+    "$rosen_text_root/interface/mlb/utils/include",
+    "$rosen_text_root/service/global_config",
+    "$rosen_text_root/service/texgine/src",
+  ]
+  sources = [
+    "$rosen_text_root/interface/mlb/napi/enum_napi/text_enum_napi.cpp",
+    "$rosen_text_root/interface/mlb/napi/fontcollection_napi/js_fontcollection.cpp",
+    "$rosen_text_root/interface/mlb/napi/fontdescriptor_napi/src/js_fontdescriptor.cpp",
+    "$rosen_text_root/interface/mlb/napi/js_text_init.cpp",
+    "$rosen_text_root/interface/mlb/napi/line_typeset_napi/js_line_typeset.cpp",
+    "$rosen_text_root/interface/mlb/napi/paragraph_builder_napi/js_paragraph_builder.cpp",
+    "$rosen_text_root/interface/mlb/napi/paragraph_napi/js_paragraph.cpp",
+    "$rosen_text_root/interface/mlb/napi/run_napi/js_run.cpp",
+    "$rosen_text_root/interface/mlb/napi/text_global_napi/js_text_global.cpp",
+    "$rosen_text_root/interface/mlb/napi/text_line_napi/js_text_line.cpp",
+    "$rosen_text_root/interface/mlb/napi/utils/napi_async_work.cpp",
+    "$rosen_text_root/interface/mlb/napi/utils/napi_common.cpp",
+    "$rosen_text_root/interface/mlb/utils/src/font_utils.cpp",
+    "//plugins/graphics/text/native_module_graphics_text.cpp",
+  ]
+
+  deps = [
+    "//plugins/libs/napi:napi_${target_os}",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+  ]
+
+  defines = [ 
+    "ROSEN_ARKUI_X",
+    "CROSS_PLATFORM",
+    "USE_M133_SKIA",
+  ]
+
+  if (is_android) {
+    defines += [ "ANDROID_PLATFORM" ]
+  } else if (is_ios) {
+    defines += [ "IOS_PLATFORM" ]
+  }
+
+  cflags_cc = [ "-std=c++17" ]
+
+  subsystem_name = "plugins"
+  part_name = "graphics_text"
+}
+
+template("plugin_graphics_text_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    deps = [ ":graphics_text_static" ]
+
+    subsystem_name = "plugins"
+    part_name = "graphics_text"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_graphics_text_static("graphics_text_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
