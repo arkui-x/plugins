@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1818,6 +1818,37 @@ napi_value IntlAddon::Select(napi_env env, napi_callback_info info)
         return nullptr;
     }
     return result;
+}
+
+bool IntlAddon::IsLocaleInfo(napi_env env, napi_value argv)
+{
+    napi_value constructor = nullptr;
+    if (g_constructor == nullptr) {
+        LOGE("IntlAddon::IsLocaleInfo: g_constructor is nullptr.");
+        return false;
+    }
+
+    napi_status status = napi_get_reference_value(env, *g_constructor, &constructor);
+    if (status != napi_ok || constructor == nullptr) {
+        LOGE("IntlAddon::IsLocaleInfo: Failed to create reference.");
+        return false;
+    }
+
+    bool isLocaleInfo = false;
+    status = napi_instanceof(env, argv, constructor, &isLocaleInfo);
+    if (status != napi_ok) {
+        LOGE("IntlAddon::IsLocaleInfo: Failed to get instance of argv.");
+        return false;
+    }
+    return isLocaleInfo;
+}
+
+std::shared_ptr<LocaleInfo> IntlAddon::GetLocaleInfo()
+{
+    if (!this->locale_) {
+        return nullptr;
+    }
+    return this->locale_;
 }
 
 napi_value Init(napi_env env, napi_value exports)

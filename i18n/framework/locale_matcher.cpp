@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -519,6 +519,21 @@ uint32_t LocaleMatcher::FindDefaultScriptEncode(const char *language, const char
         }
     }
     return LocaleMatcher::NULL_SCRIPT;
+}
+
+std::string LocaleMatcher::GetBestMatchedLocale(const LocaleInfo* requestLocale,
+    const std::vector<LocaleInfo*>& candidateLocales)
+{
+    if (candidateLocales.size() == 0) {
+        return "";
+    }
+    LocaleInfo* bestMatch = candidateLocales[0];
+    for (size_t i = 1; i < candidateLocales.size(); ++i) {
+        if (IsMoreSuitable(bestMatch, candidateLocales[i], requestLocale) < 0) {
+            bestMatch = candidateLocales[i];
+        }
+    }
+    return bestMatch->ToString();
 }
 } // namespace I18n
 } // namespace Global
