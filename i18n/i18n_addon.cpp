@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,27 +12,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "i18n_addon.h"
+
+#include <algorithm>
 #include <chrono>
 #include <unordered_map>
 #include <vector>
 
 #include "character.h"
+#include "entity_recognizer_addon.h"
 #include "error_util.h"
+#include "holiday_manager_addon.h"
 #include "i18n_calendar.h"
+#include "i18n_system_addon.h"
+#include "i18n_timezone_addon.h"
+#include "i18n_types.h"
 #include "icu_data.h"
-#include "log.h"
 #include "locale_info.h"
 #include "locale_matcher.h"
+#include "log.h"
 #include "napi_utils.h"
 #include "node_api.h"
+#include "number_format.h"
 #include "plugin_utils.h"
-#include "unicode/locid.h"
 #include "unicode/datefmt.h"
+#include "unicode/locid.h"
 #include "unicode/smpdtfmt.h"
 #include "unicode/translit.h"
 #include "utils.h"
-
-#include "i18n_addon.h"
+#include "zone_offset_transition_addon.h"
+#include "zone_rules_addon.h"
 
 #ifdef ANDROID_PLATFORM
 #include "plugins/i18n/android/java/jni/i18n_plugin_jni.h"
@@ -92,10 +101,42 @@ static std::unordered_map<std::string, CalendarType> g_typeMap {
     { "persion", CalendarType::PERSIAN },
 };
 
-const char *I18nAddon::NORMALIZER_MODE_NFC_NAME = "NFC";
-const char *I18nAddon::NORMALIZER_MODE_NFD_NAME = "NFD";
-const char *I18nAddon::NORMALIZER_MODE_NFKC_NAME = "NFKC";
-const char *I18nAddon::NORMALIZER_MODE_NFKD_NAME = "NFKD";
+const int TEMPERATURE_TYPE_CELSIUS = 1;
+const int TEMPERATURE_TYPE_FAHRENHEIT = 2;
+const int TEMPERATURE_TYPE_KELVIN = 3;
+
+const int WEEK_DAY_MON = 1;
+const int WEEK_DAY_TUE = 2;
+const int WEEK_DAY_WED = 3;
+const int WEEK_DAY_THU = 4;
+const int WEEK_DAY_FRI = 5;
+const int WEEK_DAY_SAT = 6;
+const int WEEK_DAY_SUN = 7;
+
+static std::unordered_map<std::string, int32_t> EnumTemperatureType {
+    { "CELSIUS", TEMPERATURE_TYPE_CELSIUS },
+    { "FAHRENHEIT", TEMPERATURE_TYPE_FAHRENHEIT },
+    { "KELVIN", TEMPERATURE_TYPE_KELVIN }
+};
+
+static std::unordered_map<std::string, int32_t> EnumWeekDay {
+    { "MON", WEEK_DAY_MON },
+    { "TUE", WEEK_DAY_TUE },
+    { "WED", WEEK_DAY_WED },
+    { "THU", WEEK_DAY_THU },
+    { "FRI", WEEK_DAY_FRI },
+    { "SAT", WEEK_DAY_SAT },
+    { "SUN", WEEK_DAY_SUN }
+};
+
+const char* I18nAddon::NORMALIZER_MODE_NFC_NAME = "NFC";
+const char* I18nAddon::NORMALIZER_MODE_NFD_NAME = "NFD";
+const char* I18nAddon::NORMALIZER_MODE_NFKC_NAME = "NFKC";
+const char* I18nAddon::NORMALIZER_MODE_NFKD_NAME = "NFKD";
+const int SIZE_TWO = 2;
+const int SIZE_THREE = 3;
+const int SIZE_FOUR = 4;
+const int SIZE_FIVE = 5;
 
 I18nAddon::I18nAddon() : env_(nullptr) {}
 
@@ -153,8 +194,13 @@ napi_value I18nAddon::CreateI18nUtilObject(napi_env env, napi_status &initStatus
         return nullptr;
     }
     napi_property_descriptor i18nUtilProperties[] = {
+        DECLARE_NAPI_FUNCTION("unitConvert", UnitConvert),
         DECLARE_NAPI_FUNCTION("getDateOrder", GetDateOrder),
-        DECLARE_NAPI_FUNCTION("getBestMatchLocale", GetBestMatchLocale)
+        DECLARE_NAPI_FUNCTION("getTimePeriodName", GetTimePeriodName),
+        DECLARE_NAPI_FUNCTION("getBestMatchLocale", GetBestMatchLocale),
+        DECLARE_NAPI_FUNCTION("getThreeLetterLanguage", GetThreeLetterLanguage),
+        DECLARE_NAPI_FUNCTION("getThreeLetterRegion", GetThreeLetterRegion),
+        DECLARE_NAPI_FUNCTION("getUnicodeWrappedFilePath", GetUnicodeWrappedFilePath),
     };
     status = napi_define_properties(env, i18nUtil, sizeof(i18nUtilProperties) / sizeof(napi_property_descriptor),
         i18nUtilProperties);
@@ -242,6 +288,48 @@ napi_value I18nAddon::CreateI18NNormalizerModeEnum(napi_env env, napi_status &in
     return i18nNormalizerModel;
 }
 
+napi_value I18nAddon::CreateTemperatureTypeEnum(napi_env env)
+{
+    napi_value temperatureType = nullptr;
+    napi_status status = napi_create_object(env, &temperatureType);
+    if (status != napi_ok) {
+        LOGE("I18nAddon::CreateTemperatureTypeEnum: Create temperatureType failed.");
+        return nullptr;
+    }
+    for (auto& nameToValue : EnumTemperatureType) {
+        std::string name = nameToValue.first;
+        int32_t value = static_cast<int32_t>(nameToValue.second);
+        status = NAPIUtils::SetEnumValue(env, temperatureType, name, value);
+        if (status != napi_ok) {
+            LOGE("I18nAddon::CreateTemperatureTypeEnum: set enum name %{public}s failed.",
+                name.c_str());
+            return nullptr;
+        }
+    }
+    return temperatureType;
+}
+
+napi_value I18nAddon::CreateWeekDayEnum(napi_env env)
+{
+    napi_value weekDay = nullptr;
+    napi_status status = napi_create_object(env, &weekDay);
+    if (status != napi_ok) {
+        LOGE("I18nAddon::CreateWeekDayEnum: Create weekDay failed.");
+        return nullptr;
+    }
+    for (auto& nameToValue : EnumWeekDay) {
+        std::string name = nameToValue.first;
+        int32_t value = static_cast<int32_t>(nameToValue.second);
+        status = NAPIUtils::SetEnumValue(env, weekDay, name, value);
+        if (status != napi_ok) {
+            LOGE("I18nAddon::CreateWeekDayEnum: set enum name %{public}s failed.",
+                name.c_str());
+            return nullptr;
+        }
+    }
+    return weekDay;
+}
+
 napi_value I18nAddon::Init(napi_env env, napi_value exports)
 {
     napi_status initStatus = napi_ok;
@@ -251,7 +339,7 @@ napi_value I18nAddon::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getInstance", GetIndexUtil),
         DECLARE_NAPI_PROPERTY("Unicode", CreateUnicodeObject(env, initStatus)),
         DECLARE_NAPI_FUNCTION("is24HourClock", Is24HourClock),
-        DECLARE_NAPI_FUNCTION("getTimeZone", GetI18nTimeZone),
+        DECLARE_NAPI_FUNCTION("getTimeZone", I18nTimeZoneAddon::GetI18nTimeZone),
         DECLARE_NAPI_FUNCTION("getCalendar", GetCalendar),
         DECLARE_NAPI_FUNCTION("isRTL", IsRTL),
         DECLARE_NAPI_PROPERTY("Transliterator", CreateTransliteratorObject(env, initStatus)),
@@ -260,6 +348,8 @@ napi_value I18nAddon::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("Normalizer", CreateI18nNormalizerObject(env, initStatus)),
         DECLARE_NAPI_PROPERTY("NormalizerMode", CreateI18NNormalizerModeEnum(env, initStatus)),
         DECLARE_NAPI_FUNCTION("getSystemLanguage", GetSystemLanguage),
+        DECLARE_NAPI_PROPERTY("TemperatureType", CreateTemperatureTypeEnum(env)),
+        DECLARE_NAPI_PROPERTY("WeekDay", CreateWeekDayEnum(env)),
     };
     initStatus = napi_define_properties(env, exports, sizeof(properties) \
         / sizeof(napi_property_descriptor), properties);
@@ -313,13 +403,304 @@ void GetOptionMap(napi_env env, napi_value option, std::map<std::string, std::st
     }
 }
 
+napi_value I18nAddon::UnitConvert(napi_env env, napi_callback_info info)
+{
+    size_t argc = SIZE_FIVE;
+    napi_value argv[SIZE_FIVE] = { 0 };
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    std::string fromUnit;
+    GetOptionValue(env, argv[0], "unit", fromUnit);
+    std::string fromMeasSys;
+    GetOptionValue(env, argv[0], "measureSystem", fromMeasSys);
+    std::string toUnit;
+    GetOptionValue(env, argv[1], "unit", toUnit);
+    std::string toMeasSys;
+    GetOptionValue(env, argv[1], "measureSystem", toMeasSys);
+    double number = 0;
+    status = napi_get_value_double(env, argv[SIZE_TWO], &number);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    int convertStatus = Convert(number, fromUnit, fromMeasSys, toUnit, toMeasSys);
+    int code = 0;
+    std::string locale = NAPIUtils::GetString(env, argv[SIZE_THREE], code);
+    if (code != 0) {
+        return nullptr;
+    }
+    std::vector<std::string> localeTags;
+    localeTags.push_back(locale);
+    std::map<std::string, std::string> map = {};
+    map.insert(std::make_pair("style", "unit"));
+    if (!convertStatus) {
+        map.insert(std::make_pair("unit", fromUnit));
+    } else {
+        map.insert(std::make_pair("unit", toUnit));
+    }
+    GetOptionMap(env, argv[SIZE_FOUR], map);
+    std::unique_ptr<NumberFormat> numberFmt = nullptr;
+    numberFmt = std::make_unique<NumberFormat>(localeTags, map);
+    std::string value = numberFmt->Format(number);
+    napi_value result;
+    status = napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
+    if (status != napi_ok) {
+        LOGE("UnitConvert: Failed to create string item");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value I18nAddon::GetTimePeriodName(napi_env env, napi_callback_info info)
+{
+    int32_t hour;
+    std::string localeTag;
+    if (GetParamOfGetTimePeriodName(env, info, localeTag, hour) == -1) {
+        LOGE("GetTimePeriodName param error");
+        return NAPIUtils::CreateString(env, "");
+    }
+
+    UErrorCode icuStatus = U_ZERO_ERROR;
+    icu::Locale locale = icu::Locale::forLanguageTag(localeTag.data(), icuStatus);
+    if (U_FAILURE(icuStatus) || !IsValidLocaleTag(locale)) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, "locale", "a valid locale", true);
+        return nullptr;
+    }
+    icu::SimpleDateFormat* formatter = static_cast<icu::SimpleDateFormat*>
+        (icu::DateFormat::createDateInstance(icu::DateFormat::EStyle::kDefault, locale));
+    if (formatter == nullptr) {
+        LOGE("GetTimePeriodName Failed to create SimpleDateFormat");
+        return NAPIUtils::CreateString(env, "");
+    }
+    formatter->applyPattern("B");
+
+    icu::UnicodeString name;
+    icu::Calendar* calendar = icu::Calendar::createInstance(locale, icuStatus);
+    if (calendar == nullptr) {
+        delete formatter;
+        return NAPIUtils::CreateString(env, "");
+    }
+    calendar->set(UCalendarDateFields::UCAL_HOUR_OF_DAY, hour);
+    formatter->format(calendar->getTime(icuStatus), name);
+    std::string result;
+    name.toUTF8String(result);
+    delete formatter;
+    delete calendar;
+    return NAPIUtils::CreateString(env, result);
+}
+
+int I18nAddon::GetParamOfGetTimePeriodName(napi_env env, napi_callback_info info, std::string& tag, int32_t& hour)
+{
+    size_t argc = SIZE_TWO;
+    napi_value argv[SIZE_TWO] = { 0 };
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (status != napi_ok) {
+        LOGE("GetTimePeriodName can't get parameters from getTimePerioudName.");
+        return -1;
+    } else if (argc < 1) {
+        ErrorUtil::NapiNotFoundError(env, I18N_NOT_FOUND, "hour", true);
+        return -1;
+    }
+
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    status = napi_typeof(env, argv[0], &valueType);
+    if (status != napi_ok) {
+        return -1;
+    }
+    if (valueType != napi_valuetype::napi_number) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "hour", "number", true);
+        return -1;
+    }
+    status = napi_get_value_int32(env, argv[0], &hour);
+    if (status != napi_ok) {
+        LOGE("GetTimePeriodName can't get number from js param");
+        return -1;
+    }
+
+    valueType = napi_valuetype::napi_undefined;
+    status = napi_typeof(env, argv[1], &valueType);
+    if (status != napi_ok) {
+        return -1;
+    }
+    if (valueType == napi_valuetype::napi_null || valueType == napi_valuetype::napi_undefined) {
+        tag = LocaleConfig::GetSystemLocale();
+    } else if (valueType == napi_valuetype::napi_string) {
+        int code = 0;
+        tag = NAPIUtils::GetString(env, argv[1], code);
+        if (code) {
+            LOGE("GetTimePeriodName can't get string from js param");
+            return -1;
+        }
+    } else {
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "locale", "string", true);
+        return -1;
+    }
+    return 0;
+}
+
+napi_value I18nAddon::GetThreeLetterRegion(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = { 0 };
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (status != napi_ok) {
+        LOGE("GetThreeLetterRegion: Failed to obtain the parameter.");
+        return nullptr;
+    } else if (argc < 1) {
+        ErrorUtil::NapiNotFoundError(env, I18N_NOT_FOUND, "locale", true);
+        return nullptr;
+    }
+
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    status = napi_typeof(env, argv[0], &valueType);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    if (valueType != napi_valuetype::napi_string) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "locale", "string", true);
+        return nullptr;
+    }
+
+    int32_t code = 0;
+    std::string regionTag = NAPIUtils::GetString(env, argv[0], code);
+    if (code != 0) {
+        LOGE("GetThreeLetterRegion: Failed to obtain the parameter.");
+        return nullptr;
+    }
+
+    std::string country = GetISO3Country(regionTag);
+
+    napi_value result;
+    status = napi_create_string_utf8(env, country.c_str(), NAPI_AUTO_LENGTH, &result);
+    if (status != napi_ok || country.empty()) {
+        LOGE("GetThreeLetterRegion create string fail or empty");
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, "locale", "a valid locale", true);
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value I18nAddon::GetThreeLetterLanguage(napi_env env, napi_callback_info info)
+{
+    size_t argc = 1;
+    napi_value argv[1] = { 0 };
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (status != napi_ok) {
+        LOGE("GetThreeLetterLanguage napi get param error.");
+        return nullptr;
+    } else if (argc < 1) {
+        ErrorUtil::NapiNotFoundError(env, I18N_NOT_FOUND, "locale", true);
+        return nullptr;
+    }
+
+    napi_valuetype valueType = napi_valuetype::napi_undefined;
+    status = napi_typeof(env, argv[0], &valueType);
+    if (status != napi_ok) {
+        return nullptr;
+    }
+    if (valueType != napi_valuetype::napi_string) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "locale", "string", true);
+        return nullptr;
+    }
+
+    int32_t code = 0;
+    std::string languageTag = NAPIUtils::GetString(env, argv[0], code);
+    if (code != 0) {
+        LOGE("GetThreeLetterLanguage: Failed to obtain the parameter.");
+        return nullptr;
+    }
+
+    std::string language = GetISO3Language(languageTag);
+
+    napi_value result;
+    status = napi_create_string_utf8(env, language.c_str(), NAPI_AUTO_LENGTH, &result);
+    if (status != napi_ok || language.empty()) {
+        LOGE("GetThreeLetterLanguage create string fail or empty");
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, "locale", "a valid locale", true);
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value I18nAddon::GetUnicodeWrappedFilePath(napi_env env, napi_callback_info info)
+{
+    size_t argc = SIZE_THREE;
+    napi_value argv[SIZE_THREE] = { 0 };
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (status != napi_ok) {
+        LOGE("GetUnicodeWrappedFilePath: Get param info failed");
+        return nullptr;
+    }
+    if (argc < 1) {
+        ErrorUtil::NapiNotFoundError(env, I18N_NOT_FOUND, "path", true);
+        return nullptr;
+    }
+    NAPIUtils::VerifyType(env, "path", "string", argv[0]);
+    int32_t code = 0;
+    std::string path = NAPIUtils::GetString(env, argv[0], code);
+    if (code) {
+        LOGE("GetUnicodeWrappedFilePath: Get param string argv[0] failed");
+        return nullptr;
+    }
+    char delimiter = PATH_SEPARATOR;
+    if (argc >= SIZE_TWO) {
+        NAPIUtils::VerifyType(env, "delimiter", "string", argv[1]);
+        delimiter = GetDelimiter(env, argv[1]);
+        if (delimiter == '\0') {
+            LOGE("GetUnicodeWrappedFilePath: Second param is empty");
+            return nullptr;
+        }
+    }
+    std::string errorCode;
+    napi_value locale = (argc == SIZE_THREE) ? argv[SIZE_TWO] : nullptr;
+    std::string result = I18nAddon::GetUnicodeWrappedFilePathInner(env, locale, path, delimiter, errorCode);
+    if (!errorCode.empty()) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, errorCode, "valid", true);
+        return nullptr;
+    }
+    return NAPIUtils::CreateString(env, result);
+}
+
+std::string I18nAddon::GetUnicodeWrappedFilePathInner(napi_env env, napi_value locale, const std::string& path,
+    const char delimiter, std::string& errorCode)
+{
+    if (locale == nullptr) {
+        std::shared_ptr<LocaleInfo> localeInfo = nullptr;
+        return LocaleConfig::GetUnicodeWrappedFilePath(path, delimiter, localeInfo, errorCode);
+    }
+
+    if (NAPIUtils::GetLocaleType(env, locale) == LocaleType::BUILTINS_LOCALE) {
+        std::string localeTag = NAPIUtils::ParseBuiltinsLocale(env, locale);
+        return LocaleConfig::GetUnicodeWrappedFilePath(path, delimiter, localeTag, errorCode);
+    } else if (NAPIUtils::GetLocaleType(env, locale) == LocaleType::LOCALE_INFO) {
+        std::shared_ptr<LocaleInfo> localeInfo = NAPIUtils::ParseLocaleInfo(env, locale);
+        return LocaleConfig::GetUnicodeWrappedFilePath(path, delimiter, localeInfo, errorCode);
+    }
+    LOGE("I18nAddon::GetUnicodeWrappedFilePathInner: Get file path failed.");
+    return "";
+}
+
+char I18nAddon::GetDelimiter(napi_env env, napi_value argVal)
+{
+    int32_t code = 0;
+    std::string result = NAPIUtils::GetString(env, argVal, code);
+    if (code) {
+        LOGE("GetDelimiter: Get string failed");
+        return '\0';
+    }
+    if (result.length() != 1) {
+        ErrorUtil::NapiThrow(env, I18N_NOT_VALID, "delimiter", "a valid delimiter", true);
+        return '\0';
+    }
+    return result.at(0);
+}
+
 napi_value I18nAddon::GetDateOrder(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -373,7 +754,7 @@ LocaleInfo* ProcessJsParamLocale(napi_env env, napi_value argv)
         ErrorUtil::NapiThrow(env, I18N_NOT_VALID, true);
         return nullptr;
     }
-    return new LocaleInfo(localeTag);
+    return new (std::nothrow) LocaleInfo(localeTag);
 }
 
 bool ProcessJsParamLocaleList(napi_env env, napi_value argv, std::vector<LocaleInfo*> &candidateLocales,
@@ -395,7 +776,10 @@ bool ProcessJsParamLocaleList(napi_env env, napi_value argv, std::vector<LocaleI
             ErrorUtil::NapiThrow(env, I18N_NOT_VALID, "locale of localeList", "a valid locale", true);
             return false;
         }
-        LocaleInfo *temp = new LocaleInfo(*it);
+        LocaleInfo *temp = new (std::nothrow) LocaleInfo(*it);
+        if (temp == nullptr) {
+            continue;
+        }
         if (LocaleMatcher::Match(requestLocale, temp)) {
             candidateLocales.push_back(temp);
         } else {
@@ -407,24 +791,26 @@ bool ProcessJsParamLocaleList(napi_env env, napi_value argv, std::vector<LocaleI
 
 void ReleaseParam(LocaleInfo *locale, std::vector<LocaleInfo*> &candidateLocales)
 {
-    delete locale;
+    if (locale != nullptr) {
+        delete locale;
+    }
     for (auto it = candidateLocales.begin(); it != candidateLocales.end(); ++it) {
-        delete *it;
+        if (*it != nullptr) {
+            delete *it;
+        }
     }
 }
 
 napi_value I18nAddon::GetBestMatchLocale(napi_env env, napi_callback_info info)
 {
-    size_t argc = 2;
-    napi_value argv[2] = { nullptr };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (status != napi_ok || argc < 2) { // 2 is the request param num.
+    size_t argc = SIZE_TWO;
+    napi_value argv[SIZE_TWO] = { nullptr };
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (status != napi_ok || argc < SIZE_TWO) {
         ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "locale or localeList", "", true);
         return nullptr;
     }
-    LocaleInfo *requestLocale = ProcessJsParamLocale(env, argv[0]);
+    LocaleInfo* requestLocale = ProcessJsParamLocale(env, argv[0]);
     if (requestLocale == nullptr) {
         return nullptr;
     }
@@ -436,7 +822,7 @@ napi_value I18nAddon::GetBestMatchLocale(napi_env env, napi_callback_info info)
     }
     std::string bestMatchLocaleTag = "";
     if (candidateLocales.size() > 0) {
-        LocaleInfo *bestMatch = candidateLocales[0];
+        LocaleInfo* bestMatch = candidateLocales[0];
         for (size_t i = 1; i < candidateLocales.size(); ++i) {
             if (LocaleMatcher::IsMoreSuitable(bestMatch, candidateLocales[i], requestLocale) < 0) {
                 bestMatch = candidateLocales[i];
@@ -456,8 +842,8 @@ napi_value I18nAddon::GetBestMatchLocale(napi_env env, napi_callback_info info)
 
 std::string I18nAddon::ModifyOrder(std::string &pattern)
 {
-    int order[3] = { 0 }; // total 3 elements 'y', 'M'/'L', 'd'
-    int lengths[4] = { 0 }; // first elements is the currently found elememnts, thus 4 elements totally.
+    int order[SIZE_THREE] = { 0 };
+    int lengths[SIZE_FOUR] = { 0 };
     bool flag = true;
     for (size_t i = 0; i < pattern.length(); ++i) {
         char ch = pattern[i];
@@ -625,15 +1011,15 @@ napi_value I18nAddon::Transform(napi_env env, napi_callback_info info)
     size_t argc = 1;
     napi_value argv[1] = { nullptr };
     napi_value thisVar = nullptr;
-    void *data = nullptr;
+    void* data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    I18nAddon *obj = nullptr;
+    I18nAddon* obj = nullptr;
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->transliterator_) {
         LOGE("Get Transliterator object failed");
         return nullptr;
     }
-    if (argc == 0) {
+    if (argc < 1) {
         return nullptr;
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
@@ -667,18 +1053,35 @@ napi_value I18nAddon::Transform(napi_env env, napi_callback_info info)
     return value;
 }
 
+void SortAvailableIDs(icu::StringEnumeration* strenum, std::vector<std::string>& idList)
+{
+    if (strenum == nullptr) {
+        return;
+    }
+    const char* tempId = nullptr;
+    UErrorCode icuStatus = U_ZERO_ERROR;
+    while ((tempId = strenum->next(nullptr, icuStatus)) != nullptr) {
+        if (icuStatus != U_ZERO_ERROR) {
+            break;
+        }
+        idList.push_back(std::string(tempId));
+    }
+
+    std::sort(idList.begin(), idList.end(), [](std::string& a, std::string& b) {
+        return a.compare(b) < 0;
+    });
+}
+
 napi_value I18nAddon::GetAvailableIDs(napi_env env, napi_callback_info info)
 {
     size_t argc = 0;
     napi_value *argv = nullptr;
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
     UErrorCode icuStatus = U_ZERO_ERROR;
-    icu::StringEnumeration *strenum = icu::Transliterator::getAvailableIDs(icuStatus);
+    icu::StringEnumeration* strenum = icu::Transliterator::getAvailableIDs(icuStatus);
     if (icuStatus != U_ZERO_ERROR) {
         LOGE("Failed to get available ids");
         if (strenum) {
@@ -687,20 +1090,30 @@ napi_value I18nAddon::GetAvailableIDs(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    napi_value result = nullptr;
-    napi_create_array(env, &result);
-    uint32_t i = 0;
-    const char *temp = nullptr;
     if (strenum == nullptr) {
         return nullptr;
     }
-    while ((temp = strenum->next(nullptr, icuStatus)) != nullptr) {
-        if (icuStatus != U_ZERO_ERROR) {
+    std::vector<std::string> idList;
+    SortAvailableIDs(strenum, idList);
+    napi_value result = nullptr;
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        delete strenum;
+        return nullptr;
+    }
+    uint32_t i = 0;
+    for (auto& id : idList) {
+        napi_value val = nullptr;
+        status = napi_create_string_utf8(env, id.c_str(), NAPI_AUTO_LENGTH, &val);
+        if (status != napi_ok) {
+            LOGE("GetAvailableIDs: Failed to create string item");
             break;
         }
-        napi_value val = nullptr;
-        napi_create_string_utf8(env, temp, strlen(temp), &val);
-        napi_set_element(env, result, i, val);
+        status = napi_set_element(env, result, i, val);
+        if (status != napi_ok) {
+            LOGE("GetAvailableIDs: Failed to set item");
+            break;
+        }
         ++i;
     }
     delete strenum;
@@ -711,9 +1124,7 @@ napi_value I18nAddon::GetTransliteratorInstance(napi_env env, napi_callback_info
 {
     size_t argc = 1; // retrieve 2 arguments
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     napi_value constructor = nullptr;
     napi_status status = napi_get_reference_value(env, *g_transConstructor, &constructor);
     if (status != napi_ok) {
@@ -733,9 +1144,7 @@ napi_value I18nAddon::IsDigitAddon(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -764,9 +1173,7 @@ napi_value I18nAddon::IsSpaceCharAddon(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -795,9 +1202,7 @@ napi_value I18nAddon::IsWhiteSpaceAddon(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -826,9 +1231,7 @@ napi_value I18nAddon::IsRTLCharacterAddon(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -857,9 +1260,7 @@ napi_value I18nAddon::IsIdeoGraphicAddon(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -888,9 +1289,7 @@ napi_value I18nAddon::IsLetterAddon(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -919,9 +1318,7 @@ napi_value I18nAddon::IsLowerCaseAddon(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
     napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (status != napi_ok) {
         return nullptr;
     }
@@ -1126,9 +1523,8 @@ napi_value I18nAddon::GetDisplayCountryWithError(napi_env env, napi_callback_inf
 
 napi_value I18nAddon::GetDisplayCountryImpl(napi_env env, napi_callback_info info, bool throwError)
 {
-    // Need to get three parameters to get the display country.
-    size_t argc = 3;
-    napi_value argv[3] = { nullptr };
+    size_t argc = SIZE_THREE;
+    napi_value argv[SIZE_THREE] = { nullptr };
     napi_value thisVar = nullptr;
     void *data = nullptr;
     napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
@@ -1993,11 +2389,17 @@ napi_value I18nAddon::GetDisplayName(napi_env env, napi_callback_info info)
     argv[0] = nullptr;
     napi_value thisVar = nullptr;
     void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (status != napi_ok) {
+        return nullptr;
+    }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
-    napi_typeof(env, argv[0], &valueType);
+    status = napi_typeof(env, argv[0], &valueType);
+    if (status != napi_ok) {
+        return nullptr;
+    }
     if (valueType != napi_valuetype::napi_string) {
-        napi_throw_type_error(env, nullptr, "Parameter type does not match");
+        LOGE("GetDisplayName: Parameter type does not match");
         return nullptr;
     }
     int32_t code = 0;
@@ -2006,7 +2408,7 @@ napi_value I18nAddon::GetDisplayName(napi_env env, napi_callback_info info)
         return nullptr;
     }
     I18nAddon *obj = nullptr;
-    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
     if (status != napi_ok || !obj || !obj->calendar_) {
         LOGE("Get calendar object failed");
         return nullptr;
@@ -2183,9 +2585,12 @@ napi_value I18nAddon::BreakIteratorConstructor(napi_env env, napi_callback_info 
         return nullptr;
     }
     napi_valuetype valueType = napi_valuetype::napi_undefined;
-    napi_typeof(env, argv[0], &valueType);
+    status = napi_typeof(env, argv[0], &valueType);
+    if (status != napi_ok) {
+        return nullptr;
+    }
     if (valueType != napi_valuetype::napi_string) {
-        napi_throw_type_error(env, nullptr, "Parameter type does not match");
+        LOGE("BreakIteratorConstructor: Parameter type does not match");
         return nullptr;
     }
     int32_t code = 0;
@@ -2836,120 +3241,6 @@ bool I18nAddon::ParseStringParam(napi_env env, napi_value argv, bool throwError,
     return true;
 }
 
-napi_value I18nAddon::InitI18nTimeZone(napi_env env, napi_value exports)
-{
-    napi_status status = napi_ok;
-    napi_property_descriptor properties[] = {
-        DECLARE_NAPI_FUNCTION("getID", GetID),
-        DECLARE_NAPI_FUNCTION("getDisplayName", GetTimeZoneDisplayName),
-        DECLARE_NAPI_FUNCTION("getRawOffset", GetRawOffset),
-        DECLARE_NAPI_FUNCTION("getOffset", GetOffset),
-    };
-    napi_value constructor = nullptr;
-    status = napi_define_class(env, "TimeZone", NAPI_AUTO_LENGTH, I18nTimeZoneConstructor, nullptr,
-        sizeof(properties) / sizeof(napi_property_descriptor), properties, &constructor);
-    if (status != napi_ok) {
-        LOGE("Failed to define class TimeZone at Init");
-        return nullptr;
-    }
-    g_timezoneConstructor = new (std::nothrow) napi_ref;
-    if (!g_timezoneConstructor) {
-        LOGE("Failed to create TimeZone ref at init");
-        return nullptr;
-    }
-    status = napi_create_reference(env, constructor, 1, g_timezoneConstructor);
-    if (status != napi_ok) {
-        LOGE("Failed to create reference g_timezoneConstructor at init");
-        return nullptr;
-    }
-    return exports;
-}
-
-napi_value I18nAddon::I18nTimeZoneConstructor(napi_env env, napi_callback_info info)
-{
-    size_t argc = 2;
-    napi_value argv[2] = { nullptr };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (status != napi_ok) {
-        return nullptr;
-    }
-    std::string zoneID = "";
-    napi_valuetype valueType = napi_valuetype::napi_undefined;
-    if (argc > 0) {
-        napi_typeof(env, argv[0], &valueType);
-        if (valueType != napi_valuetype::napi_string) {
-            return nullptr;
-        }
-        int32_t code = 0;
-        zoneID = NAPIUtils::GetString(env, argv[0], code);
-        if (code != 0) {
-            return nullptr;
-        }
-    }
-    if (argc < FUNC_ARGS_COUNT) {
-        return nullptr;
-    }
-    napi_typeof(env, argv[1], &valueType);
-    if (valueType != napi_valuetype::napi_boolean) {
-        return nullptr;
-    }
-    bool isZoneID = false;
-    status = napi_get_value_bool(env, argv[1], &isZoneID);
-    if (status != napi_ok) {
-        return nullptr;
-    }
-    std::unique_ptr<I18nAddon> obj = std::make_unique<I18nAddon>();
-    status =
-        napi_wrap(env, thisVar, reinterpret_cast<void *>(obj.get()), I18nAddon::Destructor, nullptr, nullptr);
-    if (status != napi_ok) {
-        return nullptr;
-    }
-    obj->timezone_ = I18nTimeZone::CreateInstance(zoneID, isZoneID);
-    if (!obj->timezone_) {
-        return nullptr;
-    }
-    obj.release();
-    return thisVar;
-}
-
-napi_value I18nAddon::GetI18nTimeZone(napi_env env, napi_callback_info info)
-{
-    size_t argc = 1;
-    napi_value argv[1] = { nullptr };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (argc == 0) {
-        napi_create_string_utf8(env, "", NAPI_AUTO_LENGTH, &argv[0]);
-    }
-    return StaticGetTimeZone(env, argv, true);
-}
-
-napi_value I18nAddon::GetID(napi_env env, napi_callback_info info)
-{
-    size_t argc = 0;
-    napi_value *argv = nullptr;
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    I18nAddon *obj = nullptr;
-    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status != napi_ok || !obj || !obj->timezone_) {
-        LOGE("Get TimeZone object failed");
-        return nullptr;
-    }
-    std::string result = obj->timezone_->GetID();
-    napi_value value = nullptr;
-    status = napi_create_string_utf8(env, result.c_str(), NAPI_AUTO_LENGTH, &value);
-    if (status != napi_ok) {
-        LOGE("Create result failed");
-        return nullptr;
-    }
-    return value;
-}
-
 bool I18nAddon::GetStringFromJS(napi_env env, napi_value argv, std::string &jsString)
 {
     size_t len = 0;
@@ -3011,121 +3302,6 @@ int32_t I18nAddon::GetParameter(napi_env env, napi_value *argv, std::string &loc
     return 3;  // 3 represents one string parameter and one bool parameter.
 }
 
-napi_value I18nAddon::GetTimeZoneDisplayName(napi_env env, napi_callback_info info)
-{
-    size_t argc = 2;
-    napi_value argv[2] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (status != napi_ok) {
-        return nullptr;
-    }
-
-    I18nAddon *obj = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status != napi_ok || !obj || !obj->timezone_) {
-        LOGE("Get TimeZone object failed");
-        return nullptr;
-    }
-
-    std::string locale;
-    bool isDST = false;
-    int32_t parameterStatus = GetParameter(env, argv, locale, isDST);
-
-    std::string result;
-    if (parameterStatus == -1) {  // -1 represents Invalid parameter.
-        napi_throw_type_error(env, nullptr, "Parameter type does not match");
-        return nullptr;
-    } else if (parameterStatus == 0) {
-        result = obj->timezone_->GetDisplayName();
-    } else if (parameterStatus == 1) {  // 1 represents one string parameter.
-        result = obj->timezone_->GetDisplayName(locale);
-    } else if (parameterStatus == 2) {  // 2 represents one boolean parameter.
-        result = obj->timezone_->GetDisplayName(isDST);
-    } else {
-        result = obj->timezone_->GetDisplayName(locale, isDST);
-    }
-
-    napi_value value = nullptr;
-    status = napi_create_string_utf8(env, result.c_str(), NAPI_AUTO_LENGTH, &value);
-    if (status != napi_ok) {
-        LOGE("Create result failed");
-        return nullptr;
-    }
-    return value;
-}
-
-napi_value I18nAddon::GetOffset(napi_env env, napi_callback_info info)
-{
-    size_t argc = 1;
-    napi_value argv[1] = { 0 };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_status status = napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (status != napi_ok) {
-        return nullptr;
-    }
-
-    double date = 0;
-    if (argc > 0) {
-        napi_valuetype valueType = napi_valuetype::napi_undefined;
-        napi_typeof(env, argv[0], &valueType);
-        if (valueType != napi_valuetype::napi_number) {
-            LOGE("Invalid parameter type");
-            return nullptr;
-        }
-        status = napi_get_value_double(env, argv[0], &date);
-        if (status != napi_ok) {
-            LOGE("Get parameter date failed");
-            return nullptr;
-        }
-    } else {
-        auto time = std::chrono::system_clock::now();
-        auto since_epoch = time.time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(since_epoch);
-        date = (double)millis.count();
-    }
-
-    I18nAddon *obj = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status != napi_ok || !obj || !obj->timezone_) {
-        LOGE("Get TimeZone object failed");
-        return nullptr;
-    }
-    int32_t result = obj->timezone_->GetOffset(date);
-    napi_value value = nullptr;
-    status = napi_create_int32(env, result, &value);
-    if (status != napi_ok) {
-        LOGE("Create result failed");
-        return nullptr;
-    }
-    return value;
-}
-
-napi_value I18nAddon::GetRawOffset(napi_env env, napi_callback_info info)
-{
-    size_t argc = 0;
-    napi_value *argv = nullptr;
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    I18nAddon *obj = nullptr;
-    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&obj));
-    if (status != napi_ok || !obj || !obj->timezone_) {
-        LOGE("Get TimeZone object failed");
-        return nullptr;
-    }
-    int32_t result = obj->timezone_->GetRawOffset();
-    napi_value value = nullptr;
-    status = napi_create_int32(env, result, &value);
-    if (status != napi_ok) {
-        LOGE("Create result failed");
-        return nullptr;
-    }
-    return value;
-}
-
 napi_value I18nAddon::CreateTimeZoneObject(napi_env env, napi_status &initStatus)
 {
     napi_status status = napi_ok;
@@ -3137,7 +3313,7 @@ napi_value I18nAddon::CreateTimeZoneObject(napi_env env, napi_status &initStatus
         return nullptr;
     }
     napi_property_descriptor timezoneProperties[] = {
-        DECLARE_NAPI_FUNCTION("getAvailableIDs", GetAvailableTimezoneIDs),
+        DECLARE_NAPI_STATIC_FUNCTION("getAvailableIDs", I18nTimeZoneAddon::GetAvailableTimezoneIDs),
     };
     status = napi_define_properties(env, timezone,
                                     sizeof(timezoneProperties) / sizeof(napi_property_descriptor),
@@ -3169,6 +3345,17 @@ napi_value I18nAddon::CreateSystemObject(napi_env env, napi_status &initStatus)
         DECLARE_NAPI_FUNCTION("is24HourClock", Is24HourClock),
         DECLARE_NAPI_STATIC_FUNCTION("setAppPreferredLanguage", SetAppPreferredLanguage),
         DECLARE_NAPI_STATIC_FUNCTION("getAppPreferredLanguage", GetAppPreferredLanguage),
+
+        DECLARE_NAPI_STATIC_FUNCTION("getSystemLanguages", I18nSystemAddon::GetSystemLanguages),
+        DECLARE_NAPI_STATIC_FUNCTION("getSystemCountries", I18nSystemAddon::GetSystemCountriesWithError),
+        DECLARE_NAPI_STATIC_FUNCTION("isSuggested", I18nSystemAddon::IsSuggestedWithError),
+        DECLARE_NAPI_STATIC_FUNCTION("getPreferredLanguageList", I18nSystemAddon::GetPreferredLanguageList),
+        DECLARE_NAPI_STATIC_FUNCTION("getFirstPreferredLanguage", I18nSystemAddon::GetFirstPreferredLanguage),
+        DECLARE_NAPI_STATIC_FUNCTION("getUsingLocalDigit", I18nSystemAddon::GetUsingLocalDigitAddon),
+        DECLARE_NAPI_STATIC_FUNCTION("getSimplifiedLanguage", I18nSystemAddon::GetSimplifiedLanguage),
+        DECLARE_NAPI_STATIC_FUNCTION("getTemperatureType", I18nSystemAddon::GetTemperatureType),
+        DECLARE_NAPI_STATIC_FUNCTION("getTemperatureName", I18nSystemAddon::GetTemperatureName),
+        DECLARE_NAPI_STATIC_FUNCTION("getFirstDayOfWeek", I18nSystemAddon::GetFirstDayOfWeek),
     };
     status = napi_define_properties(env, system,
                                     sizeof(systemProperties) / sizeof(napi_property_descriptor),
@@ -3179,60 +3366,6 @@ napi_value I18nAddon::CreateSystemObject(napi_env env, napi_status &initStatus)
         return nullptr;
     }
     return system;
-}
-
-napi_value I18nAddon::GetAvailableTimezoneIDs(napi_env env, napi_callback_info info)
-{
-    I18nErrorCode errorCode = I18nErrorCode::SUCCESS;
-    std::set<std::string> timezoneIDs = I18nTimeZone::GetAvailableIDs(errorCode);
-    if (errorCode != I18nErrorCode::SUCCESS) {
-        return nullptr;
-    }
-    napi_value result = nullptr;
-    napi_status status = napi_create_array_with_length(env, timezoneIDs.size(), &result);
-    if (status != napi_ok) {
-        LOGE("Failed to create array");
-        return nullptr;
-    }
-    size_t index = 0;
-    for (std::set<std::string>::iterator it = timezoneIDs.begin(); it != timezoneIDs.end(); ++it) {
-        napi_value value = nullptr;
-        status = napi_create_string_utf8(env, (*it).c_str(), NAPI_AUTO_LENGTH, &value);
-        if (status != napi_ok) {
-            LOGE("Failed to create string item");
-            return nullptr;
-        }
-        status = napi_set_element(env, result, index, value);
-        if (status != napi_ok) {
-            LOGE("Failed to set array item");
-            return nullptr;
-        }
-        ++index;
-    }
-    return result;
-}
-
-napi_value I18nAddon::StaticGetTimeZone(napi_env env, napi_value *argv, bool isZoneID)
-{
-    napi_value constructor = nullptr;
-    napi_status status = napi_get_reference_value(env, *g_timezoneConstructor, &constructor);
-    if (status != napi_ok) {
-        LOGE("Failed to create reference at StaticGetTimeZone");
-        return nullptr;
-    }
-    napi_value newArgv[2] = { 0 };
-    newArgv[0] = argv[0];
-    status = napi_get_boolean(env, isZoneID, &newArgv[1]);
-    if (status != napi_ok) {
-        return nullptr;
-    }
-    napi_value result = nullptr;
-    status = napi_new_instance(env, constructor, 2, newArgv, &result); // 2 is parameter num
-    if (status != napi_ok) {
-        LOGE("StaticGetTimeZone create instance failed");
-        return nullptr;
-    }
-    return result;
 }
 
 napi_value I18nAddon::InitCharacter(napi_env env, napi_value exports)
@@ -3439,10 +3572,14 @@ napi_value Init(napi_env env, napi_value exports)
     val = I18nAddon::InitBreakIterator(env, val);
     val = I18nAddon::InitI18nCalendar(env, val);
     val = I18nAddon::InitIndexUtil(env, val);
-    val = I18nAddon::InitI18nTimeZone(env, val);
     val = I18nAddon::InitTransliterator(env, val);
     val = I18nAddon::InitCharacter(env, val);
     val = I18nAddon::InitI18nNormalizer(env, val);
+    val = I18nTimeZoneAddon::InitI18nTimeZone(env, val);
+    val = EntityRecognizerAddon::InitEntityRecognizer(env, val);
+    val = HolidayManagerAddon::InitHolidayManager(env, val);
+    val = ZoneRulesAddon::InitI18nZoneRules(env, val);
+    val = ZoneOffsetTransitionAddon::InitZoneOffsetTransition(env, val);
     return val;
 }
 

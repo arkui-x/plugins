@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include "i18n_types.h"
+#include "locale_info.h"
 #include "plugins/i18n/I18N.h"
 
 namespace OHOS {
@@ -41,8 +43,26 @@ public:
     static bool IsValidTag(const std::string &tag);
     static std::string GetAppPreferredLanguage();
     static void SetAppPreferredLanguage(const std::string &language);
+    static bool IsSuggested(const std::string& language, const std::string& region = std::string(""));
+    static std::unordered_set<std::string> GetSystemLanguages();
+    static std::vector<std::string> GetPreferredLanguages();
+    static std::string GetFirstPreferredLanguage();
+    static bool GetUsingLocalDigit();
+    static std::unordered_set<std::string> GetSystemCountries(const std::string& language);
+    static std::unordered_set<std::string> GetAvailableIDs();
+    static std::string GetSimplifiedSystemLanguage();
+    static std::string GetSimplifiedLanguage(const std::string& languageTag, int32_t& code);
+    static WeekDay GetFirstDayOfWeek();
+    static TemperatureType GetTemperatureType();
+    static std::string GetTemperatureName(const TemperatureType& type);
+    static std::string GetUnicodeWrappedFilePath(const std::string& path, const char delimiter,
+        std::shared_ptr<LocaleInfo> localeInfo, std::string& invalidField);
+    static std::string GetUnicodeWrappedFilePath(const std::string& path, const char delimiter,
+        const std::string& localeTag, std::string& invalidField);
 
 private:
+    static std::string GetUnicodeWrappedFilePathInner(const std::string& path, const char delimiter,
+        const std::string& localeTag, std::string& invalidField);
     static constexpr uint32_t LANGUAGE_LEN = 2;
     static std::unique_ptr<Plugin::I18N> plugin;
 };

@@ -26,6 +26,9 @@ template("plugin_i18n_static") {
 
     include_dirs = [
       "include",
+      "./entity_recognition/include",
+      "./entity_recognition/date_time_recognition/include",
+      "./entity_recognition/phone_number_recognition/include",
       "$ace_root",
       "$ace_root/frameworks",
       "$root_out_dir/arkui/framework",
@@ -55,7 +58,40 @@ template("plugin_i18n_static") {
       "framework/phone_number_format.cpp",
       "framework/plural_rules.cpp",
       "framework/utils.cpp",
+      "i18n_system_addon.cpp",
       "i18n_addon.cpp",
+    ]
+
+    sources += [
+      "framework/holiday_manager.cpp",
+      "holiday_manager_addon.cpp",
+    ]
+
+    sources += [
+      "framework/zone_offset_transition.cpp",
+      "framework/zone_rules.cpp",
+      "i18n_timezone_addon.cpp",
+      "zone_offset_transition_addon.cpp",
+      "zone_rules_addon.cpp",
+    ]
+
+    sources += [
+      "entity_recognition/date_time_recognition/src/date_rule_init.cpp",
+      "entity_recognition/date_time_recognition/src/date_time_filter.cpp",
+      "entity_recognition/date_time_recognition/src/date_time_matched.cpp",
+      "entity_recognition/date_time_recognition/src/date_time_rule.cpp",
+      "entity_recognition/date_time_recognition/src/date_time_sequence.cpp",
+      "entity_recognition/date_time_recognition/src/rules_engine.cpp",
+      "entity_recognition/phone_number_recognition/src/border_rule.cpp",
+      "entity_recognition/phone_number_recognition/src/code_rule.cpp",
+      "entity_recognition/phone_number_recognition/src/find_rule.cpp",
+      "entity_recognition/phone_number_recognition/src/negative_rule.cpp",
+      "entity_recognition/phone_number_recognition/src/phone_number_matched.cpp",
+      "entity_recognition/phone_number_recognition/src/phone_number_rule.cpp",
+      "entity_recognition/phone_number_recognition/src/positive_rule.cpp",
+      "entity_recognition/phone_number_recognition/src/regex_rule.cpp",
+      "entity_recognition/src/entity_recognizer.cpp",
+      "entity_recognizer_addon.cpp",
     ]
 
     # libphonnumber
@@ -108,6 +144,7 @@ template("plugin_i18n_static") {
       "//plugins/libs/icu:icu_${target_os}",
       "//plugins/libs/napi:napi_${target_os}",
       "//third_party/protobuf:protobuf_lite_static",
+      "//third_party/libxml2:libxml2",
     ]
 
     if (defined(config.libace_target)) {
@@ -116,12 +153,14 @@ template("plugin_i18n_static") {
 
     if (platform == "android") {
       deps += [ "android/java:i18n_plugin_android_jni" ]
+      deps += [ "//foundation/arkui/ace_engine/adapter/android/build:intl" ]
       libs = [
         "android",
         "log",
       ]
     } else if (platform == "ios") {
       deps += [ "ios:i18n_plugin_ios" ]
+      deps += [ "//foundation/arkui/ace_engine/adapter/ios/build:intl" ]
       cflags_cc += [ "-faligned-allocation" ]
       defines += [ "ARK_UI_X" ]
     }

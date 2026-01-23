@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,8 @@
 #define PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
 
 #include <memory>
+#include <unordered_set>
+#include <vector>
 
 namespace OHOS::Plugin {
 class I18N {
@@ -31,6 +33,13 @@ public:
     virtual std::string GetSystemTimezone();
     virtual std::string GetAppPreferredLanguage();
     virtual void SetAppPreferredLanguage(const std::string& languageTag);
+    virtual std::unordered_set<std::string> GetSystemLanguages();
+    virtual std::unordered_set<std::string> GetSystemCountries(const std::string& language);
+    virtual std::unordered_set<std::string> GetAvailableIDs();
+    virtual std::vector<std::string> GetPreferredLanguages();
+    virtual std::string GetFirstPreferredLanguage();
+    virtual bool IsSuggested(const std::string& language, const std::string& region);
+    virtual bool GetUsingLocalDigit();
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_I18N_PLUGIN_H
