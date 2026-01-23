@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,9 +14,10 @@
  */
 
 #include "plugins/i18n/android/java/jni/i18n_plugin_impl.h"
-#include "plugins/i18n/android/java/jni/i18n_plugin_jni.h"
 
 #include <string>
+#include "plugins/i18n/android/java/jni/i18n_plugin_jni.h"
+
 
 namespace OHOS::Plugin {
 std::unique_ptr<I18N> I18N::Create()
@@ -57,5 +58,40 @@ std::string I18NPluginImpl::GetAppPreferredLanguage()
 void I18NPluginImpl::SetAppPreferredLanguage(const std::string& languageTag)
 {
     I18NPluginJni::SetAppPreferredLanguage(languageTag);
+}
+
+std::unordered_set<std::string> I18NPluginImpl::GetSystemLanguages()
+{
+    return I18NPluginJni::GetSystemLanguages();
+}
+
+std::unordered_set<std::string> I18NPluginImpl::GetSystemCountries(const std::string& language)
+{
+    return I18NPluginJni::GetSystemCountries(language);
+}
+
+std::unordered_set<std::string> I18NPluginImpl::GetAvailableIDs()
+{
+    return I18NPluginJni::GetAvailableIDs();
+}
+
+std::vector<std::string> I18NPluginImpl::GetPreferredLanguages()
+{
+    return I18NPluginJni::GetPreferredLanguages();
+}
+
+std::string I18NPluginImpl::GetFirstPreferredLanguage()
+{
+    return I18NPluginJni::GetFirstPreferredLanguage();
+}
+
+bool I18NPluginImpl::IsSuggested(const std::string& language, const std::string& region)
+{
+    return I18NPluginJni::IsSuggested(language, region);
+}
+
+bool I18NPluginImpl::GetUsingLocalDigit()
+{
+    return I18NPluginJni::GetUsingLocalDigit();
 }
 } // namespace OHOS::Plugin
