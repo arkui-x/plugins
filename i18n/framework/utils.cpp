@@ -146,6 +146,7 @@ std::string GetAbsoluteFilePath(const std::string& filePath)
         LOGE("utils::GetAbsoluteFilePath realpath error, error message: %{public}s.", strerror(errno));
         return "";
     }
+    resolvedPath[PATH_MAX] = '\0';
     std::ifstream file(resolvedPath.data());
     if (!file.good()) {
         LOGE("utils::GetAbsoluteFilePath file open is not good.");
