@@ -54,7 +54,7 @@ struct BufferData {
 
 static void FinalizeCallback(napi_env env, void *finalizeData, void *finalizeHint)
 {
-    BufferData *bufferData = static_cast<BufferData *>(finalizeData);
+    BufferData *bufferData = static_cast<BufferData *>(finalizeHint);
     delete bufferData;
 }
 
