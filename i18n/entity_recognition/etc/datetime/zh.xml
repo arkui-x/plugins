@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2026 Huawei Device Co., Ltd.
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<Date_Time_rules>
+    <locale_rules>
+        <tag31001>
+            <content>(([regex_ampm])[ ]*)([regex_hms])(\s*\(?([regex_zzzz])\)?(?![.:]?\d)){0,1}</content>
+        </tag31001>
+        <tag31005>
+            <content>(?&lt;![周週])(([regex_zzzz])[ ]*){0,1}(([param_mm]|[param_am]|[param_pm]|am|pm)[ ]*){0,1}</content>
+            <content>((2[0-3]|[0-1]?[0-9])|[param_digitHour])\s*([時时]|[点點]半?)(整|[一三]刻|((([0-5]?[0-9]</content>
+            <content>|[param_digitMS2])\s*分|([0-5][0-9]|[param_digitMS])(\s*分)?)(\s*(([0-5]?[0-9])</content>
+            <content>|[param_digitMS])\s*秒)?))?</content>
+        </tag31005>
+        <tag21014>
+            <content>(([regex_y]|[param_digitYear]|[param_textyear])\s*年\s*)?(([regex_m]|[param_digitMonth]</content>
+            <content>|[param_textmonth])\s*月)\s*([regex_d]|[param_digitDay])\s*(日|号)(\s*[\(（]?([param_EEEE]</content>
+            <content>|[param_E]|[param_days])[\)）]?){0,1}</content>
+        </tag21014>
+        <tag41001>
+            <content>([regex_y]\s*[年]\s*)?([regex_m])\s*[月]\s*[regex_d]\s*(日|号)?(\s*\(([param_EEEE]|</content>
+            <content>[param_E])\))?\s*[-~至～]\s*(([regex_m])\s*[月]\s*)?[regex_d]\s*(日|号)(\s*\(([param_EEEE]</content>
+            <content>|[param_E])\))?</content>
+        </tag41001>
+        <tag31009>
+            <content>[param_am]|[param_pm]</content>
+        </tag31009>
+    </locale_rules>
+    <param>
+        <tagparam_tmark>
+            <content>:</content>
+        </tagparam_tmark>
+        <tagparam_am>
+            <content>上午|清晨|凌晨|早[上晨]?</content>
+        </tagparam_am>
+        <tagparam_pm>
+            <content>下午|晚上|傍晚|半夜|晚</content>
+        </tagparam_pm>
+        <tagparam_mm>
+            <content>中午|正午</content>
+        </tagparam_mm>
+        <tagparam_MMM>
+            <content>1月|2月|3月|4月|5月|6月|7月|8月|9月|10月|11月|12月</content>
+        </tagparam_MMM>
+        <tagparam_MMMM>
+            <content>一月|二月|三月|四月|五月|六月|七月|八月|九月|十月|十一月|十二月</content>
+        </tagparam_MMMM>
+        <tagparam_E>
+            <content>周天|周日|周一|周二|周三|周四|周五|周六|週天|週日|週一|週二|週三|週四|週五|週六</content>
+        </tagparam_E>
+        <tagparam_E2>
+            <content>周天|周日|周一|周二|周三|周四|周五|周六|週天|週日|週一|週二|週三|週四|週五|週六</content>
+        </tagparam_E2>
+        <tagparam_EEEE>
+            <content>星期天|星期日|星期一|星期二|星期三|星期四|星期五|星期六|礼拜天|礼拜日|礼拜一|礼拜二|礼拜三|礼拜四|礼拜五|礼拜六</content>
+        </tagparam_EEEE>
+        <tagparam_days>
+            <content>今[天日]?(?!年)|明[天日]?(?!年)|[后後][天日]?(?!年)|大[后後][天日]?(?!年)</content>
+        </tagparam_days>
+        <tagparam_thisweek>
+            <content>本周天|本周日|本周一|本周二|本周三|本周四|本周五|本周六|本週天|本週日|本週一|本週二|本週三|本週四|本週五|本週六</content>
+        </tagparam_thisweek>
+        <tagparam_nextweek>
+            <content>下周天|下周日|下周一|下周二|下周三|下周四|下周五|下周六|下週天|下週日|下週一|下週二|下週三|下週四|下週五|下週六|</content>
+            <content>下下周天|下下周日|下下周一|下下周二|下下周三|下下周四|下下周五|下下周六|下下週天|</content>
+            <content>下下週日|下下週一|下下週二|下下週三|下下週四|下下週五|下下週六</content>
+        </tagparam_nextweek>
+        <tagparam_textyear>
+            <content>\u0604|今|明|后|後</content>
+        </tagparam_textyear>
+        <tagparam_textmonth>
+            <content>\u0604|本|下[个個]?</content>
+        </tagparam_textmonth>
+        <tagparam_digit>
+            <content>\u0604|[零一二三四五六七八九十两兩]+</content>
+        </tagparam_digit>
+        <tagparam_digitYear>
+            <content>\u0604|二[零一二三四五六七八九]{3}|(?&lt;![零一二三四五六七八九])[零一二三四][零一二三四五六七八九]</content>
+        </tagparam_digitYear>
+        <tagparam_digitMonth>
+            <content>\u0604|十[一二]|[一二三四五六七八九十]</content>
+        </tagparam_digitMonth>
+        <tagparam_digitDay>
+            <content>\u0604|三十一?|二?十[一二三四五六七八九]?|[一二三四五六七八九]</content>
+        </tagparam_digitDay>
+        <tagparam_digitHour>
+            <content>\u0604|二十[一二三四]?|十[一二三四五六七八九]?|[零一二三四五六七八九两兩]</content>
+        </tagparam_digitHour>
+        <tagparam_digitMS>
+            <content>\u0604|[二三四五]?十[一二三四五六七八九]?|一十|零[一二三四五六七八九]</content>
+        </tagparam_digitMS>
+        <tagparam_digitMS2>
+            <content>\u0604|[二三四五]?十[一二三四五六七八九]?|一十|零?[一二三四五六七八九]</content>
+        </tagparam_digitMS2>
+        <tagparam_timesuf>
+            <content>\u0604|钟|鍾|半|整|[一三]刻</content>
+        </tagparam_timesuf>
+        <tagparam_pastForward>
+            <content>\u0604|昨[日天]?\(?|前[日天]\(?|去年|前年|上月|上[个個]月|上[个個]?|1[0-9]{3}年|一[一二三四五六七八九零]{3}年|</content>
+            <content>[五六七八九][一二三四五六七八九零]年</content>
+        </tagparam_pastForward>
+        <tagparam_filtertext>
+            <content>早一点|晚一点|明[后後]天|上午|清晨|凌晨|早[上晨]?|下午|中午|晚上|傍晚|半夜|晚|今|明|后|後|[一二三四五六七八九两兩零]</content>
+            <content>点[[一二三四五六七八九零]]</content>
+        </tagparam_filtertext>
+        <tagmark_ShortDateLevel>
+            <content>ymd</content>
+        </tagmark_ShortDateLevel>
+    </param>
+    <delimiter>
+        <tagzh>
+            <content></content>
+        </tagzh>
+    </delimiter>
+    <isRelDates>
+        <tagzh>
+            <content></content>
+        </tagzh>
+    </isRelDates>
+    <default_locale>
+        <tagbackup>
+            <content>en</content>
+        </tagbackup>
+    </default_locale>
+</Date_Time_rules>

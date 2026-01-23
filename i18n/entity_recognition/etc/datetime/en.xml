@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2026 Huawei Device Co., Ltd.
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<Date_Time_rules>
+    <locale_rules>
+        <tag31008>
+            <content>([regex_zzzz][ ]*)?(([regex_ampm])[ ]*)[regex_hms]</content>
+        </tag31008>
+        <tag31002>
+            <content>([regex_hms])([ ]*([regex_ampm]))?(\s*\(?[regex_zzzz]\)?(?![.:]?\d)){0,1}</content>
+        </tag31002>
+    </locale_rules>
+    <param>
+        <tagparam_tmark>
+            <content>:</content>
+        </tagparam_tmark>
+        <tagparam_am>
+            <content>AM|a\.m\.</content>
+        </tagparam_am>
+        <tagparam_pm>
+            <content>PM|p\.m\.</content>
+        </tagparam_pm>
+        <tagparam_mm>
+            <content>noon</content>
+        </tagparam_mm>
+        <tagparam_MMM>
+            <content>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec</content>
+        </tagparam_MMM>
+        <tagparam_MMMM>
+            <content>January|February|March|April|May|June|July|August|September|October|November|December</content>
+        </tagparam_MMMM>
+        <tagparam_E>
+            <content>Sun|Mon|Tue|Wed|Thu|Fri|Sat</content>
+        </tagparam_E>
+        <tagparam_E2>
+            <content>Sun|Mon|Tue|Wed|Thu|Fri|Sat</content>
+        </tagparam_E2>
+        <tagparam_EEEE>
+            <content>Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday</content>
+        </tagparam_EEEE>
+        <tagparam_days>
+            <content>today|tomorrow</content>
+        </tagparam_days>
+        <tagparam_thisweek>
+            <content>this\s+Sunday|this\s+Monday|this\s+Tuesday|this\s+Wednesday|this\s+Thursday|</content>
+            <content>this\s+Friday|this\s+Saturday</content>
+        </tagparam_thisweek>
+        <tagparam_nextweek>
+            <content>next\s+Sunday|next\s+Monday|next\s+Tuesday|next\s+Wednesday|next\s+Thursday|</content>
+            <content>next\s+Friday|next\s+Saturday</content>
+        </tagparam_nextweek>
+        <tagmark_ShortDateLevel>
+            <content>mdy</content>
+        </tagmark_ShortDateLevel>
+    </param>
+    <isRelDates>
+        <tagen>
+            <content>,</content>
+        </tagen>
+    </isRelDates>
+    <default_locale>
+        <tagbackup>
+            <content>zh</content>
+        </tagbackup>
+    </default_locale>
+</Date_Time_rules>
