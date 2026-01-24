@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,7 +32,7 @@ const int REGION_OFFSET = 7;
 const int BASE_VALUE_SIZE = 2;
 const int FACTOR_SIZE = 2;
 const int CHAR_OFFSET = 48;
-const int MAX_UNIT_NUM = 500;
+const int MAX_UNIT_NUM = 502;
 
 const std::unordered_map<std::string, std::vector<std::string>> USAGE_001 {
     { "area-land-agricult", { "hectare" } },

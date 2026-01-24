@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -77,6 +77,12 @@ void ErrorUtil::NapiThrow(napi_env env, int32_t errCode, const std::string& valu
     napi_value error = nullptr;
     napi_create_error(env, code, message, &error);
     napi_throw(env, error);
+}
+
+void ErrorUtil::NapiNotFoundError(napi_env env, int32_t errCode, const std::string& valueName,
+    bool throwError)
+{
+    NapiThrow(env, errCode, valueName, "", throwError);
 }
 } // namespace I18n
 } // namespace Global

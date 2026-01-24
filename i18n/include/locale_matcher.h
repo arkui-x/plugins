@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,8 @@ class LocaleMatcher {
 public:
     static int8_t IsMoreSuitable(const LocaleInfo *current, const LocaleInfo *other, const LocaleInfo *request);
     static bool Match(const LocaleInfo *current, const LocaleInfo *other);
+    static std::string GetBestMatchedLocale(const LocaleInfo* requestLocale,
+        const std::vector<LocaleInfo*>& candidateLocales);
 
 public:
     static uint64_t EN_GB_ENCODE;

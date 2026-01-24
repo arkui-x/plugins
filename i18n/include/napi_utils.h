@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "i18n_types.h"
+#include "locale_info.h"
 #include "napi/native_api.h"
 namespace OHOS {
 namespace Global {
@@ -31,8 +33,18 @@ public:
     static napi_value CreateString(napi_env env, const std::string &str);
     static void VerifyType(napi_env env, const std::string& valueName, const std::string& type,
         napi_value argv);
+    static bool CheckNapiIsNull(napi_env env, napi_value value);
+    static napi_value CreateNumber(napi_env env, const int32_t& num);
+    static double GetDouble(napi_env env, napi_value value, int32_t& code);
+    static int32_t GetInt(napi_env env, napi_value value, int32_t& code);
+    static napi_status SetEnumValue(napi_env env, napi_value enumObj, const std::string& enumName, int32_t enumVal);
+    static napi_value CreateBuiltinsLocaleObject(napi_env env, const std::string& locale);
+    static napi_value GetBuiltinsLocaleConstructor(napi_env env);
+    static bool IsBuiltinsLocale(napi_env env, napi_value locale);
+    static LocaleType GetLocaleType(napi_env env, napi_value locale);
+    static std::shared_ptr<LocaleInfo> ParseLocaleInfo(napi_env env, napi_value localeInfo);
+    static std::string ParseBuiltinsLocale(napi_env env, napi_value builtinsLocale);
 };
-
 } // namespace I18n
 } // namespace Global
 } // namespace OHOS

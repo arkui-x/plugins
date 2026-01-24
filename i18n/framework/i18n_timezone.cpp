@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,36 +14,36 @@
  */
 #include "i18n_timezone.h"
 
-#include <filesystem>
+#include <dirent.h>
+#include <fstream>
+#include <map>
+#include <set>
+#include <string>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <type_traits>
+#include <unistd.h>
+#include <utility>
 
+#include "libxml/globals.h"
+#include "libxml/tree.h"
+#include "libxml/xmlstring.h"
 #include "locale_config.h"
 #include "locale_info.h"
+#include "locale_matcher.h"
 #include "log.h"
-#include "map"
-#include "set"
-#include "string"
-#include "type_traits"
 #include "umachine.h"
-#include "utility"
-#include "utils.h"
-#include "utypes.h"
-#include "vector"
 #include "unicode/locid.h"
 #include "unicode/unistr.h"
 #include "utils.h"
+#include "utypes.h"
 
 namespace OHOS {
 namespace Global {
 namespace I18n {
 const char *I18nTimeZone::DEFAULT_TIMEZONE = "GMT";
 
-std::set<std::string> I18nTimeZone::availableIDs {};
-std::set<std::string> I18nTimeZone::supportedLocales {};
-std::set<std::string> I18nTimeZone::availableZoneCityIDs {};
-std::map<std::string, std::string> I18nTimeZone::city2TimeZoneID {};
-bool I18nTimeZone::useDeviceCityDispName = false;
-
+std::unordered_set<std::string> I18nTimeZone::availableIDs {};
 I18nTimeZone::I18nTimeZone(std::string &id, bool isZoneID)
 {
     if (id.empty()) {
@@ -75,6 +75,10 @@ icu::TimeZone* I18nTimeZone::GetTimeZone()
 std::unique_ptr<I18nTimeZone> I18nTimeZone::CreateInstance(std::string &id, bool isZoneID)
 {
     std::unique_ptr<I18nTimeZone> i18nTimeZone = std::make_unique<I18nTimeZone>(id, isZoneID);
+    if (i18nTimeZone == nullptr) {
+        return nullptr;
+    }
+
     if (i18nTimeZone->GetTimeZone() == nullptr) {
         return nullptr;
     }
@@ -148,9 +152,12 @@ std::string I18nTimeZone::GetDisplayName(std::string localeStr, bool isDST)
     return result;
 }
 
-std::set<std::string> I18nTimeZone::GetAvailableIDs(I18nErrorCode &errorCode)
+std::unordered_set<std::string> I18nTimeZone::GetAvailableIDs()
 {
-    // cross modify
+    if (availableIDs.size() > 0) {
+        return availableIDs;
+    }
+    availableIDs = LocaleConfig::GetAvailableIDs();
     return availableIDs;
 }
 }  // namespace I18n

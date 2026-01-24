@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -58,6 +58,8 @@ public:
     static napi_value InitRelativeTimeFormat(napi_env env, napi_value exports);
     static napi_value InitPluralRules(napi_env env, napi_value exports);
     static void Destructor(napi_env env, void *nativeObject, void *finalize_hint);
+    static bool IsLocaleInfo(napi_env env, napi_value argv);
+    std::shared_ptr<LocaleInfo> GetLocaleInfo();
 
     IntlAddon();
     virtual ~IntlAddon();
@@ -118,7 +120,7 @@ private:
     static napi_value SetProperty(napi_env env, napi_callback_info info);
 
     napi_env env_;
-    std::unique_ptr<LocaleInfo> locale_ = nullptr;
+    std::shared_ptr<LocaleInfo> locale_ = nullptr;
     std::unique_ptr<DateTimeFormat> datefmt_ = nullptr;
     std::unique_ptr<NumberFormat> numberfmt_ = nullptr;
     std::unique_ptr<RelativeTimeFormat> relativetimefmt_ = nullptr;

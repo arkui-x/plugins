@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,6 +32,13 @@ public:
     std::string GetSystemTimezone() override;
     std::string GetAppPreferredLanguage() override;
     void SetAppPreferredLanguage(const std::string& languageTag) override;
+    std::unordered_set<std::string> GetSystemLanguages() override;
+    std::unordered_set<std::string> GetSystemCountries(const std::string& language) override;
+    std::unordered_set<std::string> GetAvailableIDs() override;
+    std::vector<std::string> GetPreferredLanguages() override;
+    std::string GetFirstPreferredLanguage() override;
+    bool IsSuggested(const std::string& language, const std::string& region) override;
+    bool GetUsingLocalDigit() override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_ANDROID_JAVA_JNI_I18N_PLUGIN_IMPL_H

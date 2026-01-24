@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except", "in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,10 +17,14 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "i18n_types.h"
-#include "memory"
 #include "unicode/timezone.h"
 
 namespace OHOS {
@@ -38,41 +42,14 @@ public:
     std::string GetDisplayName(std::string localeStr);
     std::string GetDisplayName(std::string localeStr, bool isDST);
     static std::unique_ptr<I18nTimeZone> CreateInstance(std::string &id, bool isZoneID);
-    static std::set<std::string> GetAvailableIDs(I18nErrorCode &errorCode);
-    static std::set<std::string> GetAvailableZoneCityIDs();
-    static std::string GetCityDisplayName(std::string &cityID, std::string &locale);
+    static std::unordered_set<std::string> GetAvailableIDs();
 
 private:
-    static const char *TIMEZONE_KEY;
     static const char *DEFAULT_TIMEZONE;
-    static const char *CITY_TIMEZONE_DATA_PATH;
-    static const char *DEVICE_CITY_TIMEZONE_DATA_PATH;
-    static const char *DEFAULT_LOCALE;
-    static const char *CITY_DISPLAYNAME_PATH;
-    static const char *DEVICE_CITY_DISPLAYNAME_PATH;
-    static const char *SUPPORTED_LOCALES_PATH;
-    static const char *TIMEZONE_ROOT_TAG;
-    static const char *TIMEZONE_SECOND_ROOT_TAG;
-    static const char *CITY_DISPLAYNAME_ROOT_TAG;
-    static const char *CITY_DISPLAYNAME_SECOND_ROOT_TAG;
-    static const char *ZONEINFO_PATH;
-    static const uint32_t ELEMENT_NUM = 2;
-    static std::set<std::string> availableIDs;
-    static std::set<std::string> supportedLocales;
-    static std::set<std::string> availableZoneCityIDs;
-    static std::map<std::string, std::string> city2TimeZoneID;
-    static constexpr int SYS_PARAM_LEN = 128;
-    static bool useDeviceCityDispName;
+    static std::unordered_set<std::string> availableIDs;
     icu::TimeZone *timezone = nullptr;
 
-    static bool ReadTimeZoneData(const char *xmlPath);
-    static std::string ComputeLocale(std::string &locale);
     icu::TimeZone* GetTimeZone();
-    static std::string FindCityDisplayNameFromXml(std::string &cityID, std::string &locale);
-    static bool GetSupportedLocales();
-    static std::string GetFallBack(std::string &localeStr);
-    static void GetTimezoneIDFromZoneInfo(std::set<std::string> &availableIDs, std::string &parentPath,
-        std::string &parentName);
 };
 } // namespace I18n
 } // namespace Global

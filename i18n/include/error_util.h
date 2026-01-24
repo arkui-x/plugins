@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -36,6 +36,8 @@ const size_t FUNC_ARGS_COUNT = 2;    // Function input parameter count
 class ErrorUtil {
 public:
     static void NapiThrow(napi_env env, int32_t errCode, bool throwError);
+    static void NapiNotFoundError(napi_env env, int32_t errCode, const std::string& valueName,
+        bool throwError);
     static void NapiThrow(
         napi_env env, int32_t errCode, const std::string& valueName, const std::string& valueContent, bool throwError);
 };

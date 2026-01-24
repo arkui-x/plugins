@@ -30,6 +30,14 @@ public:
     std::string GetSystemTimezone() override;
     std::string GetAppPreferredLanguage() override;
     void SetAppPreferredLanguage(const std::string& languageTag) override;
+
+    std::unordered_set<std::string> GetSystemLanguages() override;
+    std::unordered_set<std::string> GetSystemCountries(const std::string& language) override;
+    std::unordered_set<std::string> GetAvailableIDs() override;
+    std::vector<std::string> GetPreferredLanguages() override;
+    std::string GetFirstPreferredLanguage() override;
+    bool IsSuggested(const std::string& language, const std::string& region) override;
+    bool GetUsingLocalDigit() override;
 };
 } // namespace OHOS::Plugin
 #endif // PLUGINS_I18N_PLUGIN_IOS_I18N_PLUGIN_IMPL_H

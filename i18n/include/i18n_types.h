@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,12 @@ enum I18nErrorCode {
     INVALID_PARAMETER = -2,
     FAILED = -1,
     SUCCESS = 0,
+    INVALID_LOCALE_TAG = 6,
+    INVALID_NUMBER_FORMAT_SKELETON = 23,
+    INVALID_DATE_TIME_FORMAT_SKELETON = 24,
+    INVALID_DATE_TIME_FORMAT_PATTERN = 25,
+    INVALID_PARAM_INTL = 26,
+    MISSING_PARAM = 27
 };
 
 enum I18nNormalizerMode {
@@ -31,6 +37,28 @@ enum I18nNormalizerMode {
     NFD,
     NFKC,
     NFKD
+};
+
+enum TemperatureType {
+    CELSIUS = 1,
+    FAHRENHEIT = 2,
+    KELVIN = 3,
+};
+
+enum WeekDay {
+    MON = 1,
+    TUE = 2,
+    WED = 3,
+    THU = 4,
+    FRI = 5,
+    SAT = 6,
+    SUN = 7,
+};
+
+enum class LocaleType {
+    INVALID = 0,
+    BUILTINS_LOCALE = 1,
+    LOCALE_INFO = 2,
 };
 }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,17 +17,19 @@
 
 #include <string>
 #include <unordered_map>
-#include "napi/native_api.h"
+
 #include "i18n_break_iterator.h"
 #include "i18n_calendar.h"
 #include "i18n_normalizer.h"
 #include "i18n_timezone.h"
 #include "index_util.h"
-#include "napi/native_node_api.h"
-#include "phone_number_format.h"
 #include "locale_config.h"
 #include "locale_info.h"
 #include "locale_matcher.h"
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
+#include "phone_number_format.h"
+#include "unicode/translit.h"
 
 namespace OHOS {
 namespace Global {
@@ -63,21 +65,29 @@ public:
     static napi_value IsUpperCaseAddon(napi_env env, napi_callback_info info);
     static napi_value GetTypeAddon(napi_env env, napi_callback_info info);
     static napi_value Is24HourClock(napi_env env, napi_callback_info info);
-    static napi_value InitI18nTimeZone(napi_env env, napi_value exports);
-    static napi_value GetI18nTimeZone(napi_env env, napi_callback_info info);
     static napi_value GetDateOrder(napi_env env, napi_callback_info info);
     static napi_value GetBestMatchLocale(napi_env env, napi_callback_info info);
     static napi_value InitTransliterator(napi_env env, napi_value exports);
     static napi_value GetTransliteratorInstance(napi_env env, napi_callback_info info);
     static napi_value GetAvailableIDs(napi_env env, napi_callback_info info);
-    static napi_value GetAvailableTimezoneIDs(napi_env env, napi_callback_info info);
     static napi_value InitCharacter(napi_env env, napi_value exports);
     static napi_value InitUtil(napi_env env, napi_value exports);
     static napi_value System(napi_env env, napi_value exports);
     static napi_value InitI18nNormalizer(napi_env env, napi_value exports);
     static napi_value InitPhoneNumberFormat(napi_env env, napi_value exports);
+    static napi_value CreateTemperatureTypeEnum(napi_env env);
+    static napi_value CreateWeekDayEnum(napi_env env);
+    static napi_value GetTimePeriodName(napi_env env, napi_callback_info info);
+    static napi_value UnitConvert(napi_env env, napi_callback_info info);
+    static napi_value GetThreeLetterLanguage(napi_env env, napi_callback_info info);
+    static napi_value GetThreeLetterRegion(napi_env env, napi_callback_info info);
+    static napi_value GetUnicodeWrappedFilePath(napi_env env, napi_callback_info info);
 
 private:
+    static std::string GetUnicodeWrappedFilePathInner(napi_env env, napi_value locale, const std::string& path,
+        const char delimiter, std::string& errorCode);
+    static char GetDelimiter(napi_env env, napi_value argVal);
+    static int GetParamOfGetTimePeriodName(napi_env env, napi_callback_info info, std::string& tag, int32_t& hour);
     static napi_value PhoneNumberFormatConstructor(napi_env env, napi_callback_info info);
     static napi_value IsValidPhoneNumber(napi_env env, napi_callback_info info);
     static napi_value FormatPhoneNumber(napi_env env, napi_callback_info info);
@@ -177,6 +187,7 @@ private:
     static const char *NORMALIZER_MODE_NFD_NAME;
     static const char *NORMALIZER_MODE_NFKC_NAME;
     static const char *NORMALIZER_MODE_NFKD_NAME;
+    static const char PATH_SEPARATOR = '/';
 
     napi_env env_;
     std::unique_ptr<PhoneNumberFormat> phonenumberfmt_ = nullptr;

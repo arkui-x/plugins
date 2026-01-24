@@ -28,6 +28,13 @@ NS_ASSUME_NONNULL_BEGIN
 -(NSString*)getSystemTimezone;
 -(NSString*)getAppPreferredLanguage;
 -(void)setAppPreferredLanguage:(NSString*)languageTag;
+- (NSArray<NSString *> *)getSystemLanguages;
+- (NSArray<NSString *> *)getSystemCountries:(NSString *)languageCode;
+- (NSArray<NSString *> *)getAvailableIDs;
+- (NSArray<NSString *> *)getPreferredLanguages;
+- (BOOL)isSuggested:(NSString *)langCode regionCode:(NSString *)regionCode;
+- (BOOL)isUsingLocalDigit;
+- (NSString *)getNumberingSystem;
 @end
 
 NS_ASSUME_NONNULL_END

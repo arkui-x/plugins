@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -64,28 +64,6 @@ std::unique_ptr<ZoneOffsetTransition> ZoneRules::NextTransition()
     UDate currentTime = static_cast<double>(millis.count());
     return NextTransition(currentTime);
 }
-
-// std::unique_ptr<ZoneOffsetTransition> ZoneRules::NextTransition(double date)
-// {
-//     if (btz == nullptr) {
-//         LOGE("ZoneRules::NextTransition: btz is nullptr.");
-//         return std::make_unique<ZoneOffsetTransition>();
-//     }
-
-//     std::string nextTransition = plugin->GetNextTransition(date);
-//     std::vector<std::string> transField;
-//     Split(nextTransition, ",", transField);
-//     const std::size_t transitionfieldSize = 3;
-//     if (transField.size() < transitionfieldSize) {
-//         LOGE("ZoneRules::NextTransition: btz is nullptr.");
-//         return std::make_unique<ZoneOffsetTransition>();
-//     }
-
-//     double time = std::stod(transField[0]);
-//     int32_t offsetBefore = std::stoi(transField[1]);
-//     int32_t offsetAfter = std::stoi(transField[2]);
-//     return std::make_unique<ZoneOffsetTransition>(time, offsetBefore, offsetAfter);
-// }
 
 std::unique_ptr<ZoneOffsetTransition> ZoneRules::NextTransition(double date)
 {
