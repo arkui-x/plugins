@@ -24,6 +24,13 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "AceSurfaceHolder.h"
 
+
+@interface PlayerAdapter() {
+    long _surfaceLayerId;
+    long _surfaceInceId;
+}
+@end
+
 @implementation PlayerAdapter
 - (id)init
 {
@@ -131,16 +138,22 @@
 {
     Class aceSurfaceHolderClass = NSClassFromString(@"AceSurfaceHolder");
     if (aceSurfaceHolderClass) {
-        CALayer *caLayer = [aceSurfaceHolderClass getLayerWithId:layerId inceId:inceId];
-        if (caLayer) {
-            self.avPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.avPlayer];
-            self.avPlayerLayer.videoGravity = AVLayerVideoGravityResize;
-            [caLayer addSublayer: self.avPlayerLayer];
-            self->surfaceView_ = caLayer.delegate;
-            self->surfaceView_.backgroundColor = UIColor.blackColor;
-            [self addObserverWithSurfaceFrame];
-            self->isObserverSurface_ = YES;
-        }
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            _surfaceLayerId = layerId;
+            _surfaceInceId = inceId;
+            CALayer *caLayer = [aceSurfaceHolderClass getLayerWithId:_surfaceLayerId inceId:_surfaceInceId];
+            if (caLayer) {
+                [self removeAVPlayerLayersFromLayer:caLayer];
+                self.avPlayerLayer = [AVPlayerLayer playerLayerWithPlayer:self.avPlayer];
+                self.avPlayerLayer.videoGravity = AVLayerVideoGravityResize;
+                self.avPlayerLayer.frame = caLayer.bounds;
+                [caLayer addSublayer:self.avPlayerLayer];
+                self->surfaceView_ = caLayer.delegate;
+                self->surfaceView_.backgroundColor = UIColor.blackColor;
+                [self addObserverWithSurfaceFrame];
+                self->isObserverSurface_ = YES;
+            }
+        });
     }
 }
 
@@ -255,6 +268,7 @@
     }
     if (self->isObserverSurface_) {
         [self removeObserverWithSurfaceFrame];
+        [self detachPlayerLayerFromSurface];
         self->isObserverSurface_ = NO;
     }
     if (isNotify) {
@@ -264,6 +278,36 @@
             self.avPlayer = nil;
         }
         self->playerState_ = OHOS::Media::PLAYER_RELEASED;
+    }
+}
+
+- (void)detachPlayerLayerFromSurface {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        if (self.avPlayerLayer) {
+            self.avPlayerLayer.player = nil;
+            [self.avPlayerLayer removeFromSuperlayer];
+            self.avPlayerLayer = nil;
+            return;
+        }
+        Class aceSurfaceHolderClass = NSClassFromString(@"AceSurfaceHolder");
+        if (!aceSurfaceHolderClass) {
+            return;
+        }
+        CALayer *caLayer = [aceSurfaceHolderClass getLayerWithId:_surfaceLayerId inceId:_surfaceInceId];
+        [self removeAVPlayerLayersFromLayer:caLayer];
+    });
+}
+
+- (void)removeAVPlayerLayersFromLayer:(CALayer *)caLayer
+{
+    if (!caLayer) {
+        return;
+    }
+    NSArray<CALayer *> *sublayersCopy = [caLayer.sublayers copy];
+    for (CALayer *subLayer in sublayersCopy) {
+        if ([subLayer isKindOfClass:[AVPlayerLayer class]]) {
+            [subLayer removeFromSuperlayer];
+        }
     }
 }
 
