@@ -15,11 +15,19 @@
 
 const __PlatformView__ = requireInternal('platformview');
 class PlatformView extends JSViewAbstract {
-    static create(id, data) {
+    static create(id, data, type) {
         if (data === undefined || data === null) {
-            __PlatformView__.create(id);
+            if (type === undefined || type === null) {
+                __PlatformView__.create(id, 0);
+            } else {
+                __PlatformView__.create(id, type);
+            }
         } else {
-            __PlatformView__.create(id, data);
+            if (type === undefined || type === null) {
+                __PlatformView__.create(id, 0, data);
+            } else {
+                __PlatformView__.create(id, type, data);
+            }
         }
     }
     
@@ -30,6 +38,37 @@ class PlatformView extends JSViewAbstract {
     static onDisAppear(value) {
         __Common__.onDisAppear(value);
     }
+
+    static rotate(value) {
+        __PlatformView__.rotate(value);
+        JSViewAbstract.rotate(value);
+    }
+
+    static scale(value) {
+        __PlatformView__.scale(value);
+        JSViewAbstract.scale(value);
+    }
+
+    static translate(value) {
+        __PlatformView__.translate(value);
+        JSViewAbstract.translate(value);
+    }
+
+    static transform(value) {
+        __PlatformView__.transform(value);
+        JSViewAbstract.transform(value);
+    }
+
+    static transform3D(value) {
+        __PlatformView__.transform(value);
+        JSViewAbstract.transform(value);
+    }
 }
 
+export let PlatformViewType;
+(function (PlatformViewType) {
+  PlatformViewType[PlatformViewType.TEXTURE_TYPE = 0] = 'TEXTURE_TYPE';
+  PlatformViewType[PlatformViewType.SURFACE_TYPE = 1] = 'SURFACE_TYPE';
+})(PlatformViewType || (PlatformViewType = {}));
+PlatformView.PlatformViewType = PlatformViewType;
 export default PlatformView;

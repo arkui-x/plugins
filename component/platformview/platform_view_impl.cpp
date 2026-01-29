@@ -130,9 +130,39 @@ int32_t PlatformViewImpl::SetSurface()
     return 0;
 }
 
+void PlatformViewImpl::RegisterPlatformView()
+{
+    platformViewDelegate_->RegisterPlatformView(id_);
+}
+
 void PlatformViewImpl::Dispose()
 {
     CHECK_NULL_VOID(platformViewDelegate_);
     platformViewDelegate_->Dispose();
+}
+
+void PlatformViewImpl::SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY)
+{
+    CHECK_NULL_VOID(platformViewDelegate_);
+    platformViewDelegate_->SetScale(x, y, z, centerX, centerY);
+}
+
+void PlatformViewImpl::SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+    const std::string& centerY, const std::string& centerZ, const std::string& perspective)
+{
+    CHECK_NULL_VOID(platformViewDelegate_);
+    platformViewDelegate_->SetRotation(x, y, z, angle, centerX, centerY, centerZ, perspective);
+}
+
+void PlatformViewImpl::SetTranslate(const std::string& x, const std::string& y, const std::string& z)
+{
+    CHECK_NULL_VOID(platformViewDelegate_);
+    platformViewDelegate_->SetTranslate(x, y, z);
+}
+
+void PlatformViewImpl::SetTransformMatrix(const std::vector<float>& matrix)
+{
+    CHECK_NULL_VOID(platformViewDelegate_);
+    platformViewDelegate_->SetTransformMatrix(matrix);
 }
 } // namespace OHOS::Ace::NG

@@ -40,8 +40,13 @@
 #include "platformview_event_hub.h"
 
 namespace OHOS::Ace::NG {
-PlatformViewPattern::PlatformViewPattern(const std::string& id, const std::optional<std::string>& data)
-    : id_(id), data_(data) {}
+PlatformViewPattern::PlatformViewPattern(
+    const std::string& id, const std::int32_t type, const std::optional<std::string>& data)
+    : id_(id), type_(type), data_(data)
+{
+    LOGE("PlatformViewPattern constructor type_: %{public}d", type_);
+}
+
 void PlatformViewPattern::RequestFocus()
 {
     auto host = GetHost();
@@ -117,7 +122,7 @@ void PlatformViewPattern::RegisterPlatformViewEvent()
 
 void PlatformViewPattern::PrepareSurface()
 {
-    if (!platformView_ || renderSurface_->IsSurfaceValid()) {
+    if (!platformView_ || renderSurface_->IsSurfaceValid() || !IsTexture()) {
         return;
     }
     if (!SystemProperties::GetExtSurfaceEnabled()) {
@@ -142,27 +147,32 @@ void PlatformViewPattern::OnAttachToFrameNode()
 
 void PlatformViewPattern::PlatformViewInitialize()
 {
-    auto host = GetHost();
-    CHECK_NULL_VOID(host);
-    auto context = PipelineContext::GetCurrentContext();
-    CHECK_NULL_VOID(context);
+    InitEvent();
     platformView_ = AceType::MakeRefPtr<NG::PlatformViewImpl>(id_, data_);
     platformView_->InitPlatformView();
     platformViewWeakPtr_ = platformView_;
-    renderSurface_ = RenderSurface::Create();
-    renderSurface_->SetInstanceId(GetHostInstanceId());
+
     renderContextForPlatformView_ = RenderContext::Create();
-    InitEvent();
-    auto renderContext = host->GetRenderContext();
-    CHECK_NULL_VOID(renderContext);
-    static RenderContext::ContextParam param = { RenderContext::ContextType::HARDWARE_TEXTURE, "PlatformViewSurface",
+    auto contextType = RenderContext::ContextType::HARDWARE_SURFACE;
+    if (IsTexture()) {
+        renderSurface_ = RenderSurface::Create();
+        renderSurface_->SetInstanceId(GetHostInstanceId());
+        renderSurfaceWeakPtr_ = renderSurface_;
+        contextType = RenderContext::ContextType::HARDWARE_TEXTURE;
+    }
+    LOGD("RenderContext contextType: %{public}d", contextType);
+    RenderContext::ContextParam param = { contextType, "PlatformViewSurface",
         RenderContext::PatternType::PLATFORM_VIEW };
     renderContextForPlatformView_->InitContext(false, param);
-    renderSurfaceWeakPtr_ = renderSurface_;
     renderContextForPlatformViewWeakPtr_ = renderContextForPlatformView_;
+    if (IsTexture()) {
+        PlatformViewAddCallBack();
+    }
 
-    PlatformViewAddCallBack();
- 
+    auto host = GetHost();
+    CHECK_NULL_VOID(host);
+    auto renderContext = host->GetRenderContext();
+    CHECK_NULL_VOID(renderContext);
     renderContext->UpdateBackgroundColor(Color::WHITE);
     renderContextForPlatformView_->UpdateBackgroundColor(Color::WHITE);
     renderContext->SetClipToBounds(true);
@@ -205,11 +215,36 @@ void PlatformViewPattern::PlatformViewAddCallBack()
 #endif
 }
 
+void PlatformViewPattern::OnAreaChangedInner()
+{
+    auto host = GetHost();
+    CHECK_NULL_VOID(host);
+    auto context = host->GetRenderContext();
+    auto rect = context->GetPaintRectWithoutTransform();
+    auto offset = rect.GetOffset();
+    auto parent = host->GetAncestorNodeOfFrame(true);
+
+    while (parent) {
+        auto parentRenderContext = parent->GetRenderContext();
+        offset += parentRenderContext->GetPaintRectWithoutTransform().GetOffset();
+        parent = parent->GetAncestorNodeOfFrame(true);
+    }
+    platformView_->UpdatePlatformViewLayout(rect.GetSize(), offset);
+}
+
 void PlatformViewPattern::OnModifyDone()
 {
     ContainerScope scope(GetHostInstanceId());
     auto context = PipelineContext::GetCurrentContext();
     CHECK_NULL_VOID(context);
+
+    auto host = GetHost();
+    CHECK_NULL_VOID(host);
+    context->AddOnAreaChangeNode(host->GetId());
+    if (!IsTexture()) {
+        platformView_->RegisterPlatformView();
+        return;
+    }
     auto platformTask = SingleTaskExecutor::Make(context->GetTaskExecutor(), TaskExecutor::TaskType::BACKGROUND);
     platformTask.PostTask(
         [weak = WeakClaim(this)] {
@@ -252,8 +287,6 @@ void PlatformViewPattern::OnAttachContext(PipelineContext* context)
     auto host = GetHost();
     CHECK_NULL_VOID(host);
     context->AddWindowStateChangedCallback(host->GetId());
-    CHECK_NULL_VOID(renderSurface_);
-    renderSurface_->SetInstanceId(context->GetInstanceId());
 }
 
 void PlatformViewPattern::OnDetachContext(PipelineContext* context)
@@ -282,7 +315,6 @@ void PlatformViewPattern::BeforeSyncGeometryProperties(const DirtySwapConfig& co
     if (!hasPlatformViewInit_) {
         hasPlatformViewInit_ = true;
     }
-    UpdateSurfaceBounds(false, config.frameOffsetChange);
 #ifdef IOS_PLATFORM
     isTextureReady = false;
 #endif
@@ -296,8 +328,9 @@ void PlatformViewPattern::UpdatePlatformViewLayoutIfNeeded()
     CHECK_NULL_VOID(host);
     auto transformRelativeOffset = host->GetTransformRelativeOffset();
     OffsetF offset = localPosition_ + transformRelativeOffset;
+    auto rect = GetRenderContext()->GetPaintRectWithoutTransform();
     if (lastDrawSize_ != drawSize_ || lastOffset_ != offset) {
-        platformView_->UpdatePlatformViewLayout(drawSize_, offset);
+        platformView_->UpdatePlatformViewLayout(rect.GetSize(), rect.GetOffset());
 #ifdef IOS_PLATFORM
         if (!isTextureReady) {
             return;
@@ -307,7 +340,7 @@ void PlatformViewPattern::UpdatePlatformViewLayoutIfNeeded()
             renderContextForPlatformView_->SetBounds(
                 localPosition_.GetX(), localPosition_.GetY(), drawSize_.Width(), drawSize_.Height());
         }
-        if (SystemProperties::GetExtSurfaceEnabled()) {
+        if (SystemProperties::GetExtSurfaceEnabled() && IsTexture()) {
             renderSurface_->SetExtSurfaceBounds(transformRelativeOffset.GetX() + localPosition_.GetX(),
                 transformRelativeOffset.GetY() + localPosition_.GetY(), drawSize_.Width(), drawSize_.Height());
         }
@@ -321,30 +354,6 @@ void PlatformViewPattern::DumpInfo()
     DumpLog::GetInstance().AddDesc(std::string("paltformviewId: ").append(id_));
 }
 
-void PlatformViewPattern::DumpAdvanceInfo()
-{
-    DumpLog::GetInstance().AddDesc(
-        std::string("surfaceRect: ").append(RectF { localPosition_, surfaceSize_ }.ToString()));
-    if (renderSurface_) {
-        renderSurface_->DumpInfo();
-    }
-}
-
-void PlatformViewPattern::PlatformViewSizeChange(const RectF& surfaceRect, bool needFireNativeEvent)
-{
-    // do not trigger when the size is first initialized
-    if (needFireNativeEvent) {
-        ContainerScope scope(GetHostInstanceId());
-        auto context = PipelineContext::GetCurrentContext();
-        CHECK_NULL_VOID(context);
-        auto viewScale = context->GetViewScale();
-        renderSurface_->AdjustNativeWindowSize(static_cast<uint32_t>(surfaceRect.Width() * viewScale),
-            static_cast<uint32_t>(surfaceRect.Height() * viewScale));
-    }
-    renderSurface_->UpdateSurfaceSizeInUserData(
-        static_cast<uint32_t>(surfaceRect.Width()), static_cast<uint32_t>(surfaceRect.Height()));
-}
-
 void PlatformViewPattern::InitEvent()
 {
     auto host = GetHost();
@@ -354,13 +363,41 @@ void PlatformViewPattern::InitEvent()
     auto gestureHub = eventHub->GetOrCreateGestureEventHub();
     CHECK_NULL_VOID(gestureHub);
     InitTouchEvent(gestureHub);
+#if defined(ANDROID_PLATFORM)
+    InitPanGesture(gestureHub);
+#endif
     auto focusHub = host->GetOrCreateFocusHub();
     CHECK_NULL_VOID(focusHub);
     InitFocusEvent(focusHub);
 }
 
+void PlatformViewPattern::InitPanGesture(const RefPtr<GestureEventHub>& gestureHub)
+{
+    if (!gestureHub) {
+        return;
+    }
+    if (panGesture_) {
+        if (gestureHub->WillRecreateGesture()) {
+            gestureHub->AddGesture(panGesture_);
+        }
+        return;
+    }
+    auto option = MakeRefPtr<PanGestureOption>();
+    PanDirection panDirection;
+    panDirection.type = PanDirection::ALL;
+    option->SetDirection(panDirection);
+    option->SetDistance(0.0);
+    option->SetFingers(1);
+    panGesture_ = MakeRefPtr<PanGesture>(option);
+    CHECK_NULL_VOID(panGesture_);
+    panGesture_->SetPriority(GesturePriority::High);
+
+    gestureHub->AddGesture(panGesture_);
+}
+
 void PlatformViewPattern::InitFocusEvent(const RefPtr<FocusHub>& focusHub)
 {
+    CHECK_NULL_VOID(focusHub);
     focusHub->SetFocusable(true);
 }
 
@@ -410,27 +447,28 @@ void PlatformViewPattern::PlatformViewDispatchTouchEvent(const TouchLocationInfo
     }
 }
 
-void PlatformViewPattern::UpdateSurfaceBounds(bool needForceRender, bool frameOffsetChange)
+void PlatformViewPattern::SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY)
 {
-    if (!drawSize_.IsPositive()) {
-        return;
-    }
-    auto preSurfaceSize = surfaceSize_;
+    CHECK_NULL_VOID(platformView_);
+    platformView_->SetScale(x, y, z, centerX, centerY);
+}
 
-    surfaceSize_ = drawSize_;
+void PlatformViewPattern::SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+    const std::string& centerY, const std::string& centerZ, const std::string& perspective)
+{
+    CHECK_NULL_VOID(platformView_);
+    platformView_->SetRotation(x, y, z, angle, centerX, centerY, centerZ, perspective);
+}
 
-    if (preSurfaceSize != surfaceSize_) {
-        PlatformViewSizeChange({ localPosition_, surfaceSize_ }, preSurfaceSize.IsPositive());
-    }
+void PlatformViewPattern::SetTranslate(const std::string& x, const std::string& y, const std::string& z)
+{
+    CHECK_NULL_VOID(platformView_);
+    platformView_->SetTranslate(x, y, z);
+}
 
-    if (renderSurface_) {
-        renderSurface_->SetSurfaceDefaultSize(
-            static_cast<int32_t>(surfaceSize_.Width()), static_cast<int32_t>(surfaceSize_.Height()));
-    }
-    if (needForceRender) {
-        auto host = GetHost();
-        CHECK_NULL_VOID(host);
-        host->MarkNeedRenderOnly();
-    }
+void PlatformViewPattern::SetTransformMatrix(const std::vector<float>& matrix)
+{
+    CHECK_NULL_VOID(platformView_);
+    platformView_->SetTransformMatrix(matrix);
 }
 } // namespace OHOS::Ace::NG

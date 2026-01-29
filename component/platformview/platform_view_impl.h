@@ -31,7 +31,11 @@ public:
     ~PlatformViewImpl() override;
 
     void InitPlatformView() override;
-
+    void SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY) override;
+    void SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+        const std::string& centerY, const std::string& centerZ, const std::string& perspective) override;
+    void SetTranslate(const std::string& x, const std::string& y, const std::string& z) override;
+    void SetTransformMatrix(const std::vector<float>& matrix) override;
     void UpdatePlatformViewLayout(const NG::SizeF& drawSize, const NG::OffsetF& offset) override;
     void ExchangeBind() override;
     void GetPlatformViewType(int32_t& type);
@@ -47,6 +51,7 @@ public:
     void RegisterTextureEvent(TextureRefreshEvent&& textureRefreshEvent) override;
     void RegisterPlatformViewReadyEvent(PlatformViewReadyEvent&& platformViewReadyEvent) override;
     void SetRenderSurface(const RefPtr<RenderSurface>& renderSurface) override;
+    void RegisterPlatformView() override;
 
     int32_t SetSurface() override;
     void Dispose() override;

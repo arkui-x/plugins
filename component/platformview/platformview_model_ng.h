@@ -26,7 +26,12 @@ class ACE_EXPORT PlatformViewModelNG {
 public:
     static PlatformViewModelNG* GetInstance();
     virtual ~PlatformViewModelNG() = default;
-    void Create(const std::string& id, const std::optional<std::string>& data);
+    void Create(const std::string& id, const std::int32_t type, const std::optional<std::string>& data);
+    void SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY);
+    void SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+        const std::string& centerY, const std::string& centerZ, const std::string& perspective);
+    void SetTranslate(const std::string& x, const std::string& y, const std::string& z);
+    void SetTransformMatrix(const std::vector<float>& matrix);
 
 private:
     static std::unique_ptr<PlatformViewModelNG> instance_;
