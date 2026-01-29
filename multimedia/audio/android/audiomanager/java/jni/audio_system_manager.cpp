@@ -36,19 +36,6 @@ AudioSystemManager* AudioSystemManager::GetInstance()
     return &audioManager;
 }
 
-int32_t AudioSystemManager::GetCallingPid() const
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return 0;
-}
-
-map<pair<ContentType, StreamUsage>, AudioStreamType> AudioSystemManager::CreateStreamMap()
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    map<pair<ContentType, StreamUsage>, AudioStreamType> streamMap;
-    return streamMap;
-}
-
 AudioStreamType AudioSystemManager::GetStreamType(ContentType contentType, StreamUsage streamUsage)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);

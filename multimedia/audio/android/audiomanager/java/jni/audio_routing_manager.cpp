@@ -28,11 +28,6 @@ AudioRoutingManager* AudioRoutingManager::GetInstance()
     return &audioRoutingManager;
 }
 
-int32_t AudioRoutingManager::GetCallingPid()
-{
-    return getpid();
-}
-
 int32_t AudioRoutingManager::SetMicStateChangeCallback(
     const std::shared_ptr<AudioManagerMicStateChangeCallback>& callback)
 {
