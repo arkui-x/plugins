@@ -1,0 +1,129 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//plugins/pasteboard/pasteboard.gni")
+import("${pasteboard_tlv_path}/pasteboard_tlv.gni")
+
+config("pasteboard_client_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "include",
+    "${pasteboard_plugin_root_path}/platform",
+    "//commonlibrary/c_utils/base/include",
+    "${pasteboard_plugin_root_path}/mock",
+    "${pasteboard_tlv_path}",
+    "${pasteboard_root_path}/framework/tlv",
+    "${pasteboard_utils_path}/native/include",
+    "${ace_engine_path}/",
+    "${ace_engine_path}/frameworks",
+    "${ace_engine_path}/interfaces/inner_api/ace_kit/include",
+  ]
+  if (current_os == "android") {
+    include_dirs += [
+      "${pasteboard_plugin_root_path}/platform/android/java/jni",
+      "//plugins/interfaces/native",
+    ]
+  }
+  if (current_os == "ios") {
+    include_dirs += [
+      "${pasteboard_plugin_root_path}/platform/ios",
+      "//plugins/interfaces/native",
+    ]
+  }
+}
+
+config("pasteboard_data_config") {
+  include_dirs = [
+    "${pasteboard_plugin_innerkits_path}/include",
+    "//commonlibrary/c_utils/base/include",
+    "${pasteboard_framework_path}/include",
+    "${pasteboard_plugin_root_path}/mock",
+    "${pasteboard_tlv_path}",
+    "${pasteboard_root_path}/framework/tlv",
+    "${pasteboard_utils_path}/native/include",
+    "${pasteboard_root_path}/services/dfx/src",
+  ]
+}
+
+ohos_source_set("pasteboard_data") {
+  sources = [
+    "${pasteboard_innerkits_path}/src/convert_utils.cpp",
+    "${pasteboard_innerkits_path}/src/paste_data_entry.cpp",
+    "src/paste_data.cpp",
+    "src/paste_data_record.cpp",
+    "src/pasteboard_utils.cpp",
+  ]
+  sources += pasteboard_tlv_sources
+
+  ldflags = [ "-Wl,--exclude-libs=ALL" ]
+
+  include_dirs = [ "${pasteboard_plugin_root_path}/mock" ]
+
+  public_configs = [
+    "${pasteboard_interfaces_path}/kits:pasteboard_napi_config",
+    ":pasteboard_data_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:want_params_config",
+  ]
+  defines = [ "JSON_USE_EXCEPTION=0" ]
+  deps = [
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:cross_platform_want_params",
+    "${c_utils_path}/base:utilsbase",
+    "${hilog_path}/interfaces/native/innerkits:libhilog_${target_os}",
+    "${pasteboard_interfaces_path}/kits:unifieddatachannel",
+    "${plugin_path}/libs/napi:napi_${target_os}",
+    "//third_party/jsoncpp:jsoncpp_static",
+  ]
+  subsystem_name = "plugins"
+  part_name = "pasteboard"
+}
+
+ohos_source_set("pasteboard_client") {
+  sources = [
+    "${pasteboard_innerkits_path}/src/pasteboard_progress_signal.cpp",
+    "src/pasteboard_client.cpp",
+  ]
+
+  ldflags = [ "-Wl,--exclude-libs=ALL" ]
+
+  public_configs = [
+    "${pasteboard_interfaces_path}/kits:pasteboard_napi_config",
+    ":pasteboard_client_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:want_params_config",
+  ]
+  deps = [
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:cross_platform_want_params",
+    "${c_utils_path}/base:utilsbase",
+    "${hilog_path}/interfaces/native/innerkits:libhilog_${target_os}",
+    "${pasteboard_interfaces_path}/kits:unifieddatachannel",
+    "${pasteboard_plugin_innerkits_path}:pasteboard_data",
+    "${plugin_path}/libs/napi:napi_${target_os}",
+  ]
+  defines = []
+  if (current_os == "android") {
+    deps += [
+      "${ace_engine_path}/adapter/android/build:libarkui_android",
+      "${pasteboard_plugin_root_path}/platform/android:pasteboard_android_jni",
+    ]
+    defines += [ "ANDROID_PLATFORM" ]
+    libs = [ "log" ]
+  } else if (current_os == "ios") {
+    deps += [
+      "${ace_engine_path}/adapter/ios/build:libarkui_ios",
+      "${pasteboard_plugin_root_path}/platform/ios:pasteboard_ios",
+    ]
+    defines += [ "IOS_PLATFORM" ]
+  }
+  subsystem_name = "plugins"
+  part_name = "pasteboard_innerkits"
+}

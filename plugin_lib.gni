@@ -52,6 +52,7 @@ common_plugin_libs = [
   "data/datasharepredicates",
   "data/distributedkvstore",
   "data/preferences",
+  "pasteboard",
   "data/relationalstore",
   "data/unifieddatachannel",
   "data/uniformtypedescriptor",

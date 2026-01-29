@@ -1,0 +1,157 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/appframework/ability/ability_runtime/ability_runtime.gni")
+import("//plugins/pasteboard/pasteboard.gni")
+
+third_party_skia_path = "${third_party_path}/skia/m133"
+config("pasteboard_napi_config") {
+  include_dirs = [
+    "${arkui_path}/napi/interfaces/kits",
+    "${arkui_path}/napi/interfaces/inner_api",
+    "${hilog_path}/interfaces/native/innerkits/include",
+    "${image_framework_path}/interfaces/kits/js/common/include",
+    "${image_framework_path}/frameworks/innerkitsimpl/receiver/include",
+    "${image_framework_path}/frameworks/innerkitsimpl/utils/include",
+    "${image_framework_path}/interfaces/innerkits/include",
+    "${graphic_surface_path}/interfaces/inner_api/common",
+    "${graphic_surface_path}/interfaces/inner_api/surface",
+    "${graphic_surface_path}/interfaces/inner_api/utils",
+    "${graphic_2d_path}/utils/color_manager/export",
+    "${graphic_2d_path}/rosen/modules/platform/ipc_core",
+    "${third_party_skia_path}",
+  ]
+  defines = []
+  if (current_os == "ios") {
+    defines += [ "IOS_PLATFORM" ]
+  }
+  defines += [ "USE_M133_SKIA" ]
+}
+
+ohos_source_set("unifieddatachannel") {
+  include_dirs = [
+    "${ability_runtime_cross_platform_path}/frameworks/js/napi/napi_common",
+    "${kv_store_path}/interfaces/innerkits/distributeddata/include",
+    "${udmf_root_path}/adapter/framework/innerkitsimpl/client",
+    "${third_party_path}/bounds_checking_function/include",
+  ]
+
+  sources = [
+    "${udmf_framework_path}/jskitsimpl/common/napi_data_utils.cpp",
+    "${udmf_framework_path}/jskitsimpl/common/napi_error_utils.cpp",
+    "${udmf_framework_path}/jskitsimpl/common/napi_queue.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/application_defined_record_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/audio_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/file_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/folder_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/html_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/image_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/link_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/plain_text_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/summary_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/system_defined_appitem_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/system_defined_form_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/system_defined_pixelmap_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/system_defined_record_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/text_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/unified_data_channel_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/unified_data_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/unified_data_properties_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/unified_record_napi.cpp",
+    "${udmf_framework_path}/jskitsimpl/data/video_napi.cpp",
+    "${udmf_root_path}/adapter/framework/innerkitsimpl/client/udmf_client.cpp",
+  ]
+
+  ldflags = [ "-Wl,--exclude-libs=ALL" ]
+
+  public_configs = [
+    "${udmf_root_path}/adapter:udmf_napi_config",
+    "${udmf_root_path}/adapter:arkui_x_udmf_napi_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/jsruntime:jsruntime_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/hilog:ability_cross_platform_hilog_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:want_params_config",
+  ]
+
+  defines = [ "USE_M133_SKIA" ]
+
+  deps = [
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:cross_platform_want_params",
+    "${c_utils_path}/base:utilsbase",
+    "${hilog_path}/interfaces/native/innerkits:libhilog_${target_os}",
+    "${plugin_path}/libs/napi:napi_${target_os}",
+    "${udmf_root_path}/adapter:arkui_x_udmf_data",
+  ]
+  subsystem_name = "plugins"
+  part_name = "pasteboard_napi"
+}
+
+ohos_source_set("pasteboard_napi") {
+  include_dirs = [
+    "${ability_runtime_cross_platform_path}/frameworks/js/napi/napi_common",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/jsruntime",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/app_manager",
+    "${graphic_2d_path}/rosen/modules/platform/eventhandler",
+    "${hiappevent_path}/native/include",
+    "${hiappevent_path}/native/include/observer",
+    "${hiappevent_path}/native/include/utility",
+    "${hiappevent_path}/native/include/clean",
+    "${hiappevent_path}/js/napi/include",
+    "${pasteboard_plugin_root_path}/mock",
+    "${pasteboard_plugin_innerkits_path}/include",
+    "${pasteboard_tlv_path}",
+    "${pasteboard_napi_path}/include",
+    "${udmf_interfaces_path}/innerkits/common",
+    "${udmf_interfaces_path}/interfaces/innerkits/client",
+    "${pasteboard_utils_path}/native/include",
+  ]
+  ldflags = [ "-Wl,--exclude-libs=ALL" ]
+
+  public_configs = [
+    ":pasteboard_napi_config",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:want_params_config",
+  ]
+
+  sources = [
+    "${pasteboard_napi_path}/src/async_call.cpp",
+    "${pasteboard_napi_path}/src/napi_data_utils.cpp",
+    "${pasteboard_napi_path}/src/napi_init.cpp",
+    "${pasteboard_napi_path}/src/napi_pasteboard.cpp",
+    "${pasteboard_napi_path}/src/napi_pasteboard_common.cpp",
+    "${pasteboard_napi_path}/src/napi_pasteboard_progress_signal.cpp",
+    "${pasteboard_napi_path}/src/napi_pastedata.cpp",
+    "${pasteboard_napi_path}/src/napi_pastedata_record.cpp",
+    "${pasteboard_napi_path}/src/napi_systempasteboard.cpp",
+    "${pasteboard_plugin_root_path}/mock/napi_pasteboard_observer.cpp",
+    "${pasteboard_service_path}/dfx/src/pasteboard_app_event_dfx.cpp",
+  ]
+
+  if (current_os == "android") {
+    sources +=
+        [ "${pasteboard_plugin_root_path}/mock/register_java_plugin.cpp" ]
+  }
+
+  deps = [
+    ":unifieddatachannel",
+    "${ability_runtime_cross_platform_path}/interfaces/inner_api/want:cross_platform_want_params",
+    "${hilog_path}/interfaces/native/innerkits:libhilog_${target_os}",
+    "${pasteboard_plugin_innerkits_path}:pasteboard_client",
+    "${pasteboard_plugin_innerkits_path}:pasteboard_data",
+    "//commonlibrary/c_utils/base:utilsbase",
+    "//plugins/interfaces/native:napi_common",
+    "//plugins/libs/napi:napi_${target_os}",
+  ]
+
+  subsystem_name = "plugins"
+  part_name = "pasteboard_napi"
+}
