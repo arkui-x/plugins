@@ -80,6 +80,7 @@ int32_t UploadProxy::Pause(int64_t taskId)
     bool isPause = false;
     for (auto &task : uploadTaskList_) {
         if (task == nil) {
+            NSLog(@"UploadProxy::Pause task nil");
             continue;
         }
         if (task.state == NSURLSessionTaskStateRunning) {
@@ -99,6 +100,7 @@ int32_t UploadProxy::Resume(int64_t taskId)
     bool isResume = false;
     for (auto &task : uploadTaskList_) {
         if (task == nil) {
+            NSLog(@"UploadProxy::Resume task nil");
             continue;
         }
         if (task.state == NSURLSessionTaskStateSuspended) {
@@ -130,6 +132,7 @@ void UploadProxy::PartPutUpload(NSURL *baseUrl, NSMutableDictionary *headers)
     NSLog(@"UploadProxy::PartPutUpload enter, config.index:%d", config_.index);
     uint32_t index = config_.index;
     if (config_.files.empty() || index >= config_.files.size()) {
+        NSLog(@"PartPutUpload invalid index");
         return;
     }
     NSString *partFilePath = GetUploadPartFile(config_.files[index]);
@@ -298,6 +301,7 @@ void UploadProxy::PartPostUpload(NSURL *baseUrl, NSMutableDictionary *headers)
     NSLog(@"UploadProxy::PartPostUpload enter, config.index:%d", config_.index);
     uint32_t index = config_.index;
     if (config_.files.empty() || index >= config_.files.size()) {
+        NSLog(@"PartPostUpload invalid index");
         return;
     }
     NSString *partFilePath = GetUploadPartFile(config_.files[index]);
@@ -843,6 +847,8 @@ void UploadProxy::RemoveFile(NSString *filePath)
     BOOL fileExists = [fileManager fileExistsAtPath:filePath];
     if (fileExists) {
         [fileManager removeItemAtPath:filePath error:nil];
+    } else {
+        NSLog(@"RemoveFile file not exists");
     }
 }
 

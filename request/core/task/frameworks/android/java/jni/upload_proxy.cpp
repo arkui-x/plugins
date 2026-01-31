@@ -420,6 +420,7 @@ int32_t UploadProxy::ResumeUploadOneFile(uint32_t index)
     do {
         if (curlMulti_ == nullptr || currentCurl_ == nullptr) {
             errorCode = ExceptionErrorCode::E_SERVICE_ERROR;
+            REQUEST_HILOGI("Failed to resume upload file, curlMulti_ or currentCurl_ is null");
             break;
         }
         isPause_ = false;
@@ -428,6 +429,7 @@ int32_t UploadProxy::ResumeUploadOneFile(uint32_t index)
             int numfds = 0;
             if (curl_multi_wait(curlMulti_, nullptr, 0, TRANS_TIMEOUT_MS, &numfds) != CURLM_OK) {
                 errorCode = ExceptionErrorCode::E_SERVICE_ERROR;
+                REQUEST_HILOGI("Failed to resume upload file, curl_multi_wait error");
                 break;
             }
             curl_multi_perform(curlMulti_, &isRuning);

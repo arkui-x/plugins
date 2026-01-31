@@ -23,6 +23,7 @@
 + (instancetype)initWithJsonString:(NSString *)jsonString {
     @try {
         if (jsonString == nil) {
+            NSLog(@"failed to init config, jsonString is nil");
             return nil;
         }
         NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
@@ -132,6 +133,7 @@
 
 - (NSString *)objToJsonString:(id)obj {
     if (obj == nil) {
+        NSLog(@"failed to objToJsonString, obj is nil");
         return @"";
     }
     

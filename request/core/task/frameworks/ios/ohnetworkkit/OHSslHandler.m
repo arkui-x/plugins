@@ -191,6 +191,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
     if (self.sslType == OHSslTypeNone) {
         return self.allowIvdCerts || OHServerTrustIsValid(serverTrust);
     } else if (!self.allowIvdCerts && !OHServerTrustIsValid(serverTrust)) {
+        NSLog(@"evaluateServerTrust serverTrust is invalid or not proceed");
         return NO;
     }
 
@@ -203,6 +204,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
             }
             SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)certList);
             if (!OHServerTrustIsValid(serverTrust)) {
+                NSLog(@"evaluateServerTrust serverTrust is invalid");
                 return NO;
             }
             // obtain the chain after being validated, which *should* contain the pinned certificate

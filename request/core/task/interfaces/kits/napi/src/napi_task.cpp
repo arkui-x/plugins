@@ -142,6 +142,7 @@ napi_value NapiTask::GetCtor(napi_env env, Version version)
         default:
             break;
     }
+    REQUEST_HILOGI("no version reachable");
     return nullptr;
 }
 
@@ -250,6 +251,7 @@ bool NapiTask::ParseTid(napi_env env, size_t argc, napi_value *argv, int64_t &ta
     }
     auto tidText = NapiUtils::Convert2String(env, argv[0]);
     if (tidText.empty()) {
+        REQUEST_HILOGI("Empty tidText");
         return false;
     }
     taskId = atoll(tidText.c_str());
@@ -327,6 +329,7 @@ bool NapiTask::ParseTouch(napi_env env, size_t argc, napi_value *argv, std::shar
     size_t len = 0;
     napi_status status = napi_get_value_string_utf8(env, argv[1], token.data(), token.size(), &len);
     if (status != napi_ok || len < TOKEN_MIN_BYTES || len > TOKEN_MAX_BYTES) {
+        REQUEST_HILOGI("ParseToken error");
         return false;
     }
     context->token = token.data();
@@ -340,6 +343,7 @@ bool NapiTask::ParseSearch(napi_env env, size_t argc, napi_value *argv, Filter &
     }
     napi_valuetype valueType = NapiUtils::GetValueType(env, argv[0]);
     if (valueType == napi_null || valueType == napi_undefined) {
+        REQUEST_HILOGI("The parameter is null or undefined");
         return true;
     }
     if (valueType != napi_object) {

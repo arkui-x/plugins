@@ -75,6 +75,8 @@ NSString * const OHNetworkErrorDomain = @"com.oh.network.error";
                                                  delegate:self
                                             delegateQueue:queue];
         
+    } else {
+        NSLog(@"initWithConfiguration failed");
     }
     return self;
 }
@@ -224,6 +226,7 @@ NSString * const OHNetworkErrorDomain = @"com.oh.network.error";
             disposition = NSURLSessionAuthChallengeUseCredential;
             credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
         } else {
+            NSLog(@"evaluateServerTrust sslHandlerResult false");
             OHRequestResult *result = [self resultForTask:task];
             NSError *error = [self generateServerTrustErrorForServerTrust:challenge.protectionSpace.serverTrust
                                                                       url:task.currentRequest.URL];
@@ -271,6 +274,7 @@ NSString * const OHNetworkErrorDomain = @"com.oh.network.error";
 
         //the path for move after download is nil, stop move
         if (!filePath) {
+            NSLog(@"downloadTask didFinishDownloadingToURL filePath is nil");
             NSDictionary *userInfo = @{
                 NSLocalizedDescriptionKey: @"No destination url for download task",
             };
