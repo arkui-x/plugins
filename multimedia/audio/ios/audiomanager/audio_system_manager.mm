@@ -21,9 +21,6 @@ namespace OHOS {
 namespace AudioStandard {
 using namespace std;
 
-const map<pair<ContentType, StreamUsage>, AudioStreamType> AudioSystemManager::streamTypeMap_
-    = AudioSystemManager::CreateStreamMap();
-
 static vector<std::shared_ptr<AudioGroupManager>> groupManagerMap_;
 
 AudioSystemManager::AudioSystemManager()
@@ -42,7 +39,7 @@ AudioSystemManager *AudioSystemManager::GetInstance()
     return &audioManager;
 }
 
-map<pair<ContentType, StreamUsage>, AudioStreamType> AudioSystemManager::CreateStreamMap()
+map<pair<ContentType, StreamUsage>, AudioStreamType> CreateStreamMap()
 {
     map<pair<ContentType, StreamUsage>, AudioStreamType> streamMap;
     // Mapping relationships from content and usage to stream type in design
@@ -95,6 +92,8 @@ map<pair<ContentType, StreamUsage>, AudioStreamType> AudioSystemManager::CreateS
 
     return streamMap;
 }
+
+const map<pair<ContentType, StreamUsage>, AudioStreamType> streamTypeMap_ = CreateStreamMap();
 
 AudioStreamType AudioSystemManager::GetStreamType(ContentType contentType, StreamUsage streamUsage)
 {
