@@ -25,6 +25,7 @@
 #include "core/common/thread_checker.h"
 #include "core/components_ng/event/focus_hub.h"
 #include "core/components_ng/event/input_event.h"
+#include "core/components_ng/gestures/pan_gesture.h"
 #include "core/components_ng/pattern/pattern.h"
 #include "core/components_ng/property/property.h"
 #include "core/components_ng/render/render_surface.h"
@@ -39,7 +40,7 @@ class PlatformViewPattern : public Pattern {
 
 public:
     PlatformViewPattern() = default;
-    PlatformViewPattern(const std::string& id, const std::optional<std::string>& data);
+    PlatformViewPattern(const std::string& id, const std::int32_t type, const std::optional<std::string>& data);
 
     ~PlatformViewPattern() override = default;
 
@@ -62,21 +63,22 @@ public:
     {
         return { FocusType::NODE, false };
     }
-
-    void PlatformViewSizeChange(const RectF& surfaceRect, bool needFireNativeEvent);
-    void UpdateSurfaceBounds(bool needForceRender, bool frameOffsetChange = false);
+    void SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY);
+    void SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+        const std::string& centerY, const std::string& centerZ, const std::string& perspective);
+    void SetTranslate(const std::string& x, const std::string& y, const std::string& z);
+    void SetTransformMatrix(const std::vector<float>& matrix);
 
 private:
     void OnAttachToFrameNode() override;
     void OnDetachFromFrameNode(FrameNode* frameNode) override;
     void BeforeSyncGeometryProperties(const DirtySwapConfig& config) override;
     void OnRebuildFrame() override;
-    void OnAreaChangedInner() override {}
+    void OnAreaChangedInner() override;
     void OnWindowHide() override {}
     void OnWindowShow() override {}
     void OnModifyDone() override;
     void DumpInfo() override;
-    void DumpAdvanceInfo() override;
     void OnAttachContext(PipelineContext* context) override;
     void OnDetachContext(PipelineContext* context) override;
 
@@ -94,6 +96,15 @@ private:
     void RegisterPlatformViewEvent();
     void PlatformViewDispatchTouchEvent(const TouchLocationInfo& changedPoint);
     void UpdatePlatformViewLayoutIfNeeded();
+
+    void InitPanGesture(const RefPtr<GestureEventHub>&);
+
+    bool IsTexture()
+    {
+        return type_ == static_cast<int32_t>(PlatformViewType::TEXTURE_TYPE);
+    }
+
+    RefPtr<PanGesture> panGesture_;
 
     std::string id_;
     std::optional<std::string> data_;
@@ -113,6 +124,7 @@ private:
     OffsetF localPosition_;
     SizeF drawSize_;
     SizeF surfaceSize_;
+    std::int32_t type_;
 };
 } // namespace OHOS::Ace::NG
 #endif // PLUGINS_COMPONENT_PLATFORMVIEW_PLATFORMVIEW_PATTERN_H

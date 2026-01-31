@@ -34,6 +34,7 @@ public:
     void Create(const std::string& viewTag, const std::optional<std::string>& data);
     void CreatePlatformView(const std::string& viewTag, const std::optional<std::string>& data);
     void RegisterPlatformViewTexture(int64_t textureId, std::string& viewTag);
+    void RegisterPlatformView(std::string& viewTag);
     void UpdatePlatformViewLayout(const NG::SizeF& drawSize, const NG::OffsetF& offset);
     void ExchangeBind();
     void GetPlatformViewType(int32_t& type);
@@ -42,6 +43,11 @@ public:
     void HandleTouchMove(const NG::OffsetF& offset);
     void HandleTouchCancel(const NG::OffsetF& offset);
     void Dispose();
+    void SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY);
+    void SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+        const std::string& centerY, const std::string& centerZ, const std::string& perspective);
+    void SetTranslate(const std::string& x, const std::string& y, const std::string& z);
+    void SetTransformMatrix(const std::vector<float>& matrix);
 
     void SetPlatformViewReadyCallback(std::function<void()>&& callback)
     {

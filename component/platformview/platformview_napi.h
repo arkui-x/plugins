@@ -21,5 +21,9 @@
 
 namespace OHOS::Plugin::PlatformView {
 napi_value JsCreate(napi_env env, napi_callback_info info);
+napi_value JsScale(napi_env env, napi_callback_info info);
+napi_value JsRotate(napi_env env, napi_callback_info info);
+napi_value JsTranslate(napi_env env, napi_callback_info info);
+napi_value JsTransform(napi_env env, napi_callback_info info);
 } // namespace OHOS::Plugin::PlatformView
 #endif //PLUGINS_COMPONENT_PLATFORMVIEW_PLATFORMVIEW_NAPI_H

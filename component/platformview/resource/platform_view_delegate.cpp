@@ -42,6 +42,18 @@ const char TEXTURE_ID[] = "textureId";
 const char INSTANCE_ID[] = "instanceId";
 const char PLATFORM_VIEW_ERROR_CODE_CREATEFAIL[] = "error_platform_view_000001";
 const char PLATFORM_VIEW_ERROR_MSG_CREATEFAIL[] = "Create platformView failed.";
+const char SET_SCALE[] = "setScale";
+const char SET_ROTATION[] = "setRotation";
+const char SET_TRANSLATE[] = "setTranslate";
+const char SET_TRANSFORM_MATRIX[] = "setTransformMatrix";
+const char X[] = "X";
+const char Y[] = "Y";
+const char Z[] = "Z";
+const char CENTER_X[] = "centerX";
+const char CENTER_Y[] = "centerY";
+const char CENTER_Z[] = "centerZ";
+const char PERSPECTIVE[] = "perspective";
+const char ANGLE[] = "angle";
 
 PlatformViewDelegate::~PlatformViewDelegate()
 {
@@ -116,6 +128,14 @@ void PlatformViewDelegate::RegisterPlatformViewTexture(int64_t textureId, std::s
     std::stringstream paramStream;
     paramStream << TEXTURE_ID << PLATFORM_VIEW_PARAM_EQUALS << textureId << PLATFORM_VIEW_PARAM_AND << VIEW_TAG
                 << PLATFORM_VIEW_PARAM_EQUALS << viewTag;
+    std::string param = paramStream.str();
+    CallResRegisterMethod(MakeMethodHash(REGISTER_PLATFORM_VIEW), param);
+}
+
+void PlatformViewDelegate::RegisterPlatformView(std::string& viewTag)
+{
+    std::stringstream paramStream;
+    paramStream << VIEW_TAG << PLATFORM_VIEW_PARAM_EQUALS << viewTag;
     std::string param = paramStream.str();
     CallResRegisterMethod(MakeMethodHash(REGISTER_PLATFORM_VIEW), param);
 }
@@ -195,5 +215,72 @@ void PlatformViewDelegate::HandleTouchCancel(const NG::OffsetF& offset)
 void PlatformViewDelegate::Dispose()
 {
     CallResRegisterMethod(MakeMethodHash(DISPOSE_PLATFORM_VIEW), "");
+}
+
+void PlatformViewDelegate::SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY)
+{
+    std::stringstream paramStream;
+    paramStream << X << PLATFORM_VIEW_PARAM_EQUALS
+                << x << PLATFORM_VIEW_PARAM_AND
+                << Y << PLATFORM_VIEW_PARAM_EQUALS
+                << y << PLATFORM_VIEW_PARAM_AND
+                << Z << PLATFORM_VIEW_PARAM_EQUALS
+                << z << PLATFORM_VIEW_PARAM_AND
+                << CENTER_X << PLATFORM_VIEW_PARAM_EQUALS
+                << centerX << PLATFORM_VIEW_PARAM_AND
+                << CENTER_Y << PLATFORM_VIEW_PARAM_EQUALS
+                << centerY;
+    std::string param = paramStream.str();
+    CallResRegisterMethod(MakeMethodHash(SET_SCALE), param);
+}
+
+void PlatformViewDelegate::SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+    const std::string& centerY, const std::string& centerZ, const std::string& perspective)
+{
+    std::stringstream paramStream;
+    paramStream << X << PLATFORM_VIEW_PARAM_EQUALS
+                << x << PLATFORM_VIEW_PARAM_AND
+                << Y << PLATFORM_VIEW_PARAM_EQUALS
+                << y << PLATFORM_VIEW_PARAM_AND
+                << Z << PLATFORM_VIEW_PARAM_EQUALS
+                << z << PLATFORM_VIEW_PARAM_AND
+                << ANGLE << PLATFORM_VIEW_PARAM_EQUALS
+                << angle << PLATFORM_VIEW_PARAM_AND
+                << CENTER_X << PLATFORM_VIEW_PARAM_EQUALS
+                << centerX << PLATFORM_VIEW_PARAM_AND
+                << CENTER_Y << PLATFORM_VIEW_PARAM_EQUALS
+                << centerY << PLATFORM_VIEW_PARAM_AND
+                << CENTER_Z << PLATFORM_VIEW_PARAM_EQUALS
+                << centerZ << PLATFORM_VIEW_PARAM_AND
+                << PERSPECTIVE << PLATFORM_VIEW_PARAM_EQUALS
+                << perspective;
+    std::string param = paramStream.str();
+    CallResRegisterMethod(MakeMethodHash(SET_ROTATION), param);
+}
+
+void PlatformViewDelegate::SetTranslate(const std::string& x, const std::string& y, const std::string& z)
+{
+    std::stringstream paramStream;
+    paramStream << X << PLATFORM_VIEW_PARAM_EQUALS
+                << x << PLATFORM_VIEW_PARAM_AND
+                << Y << PLATFORM_VIEW_PARAM_EQUALS
+                << y << PLATFORM_VIEW_PARAM_AND
+                << Z << PLATFORM_VIEW_PARAM_EQUALS
+                << z;
+    std::string param = paramStream.str();
+    CallResRegisterMethod(MakeMethodHash(SET_TRANSLATE), param);
+}
+
+void PlatformViewDelegate::SetTransformMatrix(const std::vector<float>& matrix)
+{
+    std::stringstream paramStream;
+    for (size_t i = 0; i < matrix.size(); ++i) {
+        paramStream << "m" << i << PLATFORM_VIEW_PARAM_EQUALS << matrix[i];
+        if (i < matrix.size() - 1) {
+            paramStream << PLATFORM_VIEW_PARAM_AND;
+        }
+    }
+    std::string param = paramStream.str();
+    CallResRegisterMethod(MakeMethodHash(SET_TRANSFORM_MATRIX), param);
 }
 } // namespace OHOS::Ace

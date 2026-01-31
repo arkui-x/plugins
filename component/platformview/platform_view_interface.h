@@ -26,6 +26,11 @@ using CommonEvent = std::function<void()>;
 using TextureRefreshEvent = std::function<void(uint32_t, uint64_t)>;
 using PlatformViewReadyEvent = std::function<void()>;
 
+enum class PlatformViewType {
+    TEXTURE_TYPE = 0,
+    SURFACE_TYPE = 1,
+};
+
 class PlatformViewInterface : public virtual AceType {
     DECLARE_ACE_TYPE(NG::PlatformViewInterface, AceType)
 
@@ -36,6 +41,11 @@ public:
     static RefPtr<PlatformViewInterface> Create();
 
     virtual void InitPlatformView() {}
+    virtual void SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY) {}
+    virtual void SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,
+        const std::string& centerY, const std::string& centerZ, const std::string& perspective) {}
+    virtual void SetTranslate(const std::string& x, const std::string& y, const std::string& z) {}
+    virtual void SetTransformMatrix(const std::vector<float>& matrix) {}
     virtual void UpdatePlatformViewLayout(const NG::SizeF& drawSize, const NG::OffsetF& offset) {}
     virtual void ExchangeBind() {}
     virtual void GetPlatformViewType(int32_t& type) {}
@@ -47,6 +57,7 @@ public:
     virtual void SetRenderSurface(const RefPtr<RenderSurface>& renderSurface) {}
     virtual void RegisterTextureEvent(TextureRefreshEvent&& textureRefreshEvent) {}
     virtual void RegisterPlatformViewReadyEvent(PlatformViewReadyEvent&& platformViewReadyEvent) {}
+    virtual void RegisterPlatformView() {}
     virtual int32_t SetSurface()
     {
         return -1;
