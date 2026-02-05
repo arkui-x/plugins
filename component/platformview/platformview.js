@@ -16,18 +16,11 @@
 const __PlatformView__ = requireInternal('platformview');
 class PlatformView extends JSViewAbstract {
     static create(id, data, type) {
+        const finalType = (type === undefined || type === null) ? 0 : type;
         if (data === undefined || data === null) {
-            if (type === undefined || type === null) {
-                __PlatformView__.create(id, 0);
-            } else {
-                __PlatformView__.create(id, type);
-            }
+            __PlatformView__.create(id, finalType);
         } else {
-            if (type === undefined || type === null) {
-                __PlatformView__.create(id, 0, data);
-            } else {
-                __PlatformView__.create(id, type, data);
-            }
+            __PlatformView__.create(id, finalType, data);
         }
     }
     
