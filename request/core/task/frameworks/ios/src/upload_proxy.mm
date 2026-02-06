@@ -229,8 +229,8 @@ void UploadProxy::PutUpload()
     [headers setValue:@"application/octet-stream" forKey:@"Content-Type"];
 
     for (auto it = config_.headers.begin(); it != config_.headers.end(); it++) {
-        [headers setValue:JsonUtils::CStringToNSString(it->first)
-            forKey:JsonUtils::CStringToNSString(it->second)];
+        [headers setValue:JsonUtils::CStringToNSString(it->second)
+               forKey:JsonUtils::CStringToNSString(it->first)];
     }
     if ([url hasPrefix:@"https"]) {
         OHOS::Plugin::Request::CertificateUtils::InstallCertificateChain(sessionCtrl_);
