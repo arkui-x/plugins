@@ -219,11 +219,6 @@ bool AudioCapturerPrivate::GetAudioTime(Timestamp& timestamp, Timestamp::Timesta
     return capturerImpl_->GetAudioTime(timestamp, base);
 }
 
-bool AudioCapturerPrivate::GetFirstPkgTimeStampInfo(int64_t &firstTs) const
-{
-    return false;
-}
-
 bool AudioCapturerPrivate::Pause() const
 {
     return true;

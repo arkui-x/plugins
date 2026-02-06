@@ -48,7 +48,6 @@ public:
     CapturerState GetStatus() const override;
     bool GetTimeStampInfo(Timestamp &timestampNs, Timestamp::Timestampbase base) const override;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const override;
-    bool GetFirstPkgTimeStampInfo(int64_t &firstTs) const override;
     bool Pause() const override;
     bool Stop() const override;
     bool Flush() const override;

@@ -55,6 +55,7 @@ ohos_source_set("graphics_text_static") {
     "$rosen_text_root/interface/mlb/napi/utils/napi_async_work.cpp",
     "$rosen_text_root/interface/mlb/napi/utils/napi_common.cpp",
     "$rosen_text_root/interface/mlb/utils/src/font_utils.cpp",
+    "$rosen_text_root/interface/mlb/utils/src/error_code.cpp",
     "//plugins/graphics/text/native_module_graphics_text.cpp",
   ]
 
