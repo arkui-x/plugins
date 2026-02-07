@@ -15,46 +15,47 @@
 
 package ohos.ace.plugin.locationserviceplugin;
 
-import android.util.Log;
-import android.os.Build;
-import android.content.Intent;
+import android.app.Activity;
 import android.app.PendingIntent;
-import android.net.wifi.WifiInfo;
-import android.provider.Settings;
-import android.net.wifi.WifiManager;
-import android.telephony.TelephonyManager;
-import android.content.Context;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Bundle;
 import android.Manifest;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Handler;
-import android.location.GnssStatus;
-import android.location.OnNmeaMessageListener;
-import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.GnssStatus;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.location.OnNmeaMessageListener;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.provider.Settings;
+import android.telephony.TelephonyManager;
 
-import java.util.concurrent.CountDownLatch;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * The LocationServicePlugin class provides functions related to location services,
@@ -155,7 +156,7 @@ public class LocationServicePlugin {
             } else if (status == android.location.LocationProvider.TEMPORARILY_UNAVAILABLE) {
                 nativeOnLocationError(ERR_PROVIDER_TEMP_UNAVAILABLE);
             } else {
-                Log.i(LOG_TAG, "status is available");
+                ALog.i(LOG_TAG, "status is available");
             }
         }
 
@@ -172,7 +173,7 @@ public class LocationServicePlugin {
     private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            Log.i(LOG_TAG, "onScanResult called");
+            ALog.i(LOG_TAG, "onScanResult called");
             if (result == null) {
                 return;
             }
@@ -184,7 +185,7 @@ public class LocationServicePlugin {
                 ? result.getScanRecord().getBytes() : new byte[0];
             boolean connectable = result.isConnectable();
             nativeOnBluetoothScanResult(deviceId, deviceName, rssi, adv, connectable);
-            Log.i(LOG_TAG, "onScanResult processed");
+            ALog.i(LOG_TAG, "onScanResult processed");
         }
     };
 
@@ -230,10 +231,10 @@ public class LocationServicePlugin {
      * @return Returns whether the location permission request was successful.
      */
     public boolean requestAndCheckLocationPermission() {
-        Log.i(LOG_TAG, "Java requestLocationPermission called");
+        ALog.i(LOG_TAG, "Java requestLocationPermission called");
         Activity activity = getMainActivity();
         if (activity == null) {
-            Log.e(LOG_TAG, "Java activity is null");
+            ALog.e(LOG_TAG, "Java activity is null");
             return false;
         }
 
@@ -243,7 +244,7 @@ public class LocationServicePlugin {
                 PackageManager.PERMISSION_GRANTED &&
             activity.checkSelfPermission(android.Manifest.permission.ACCESS_WIFI_STATE) ==
                 PackageManager.PERMISSION_GRANTED) {
-            Log.i(LOG_TAG, "All required permissions are granted");
+            ALog.i(LOG_TAG, "All required permissions are granted");
             return true;
         }
         return false;
@@ -309,7 +310,7 @@ public Location getCurrentLocation() {
         try {
             latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            Log.e(LOG_TAG, "latch await interrupted, no upper logic to handle", e);
+            ALog.e(LOG_TAG, "latch await interrupted, no upper logic to handle" + e);
         } finally {
             stopListener(listener);
         }
@@ -363,7 +364,7 @@ public Location getCurrentLocation() {
             try {
                 locationManager.removeUpdates(locationListener);
             } catch (SecurityException e) {
-                Log.e("LocationManager", "SecurityException occurred while removing updates", e);
+                ALog.e("LocationManager", "SecurityException occurred while removing updates" + e);
             }
         }
     }
@@ -415,11 +416,11 @@ public Location getCurrentLocation() {
                 out.addAll(list);
             }
         } catch (IOException e) {
-            Log.e(LOG_TAG, "getAddressByCoordinate geocoder IO error: " + e.getMessage());
+            ALog.e(LOG_TAG, "getAddressByCoordinate geocoder IO error: " + e.getMessage());
         } catch (IllegalArgumentException iae) {
-            Log.e(LOG_TAG, "getAddressByCoordinate invalid lat/lon: " + iae.getMessage());
+            ALog.e(LOG_TAG, "getAddressByCoordinate invalid lat/lon: " + iae.getMessage());
         } catch (Exception e) {
-            Log.e(LOG_TAG, "getAddressByCoordinate unexpected: " + e.getMessage());
+            ALog.e(LOG_TAG, "getAddressByCoordinate unexpected: " + e.getMessage());
         }
         return out.toArray(new Address[0]);
     }
@@ -474,7 +475,7 @@ public Location getCurrentLocation() {
                     context.unregisterReceiver(localeReceiver);
                 }
             } catch (IllegalArgumentException | SecurityException e) {
-                Log.e(LOG_TAG, "unregisterCountryCodeCallback exception: " + e.getMessage());
+                ALog.e(LOG_TAG, "unregisterCountryCodeCallback exception: " + e.getMessage());
             }
             countryCodeRegistered = false;
         }
@@ -575,14 +576,14 @@ public Location getCurrentLocation() {
      * This method is used to register a GNSS status listener with the LocationManager.
      */
     public void registerGnssStatusCallback() {
-        Log.i(LOG_TAG, "registerGnssStatusCallback called");
+        ALog.i(LOG_TAG, "registerGnssStatusCallback called");
         if (!checkRegisterPreconditions()) {
             return;
         }
 
         synchronized (gnssStatusCbLock) {
             if (gnssStatusRegistered) {
-                Log.i(LOG_TAG, "GNSS status already registered");
+                ALog.i(LOG_TAG, "GNSS status already registered");
                 return;
             }
             initGnssStatusCallback();
@@ -597,7 +598,7 @@ public Location getCurrentLocation() {
      */
     private boolean checkRegisterPreconditions() {
         if (locationManager == null) {
-            Log.e(LOG_TAG, "registerGnssStatusCallback locationManager null");
+            ALog.e(LOG_TAG, "registerGnssStatusCallback locationManager null");
             return false;
         }
 
@@ -622,13 +623,13 @@ public Location getCurrentLocation() {
         gnssStatusCallback = new android.location.GnssStatus.Callback() {
             @Override
             public void onSatelliteStatusChanged(android.location.GnssStatus status) {
-                Log.i(LOG_TAG, "onSatelliteStatusChanged called");
+                ALog.i(LOG_TAG, "onSatelliteStatusChanged called");
                 if (status == null) {
                     return;
                 }
 
                 int satelliteCount = status.getSatelliteCount();
-                Log.i(LOG_TAG, "onSatelliteStatusChanged count=" + satelliteCount);
+                ALog.i(LOG_TAG, "onSatelliteStatusChanged count=" + satelliteCount);
                 if (satelliteCount <= 0) {
                     nativeOnGnssStatusChanged(0, new int[0], new double[0], new double[0],
                         new double[0], new double[0], new int[0], new int[0]);
@@ -654,7 +655,7 @@ public Location getCurrentLocation() {
 
                 nativeOnGnssStatusChanged(satelliteCount, ids, cn0, elevations, azimuths,
                     freqs, constellations, usedInFix);
-                Log.i(LOG_TAG, "onSatelliteStatusChanged processed");
+                ALog.i(LOG_TAG, "onSatelliteStatusChanged processed");
             }
         };
     }
@@ -670,16 +671,16 @@ public Location getCurrentLocation() {
                     new android.os.Handler(Looper.getMainLooper()));
                 gnssStatusRegistered = true;
                 pendingGnssStatusRegister = false;
-                Log.i(LOG_TAG, "GNSS status registered success");
+                ALog.i(LOG_TAG, "GNSS status registered success");
 
                 forceGpsLocationUpdate();
             } else {
-                Log.e(LOG_TAG, "GNSS status callback not supported on this API (<24)");
+                ALog.e(LOG_TAG, "GNSS status callback not supported on this API (<24)");
             }
         } catch (SecurityException se) {
-            Log.e(LOG_TAG, "registerGnssStatusCallback security: " + se.getMessage());
+            ALog.e(LOG_TAG, "registerGnssStatusCallback security: " + se.getMessage());
         } catch (IllegalArgumentException | IllegalStateException e) {
-            Log.e(LOG_TAG, "registerGnssStatusCallback ex: " + e.getMessage());
+            ALog.e(LOG_TAG, "registerGnssStatusCallback ex: " + e.getMessage());
         }
     }
 
@@ -694,12 +695,12 @@ public Location getCurrentLocation() {
                     1000L,
                     0f,
                     locationListener);
-                Log.i(LOG_TAG, "Force GPS request to trigger GNSS scan");
+                ALog.i(LOG_TAG, "Force GPS request to trigger GNSS scan");
             } else {
-                Log.i(LOG_TAG, "GPS provider disabled, skip force request");
+                ALog.i(LOG_TAG, "GPS provider disabled, skip force request");
             }
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "Force GPS request failed: " + e.getMessage());
+            ALog.e(LOG_TAG, "Force GPS request failed: " + e.getMessage());
         }
     }
 
@@ -707,7 +708,7 @@ public Location getCurrentLocation() {
      * Unregister GNSS status callback.
      */
     public void unregisterGnssStatusCallback() {
-        Log.i(LOG_TAG, "unregisterGnssStatusCallback called");
+        ALog.i(LOG_TAG, "unregisterGnssStatusCallback called");
         if (locationManager == null) {
             return;
         }
@@ -720,7 +721,7 @@ public Location getCurrentLocation() {
                     locationManager.unregisterGnssStatusCallback(gnssStatusCallback);
                 }
             } catch (IllegalArgumentException | SecurityException e) {
-                Log.e(LOG_TAG, "unregisterGnssStatusCallback exception: " + e.getMessage());
+                ALog.e(LOG_TAG, "unregisterGnssStatusCallback exception: " + e.getMessage());
             }
             gnssStatusRegistered = false;
         }
@@ -766,20 +767,20 @@ public Location getCurrentLocation() {
         BluetoothAdapter adapter = (bm == null) ? null : bm.getAdapter();
         bluetoothLeScanner = (adapter == null) ? null : adapter.getBluetoothLeScanner();
         if (bluetoothLeScanner == null) {
-            Log.e(LOG_TAG, "BLE scanner null");
+            ALog.e(LOG_TAG, "BLE scanner null");
             return FAIL;
         }
 
         try {
-            Log.i(LOG_TAG, "Starting BLE scan");
+            ALog.i(LOG_TAG, "Starting BLE scan");
             bluetoothLeScanner.startScan(scanCallback);
-            Log.i(LOG_TAG, "BLE scan started");
+            ALog.i(LOG_TAG, "BLE scan started");
             return SUCCESS;
         } catch (IllegalArgumentException | IllegalStateException e) {
-            Log.e(LOG_TAG, "startScan exception: " + e.getMessage());
+            ALog.e(LOG_TAG, "startScan exception: " + e.getMessage());
             return FAIL;
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "startScan missing permission: " + e.getMessage());
+            ALog.e(LOG_TAG, "startScan missing permission: " + e.getMessage());
             return FAIL;
         }
     }
@@ -794,7 +795,7 @@ public Location getCurrentLocation() {
         try {
             bluetoothLeScanner.stopScan(scanCallback);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            Log.e(LOG_TAG, "stopScan exception: " + e.getMessage());
+            ALog.e(LOG_TAG, "stopScan exception: " + e.getMessage());
         }
     }
 
@@ -836,10 +837,10 @@ public Location getCurrentLocation() {
             locationManager.requestLocationUpdates(provider, minTimeMs, minDistance, locationListener);
             return SUCCESS;
         } catch (SecurityException se) {
-            Log.e(LOG_TAG, "registerLocationChangeCallbackWithConfig security: " + se.getMessage());
+            ALog.e(LOG_TAG, "registerLocationChangeCallbackWithConfig security: " + se.getMessage());
             return FAIL;
         } catch (IllegalArgumentException | IllegalStateException e) {
-            Log.e(LOG_TAG, "registerLocationChangeCallbackWithConfig ex: " + e.getMessage());
+            ALog.e(LOG_TAG, "registerLocationChangeCallbackWithConfig ex: " + e.getMessage());
             return FAIL;
         }
     }
@@ -851,7 +852,7 @@ public Location getCurrentLocation() {
      */
     public synchronized void registerLocationErrorCallback() {
         if (errorListenerRegistered) {
-            Log.e(LOG_TAG, "Location error listener already registered");
+            ALog.e(LOG_TAG, "Location error listener already registered");
             return;
         }
         if (locationManager == null) {
@@ -871,7 +872,7 @@ public Location getCurrentLocation() {
             }
             locationManager.requestLocationUpdates(provider, 0L, 0f, statusListener);
             errorListenerRegistered = true;
-            Log.i(LOG_TAG, "registerLocationErrorCallback success, provider=" + provider);
+            ALog.i(LOG_TAG, "registerLocationErrorCallback success, provider=" + provider);
         } catch (SecurityException se) {
             nativeOnLocationError(ERR_NO_PERMISSION);
         } catch (Exception e) {
@@ -892,7 +893,7 @@ public Location getCurrentLocation() {
             try {
                 locationManager.removeUpdates(statusListener);
             } catch (IllegalArgumentException | SecurityException e) {
-                Log.e(LOG_TAG, "removeUpdates exception: " + e.getMessage());
+                ALog.e(LOG_TAG, "removeUpdates exception: " + e.getMessage());
             }
         }
         errorListenerRegistered = false;
@@ -908,7 +909,7 @@ public Location getCurrentLocation() {
                 return LocationManager.NETWORK_PROVIDER;
             }
         } catch (IllegalArgumentException | SecurityException e) {
-            Log.e(LOG_TAG, "chooseProvider exception: " + e.getMessage());
+            ALog.e(LOG_TAG, "chooseProvider exception: " + e.getMessage());
         }
         return null;
     }
@@ -922,7 +923,7 @@ public Location getCurrentLocation() {
 
     private int checkSelfPermission(String perm) {
         if (context == null) {
-            Log.e(LOG_TAG, "checkSelfPermission: context null, treat as denied");
+            ALog.e(LOG_TAG, "checkSelfPermission: context null, treat as denied");
             return PackageManager.PERMISSION_DENIED;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -938,7 +939,7 @@ public Location getCurrentLocation() {
      * @return Returns SUCCESS for success, other values for failure
      */
     public int startLocating() {
-        Log.i(LOG_TAG, "Java startLocating called");
+        ALog.i(LOG_TAG, "Java startLocating called");
         if (locatingStarted) {
             return SUCCESS;
         }
@@ -957,7 +958,7 @@ public Location getCurrentLocation() {
             locatingStarted = true;
             return SUCCESS;
         } catch (SecurityException | IllegalArgumentException | IllegalStateException e) {
-            Log.e(LOG_TAG, "startLocating error: " + e.getMessage());
+            ALog.e(LOG_TAG, "startLocating error: " + e.getMessage());
             return FAIL;
         }
     }
@@ -976,7 +977,7 @@ public Location getCurrentLocation() {
                 locationManager.removeUpdates(internalLocationListener);
             }
         } catch (SecurityException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "stopLocating removeUpdates warn");
+            ALog.e(LOG_TAG, "stopLocating removeUpdates warn");
             return FAIL;
         }
         locatingStarted = false;
@@ -1057,7 +1058,7 @@ public Location getCurrentLocation() {
      * @return Returns the integer value of the switch state.
      */
     public int getSwitchState() {
-        Log.i(LOG_TAG, "getSwitchState called");
+        ALog.i(LOG_TAG, "getSwitchState called");
         try {
             int mode = Settings.Secure.getInt(
                 context.getContentResolver(),
@@ -1079,7 +1080,7 @@ public Location getCurrentLocation() {
      * @return Returns true if the conversion service is available; otherwise, returns false.
      */
     public boolean isGeoConvertAvailable() {
-        Log.i(LOG_TAG, "isGeoConvertAvailable called");
+        ALog.i(LOG_TAG, "isGeoConvertAvailable called");
         return Geocoder.isPresent();
     }
 
@@ -1132,7 +1133,7 @@ public Location getCurrentLocation() {
                 addresses.addAll(addressList);
             }
         } catch (IOException e) {
-            Log.e(LOG_TAG, "getAddressByLocationName error: " + e.getMessage());
+            ALog.e(LOG_TAG, "getAddressByLocationName error: " + e.getMessage());
         }
         return addresses.toArray(new android.location.Address[0]);
     }
@@ -1143,7 +1144,7 @@ public Location getCurrentLocation() {
      * @return The string representation of the ISO country code.
      */
     public String getIsoCountryCode() {
-        Log.i(LOG_TAG, "Get the ISO country code");
+        ALog.i(LOG_TAG, "Get the ISO country code");
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         String simCountry = null;
         if (tm != null) {
@@ -1169,7 +1170,7 @@ public Location getCurrentLocation() {
             LocationManager locationManagerInstance =
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             if (locationManagerInstance == null) {
-                Log.e(LOG_TAG, "Get locationManager failed");
+                ALog.e(LOG_TAG, "Get locationManager failed");
                 return;
             }
             ensureGeofenceReceiverRegistered();
@@ -1179,7 +1180,7 @@ public Location getCurrentLocation() {
                 try {
                     locationManagerInstance.removeProximityAlert(oldPi);
                 } catch (SecurityException | IllegalArgumentException e) {
-                    Log.e(LOG_TAG, "remove old proximity alert fail");
+                    ALog.e(LOG_TAG, "remove old proximity alert fail");
                 }
             }
 
@@ -1189,9 +1190,9 @@ public Location getCurrentLocation() {
             geofencePendingIntents.put(fenceId, geofencePendingIntent);
             nativeOnGeofenceEvent(fenceId);
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "Geofence addition failed: permission error", e);
+            ALog.e(LOG_TAG, "Geofence addition failed: permission error" + e);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Geofence addition encountered an unexpected error", e);
+            ALog.e(LOG_TAG, "Geofence addition encountered an unexpected error" + e);
         }
     }
 
@@ -1207,7 +1208,7 @@ public Location getCurrentLocation() {
                 }
                 int fenceId = intent.getIntExtra(FENCE_ID, -1);
                 if (fenceId <= 0) {
-                    Log.e(LOG_TAG, "GeofenceReceiver invalid fenceId");
+                    ALog.e(LOG_TAG, "GeofenceReceiver invalid fenceId");
                     return;
                 }
                 boolean entering = intent.getBooleanExtra(
@@ -1218,7 +1219,7 @@ public Location getCurrentLocation() {
         IntentFilter filter = new IntentFilter(ACTION_GEOFENCE);
         context.registerReceiver(geofenceReceiver, filter);
         geofenceReceiverRegistered = true;
-        Log.i(LOG_TAG, "Geofence receiver registered");
+        ALog.i(LOG_TAG, "Geofence receiver registered");
     }
 
     /**
@@ -1227,12 +1228,12 @@ public Location getCurrentLocation() {
      * @param fenceId The ID of the geofence to be removed.
      */
     public void removeGnssGeofence(int fenceId) {
-        Log.i(LOG_TAG, "removeGnssGeofence called with fenceId: " + fenceId);
+        ALog.i(LOG_TAG, "removeGnssGeofence called with fenceId: " + fenceId);
         try {
             LocationManager locationManagerService =
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             if (locationManagerService == null) {
-                Log.e(LOG_TAG, "Failed to obtain the LocationManager instance");
+                ALog.e(LOG_TAG, "Failed to obtain the LocationManager instance");
                 return;
             }
 
@@ -1241,9 +1242,9 @@ public Location getCurrentLocation() {
 
             locationManagerService.removeProximityAlert(geofencePendingIntent);
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "Failed to remove geofence: Permission error", e);
+            ALog.e(LOG_TAG, "Failed to remove geofence: Permission error" + e);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "An unexpected error occurred while removing the geofence", e);
+            ALog.e(LOG_TAG, "An unexpected error occurred while removing the geofence" + e);
         }
     }
 
@@ -1274,45 +1275,45 @@ public Location getCurrentLocation() {
      * @return The current WiFi BSSID; returns "Denied" if the acquisition fails.
      */
     public String getCurrentWifiBssidForLocating() {
-        Log.i(LOG_TAG, "getCurrentWifiBssidForLocating called");
+        ALog.i(LOG_TAG, "getCurrentWifiBssidForLocating called");
 
         if (!checkRequiredPermissions()) {
-            Log.e(LOG_TAG, "Missing necessary permissions, unable to obtain WiFi BSSID.");
+            ALog.e(LOG_TAG, "Missing necessary permissions, unable to obtain WiFi BSSID.");
             return "Permission Denied";
         }
 
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (wifiManager == null) {
-            Log.e(LOG_TAG, "WiFi Manager is null, cannot obtain WiFi BSSID.");
+            ALog.e(LOG_TAG, "WiFi Manager is null, cannot obtain WiFi BSSID.");
             return "WiFi Not Supported";
         }
 
         try {
             if (!wifiManager.isWifiEnabled()) {
-                Log.e(LOG_TAG, "WiFi is disabled.");
+                ALog.e(LOG_TAG, "WiFi is disabled.");
                 return "WiFi Disabled";
             }
 
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
             if (wifiInfo == null) {
-                Log.e(LOG_TAG, "Failed to get WiFi connection info: WifiInfo is null.");
+                ALog.e(LOG_TAG, "Failed to get WiFi connection info: WifiInfo is null.");
                 return "No WiFi Connection";
             }
 
             String bssid = wifiInfo.getBSSID();
             if (isInvalidBssid(bssid)) {
-                Log.e(LOG_TAG, "Invalid or placeholder BSSID received: " + bssid);
+                ALog.e(LOG_TAG, "Invalid or placeholder BSSID received: " + bssid);
                 return "Invalid BSSID";
             }
 
-            Log.i(LOG_TAG, "Successfully obtained WiFi BSSID: " + bssid);
+            ALog.i(LOG_TAG, "Successfully obtained WiFi BSSID: " + bssid);
             return bssid;
 
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "Failed to get WiFi BSSID: Security exception - missing permissions.", e);
+            ALog.e(LOG_TAG, "Failed to get WiFi BSSID: Security exception - missing permissions." + e);
             return "Security Exception";
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Failed to get WiFi BSSID: Unexpected exception.", e);
+            ALog.e(LOG_TAG, "Failed to get WiFi BSSID: Unexpected exception." + e);
             return "Unknown Error";
         }
     }
@@ -1327,10 +1328,10 @@ public Location getCurrentLocation() {
         ) == PackageManager.PERMISSION_GRANTED;
 
         if (!hasLocationPerm) {
-            Log.e(LOG_TAG, "Missing required permission: ACCESS_FINE_LOCATION (Fine Location Permission)");
+            ALog.e(LOG_TAG, "Missing required permission: ACCESS_FINE_LOCATION (Fine Location Permission)");
         }
         if (!hasWifiPerm) {
-            Log.e(LOG_TAG, "Missing required permission: ACCESS_WIFI_STATE (WiFi State Permission)");
+            ALog.e(LOG_TAG, "Missing required permission: ACCESS_WIFI_STATE (WiFi State Permission)");
         }
 
         return hasLocationPerm && hasWifiPerm;
@@ -1363,15 +1364,15 @@ public Location getCurrentLocation() {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            Log.e("TAG", "ClassNotFoundException occurred: " + ex.getMessage());
+            ALog.e("TAG", "ClassNotFoundException occurred: " + ex.getMessage());
         } catch (InvocationTargetException ex) {
-            Log.e("TAG", "InvocationTargetException occurred: " + ex.getMessage());
+            ALog.e("TAG", "InvocationTargetException occurred: " + ex.getMessage());
         } catch (NoSuchMethodException ex) {
-            Log.e("TAG", "NoSuchMethodException occurred: " + ex.getMessage());
+            ALog.e("TAG", "NoSuchMethodException occurred: " + ex.getMessage());
         } catch (NoSuchFieldException ex) {
-            Log.e("TAG", "NoSuchFieldException occurred: " + ex.getMessage());
+            ALog.e("TAG", "NoSuchFieldException occurred: " + ex.getMessage());
         } catch (IllegalAccessException ex) {
-            Log.e("TAG", "IllegalAccessException occurred: " + ex.getMessage());
+            ALog.e("TAG", "IllegalAccessException occurred: " + ex.getMessage());
         }
         return null;
     }

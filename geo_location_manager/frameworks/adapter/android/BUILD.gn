@@ -17,6 +17,10 @@ import("//plugins/geo_location_manager/geolocationmanager.gni")
 java_library("geolocationmanager_android_java") {
   java_files =
       [ "java/src/ohos/ace/plugin/locationserviceplugin/LocationServicePlugin.java" ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "geo_location_manager"
 }

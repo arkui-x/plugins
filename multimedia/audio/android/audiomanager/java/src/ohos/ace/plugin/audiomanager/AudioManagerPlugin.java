@@ -22,11 +22,12 @@ import android.media.AudioManager;
 import android.media.AudioManager.AudioRecordingCallback;
 import android.media.AudioPlaybackConfiguration;
 import android.media.AudioRecordingConfiguration;
-import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * AudioManagerPlugin
@@ -47,7 +48,7 @@ public class AudioManagerPlugin {
      */
     public AudioManagerPlugin(Context context) {
         if (context == null) {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             return;
         }
         audioManager_ = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -64,9 +65,9 @@ public class AudioManagerPlugin {
             value = method.invoke(obj, args);
         } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | SecurityException | ClassNotFoundException e) {
-            Log.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
+            ALog.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
         } catch (Exception e) {
-            Log.e(LOG_TAG, "unknown Exception in invoke");
+            ALog.e(LOG_TAG, "unknown Exception in invoke");
             e.printStackTrace();
         }
         return value;
@@ -80,7 +81,7 @@ public class AudioManagerPlugin {
      */
     public int getVolume(int streamType) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return -1;
         }
         return audioManager_.getStreamVolume(streamType);
@@ -94,7 +95,7 @@ public class AudioManagerPlugin {
      */
     public int getMaxVolume(int streamType) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return -1;
         }
         return audioManager_.getStreamMaxVolume(streamType);
@@ -108,7 +109,7 @@ public class AudioManagerPlugin {
      */
     public int getMinVolume(int streamType) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return -1;
         }
         Object result = invoke("android.media.AudioManager", "getStreamMinVolume",
@@ -127,7 +128,7 @@ public class AudioManagerPlugin {
      */
     public boolean isStreamMute(int streamType) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return false;
         }
         return audioManager_.isStreamMute(streamType);
@@ -140,7 +141,7 @@ public class AudioManagerPlugin {
      */
     public int getRingerMode() {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return -1;
         }
         return audioManager_.getRingerMode();
@@ -153,7 +154,7 @@ public class AudioManagerPlugin {
      */
     public boolean isMicrophoneMute() {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return false;
         }
         return audioManager_.isMicrophoneMute();
@@ -166,7 +167,7 @@ public class AudioManagerPlugin {
      */
     public boolean isVolumeFixed() {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return false;
         }
         return audioManager_.isVolumeFixed();
@@ -182,7 +183,7 @@ public class AudioManagerPlugin {
      */
     public float getSystemVolumeInDb(int streamType, int index, int deviceType) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return 0.0f;
         }
         Object result = invoke("android.media.AudioManager", "getStreamVolumeDb",
@@ -200,7 +201,7 @@ public class AudioManagerPlugin {
      */
     public int getAudioScene() {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return AudioManager.MODE_INVALID;
         }
         return audioManager_.getMode();
@@ -214,7 +215,7 @@ public class AudioManagerPlugin {
      */
     public AudioDeviceInfo[] getDevices(int flags) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return null;
         }
         return audioManager_.getDevices(flags);
@@ -223,26 +224,26 @@ public class AudioManagerPlugin {
     void registerAudioDeviceCallback() {
         if (deviceChangeCallback_ == null) {
             if (audioManager_ == null) {
-                Log.e(LOG_TAG, "audioManager_ is null");
+                ALog.e(LOG_TAG, "audioManager_ is null");
                 return;
             }
             deviceChangeCallback_ = new AudioDeviceChangeCallbackImpl();
             audioManager_.registerAudioDeviceCallback(deviceChangeCallback_, null);
         } else {
-            Log.w(LOG_TAG, "AudioDeviceCallback has already been registered");
+            ALog.w(LOG_TAG, "AudioDeviceCallback has already been registered");
         }
     }
 
     void unregisterAudioDeviceCallback() {
         if (deviceChangeCallback_ != null) {
             if (audioManager_ == null) {
-                Log.e(LOG_TAG, "audioManager_ is null");
+                ALog.e(LOG_TAG, "audioManager_ is null");
                 return;
             }
             audioManager_.unregisterAudioDeviceCallback(deviceChangeCallback_);
             deviceChangeCallback_ = null;
         } else {
-            Log.w(LOG_TAG, "AudioDeviceCallback has not been registered");
+            ALog.w(LOG_TAG, "AudioDeviceCallback has not been registered");
         }
     }
 
@@ -253,7 +254,7 @@ public class AudioManagerPlugin {
      */
     public List<AudioPlaybackConfiguration> getCurrentAudioRendererInfoArray() {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return null;
         }
         return audioManager_.getActivePlaybackConfigurations();
@@ -266,7 +267,7 @@ public class AudioManagerPlugin {
      */
     public List<AudioRecordingConfiguration> getCurrentAudioCapturerInfoArray() {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return null;
         }
         return audioManager_.getActiveRecordingConfigurations();
@@ -278,13 +279,13 @@ public class AudioManagerPlugin {
     public void registerAudioRendererEventListener() {
         if (audioPlaybackCallbacklListeners_ == null) {
             if (audioManager_ == null) {
-                Log.e(LOG_TAG, "audioManager_ is null");
+                ALog.e(LOG_TAG, "audioManager_ is null");
                 return;
             }
             audioPlaybackCallbacklListeners_ = new OnAudioPlaybackCallbackListenerImpl();
             audioManager_.registerAudioPlaybackCallback(audioPlaybackCallbacklListeners_, null);
         } else {
-            Log.w(LOG_TAG, "AudioPlaybackCallback has already been registered");
+            ALog.w(LOG_TAG, "AudioPlaybackCallback has already been registered");
         }
     }
 
@@ -294,13 +295,13 @@ public class AudioManagerPlugin {
     public void unregisterAudioRendererEventListener() {
         if (audioPlaybackCallbacklListeners_ != null) {
             if (audioManager_ == null) {
-                Log.e(LOG_TAG, "audioManager_ is null");
+                ALog.e(LOG_TAG, "audioManager_ is null");
                 return;
             }
             audioManager_.unregisterAudioPlaybackCallback(audioPlaybackCallbacklListeners_);
             audioPlaybackCallbacklListeners_ = null;
         } else {
-            Log.w(LOG_TAG, "AudioPlaybackCallback has not been registered");
+            ALog.w(LOG_TAG, "AudioPlaybackCallback has not been registered");
         }
     }
 
@@ -310,13 +311,13 @@ public class AudioManagerPlugin {
     public void registerAudioCapturerEventListener() {
         if (audioRecordingCallbacklListeners_ == null) {
             if (audioManager_ == null) {
-                Log.e(LOG_TAG, "audioManager_ is null");
+                ALog.e(LOG_TAG, "audioManager_ is null");
                 return;
             }
             audioRecordingCallbacklListeners_ = new OnAudioRecordingCallbackListenerImpl();
             audioManager_.registerAudioRecordingCallback(audioRecordingCallbacklListeners_, null);
         } else {
-            Log.w(LOG_TAG, "AudioRecordingCallback has already been registered");
+            ALog.w(LOG_TAG, "AudioRecordingCallback has already been registered");
         }
     }
 
@@ -326,13 +327,13 @@ public class AudioManagerPlugin {
     public void unregisterAudioCapturerEventListener() {
         if (audioRecordingCallbacklListeners_ != null) {
             if (audioManager_ == null) {
-                Log.e(LOG_TAG, "audioManager_ is null");
+                ALog.e(LOG_TAG, "audioManager_ is null");
                 return;
             }
             audioManager_.unregisterAudioRecordingCallback(audioRecordingCallbacklListeners_);
             audioRecordingCallbacklListeners_ = null;
         } else {
-            Log.w(LOG_TAG, "AudioRecordingCallback has not been registered");
+            ALog.w(LOG_TAG, "AudioRecordingCallback has not been registered");
         }
     }
 
@@ -345,7 +346,7 @@ public class AudioManagerPlugin {
      */
     public boolean setDeviceActive(int deviceType, boolean flag) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return false;
         }
         if (!flag) {
@@ -383,7 +384,7 @@ public class AudioManagerPlugin {
      */
     public boolean isDeviceActive(int deviceType) {
         if (audioManager_ == null) {
-            Log.e(LOG_TAG, "audioManager_ is null");
+            ALog.e(LOG_TAG, "audioManager_ is null");
             return false;
         }
         Object result = invoke("android.media.AudioManager", "getCommunicationDevice",

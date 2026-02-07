@@ -23,7 +23,8 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.text.TextUtils;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,7 +51,7 @@ public class WifiDeviceUtils {
      */
     public WifiDeviceUtils(Context context) {
         if (context == null) {
-            Log.e(TAG, "WifiDeviceUtils context is null");
+            ALog.e(TAG, "WifiDeviceUtils context is null");
             return;
         }
         this.context = context;
@@ -64,12 +65,12 @@ public class WifiDeviceUtils {
      */
     public String getWifiInfo() {
         if (mWifiManager == null) {
-            Log.e(TAG, "WifiDeviceUtils getWifiInfo mWifiManager is null");
+            ALog.e(TAG, "WifiDeviceUtils getWifiInfo mWifiManager is null");
             return "";
         }
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo == null) {
-            Log.e(TAG, "WifiDeviceUtils getWifiInfo wifiInfo is null");
+            ALog.e(TAG, "WifiDeviceUtils getWifiInfo wifiInfo is null");
             return "";
         }
         String ssid = wifiInfo.getSSID();
@@ -93,7 +94,7 @@ public class WifiDeviceUtils {
             jsonObject.put("isHidden", isHidden);
             return jsonObject.toString();
         } catch (JSONException exception) {
-            Log.e(TAG, "WifiDeviceUtils getWifiInfo jsonObject.put JSONException");
+            ALog.e(TAG, "WifiDeviceUtils getWifiInfo jsonObject.put JSONException");
         }
         return "";
     }
@@ -105,7 +106,7 @@ public class WifiDeviceUtils {
      */
     public boolean getWifiActive() {
         if (mWifiManager == null) {
-            Log.e(TAG, "WifiDeviceUtils mWifiManager is null");
+            ALog.e(TAG, "WifiDeviceUtils mWifiManager is null");
             return false;
         }
         return mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED;
@@ -118,7 +119,7 @@ public class WifiDeviceUtils {
      */
     public boolean getIsConnected() {
         if (context == null) {
-            Log.e(TAG, "WifiDeviceUtils getIsConnected context is null");
+            ALog.e(TAG, "WifiDeviceUtils getIsConnected context is null");
             return false;
         }
 
@@ -126,7 +127,7 @@ public class WifiDeviceUtils {
         ConnectivityManager connectivityManager =
             (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager == null) {
-            Log.e(TAG, "WifiDeviceUtils getIsConnected connectivityManager is null");
+            ALog.e(TAG, "WifiDeviceUtils getIsConnected connectivityManager is null");
             return false;
         }
 

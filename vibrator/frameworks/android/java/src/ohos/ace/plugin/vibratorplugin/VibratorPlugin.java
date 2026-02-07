@@ -15,23 +15,25 @@
 
 package ohos.ace.plugin.vibratorplugin;
 
+import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build;
-import android.util.Log;
-import android.os.Vibrator;
-import android.os.VibrationEffect;
-import android.media.AudioManager;
-import android.app.NotificationManager;
-import android.app.Activity;
 import android.Manifest;
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.lang.reflect.InvocationTargetException;
+import android.media.AudioManager;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * Vibrator android plugin module
@@ -188,7 +190,7 @@ public class VibratorPlugin {
             try {
                 Class<?> vibratorManagerClass = Class.forName("android.os.VibratorManager");
                 String managerType = vibratorManagerClass.getName();
-                Log.i(LOG_TAG, "vibratorManagerClass Type: " + managerType);
+                ALog.i(LOG_TAG, "vibratorManagerClass Type: " + managerType);
 
                 Method getSystemServiceMethod = Context.class.getMethod(
                     "getSystemService",
@@ -200,7 +202,7 @@ public class VibratorPlugin {
                 );
             } catch (SecurityException | ClassNotFoundException | InvocationTargetException |
                         NoSuchMethodException | IllegalAccessException e) {
-                Log.e(LOG_TAG, "VibratorManager init failed: " + e.getMessage());
+                ALog.e(LOG_TAG, "VibratorManager init failed: " + e.getMessage());
                 mVibratorManager = null;
             }
         }
@@ -252,15 +254,15 @@ public class VibratorPlugin {
     public int vibrate(long duration, int usage) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.VIBRATE)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "vibrate: Vibration permission not granted");
+            ALog.e(LOG_TAG, "vibrate: Vibration permission not granted");
             return PERMISSION_DENIED;
         }
         if (mVibrator == null) {
-            Log.w(LOG_TAG, "vibrate: init Vibrator service");
+            ALog.w(LOG_TAG, "vibrate: init Vibrator service");
             getVibratorService();
         }
         if (!mVibrator.hasVibrator()) {
-            Log.e(LOG_TAG, "vibrate: Device does not have a vibrator");
+            ALog.e(LOG_TAG, "vibrate: Device does not have a vibrator");
             return IS_NOT_SUPPORTED;
         }
         try {
@@ -274,13 +276,13 @@ public class VibratorPlugin {
                     mMode = VibrateMode.TIME;
                     mVibrator.vibrate(effect);
                 } else {
-                    Log.e(LOG_TAG, "vibrate: Vibrator is error");
+                    ALog.e(LOG_TAG, "vibrate: Vibrator is error");
                     return IS_NOT_SUPPORTED;
                 }
             }
             return VIBRATE_SUCCESS;
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "vibrate: Local vibration failed: " + e.getMessage());
+            ALog.e(LOG_TAG, "vibrate: Local vibration failed: " + e.getMessage());
             return IS_NOT_SUPPORTED;
         }
     }
@@ -296,15 +298,15 @@ public class VibratorPlugin {
     public int playVibratorEffect(String effect, int loopCount, int usage) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.VIBRATE)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "vibrate: Vibration permission not granted");
+            ALog.e(LOG_TAG, "vibrate: Vibration permission not granted");
             return PERMISSION_DENIED;
         }
         if (mVibrator == null) {
-            Log.i(LOG_TAG, "vibrate: init Vibrator service");
+            ALog.i(LOG_TAG, "vibrate: init Vibrator service");
             getVibratorService();
         }
         if (!mVibrator.hasVibrator()) {
-            Log.e(LOG_TAG, "vibrate: Device does not have a vibrator");
+            ALog.e(LOG_TAG, "vibrate: Device does not have a vibrator");
             return IS_NOT_SUPPORTED;
         }
         try {
@@ -336,10 +338,10 @@ public class VibratorPlugin {
             VibrationEffect effectObject = VibrationEffect.createWaveform(durationParam, amplitudeParam, -1);
             mMode = VibrateMode.PRESET;
             mVibrator.vibrate(effectObject);
-            Log.i(LOG_TAG, "playVibratorEffect: Vibrator is success");
+            ALog.i(LOG_TAG, "playVibratorEffect: Vibrator is success");
             return VIBRATE_SUCCESS;
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "SecurityException when playVibratorEffect: " + e.getMessage());
+            ALog.e(LOG_TAG, "SecurityException when playVibratorEffect: " + e.getMessage());
             return IS_NOT_SUPPORTED;
         }
     }
@@ -352,15 +354,15 @@ public class VibratorPlugin {
     public int stopVibrator(int vibratorId) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.VIBRATE)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "stopVibrator: Vibration permission not granted");
+            ALog.e(LOG_TAG, "stopVibrator: Vibration permission not granted");
             return PERMISSION_DENIED;
         }
         if (mVibrator == null) {
-            Log.i(LOG_TAG, "vibrate: init Vibrator service");
+            ALog.i(LOG_TAG, "vibrate: init Vibrator service");
             getVibratorService();
         }
         if (!mVibrator.hasVibrator()) {
-            Log.e(LOG_TAG, "vibrate: Device does not have a vibrator");
+            ALog.e(LOG_TAG, "vibrate: Device does not have a vibrator");
             return IS_NOT_SUPPORTED;
         }
 
@@ -368,7 +370,7 @@ public class VibratorPlugin {
             if (Build.VERSION.SDK_INT >= API_31) {
                 Class<?> vibratorManagerClass = Class.forName("android.os.VibratorManager");
                 String managerType = vibratorManagerClass.getName();
-                Log.i(LOG_TAG, "mVibratorManager Type: " + managerType);
+                ALog.i(LOG_TAG, "mVibratorManager Type: " + managerType);
                 Method getVibratorMethod = vibratorManagerClass.getMethod("getVibrator", int.class);
                 if (getVibratorMethod == null) {
                     return IS_NOT_SUPPORTED;
@@ -384,12 +386,12 @@ public class VibratorPlugin {
                 mVibrator.cancel();
             } else {
                 mVibrator.cancel();
-                Log.i(LOG_TAG, " stopVibrator: is success");
+                ALog.i(LOG_TAG, " stopVibrator: is success");
             }
             return VIBRATE_SUCCESS;
         } catch (SecurityException | ClassNotFoundException | InvocationTargetException |
                  NoSuchMethodException | IllegalAccessException e) {
-            Log.e(LOG_TAG, "stopVibrator: SecurityException when stopping vibrator: " + e.getMessage());
+            ALog.e(LOG_TAG, "stopVibrator: SecurityException when stopping vibrator: " + e.getMessage());
             return IS_NOT_SUPPORTED;
         }
     }
@@ -402,7 +404,7 @@ public class VibratorPlugin {
     public int stopVibratorByMode(String mode) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.VIBRATE)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "vibrate: Vibration permission not granted");
+            ALog.e(LOG_TAG, "vibrate: Vibration permission not granted");
             return PERMISSION_DENIED;
         }
         String lowerMode = mode.toLowerCase(Locale.ROOT).trim();
@@ -423,15 +425,15 @@ public class VibratorPlugin {
     public int isSupportEffect(String effect, boolean[] state) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.VIBRATE)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "vibrate: Vibration permission not granted");
+            ALog.e(LOG_TAG, "vibrate: Vibration permission not granted");
             return PERMISSION_DENIED;
         }
         if (mVibrator == null) {
-            Log.i(LOG_TAG, "vibrate: init Vibrator service");
+            ALog.i(LOG_TAG, "vibrate: init Vibrator service");
             getVibratorService();
         }
         if (!mVibrator.hasVibrator()) {
-            Log.e(LOG_TAG, "vibrate: Device does not have a vibrator");
+            ALog.e(LOG_TAG, "vibrate: Device does not have a vibrator");
             return IS_NOT_SUPPORTED;
         }
         state[0] = isSupportedEffect(effect);
@@ -444,19 +446,19 @@ public class VibratorPlugin {
      * @return Operation result, 0 for success, other values indicate errors.
      */
     public int playPattern(long[] timings, int[] amplitudes, int repeat, int usage) {
-        Log.i(LOG_TAG, "Java playPattern");
+        ALog.i(LOG_TAG, "Java playPattern");
 
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.VIBRATE)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(LOG_TAG, "vibrate: Vibration permission not granted");
+            ALog.e(LOG_TAG, "vibrate: Vibration permission not granted");
             return PERMISSION_DENIED;
         }
         if (mVibrator == null) {
-            Log.i(LOG_TAG, "vibrate: init Vibrator service");
+            ALog.i(LOG_TAG, "vibrate: init Vibrator service");
             getVibratorService();
         }
         if (!mVibrator.hasVibrator()) {
-            Log.e(LOG_TAG, "vibrate: Device does not have a vibrator");
+            ALog.e(LOG_TAG, "vibrate: Device does not have a vibrator");
             return IS_NOT_SUPPORTED;
         }
         try {
@@ -473,12 +475,12 @@ public class VibratorPlugin {
                 mVibrator.vibrate(effect);
                 mMode = VibrateMode.PATTERN;
             } else {
-                Log.e(LOG_TAG, "playPattern: playPattern is error");
+                ALog.e(LOG_TAG, "playPattern: playPattern is error");
                 return IS_NOT_SUPPORTED;
             }
             return VIBRATE_SUCCESS;
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "SecurityException when playPattern: " + e.getMessage());
+            ALog.e(LOG_TAG, "SecurityException when playPattern: " + e.getMessage());
             return IS_NOT_SUPPORTED;
         }
     }
@@ -511,7 +513,7 @@ public class VibratorPlugin {
                 }
             } catch (SecurityException | ClassNotFoundException | InvocationTargetException |
                  NoSuchMethodException | IllegalAccessException e) {
-                Log.e(LOG_TAG, "getVibratorList: Exception when stopping vibrator: " + e.getMessage());
+                ALog.e(LOG_TAG, "getVibratorList: Exception when stopping vibrator: " + e.getMessage());
                 return IS_NOT_SUPPORTED;
             }
         }
@@ -555,7 +557,7 @@ public class VibratorPlugin {
      * @return isHdHapticSupport
      */
     public boolean getVibratorCapacity() {
-        Log.i(LOG_TAG, "Java getVibratorCapacity");
+        ALog.i(LOG_TAG, "Java getVibratorCapacity");
         if (mVibrator == null || !mVibrator.hasVibrator()) {
             return false;
         }
@@ -662,15 +664,15 @@ public class VibratorPlugin {
                 return null;
             }
         } catch (ClassNotFoundException ex) {
-            Log.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
+            ALog.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
         } catch (InvocationTargetException ex) {
-            Log.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
+            ALog.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
         } catch (NoSuchMethodException ex) {
-            Log.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
+            ALog.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
         } catch (NoSuchFieldException ex) {
-            Log.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
+            ALog.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
         } catch (IllegalAccessException ex) {
-            Log.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
+            ALog.e(LOG_TAG, "getActivity failed: " + ex.getMessage());
         }
         return null;
     }

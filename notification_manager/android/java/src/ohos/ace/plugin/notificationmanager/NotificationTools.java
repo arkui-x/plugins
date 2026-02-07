@@ -25,7 +25,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.text.TextUtils;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * NotificationTools class is used to create notification style
@@ -130,7 +131,7 @@ public class NotificationTools {
         try {
             bitmap = BitmapFactory.decodeFile(filePath);
         } catch (OutOfMemoryError except) {
-            Log.e(TAG, "getBitmapFromFilePath except");
+            ALog.e(TAG, "getBitmapFromFilePath except");
         }
         return bitmap;
     }
@@ -160,7 +161,7 @@ public class NotificationTools {
         try {
             drawable = packageManager.getApplicationIcon(context.getPackageName());
         } catch (PackageManager.NameNotFoundException e) {
-            Log.e(TAG, "getAppIcon error");
+            ALog.e(TAG, "getAppIcon error");
             return icon;
         }
         icon = Icon.createWithBitmap(drawableToBitmap(drawable));

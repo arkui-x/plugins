@@ -22,12 +22,13 @@ import java.util.Map;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.content.pm.PackageManager;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * AbilityAccessCtrl
@@ -56,13 +57,13 @@ public class AbilityAccessCtrl {
      * @return boolean
      */
     public boolean checkPermission(String permission) {
-        Log.i(LOG_TAG, "AbilityAccessCtrl: check from java");
+        ALog.i(LOG_TAG, "AbilityAccessCtrl: check from java");
         PackageManager pm = mContext.getPackageManager();
         if (pm.checkPermission(permission, mContext.getPackageName()) == PackageManager.PERMISSION_GRANTED) {
-            Log.i(LOG_TAG, "AbilityAccessCtrl: has permission");
+            ALog.i(LOG_TAG, "AbilityAccessCtrl: has permission");
             return true;
         } else {
-            Log.i(LOG_TAG, "AbilityAccessCtrl: not has permission");
+            ALog.i(LOG_TAG, "AbilityAccessCtrl: not has permission");
             return false;
         }
     }
@@ -73,18 +74,18 @@ public class AbilityAccessCtrl {
      * @param permissions The permission list to be requested.
      */
     public void requestPermissions(String[] permissions) {
-        Log.i(LOG_TAG, "AbilityAccessCtrl: request from java");
-        Log.i(LOG_TAG, "AbilityAccessCtrl: request  " + permissions.length);
+        ALog.i(LOG_TAG, "AbilityAccessCtrl: request from java");
+        ALog.i(LOG_TAG, "AbilityAccessCtrl: request  " + permissions.length);
         Activity curActivity = getActivity();
         if (curActivity == null) {
             return;
         }
         Fragment fragment = getFragment(curActivity);
         if (fragment != null) {
-            Log.i(LOG_TAG, "AbilityAccessCtrl: fragment request");
+            ALog.i(LOG_TAG, "AbilityAccessCtrl: fragment request");
             fragment.requestPermissions(permissions, 1);
         } else {
-            Log.i(LOG_TAG, "AbilityAccessCtrl: curActivity request");
+            ALog.i(LOG_TAG, "AbilityAccessCtrl: curActivity request");
             curActivity.requestPermissions(permissions, 1);
         }
     }
@@ -127,7 +128,7 @@ public class AbilityAccessCtrl {
                 return null;
             }
         } catch (NoClassDefFoundError exception) {
-            Log.w(LOG_TAG, "FragmentActivity no class define found");
+            ALog.w(LOG_TAG, "FragmentActivity no class define found");
             return null;
         }
         FragmentActivity fragmentActivity = (FragmentActivity) curActivity;

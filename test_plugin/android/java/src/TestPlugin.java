@@ -16,7 +16,8 @@
 package ohos.ace.plugin.testplugin;
 
 import android.content.Context;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * TestPlugin class is used to test plugin
@@ -33,7 +34,7 @@ public class TestPlugin {
      * hello is used to test plugin
      */
     public void hello() {
-        Log.i(LOG_TAG, "TestPlugin: hello from java");
+        ALog.i(LOG_TAG, "TestPlugin: hello from java");
     }
 
     /**

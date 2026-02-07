@@ -20,6 +20,10 @@ java_library("wifi_manager_android_java") {
     "src/ohos/ace/plugin/wifimanager/WifiBroadcastReceiver.java",
     "src/ohos/ace/plugin/wifimanager/WifiBroadcastInterface.java",
   ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "wifi_manager"
 }

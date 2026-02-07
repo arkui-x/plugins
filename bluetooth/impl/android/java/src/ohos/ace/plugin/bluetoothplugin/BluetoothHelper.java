@@ -15,8 +15,6 @@
 
 package ohos.ace.plugin.bluetoothplugin;
 
-import ohos.ace.plugin.bluetoothplugin.BluetoothErrorCode;
-
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -29,19 +27,22 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.os.ParcelUuid;
-import android.util.Log;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import ohos.ace.adapter.ALog;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -72,7 +73,7 @@ public class BluetoothHelper {
 
     public static <T> T getValueFromJson(JSONObject jsonObject, String key, Class<T> valueType) {
         if (jsonObject == null) {
-            Log.e(LOG_TAG, "jsonObject is null");
+            ALog.e(LOG_TAG, "jsonObject is null");
             return null;
         }
         try {
@@ -93,15 +94,15 @@ public class BluetoothHelper {
                 } else if (valueType == String.class && value instanceof String) {
                     return valueType.cast(value);
                 } else {
-                    Log.e(LOG_TAG, "The given ValueType : " + key + " does not exist");
+                    ALog.e(LOG_TAG, "The given ValueType : " + key + " does not exist");
                     return null;
                 }
             } else {
-                Log.e(LOG_TAG, "JsonData do not has " + key);
+                ALog.e(LOG_TAG, "JsonData do not has " + key);
                 return null;
             }
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "CreateScanFilters failed; err is ", e);
+            ALog.e(LOG_TAG, "CreateScanFilters failed; err is " + e);
             return null;
         }
     }
@@ -110,7 +111,7 @@ public class BluetoothHelper {
         try {
             JSONArray dataJson = getValueFromJson(jsonObject, key, JSONArray.class);
             if (dataJson == null) {
-                Log.e(LOG_TAG, key + " dataJson is null");
+                ALog.e(LOG_TAG, key + " dataJson is null");
                 return null;
             }
             byte[] data = new byte[dataJson.length()];
@@ -119,7 +120,7 @@ public class BluetoothHelper {
             }
             return data;
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "convertJsonArrayToByteArray failed; err is ", e);
+            ALog.e(LOG_TAG, "convertJsonArrayToByteArray failed; err is " + e);
             return null;
         }
     }
@@ -172,7 +173,7 @@ public class BluetoothHelper {
             return filter;
         } catch (JSONException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException |
             InvocationTargetException | SecurityException | ClassNotFoundException e) {
-            Log.e(LOG_TAG, "createScanFilters failed; err is " + e.getClass().getSimpleName(), e);
+            ALog.e(LOG_TAG, "createScanFilters failed; err is " + e.getClass().getSimpleName() + e);
             return null;
         }
     }
@@ -215,7 +216,7 @@ public class BluetoothHelper {
                 .build();
             return settings;
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "getBluetoothLeScanSettings failed; err is ", e);
+            ALog.e(LOG_TAG, "getBluetoothLeScanSettings failed; err is " + e);
             return null;
         }
     }
@@ -246,7 +247,7 @@ public class BluetoothHelper {
             jsonObject.put("payload", array);
             return jsonObject.toString();
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "encapsulationBluetoothLeScanResults failed; err is ", e);
+            ALog.e(LOG_TAG, "encapsulationBluetoothLeScanResults failed; err is " + e);
             return "";
         }
     }
@@ -265,7 +266,7 @@ public class BluetoothHelper {
                 .build();
             return settings;
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "getBluetoothAdvertiseSettings failed; err is ", e);
+            ALog.e(LOG_TAG, "getBluetoothAdvertiseSettings failed; err is " + e);
             return null;
         }
     }
@@ -312,7 +313,7 @@ public class BluetoothHelper {
             dataBuilder.setIncludeDeviceName(includeDeviceName);
             return dataBuilder.build();
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "getBluetoothAdvertiseData failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "getBluetoothAdvertiseData failed, try-catch err is " + e);
             return null;
         }
     }
@@ -346,7 +347,7 @@ public class BluetoothHelper {
                     ? null
                     : bluetoothGattCharacteristic;
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "getBluetoothGattCharacteristic failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "getBluetoothGattCharacteristic failed, try-catch err is " + e);
             return null;
         }
     }
@@ -360,7 +361,7 @@ public class BluetoothHelper {
             }
             return characteristicValue;
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "getCharacteristicValue failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "getCharacteristicValue failed, try-catch err is " + e);
             return null;
         }
     }
@@ -368,7 +369,7 @@ public class BluetoothHelper {
     public static String convertGattServiceToJSONString(BluetoothGattService service) {
         try {
             if (service == null) {
-                Log.e(LOG_TAG, "BluetoothGattService Object to be converted is null");
+                ALog.e(LOG_TAG, "BluetoothGattService Object to be converted is null");
                 return "";
             }
             JSONObject jsonObject = new JSONObject();
@@ -379,14 +380,14 @@ public class BluetoothHelper {
             jsonObject.put("type", type);
             return jsonObject.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Json data encapsulation error; error is : ", e);
+            ALog.e(LOG_TAG, "Json data encapsulation error; error is : " + e);
             return "";
         }
     }
 
     public static String convertBluetoothDeviceToJString(BluetoothDevice device) {
         if (device == null) {
-            Log.e(LOG_TAG, "Device Object to be converted is null");
+            ALog.e(LOG_TAG, "Device Object to be converted is null");
             return "";
         }
         try {
@@ -397,7 +398,7 @@ public class BluetoothHelper {
             jsonObject.put("transport", transport);
             return jsonObject.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Json data encapsulation error; error is : ", e);
+            ALog.e(LOG_TAG, "Json data encapsulation error; error is : " + e);
             return "";
         }
     }
@@ -405,7 +406,7 @@ public class BluetoothHelper {
     public static String convertCharacteristicToJSONString(BluetoothGattCharacteristic characteristic) {
         try {
             if (characteristic == null) {
-                Log.e(LOG_TAG, "Characteristic Object to be converted is null");
+                ALog.e(LOG_TAG, "Characteristic Object to be converted is null");
                 return "";
             }
             JSONObject jsonObject = new JSONObject();
@@ -430,7 +431,7 @@ public class BluetoothHelper {
             jsonObject.put("length", length);
             return jsonObject.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Json data encapsulation error; error is : ", e);
+            ALog.e(LOG_TAG, "Json data encapsulation error; error is : " + e);
             return "";
         }
     }
@@ -438,7 +439,7 @@ public class BluetoothHelper {
     public static String convertDescriptorToJSONString(BluetoothGattDescriptor descriptor) {
         try {
             if (descriptor == null) {
-                Log.e(LOG_TAG, "descriptor Object to be converted is null.");
+                ALog.e(LOG_TAG, "descriptor Object to be converted is null.");
                 return "";
             }
             JSONObject jsonObject = new JSONObject();
@@ -450,7 +451,7 @@ public class BluetoothHelper {
                 value = descriptor.getValue();
                 length = value.length;
             } else {
-                Log.e(LOG_TAG, "descriptor value is null.");
+                ALog.e(LOG_TAG, "descriptor value is null.");
             }
             JSONArray array = new JSONArray();
             for (int i = 0; i < value.length; i++) {
@@ -463,7 +464,7 @@ public class BluetoothHelper {
             jsonObject.put("length", length);
             return jsonObject.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Json data encapsulation error; error is : ", e);
+            ALog.e(LOG_TAG, "Json data encapsulation error; error is : " + e);
             return "";
         }
     }
@@ -471,7 +472,7 @@ public class BluetoothHelper {
     public static String convertCharacteristicToJString(BluetoothGattCharacteristic characteristic, int handle) {
         try {
             if (characteristic == null) {
-                Log.e(LOG_TAG, "Characteristic Object to be converted is null");
+                ALog.e(LOG_TAG, "Characteristic Object to be converted is null");
                 return "";
             }
             JSONObject jsonObject = new JSONObject();
@@ -489,7 +490,7 @@ public class BluetoothHelper {
             jsonObject.put("length", length);
             return jsonObject.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Json data encapsulation error; error is : ", e);
+            ALog.e(LOG_TAG, "Json data encapsulation error; error is : " + e);
             return "";
         }
     }
@@ -497,7 +498,7 @@ public class BluetoothHelper {
     public static String convertDescriptorToJSONString(BluetoothGattDescriptor descriptor, int handle) {
         try {
             if (descriptor == null) {
-                Log.e(LOG_TAG, "Descriptor Object to be converted is null");
+                ALog.e(LOG_TAG, "Descriptor Object to be converted is null");
                 return "";
             }
             JSONObject jsonObject = new JSONObject();
@@ -517,7 +518,7 @@ public class BluetoothHelper {
             jsonObject.put("length", length);
             return jsonObject.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "convert descriptor To JSONString failed; err is ", e);
+            ALog.e(LOG_TAG, "convert descriptor To JSONString failed; err is " + e);
             return "";
         }
     }
@@ -532,7 +533,7 @@ public class BluetoothHelper {
             JSONArray characterArray = getValueFromJson(jsonObject, "characteristics", JSONArray.class);
             UUID uuid = UUID.fromString(serviceUuid);
             if (!checkServiceJsonIsLegality(structure, serviceUuid, characterArray)) {
-                Log.e(LOG_TAG, "addServiceToCustomGattServer failed; service Json is not legally");
+                ALog.e(LOG_TAG, "addServiceToCustomGattServer failed; service Json is not legally");
                 return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
             }
             BluetoothGattService service = new BluetoothGattService(uuid,
@@ -560,7 +561,7 @@ public class BluetoothHelper {
             }
             return errCode;
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "addServiceToCustomGattServer failed; err is ", e);
+            ALog.e(LOG_TAG, "addServiceToCustomGattServer failed; err is " + e);
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         }
     }
@@ -570,7 +571,7 @@ public class BluetoothHelper {
         BluetoothGattServer bluetoothGattServer = structure.getBluetoothGattServer();
         if (bluetoothGattServer == null || structure.serviceIsExist(serviceUuid) ||
             !checkCharacterJsonIsLegality(characterArray)) {
-            Log.e(LOG_TAG, "checkServiceJsonIsLegality failed, bluetoothGattServer is null or service is exist");
+            ALog.e(LOG_TAG, "checkServiceJsonIsLegality failed, bluetoothGattServer is null or service is exist");
             return false;
         }
         return true;
@@ -610,7 +611,7 @@ public class BluetoothHelper {
             }
             return res;
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "checkCharacterJsonIsLegality error; error is : ", e);
+            ALog.e(LOG_TAG, "checkCharacterJsonIsLegality error; error is : " + e);
             return false;
         }
     }
@@ -661,7 +662,7 @@ public class BluetoothHelper {
             }
             return res;
         } catch (JSONException | NullPointerException e) {
-            Log.e(LOG_TAG, "checkDescriptorJsonIsLegality error; error is : ", e);
+            ALog.e(LOG_TAG, "checkDescriptorJsonIsLegality error; error is : " + e);
             return false;
         }
     }
@@ -721,7 +722,7 @@ public class BluetoothHelper {
             }
             return characterMap;
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "getCharacteristicMap failed; err is ", e);
+            ALog.e(LOG_TAG, "getCharacteristicMap failed; err is " + e);
             return new HashMap<Integer, BluetoothGattCharacteristic>();
         }
     }
@@ -755,7 +756,7 @@ public class BluetoothHelper {
             }
             return descriptorMap;
         } catch (JSONException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "getDescriptorMap failed; err is ", e);
+            ALog.e(LOG_TAG, "getDescriptorMap failed; err is " + e);
             return new HashMap<Integer, BluetoothGattDescriptor>();
         }
     }
@@ -773,7 +774,7 @@ public class BluetoothHelper {
             }
             return descriptorUuidList;
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "getDescriptorUuidList failed; err is ", e);
+            ALog.e(LOG_TAG, "getDescriptorUuidList failed; err is " + e);
             return new ArrayList<String>();
         }
     }

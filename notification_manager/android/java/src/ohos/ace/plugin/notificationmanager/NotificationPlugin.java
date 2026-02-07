@@ -19,17 +19,17 @@ import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
-import android.content.Context;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * NotificationPlugin: NotificationPlugin
@@ -50,7 +50,7 @@ public class NotificationPlugin {
 
     public NotificationPlugin(Context context) {
         if (context == null) {
-            Log.e(TAG, " Notification context is null");
+            ALog.e(TAG, " Notification context is null");
             return;
         }
         this.context = context;
@@ -87,10 +87,10 @@ public class NotificationPlugin {
     public void requestEnableNotification() {
         Activity activity = getActivity();
         if (activity == null) {
-            Log.d(TAG, "requestEnableNotification activity null");
+            ALog.d(TAG, "requestEnableNotification activity null");
             return;
         }
-        Log.d(TAG, "requestEnableNotification requestPermissions " + activity);
+        ALog.d(TAG, "requestEnableNotification requestPermissions " + activity);
         activity.requestPermissions(new String[] {PERMISSION}, 1);
     }
 
@@ -101,7 +101,7 @@ public class NotificationPlugin {
      */
     public boolean isAPITiramisuLater() {
         // Build.VERSION_CODES.TIRAMISU
-        Log.d(TAG, "isHighVersion version " + Build.VERSION.SDK_INT);
+        ALog.d(TAG, "isHighVersion version " + Build.VERSION.SDK_INT);
         return Build.VERSION.SDK_INT >= 33;
     }
 

@@ -18,6 +18,9 @@ java_library("i18n_plugin_android_java") {
     "src/ohos/ace/plugin/i18nplugin/I18NPlugin.java",
     "src/ohos/ace/plugin/i18nplugin/I18NSetAppPreferredLanguage.java",
   ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
   subsystem_name = "plugins"
   part_name = "i18n"
 }

@@ -16,15 +16,17 @@
 package ohos.ace.plugin.netconnclientplugin;
 
 import android.content.Context;
-import android.util.Log;
 import android.net.ConnectivityManager;
-import android.net.NetworkCapabilities;
 import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import java.util.Map;
-import java.util.HashMap;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * NetConnClientPlugin
@@ -58,13 +60,13 @@ public class NetConnClientPlugin {
             Object service = context.getSystemService(Context.CONNECTIVITY_SERVICE);
             if (service instanceof ConnectivityManager) {
                 connectivity = (ConnectivityManager) service;
-                Log.i(LOG_TAG, "enable to get ConnectivityManager service");
+                ALog.i(LOG_TAG, "enable to get ConnectivityManager service");
             } else {
-                Log.e(LOG_TAG, "unable to get ConnectivityManager service");
+                ALog.e(LOG_TAG, "unable to get ConnectivityManager service");
                 connectivity = null;
             }
         } else {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             connectivity = null;
         }
         if (isNativeInit) {
@@ -111,7 +113,7 @@ public class NetConnClientPlugin {
             try {
                 final Method method = Network.class.getMethod("getNetId");
                 if (method == null) {
-                    Log.e(LOG_TAG, "getNetId method is null");
+                    ALog.e(LOG_TAG, "getNetId method is null");
                     return networkId;
                 }
                 Object object = method.invoke(network);
@@ -120,7 +122,7 @@ public class NetConnClientPlugin {
                 }
             } catch (NoSuchMethodError | NoSuchMethodException | InvocationTargetException |
                      IllegalAccessException error) {
-                Log.e(LOG_TAG, "NoSuchMethodError");
+                ALog.e(LOG_TAG, "NoSuchMethodError");
             }
             return networkId;
         }
@@ -221,7 +223,7 @@ public class NetConnClientPlugin {
         for (long key : observer.keySet()) {
             NetworkCallbackImpl value = observer.get(key);
             if (value == callback) {
-                Log.i("LOG_TAG", "getCallbackKey successfull!");
+                ALog.i("LOG_TAG", "getCallbackKey successfull!");
                 return key;
             }
         }

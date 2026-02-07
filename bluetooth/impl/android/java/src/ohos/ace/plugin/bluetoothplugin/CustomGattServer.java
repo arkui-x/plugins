@@ -21,10 +21,12 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattService;
-import android.util.Log;
+
+import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.HashMap;
+
+import ohos.ace.adapter.ALog;
 
 public class CustomGattServer {
     private static final String LOG_TAG = "CustomGattServer";
@@ -134,7 +136,7 @@ public class CustomGattServer {
                 if (entry.getValue().getUuid().toString().equalsIgnoreCase(uuid)) {
                     result[0] = entry.getKey();
                     result[1] = handleInfoMap_.get(result[0]);
-                    Log.i(LOG_TAG, "HandleScope: " + result[0] + " -- " + result[1]);
+                    ALog.i(LOG_TAG, "HandleScope: " + result[0] + " -- " + result[1]);
                     return result;
                 }
             }
@@ -149,7 +151,7 @@ public class CustomGattServer {
             for (int i = startHandle; i <= endHandle; i++) {
                 if (BluetoothGattCharacteristicMap_.containsKey(i) &&
                     BluetoothGattCharacteristicMap_.get(i).getUuid().toString().equalsIgnoreCase(characteristicUuid)) {
-                    Log.i(LOG_TAG, "Characteristic handle is " + i);
+                    ALog.i(LOG_TAG, "Characteristic handle is " + i);
                     return i;
                 }
             }
@@ -164,7 +166,7 @@ public class CustomGattServer {
             for (int i = startHandle; i <= endHandle; i++) {
                 if (BluetoothGattDescriptorMap_.containsKey(i) && 
                     BluetoothGattDescriptorMap_.get(i).getUuid().toString().equalsIgnoreCase(descriptorUuid)) {
-                    Log.i(LOG_TAG, "Descriptor handle is " + i);
+                    ALog.i(LOG_TAG, "Descriptor handle is " + i);
                     return i;
                 }
             }

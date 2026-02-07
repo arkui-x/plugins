@@ -22,6 +22,9 @@ java_library("bluetooth_android_java") {
     "java/src/ohos/ace/plugin/bluetoothplugin/CustomBluetoothManager.java",
     "java/src/ohos/ace/plugin/bluetoothplugin/CustomGattServer.java",
   ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
 
   subsystem_name = "plugins"
   part_name = "bluetooth"

@@ -15,41 +15,39 @@
 
 package ohos.ace.plugin.photoaccesshelper;
 
-import android.content.Context;
-import android.util.Log;
-import android.content.Intent;
-import android.content.ClipData;
-import android.content.ActivityNotFoundException;
-import android.provider.MediaStore;
 import android.app.Activity;
-import android.net.Uri;
-import android.database.Cursor;
-import android.os.Build;
-import android.os.Bundle;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.ContentQueryMap;
 import android.content.ContentResolver;
-import android.content.pm.PackageManager;
-
-import android.provider.MediaStore.MediaColumns;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.provider.MediaStore.MediaColumns;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.Random;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
 
+import ohos.ace.adapter.ALog;
 import ohos.ace.plugin.photoaccesshelper.AlbumValues;
 
 /**
@@ -96,7 +94,7 @@ public class PhotoPlugin {
      */
     public void startPhotoPicker(String type) {
         if (mContext == null) {
-            Log.i(TAG, "mContext is null");
+            ALog.i(TAG, "mContext is null");
             return;
         }
         Intent intent = new Intent(Intent.ACTION_PICK);
@@ -114,7 +112,7 @@ public class PhotoPlugin {
         try {
             activity.startActivityForResult(intent, 1001);
         } catch (ActivityNotFoundException e) {
-            Log.e(TAG, e.getMessage());
+            ALog.e(TAG, e.getMessage());
         }
     }
 
@@ -125,7 +123,7 @@ public class PhotoPlugin {
      */
     public boolean checkPermission() {
         if (mContext == null) {
-            Log.i(TAG, "mContext is null");
+            ALog.i(TAG, "mContext is null");
             return false;
         }
         PackageManager pm = mContext.getPackageManager();
@@ -136,7 +134,7 @@ public class PhotoPlugin {
                 mContext.getPackageName()) == PackageManager.PERMISSION_GRANTED) {
                 return true;
             } else {
-                Log.e(TAG, "not has permission");
+                ALog.e(TAG, "not has permission");
                 return false;
             }
         } else {
@@ -144,7 +142,7 @@ public class PhotoPlugin {
                 mContext.getPackageName()) == PackageManager.PERMISSION_GRANTED) {
                 return true;
             } else {
-                Log.e(TAG, "not has permission");
+                ALog.e(TAG, "not has permission");
                 return false;
             }
         }
@@ -157,7 +155,7 @@ public class PhotoPlugin {
      */
     public boolean checkWritePermission() {
         if (mContext == null) {
-            Log.e(TAG, "mContext is null");
+            ALog.e(TAG, "mContext is null");
             return false;
         }
         if (Build.VERSION.SDK_INT >= VERSION_T_API_LEVEL) {
@@ -168,7 +166,7 @@ public class PhotoPlugin {
             mContext.getPackageName()) == PackageManager.PERMISSION_GRANTED) {
             return true;
         } else {
-            Log.e(TAG, "not has permission");
+            ALog.e(TAG, "not has permission");
             return false;
         }
     }
@@ -183,7 +181,7 @@ public class PhotoPlugin {
      */
     public Cursor queryPhoto(Bundle selection, String[] selectionArgs, String[] projection) {
         if (mContext == null) {
-            Log.i(TAG, "mContext is null");
+            ALog.i(TAG, "mContext is null");
             return null;
         }
         Activity activity = getActivity();
@@ -229,7 +227,7 @@ public class PhotoPlugin {
      */
     public AlbumValues queryAlbum(Bundle selection, String[] selectionArgs, String[] projection) {
         if (mContext == null) {
-            Log.i(TAG, "mContext is null");
+            ALog.i(TAG, "mContext is null");
             return null;
         }
         Cursor cursor = queryPhoto(selection, selectionArgs, projection);
@@ -289,7 +287,7 @@ public class PhotoPlugin {
             }
         } catch (NoSuchMethodException | ClassNotFoundException | InvocationTargetException
                 | IllegalAccessException e) {
-            Log.e(TAG, e.getMessage());
+            ALog.e(TAG, e.getMessage());
         }
     }
 
@@ -302,7 +300,7 @@ public class PhotoPlugin {
      * @param activity activity
      */
     public void onResult(int requestCode, int resultCode, Intent data, Activity activity) {
-        Log.i(TAG, "onResult enter requestCode is " + requestCode + ", " + resultCode);
+        ALog.i(TAG, "onResult enter requestCode is " + requestCode + ", " + resultCode);
 
         if (!checkResult(requestCode, resultCode, data)) {
             return;
@@ -368,19 +366,19 @@ public class PhotoPlugin {
         String errorMsg = "requestCode:" + requestCode + ".   resultCode:" + resultCode;
 
         if (requestCode != 1001) {
-            Log.d(TAG, errorMsg);
+            ALog.d(TAG, errorMsg);
             return false;
         }
 
         if (resultCode != Activity.RESULT_OK) {
-            Log.i(TAG, errorMsg);
+            ALog.i(TAG, errorMsg);
             onPickerResult(new ArrayList<>(), 0);
             return false;
         }
 
         if (data == null) {
             errorMsg += ".  data is null";
-            Log.i(TAG, errorMsg);
+            ALog.i(TAG, errorMsg);
             onPickerResult(new ArrayList<>(), 0);
             return false;
         }
@@ -429,7 +427,7 @@ public class PhotoPlugin {
      */
     public String createPhoto(int photoType, String extension, String title) {
         if (mContext == null) {
-            Log.e(TAG, "mContext is null");
+            ALog.e(TAG, "mContext is null");
             return null;
         }
         if (mResolver == null) {
@@ -447,7 +445,7 @@ public class PhotoPlugin {
         String displayName = generateDisplayName(photoType, title, cleanExtension);
         String mimeType = getMimeTypeFromExtension(cleanExtension);
         if (mimeType == null) {
-            Log.e(TAG, "extension not supported");
+            ALog.e(TAG, "extension not supported");
             return null;
         }
         values.put(MediaColumns.DISPLAY_NAME, displayName);
@@ -475,7 +473,7 @@ public class PhotoPlugin {
                 File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
                     packageName + "/" + uniqueDir);
                 if (!directory.exists() && !directory.mkdirs()) {
-                    Log.e(TAG, "Failed to create directory");
+                    ALog.e(TAG, "Failed to create directory");
                     return null;
                 }
             }
@@ -488,20 +486,20 @@ public class PhotoPlugin {
             }
 
             if (uri == null) {
-                Log.e(TAG, "Error uri is null");
+                ALog.e(TAG, "Error uri is null");
                 return null;
             } else {
                 return uri.toString();
             }
         } catch (SecurityException | OutOfMemoryError e) {
-            Log.e(TAG, "Error creating media asset: " + e.getMessage());
+            ALog.e(TAG, "Error creating media asset: " + e.getMessage());
             return null;
         }
     }
 
     private String generateDisplayName(int photoType, String title, String extension) {
         if (extension == null || extension.isEmpty()) {
-            Log.e(TAG, "extension is null");
+            ALog.e(TAG, "extension is null");
             return null;
         }
         if (title == null || title.isEmpty()) {
@@ -520,7 +518,7 @@ public class PhotoPlugin {
     private String getMimeTypeFromExtension(String extension) {
         String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
         if (mimeType == null || mimeType.isEmpty()) {
-            Log.e(TAG, "extension not supported");
+            ALog.e(TAG, "extension not supported");
             return null;
         }
         return mimeType;

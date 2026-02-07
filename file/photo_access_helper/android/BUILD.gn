@@ -18,6 +18,10 @@ java_library("photo_access_helper_android_java") {
     "java/src/ohos/ace/plugin/photoaccesshelper/PhotoPlugin.java",
     "java/src/ohos/ace/plugin/photoaccesshelper/AlbumValues.java",
   ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "photo_access_helper"
 }

@@ -16,6 +16,10 @@ import("//build/ohos.gni")
 java_library("filepicker_android_java") {
   java_files =
       [ "src/ohos/ace/plugin/file/fs/picker/filepicker/FilePicker.java" ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "device_info"
 }

@@ -31,10 +31,12 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+
+import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.HashMap;
+
+import ohos.ace.adapter.ALog;
 
 public class CustomBluetoothManager {
     private static final String LOG_TAG = "CustomBluetoothManager";
@@ -59,17 +61,17 @@ public class CustomBluetoothManager {
 
     private CustomBluetoothManager(Context context) {
         if (context == null) {
-            Log.e(LOG_TAG, "Constructor failure, context is null");
+            ALog.e(LOG_TAG, "Constructor failure, context is null");
             return;
         }
         try {
             context_ = context;
             bluetoothManager_ = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
             if (bluetoothManager_ == null) {
-                Log.e(LOG_TAG, "Constructor failure, bluetoothManager_ is null");
+                ALog.e(LOG_TAG, "Constructor failure, bluetoothManager_ is null");
             }
         } catch (IllegalStateException e) {
-            Log.e(LOG_TAG, "Constructor failure, IllegalStateException err is " + e);
+            ALog.e(LOG_TAG, "Constructor failure, IllegalStateException err is " + e);
         }
     }
 
@@ -105,7 +107,7 @@ public class CustomBluetoothManager {
                 bluetoothAdapter_ = bluetoothManager_.getAdapter();
                 return bluetoothAdapter_;
             } else {
-                Log.e(LOG_TAG, "getBluetoothAdapter failed, bluetoothManager is null");
+                ALog.e(LOG_TAG, "getBluetoothAdapter failed, bluetoothManager is null");
                 return null;
             }
         }
@@ -119,7 +121,7 @@ public class CustomBluetoothManager {
                 bluetoothLeScanner_ = bluetoothAdapter_.getBluetoothLeScanner();
                 return bluetoothLeScanner_;
             } else {
-                Log.e(LOG_TAG, "getBluetoothLeScanner failed, bluetoothAdapter is error");
+                ALog.e(LOG_TAG, "getBluetoothLeScanner failed, bluetoothAdapter is error");
                 return null;
             }
         }
@@ -198,7 +200,7 @@ public class CustomBluetoothManager {
             }
             return errCode.getId();
         } catch (IllegalArgumentException e) {
-            Log.e(LOG_TAG, "registerBluetoothGattServer failure, IllegalArgumentException err is " + e);
+            ALog.e(LOG_TAG, "registerBluetoothGattServer failure, IllegalArgumentException err is " + e);
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } finally {
             bluetoothGattServerMapLock_.unlock();
@@ -251,11 +253,11 @@ public class CustomBluetoothManager {
         this.bluetoothGattClientMapLock_.lock();
         try {
             if (bluetoothGattClientMap_ != null && bluetoothGattClientMap_.containsKey(appId)) {
-                Log.e(LOG_TAG, "The BluetoothGattClient Already exists, appId is " + String.valueOf(appId));
+                ALog.e(LOG_TAG, "The BluetoothGattClient Already exists, appId is " + String.valueOf(appId));
                 return false;
             } else {
                 bluetoothGattClientMap_.put(appId, bluetoothGattClient);
-                Log.i(LOG_TAG, "The BluetoothGattClient add successfully, appId is " + String.valueOf(appId));
+                ALog.i(LOG_TAG, "The BluetoothGattClient add successfully, appId is " + String.valueOf(appId));
                 return true;
             }
         } finally {
@@ -277,7 +279,7 @@ public class CustomBluetoothManager {
             if (bluetoothGattClientMap_ != null && bluetoothGattClientMap_.containsKey(appId)) {
                 bluetoothGattClientMap_.remove(appId);
             } else {
-                Log.e(LOG_TAG, "delete BluetoothGattClient failed, appId is " + String.valueOf(appId));
+                ALog.e(LOG_TAG, "delete BluetoothGattClient failed, appId is " + String.valueOf(appId));
             }
         } finally {
             this.bluetoothGattClientMapLock_.unlock();
@@ -303,7 +305,7 @@ public class CustomBluetoothManager {
             if (bluetoothDeviceMap_ != null) {
                 bluetoothDeviceMap_.put(address, bluetoothDevice);
             } else {
-                Log.e(LOG_TAG, "add BluetoothDevice failed.");
+                ALog.e(LOG_TAG, "add BluetoothDevice failed.");
             }
         } finally {
             this.bluetoothDeviceMapLock_.unlock();
@@ -316,7 +318,7 @@ public class CustomBluetoothManager {
             if (bluetoothDeviceMap_ != null && !bluetoothDeviceMap_.isEmpty()) {
                 bluetoothDeviceMap_.clear();
             } else {
-                Log.e(LOG_TAG, "delete BluetoothDevice failed.");
+                ALog.e(LOG_TAG, "delete BluetoothDevice failed.");
             }
         } finally {
             this.bluetoothDeviceMapLock_.unlock();
@@ -357,7 +359,7 @@ public class CustomBluetoothManager {
         @Override
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
-            Log.e(LOG_TAG, "StartScan callback onScanFailed; errorCode is " + errorCode);
+            ALog.e(LOG_TAG, "StartScan callback onScanFailed; errorCode is " + errorCode);
         }
     }
 

@@ -24,6 +24,10 @@ java_library("pasteboard_android_java") {
     "java/src/ohos/ace/plugin/clipboard/PropertyDTO.java",
     "java/src/ohos/ace/plugin/clipboard/WantParamsUtils.java",
   ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "pasteboard"
 }

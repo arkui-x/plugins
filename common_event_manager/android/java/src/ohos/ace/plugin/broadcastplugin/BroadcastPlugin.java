@@ -19,17 +19,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Bundle;
 import android.os.BatteryManager;
+import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import ohos.ace.adapter.ALog;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * BroadcastPlugin
@@ -60,7 +61,7 @@ public class BroadcastPlugin {
         if (context != null) {
             this.context = context;
         } else {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
         }
         this.broadcastReceiverMap = new HashMap<>();
         nativeInit();
@@ -76,7 +77,7 @@ public class BroadcastPlugin {
         if (context != null) {
             this.context = context;
         } else {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
         }
         this.broadcastReceiverMap = new HashMap<>();
         if (isNativeInit) {
@@ -108,7 +109,7 @@ public class BroadcastPlugin {
                     intent.putExtra(key, value);
                 }
             } catch (JSONException e) {
-                Log.e(LOG_TAG, "Send broadcast failed, JSONException.");
+                ALog.e(LOG_TAG, "Send broadcast failed, JSONException.");
                 e.printStackTrace();
                 return false;
             }
@@ -165,7 +166,7 @@ public class BroadcastPlugin {
                     }
                     receiveBroadcast(key, intent, jsonObject.toString());
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "Receive broadcast failed, JSONException.");
+                    ALog.e(LOG_TAG, "Receive broadcast failed, JSONException.");
                     e.printStackTrace();
                 }
             }
@@ -176,7 +177,7 @@ public class BroadcastPlugin {
     }
 
     private void receiveBroadcast(String key, Intent intent, String json) {
-        Log.i(LOG_TAG, " receiveBroadcast " + key);
+        ALog.i(LOG_TAG, " receiveBroadcast " + key);
         if (Intent.ACTION_BATTERY_CHANGED.equals(intent.getAction())) {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
             int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, BATTERY_FULL_VALUE);

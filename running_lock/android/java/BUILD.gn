@@ -16,8 +16,12 @@ import("//build/ohos.gni")
 java_library("runninglock_android_java") {
   java_files =
       [ "src/ohos/ace/plugin/runninglockplugin/RunningLockPlugin.java" ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
-  part_name = "runninglock"
+  part_name = "running_lock"
 }
 
 ohos_combine_jars("runninglock_java") {

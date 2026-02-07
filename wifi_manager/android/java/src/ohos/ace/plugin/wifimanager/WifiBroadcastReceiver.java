@@ -24,7 +24,8 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 import ohos.ace.plugin.wifimanager.WifiBroadcastReceiver.WifiConnectReceiver;
 
 /**
@@ -62,7 +63,7 @@ public class WifiBroadcastReceiver {
      */
     public void unRegisterConnectReceiver() {
         if (mWifiConnectReceiver == null) {
-            Log.e(TAG, "mWifiConnectReceiver is null");
+            ALog.e(TAG, "mWifiConnectReceiver is null");
         }
         context.unregisterReceiver(mWifiConnectReceiver);
     }
@@ -75,18 +76,18 @@ public class WifiBroadcastReceiver {
         public void onReceive(Context context, Intent safeIntent) {
             // The identification (action/intention) of the currently received broadcast
             if (mWifiInterface == null || context == null || safeIntent == null) {
-                Log.e(TAG, "WifiConnectReceiver onReceive parameter is null");
+                ALog.e(TAG, "WifiConnectReceiver onReceive parameter is null");
                 return;
             }
             String action = safeIntent.getAction();
             if (!ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-                Log.e(TAG, "WifiConnectReceiver action is not CONNECTIVITY_ACTION");
+                ALog.e(TAG, "WifiConnectReceiver action is not CONNECTIVITY_ACTION");
                 return;
             }
             ConnectivityManager connectivityManager =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             if (connectivityManager == null) {
-                Log.e(TAG, "WifiConnectReceiver connectivityManager is null");
+                ALog.e(TAG, "WifiConnectReceiver connectivityManager is null");
                 return;
             }
             NetworkInfo info = connectivityManager.getActiveNetworkInfo();
@@ -118,7 +119,7 @@ public class WifiBroadcastReceiver {
      */
     public void unRegisterSwitchReceiver() {
         if (mWifiSwitchReceiver == null) {
-            Log.e(TAG, "mWifiSwitchReceiver is null");
+            ALog.e(TAG, "mWifiSwitchReceiver is null");
         }
         context.unregisterReceiver(mWifiSwitchReceiver);
     }
@@ -130,7 +131,7 @@ public class WifiBroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent safeIntent) {
             if (mWifiInterface == null || context == null || safeIntent == null) {
-                Log.e(TAG, "WifiSwitchBroadcastReceiver onReceive parameter is null");
+                ALog.e(TAG, "WifiSwitchBroadcastReceiver onReceive parameter is null");
                 return;
             }
             mWifiInterface.wifiSwitchState(safeIntent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0));

@@ -18,11 +18,13 @@ package ohos.ace.plugin.recorderplugin;
 import android.content.Context;
 import android.media.MediaRecorder;
 import android.view.Surface;
-import android.util.Log;
-import java.util.Map;
-import java.util.HashMap;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * RecorderPlugin
@@ -40,7 +42,7 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
      */
     public RecorderPlugin(Context context) {
         if (context == null) {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             return;
         }
         nativeInit();
@@ -84,7 +86,7 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
     public void createMediaRecorder(long key) {
         MediaRecorder mediaRecorder = mediaRecorderMap.get(key);
         if (mediaRecorder != null) {
-            Log.e(LOG_TAG, "createMediaRecorder mediaRecorder exist.");
+            ALog.e(LOG_TAG, "createMediaRecorder mediaRecorder exist.");
             return;
         }
 
@@ -364,7 +366,7 @@ public class RecorderPlugin implements MediaRecorder.OnInfoListener, MediaRecord
                 FileOutputStream fs = new FileOutputStream(url);
                 mediaRecorder.setOutputFile(fs.getFD());
             } catch (IOException ex) {
-                Log.e(LOG_TAG, "setOutputFile IOException:" + ex.getMessage());
+                ALog.e(LOG_TAG, "setOutputFile IOException:" + ex.getMessage());
             }
         }
     }

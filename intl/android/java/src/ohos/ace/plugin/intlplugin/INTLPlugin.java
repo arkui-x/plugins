@@ -21,14 +21,15 @@ import android.icu.text.NumberingSystem;
 import android.os.Build;
 import android.os.LocaleList;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.Calendar;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * INTL android plugin module
@@ -62,7 +63,7 @@ public class INTLPlugin {
      */
     public boolean is24HourClock() {
         if (mContext == null) {
-            Log.w(LOG_TAG, "INTLPlugin: context not registered");
+            ALog.w(LOG_TAG, "INTLPlugin: context not registered");
             return true;
         }
         return DateFormat.is24HourFormat(mContext);
@@ -125,7 +126,7 @@ public class INTLPlugin {
     public String getDeviceType() {
         String deviceType = DEVICE_TYPE_PHONES;
         if (mContext == null) {
-            Log.e(LOG_TAG, "The mContext is null, getDeviceType failed.");
+            ALog.e(LOG_TAG, "The mContext is null, getDeviceType failed.");
             return deviceType;
         }
 
@@ -141,19 +142,19 @@ public class INTLPlugin {
     private String getDeviceTypeByPhysicalSize() {
         String deviceType = DEVICE_TYPE_PHONES;
         if (mContext == null) {
-            Log.e(LOG_TAG, "The mContext is null, getDeviceTypeByPhysicalSize failed.");
+            ALog.e(LOG_TAG, "The mContext is null, getDeviceTypeByPhysicalSize failed.");
             return deviceType;
         }
 
         WindowManager windowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         if (windowManager == null) {
-            Log.e(LOG_TAG, "The mContext is null, getDeviceTypeByPhysicalSize failed.");
+            ALog.e(LOG_TAG, "The mContext is null, getDeviceTypeByPhysicalSize failed.");
             return deviceType;
         }
 
         Display display = windowManager.getDefaultDisplay();
         if (display == null) {
-            Log.e(LOG_TAG, "The display is null, getDeviceTypeByPhysicalSize failed.");
+            ALog.e(LOG_TAG, "The display is null, getDeviceTypeByPhysicalSize failed.");
             return deviceType;
         }
 
