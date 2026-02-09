@@ -154,11 +154,6 @@ bool AudioCapturerPrivate::GetAudioTime(Timestamp &timestamp, Timestamp::Timesta
     return [capturerImpl_ getAudioTime: timestamp];
 }
 
-bool AudioCapturerPrivate::GetFirstPkgTimeStampInfo(int64_t &firstTs) const
-{
-    return false;
-}
-
 bool AudioCapturerPrivate::Stop() const
 {
     CHECK_AND_RETURN_RET_LOG(capturerImpl_ != nullptr, false, "capturerImpl_ == nullptr.");

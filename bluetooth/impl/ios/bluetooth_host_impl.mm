@@ -295,6 +295,12 @@ int32_t BluetoothHostImpl::GetRemoteDeviceBatteryInfo(const std::string& address
     return BT_NO_ERROR;
 }
 
+int32_t BluetoothHostImpl::SetRemoteDeviceBatteryInfo(const std::string &address,
+    const BluetoothBatteryInfo &batteryInfo)
+{
+    return BT_NO_ERROR;
+}
+
 int32_t BluetoothHostImpl::GetPairState(int32_t transport, const std::string& address, int32_t& pairState)
 {
     return BT_NO_ERROR;
