@@ -15,6 +15,7 @@
 
 #import "OHSslHandler.h"
 #import <AssertMacros.h>
+#include "base/log/log.h"
 
 static BOOL OHSecKeyIsEqualToKey(SecKeyRef key1, SecKeyRef key2) {
     return [(__bridge id)key1 isEqual:(__bridge id)key2];
@@ -177,7 +178,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
                   forDomain:(NSString *)domain {
     if (domain && self.allowIvdCerts && self.allowIvdHostDomain &&
         (self.sslType == OHSslTypeNone || [self.certList count] == 0)) {
-        NSLog(@"In order to validate a domain name for self signed certificates, you MUST use pinning.");
+        LOGE("In order to validate a domain name for self signed certificates, you MUST use pinning.");
         return NO;
     }
 

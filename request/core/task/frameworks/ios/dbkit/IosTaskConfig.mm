@@ -17,6 +17,7 @@
 #include <time.h>
 #import "IosTaskFilter.h"
 #import "Constants.h"
+#include "base/log/log.h"
 
 @implementation IosTaskConfig
 
@@ -29,11 +30,11 @@
         NSError *error = nil;
         id jsonObject = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&error];
         if (error) {
-            NSLog(@"failed to translate string to json object");
+            LOGE("failed to translate string to json object");
             return nil;
         }
         if (![jsonObject isKindOfClass:[NSDictionary class]]) {
-            NSLog(@"failed to translate string to dictionary");
+            LOGE("failed to translate string to dictionary");
             return nil;
         }
         
@@ -42,7 +43,7 @@
         [config initWithDictionary:dict];
         return config;
     } @catch (NSException *exception) {
-        NSLog(@"IosTaskConfig initWithJsonString has exception");
+        LOGI("IosTaskConfig initWithJsonString has exception");
         return nil;
     }
 }
@@ -138,7 +139,7 @@
     NSError *error = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:obj options:NSJSONWritingPrettyPrinted error:&error];
     if (error) {
-        NSLog(@"objToJsonString error:%@", error.localizedDescription);
+        LOGE("objToJsonString error:%{public}s", [error.localizedDescription UTF8String]);
         return @"";
     }
     NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];

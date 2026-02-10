@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 
- #import "DBManager.h"
- #import <sqlite3.h>
+#import "DBManager.h"
+#import <sqlite3.h>
+
+#include "base/log/log.h"
 
 @interface DBManager () {
     sqlite3 *db_;
@@ -34,7 +36,7 @@ static DBManager *instance;
 }
 
 - (void)dealloc {
-    NSLog(@"DBManager dealloc");
+    LOGI("DBManager dealloc");
     sqlite3_close(db_);
     instance = nil;
 }
@@ -49,7 +51,7 @@ static DBManager *instance;
 
     sqlite3_shutdown();
     if (sqlite3_config(SQLITE_CONFIG_SERIALIZED) != SQLITE_OK) {
-        NSLog(@"failed to sqlite3_config serialized");
+        LOGE("failed to sqlite3_config serialized");
     }
     sqlite3_initialize();
 
@@ -98,16 +100,16 @@ static DBManager *instance;
         " extras TEXT);";
     char *error = NULL;
     if (sqlite3_exec(db_, sql, NULL, NULL, &error) != SQLITE_OK) {
-        NSLog(@"failed to create table Task, %s", error);
+        LOGE("failed to create table Task, %{public}s", error);
         sqlite3_close(db_);
         return NO;
     }
-    NSLog(@"init db ok");
+    LOGI("init db ok");
     return YES;
 }
 
 - (int64_t)insert:(IosTaskInfo *)taskInfo {
-    NSLog(@"insert db enter");
+    LOGI("insert db enter");
     if (![self openDB]) {
         return -1;
     }
@@ -120,7 +122,7 @@ static DBManager *instance;
         "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"failed to execute sqlite3_prepare_v2");
+        LOGE("failed to execute sqlite3_prepare_v2");
         [self releaseStmt:stmt];
         return -1;
     }
@@ -165,18 +167,18 @@ static DBManager *instance;
     sqlite3_bind_text(stmt, 39, taskInfo.extras.UTF8String, -1, NULL);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        NSLog(@"failed to insert record: %s", sqlite3_errmsg(db_));
+        LOGE("failed to insert record: %{public}s", sqlite3_errmsg(db_));
         [self releaseStmt:stmt];
         return -1;
     }
     int64_t tid = sqlite3_last_insert_rowid(db_); // 获取最后插入的记录的主键值
     [self releaseStmt:stmt];
-    NSLog(@"insert db ok, tid:%lld", tid);
+    LOGI("insert db ok, tid:%{public}lld", tid);
     return tid;
 }
 
 - (NSArray *)queryAll {
-    NSLog(@"queryAll enter");
+    LOGI("queryAll enter");
 
     if (![self openDB]) {
         return nil;
@@ -184,18 +186,18 @@ static DBManager *instance;
     const char *sql = "SELECT * FROM Task;";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"failed to execute sqlite3_prepare_v2");
+        LOGE("failed to execute sqlite3_prepare_v2");
         [self releaseStmt:stmt];
         return nil;
     }
     NSMutableArray *tasks = [self getQueryResult:stmt];
     [self releaseStmt:stmt];
-    NSLog(@"queryAll ok");
+    LOGI("queryAll ok");
     return tasks;
 }
 
 - (IosTaskInfo *)queryWithTaskId:(int64_t)taskId {
-    NSLog(@"queryWithTaskId, taskId:%lld", taskId);
+    LOGI("queryWithTaskId, taskId:%{public}lld", taskId);
 
     if (![self openDB]) {
         return nil;
@@ -203,7 +205,7 @@ static DBManager *instance;
     const char *sql = "SELECT * FROM Task WHERE tid=?;";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"failed to execute sqlite3_prepare_v2");
+        LOGE("failed to execute sqlite3_prepare_v2");
         [self releaseStmt:stmt];
         return nil;
     }
@@ -212,14 +214,14 @@ static DBManager *instance;
     NSMutableArray *tasks = [self getQueryResult:stmt];
     [self releaseStmt:stmt];
     if (tasks.count > 0) {
-        NSLog(@"queryWithTaskId ok, tasks.count:%ld", tasks.count);
+        LOGI("queryWithTaskId ok, tasks.count:%{public}ld", tasks.count);
         return [tasks firstObject];;
     }
     return nil;
 }
 
 - (IosTaskInfo *)queryWithToken:(NSString *)token taskId:(int64_t)taskId {
-    NSLog(@"queryWithToken, taskId:%lld, token:%@", taskId, token);
+    LOGI("queryWithToken, taskId:%{public}lld, token:%{public}s", taskId, [token UTF8String]);
 
     if (![self openDB]) {
         return nil;
@@ -227,7 +229,7 @@ static DBManager *instance;
     const char *sql = "SELECT * FROM Task WHERE tid=? AND token=?;";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"failed to execute sqlite3_prepare_v2");
+        LOGE("failed to execute sqlite3_prepare_v2");
         [self releaseStmt:stmt];
         return nil;
     }
@@ -237,15 +239,15 @@ static DBManager *instance;
     NSMutableArray *tasks = [self getQueryResult:stmt];
     [self releaseStmt:stmt];
     if (tasks.count > 0) {
-        NSLog(@"queryWithToken ok, tasks.count:%ld", tasks.count);
+        LOGI("queryWithToken ok, tasks.count:%{public}ld", tasks.count);
         return [tasks firstObject];
     }
-    NSLog(@"queryWithToken failed");
+    LOGE("queryWithToken failed");
     return nil;
 }
 
 - (NSArray *)queryWithFilter:(IosTaskFilter *)filter {
-    NSLog(@"queryWithFilter enter");
+    LOGI("queryWithFilter enter");
     if (!filter) {
         return nil;
     }
@@ -276,15 +278,15 @@ static DBManager *instance;
         strFilter = [strFilter stringByAppendingFormat:@"mode=%d ", filter.mode];
     }
     NSString *strSql = @"SELECT tid FROM Task";
-    NSLog(@"queryWithFilter, strFilter:%@", strFilter);
+    LOGI("queryWithFilter, strFilter:%{public}s", [strFilter UTF8String]);
     if (strFilter.length > 0) {
         strSql = [strSql stringByAppendingFormat:@" WHERE %@", strFilter];
     }
     const char *sql = strSql.UTF8String;
-    NSLog(@"queryWithFilter, sql:%s", sql);
+    LOGI("queryWithFilter, sql:%{public}s", sql);
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"failed to execute sqlite3_prepare_v2");
+        LOGE("failed to execute sqlite3_prepare_v2");
         [self releaseStmt:stmt];
         return nil;
     }
@@ -295,13 +297,13 @@ static DBManager *instance;
         [taskIds addObject:[NSNumber numberWithLongLong:taskId]];
     }
     [self releaseStmt:stmt];
-    NSLog(@"queryWithFilter end, taskIds.count:%ld", taskIds.count);
+    LOGI("queryWithFilter end, taskIds.count:%{public}ld", taskIds.count);
 
     return taskIds;
 }
 
 - (BOOL)update:(IosTaskInfo *)taskInfo {
-    NSLog(@"update db enter, tid:%lld", taskInfo.tid);
+    LOGI("update db enter, tid:%{public}lld", taskInfo.tid);
     if (!taskInfo) {
         return NO;
     }
@@ -315,7 +317,7 @@ static DBManager *instance;
         "reason=?, downloadId=?, taskStates=?, version=?, files=?, code=? WHERE tid =?;";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"failed to execute sqlite3_prepare_v2");
+        LOGE("failed to execute sqlite3_prepare_v2");
         [self releaseStmt:stmt];
         return NO;
     }
@@ -339,17 +341,17 @@ static DBManager *instance;
     sqlite3_bind_int64(stmt, 18, taskInfo.tid);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        NSLog(@"failed to update database");
+        LOGE("failed to update database");
         [self releaseStmt:stmt];
         return NO;
     }
     [self releaseStmt:stmt];
-    NSLog(@"update db ok");
+    LOGI("update db ok");
     return YES;
 }
 
 - (BOOL)remove:(int64_t)taskId {
-    NSLog(@"remove, taskId:%lld", taskId);
+    LOGI("remove, taskId:%{public}lld", taskId);
 
     if (![self openDB]) {
         return NO;
@@ -357,19 +359,19 @@ static DBManager *instance;
     const char *sql = "DELETE FROM Task WHERE tid=?;";
     sqlite3_stmt *stmt = NULL;
     if (sqlite3_prepare_v2(db_, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        NSLog(@"failed to execute sqlite3_prepare_v2");
+        LOGE("failed to execute sqlite3_prepare_v2");
         [self releaseStmt:stmt];
         return NO;
     }
     sqlite3_bind_int64(stmt, 1, taskId);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        NSLog(@"failed to delete, taskId:%lld", taskId);
+        LOGE("failed to delete, taskId:%{public}lld", taskId);
         [self releaseStmt:stmt];
         return NO;
     }
     [self releaseStmt:stmt];
-    NSLog(@"remove ok");
+    LOGI("remove ok");
     return YES;
 }
 
@@ -380,7 +382,7 @@ static DBManager *instance;
         return YES;
     }
     if (sqlite3_open(dbPath_.UTF8String, &db_) != SQLITE_OK) {
-        NSLog(@"failed to open database, %@", sqlite3_errmsg(db_));
+        LOGE("failed to open database, %{public}s", sqlite3_errmsg(db_));
         sqlite3_close(db_);
         return NO;
     }
@@ -436,13 +438,13 @@ static DBManager *instance;
         taskInfo.extras = [NSString stringWithUTF8String:(const char *)sqlite3_column_text(stmt, 39)];
         [tasks addObject:taskInfo];
     }
-    NSLog(@"getQueryResult ok");
+    LOGI("getQueryResult ok");
     return tasks;
 }
 
 - (void)releaseStmt:(sqlite3_stmt *)stmt {
     sqlite3_finalize(stmt);
-    NSLog(@"releaseStmt ok");
+    LOGI("releaseStmt ok");
 }
 
 @end

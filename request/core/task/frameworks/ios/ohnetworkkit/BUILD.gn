@@ -21,7 +21,7 @@ ohos_source_set("ios_ohnetworkkit") {
     "OHNetStatusMonitor.m",
     "OHRequestResult.m",
     "OHSessionManager.m",
-    "OHSslHandler.m",
+    "OHSslHandler.mm",
     "ios_certificate_utils.mm",
   ]
 
