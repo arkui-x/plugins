@@ -14,6 +14,7 @@
  */
 
 #include "json_utils.h"
+#include "base/log/log.h"
 
 namespace OHOS::Plugin::Request {
 using namespace std;
@@ -136,7 +137,7 @@ string JsonUtils::TaskInfoToJsonString(const TaskInfo &info)
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
             error:&error];
         if (!jsonData) {
-            NSLog(@"Failed to translate TaskInfo dictionary to string");
+            LOGE("Failed to translate TaskInfo dictionary to string");
             return "";
         }
         NSString *strInfo = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -226,7 +227,7 @@ string JsonUtils::ConfigToJsonString(const Config &config)
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
                                                              error:&error];
         if (!jsonData) {
-            NSLog(@"Failed to translate Config dictionary to string");
+            LOGE("Failed to translate Config dictionary to string");
             return "";
         }
         NSString *strConfig = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -265,7 +266,7 @@ string JsonUtils::ProgressToJsonString(const Progress &progress)
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
                                                              error:&error];
         if (!jsonData) {
-            NSLog(@"Failed to translate progress dictionary to string");
+            LOGE("Failed to translate progress dictionary to string");
             return "";
         }
         NSString *strProgress = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -289,7 +290,7 @@ string JsonUtils::TaskStatesToJsonStirng(const std::vector<TaskState> &taskState
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:array options:NSJSONWritingPrettyPrinted
                                                              error:&error];
         if (!jsonData) {
-            NSLog(@"failed to translate taskStates array to string");
+            LOGE("failed to translate taskStates array to string");
             return "";
         }
         NSString *strTaskState = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -315,7 +316,7 @@ std::string JsonUtils::FilesToJsonStirng(const std::vector<FileSpec> &files)
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:array options:NSJSONWritingPrettyPrinted
                                                              error:&error];
         if (!jsonData) {
-            NSLog(@"failed to translate taskStates array to string");
+            LOGE("failed to translate taskStates array to string");
             return "";
         }
         NSString *strFiles = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -332,7 +333,7 @@ void JsonUtils::JsonStringToProgress(const string &jsonProgress, Progress &progr
         NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
                                                                error:&error];
         if (dict == nil) {
-            NSLog(@"failed to get progress dict");
+            LOGE("failed to get progress dict");
             return;
         }
         progress.state = static_cast<State>([dict[@"state"] intValue]);
@@ -370,7 +371,7 @@ void JsonUtils::JsonStringToFiles(const string &jsonFiles, vector<FileSpec> &fil
         NSArray *array = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
                                                            error:&error];
         if (array == nil) {
-            NSLog(@"failed to get files array");
+            LOGE("failed to get files array");
             return;
         }
         for (id dictFile : array) {
@@ -394,7 +395,7 @@ void JsonUtils::JsonStringToForms(const string &jsonForms, vector<FormItem> &for
         NSArray *array = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
                                                            error:&error];
         if (array == nil) {
-            NSLog(@"failed to get forms array");
+            LOGE("failed to get forms array");
             return;
         }
         for (id dictForm : array) {
@@ -415,7 +416,7 @@ void JsonUtils::JsonStringToExtras(const string &jsonExtras, map<string, string>
         NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
                                                                error:&error];
         if (dict == nil) {
-            NSLog(@"failed to get extras dictionary");
+            LOGE("failed to get extras dictionary");
             return;
         }
         for (id key in dict) {
@@ -434,7 +435,7 @@ void JsonUtils::JsonStringToTaskStates(const string &jsonTaskStates, vector<Task
         NSArray *array = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers
                                                            error:&error];
         if (array == nil) {
-            NSLog(@"failed to get taskStates array");
+            LOGE("failed to get taskStates array");
             return;
         }
         for (id dictTaskState : array) {

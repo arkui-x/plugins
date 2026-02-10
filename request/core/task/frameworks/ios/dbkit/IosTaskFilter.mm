@@ -14,6 +14,7 @@
  */
 
 #import "IosTaskFilter.h"
+#include "base/log/log.h"
 
 @implementation IosTaskFilter
 @end
@@ -32,7 +33,7 @@
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
         error:&error];
     if (!jsonData) {
-        NSLog(@"Failed to translate IosTaskProgress dictionary to string");
+        LOGE("Failed to translate IosTaskProgress dictionary to string");
         return nil;
     }
     NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -70,7 +71,7 @@
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted
         error:&error];
     if (!jsonData) {
-        NSLog(@"Failed to translate dictionary to string");
+        LOGE("Failed to translate dictionary to string");
         return nil;
     }
     NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];

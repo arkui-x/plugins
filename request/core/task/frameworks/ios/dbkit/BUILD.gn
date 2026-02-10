@@ -17,10 +17,10 @@ import("//plugins/request/request.gni")
 
 ohos_source_set("ios_dbkit") {
   sources = [
-    "DBManager.m",
+    "DBManager.mm",
     "IosTaskDao.mm",
-    "IosTaskConfig.m",
-    "IosTaskFilter.m",
+    "IosTaskConfig.mm",
+    "IosTaskFilter.mm",
     "IosTaskInfo.m",
   ]
 
