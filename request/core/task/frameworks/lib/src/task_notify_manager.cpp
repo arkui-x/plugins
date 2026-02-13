@@ -96,6 +96,8 @@ void TaskNotifyManager::SendNotify(const std::string &eventType, const std::stri
     }
     if (it->second != nullptr) {
         it->second->OnCallback(params);
+    } else {
+        REQUEST_HILOGI("invalid listener for event type: %{public}s", eventType.c_str());
     }
 }
 } // namespace OHOS::Plugin::Request

@@ -21,6 +21,7 @@ using namespace std;
 NSString *JsonUtils::CStringToNSString(const string &str)
 {
     if (str.empty() || str.c_str() == nullptr) {
+        NSLog(@"CStringToNSString str empty");
         return @"";
     }
     return [NSString stringWithUTF8String:str.c_str()];

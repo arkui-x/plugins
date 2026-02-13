@@ -105,6 +105,7 @@ void DownloadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
 void DownloadProxy::SetProxy(const Config &config, NSURLSessionConfiguration **sessionConfig)
 {
     if (sessionConfig == nil) {
+        NSLog(@"Config is nil");
         return;
     }
     if (config.proxy.empty()) {
@@ -210,6 +211,8 @@ int32_t DownloadProxy::Resume(int64_t taskId)
             info_.progress.state = State::RUNNING;
             callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
             IosTaskDao::UpdateDB(info_);
+        } else {
+            NSLog(@"Resume download failed, ret:%d", ret);
         }
         return ret;
     }
@@ -358,6 +361,7 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
 {
     NSLog(@"download OnProgressCallback");
     if (callback_ == nullptr || progress == nil) {
+        NSLog(@"download OnProgressCallback failed with nil");
         return;
     }
     info_.progress.processed = progress.completedUnitCount;
@@ -431,6 +435,7 @@ void DownloadProxy::OnResponseCallback(NSURLResponse *response)
 {
     NSLog(@"download OnResponseCallback");
     if (callback_ == nullptr || response == nil) {
+        NSLog(@"download OnResponseCallback failed with nil");
         return;
     }
      if ([response isKindOfClass:[NSHTTPURLResponse class]]) {

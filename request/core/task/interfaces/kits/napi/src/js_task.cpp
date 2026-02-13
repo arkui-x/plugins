@@ -314,6 +314,7 @@ napi_status JsTask::GetResult(napi_env env, const std::shared_ptr<ExecContext> &
     if (resMap_[execType] == INFO_RES) {
         return NapiUtils::Convert2JSValue(env, context->infoRes, result);
     }
+    REQUEST_HILOGE("GetResult error execType");
     return napi_generic_failure;
 }
 

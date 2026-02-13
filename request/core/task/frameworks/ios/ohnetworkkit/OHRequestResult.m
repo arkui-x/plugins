@@ -50,6 +50,7 @@ NSString * const OHNetworkResponseErrorDomain = @"com.oh.network.response.error"
     if ([vaildStatusCode containsIndex:statusCode]) {
         return true;
     }
+    NSLog(@"checkStatusCode invalid, statusCode:%ld", (long)statusCode);
     return false;
 }
 
@@ -65,6 +66,8 @@ NSString * const OHNetworkResponseErrorDomain = @"com.oh.network.response.error"
             };
             validError = [NSError errorWithDomain:OHNetworkResponseErrorDomain code:NSURLErrorBadServerResponse userInfo:userInfo];
         }
+    } else {
+        NSLog(@"validateResponseWithTask failed");
     }
     return validError;
 }

@@ -71,6 +71,7 @@ napi_value JsInitialize::Initialize(napi_env env, napi_callback_info info, Versi
         delete task;
     };
     if (napi_wrap(env, self, task, finalize, nullptr, nullptr) != napi_ok) {
+        REQUEST_HILOGI("wrap task object failed");
         finalize(env, task, nullptr);
         return nullptr;
     }
@@ -233,6 +234,7 @@ bool JsInitialize::ParseConfig(napi_env env, napi_value jsConfig, Config &config
 {
     if (NapiUtils::GetValueType(env, jsConfig) != napi_object) {
         errInfo = "Wrong conf type, expected object";
+        REQUEST_HILOGI("ParseConfig error type");
         return false;
     }
     if (config.version != Version::API10) {
@@ -320,6 +322,7 @@ bool JsInitialize::ParseToken(napi_env env, napi_value jsConfig, Config &config)
     size_t len = 0;
     napi_status status = napi_get_value_string_utf8(env, value, token.data(), token.size(), &len);
     if (status != napi_ok || len < TOKEN_MIN_BYTES || len > TOKEN_MAX_BYTES) {
+        REQUEST_HILOGI("ParseToken error");
         return false;
     }
     config.token = token.data();

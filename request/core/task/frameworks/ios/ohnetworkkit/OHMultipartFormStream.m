@@ -139,6 +139,7 @@ typedef enum {
         streamReadLength = [_innerStream read:&buffer[totalReadLength] maxLength:(len - (NSUInteger)totalReadLength)];
         
         if (streamReadLength == -1) {
+            NSLog(@"failed to read from form");
             return -1;
         } else {
             totalReadLength += streamReadLength;
@@ -307,6 +308,7 @@ typedef enum {
             NSInteger readLength = [_currentPart read:&buffer[totalReadLength] maxLength:expectedLength];
             
             if (readLength == -1) {
+                NSLog(@"failed to read from stream");
                 self.streamError = _currentPart.innerStream.streamError;
                 break;
             }
@@ -331,6 +333,7 @@ typedef enum {
     
     NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath.path error:&error];
     if (!fileAttributes) {
+        NSLog(@"failed to appendWithFilePath, no fileAttributes");
         return ;
     }
     

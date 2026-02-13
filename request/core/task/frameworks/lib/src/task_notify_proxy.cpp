@@ -74,6 +74,8 @@ void TaskNotifyProxy::OnCallback(const std::string &params)
     for (auto &listener : listenerList_) {
         if (listener != nullptr) {
             listener->OnCallback(params);
+        } else {
+            REQUEST_HILOGI("invalid listener in proxy");
         }
     }
 }

@@ -139,6 +139,7 @@ static std::string UTF16StringToUTF8String(const char16_t* chars, size_t len)
 static std::string JavaStringToString(JNIEnv* env, const jstring &str)
 {
     if (env == nullptr || str == nullptr) {
+        REQUEST_HILOGI("TaskManagerJni JNI: JavaStringToString fail, env or str is null");
         return "";
     }
     const jchar *chars = env->GetStringChars(str, NULL);
@@ -557,6 +558,8 @@ std::string TaskManagerJni::GetUserId(const std::string &sandBoxPath, const std:
         if (pos != std::string::npos) {
             userId = temp.substr(0, pos);
         }
+    } else {
+        REQUEST_HILOGI("fail to find user id in path");
     }
     return userId;
 }
@@ -574,6 +577,8 @@ std::string TaskManagerJni::GetPackageName(const std::string &sandBoxPath, const
                 packageName = temp.substr(0, pos);
             }
         }
+    } else {
+        REQUEST_HILOGI("fail to find package name in path");
     }
     return packageName;
 }

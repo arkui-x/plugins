@@ -54,6 +54,7 @@ static DBManager *instance;
     sqlite3_initialize();
 
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return NO;
     }
     const char *sql = "CREATE TABLE IF NOT EXISTS Task (tid INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -109,6 +110,7 @@ static DBManager *instance;
 - (int64_t)insert:(IosTaskInfo *)taskInfo {
     NSLog(@"insert db enter");
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return -1;
     }
     const char *sql = "INSERT INTO Task (saveas, url, data, title, description, action1, mode, mimeType, "
@@ -179,6 +181,7 @@ static DBManager *instance;
     NSLog(@"queryAll enter");
 
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return nil;
     }
     const char *sql = "SELECT * FROM Task;";
@@ -198,6 +201,7 @@ static DBManager *instance;
     NSLog(@"queryWithTaskId, taskId:%lld", taskId);
 
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return nil;
     }
     const char *sql = "SELECT * FROM Task WHERE tid=?;";
@@ -222,6 +226,7 @@ static DBManager *instance;
     NSLog(@"queryWithToken, taskId:%lld, token:%@", taskId, token);
 
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return nil;
     }
     const char *sql = "SELECT * FROM Task WHERE tid=? AND token=?;";
@@ -247,9 +252,11 @@ static DBManager *instance;
 - (NSArray *)queryWithFilter:(IosTaskFilter *)filter {
     NSLog(@"queryWithFilter enter");
     if (!filter) {
+        NSLog(@"failed to queryWithFilter, filter is nil");
         return nil;
     }
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return nil;
     }
 
@@ -303,10 +310,12 @@ static DBManager *instance;
 - (BOOL)update:(IosTaskInfo *)taskInfo {
     NSLog(@"update db enter, tid:%lld", taskInfo.tid);
     if (!taskInfo) {
+        NSLog(@"failed to update db, taskInfo is nil");
         return NO;
     }
 
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return NO;
     }
 
@@ -352,6 +361,7 @@ static DBManager *instance;
     NSLog(@"remove, taskId:%lld", taskId);
 
     if (![self openDB]) {
+        NSLog(@"failed to open db");
         return NO;
     }
     const char *sql = "DELETE FROM Task WHERE tid=?;";
@@ -389,6 +399,7 @@ static DBManager *instance;
 
 - (NSMutableArray *)getQueryResult:(sqlite3_stmt *)stmt  {
     if (!stmt) {
+        NSLog(@"failed to getQueryResult, stmt is nil");
         return nil;
     }
     NSMutableArray *tasks = [NSMutableArray array];
