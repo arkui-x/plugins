@@ -38,6 +38,7 @@ public:
     int32_t BluetoothFactoryReset() override;
     int32_t GetBtState(int& state) override;
     int32_t GetLocalAddress(std::string& addr) override;
+    int32_t GenerateLocalOobData(int transport, const sptr<IBluetoothOobObserver> &observer) override;
     int32_t DisableBle() override;
     int32_t EnableBle(bool noAutoConnect, bool isAsync, const std::string &callingName) override;
     bool IsBrEnabled();
@@ -136,6 +137,7 @@ public:
     int32_t StartRemoteSdpSearch(const std::string &address, const std::string &uuid) override;
     int32_t GetRemoteServices(const std::string &address) override;
     int32_t SetConnectionPriority(const std::string &address, int32_t priority) override;
+    int32_t IsProfileExist(const std::string &profileName, bool &isProfileExist) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;
