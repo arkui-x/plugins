@@ -19,7 +19,7 @@ import static ohos.ace.plugin.taskmanagerplugin.IConstant.TAG;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
+
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import ohos.ace.adapter.ALog;
 
 /**
  * JavaTaskImpl class implements JavaTask interface and provides task management functions.
@@ -57,20 +58,20 @@ public class JavaTaskImpl {
      * @return task id
      */
     public long create(String configJson) {
-        Log.i(TAG, "create: configJson:" + configJson);
+        ALog.i(TAG, "create: configJson:" + configJson);
         Config config = JsonUtil.jsonToConfig(configJson);
         if (config == null) {
-            Log.e(TAG, "create: config is null");
+            ALog.e(TAG, "create: config is null");
             return IConstant.FAILED_VALUE;
         }
-        Log.i(TAG, "create: save taskInfo to database");
+        ALog.i(TAG, "create: save taskInfo to database");
         CompletableFuture<Long> future = CompletableFuture.supplyAsync(() -> TaskDao.insert(mContext, config));
         try {
             long tid = future.get();
-            Log.i(TAG, "create success:" + tid);
+            ALog.i(TAG, "create success:" + tid);
             return tid;
         } catch (Exception e) {
-            Log.e(TAG, "create: error:", e);
+            ALog.e(TAG, "create: error:" + e);
         }
         return IConstant.FAILED_VALUE;
     }
@@ -81,22 +82,22 @@ public class JavaTaskImpl {
      * @param taskId Task ID
      */
     public void start(long taskId) {
-        Log.i(TAG, "start: taskId:" + taskId);
+        ALog.i(TAG, "start: taskId:" + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
         } catch (Exception e) {
-            Log.d(TAG, "start query error: " + e);
+            ALog.d(TAG, "start query error: " + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "start: task info is null");
+            ALog.e(TAG, "start: task info is null");
             return;
         }
         if (taskInfo.getAction() == Action.DOWNLOAD) {
             mDownloadImpl.startDownload(taskInfo);
         } else {
-            Log.e(TAG, "start: action is not download:" + taskInfo.getAction());
+            ALog.e(TAG, "start: action is not download:" + taskInfo.getAction());
         }
     }
 
@@ -106,22 +107,22 @@ public class JavaTaskImpl {
      * @param taskId Task ID
      */
     public void resume(long taskId) {
-        Log.i(TAG, "resume: " + taskId);
+        ALog.i(TAG, "resume: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
         } catch (Exception e) {
-            Log.d(TAG, "resume query error: " + e);
+            ALog.d(TAG, "resume query error: " + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "resume: task info is null");
+            ALog.e(TAG, "resume: task info is null");
             return;
         }
         if (taskInfo.getAction() == Action.DOWNLOAD) {
             mDownloadImpl.resumeDownload(taskInfo);
         } else {
-            Log.e(TAG, "resume: action is not download:" + taskInfo.getAction());
+            ALog.e(TAG, "resume: action is not download:" + taskInfo.getAction());
         }
     }
 
@@ -131,22 +132,22 @@ public class JavaTaskImpl {
      * @param taskId Task ID
      */
     public void pause(long taskId) {
-        Log.i(TAG, "pause: " + taskId);
+        ALog.i(TAG, "pause: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
         } catch (Exception e) {
-            Log.d(TAG, "pause query error: " + e);
+            ALog.d(TAG, "pause query error: " + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "pause: task info is null");
+            ALog.e(TAG, "pause: task info is null");
             return;
         }
         if (taskInfo.getAction() == Action.DOWNLOAD) {
             mDownloadImpl.pauseDownload(taskInfo);
         } else {
-            Log.e(TAG, "pause: action is not download:" + taskInfo.getAction());
+            ALog.e(TAG, "pause: action is not download:" + taskInfo.getAction());
         }
     }
 
@@ -156,23 +157,23 @@ public class JavaTaskImpl {
      * @param taskId Task ID
      */
     public void stop(long taskId) {
-        Log.i(TAG, "stop: " + taskId);
+        ALog.i(TAG, "stop: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
         } catch (Exception e) {
-            Log.d(TAG, "stop query error: " + e);
+            ALog.d(TAG, "stop query error: " + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "stop: task info is null");
+            ALog.e(TAG, "stop: task info is null");
             return;
         }
         if (taskInfo.getAction() == Action.DOWNLOAD) {
             mDownloadImpl.removeDownload(taskInfo);
             mDownloadImpl.sendStopCallback(taskInfo);
         } else {
-            Log.e(TAG, "stop: action is not download:" + taskInfo.getAction());
+            ALog.e(TAG, "stop: action is not download:" + taskInfo.getAction());
         }
     }
 
@@ -183,22 +184,22 @@ public class JavaTaskImpl {
      * @return 0 if success, -1 if failed
      */
     public long remove(long taskId) {
-        Log.i(TAG, "remove: " + taskId);
+        ALog.i(TAG, "remove: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
         } catch (Exception e) {
-            Log.d(TAG, "remove query error: " + e);
+            ALog.d(TAG, "remove query error: " + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "remove: task info is null");
+            ALog.e(TAG, "remove: task info is null");
             return -1;
         }
         if (taskInfo.getAction() == Action.DOWNLOAD) {
             mDownloadImpl.removeDownload(taskInfo);
         } else {
-            Log.e(TAG, "remove: action is not download:" + taskInfo.getAction());
+            ALog.e(TAG, "remove: action is not download:" + taskInfo.getAction());
         }
         mDownloadImpl.sendRemoveCallback(taskInfo);
         return 0;
@@ -211,16 +212,16 @@ public class JavaTaskImpl {
      * @return mimeType
      */
     public String getMimeType(long taskId) {
-        Log.i(TAG, "getMimeType: " + taskId);
+        ALog.i(TAG, "getMimeType: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
         } catch (Exception e) {
-            Log.d(TAG, "getMimeType query error: " + e);
+            ALog.d(TAG, "getMimeType query error: " + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "getMimeType: task info is null");
+            ALog.e(TAG, "getMimeType: task info is null");
             return "";
         }
         return mDownloadImpl.getMimeType(taskInfo.getDownloadId());
@@ -250,10 +251,10 @@ public class JavaTaskImpl {
      * @param taskInfoJson task info json
      */
     public void reportTaskInfo(String taskInfoJson) {
-        Log.i(TAG, "reportTaskInfo: " + taskInfoJson);
+        ALog.i(TAG, "reportTaskInfo: " + taskInfoJson);
         TaskInfo taskInfo = JsonUtil.jsonToTaskInfo(taskInfoJson);
         if (taskInfo == null) {
-            Log.i(TAG, "reportTaskInfo: task info is null");
+            ALog.i(TAG, "reportTaskInfo: task info is null");
             return;
         }
         TaskDao.update(mContext, taskInfo, false);
@@ -266,30 +267,30 @@ public class JavaTaskImpl {
      * @return task info json
      */
     public String show(long taskId) {
-        Log.i(TAG, "show: " + taskId);
+        ALog.i(TAG, "show: " + taskId);
         CompletableFuture<TaskInfo> future = CompletableFuture.supplyAsync(() -> TaskDao.query(mContext, taskId));
         TaskInfo taskInfo = null;
         try {
             taskInfo = future.get();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
-            Log.e(TAG, "show: query error", e);
+            ALog.e(TAG, "show: query error" + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "show: task is null");
+            ALog.e(TAG, "show: task is null");
             return "";
         }
         if (taskInfo.getAction() == Action.DOWNLOAD) {
             mDownloadImpl.postQueryProgressByTid(taskId);
             if (!TextUtils.isEmpty(taskInfo.getToken()) && !"null".equals(taskInfo.getToken())) {
-                Log.e(TAG, "show: token is not null");
+                ALog.e(TAG, "show: token is not null");
                 return "";
             }
         } else {
-            Log.i(TAG, "Action.UPLOAD taskId: " + taskId);
+            ALog.i(TAG, "Action.UPLOAD taskId: " + taskId);
         }
         String result = JsonUtil.convertTaskInfoToJson(taskInfo);
-        Log.d(TAG, "show: result:" + result);
+        ALog.d(TAG, "show: result:" + result);
         return result;
     }
 
@@ -301,7 +302,7 @@ public class JavaTaskImpl {
      * @return task info json
      */
     public String touch(long taskId, String token) {
-        Log.i(TAG, "touch: " + taskId);
+        ALog.i(TAG, "touch: " + taskId);
         mDownloadImpl.postQueryProgressByTid(taskId);
         CompletableFuture<TaskInfo> future =
             CompletableFuture.supplyAsync(() -> TaskDao.queryByToken(mContext, taskId, token));
@@ -310,14 +311,14 @@ public class JavaTaskImpl {
             taskInfo = future.get();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
-            Log.e(TAG, "touch: query error", e);
+            ALog.e(TAG, "touch: query error" + e);
         }
         if (taskInfo == null) {
-            Log.e(TAG, "touch: task is null");
+            ALog.e(TAG, "touch: task is null");
             return "";
         }
         String result = JsonUtil.convertTaskInfoToJson(taskInfo);
-        Log.d(TAG, "touch: result:" + result);
+        ALog.d(TAG, "touch: result:" + result);
         return result;
     }
 
@@ -328,7 +329,7 @@ public class JavaTaskImpl {
      * @return task id array
      */
     public long[] search(String filterJson) {
-        Log.i(TAG, "search: " + filterJson);
+        ALog.i(TAG, "search: " + filterJson);
         mDownloadImpl.postQueryProgress();
         List<Long> taskIdList = new ArrayList<>();
         Filter filter = JsonUtil.jsonToFilter(filterJson);
@@ -338,13 +339,13 @@ public class JavaTaskImpl {
             taskIdList = future.get();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
-            Log.e(TAG, "search: error", e);
+            ALog.e(TAG, "search: error" + e);
         }
         long[] taskIdArray = new long[taskIdList.size()];
         for (int i = 0; i < taskIdList.size(); i++) {
             taskIdArray[i] = taskIdList.get(i);
         }
-        Log.i(TAG, "search result: " + Arrays.toString(taskIdArray));
+        ALog.i(TAG, "search result: " + Arrays.toString(taskIdArray));
         return taskIdArray;
     }
 
@@ -365,7 +366,7 @@ public class JavaTaskImpl {
      * Get the default download path of the current device
      */
     public void jniInit() {
-        Log.i(TAG, "jniInit: ");
+        ALog.i(TAG, "jniInit: ");
         if (!IConstant.IS_ANDROID_DEBUG) {
             nativeInit();
         }
@@ -379,7 +380,7 @@ public class JavaTaskImpl {
      * @param taskInfoJson task information
      */
     public void jniOnRequestCallback(long taskId, String eventType, String taskInfoJson) {
-        Log.i(TAG,
+        ALog.i(TAG,
                 "jniOnRequestCallback: taskId:" + taskId + ",eventType:" + eventType + ",taskInfoJson:" + taskInfoJson);
         if (!IConstant.IS_ANDROID_DEBUG) {
             onRequestCallback(taskId, eventType, taskInfoJson);

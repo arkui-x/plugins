@@ -40,6 +40,9 @@ java_library("task_android_java") {
     "java/src/ohos/ace/plugin/taskmanagerplugin/FormItem.java",
     "java/src/ohos/ace/plugin/taskmanagerplugin/Version.java",
   ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java",
+  ]
   subsystem_name = "plugins"
   part_name = "request"
 }

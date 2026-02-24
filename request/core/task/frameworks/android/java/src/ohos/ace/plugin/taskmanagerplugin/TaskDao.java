@@ -23,11 +23,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
-import android.util.Log;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import ohos.ace.adapter.ALog;
 
 /**
  * TaskDao class is used to operate database
@@ -46,7 +47,7 @@ public class TaskDao {
      * @return long
      */
     public static long insert(Context context, Config config) {
-        Log.i(TAG, "insert:" + JsonUtil.configToJson(config));
+        ALog.i(TAG, "insert:" + JsonUtil.configToJson(config));
         initDb(context);
         ContentValues values = new ContentValues();
         values.put("saveas", config.getSaveas());
@@ -94,11 +95,11 @@ public class TaskDao {
         values.put("withSystem", 0);
         try {
             long insertResult = mSQLiteDatabase.insert("Task", null, values);
-            Log.i(TAG, "insert: " + insertResult);
+            ALog.i(TAG, "insert: " + insertResult);
             return insertResult;
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "insert: error", e);
+            ALog.e(TAG, "insert: error" + e);
         }
         return IConstant.FAILED_VALUE;
     }
@@ -112,7 +113,7 @@ public class TaskDao {
      */
     @SuppressLint("Range")
     public static Config queryConfig(Context context, long taskId) {
-        Log.i(TAG, "queryConfig: " + taskId);
+        ALog.i(TAG, "queryConfig: " + taskId);
         initDb(context);
         String[] selectionArgs = {String.valueOf(taskId)};
         try (Cursor cursor = mSQLiteDatabase.query("Task", null, "tid=?", selectionArgs, null, null, null)) {
@@ -144,7 +145,7 @@ public class TaskDao {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "query: error", e);
+            ALog.e(TAG, "query: error" + e);
         }
         return null;
     }
@@ -158,7 +159,7 @@ public class TaskDao {
      */
     @SuppressLint("Range")
     public static TaskInfo query(Context context, long taskId) {
-        Log.i(TAG, "query: " + taskId);
+        ALog.i(TAG, "query: " + taskId);
         initDb(context);
         String[] selectionArgs = {String.valueOf(taskId)};
         List<TaskInfo> taskInfos = new ArrayList<>();
@@ -173,7 +174,7 @@ public class TaskDao {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "query: error", e);
+            ALog.e(TAG, "query: error" + e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -193,7 +194,7 @@ public class TaskDao {
      */
     @SuppressLint("Range")
     public static List<TaskInfo> queryAll(Context context) {
-        Log.i(TAG, "queryAll");
+        ALog.i(TAG, "queryAll");
         initDb(context);
         List<TaskInfo> taskInfos = new ArrayList<>();
         Cursor cursor = null;
@@ -207,7 +208,7 @@ public class TaskDao {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "query: error", e);
+            ALog.e(TAG, "query: error" + e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -226,7 +227,7 @@ public class TaskDao {
      */
     @SuppressLint("Range")
     public static TaskInfo queryByToken(Context context, long taskId, String token) {
-        Log.i(TAG, "queryByToken: " + taskId + ",token:" + token);
+        ALog.i(TAG, "queryByToken: " + taskId + ",token:" + token);
         initDb(context);
         String[] selectionArgs = {String.valueOf(taskId), token};
         List<TaskInfo> taskInfos = new ArrayList<>();
@@ -240,7 +241,7 @@ public class TaskDao {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "queryByToken: error", e);
+            ALog.e(TAG, "queryByToken: error" + e);
         }
         if (!taskInfos.isEmpty()) {
             return taskInfos.get(0);
@@ -317,7 +318,7 @@ public class TaskDao {
      */
     @SuppressLint("Range")
     public static List<Long> queryByFilter(Context context, Filter filter) {
-        Log.i(TAG, "queryByFilter");
+        ALog.i(TAG, "queryByFilter");
         initDb(context);
         List<String> argsList = new ArrayList<>();
         StringBuffer sbSelection = new StringBuffer();
@@ -352,7 +353,7 @@ public class TaskDao {
             }
         }
         String selection = sbSelection.toString();
-        Log.i(TAG, "queryByFilter,selection:" + selection);
+        ALog.i(TAG, "queryByFilter,selection:" + selection);
         String[] selectionArgs = argsList.toArray(new String[0]);
 
         List<Long> taskIds = new ArrayList<>();
@@ -362,7 +363,7 @@ public class TaskDao {
             if (cursor != null && cursor.moveToFirst()) {
                 do {
                     long tid = cursor.getLong(cursor.getColumnIndex("tid"));
-                    Log.i(TAG, "queryByFilter,tid:" + tid);
+                    ALog.i(TAG, "queryByFilter,tid:" + tid);
                     String progressJson = cursor.getString(cursor.getColumnIndex("progress"));
                     Progress progress = JsonUtil.convertJsonToProgress(progressJson);
                     if (progress != null && filter != null) {
@@ -388,7 +389,7 @@ public class TaskDao {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "queryByFilter: error", e);
+            ALog.e(TAG, "queryByFilter: error" + e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -405,7 +406,7 @@ public class TaskDao {
      * @param isSaveToken is save token
      */
     public static void update(Context context, TaskInfo taskInfo, boolean isSaveToken) {
-        Log.i(TAG, "update: " + JsonUtil.convertTaskInfoToJson(taskInfo));
+        ALog.i(TAG, "update: " + JsonUtil.convertTaskInfoToJson(taskInfo));
         initDb(context);
         ContentValues values = new ContentValues();
         values.put("saveas", taskInfo.getSaveas());
@@ -440,7 +441,7 @@ public class TaskDao {
             mSQLiteDatabase.update("Task", values, whereClause, whereArgs);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "insert: error", e);
+            ALog.e(TAG, "insert: error" + e);
         }
     }
 
@@ -451,14 +452,14 @@ public class TaskDao {
      * @param taskId  taskId
      */
     public static void delete(Context context, long taskId) {
-        Log.i(TAG, "delete: " + taskId);
+        ALog.i(TAG, "delete: " + taskId);
         initDb(context);
         String[] whereArgs = {String.valueOf(taskId)};
         try {
             mSQLiteDatabase.delete("Task", "tid=?", whereArgs);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(TAG, "delete error ", e);
+            ALog.e(TAG, "delete error " + e);
         }
     }
 
