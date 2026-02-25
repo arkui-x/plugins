@@ -19,7 +19,8 @@ import android.content.ClipDescription;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -73,7 +74,7 @@ public class WantParamsUtils {
                 return buildBundleFromParamsArray(params);
             }
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "jsonToExtras: JSON parse error");
+            ALog.e(LOG_TAG, "jsonToExtras: JSON parse error");
             return new Bundle();
         }
     }
@@ -95,14 +96,14 @@ public class WantParamsUtils {
             root.put("params", params);
             return root.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "extrasToJson: JSON parse error");
+            ALog.e(LOG_TAG, "extrasToJson: JSON parse error");
             return "{}";
         }
     }
 
     private static String intentToJsonString(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "intentToJsonString: intent is null");
+            ALog.e(LOG_TAG, "intentToJsonString: intent is null");
             return "{}";
         }
         try {
@@ -127,7 +128,7 @@ public class WantParamsUtils {
 
             return root.toString();
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "intentToJsonString: JSON parse error");
+            ALog.e(LOG_TAG, "intentToJsonString: JSON parse error");
             return "{}";
         }
     }
@@ -144,7 +145,7 @@ public class WantParamsUtils {
      */
     public static Boolean putJsonToIntent(Intent intent, String json) {
         if (intent == null || json == null) {
-            Log.e(LOG_TAG, "putJsonToIntent: intent or json is null");
+            ALog.e(LOG_TAG, "putJsonToIntent: intent or json is null");
             return false;
         }
         try {
@@ -176,7 +177,7 @@ public class WantParamsUtils {
                 handlePutParamToIntent(intent, key, type, p);
             }
         } catch (JSONException ignored) {
-            Log.w(LOG_TAG, "putJsonToIntent: JSON parse error");
+            ALog.w(LOG_TAG, "putJsonToIntent: JSON parse error");
             return false;
         }
         return true;
@@ -214,7 +215,7 @@ public class WantParamsUtils {
             handlePutArrayToIntent(intent, key, arrValue);
             return;
         }
-        Log.w(LOG_TAG, "handlePutParamToIntent: Unknown param type");
+        ALog.w(LOG_TAG, "handlePutParamToIntent: Unknown param type");
         String defaultValue = p.optString("value", "");
         intent.putExtra(key, defaultValue);
     }
@@ -253,7 +254,7 @@ public class WantParamsUtils {
      */
     public static String getJsonFromIntent(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "getJsonFromIntent: intent is null");
+            ALog.e(LOG_TAG, "getJsonFromIntent: intent is null");
             return "{}";
         }
         return intentToJsonString(intent);
@@ -269,7 +270,7 @@ public class WantParamsUtils {
      */
     public static void setExtrasToClipDescription(ClipDescription desc, Bundle extras) {
         if (desc == null || extras == null) {
-            Log.e(LOG_TAG, "setExtrasToClipDescription: desc or extras is null");
+            ALog.e(LOG_TAG, "setExtrasToClipDescription: desc or extras is null");
             return;
         }
         try {
@@ -277,7 +278,7 @@ public class WantParamsUtils {
             desc.setExtras(pb);
         } catch (NoSuchMethodError ignored) {
             // platform may not allow modifying ClipDescription extras; caller must handle it
-            Log.w(LOG_TAG, "setExtrasToClipDescription: platform does not support setting ClipDescription extras");
+            ALog.w(LOG_TAG, "setExtrasToClipDescription: platform does not support setting ClipDescription extras");
         }
     }
 
@@ -290,7 +291,7 @@ public class WantParamsUtils {
      */
     public static String getJsonFromClipDescription(ClipDescription desc) {
         if (desc == null) {
-            Log.e(LOG_TAG, "getJsonFromClipDescription: desc is null");
+            ALog.e(LOG_TAG, "getJsonFromClipDescription: desc is null");
             return "{}";
         }
         PersistableBundle pb = desc.getExtras();
@@ -301,7 +302,7 @@ public class WantParamsUtils {
     private static PersistableBundle bundleToPersistableBundle(Bundle bundle) {
         PersistableBundle result = new PersistableBundle();
         if (bundle == null) {
-            Log.e(LOG_TAG, "bundleToPersistableBundle: bundle is null");
+            ALog.e(LOG_TAG, "bundleToPersistableBundle: bundle is null");
             return result;
         }
         Set<String> keys = bundle.keySet();
@@ -340,7 +341,7 @@ public class WantParamsUtils {
     private static Bundle persistableBundleToBundle(PersistableBundle pb) {
         Bundle result = new Bundle();
         if (pb == null) {
-            Log.e(LOG_TAG, "persistableBundleToBundle: pb is null");
+            ALog.e(LOG_TAG, "persistableBundleToBundle: pb is null");
             return result;
         }
         Set<String> keys = pb.keySet();
@@ -387,7 +388,7 @@ public class WantParamsUtils {
     private static void putParamIntoBundle(Bundle result, JSONObject paramObj) throws JSONException {
         String key = paramObj.optString("key", null);
         if (key == null) {
-            Log.e(LOG_TAG, "putParamIntoBundle: key is null");
+            ALog.e(LOG_TAG, "putParamIntoBundle: key is null");
             return;
         }
         int type = paramObj.getInt("type");
@@ -443,7 +444,7 @@ public class WantParamsUtils {
                 result.putInt(key, (int) longValue);
             }
         } catch (NumberFormatException ex) {
-            Log.w(LOG_TAG, "handleIntParam: NumberFormatException for key " + key);
+            ALog.w(LOG_TAG, "handleIntParam: NumberFormatException for key " + key);
             result.putInt(key, 0);
         }
     }
@@ -666,7 +667,7 @@ public class WantParamsUtils {
                     flags.hasLong = true;
                 }
             } else {
-                Log.e(LOG_TAG, "detectArrayFlags: unsupported array item type: " +
+                ALog.e(LOG_TAG, "detectArrayFlags: unsupported array item type: " +
                     ((item == null) ? "null" : item.getClass().getName()));
             }
         }

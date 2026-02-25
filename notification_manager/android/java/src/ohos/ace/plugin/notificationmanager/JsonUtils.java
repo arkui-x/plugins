@@ -16,7 +16,8 @@
 package ohos.ace.plugin.notificationmanager;
 
 import android.text.TextUtils;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,7 +65,7 @@ public class JsonUtils {
 
             request.content = getContent(object.getJSONObject("content"));
         } catch (JSONException ex) {
-            Log.e(TAG, "getNotificationRequest error");
+            ALog.e(TAG, "getNotificationRequest error");
         }
         return request;
     }
@@ -77,7 +78,7 @@ public class JsonUtils {
             JSONObject object = contentObject.getJSONObject("content");
             content.content = getBasicContent(content.contentType, object);
         } catch (JSONException ex) {
-            Log.e(TAG, "getStringArray error");
+            ALog.e(TAG, "getStringArray error");
         }
         return content;
     }
@@ -139,7 +140,7 @@ public class JsonUtils {
             }
             return stringArray;
         } catch (JSONException ex) {
-            Log.e(TAG, "getStringArray error");
+            ALog.e(TAG, "getStringArray error");
         }
         return null;
     }

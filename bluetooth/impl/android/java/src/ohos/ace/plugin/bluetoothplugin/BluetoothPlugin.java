@@ -44,11 +44,13 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelUuid;
-import android.util.Log;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * BlueTooth android plugin module
@@ -107,14 +109,14 @@ public class BluetoothPlugin {
 
     private boolean checkPermissions(String... parameters) {
         if (mContext_ == null) {
-            Log.e(LOG_TAG, "checkPermissions mContext_ is null.");
+            ALog.e(LOG_TAG, "checkPermissions mContext_ is null.");
             return false;
         }
         int permissionResult = PackageManager.PERMISSION_DENIED;
         for (String permissions : parameters) {
             permissionResult = mContext_.checkCallingOrSelfPermission(permissions);
             if (permissionResult != PackageManager.PERMISSION_GRANTED) {
-                Log.e(LOG_TAG, "Permission check failed, The permissions is " + permissions);
+                ALog.e(LOG_TAG, "Permission check failed, The permissions is " + permissions);
                 return false;
             }
         }
@@ -150,29 +152,29 @@ public class BluetoothPlugin {
             permissionRes = locationRes && checkPermissions(PERMISSION_BLUETOOTH, PERMISSION_BLUETOOTH_ADMIN);
         }
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!permissionRes) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         try {
             BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
             BluetoothLeScanner scanner = btManager_.getBluetoothLeScanner();
             if (bluetoothAdapter == null) {
-                Log.e(LOG_TAG, "startScan failed, The device does not support Bluetooth");
+                ALog.e(LOG_TAG, "startScan failed, The device does not support Bluetooth");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else if (!bluetoothAdapter.isEnabled()) {
-                Log.e(LOG_TAG, "startScan failed, User not enabled Bluetooth switch");
+                ALog.e(LOG_TAG, "startScan failed, User not enabled Bluetooth switch");
                 errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             } else if (scanner == null) {
-                Log.e(LOG_TAG, "startScan failed, BluetoothLeScanner is null");
+                ALog.e(LOG_TAG, "startScan failed, BluetoothLeScanner is null");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else {
                 List<ScanFilter> filters = BluetoothHelper.getBluetoothScanFilters(stringFilters);
                 ScanSettings settings = BluetoothHelper.getBluetoothLeScanSettings(stringSettings);
                 if (filters == null || settings == null) {
-                    Log.e(LOG_TAG, "startScan failed, Invalid Param");
+                    ALog.e(LOG_TAG, "startScan failed, Invalid Param");
                     errCode = BluetoothErrorCode.BT_ERR_INVALID_PARAM;
                 } else {
                     if (filters.isEmpty()) {
@@ -183,7 +185,7 @@ public class BluetoothPlugin {
                 }
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
-            Log.e(LOG_TAG, "startScan failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "startScan failed, try-catch err is " + e);
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } finally {
             return errCode.getId();
@@ -202,15 +204,15 @@ public class BluetoothPlugin {
                 permissionRes = locationRes && checkPermissions(PERMISSION_BLUETOOTH, PERMISSION_BLUETOOTH_ADMIN);
             }
             if (btManager_ == null) {
-                Log.e(LOG_TAG, "stopBLEScan failed, CustomBluetoothManager is null");
+                ALog.e(LOG_TAG, "stopBLEScan failed, CustomBluetoothManager is null");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else if (!permissionRes) {
-                Log.e(LOG_TAG, "Permission check failed");
+                ALog.e(LOG_TAG, "Permission check failed");
                 errCode = BluetoothErrorCode.BT_ERR_PERMISSION_FAILED;
             } else {
                 BluetoothLeScanner scanner = btManager_.getBluetoothLeScanner();
                 if (scanner == null) {
-                    Log.e(LOG_TAG, "stopBLEScan failed, BluetoothLeScanner is null");
+                    ALog.e(LOG_TAG, "stopBLEScan failed, BluetoothLeScanner is null");
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                 } else {
                     scanner.stopScan(btManager_.getScanCallback(scannerId));
@@ -218,7 +220,7 @@ public class BluetoothPlugin {
             }
             return errCode.getId();
         } catch (IllegalStateException e) {
-            Log.e(LOG_TAG, "startScan failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "startScan failed, try-catch err is " + e);
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         }
     }
@@ -273,16 +275,16 @@ public class BluetoothPlugin {
         int advHandle, boolean isRawData) {
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "startAdvertising failed, CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "startAdvertising failed, CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         }
         try {
             BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
             if (bluetoothAdapter == null) {
-                Log.e(LOG_TAG, "startAdvertising failed, The device does not support Bluetooth");
+                ALog.e(LOG_TAG, "startAdvertising failed, The device does not support Bluetooth");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else if (!bluetoothAdapter.isEnabled()) {
-                Log.e(LOG_TAG, "startAdvertising failed, User not enabled Bluetooth switch");
+                ALog.e(LOG_TAG, "startAdvertising failed, User not enabled Bluetooth switch");
                 errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             } else if (btManager_.getAdvertisingStatus(advHandle) !=
                 AdvertisingStatus.ADVERTISING_STATUS_NOT_START.ordinal()) {
@@ -295,7 +297,7 @@ public class BluetoothPlugin {
                 AdvertiseCallback callback = createAdvertisingCallback(advHandle);
                 if (bluetoothLeAdvertiser == null || settings == null || advertiseData == null ||
                     scanResponseData == null || callback == null) {
-                    Log.e(LOG_TAG, "startAdvertising failed, Params is null");
+                    ALog.e(LOG_TAG, "startAdvertising failed, Params is null");
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                 } else {
                     btManager_.setAdvertisingStatus(advHandle, AdvertisingStatus.ADVERTISING_STATUS_START.ordinal());
@@ -308,7 +310,7 @@ public class BluetoothPlugin {
                 }
             }
         } catch (IllegalStateException | IllegalArgumentException e) {
-            Log.e(LOG_TAG, "startAdvertising failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "startAdvertising failed, try-catch err is " + e);
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } finally {
             return errCode.getId();
@@ -318,25 +320,25 @@ public class BluetoothPlugin {
     public int stopAdvertising(int advHandle) {
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "stopAdvertising failed, CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "stopAdvertising failed, CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         }else if (!checkAdvertisingPermission()) {
-            Log.e(LOG_TAG, "stopAdvertising failed, Permission check failed");
+            ALog.e(LOG_TAG, "stopAdvertising failed, Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         try {
             BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
             if (bluetoothAdapter == null) {
-                Log.e(LOG_TAG, "stopAdvertising failed, The device does not support Bluetooth");
+                ALog.e(LOG_TAG, "stopAdvertising failed, The device does not support Bluetooth");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else if (!bluetoothAdapter.isEnabled()) {
-                Log.e(LOG_TAG, "startAdvertising failed, User not enabled Bluetooth switch");
+                ALog.e(LOG_TAG, "startAdvertising failed, User not enabled Bluetooth switch");
                 errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             } else {
                 BluetoothLeAdvertiser bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
                 AdvertiseCallback advertiseCallback = btManager_.getAdvertiseCallback(advHandle);
                 if (bluetoothLeAdvertiser == null || advertiseCallback == null) {
-                    Log.e(LOG_TAG, "startAdvertising failed, BluetoothLeAdvertiser or AdvertiseCallback is null");
+                    ALog.e(LOG_TAG, "startAdvertising failed, BluetoothLeAdvertiser or AdvertiseCallback is null");
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                 } else {
                     bluetoothLeAdvertiser.stopAdvertising(advertiseCallback); 
@@ -345,7 +347,7 @@ public class BluetoothPlugin {
                 }
             }
         } catch (IllegalArgumentException e) {
-            Log.e(LOG_TAG, "stopAdvertising failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "stopAdvertising failed, try-catch err is " + e);
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } finally {
             return errCode.getId();
@@ -355,32 +357,32 @@ public class BluetoothPlugin {
     public int startPair(String address) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
-                Log.e(LOG_TAG, "startPair permission failed" + PERMISSION_BLUETOOTH_ADMIN);
+                ALog.e(LOG_TAG, "startPair permission failed" + PERMISSION_BLUETOOTH_ADMIN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "startPair permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "startPair permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "startPair failed, btManager_ is null");
+            ALog.e(LOG_TAG, "startPair failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "startPair failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "startPair failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "startPair failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "startPair failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
             if (device == null) {
-                Log.e(LOG_TAG, "startPair failed, BluetoothDevice is null");
+                ALog.e(LOG_TAG, "startPair failed, BluetoothDevice is null");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else {
                 errCode = device.createBond() ? BluetoothErrorCode.BT_NO_ERROR
@@ -393,27 +395,27 @@ public class BluetoothPlugin {
     public int getBtProfileConnState(int profileId, int[] retCode) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getBtProfileConnState permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getBtProfileConnState permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getBtProfileConnState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getBtProfileConnState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getBtProfileConnState failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getBtProfileConnState failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getBtProfileConnState failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getBtProfileConnState failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getBtProfileConnState failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getBtProfileConnState failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             retCode[0] = bluetoothAdapter.getProfileConnectionState(profileId);
@@ -424,27 +426,27 @@ public class BluetoothPlugin {
     public int getBtProfilesConnState(int[] profileId, int[] retCode) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getBtProfilesConnState permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getBtProfilesConnState permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getBtProfilesConnState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getBtProfilesConnState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getBtProfilesConnState failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getBtProfilesConnState failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getBtProfileConnState failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getBtProfileConnState failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getBtProfileConnState failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getBtProfileConnState failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             for (int index = 0; index < profileId.length; index++) {
@@ -462,33 +464,33 @@ public class BluetoothPlugin {
     public int getDeviceName(String address, String[] name) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getDeviceName permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getDeviceName permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getDeviceName permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getDeviceName permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getBtProfilesConnState failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getBtProfilesConnState failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getDeviceName failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getDeviceName failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getDeviceName failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getDeviceName failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             try {
                 BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
                 if (device == null) {
-                    Log.e(LOG_TAG, "getDeviceName failed, BluetoothDevice is null");
+                    ALog.e(LOG_TAG, "getDeviceName failed, BluetoothDevice is null");
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                 } else {
                     name[0] = device.getName();
@@ -497,7 +499,7 @@ public class BluetoothPlugin {
                     }
                 }
             } catch (IllegalArgumentException e) {
-                Log.e(LOG_TAG, "getDeviceName failed, IllegalArgumentException is " + e);
+                ALog.e(LOG_TAG, "getDeviceName failed, IllegalArgumentException is " + e);
                 return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
             }
         }
@@ -507,27 +509,27 @@ public class BluetoothPlugin {
     public int getLocalName(String[] name) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getLocalName permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getLocalName permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getLocalName permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getLocalName permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getLocalName failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getLocalName failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getLocalName failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getLocalName failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getLocalName failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getLocalName failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             name[0] = bluetoothAdapter.getName();
@@ -541,27 +543,27 @@ public class BluetoothPlugin {
     public int getPairedDevices(String[] pairedAddr) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getPairedDevices permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getPairedDevices permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getPairedDevices permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getPairedDevices permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getPairedDevices failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getPairedDevices failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getPairedDevices failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getPairedDevices failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getPairedDevices failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getPairedDevices failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
@@ -581,27 +583,27 @@ public class BluetoothPlugin {
     public int getPairState(String address, int[] pairState) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getPairState permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getPairState permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getPairState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getPairState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getPairState failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getPairState failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getPairState failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getPairState failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getPairState failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getPairState failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
@@ -617,27 +619,27 @@ public class BluetoothPlugin {
     public int getDeviceClass(String address, int[] code) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getDeviceClass permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getDeviceClass permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getDeviceClass permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getDeviceClass permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getDeviceClass failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getDeviceClass failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getDeviceClass failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getDeviceClass failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getDeviceClass failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getDeviceClass failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
@@ -647,7 +649,7 @@ public class BluetoothPlugin {
                 BluetoothClass deviceClass = device.getBluetoothClass();
                 if (deviceClass == null) {
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
-                    Log.e(LOG_TAG, "BluetoothPlugin JAVA getDeviceClass is null");
+                    ALog.e(LOG_TAG, "BluetoothPlugin JAVA getDeviceClass is null");
                 } else {
                     code[0] = deviceClass.getDeviceClass();
                 }
@@ -659,37 +661,37 @@ public class BluetoothPlugin {
     public int getDeviceUuids(String address, String[] uuids) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getDeviceUuids permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getDeviceUuids permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getDeviceUuids permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getDeviceUuids permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getDeviceUuids failed, btManager_ is null");
+            ALog.e(LOG_TAG, "getDeviceUuids failed, btManager_ is null");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getDeviceUuids failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getDeviceUuids failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getDeviceUuids failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getDeviceUuids failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
             if (device == null) {
-                Log.e(LOG_TAG, "getDeviceUuids failed, device is null");
+                ALog.e(LOG_TAG, "getDeviceUuids failed, device is null");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else {
                 ParcelUuid[] uuidsArray = device.getUuids();
                 if (uuidsArray == null) {
-                    Log.e(LOG_TAG, "getDeviceUuids failed, return uuidsArray is null");
+                    ALog.e(LOG_TAG, "getDeviceUuids failed, return uuidsArray is null");
                     errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                 } else {
                     Vector<String> vector = new Vector<>();
@@ -705,30 +707,30 @@ public class BluetoothPlugin {
 
     public int enableBt() {
         if (Build.VERSION.SDK_INT >= API_33) {
-            Log.e(LOG_TAG, "enableBt API_33 not support!");
+            ALog.e(LOG_TAG, "enableBt API_33 not support!");
             return (BluetoothErrorCode.BT_ERR_CAPABILITY_NOT_SUPPORT).getId();
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "enableBt btManager_ is null!");
+            ALog.e(LOG_TAG, "enableBt btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "enableBt bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "enableBt bluetoothAdapter is null!");
             return errCode.getId();
         }
 
         if (checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
             if (Build.VERSION.SDK_INT >= API_31) {
                 if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                    Log.e(LOG_TAG, " enableBt permission failed");
+                    ALog.e(LOG_TAG, " enableBt permission failed");
                     return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
                 }
             }
         } else {
-            Log.e(LOG_TAG, "enableBt permission failed");
+            ALog.e(LOG_TAG, "enableBt permission failed");
             return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
         }
 
@@ -736,36 +738,36 @@ public class BluetoothPlugin {
             return (BluetoothErrorCode.BT_NO_ERROR).getId();
         }
 
-        Log.e(LOG_TAG, "enableBt return false!");
+        ALog.e(LOG_TAG, "enableBt return false!");
         return errCode.getId();
     }
 
     public int disableBt() {
         if (Build.VERSION.SDK_INT >= API_33) {
-            Log.e(LOG_TAG, "disableBt API_33 not support!");
+            ALog.e(LOG_TAG, "disableBt API_33 not support!");
             return (BluetoothErrorCode.BT_ERR_CAPABILITY_NOT_SUPPORT).getId();
         }
 
         if (checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
             if (Build.VERSION.SDK_INT >= API_31) {
                 if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                    Log.e(LOG_TAG, " disableBt permission failed");
+                    ALog.e(LOG_TAG, " disableBt permission failed");
                     return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
                 }
             }
         } else {
-            Log.e(LOG_TAG, "disableBt permission failed");
+            ALog.e(LOG_TAG, "disableBt permission failed");
             return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "disableBt btManager_ is null!");
+            ALog.e(LOG_TAG, "disableBt btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "disableBt bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "disableBt bluetoothAdapter is null!");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             return errCode.getId();
         }
@@ -777,43 +779,43 @@ public class BluetoothPlugin {
     public int getBtState(int[] state) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, " getBtState permission failed");
+                ALog.e(LOG_TAG, " getBtState permission failed");
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getBtState btManager_ is null!");
+            ALog.e(LOG_TAG, "getBtState btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getBtState bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "getBtState bluetoothAdapter is null!");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             return errCode.getId();
         }
 
         state[0] = bluetoothAdapter.getState();
-        Log.i(LOG_TAG, "getBtState state: " + Integer.toString(state[0]));
+        ALog.i(LOG_TAG, "getBtState state: " + Integer.toString(state[0]));
         return errCode.getId();
     }
 
     public boolean isBtEnable() {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, " isBtEnable permission failed");
+                ALog.e(LOG_TAG, " isBtEnable permission failed");
                 return false;
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "isBtEnable btManager_ is null!");
+            ALog.e(LOG_TAG, "isBtEnable btManager_ is null!");
             return false;
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "isBtEnable bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "isBtEnable bluetoothAdapter is null!");
             return false;
         }
 
@@ -822,25 +824,25 @@ public class BluetoothPlugin {
 
     public int setLocalName(String name) {
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "setLocalName btManager_ is null!");
+            ALog.e(LOG_TAG, "setLocalName btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "setLocalName bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "setLocalName bluetoothAdapter is null!");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             return errCode.getId();
         }
 
         if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "setLocalName failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "setLocalName failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             return errCode.getId();
         }
 
         if (bluetoothAdapter.setName(name)) {
-            Log.i(LOG_TAG, "setLocalName setName success. name: " + name);
+            ALog.i(LOG_TAG, "setLocalName setName success. name: " + name);
             return errCode.getId();
         }
         errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
@@ -850,66 +852,66 @@ public class BluetoothPlugin {
     public int getBtScanMode(int[] scanMode) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH)) {
-                Log.e(LOG_TAG, "getBtScanMode permission failed" + PERMISSION_BLUETOOTH);
+                ALog.e(LOG_TAG, "getBtScanMode permission failed" + PERMISSION_BLUETOOTH);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN)) {
-                Log.e(LOG_TAG, "getBtScanMode permission failed" + PERMISSION_BLUETOOTH_SCAN);
+                ALog.e(LOG_TAG, "getBtScanMode permission failed" + PERMISSION_BLUETOOTH_SCAN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getBtScanMode btManager_ is null!");
+            ALog.e(LOG_TAG, "getBtScanMode btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getBtScanMode bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "getBtScanMode bluetoothAdapter is null!");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             return errCode.getId();
         }
 
         if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getBtScanMode getBtScanMode failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getBtScanMode getBtScanMode failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             return errCode.getId();
         }
 
         scanMode[0] = bluetoothAdapter.getScanMode();
-        Log.i(LOG_TAG, "getBtScanMode scanmode: " + Integer.toString(scanMode[0]));
+        ALog.i(LOG_TAG, "getBtScanMode scanmode: " + Integer.toString(scanMode[0]));
         return errCode.getId();
     }
 
     public int startBtDiscovery() {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN, PERMISSION_ACCESS_FINE_LOCATION)) {
-                Log.e(LOG_TAG, "startBtDiscovery permission failed" + PERMISSION_BLUETOOTH_ADMIN);
+                ALog.e(LOG_TAG, "startBtDiscovery permission failed" + PERMISSION_BLUETOOTH_ADMIN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN, PERMISSION_ACCESS_FINE_LOCATION)) {
-                Log.e(LOG_TAG, "startBtDiscovery permission failed" + PERMISSION_BLUETOOTH_SCAN);
+                ALog.e(LOG_TAG, "startBtDiscovery permission failed" + PERMISSION_BLUETOOTH_SCAN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "startBtDiscovery btManager_ is null!");
+            ALog.e(LOG_TAG, "startBtDiscovery btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "startBtDiscovery bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "startBtDiscovery bluetoothAdapter is null!");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             return errCode.getId();
         }
 
         if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "startBtDiscovery failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "startBtDiscovery failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             return errCode.getId();
         }
@@ -918,7 +920,7 @@ public class BluetoothPlugin {
         if (bluetoothAdapter.startDiscovery()) {
             return errCode.getId();
         }
-        Log.e(LOG_TAG, "startBtDiscovery faild");
+        ALog.e(LOG_TAG, "startBtDiscovery faild");
         errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         return errCode.getId();
     }
@@ -926,29 +928,29 @@ public class BluetoothPlugin {
     public int cancelBtDiscovery() {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
-                Log.e(LOG_TAG, "cancelBtDiscovery permission failed" + PERMISSION_BLUETOOTH_ADMIN);
+                ALog.e(LOG_TAG, "cancelBtDiscovery permission failed" + PERMISSION_BLUETOOTH_ADMIN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN)) {
-                Log.e(LOG_TAG, "cancelBtDiscovery permission failed" + PERMISSION_BLUETOOTH_SCAN);
+                ALog.e(LOG_TAG, "cancelBtDiscovery permission failed" + PERMISSION_BLUETOOTH_SCAN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "cancelBtDiscovery btManager_ is null!");
+            ALog.e(LOG_TAG, "cancelBtDiscovery btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "cancelBtDiscovery bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "cancelBtDiscovery bluetoothAdapter is null!");
             return errCode.getId();
         }
 
         if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "cancelBtDiscovery cancelBtDiscovery failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "cancelBtDiscovery cancelBtDiscovery failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             return errCode.getId();
         }
@@ -956,37 +958,37 @@ public class BluetoothPlugin {
         if (bluetoothAdapter.cancelDiscovery()) {
             return (BluetoothErrorCode.BT_NO_ERROR).getId();
         }
-        Log.e(LOG_TAG, "cancelBtDiscovery faild");
+        ALog.e(LOG_TAG, "cancelBtDiscovery faild");
         return errCode.getId();
     }
 
     public int isBtDiscovering(boolean[] isDisCovering) {
         if (Build.VERSION.SDK_INT < API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
-                Log.e(LOG_TAG, "isBtDiscovering permission failed" + PERMISSION_BLUETOOTH_ADMIN);
+                ALog.e(LOG_TAG, "isBtDiscovering permission failed" + PERMISSION_BLUETOOTH_ADMIN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         } else {
             if (!checkPermissions(PERMISSION_BLUETOOTH_SCAN)) {
-                Log.e(LOG_TAG, "isBtDiscovering permission failed" + PERMISSION_BLUETOOTH_SCAN);
+                ALog.e(LOG_TAG, "isBtDiscovering permission failed" + PERMISSION_BLUETOOTH_SCAN);
                 return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
             }
         }
 
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "isBtDiscovering btManager_ is null!");
+            ALog.e(LOG_TAG, "isBtDiscovering btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "isBtDiscovering bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "isBtDiscovering bluetoothAdapter is null!");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             return errCode.getId();
         }
 
         if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "isBtDiscovering failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "isBtDiscovering failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             return errCode.getId();
         }
@@ -1002,7 +1004,7 @@ public class BluetoothPlugin {
 
         IntentFilter itFilter = new IntentFilter();
         if (itFilter == null) {
-            Log.e(LOG_TAG, "registerBluetoothReceiver itFilter is null!");
+            ALog.e(LOG_TAG, "registerBluetoothReceiver itFilter is null!");
             btBroadcastReceive_ = null;
             return;
         }
@@ -1041,28 +1043,28 @@ public class BluetoothPlugin {
     }
 
     public static void sendBleBroadcast(Intent intent) {
-        Log.i(LOG_TAG, "sendBleBroadcast enter.");
+        ALog.i(LOG_TAG, "sendBleBroadcast enter.");
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "sendBleBroadcast btManager_ is null!");
+            ALog.e(LOG_TAG, "sendBleBroadcast btManager_ is null!");
             return;
         }
         Context context = btManager_.getContext();
         if (context != null) {
             context.sendBroadcast(intent);
         } else {
-            Log.e(LOG_TAG, "sendBleBroadcast failed. context is null");
+            ALog.e(LOG_TAG, "sendBleBroadcast failed. context is null");
         }
     }
 
     public void registerBluetoothServiceListener(Context context)
     {
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "registerBluetoothServiceListener btManager_ is null!");
+            ALog.e(LOG_TAG, "registerBluetoothServiceListener btManager_ is null!");
             return;
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "registerBluetoothServiceListener bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "registerBluetoothServiceListener bluetoothAdapter is null!");
             return;
         }
         btServiceListener_ = new BluetoothProfile.ServiceListener() {
@@ -1086,23 +1088,23 @@ public class BluetoothPlugin {
         };
         if (!checkPermissions(PERMISSION_BLUETOOTH)) {
             btServiceListener_ = null;
-            Log.e(LOG_TAG, "registerBluetoothServiceListener Permission check failed");
+            ALog.e(LOG_TAG, "registerBluetoothServiceListener Permission check failed");
             return;
         }
         if (!bluetoothAdapter.getProfileProxy(context, btServiceListener_, BluetoothProfile.A2DP)) {
-            Log.e(LOG_TAG, "registerBluetoothServiceListener getProfileProxy error!");
+            ALog.e(LOG_TAG, "registerBluetoothServiceListener getProfileProxy error!");
             btServiceListener_ = null;
         }
     }
 
     public void unregisterBluetoothServiceListener(Context context) {
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "unregisterBluetoothServiceListener btManager_ is null!");
+            ALog.e(LOG_TAG, "unregisterBluetoothServiceListener btManager_ is null!");
             return;
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "unregisterBluetoothServiceListener bluetoothAdapter is null!");
+            ALog.e(LOG_TAG, "unregisterBluetoothServiceListener bluetoothAdapter is null!");
             return;
         }
 
@@ -1117,7 +1119,7 @@ public class BluetoothPlugin {
     private BluetoothErrorCode getA2dpConnectionState(BluetoothDevice device, int[] state) {
         if (Build.VERSION.SDK_INT >= API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getA2dpConnectionState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getA2dpConnectionState permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED; 
             }
         }
@@ -1129,7 +1131,7 @@ public class BluetoothPlugin {
                 stateTemp = bluetoothA2dp_.getConnectionState(device);
                 state[0] = stateTemp;
             } else {
-                Log.e(LOG_TAG, "getA2dpConnectionState bluetoothA2dp_ is null!");
+                ALog.e(LOG_TAG, "getA2dpConnectionState bluetoothA2dp_ is null!");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             }
         }
@@ -1139,7 +1141,7 @@ public class BluetoothPlugin {
     private BluetoothErrorCode getA2dpConnectedDevices(BluetoothAdapter bluetoothAdapter, String[] devices) {
         if (Build.VERSION.SDK_INT >= API_31) {
             if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
-                Log.e(LOG_TAG, "getA2dpConnectedDevices permission failed" + PERMISSION_BLUETOOTH_CONNECT);
+                ALog.e(LOG_TAG, "getA2dpConnectedDevices permission failed" + PERMISSION_BLUETOOTH_CONNECT);
                 return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED; 
             }
         }
@@ -1162,21 +1164,21 @@ public class BluetoothPlugin {
 
     public int getConnectionState(String address, int[] state) {
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getConnectionState btManager_ is null!");
+            ALog.e(LOG_TAG, "getConnectionState btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "getConnectionState failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getConnectionState failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getConnectionState failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getConnectionState failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
             if (device == null) {
-                Log.e(LOG_TAG, "getConnectionState failed, device is null");
+                ALog.e(LOG_TAG, "getConnectionState failed, device is null");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else {
                 errCode = getA2dpConnectionState(device, state);
@@ -1187,16 +1189,16 @@ public class BluetoothPlugin {
 
     public int getDevicesByStates(String[] devices) {
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "getDevicesByStates btManager_ is null!");
+            ALog.e(LOG_TAG, "getDevicesByStates btManager_ is null!");
             return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
         }
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null || btServiceListener_ == null) {
-            Log.e(LOG_TAG, "getDevicesByStates failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "getDevicesByStates failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "getDevicesByStates failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "getDevicesByStates failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             errCode = getA2dpConnectedDevices(bluetoothAdapter, devices);
@@ -1207,18 +1209,18 @@ public class BluetoothPlugin {
     public int registerApplicationGattServer(int appId) {
         int errCode = BluetoothErrorCode.BT_NO_ERROR.getId();
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         } 
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "registerApplicationGattServer failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "registerApplicationGattServer failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "registerApplicationGattServer failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "registerApplicationGattServer failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             errCode = btManager_.registerBluetoothGattServer(appId, mContext_);
@@ -1229,18 +1231,18 @@ public class BluetoothPlugin {
     public int addService(int appId, int serviceHandle, String services) {
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "addService failed, CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "addService failed, CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "addService failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "addService failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "addService failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "addService failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             CustomGattServer structure = btManager_.getCustomGattServer(appId);
@@ -1251,7 +1253,7 @@ public class BluetoothPlugin {
             BluetoothGattServer bluetoothGattServer = structure.getBluetoothGattServer();
             BluetoothGattService service = structure.getBluetoothGattService(serviceHandle);
             if (service == null || bluetoothGattServer == null) {
-                Log.e(LOG_TAG, "addService failed, BluetoothGattServer or BluetoothGattService is null");
+                ALog.e(LOG_TAG, "addService failed, BluetoothGattServer or BluetoothGattService is null");
                 structure.removeBluetoothGattService(serviceHandle);
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else {
@@ -1269,24 +1271,24 @@ public class BluetoothPlugin {
     public int removeService(int appId, int handle) {
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "removeService failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "removeService failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "removeService failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "removeService failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             BluetoothGattService service = btManager_.getBluetoothGattService(appId, handle);
             BluetoothGattServer bluetoothGattServer = btManager_.getGattServer(appId);
             if (service == null || bluetoothGattServer == null) {
-                Log.e(LOG_TAG, "removeService failed, BluetoothGattServer or BluetoothGattService is null");
+                ALog.e(LOG_TAG, "removeService failed, BluetoothGattServer or BluetoothGattService is null");
                 return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
             }
             boolean ret = bluetoothGattServer.removeService(service);
@@ -1301,23 +1303,23 @@ public class BluetoothPlugin {
     public int gattServerClose(int appId) {
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "gattServerClose failed, CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "gattServerClose failed, CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "gattServerClose failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "gattServerClose failed, The device does not support Bluetooth");
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "gattServerClose failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "gattServerClose failed, User not enabled Bluetooth switch");
             errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
         } else {
             BluetoothGattServer bluetoothGattServer = btManager_.getGattServer(appId);
             if (bluetoothGattServer == null) {
-                Log.e(LOG_TAG, "gattServerClose failed, BluetoothGattServer is null");
+                ALog.e(LOG_TAG, "gattServerClose failed, BluetoothGattServer is null");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else {
                 bluetoothGattServer.close();
@@ -1329,13 +1331,13 @@ public class BluetoothPlugin {
     }
 
     public int respondCharacteristicRead(String address, String value, int appId, int status, int length) {
-        Log.i(LOG_TAG, "AppId is " + appId);
+        ALog.i(LOG_TAG, "AppId is " + appId);
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
@@ -1363,13 +1365,13 @@ public class BluetoothPlugin {
     }
 
     public int respondCharacteristicWrite(String address, int appId, int status, int handle) {
-        Log.i(LOG_TAG, "AppId is " + appId);
+        ALog.i(LOG_TAG, "AppId is " + appId);
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
@@ -1398,13 +1400,13 @@ public class BluetoothPlugin {
     }
 
     public int respondDescriptorRead(String address, String value, int appId, int status, int length) {
-        Log.i(LOG_TAG, "AppId is " + appId);
+        ALog.i(LOG_TAG, "AppId is " + appId);
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
@@ -1432,13 +1434,13 @@ public class BluetoothPlugin {
     }
 
     public int respondDescriptorWrite(String address, int appId, int status, int handle) {
-        Log.i(LOG_TAG, "AppId is " + appId);
+        ALog.i(LOG_TAG, "AppId is " + appId);
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
@@ -1468,22 +1470,22 @@ public class BluetoothPlugin {
 
     public int notifyCharacteristicChanged(
         int appId, int characterHandle, String address, String characteristicString, boolean isConfirm) {
-        Log.i(LOG_TAG, "AppId is " + appId);
+        ALog.i(LOG_TAG, "AppId is " + appId);
         BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
         if (btManager_ == null) {
-            Log.e(LOG_TAG, "notifyCharacteristicChanged failed, CustomBluetoothManager is null");
+            ALog.e(LOG_TAG, "notifyCharacteristicChanged failed, CustomBluetoothManager is null");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         } else if (!checkGattServerPermission()) {
-            Log.e(LOG_TAG, "Permission check failed");
+            ALog.e(LOG_TAG, "Permission check failed");
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
         try {
             BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
             if (bluetoothAdapter == null) {
-                Log.e(LOG_TAG, "notifyCharacteristicChanged failed, The device does not support Bluetooth");
+                ALog.e(LOG_TAG, "notifyCharacteristicChanged failed, The device does not support Bluetooth");
                 errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
             } else if (!bluetoothAdapter.isEnabled()) {
-                Log.e(LOG_TAG, "notifyCharacteristicChanged failed, User not enabled Bluetooth switch");
+                ALog.e(LOG_TAG, "notifyCharacteristicChanged failed, User not enabled Bluetooth switch");
                 errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             } else {
                 if (Build.VERSION.SDK_INT < API_33) {
@@ -1502,12 +1504,12 @@ public class BluetoothPlugin {
                                 : BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
                     }
                 } else {
-                    Log.e(LOG_TAG, "Not supported above Android API 33");
+                    ALog.e(LOG_TAG, "Not supported above Android API 33");
                     errCode = BluetoothErrorCode.BT_ERR_CAPABILITY_NOT_SUPPORT;
                 }
             }
         } catch (IllegalArgumentException e) {
-            Log.e(LOG_TAG, "respondDescriptorWrite failed, try-catch err is " + e);
+            ALog.e(LOG_TAG, "respondDescriptorWrite failed, try-catch err is " + e);
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         }
         return errCode.getId();
@@ -1523,17 +1525,17 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "gattClientConnect failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "gattClientConnect failed, The device does not support Bluetooth");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "gattClientConnect failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "gattClientConnect failed, User not enabled Bluetooth switch");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothDevice device = btManager_.findBluetoothDevice(address);
             if (device == null) {
-                Log.d(LOG_TAG, "It simply creates a BluetoothDevice object based on the MAC address");
+                ALog.d(LOG_TAG, "It simply creates a BluetoothDevice object based on the MAC address");
                 device = bluetoothAdapter.getRemoteDevice(address);
                 if (device == null) {
-                    Log.e(LOG_TAG, "gattClientConnect failed, Device not found");
+                    ALog.e(LOG_TAG, "gattClientConnect failed, Device not found");
                     return result;
                 }
             }
@@ -1562,23 +1564,23 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "gattClientDisconnect failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "gattClientDisconnect failed, The device does not support Bluetooth");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "gattClientDisconnect failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "gattClientDisconnect failed, User not enabled Bluetooth switch");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
             if (bluetoothGattClient != null) {
                 result = bluetoothGattClient.disconnect();
             } else {
-                Log.e(LOG_TAG, "gattClientDisconnect failed, BluetoothGattClient not found");
+                ALog.e(LOG_TAG, "gattClientDisconnect failed, BluetoothGattClient not found");
             }
         }
         return result;
     }
 
     public int gattClientRequestExchangeMtu(int appId, int mtu) {
-        Log.i(LOG_TAG, "gattClientRequestExchangeMtu enter, mtu: " + String.valueOf(mtu));
+        ALog.i(LOG_TAG, "gattClientRequestExchangeMtu enter, mtu: " + String.valueOf(mtu));
         if (!checkGattClientPermission()) {
             return BluetoothErrorCode.BT_ERR_PERMISSION_FAILED.getId();
         }
@@ -1588,16 +1590,16 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "gattClientRequestExchangeMtu failed, The device does not support Bluetooth.");
+            ALog.e(LOG_TAG, "gattClientRequestExchangeMtu failed, The device does not support Bluetooth.");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "gattClientRequestExchangeMtu failed, User not enabled Bluetooth switch.");
+            ALog.e(LOG_TAG, "gattClientRequestExchangeMtu failed, User not enabled Bluetooth switch.");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
             if (bluetoothGattClient != null) {
                 result = bluetoothGattClient.requestExchangeMtu(mtu);
             } else {
-                Log.e(LOG_TAG, "gattClientRequestExchangeMtu failed, BluetoothGattClient not found.");
+                ALog.e(LOG_TAG, "gattClientRequestExchangeMtu failed, BluetoothGattClient not found.");
             }
         }
         return result;
@@ -1613,9 +1615,9 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "gattClientClose failed, The device does not support Bluetooth");
+            ALog.e(LOG_TAG, "gattClientClose failed, The device does not support Bluetooth");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "gattClientClose failed, User not enabled Bluetooth switch");
+            ALog.e(LOG_TAG, "gattClientClose failed, User not enabled Bluetooth switch");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
@@ -1625,7 +1627,7 @@ public class BluetoothPlugin {
                     btManager_.deleteBluetoothGattClient(appId);
                 }
             } else {
-                Log.e(LOG_TAG, "gattClientClose failed, BluetoothGattClient not found");
+                ALog.e(LOG_TAG, "gattClientClose failed, BluetoothGattClient not found");
             }
         }
         return result;
@@ -1639,7 +1641,7 @@ public class BluetoothPlugin {
         if (bluetoothGattClient != null) {
             return bluetoothGattClient.discoverServices();
         } else {
-            Log.e(LOG_TAG, "clientDiscoverServices failed, BluetoothGattClient not found.");
+            ALog.e(LOG_TAG, "clientDiscoverServices failed, BluetoothGattClient not found.");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         }
     }
@@ -1651,16 +1653,16 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
             if (bluetoothGattClient != null) {
                 result = bluetoothGattClient.readCharacter(sUuidString, cUuidString);
             } else {
-                Log.e(LOG_TAG, "clientReadCharacter failed, BluetoothGattClient not found.");
+                ALog.e(LOG_TAG, "clientReadCharacter failed, BluetoothGattClient not found.");
             }
         }
         return result;
@@ -1674,16 +1676,16 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
             if (bluetoothGattClient != null) {
                 result = bluetoothGattClient.writeCharacter(sUuidString, cUuidString, valueString, writeType);
             } else {
-                Log.e(LOG_TAG, "clientWriteCharacter failed, BluetoothGattClient not found.");
+                ALog.e(LOG_TAG, "clientWriteCharacter failed, BluetoothGattClient not found.");
             }
         }
         return result;
@@ -1696,16 +1698,16 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
             if (bluetoothGattClient != null) {
                 result = bluetoothGattClient.readDescriptor(sUuidString, cUuidString, dUuidString);
             } else {
-                Log.e(LOG_TAG, "clientReadDescriptor failed, BluetoothGattClient not found.");
+                ALog.e(LOG_TAG, "clientReadDescriptor failed, BluetoothGattClient not found.");
             }
         }
         return result;
@@ -1719,16 +1721,16 @@ public class BluetoothPlugin {
         }
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, The device does not support Bluetooth.");
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
+            ALog.e(LOG_TAG, "clientReadDescriptor failed, User not enabled Bluetooth switch.");
             result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
         } else {
             BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
             if (bluetoothGattClient != null) {
                 result = bluetoothGattClient.writeDescriptor(sUuidString, cUuidString, dUuidString, valueString);
             } else {
-                Log.e(LOG_TAG, "clientReadDescriptor failed, BluetoothGattClient not found.");
+                ALog.e(LOG_TAG, "clientReadDescriptor failed, BluetoothGattClient not found.");
             }
         }
         return result;
@@ -1736,7 +1738,7 @@ public class BluetoothPlugin {
 
     public void serverMtuChanged(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "Intent is null");
+            ALog.e(LOG_TAG, "Intent is null");
             return;
         }
         int applicationId = intent.getIntExtra("applicationId", 0);
@@ -1747,7 +1749,7 @@ public class BluetoothPlugin {
 
     public void serverConnectionStateChange(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "Intent is null");
+            ALog.e(LOG_TAG, "Intent is null");
             return;
         }
         int applicationId = intent.getIntExtra("applicationId", 0);
@@ -1758,7 +1760,7 @@ public class BluetoothPlugin {
 
     public void serverCharacteristicRead(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "Intent is null");
+            ALog.e(LOG_TAG, "Intent is null");
             return;
         }
         int applicationId = intent.getIntExtra("applicationId", 0);
@@ -1769,7 +1771,7 @@ public class BluetoothPlugin {
 
     public void serverCharacteristicWrite(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "Intent is null");
+            ALog.e(LOG_TAG, "Intent is null");
             return;
         }
         int applicationId = intent.getIntExtra("applicationId", 0);
@@ -1781,7 +1783,7 @@ public class BluetoothPlugin {
 
     public void serverDescriptorRead(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "Intent is null");
+            ALog.e(LOG_TAG, "Intent is null");
             return;
         }
         int applicationId = intent.getIntExtra("applicationId", 0);
@@ -1792,7 +1794,7 @@ public class BluetoothPlugin {
 
     public void serverDescriptorWrite(Intent intent) {
         if (intent == null) {
-            Log.e(LOG_TAG, "Intent is null");
+            ALog.e(LOG_TAG, "Intent is null");
             return;
         }
         int applicationId = intent.getIntExtra("applicationId", 0);

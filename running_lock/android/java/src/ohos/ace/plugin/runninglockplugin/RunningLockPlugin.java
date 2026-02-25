@@ -18,7 +18,8 @@ package ohos.ace.plugin.runninglockplugin;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * RunningLockPlugin
@@ -51,11 +52,11 @@ public class RunningLockPlugin {
             if (service instanceof PowerManager) {
                 powerManager = (PowerManager) service;
             } else {
-                Log.e(LOG_TAG, "unable to get power service");
+                ALog.e(LOG_TAG, "unable to get power service");
                 powerManager = null;
             }
         } else {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             powerManager = null;
         }
         if (isNativeInit) {
@@ -81,11 +82,11 @@ public class RunningLockPlugin {
         if (powerManager != null) {
             wakeLock = powerManager.newWakeLock(wakeLockLevel, name);
             if (wakeLock == null) {
-                Log.e(LOG_TAG, "init wakeLock is null");
+                ALog.e(LOG_TAG, "init wakeLock is null");
                 return false;
             }
         } else {
-            Log.e(LOG_TAG, "init powerManager is null");
+            ALog.e(LOG_TAG, "init powerManager is null");
             return false;
         }
         return true;
@@ -100,7 +101,7 @@ public class RunningLockPlugin {
         if (wakeLock != null) {
             return wakeLock.isHeld();
         } else {
-            Log.e(LOG_TAG, "isUsed wakeLock is null");
+            ALog.e(LOG_TAG, "isUsed wakeLock is null");
         }
         return false;
     }
@@ -119,7 +120,7 @@ public class RunningLockPlugin {
                 wakeLock.acquire(timeOutMs);
             }
         } else {
-            Log.e(LOG_TAG, "lock wakeLock is null");
+            ALog.e(LOG_TAG, "lock wakeLock is null");
             return false;
         }
         return true;
@@ -134,7 +135,7 @@ public class RunningLockPlugin {
         if (wakeLock != null) {
             wakeLock.release();
         } else {
-            Log.e(LOG_TAG, "unLock wakeLock is null");
+            ALog.e(LOG_TAG, "unLock wakeLock is null");
             return false;
         }
         return true;

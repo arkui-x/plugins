@@ -15,6 +15,10 @@ import("//build/ohos.gni")
 
 java_library("device_info_android_java") {
   java_files = [ "src/ohos/ace/plugin/device_infoplugin/DeviceInfoPlugin.java" ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "device_info"
 }

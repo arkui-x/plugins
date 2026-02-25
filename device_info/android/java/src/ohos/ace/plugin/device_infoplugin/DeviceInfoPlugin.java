@@ -16,15 +16,16 @@
 package ohos.ace.plugin.device_infoplugin;
 
 import android.app.UiModeManager;
-import android.view.WindowManager;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.util.Log;
-import android.util.DisplayMetrics;
 import android.os.Build;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * DeviceInfoPlugin
@@ -253,7 +254,7 @@ public class DeviceInfoPlugin {
             String value = getProp(name, Integer.toString(defValue));
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            Log.e(LOG_TAG, "Failed to get property name: " + name + " exception: " + e.toString());
+            ALog.e(LOG_TAG, "Failed to get property name: " + name + " exception: " + e.toString());
             return defValue;
         }
     }
@@ -284,9 +285,9 @@ public class DeviceInfoPlugin {
             value = method.invoke(clz, args);
         } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | SecurityException | ClassNotFoundException e) {
-            Log.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
+            ALog.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
         } catch (Exception e) {
-            Log.e(LOG_TAG, "unknown Exception in invoke");
+            ALog.e(LOG_TAG, "unknown Exception in invoke");
             e.printStackTrace();
         }
         return value;

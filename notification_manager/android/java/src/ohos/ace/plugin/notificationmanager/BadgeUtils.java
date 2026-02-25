@@ -26,12 +26,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * BadgeUtils set badge number for different manufacturers of mobile phones
@@ -53,7 +54,7 @@ public class BadgeUtils {
             return;
         }
         String manufacturer = Build.MANUFACTURER.toLowerCase();
-        Log.d(TAG, "manufacturer:" + manufacturer);
+        ALog.d(TAG, "manufacturer:" + manufacturer);
         if (manufacturer.contains("xiaomi")) {
             setXiaoMiBadge(count, context, notification);
         } else {
@@ -81,7 +82,7 @@ public class BadgeUtils {
         } else if (manufacturer.contains("vivo")) {
             setVivoBadge(count, context);
         } else {
-            Log.d(TAG, "other phone");
+            ALog.d(TAG, "other phone");
             setBadgeCount(count, context);
         }
     }
@@ -95,7 +96,7 @@ public class BadgeUtils {
             contentValues.put("badgecount", count);
             context.getContentResolver().update(uri, contentValues, null, null);
         } catch (RuntimeException except) {
-            Log.e(TAG, "setBadgeCount except");
+            ALog.e(TAG, "setBadgeCount except");
         }
     }
 
@@ -141,7 +142,7 @@ public class BadgeUtils {
             context.getContentResolver().call(Uri.parse("content://com.huawei.android.launcher.settings/badge/"),
                     "change_badge", null, bunlde);
         } catch (RuntimeException except) {
-            Log.e(TAG, "setBadgeCount except");
+            ALog.e(TAG, "setBadgeCount except");
         }
     }
 
@@ -179,7 +180,7 @@ public class BadgeUtils {
             context.getContentResolver().call(Uri.parse("content://com.android.badge/badge"),
                     "setAppBadgeCount", String.valueOf(count), extras);
         } catch (RuntimeException except) {
-            Log.e(TAG, "setAppBadgeCount except");
+            ALog.e(TAG, "setAppBadgeCount except");
         }
     }
 

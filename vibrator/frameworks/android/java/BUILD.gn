@@ -17,6 +17,10 @@ java_library("vibrator_plugin_android_java") {
   java_files = [
     "src/ohos/ace/plugin/vibratorplugin/VibratorPlugin.java",
   ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "vibrator"
 }

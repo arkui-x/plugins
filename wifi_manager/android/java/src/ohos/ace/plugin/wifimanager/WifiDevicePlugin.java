@@ -19,7 +19,8 @@ import static ohos.ace.plugin.wifimanager.WifiBroadcastInterface.TAG;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * WifiDevicePlugin is a plugin for wifi device management.
@@ -62,7 +63,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
      */
     public WifiDevicePlugin(Context context) {
         if (context == null) {
-            Log.e(TAG, " WifiDevicePlugin context is null");
+            ALog.e(TAG, " WifiDevicePlugin context is null");
             return;
         }
         this.context = context;
@@ -128,7 +129,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
         try {
             isConnectedWifi = mWifiDeviceUtils.getIsConnected();
         } catch (Exception exception) {
-            Log.e(TAG, "getIsConnected exception");
+            ALog.e(TAG, "getIsConnected exception");
         }
         return isConnectedWifi;
     }
@@ -148,10 +149,10 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
             } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) {
                 mWifiReceiver.registerConnectReceiver();
             } else {
-                Log.e(TAG, "on is invalid value: " + value);
+                ALog.e(TAG, "on is invalid value: " + value);
             }
         } catch (Exception exception) {
-            Log.e(TAG, "on exception");
+            ALog.e(TAG, "on exception");
         }
     }
 
@@ -169,7 +170,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
         } else if (TextUtils.equals(value, WIFI_CONNECTION_CHANGE)) {
             mWifiReceiver.unRegisterConnectReceiver();
         } else {
-            Log.e(TAG, "off is invalid value: " + value);
+            ALog.e(TAG, "off is invalid value: " + value);
         }
     }
 
@@ -194,7 +195,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
                 nativeReceiveCallback(WIFI_STATE_CHANGE, WIFI_SWITCH_ACTIVATING);
                 break;
             default:
-                Log.e(TAG, "WifiDevicePlugins wifiSwitchState invalid parameter state: " + state);
+                ALog.e(TAG, "WifiDevicePlugins wifiSwitchState invalid parameter state: " + state);
                 break;
         }
     }
@@ -214,7 +215,7 @@ public class WifiDevicePlugin implements WifiBroadcastInterface {
                 nativeReceiveCallback(WIFI_CONNECTION_CHANGE, WIFI_CONNECT_CONNECTED);
                 break;
             default:
-                Log.e(TAG, "WifiDevicePlugins wifiConnectState invalid parameter state: " + state);
+                ALog.e(TAG, "WifiDevicePlugins wifiConnectState invalid parameter state: " + state);
                 break;
         }
     }

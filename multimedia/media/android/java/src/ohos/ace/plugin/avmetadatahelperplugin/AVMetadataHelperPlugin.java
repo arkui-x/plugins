@@ -16,14 +16,16 @@
 package ohos.ace.plugin.avmetadatahelperplugin;
 
 import android.content.Context;
-import android.util.Log;
-import java.util.Map;
-import java.util.HashMap;
+import android.media.MediaDataSource;
+import android.media.MediaMetadataRetriever;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import android.media.MediaDataSource;
-import android.media.MediaMetadataRetriever;
+import java.util.HashMap;
+import java.util.Map;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * AVMetadataHelperPlugin
@@ -71,7 +73,7 @@ public class AVMetadataHelperPlugin {
      */
     public AVMetadataHelperPlugin(Context context) {
         if (context == null) {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             return;
         }
         nativeInit();
@@ -128,7 +130,7 @@ public class AVMetadataHelperPlugin {
     public void createMetadataRetriever(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever != null) {
-            Log.e(LOG_TAG, "createMetadataRetriever metadataRetriever exist.");
+            ALog.e(LOG_TAG, "createMetadataRetriever metadataRetriever exist.");
             return;
         }
 
@@ -164,7 +166,7 @@ public class AVMetadataHelperPlugin {
     public void setDataSource(long key, String url, long offset, long size) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
-            Log.e("LOG_TAG", "MediaMetadataRetriever is not created, setDataSource(fd).");
+            ALog.e("LOG_TAG", "MediaMetadataRetriever is not created, setDataSource(fd).");
             return;
         }
         try {
@@ -176,7 +178,7 @@ public class AVMetadataHelperPlugin {
             metadataRetriever.setDataSource(fs.getFD(), offset, size);
             notifyInfo(key, HELPER_PREPARED);
         } catch (IOException ex) {
-            Log.e(LOG_TAG, "setDataSource IOException:" + ex.getMessage());
+            ALog.e(LOG_TAG, "setDataSource IOException:" + ex.getMessage());
         }
     }
 
@@ -188,7 +190,7 @@ public class AVMetadataHelperPlugin {
     public void setDataSource(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
-            Log.e("LOG_TAG", "MediaMetadataRetriever is not created, setDataSource(dataSource).");
+            ALog.e("LOG_TAG", "MediaMetadataRetriever is not created, setDataSource(dataSource).");
             return;
         }
         MediaDataSourceImpl dataSource = new MediaDataSourceImpl(key);
@@ -206,7 +208,7 @@ public class AVMetadataHelperPlugin {
     public String extractMetadata(long key, int keyCode) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
-            Log.e("LOG_TAG", "MediaMetadataRetriever is not created, extractMetadata.");
+            ALog.e("LOG_TAG", "MediaMetadataRetriever is not created, extractMetadata.");
             return "";
         }
         String ret = metadataRetriever.extractMetadata(keyCode);
@@ -231,7 +233,7 @@ public class AVMetadataHelperPlugin {
     public int getEmbeddedPictureSize(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
-            Log.e("LOG_TAG", "MediaMetadataRetriever is not created, getEmbeddedPicture.");
+            ALog.e("LOG_TAG", "MediaMetadataRetriever is not created, getEmbeddedPicture.");
             return -1;
         }
         byte[] pic = metadataRetriever.getEmbeddedPicture();
@@ -251,7 +253,7 @@ public class AVMetadataHelperPlugin {
     public byte[] getEmbeddedPicture(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
-            Log.e("LOG_TAG", "MediaMetadataRetriever is not created, getEmbeddedPicture.");
+            ALog.e("LOG_TAG", "MediaMetadataRetriever is not created, getEmbeddedPicture.");
             return null;
         }
         notifyInfo(key, HELPER_CALL_DONE);
@@ -266,7 +268,7 @@ public class AVMetadataHelperPlugin {
     public void release(long key) {
         MediaMetadataRetriever metadataRetriever = metadataRetrieverMap.get(key);
         if (metadataRetriever == null) {
-            Log.e("LOG_TAG", "MediaMetadataRetriever is not created, release.");
+            ALog.e("LOG_TAG", "MediaMetadataRetriever is not created, release.");
             return;
         }
         metadataRetriever.release();

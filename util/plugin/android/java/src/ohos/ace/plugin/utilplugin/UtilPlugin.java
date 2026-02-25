@@ -17,9 +17,10 @@ package ohos.ace.plugin.utilplugin;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * Util android plugin module
@@ -49,7 +50,7 @@ public class UtilPlugin {
         byte[] bytes = null;
         StringBuilder hexString = new StringBuilder();
         if (TextUtils.isEmpty(input) || TextUtils.isEmpty(encoding)) {
-            Log.e(TAG, "Input or encoding is empty");
+            ALog.e(TAG, "Input or encoding is empty");
             return "";
         }
         try {
@@ -62,7 +63,7 @@ public class UtilPlugin {
                 hexString.append(hex);
             }
         } catch (UnsupportedEncodingException e) {
-            Log.e(TAG, "Encoding to chinese failed, unsupported encode type");
+            ALog.e(TAG, "Encoding to chinese failed, unsupported encode type");
             e.printStackTrace();
         }
 
@@ -79,7 +80,7 @@ public class UtilPlugin {
     public String decode(String input, String encoding) {
         String result = "";
         if (TextUtils.isEmpty(input) || TextUtils.isEmpty(encoding)) {
-            Log.e(TAG, "Input or encoding is empty");
+            ALog.e(TAG, "Input or encoding is empty");
             return "";
         }
         try {
@@ -92,7 +93,7 @@ public class UtilPlugin {
             // 4. utf-8 bytes -> utf-8 str
             result = new String(utf8Bytes, "utf-8");
         } catch (UnsupportedEncodingException e) {
-            Log.e(TAG, "Decode failed, unsupported encode type");
+            ALog.e(TAG, "Decode failed, unsupported encode type");
             e.printStackTrace();
         }
         return result;

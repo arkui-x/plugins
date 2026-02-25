@@ -16,6 +16,10 @@ import("//plugins/multimedia/audio/audio.gni")
 
 java_library("audio_capturer_android_java") {
   java_files = [ "src/ohos/ace/plugin/audiocapturer/AudioCapturerPlugin.java" ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "multimedia_audio_audiocapturer"
 }

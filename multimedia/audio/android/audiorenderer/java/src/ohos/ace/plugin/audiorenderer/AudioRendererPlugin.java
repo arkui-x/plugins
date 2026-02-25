@@ -25,12 +25,13 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.AudioTrack.OnPlaybackPositionUpdateListener;
 import android.media.PlaybackParams;
-import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * AudioRendererPlugin
@@ -50,7 +51,7 @@ public class AudioRendererPlugin {
      */
     public AudioRendererPlugin(Context context) {
         if (context == null) {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             return;
         }
         nativeInit();
@@ -92,7 +93,7 @@ public class AudioRendererPlugin {
         AudioFormat format = formatBuilder.build();
 
         int bufferSizeInBytes = AudioTrack.getMinBufferSize(sampleRate, channelLayout, encoding);
-        Log.i(LOG_TAG, "getMinBufferSize bufferSizeInBytes=" + bufferSizeInBytes);
+        ALog.i(LOG_TAG, "getMinBufferSize bufferSizeInBytes=" + bufferSizeInBytes);
 
         // create AudioFormat
         audioTrack = new AudioTrack.Builder()
@@ -123,7 +124,7 @@ public class AudioRendererPlugin {
     public void play(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         audioTrack.play();
@@ -137,7 +138,7 @@ public class AudioRendererPlugin {
     public void pause(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         audioTrack.pause();
@@ -151,7 +152,7 @@ public class AudioRendererPlugin {
     public void stop(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         audioTrack.stop();
@@ -165,7 +166,7 @@ public class AudioRendererPlugin {
     public void release(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         audioTrack.release();
@@ -180,7 +181,7 @@ public class AudioRendererPlugin {
     public void flush(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         audioTrack.flush();
@@ -195,7 +196,7 @@ public class AudioRendererPlugin {
     public void setSpeed(long rendererPtr, float speed) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
 
@@ -213,7 +214,7 @@ public class AudioRendererPlugin {
     public float getSpeed(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return 0.0f;
         }
 
@@ -233,7 +234,7 @@ public class AudioRendererPlugin {
     public int getMinBufferSize(long rendererPtr, int sampleRateInHz, int channelConfig, int audioFormat) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return -1;
         }
         return AudioTrack.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
@@ -250,7 +251,7 @@ public class AudioRendererPlugin {
     public int write(long rendererPtr, byte[] buffer, int size) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return -1;
         }
         return audioTrack.write(buffer, 0, size);
@@ -266,7 +267,7 @@ public class AudioRendererPlugin {
     public int setVolume(long rendererPtr, float gain) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return AudioTrack.ERROR_INVALID_OPERATION;
         }
         return audioTrack.setVolume(gain);
@@ -301,7 +302,7 @@ public class AudioRendererPlugin {
     public int getUnderrunCount(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return -1;
         }
         return audioTrack.getUnderrunCount();
@@ -317,7 +318,7 @@ public class AudioRendererPlugin {
     public int setNotificationMarkerPosition(long rendererPtr, int markerInFrames) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return AudioTrack.ERROR_INVALID_OPERATION;
         }
         return audioTrack.setNotificationMarkerPosition(markerInFrames);
@@ -335,7 +336,7 @@ public class AudioRendererPlugin {
         }
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         listener = new OnPlaybackPositionUpdateListenerImpl();
@@ -356,7 +357,7 @@ public class AudioRendererPlugin {
         positionUpdateListeners.remove(rendererPtr);
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         audioTrack.setPlaybackPositionUpdateListener(null);
@@ -372,7 +373,7 @@ public class AudioRendererPlugin {
     public int setPositionNotificationPeriod(long rendererPtr, int periodInFrames) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return AudioTrack.ERROR_INVALID_OPERATION;
         }
         return audioTrack.setPositionNotificationPeriod(periodInFrames);
@@ -387,7 +388,7 @@ public class AudioRendererPlugin {
     public AudioDeviceInfo getCurrentOutputDevices(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return null;
         }
         return audioTrack.getRoutedDevice();
@@ -402,7 +403,7 @@ public class AudioRendererPlugin {
     public int getAudioSessionId(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return -1;
         }
         return audioTrack.getAudioSessionId();
@@ -420,7 +421,7 @@ public class AudioRendererPlugin {
         }
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         listener = new OnRoutingChangedListenerImpl();
@@ -441,7 +442,7 @@ public class AudioRendererPlugin {
         deviceChangeListeners.remove(rendererPtr);
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return;
         }
         audioTrack.removeOnRoutingChangedListener(listener);
@@ -457,7 +458,7 @@ public class AudioRendererPlugin {
     public boolean setDualMonoMode(long rendererPtr, int dualMonoMode) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return false;
         }
         Object result = invoke("android.media.AudioTrack", "setDualMonoMode",
@@ -477,7 +478,7 @@ public class AudioRendererPlugin {
     public AudioAttributes getAudioAttributes(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return null;
         }
         Object result = invoke("android.media.AudioTrack", "getAudioAttributes", audioTrack, null);
@@ -497,9 +498,9 @@ public class AudioRendererPlugin {
             value = method.invoke(obj, args);
         } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | SecurityException | ClassNotFoundException e) {
-            Log.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
+            ALog.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
         } catch (Exception e) {
-            Log.e(LOG_TAG, "unknown Exception in invoke");
+            ALog.e(LOG_TAG, "unknown Exception in invoke");
             e.printStackTrace();
         }
         return value;
@@ -514,7 +515,7 @@ public class AudioRendererPlugin {
     public AudioFormat getFormat(long rendererPtr) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return null;
         }
         return audioTrack.getFormat();
@@ -530,7 +531,7 @@ public class AudioRendererPlugin {
     public boolean getTimestamp(long rendererPtr, AudioTimestamp timestamp) {
         AudioTrack audioTrack = audioTracks.get(rendererPtr);
         if (audioTrack == null) {
-            Log.e(LOG_TAG, "audioTrack is null");
+            ALog.e(LOG_TAG, "audioTrack is null");
             return false;
         }
         return audioTrack.getTimestamp(timestamp);

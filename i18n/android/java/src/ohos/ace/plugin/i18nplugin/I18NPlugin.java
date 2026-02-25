@@ -22,7 +22,6 @@ import android.icu.text.NumberingSystem;
 import android.os.Build;
 import android.os.LocaleList;
 import android.text.format.DateFormat;
-import android.util.Log;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -30,6 +29,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * INTL android plugin module
@@ -73,7 +74,7 @@ public class I18NPlugin {
      */
     public boolean is24HourClock() {
         if (mContext == null) {
-            Log.e(LOG_TAG, "I18NPlugin: context not registered");
+            ALog.e(LOG_TAG, "I18NPlugin: context not registered");
             return true;
         }
         return DateFormat.is24HourFormat(mContext);
@@ -145,7 +146,7 @@ public class I18NPlugin {
      */
     public String getAppPreferredLanguage() {
         if (mContext == null) {
-            Log.w(LOG_TAG, "I18NPlugin: context not registered");
+            ALog.w(LOG_TAG, "I18NPlugin: context not registered");
             return getSystemLocale();
         }
         SharedPreferences prefs =
@@ -165,7 +166,7 @@ public class I18NPlugin {
      */
     public void setAppPreferredLanguage(String languageTag) {
         if (mContext == null) {
-            Log.w(LOG_TAG, "I18NPlugin: context not registered");
+            ALog.w(LOG_TAG, "I18NPlugin: context not registered");
             return;
         }
         SharedPreferences.Editor editor =

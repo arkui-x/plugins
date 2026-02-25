@@ -16,21 +16,23 @@
 package ohos.ace.plugin.playerplugin;
 
 import android.content.Context;
-import android.media.MediaPlayer;
 import android.media.MediaDataSource;
-import android.media.PlaybackParams;
 import android.media.MediaFormat;
+import android.media.MediaPlayer;
+import android.media.PlaybackParams;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Surface;
-import java.util.Map;
-import java.util.HashMap;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.Runnable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.Runnable;
+import java.util.HashMap;
+import java.util.Map;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * PlayerPlugin
@@ -150,7 +152,7 @@ public class PlayerPlugin {
      */
     public PlayerPlugin(Context context) {
         if (context == null) {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             return;
         }
         mediaPlayerMap = new HashMap<Long, MediaPlayer>();
@@ -302,7 +304,7 @@ public class PlayerPlugin {
     public void addMediaPlayer(long id) {
         MediaPlayer mp = mediaPlayerMap.get(id);
         if (mp != null) {
-            Log.e(LOG_TAG, "addMediaPlayer mediaPlayer exist.");
+            ALog.e(LOG_TAG, "addMediaPlayer mediaPlayer exist.");
             return;
         }
         mp = new MediaPlayer();
@@ -396,7 +398,7 @@ public class PlayerPlugin {
             mp.setDataSource(url);
             notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_INITIALIZED);
         } catch (IOException ex) {
-            Log.e(LOG_TAG, "setDataSourceWithUrl IOException:" + ex.getMessage());
+            ALog.e(LOG_TAG, "setDataSourceWithUrl IOException:" + ex.getMessage());
         }
     }
 
@@ -423,7 +425,7 @@ public class PlayerPlugin {
             mp.setDataSource(fs.getFD(), offset, length);
             notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_INITIALIZED);
         } catch (IOException ex) {
-            Log.e(LOG_TAG, "setDataSourceWithFd IOException:" + ex.getMessage());
+            ALog.e(LOG_TAG, "setDataSourceWithFd IOException:" + ex.getMessage());
         }
     }
 
@@ -442,7 +444,7 @@ public class PlayerPlugin {
             notifyInfo(id, PLAYER_INFO_TYPE_STATE_CHANGE, PLAYER_STATE_PREPARED);
             notifyInfo(id, PLAYER_INFO_TYPE_DURATION_UPDATE, mp.getDuration());
         } catch (IOException ex) {
-            Log.e(LOG_TAG, "prepare IOException:" + ex.getMessage());
+            ALog.e(LOG_TAG, "prepare IOException:" + ex.getMessage());
         }
     }
 
@@ -698,9 +700,9 @@ public class PlayerPlugin {
             value = method.invoke(null, args);
         } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | SecurityException | ClassNotFoundException e) {
-            Log.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
+            ALog.e(LOG_TAG, "invoke " + e.getClass().getSimpleName());
         } catch (Exception e) {
-            Log.e(LOG_TAG, "unknown Exception in invoke");
+            ALog.e(LOG_TAG, "unknown Exception in invoke");
             e.printStackTrace();
         }
         return value;

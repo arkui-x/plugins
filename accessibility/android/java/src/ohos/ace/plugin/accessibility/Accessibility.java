@@ -17,15 +17,16 @@ package ohos.ace.plugin.accessibility;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
-import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
-import java.util.HashSet;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * This class represents the Accessibility features in the application.
@@ -113,13 +114,13 @@ public List<AccessibilityAbilityInfo> getAccessibilityExtensionList(String abili
 
     int feedbackType = mapAbilityTypeToFeedbackType(abilityType);
     if (feedbackType == 0) {
-        Log.e(LOG_TAG, "Invalid abilityType: " + abilityType);
+        ALog.e(LOG_TAG, "Invalid abilityType: " + abilityType);
         return result;
     }
 
     List<AccessibilityServiceInfo> serviceList = getServiceListByState(stateType, feedbackType);
     if (serviceList == null) {
-        Log.e(LOG_TAG, "Invalid serviceList");
+        ALog.e(LOG_TAG, "Invalid serviceList");
         return result;
     }
 

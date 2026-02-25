@@ -15,6 +15,10 @@ import("//build/ohos.gni")
 
 java_library("common_event_manager_android_java") {
   java_files = [ "src/ohos/ace/plugin/broadcastplugin/BroadcastPlugin.java" ]
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
+
   subsystem_name = "plugins"
   part_name = "common_event_manager"
 }

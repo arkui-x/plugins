@@ -28,16 +28,16 @@ import android.os.FileUriExposedException;
 import android.os.Handler;
 import android.text.Html;
 import android.text.Spanned;
-import android.util.Log;
-
-import ohos.ace.plugin.clipboard.PasteboardConstants.PasteboardError;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import ohos.ace.adapter.ALog;
+import ohos.ace.plugin.clipboard.PasteboardConstants.PasteboardError;
 
 /**
  * ClipboardAosp
@@ -94,11 +94,11 @@ public class ClipboardAosp {
             if (service instanceof ClipboardManager) {
                 this.clipManager = (ClipboardManager) service;
             } else {
-                Log.e(LOG_TAG, "unable to get clipboard service");
+                ALog.e(LOG_TAG, "unable to get clipboard service");
                 this.clipManager = null;
             }
         } else {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             this.clipManager = null;
         }
     }
@@ -108,7 +108,7 @@ public class ClipboardAosp {
             initClipManager();
         }
         if (clipManager == null) {
-            Log.e(LOG_TAG, "clipboard manager is not available");
+            ALog.e(LOG_TAG, "clipboard manager is not available");
             return false;
         }
         return true;
@@ -158,7 +158,7 @@ public class ClipboardAosp {
             }
             return clipData;
         } catch (IllegalArgumentException e) {
-            Log.e(LOG_TAG, "buildClipData: create ClipData failed");
+            ALog.e(LOG_TAG, "buildClipData: create ClipData failed");
             return null;
         }
     }
@@ -203,7 +203,7 @@ public class ClipboardAosp {
             try {
                 uri = Uri.parse(uriStr);
             } catch (IllegalArgumentException e) {
-                Log.e(LOG_TAG, "recordToClipItem: Invalid URI");
+                ALog.e(LOG_TAG, "recordToClipItem: Invalid URI");
             }
         }
         String jsonWant = record.getJsonWant();
@@ -228,14 +228,14 @@ public class ClipboardAosp {
         try {
             return new ClipData.Item(plainText, htmlText, intent, uri);
         } catch (FileUriExposedException e) {
-            Log.e(LOG_TAG, "recordToClipItem new Item failed");
+            ALog.e(LOG_TAG, "recordToClipItem new Item failed");
             return null;
         }
     }
 
     private DataRecordDTO buildDataRecordDTO(ClipData.Item item) {
         if (item == null) {
-            Log.e(LOG_TAG, "buildDataRecordDTO: item is null");
+            ALog.e(LOG_TAG, "buildDataRecordDTO: item is null");
             return null;
         }
         DataRecordDTO dataRecordDTO = new DataRecordDTO();
@@ -257,7 +257,7 @@ public class ClipboardAosp {
 
     private void buildDataRecordsDTO(DataRecordDTO[] dataRecordsDTO, ClipData clipData) {
         if (dataRecordsDTO == null || clipData == null) {
-            Log.e(LOG_TAG, "buildDataRecordsDTO: null params");
+            ALog.e(LOG_TAG, "buildDataRecordsDTO: null params");
             return;
         }
         int itemCount = clipData.getItemCount();
@@ -285,13 +285,13 @@ public class ClipboardAosp {
         PropertyDTO propertyDTO = new PropertyDTO();
         ClipDescription clipDescription = clipData.getDescription();
         if (propertyDTO == null || clipDescription == null) {
-            Log.e(LOG_TAG, "clipDataToDTO: null propertyDTO or clipDescription");
+            ALog.e(LOG_TAG, "clipDataToDTO: null propertyDTO or clipDescription");
             return null;
         }
         buildPropertyDTO(propertyDTO, clipDescription);
         int itemCount = clipData.getItemCount();
         if (itemCount == 0) {
-            Log.e(LOG_TAG, "clipDataToDTO: clipData has no item");
+            ALog.e(LOG_TAG, "clipDataToDTO: clipData has no item");
             return null;
         }
         DataRecordDTO[] dataRecordsDTO = new DataRecordDTO[itemCount];
@@ -334,13 +334,13 @@ public class ClipboardAosp {
             clipManager.setPrimaryClip(clipData);
             return PasteboardError.E_OK.getValue();
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "permission denied");
+            ALog.e(LOG_TAG, "permission denied");
             return PasteboardError.PERMISSION_VERIFICATION_ERROR.getValue();
         } catch (IllegalStateException e) {
-            Log.e(LOG_TAG, "clipboard service status exception");
+            ALog.e(LOG_TAG, "clipboard service status exception");
             return PasteboardError.INVALID_PARAM_ERROR.getValue();
         } catch (RuntimeException e) {
-            Log.e(LOG_TAG, "clipData size exceed system limit");
+            ALog.e(LOG_TAG, "clipData size exceed system limit");
             return PasteboardError.OTHER_ERROR.getValue();
         }
     }
@@ -357,10 +357,10 @@ public class ClipboardAosp {
         try {
             return clipManager.hasPrimaryClip();
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "permission denied");
+            ALog.e(LOG_TAG, "permission denied");
             return false;
         } catch (IllegalStateException e) {
-            Log.e(LOG_TAG, "clipboard service status exception");
+            ALog.e(LOG_TAG, "clipboard service status exception");
             return false;
         }
     }
@@ -382,7 +382,7 @@ public class ClipboardAosp {
                     java.lang.reflect.Method clearMethod = clipManager.getClass().getMethod("clearPrimaryClip");
                     clearMethod.invoke(clipManager);
                 } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    Log.e(LOG_TAG, "reflection error when calling clearPrimaryClip");
+                    ALog.e(LOG_TAG, "reflection error when calling clearPrimaryClip");
                     return false;
                 }
             } else {
@@ -391,10 +391,10 @@ public class ClipboardAosp {
                 clipManager.setPrimaryClip(emptyClip);
             }
         } catch (SecurityException e) {
-            Log.e(LOG_TAG, "permission denied");
+            ALog.e(LOG_TAG, "permission denied");
             return false;
         } catch (IllegalStateException e) {
-            Log.e(LOG_TAG, "clipboard service status exception");
+            ALog.e(LOG_TAG, "clipboard service status exception");
             return false;
         }
         return true;
@@ -555,7 +555,7 @@ public class ClipboardAosp {
         try {
             clipManager.removePrimaryClipChangedListener(this.listener);
         } catch (IllegalArgumentException e) {
-            Log.e(LOG_TAG, "remove listener failed: listener not registered");
+            ALog.e(LOG_TAG, "remove listener failed: listener not registered");
         }
         return true;
     }

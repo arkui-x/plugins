@@ -17,25 +17,22 @@ package ohos.ace.plugin.file.fs.picker.filepicker;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.DocumentsContract;
-import android.util.Log;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.List;
-import java.util.ArrayList;
-
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-
-import android.content.Context;
-
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * FilePicker class for file picker plugin implementation in Java.
@@ -79,7 +76,7 @@ public class FilePicker {
             }
         } catch (NoSuchMethodException | ClassNotFoundException | InvocationTargetException |
                  IllegalAccessException e) {
-            Log.e(LOG_TAG, Objects.requireNonNull(e.getMessage()));
+            ALog.e(LOG_TAG, Objects.requireNonNull(e.getMessage()));
         }
     }
 
@@ -102,7 +99,7 @@ public class FilePicker {
      * @param selectMode select mode
      */
     public void select(int maxSelectNumber, String defaultFilePathUri, String[] fileSuffixFilters, int selectMode) {
-        Log.i(LOG_TAG, "select enter. selectMode:" + selectMode);
+        ALog.i(LOG_TAG, "select enter. selectMode:" + selectMode);
         if (selectMode == DocumentSelectMode.FOLDER.code) {
             this.selectFolder();
             return;
@@ -130,7 +127,7 @@ public class FilePicker {
             String[] fileSuffixTypes = new String[fileSuffixFilters.length];
             for (int i = 0; i < fileSuffixFilters.length; i++) {
                 String types = URLConnection.guessContentTypeFromName(fileSuffixFilters[i]);
-                Log.d(LOG_TAG, "selectFile fileSuffixFilters[i]:" + fileSuffixFilters[i] + ", types:" + types);
+                ALog.d(LOG_TAG, "selectFile fileSuffixFilters[i]:" + fileSuffixFilters[i] + ", types:" + types);
                 fileSuffixTypes[i] = types;
             }
             intent.putExtra(Intent.EXTRA_MIME_TYPES, fileSuffixTypes);
@@ -155,7 +152,7 @@ public class FilePicker {
      * @param defaultFilePath default file path
      */
     public void save(String[] newFileNames, String defaultFilePath) {
-        Log.i(LOG_TAG, "save enter");
+        ALog.i(LOG_TAG, "save enter");
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
@@ -179,7 +176,7 @@ public class FilePicker {
      * @param data data for picker activity
      */
     public void onResult(int requestCode, int resultCode, Intent data) {
-        Log.i(LOG_TAG, "onResult enter");
+        ALog.i(LOG_TAG, "onResult enter");
 
         if (!checkResult(requestCode, resultCode, data)) {
             return;
@@ -206,19 +203,19 @@ public class FilePicker {
         String errorMsg = "requestCode:" + requestCode + ".   resultCode:" + resultCode;
 
         if (requestCode != FILE_PICKER_CODE) {
-            Log.d(LOG_TAG, errorMsg);
+            ALog.d(LOG_TAG, errorMsg);
             return false;
         }
 
         if (resultCode != Activity.RESULT_OK) {
-            Log.i(LOG_TAG, errorMsg);
+            ALog.i(LOG_TAG, errorMsg);
             onPickerResult(new ArrayList<>(), RESULT_OK);
             return false;
         }
 
         if (data == null) {
             errorMsg += ".  data is null";
-            Log.i(LOG_TAG, errorMsg);
+            ALog.i(LOG_TAG, errorMsg);
             onPickerResult(new ArrayList<>(), RESULT_OK);
             return false;
         }
@@ -229,10 +226,10 @@ public class FilePicker {
         try {
             Objects.requireNonNull(getActivity()).startActivityForResult(intent, FILE_PICKER_CODE);
         } catch (ActivityNotFoundException e) {
-            Log.e(LOG_TAG, "ActivityNotFoundException, err:", e);
+            ALog.e(LOG_TAG, "ActivityNotFoundException, err:" + e);
             onPickerResult(new ArrayList<>(), RESULT_OK);
         } catch (Exception e) {
-            Log.e(LOG_TAG, "startActivityForResult unknown error, err:", e);
+            ALog.e(LOG_TAG, "startActivityForResult unknown error, err:" + e);
             onPickerResult(null, RESULT_ERROR);
         }
     }

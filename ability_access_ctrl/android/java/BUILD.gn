@@ -15,7 +15,9 @@ import("//build/ohos.gni")
 
 java_library("ability_access_ctrl_android_java") {
   java_files = [ "src/AbilityAccessCtrl.java" ]
-
+  classpath_deps = [
+    "//foundation/arkui/ace_engine/adapter/android/build:ace_android_adapter_java"
+  ]
   input_jars_paths = [
     "//prebuilts/androidx/activity-1.5.1/classes.jar",
     "//prebuilts/androidx/core-1.8.0/classes.jar",
