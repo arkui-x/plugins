@@ -17,10 +17,10 @@ import("//plugins/request/request.gni")
 
 ohos_source_set("ios_ohnetworkkit") {
   sources = [
-    "OHMultipartFormStream.m",
+    "OHMultipartFormStream.mm",
     "OHNetStatusMonitor.m",
-    "OHRequestResult.m",
-    "OHSessionManager.m",
+    "OHRequestResult.mm",
+    "OHSessionManager.mm",
     "OHSslHandler.mm",
     "ios_certificate_utils.mm",
   ]
