@@ -56,6 +56,7 @@ static DBManager *instance;
     sqlite3_initialize();
 
     if (![self openDB]) {
+        LOGE("failed to open db");
         return NO;
     }
     const char *sql = "CREATE TABLE IF NOT EXISTS Task (tid INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -111,6 +112,7 @@ static DBManager *instance;
 - (int64_t)insert:(IosTaskInfo *)taskInfo {
     LOGI("insert db enter");
     if (![self openDB]) {
+        LOGE("failed to open db");
         return -1;
     }
     const char *sql = "INSERT INTO Task (saveas, url, data, title, description, action1, mode, mimeType, "
@@ -181,6 +183,7 @@ static DBManager *instance;
     LOGI("queryAll enter");
 
     if (![self openDB]) {
+        LOGE("failed to open db");
         return nil;
     }
     const char *sql = "SELECT * FROM Task;";
@@ -200,6 +203,7 @@ static DBManager *instance;
     LOGI("queryWithTaskId, taskId:%{public}lld", taskId);
 
     if (![self openDB]) {
+        LOGE("failed to open db");
         return nil;
     }
     const char *sql = "SELECT * FROM Task WHERE tid=?;";
@@ -221,9 +225,9 @@ static DBManager *instance;
 }
 
 - (IosTaskInfo *)queryWithToken:(NSString *)token taskId:(int64_t)taskId {
-    LOGI("queryWithToken, taskId:%{public}lld, token:%{public}s", taskId, [token UTF8String]);
 
     if (![self openDB]) {
+        LOGE("failed to open db");
         return nil;
     }
     const char *sql = "SELECT * FROM Task WHERE tid=? AND token=?;";
@@ -249,9 +253,11 @@ static DBManager *instance;
 - (NSArray *)queryWithFilter:(IosTaskFilter *)filter {
     LOGI("queryWithFilter enter");
     if (!filter) {
+        LOGE("failed to queryWithFilter, filter is nil");
         return nil;
     }
     if (![self openDB]) {
+        LOGE("failed to open db");
         return nil;
     }
 
@@ -305,10 +311,12 @@ static DBManager *instance;
 - (BOOL)update:(IosTaskInfo *)taskInfo {
     LOGI("update db enter, tid:%{public}lld", taskInfo.tid);
     if (!taskInfo) {
+        LOGE("failed to update db, taskInfo is nil");
         return NO;
     }
 
     if (![self openDB]) {
+        LOGE("failed to open db");
         return NO;
     }
 
@@ -354,6 +362,7 @@ static DBManager *instance;
     LOGI("remove, taskId:%{public}lld", taskId);
 
     if (![self openDB]) {
+        LOGE("failed to open db");
         return NO;
     }
     const char *sql = "DELETE FROM Task WHERE tid=?;";
@@ -381,6 +390,11 @@ static DBManager *instance;
     if (db_) {
         return YES;
     }
+    if (!dbPath_) {
+        LOGI("init dbPath while openDB");
+        dbPath_ = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]
+            stringByAppendingPathComponent:@"task.db"];
+    }
     if (sqlite3_open(dbPath_.UTF8String, &db_) != SQLITE_OK) {
         LOGE("failed to open database, %{public}s", sqlite3_errmsg(db_));
         sqlite3_close(db_);
@@ -391,6 +405,7 @@ static DBManager *instance;
 
 - (NSMutableArray *)getQueryResult:(sqlite3_stmt *)stmt  {
     if (!stmt) {
+        LOGE("failed to getQueryResult, stmt is nil");
         return nil;
     }
     NSMutableArray *tasks = [NSMutableArray array];

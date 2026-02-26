@@ -14,6 +14,7 @@
  */
 
 #import "OHRequestResult.h"
+#include "base/log/log.h"
 
 NSString * const OHNetworkResponseErrorDomain = @"com.oh.network.response.error";
 
@@ -50,6 +51,7 @@ NSString * const OHNetworkResponseErrorDomain = @"com.oh.network.response.error"
     if ([vaildStatusCode containsIndex:statusCode]) {
         return true;
     }
+    LOGE("checkStatusCode invalid, statusCode:%{public}ld", static_cast<long>(statusCode));
     return false;
 }
 
@@ -65,6 +67,8 @@ NSString * const OHNetworkResponseErrorDomain = @"com.oh.network.response.error"
             };
             validError = [NSError errorWithDomain:OHNetworkResponseErrorDomain code:NSURLErrorBadServerResponse userInfo:userInfo];
         }
+    } else {
+        LOGE("validateResponseWithTask failed");
     }
     return validError;
 }

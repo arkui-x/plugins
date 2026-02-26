@@ -106,6 +106,7 @@ void DownloadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
 void DownloadProxy::SetProxy(const Config &config, NSURLSessionConfiguration **sessionConfig)
 {
     if (sessionConfig == nil) {
+        LOGE("Config is nil");
         return;
     }
     if (config.proxy.empty()) {
@@ -165,9 +166,9 @@ int32_t DownloadProxy::Start(int64_t taskId)
             } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
                 OnResponseCallback(response);
                 NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
-                LOGI("download filePath:%{public}s", filePath ? filePath.UTF8String : "null");
+                LOGI("download filePath");
                 NSURL *destPath = [NSURL fileURLWithPath:filePath];
-                LOGI("download destPath:%{public}s", destPath ? [[destPath description] UTF8String] : "null");
+                LOGI("download destPath");
                 return destPath;
             } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
                 CompletionHandler(response, filePath, error);
@@ -211,6 +212,8 @@ int32_t DownloadProxy::Resume(int64_t taskId)
             info_.progress.state = State::RUNNING;
             callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
             IosTaskDao::UpdateDB(info_);
+        } else {
+            LOGE("Resume download failed, ret:%{public}d", ret);
         }
         return ret;
     }
@@ -253,16 +256,15 @@ void DownloadProxy::PushNotification(BOOL isFailed)
 
 void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, NSError *error)
 {
-    LOGI("CompletionHandler, filePath:%{public}s", filePath ? [[filePath description] UTF8String] : "null");
+    LOGI("CompletionHandler start");
     if (!isMimeReported_) {
         ReportMimeType(response);
     }
     if (error == nil) {
-        LOGI("success download file to: %{public}s", filePath ? [[filePath description] UTF8String] : "null");
+        LOGI("success download file");
         OnCompletedCallback();
     } else {
-        LOGE("failed download file to: %{public}s, error:%{public}s, error_code:%{public}ld",
-            filePath ? [[filePath description] UTF8String] : "null",
+        LOGE("failed download file, error:%{public}s, error_code:%{public}ld",
             error ? [[error description] UTF8String] : "null", (long)error.code);
         OnFailedCallback();
 
@@ -362,6 +364,7 @@ void DownloadProxy::OnProgressCallback(NSProgress *progress)
 {
     LOGI("download OnProgressCallback");
     if (callback_ == nullptr || progress == nil) {
+        LOGE("download OnProgressCallback failed with nil");
         return;
     }
     info_.progress.processed = progress.completedUnitCount;
@@ -435,6 +438,7 @@ void DownloadProxy::OnResponseCallback(NSURLResponse *response)
 {
     LOGI("download OnResponseCallback");
     if (callback_ == nullptr || response == nil) {
+        LOGE("download OnResponseCallback failed with nil");
         return;
     }
      if ([response isKindOfClass:[NSHTTPURLResponse class]]) {

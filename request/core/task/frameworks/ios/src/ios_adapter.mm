@@ -101,7 +101,7 @@ int32_t IosAdapter::Remove(int64_t taskId)
 
 int32_t IosAdapter::GetTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info)
 {
-    LOGI("IosAdapter::GetTaskInfo, taskId:%{public}lld, token:%{public}s", taskId, token.c_str());
+    LOGI("IosAdapter::GetTaskInfo, taskId:%{public}lld", taskId);
     return IosTaskDao::QueryTaskInfo(taskId, token, info);
 }
 
@@ -172,7 +172,7 @@ int32_t IosAdapter::GetDefaultStoragePath(std::string& path)
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
     NSString *cachesDir = [paths objectAtIndex:0];
     path = cachesDir.UTF8String;
-    LOGI("ios adapter GetDefaultStoragePath path:%{public}s", path.c_str());
+    LOGI("ios adapter GetDefaultStoragePath path");
     return E_OK;
 }
 } // namespace OHOS::Plugin::Request
