@@ -37,6 +37,7 @@ import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanSettings;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -44,7 +45,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelUuid;
-
+import android.provider.Settings;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -706,20 +707,22 @@ public class BluetoothPlugin {
     }
 
     public int enableBt() {
-        if (Build.VERSION.SDK_INT >= API_33) {
-            ALog.e(LOG_TAG, "enableBt API_33 not support!");
-            return (BluetoothErrorCode.BT_ERR_CAPABILITY_NOT_SUPPORT).getId();
-        }
-
+        BluetoothErrorCode errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         if (btManager_ == null) {
             ALog.e(LOG_TAG, "enableBt btManager_ is null!");
-            return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
+            return errCode.getId();
         }
-        BluetoothErrorCode errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
         if (bluetoothAdapter == null) {
             ALog.e(LOG_TAG, "enableBt bluetoothAdapter is null!");
             return errCode.getId();
+        }
+        if (bluetoothAdapter.isEnabled()) {
+            return BluetoothErrorCode.BT_NO_ERROR.getId();
+        }
+        if (Build.VERSION.SDK_INT >= API_33) {
+            ALog.w(LOG_TAG, "enableBt on API 33+ is asynchronous, requires user confirmation.");
+            return requestEnableBluetooth() ? BluetoothErrorCode.BT_NO_ERROR.getId() : errCode.getId();
         }
 
         if (checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
@@ -743,9 +746,23 @@ public class BluetoothPlugin {
     }
 
     public int disableBt() {
+        if (btManager_ == null) {
+            ALog.e(LOG_TAG, "disableBt btManager_ is null!");
+            return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
+        }
+        BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
+        BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            ALog.e(LOG_TAG, "disableBt bluetoothAdapter is null!");
+            errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
+            return errCode.getId();
+        }
+        if (!bluetoothAdapter.isEnabled()) {
+            return errCode.getId();
+        }
         if (Build.VERSION.SDK_INT >= API_33) {
-            ALog.e(LOG_TAG, "disableBt API_33 not support!");
-            return (BluetoothErrorCode.BT_ERR_CAPABILITY_NOT_SUPPORT).getId();
+            ALog.w(LOG_TAG, "disableBt on API 33+ only opens settings, state change is not guaranteed.");
+            return requestDisableBluetooth() ? errCode.getId() : BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         }
 
         if (checkPermissions(PERMISSION_BLUETOOTH_ADMIN)) {
@@ -758,18 +775,6 @@ public class BluetoothPlugin {
         } else {
             ALog.e(LOG_TAG, "disableBt permission failed");
             return (BluetoothErrorCode.BT_ERR_PERMISSION_FAILED).getId();
-        }
-
-        if (btManager_ == null) {
-            ALog.e(LOG_TAG, "disableBt btManager_ is null!");
-            return (BluetoothErrorCode.BT_ERR_INTERNAL_ERROR).getId();
-        }
-        BluetoothErrorCode errCode = BluetoothErrorCode.BT_NO_ERROR;
-        BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
-        if (bluetoothAdapter == null) {
-            ALog.e(LOG_TAG, "disableBt bluetoothAdapter is null!");
-            errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
-            return errCode.getId();
         }
 
         bluetoothAdapter.disable();
@@ -2000,5 +2005,57 @@ public class BluetoothPlugin {
         ADV_DEFAULT_CODE,
         ADV_STOP_COMPLETE_CODE,
         ADV_FAILED_CODE;
+    }
+
+    private boolean requestEnableBluetooth() {
+        if (mContext_ == null) {
+            ALog.e(LOG_TAG, "context is null");
+            return false;
+        }
+        if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
+            ALog.e(LOG_TAG, "Permission check failed for BLUETOOTH_CONNECT");
+            return false;
+        }
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        if (enableBtIntent == null) {
+            ALog.e(LOG_TAG, "requestEnableBluetooth failed, Intent is null");
+            return false;
+        }
+        try {
+            enableBtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext_.startActivity(enableBtIntent);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            ALog.e(LOG_TAG, "Requesting to enable Bluetooth failed: Activity not found");
+        } catch (SecurityException e) {
+            ALog.e(LOG_TAG, "Requesting to enable Bluetooth failed: SecurityException");
+        }
+        return false;
+    }
+
+    private boolean requestDisableBluetooth() {
+        if (mContext_ == null) {
+            ALog.e(LOG_TAG, "context is null");
+            return false;
+        }
+        if (!checkPermissions(PERMISSION_BLUETOOTH_CONNECT)) {
+            ALog.e(LOG_TAG, "Permission check failed for BLUETOOTH_CONNECT");
+            return false;
+        }
+        Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+        if (intent == null) {
+            ALog.e(LOG_TAG, "requestDisableBluetooth failed, Intent is null");
+            return false;
+        }
+        try {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext_.startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            ALog.e(LOG_TAG, "Opening Bluetooth settings failed: Activity not found");
+        } catch (SecurityException e) {
+            ALog.e(LOG_TAG, "Opening Bluetooth settings failed: SecurityException");
+        }
+        return false;
     }
 }
