@@ -206,7 +206,6 @@ public class DownloadImpl {
             sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
             return;
         }
-        ALog.i(TAG, "startDownload config: :" + JsonUtil.configToJson(config));
         int networkState = getNetworkState();
         ALog.i(TAG, "networkState :" + networkState);
         if (networkState == NETWORK_INVALID) {
@@ -281,7 +280,6 @@ public class DownloadImpl {
         File saveFile = new File(downloadFilePath, fileName);
         File parentFile = saveFile.getParentFile();
         if (parentFile != null) {
-            ALog.i(TAG, "createDownload: savePath:" + parentFile.getAbsolutePath());
             request.setDestinationUri(Uri.fromFile(parentFile));
             taskInfo.setMimeType(mimeType);
         } else {
@@ -289,7 +287,6 @@ public class DownloadImpl {
             sendFailCallback(taskInfo, Reason.IO_ERROR);
             return;
         }
-        ALog.i(TAG, "startDownload,savePath: " + taskInfo.getSaveas() + ",downloadUrl:" + taskInfo.getUrl());
         long downloadId = 0L;
         try {
             downloadId = downloadManager.enqueue(request);

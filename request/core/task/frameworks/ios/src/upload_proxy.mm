@@ -81,7 +81,7 @@ int32_t UploadProxy::Pause(int64_t taskId)
     bool isPause = false;
     for (auto &task : uploadTaskList_) {
         if (task == nil) {
-            NSLog(@"UploadProxy::Pause task nil");
+            LOGI("UploadProxy::Pause task nil");
             continue;
         }
         if (task.state == NSURLSessionTaskStateRunning) {
@@ -101,7 +101,7 @@ int32_t UploadProxy::Resume(int64_t taskId)
     bool isResume = false;
     for (auto &task : uploadTaskList_) {
         if (task == nil) {
-            NSLog(@"UploadProxy::Resume task nil");
+            LOGI("UploadProxy::Resume task nil");
             continue;
         }
         if (task.state == NSURLSessionTaskStateSuspended) {
@@ -133,7 +133,7 @@ void UploadProxy::PartPutUpload(NSURL *baseUrl, NSMutableDictionary *headers)
     LOGI("UploadProxy::PartPutUpload enter, config.index:%{public}d", config_.index);
     uint32_t index = config_.index;
     if (config_.files.empty() || index >= config_.files.size()) {
-        NSLog(@"PartPutUpload invalid index");
+        LOGE("PartPutUpload invalid index");
         return;
     }
     NSString *partFilePath = GetUploadPartFile(config_.files[index]);
@@ -157,7 +157,6 @@ void UploadProxy::PartPutUploadFile(const FileSpec &file, int32_t index, NSStrin
     LOGI("UploadProxy::PartPutUploadFile enter, index:%{public}d", index);
     NSString *fileName = JsonUtils::CStringToNSString(file.filename);
     NSURL *localPath = [NSURL fileURLWithPath:partFilePath];
-    LOGI("PutUploadFile upload localPath:%{public}s", [localPath description].UTF8String);
     NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:dstUrl];
     request.HTTPMethod = @"PUT";
@@ -181,7 +180,7 @@ void UploadProxy::PutUploadFile(const FileSpec &file, int32_t index, NSURL *base
     NSString *filePath = JsonUtils::CStringToNSString(file.uri);
     NSString *fileName = JsonUtils::CStringToNSString(file.filename);
     NSURL *localPath = [NSURL fileURLWithPath:filePath];
-    LOGI("PutUploadFile upload localPath:%{public}s", [localPath description].UTF8String);
+    LOGI("PutUploadFile upload localPath");
     NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:dstUrl];
     request.HTTPMethod = @"PUT";
@@ -304,7 +303,7 @@ void UploadProxy::PartPostUpload(NSURL *baseUrl, NSMutableDictionary *headers)
     LOGI("UploadProxy::PartPostUpload enter, config.index:%{public}d", config_.index);
     uint32_t index = config_.index;
     if (config_.files.empty() || index >= config_.files.size()) {
-        NSLog(@"PartPostUpload invalid index");
+        LOGE("PartPostUpload invalid index");
         return;
     }
     NSString *partFilePath = GetUploadPartFile(config_.files[index]);
@@ -334,11 +333,11 @@ void UploadProxy::PartPostUploadFile(const FileSpec &file, int32_t index, NSStri
             NSData *data = [NSData dataWithBytes:formDt.value.c_str() length:formDt.value.size()];
             [multipartStream appendWithFormData:data name:JsonUtils::CStringToNSString(formDt.name)];
         }
-        LOGI("PartPostUploadFile partFilePath:%{public}s", partFilePath ? partFilePath.UTF8String : "null");
+        LOGI("PartPostUploadFile partFilePath");
         NSString *fieldName = JsonUtils::CStringToNSString(!file.name.empty() ? file.name : "file"); // default: file
         NSString *fileName = JsonUtils::CStringToNSString(file.filename);
         NSURL *localPath = [NSURL fileURLWithPath:partFilePath];
-        LOGI("PartPostUploadFile upload fieldName:%{public}s, localPath:%{public}s", fieldName.UTF8String, [localPath description].UTF8String);
+        LOGI("PartPostUploadFile upload fieldName:%{public}s", fieldName.UTF8String);
         [multipartStream appendWithFilePath:localPath
                                 fileName:fileName
                                 fieldName:fieldName
@@ -424,11 +423,11 @@ void UploadProxy::PostUploadFile(const FileSpec &file, int32_t index, NSURL *bas
             [multipartStream appendWithFormData:data name:JsonUtils::CStringToNSString(formDt.name)];
         }
         NSString *filePath = JsonUtils::CStringToNSString(file.uri);
-        LOGI("PostUploadFile filePath:%{public}s", filePath ? filePath.UTF8String : "null");
+        LOGI("PostUploadFile filePath");
         NSString *fieldName = JsonUtils::CStringToNSString(!file.name.empty() ? file.name : "file"); // default: file
         NSString *fileName = JsonUtils::CStringToNSString(file.filename);
         NSURL *localPath = [NSURL fileURLWithPath:filePath];
-        LOGI("PostUploadFile upload fieldName:%{public}s, localPath:%{public}s", fieldName.UTF8String, [localPath description].UTF8String);
+        LOGI("PostUploadFile upload fieldName:%{public}s", fieldName.UTF8String);
         if (config_.begins > 0 && config_.ends == -1 && index == config_.index) {
             NSString *cachesDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
             NSString *partFilePath = [cachesDir stringByAppendingString:@"/temp.data"];
@@ -851,7 +850,7 @@ void UploadProxy::RemoveFile(NSString *filePath)
     if (fileExists) {
         [fileManager removeItemAtPath:filePath error:nil];
     } else {
-        NSLog(@"RemoveFile file not exists");
+        LOGI("RemoveFile file not exists");
     }
 }
 

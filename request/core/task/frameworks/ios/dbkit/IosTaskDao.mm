@@ -38,7 +38,6 @@ int64_t IosTaskDao::CreateTask(const Config &config)
 
     std::string strConfig = JsonUtils::ConfigToJsonString(config);
     NSString *jsonConfig = JsonUtils::CStringToNSString(strConfig);
-    LOGI("CreateTask, jsonConfig:%{public}s", [jsonConfig UTF8String]);
     IosTaskConfig *taskConfig = [IosTaskConfig initWithJsonString:jsonConfig];
     if (taskConfig == nil) {
         LOGE("failed to create task, config is nil");
@@ -61,7 +60,7 @@ int32_t IosTaskDao::RemoveTask(int64_t taskId)
 
 int32_t IosTaskDao::QueryTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info)
 {
-    LOGI("QueryTaskInfo, taskId:%{public}lld, token:%{public}s", taskId, token.c_str());
+    LOGI("QueryTaskInfo, taskId:%{public}lld", taskId);
     if (taskId < 1) {
         return E_TASK_NOT_FOUND;
     }

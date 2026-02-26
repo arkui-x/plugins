@@ -14,7 +14,7 @@
  */
 
 #import "IosTaskConfig.h"
-#include <time.h>
+#include <ctime>
 #import "IosTaskFilter.h"
 #import "Constants.h"
 #include "base/log/log.h"
@@ -24,7 +24,7 @@
 + (instancetype)initWithJsonString:(NSString *)jsonString {
     @try {
         if (jsonString == nil) {
-            NSLog(@"failed to init config, jsonString is nil");
+            LOGE("failed to init config, jsonString is nil");
             return nil;
         }
         NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
@@ -98,7 +98,7 @@
     info.progress = [progress toJsonString];
     struct timespec ts;  
     clock_gettime(CLOCK_REALTIME, &ts);  
-    long long milliseconds = (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+    long long milliseconds = static_cast<long long>(ts.tv_sec) * 1000 + ts.tv_nsec / 1000000;
     info.ctime = milliseconds;
     info.mtime = milliseconds;
     info.faults = FaultsOthers;
@@ -125,7 +125,7 @@
     info.files = [self objToJsonString:self.files];
     info.bodyFds = [self objToJsonString:self.bodyFds];
     info.bodyFileNames = [self objToJsonString:self.bodyFileNames];
-    info.tries = @"";
+    info.tries = 0;
     info.code = 0;
     info.withSystem = false;
     info.extras = [self objToJsonString:self.extras];
@@ -134,7 +134,7 @@
 
 - (NSString *)objToJsonString:(id)obj {
     if (obj == nil) {
-        NSLog(@"failed to objToJsonString, obj is nil");
+        LOGE("failed to objToJsonString, obj is nil");
         return @"";
     }
     
