@@ -20,6 +20,7 @@
 #import "json_utils.h"
 #include "request_utils.h"
 #import <UserNotifications/UserNotifications.h>
+#include "base/log/log.h"
 
 namespace OHOS::Plugin::Request {
 using namespace std;
@@ -35,14 +36,14 @@ static string GetFileName(const string &fileName)
 DownloadProxy::DownloadProxy(int64_t taskId, const Config &config, OnRequestCallback callback)
     : taskId_(taskId), config_(config), callback_(callback)
 {
-    NSLog(@"DownloadProxy allocated, taskId:%lld", taskId);
+    LOGI("DownloadProxy allocated, taskId:%{public}lld", taskId);
     InitTaskInfo(config, info_);
     IosNetMonitor::SharedInstance()->AddObserver(this);
 }
 
 DownloadProxy::~DownloadProxy()
 {
-    NSLog(@"DownloadProxy freed, taskId:%lld", taskId_);
+    LOGI("DownloadProxy freed, taskId:%{public}lld", taskId_);
     IosNetMonitor::SharedInstance()->RemoveObserver(this);
     sessionCtrl_ = nil;
     downloadTask_ = nil;
@@ -105,10 +106,11 @@ void DownloadProxy::InitTaskInfo(const Config &config, TaskInfo &info)
 void DownloadProxy::SetProxy(const Config &config, NSURLSessionConfiguration **sessionConfig)
 {
     if (sessionConfig == nil) {
+        LOGE("Config is nil");
         return;
     }
     if (config.proxy.empty()) {
-        NSLog(@"Proxy empty");
+        LOGI("Proxy empty");
         return;
     }
     NSURLSessionConfiguration *newSessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -127,18 +129,18 @@ void DownloadProxy::SetProxy(const Config &config, NSURLSessionConfiguration **s
             @"HTTPSPort": proxyUrl.port
         };
         *sessionConfig = newSessionConfig;
-        NSLog(@"Proxy set: %@", proxyStr);
+        LOGI("Proxy set: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
     } else {
-        NSLog(@"Invalid proxy address: %@", proxyStr);
+        LOGE("Invalid proxy address: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
     }
 }
 
 int32_t DownloadProxy::Start(int64_t taskId)
 {
-    NSLog(@"start download, taskId:%lld, config_.saveas:%s", taskId, config_.saveas.c_str());
+    LOGI("start download, taskId:%{public}lld, config_.saveas:%{public}s", taskId, config_.saveas.c_str());
     @autoreleasepool {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            NSLog(@"start download");
+            LOGI("start download");
             NSString *urlStr = JsonUtils::CStringToNSString(config_.url);
             NSURL *url = [NSURL URLWithString:urlStr];
             NSURLSessionConfiguration *sessionConfig = nil;
@@ -156,7 +158,7 @@ int32_t DownloadProxy::Start(int64_t taskId)
             }
             downloadTask_ = [sessionCtrl_ downloadWithRequest:request
                                                 progressBlock:^(NSProgress *progress) {
-                NSLog(@"downloading, progress:%@", progress);
+                LOGI("downloading, progress:%{public}s", progress ? [[progress description] UTF8String] : "null");
                 OnProgressCallback(progress);
                 if (!isMimeReported_) {
                     ReportMimeType([downloadTask_ response]);
@@ -164,15 +166,15 @@ int32_t DownloadProxy::Start(int64_t taskId)
             } destination:^NSURL * _Nullable(NSURLResponse *response, NSURL *temporaryURL) {
                 OnResponseCallback(response);
                 NSString *filePath = JsonUtils::CStringToNSString(config_.saveas);
-                NSLog(@"download filePath:%@", filePath);
+                LOGI("download filePath");
                 NSURL *destPath = [NSURL fileURLWithPath:filePath];
-                NSLog(@"download destPath:%@", destPath);
+                LOGI("download destPath");
                 return destPath;
             } completion:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
                 CompletionHandler(response, filePath, error);
             }];
             [downloadTask_ resume];
-            NSLog(@"downloadTask resume");
+            LOGI("downloadTask resume");
         });
         info_.progress.state = State::RUNNING;
         IosTaskDao::UpdateDB(info_);
@@ -182,10 +184,10 @@ int32_t DownloadProxy::Start(int64_t taskId)
 
 int32_t DownloadProxy::Pause(int64_t taskId)
 {
-    NSLog(@"Pause download, taskId:%lld", taskId);
+    LOGI("Pause download, taskId:%{public}lld", taskId);
     if (downloadTask_.state == NSURLSessionTaskStateRunning) {
         [downloadTask_ cancelByProducingResumeData:^(NSData *resumeData) {
-            NSLog(@"DownloadProxy::Pause resumeData=%@", resumeData);
+            LOGI("DownloadProxy::Pause resumeData=%{public}s", resumeData ? [[resumeData description] UTF8String] : "null");
             if (resumeData != nil) {
                 resumeData_ = resumeData;
             } else {
@@ -203,13 +205,15 @@ int32_t DownloadProxy::Pause(int64_t taskId)
 
 int32_t DownloadProxy::Resume(int64_t taskId)
 {
-    NSLog(@"Resume download, taskId:%lld", taskId);
+    LOGI("Resume download, taskId:%{public}lld", taskId);
     if (resumeData_ == nil) {
         int32_t ret = Start(taskId);
         if (ret == E_OK) {
             info_.progress.state = State::RUNNING;
             callback_(taskId_, EVENT_RESUME, JsonUtils::TaskInfoToJsonString(info_));
             IosTaskDao::UpdateDB(info_);
+        } else {
+            LOGE("Resume download failed, ret:%{public}d", ret);
         }
         return ret;
     }
@@ -234,7 +238,7 @@ int32_t DownloadProxy::Resume(int64_t taskId)
 
 int32_t DownloadProxy::Stop(int64_t taskId)
 {
-    NSLog(@"Stop download, taskId:%lld", taskId);
+    LOGI("Stop download, taskId:%{public}lld", taskId);
     if (downloadTask_ != nil) {
         [downloadTask_ cancel];
     }
@@ -244,7 +248,7 @@ int32_t DownloadProxy::Stop(int64_t taskId)
 
 void DownloadProxy::PushNotification(BOOL isFailed)
 {
-    NSLog(@"push notification");
+    LOGI("push notification");
     NSString *file = JsonUtils::CStringToNSString(GetFileName(config_.url));
     NSValue *result = [NSValue value:&isFailed withObjCType:@encode(BOOL)];
     PushNotification(file, result);
@@ -252,27 +256,27 @@ void DownloadProxy::PushNotification(BOOL isFailed)
 
 void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, NSError *error)
 {
-    NSLog(@"CompletionHandler, filePath:%@", filePath);
+    LOGI("CompletionHandler start");
     if (!isMimeReported_) {
         ReportMimeType(response);
     }
     if (error == nil) {
-        NSLog(@"success download file to: %@", [filePath description]);
+        LOGI("success download file");
         OnCompletedCallback();
     } else {
-        NSLog(@"failed download file to: %s, error:%s, error_code:%ld",
-            [filePath description].UTF8String, [error description].UTF8String, error.code);
+        LOGE("failed download file, error:%{public}s, error_code:%{public}ld",
+            error ? [[error description] UTF8String] : "null", (long)error.code);
         OnFailedCallback();
 
         // check can be resume?
         NSData *resumeData = [[error userInfo] objectForKey:NSURLSessionDownloadTaskResumeData];
         if (resumeData != nil) {
-            NSLog(@"download failed, but has resumeData");
+            LOGI("download failed, but has resumeData");
             resumeData_ = resumeData;
         }
     }
 
-    NSLog(@"isBackground: %d", config_.background);
+    LOGI("isBackground: %d", config_.background);
     // Allow download background task notifications.
     if (config_.background) {
         PushNotification(error != nil);
@@ -306,7 +310,7 @@ void DownloadProxy::PushNotification(NSString *fileName, NSValue *result)
                                                                                       trigger:trigger];
                 [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
                     if (error) {
-                        NSLog(@"Failed to show notification: %@", error);
+                        LOGE("Failed to show notification: %{public}s", error ? [[error description] UTF8String] : "null");
                     }
                 }];
             }
@@ -331,7 +335,9 @@ void DownloadProxy::ReportMimeType(NSURLResponse *response)
     if (mimeType.length == 0) {
         mimeType = [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Content-Type"];
     }
-    NSLog(@"download, response:%@, mimeType:%@", response.description, mimeType);
+    LOGI("download, response:%{public}s, mimeType:%{public}s",
+        response ? [[response description] UTF8String] : "null",
+        mimeType ? [mimeType UTF8String] : "null");
     if (mimeType.length > 0) {
         info_.mimeType = mimeType.UTF8String;
         IosTaskDao::UpdateDB(info_);
@@ -340,7 +346,7 @@ void DownloadProxy::ReportMimeType(NSURLResponse *response)
 
 void DownloadProxy::OnCompletedCallback()
 {
-    NSLog(@"download OnCompletedCallback");
+    LOGI("download OnCompletedCallback");
     if (callback_ != nullptr) {
         info_.progress.state = State::COMPLETED;
         if (downloadTotalBytes_ == -1) {
@@ -356,8 +362,9 @@ void DownloadProxy::OnCompletedCallback()
 
 void DownloadProxy::OnProgressCallback(NSProgress *progress)
 {
-    NSLog(@"download OnProgressCallback");
+    LOGI("download OnProgressCallback");
     if (callback_ == nullptr || progress == nil) {
+        LOGE("download OnProgressCallback failed with nil");
         return;
     }
     info_.progress.processed = progress.completedUnitCount;
@@ -429,8 +436,9 @@ NSString* DownloadProxy::GetStandardHTTPReason(NSInteger statusCode) {
 
 void DownloadProxy::OnResponseCallback(NSURLResponse *response)
 {
-    NSLog(@"download OnResponseCallback");
+    LOGI("download OnResponseCallback");
     if (callback_ == nullptr || response == nil) {
+        LOGE("download OnResponseCallback failed with nil");
         return;
     }
      if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
@@ -483,11 +491,11 @@ void DownloadProxy::PushBackOcValues(NSArray<NSString *> *ocValues, std::vector<
 void DownloadProxy::OnFailedCallback()
 {
     if (isStopped_) {
-        NSLog(@"download OnFailedCallback task is stopped");
+        LOGI("download OnFailedCallback task is stopped");
         return;
     }
     if (isPause_) {
-        NSLog(@"download OnFailedCallback task is pause");
+        LOGI("download OnFailedCallback task is pause");
         return;
     }
 
@@ -497,7 +505,7 @@ void DownloadProxy::OnFailedCallback()
             info_.progress.processed = 0;
             info_.code = Reason::OTHERS_ERROR;
             SetSizes(downloadTotalBytes_);
-            NSLog(@"download OnFailedCallback start");
+            LOGI("download OnFailedCallback start");
             callback_(taskId_, EVENT_FAILED, JsonUtils::TaskInfoToJsonString(info_));
             IosTaskDao::UpdateDB(info_);
         }
@@ -506,7 +514,7 @@ void DownloadProxy::OnFailedCallback()
 
 void DownloadProxy::OnPauseCallback()
 {
-    NSLog(@"download OnPauseCallback");
+    LOGI("download OnPauseCallback");
     if (callback_ != nullptr) {
         info_.progress.state = State::PAUSED;
         SetSizes(downloadTotalBytes_);
@@ -517,7 +525,7 @@ void DownloadProxy::OnPauseCallback()
 
 void DownloadProxy::SetSizes(int64_t fileSize)
 {
-    NSLog(@"SetSizes fileSize:%lld", fileSize);
+    LOGI("SetSizes fileSize:%{public}lld", fileSize);
     info_.progress.sizes.clear();
     info_.progress.sizes.emplace_back(fileSize);
 }
@@ -525,7 +533,7 @@ void DownloadProxy::SetSizes(int64_t fileSize)
 // IosNetMonitorObserver
 void DownloadProxy::NetworkStatusChanged(NetworkType netType)
 {
-    NSLog(@"DownloadProxy::NetworkStatusChanged, netType:%d", netType);
+    LOGI("DownloadProxy::NetworkStatusChanged, netType:%{public}d", netType);
     if (netType == NETWORK_WIFI) {
         ReachableViaWiFi();
     } else if (netType == NETWORK_MOBILE) {
@@ -537,17 +545,17 @@ void DownloadProxy::NetworkStatusChanged(NetworkType netType)
 
 void DownloadProxy::ReachableViaWiFi()
 {
-    NSLog(@"DownloadProxy::ReachableViaWiFi enter");
+    LOGI("DownloadProxy::ReachableViaWiFi enter");
 }
 
 void DownloadProxy::ReachableViaWWAN()
 {
-    NSLog(@"DownloadProxy::ReachableViaWWAN enter");
+    LOGI("DownloadProxy::ReachableViaWWAN enter");
 }
 
 void DownloadProxy::NotReachable()
 {
-    NSLog(@"DownloadProxy::NotReachable enter");
+    LOGI("DownloadProxy::NotReachable enter");
 }
 
 } // namespace OHOS::Plugin::Request

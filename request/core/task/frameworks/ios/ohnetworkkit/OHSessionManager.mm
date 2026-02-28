@@ -15,6 +15,7 @@
 
 #import "OHSessionManager.h"
 #import "OHRequestResult.h"
+#include "base/log/log.h"
 
 #define OHNetworkLabel "com.oh.network.session"
 #define OHConfigIdentifier "com.oh.config"
@@ -75,6 +76,8 @@ NSString * const OHNetworkErrorDomain = @"com.oh.network.error";
                                                  delegate:self
                                             delegateQueue:queue];
         
+    } else {
+        LOGE("initWithConfiguration failed");
     }
     return self;
 }
@@ -224,6 +227,7 @@ NSString * const OHNetworkErrorDomain = @"com.oh.network.error";
             disposition = NSURLSessionAuthChallengeUseCredential;
             credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
         } else {
+            LOGE("evaluateServerTrust sslHandlerResult false");
             OHRequestResult *result = [self resultForTask:task];
             NSError *error = [self generateServerTrustErrorForServerTrust:challenge.protectionSpace.serverTrust
                                                                       url:task.currentRequest.URL];
@@ -271,6 +275,7 @@ NSString * const OHNetworkErrorDomain = @"com.oh.network.error";
 
         //the path for move after download is nil, stop move
         if (!filePath) {
+            LOGE("downloadTask didFinishDownloadingToURL filePath is nil");
             NSDictionary *userInfo = @{
                 NSLocalizedDescriptionKey: @"No destination url for download task",
             };
