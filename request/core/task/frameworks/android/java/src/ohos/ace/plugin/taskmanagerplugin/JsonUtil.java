@@ -17,7 +17,7 @@ package ohos.ace.plugin.taskmanagerplugin;
 
 import static ohos.ace.plugin.taskmanagerplugin.IConstant.TAG;
 
-import android.util.Log;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import ohos.ace.adapter.ALog;
 
 /**
  * JsonUtil class for json to config and config to json convert.
@@ -546,7 +547,7 @@ public class JsonUtil {
                 map.put(key, value);
             }
         } catch (JSONException e) {
-            Log.e(TAG, "jsonToMapString: error", e);
+            ALog.e(TAG, "jsonToMapString: error" + e);
         }
         return map;
     }

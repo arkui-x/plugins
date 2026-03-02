@@ -26,7 +26,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
@@ -41,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.Map;
 import java.util.HashMap;
+import ohos.ace.adapter.ALog;
 
 /**
  * download manager
@@ -116,7 +117,7 @@ public class DownloadImpl {
         }
         NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
         if (activeNetInfo == null || !activeNetInfo.isAvailable()) {
-            Log.i(TAG, "current network is invalid");
+            ALog.i(TAG, "current network is invalid");
             return NETWORK_INVALID;
         }
 
@@ -125,7 +126,7 @@ public class DownloadImpl {
             NetworkInfo.State state = wifiInfo.getState();
             if (state != null) {
                 if (state == NetworkInfo.State.CONNECTED || state == NetworkInfo.State.CONNECTING) {
-                    Log.i(TAG, "current network is wifi!");
+                    ALog.i(TAG, "current network is wifi!");
                     return NETWORK_WIFI;
                 }
             }
@@ -136,7 +137,7 @@ public class DownloadImpl {
             NetworkInfo.State state = networkInfo.getState();
             if (state != null) {
                 if (state == NetworkInfo.State.CONNECTED || state == NetworkInfo.State.CONNECTING) {
-                    Log.i(TAG, "current network is mobile net!");
+                    ALog.i(TAG, "current network is mobile net!");
                     return NETWORK_MOBILE;
                 }
             }
@@ -168,18 +169,18 @@ public class DownloadImpl {
         }
         response.setHeaders(headers);
 
-        Log.i(TAG, "HTTP Response: Version=" + response.getVersion()
+        ALog.i(TAG, "HTTP Response: Version=" + response.getVersion()
             + ", Status=" + response.getStatusCode()
             + ", Reason=" + response.getReason());
 
-        Log.i(TAG, "  Headers:");
+        ALog.i(TAG, "  Headers:");
         if (headers.isEmpty()) {
-            Log.i(TAG, "    (empty)");
+            ALog.i(TAG, "    (empty)");
         } else {
             for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
                 String key = entry.getKey();
                 for (String value : entry.getValue()) {
-                    Log.i(TAG, " " + key + ":" + value);
+                    ALog.i(TAG, " " + key + ":" + value);
                 }
             }
         }
@@ -198,18 +199,18 @@ public class DownloadImpl {
         try {
             config = configFuture.get();
         } catch (Exception e) {
-            Log.e(TAG, "startDownload: error", e);
+            ALog.e(TAG, "startDownload: error" + e);
         }
         if (config == null) {
-            Log.e(TAG, "startDownload: config is null");
+            ALog.e(TAG, "startDownload: config is null");
             sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
             return;
         }
-        Log.i(TAG, "startDownload config: :" + JsonUtil.configToJson(config));
+        ALog.i(TAG, "startDownload config: :" + JsonUtil.configToJson(config));
         int networkState = getNetworkState();
-        Log.i(TAG, "networkState :" + networkState);
+        ALog.i(TAG, "networkState :" + networkState);
         if (networkState == NETWORK_INVALID) {
-            Log.e(TAG, "no network");
+            ALog.e(TAG, "no network");
             sendFailCallback(taskInfo, Reason.NETWORK_OFFLINE);
             return;
         }
@@ -221,12 +222,12 @@ public class DownloadImpl {
             mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
                 EventType.RESPONSE, JsonUtil.convertTaskInfoToJson(taskInfo));
             if (response.getStatusCode() != HttpURLConnection.HTTP_OK) {
-                Log.d(TAG, "can not make request, status code: " + response.getStatusCode());
+                ALog.d(TAG, "can not make request, status code: " + response.getStatusCode());
                 sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
                 return;
             }
         } else {
-            Log.d(TAG, "can not make request, no response");
+            ALog.d(TAG, "can not make request, no response");
             sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
             return;
         }
@@ -234,7 +235,7 @@ public class DownloadImpl {
             downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         }
         if (downloadManager == null) {
-            Log.e(TAG, "no http or https url");
+            ALog.e(TAG, "no http or https url");
             return;
         }
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(config.getUrl()));
@@ -272,7 +273,7 @@ public class DownloadImpl {
         // set destination save file path
         String downloadFilePath = config.getSaveas();
         if (downloadFilePath == null) {
-            Log.e(TAG, "startDownload: saveas is null");
+            ALog.e(TAG, "startDownload: saveas is null");
             sendFailCallback(taskInfo, Reason.USER_OPERATION);
             return;
         }
@@ -280,22 +281,22 @@ public class DownloadImpl {
         File saveFile = new File(downloadFilePath, fileName);
         File parentFile = saveFile.getParentFile();
         if (parentFile != null) {
-            Log.i(TAG, "createDownload: savePath:" + parentFile.getAbsolutePath());
+            ALog.i(TAG, "createDownload: savePath:" + parentFile.getAbsolutePath());
             request.setDestinationUri(Uri.fromFile(parentFile));
             taskInfo.setMimeType(mimeType);
         } else {
-            Log.e(TAG, "createDownload: file is null");
+            ALog.e(TAG, "createDownload: file is null");
             sendFailCallback(taskInfo, Reason.IO_ERROR);
             return;
         }
-        Log.i(TAG, "startDownload,savePath: " + taskInfo.getSaveas() + ",downloadUrl:" + taskInfo.getUrl());
+        ALog.i(TAG, "startDownload,savePath: " + taskInfo.getSaveas() + ",downloadUrl:" + taskInfo.getUrl());
         long downloadId = 0L;
         try {
             downloadId = downloadManager.enqueue(request);
         } catch (SecurityException e) {
-            Log.e(TAG, "SecurityException error");
+            ALog.e(TAG, "SecurityException error");
         }
-        Log.i(TAG, "Start to download task: " + downloadId);
+        ALog.i(TAG, "Start to download task: " + downloadId);
         Progress progress = taskInfo.getProgress();
         if (progress == null) {
             progress = new Progress();
@@ -316,19 +317,19 @@ public class DownloadImpl {
      * @return paused reason
      */
     private String getPausedReason(int downloadColumnReason) {
-        Log.i(TAG, "get download paused reason");
+        ALog.i(TAG, "get download paused reason");
         switch (downloadColumnReason) {
             case DownloadManager.PAUSED_QUEUED_FOR_WIFI:
-                Log.i(TAG, "the download is Waiting for WiFi");
+                ALog.i(TAG, "the download is Waiting for WiFi");
                 return Reason.UNSUPPORTED_NETWORK_TYPE;
             case DownloadManager.PAUSED_WAITING_FOR_NETWORK:
-                Log.i(TAG, "the download is Waiting for Network");
+                ALog.i(TAG, "the download is Waiting for Network");
                 return Reason.WAITTING_NETWORK_ONE_DAY;
             case DownloadManager.PAUSED_WAITING_TO_RETRY:
-                Log.i(TAG, "the download is Waiting to retry");
+                ALog.i(TAG, "the download is Waiting to retry");
                 return Reason.REQUEST_ERROR;
             case DownloadManager.PAUSED_UNKNOWN:
-                Log.i(TAG, "the download is paused for some other reason");
+                ALog.i(TAG, "the download is paused for some other reason");
                 return Reason.OTHERS_ERROR;
             default:
                 return Reason.OTHERS_ERROR;
@@ -342,37 +343,37 @@ public class DownloadImpl {
      * @return failed reason
      */
     private String getFailedReason(int downloadColumnReason) {
-        Log.i(TAG, "get download failed reason");
+        ALog.i(TAG, "get download failed reason");
         switch (downloadColumnReason) {
             case DownloadManager.ERROR_CANNOT_RESUME:
-                Log.e(TAG, "can't resume the download");
+                ALog.e(TAG, "can't resume the download");
                 return Reason.REQUEST_ERROR;
             case DownloadManager.ERROR_DEVICE_NOT_FOUND:
-                Log.e(TAG, "no external storage device was found");
+                ALog.e(TAG, "no external storage device was found");
                 return Reason.BUILD_CLIENT_FAILED;
             case DownloadManager.ERROR_FILE_ALREADY_EXISTS:
-                Log.e(TAG, "the requested destination file already exists");
+                ALog.e(TAG, "the requested destination file already exists");
                 return Reason.IO_ERROR;
             case DownloadManager.ERROR_FILE_ERROR:
-                Log.e(TAG, "it doesn't fit under any other error code");
+                ALog.e(TAG, "it doesn't fit under any other error code");
                 return Reason.IO_ERROR;
             case DownloadManager.ERROR_HTTP_DATA_ERROR:
-                Log.e(TAG, "the error receiving or processing data occurred at the HTTP level");
+                ALog.e(TAG, "the error receiving or processing data occurred at the HTTP level");
                 return Reason.PROTOCOL_ERROR;
             case DownloadManager.ERROR_INSUFFICIENT_SPACE:
-                Log.e(TAG, "there was insufficient storage space.");
+                ALog.e(TAG, "there was insufficient storage space.");
                 return Reason.UNSUPPORT_RANGE_REQUEST;
             case DownloadManager.ERROR_TOO_MANY_REDIRECTS:
-                Log.e(TAG, "there were too many redirects");
+                ALog.e(TAG, "there were too many redirects");
                 return Reason.REDIRECT_ERROR;
             case DownloadManager.ERROR_UNHANDLED_HTTP_CODE:
-                Log.e(TAG, "the HTTP was received that download manager can't handle");
+                ALog.e(TAG, "the HTTP was received that download manager can't handle");
                 return Reason.CONNECT_ERROR;
             case DownloadManager.ERROR_UNKNOWN:
-                Log.e(TAG, "the download has an error that doesn't fit under any other error code");
+                ALog.e(TAG, "the download has an error that doesn't fit under any other error code");
                 return Reason.OTHERS_ERROR;
             default:
-                Log.e(TAG, "error code: SESSION_UNKNOWN");
+                ALog.e(TAG, "error code: SESSION_UNKNOWN");
                 return Reason.OTHERS_ERROR;
         }
     }
@@ -410,11 +411,11 @@ public class DownloadImpl {
      * @param bytesAndStatus the Array of saving download bytes and status
      */
     private void queryDownloadStatus(QueryRunnable queryRunnable, int downloadStatus, int[] bytesAndStatus) {
-        Log.i(TAG, "query download status, download status: " + downloadStatus);
+        ALog.i(TAG, "query download status, download status: " + downloadStatus);
         Progress progress = queryRunnable.taskInfo.getProgress();
         switch (downloadStatus) {
             case DownloadManager.STATUS_PAUSED:
-                Log.i(TAG, "query download status, download STATUS_PAUSED: " + DownloadManager.STATUS_PAUSED);
+                ALog.i(TAG, "query download status, download STATUS_PAUSED: " + DownloadManager.STATUS_PAUSED);
                 if (progress.getState() != State.PAUSED && !statusIsFinish(progress.getState())) {
                     queryRunnable.taskInfo.setReason(getPausedReason(bytesAndStatus[DOWNLOAD_COLUMN_REASON]));
                     queryRunnable.taskInfo.setCode(getReasonCodeByReason(queryRunnable.taskInfo.getReason()));
@@ -441,7 +442,7 @@ public class DownloadImpl {
                 }
                 break;
             case DownloadManager.STATUS_PENDING:
-                Log.i(TAG, "queryDownloadStatus: STATUS_PENDING,retryNum:" + queryRunnable.retryNum);
+                ALog.i(TAG, "queryDownloadStatus: STATUS_PENDING,retryNum:" + queryRunnable.retryNum);
                 if (queryRunnable.retryNum < 3) {
                     queryRunnable.retryNum++;
                 } else {
@@ -458,12 +459,12 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
-                    Log.i(TAG, "queryDownloadStatus: running:size: " + downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
+                    ALog.i(TAG, "queryDownloadStatus: running:size: " + downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS,
                             JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     TaskDao.update(context, queryRunnable.taskInfo, true);
                 }
-                Log.i(TAG, "isIgnoreStatus:" + isIgnoreStatus);
+                ALog.i(TAG, "isIgnoreStatus:" + isIgnoreStatus);
                 isIgnoreStatus = false;
                 break;
             case DownloadManager.STATUS_SUCCESSFUL:
@@ -474,7 +475,7 @@ public class DownloadImpl {
                     List<Long> sizes = new ArrayList<>();
                     sizes.add((long) downloadBytes[DOWNLOAD_TOTAL_SIZE_ARGC]);
                     progress.setSizes(sizes);
-                    Log.i(TAG, "queryDownloadStatus: success:size: " + downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
+                    ALog.i(TAG, "queryDownloadStatus: success:size: " + downloadBytes[DOWNLOAD_RECEIVED_SIZE_ARGC]);
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.PROGRESS,
                             JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
                     mJavaTaskImpl.jniOnRequestCallback(queryRunnable.taskInfo.getTid(), EventType.COMPLETED,
@@ -503,7 +504,7 @@ public class DownloadImpl {
                 break;
         }
 
-        Log.i(TAG, "queryDownloadStatus taskInfo:" + JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+        ALog.i(TAG, "queryDownloadStatus taskInfo:" + JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
     }
 
     /**
@@ -512,7 +513,7 @@ public class DownloadImpl {
      * @param queryRunnable queryRunnable
      */
     public void queryProgress(QueryRunnable queryRunnable) {
-        Log.i(TAG, "queryProgress: tid:" + queryRunnable.taskInfo.getTid() + ",downloadId:" +
+        ALog.i(TAG, "queryProgress: tid:" + queryRunnable.taskInfo.getTid() + ",downloadId:" +
             queryRunnable.taskInfo.getDownloadId());
         int[] bytesAndStatus = new int[]{ARRAY_INIT_VAL, ARRAY_INIT_VAL, 0, 0};
 
@@ -523,8 +524,8 @@ public class DownloadImpl {
                 bytesAndStatus[DOWNLOAD_STATUS] = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
                 bytesAndStatus[DOWNLOAD_COLUMN_REASON] =
                     cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON));
-                Log.i(TAG, "queryProgress status: " + bytesAndStatus[DOWNLOAD_STATUS]);
-                Log.i(TAG, "queryProgress reason: " + bytesAndStatus[DOWNLOAD_COLUMN_REASON]);
+                ALog.i(TAG, "queryProgress status: " + bytesAndStatus[DOWNLOAD_STATUS]);
+                ALog.i(TAG, "queryProgress reason: " + bytesAndStatus[DOWNLOAD_COLUMN_REASON]);
                 queryDownloadStatus(queryRunnable, bytesAndStatus[DOWNLOAD_STATUS], bytesAndStatus);
             } else {
                 stopQueryProgress(queryRunnable);
@@ -575,7 +576,7 @@ public class DownloadImpl {
      * post query progress by tid
      */
     public void postQueryProgressByTid(long tid) {
-        Log.i(TAG, "postQueryProgressByTid: tid:" + tid);
+        ALog.i(TAG, "postQueryProgressByTid: tid:" + tid);
         for (QueryRunnable item : queryRunnables) {
             if (item.taskInfo.getTid() == tid) {
                 handle.removeCallbacks(item);
@@ -590,7 +591,7 @@ public class DownloadImpl {
      * post query progress
      */
     public void postQueryProgress() {
-        Log.i(TAG, "postQueryProgress");
+        ALog.i(TAG, "postQueryProgress");
         for (QueryRunnable item : queryRunnables) {
             handle.removeCallbacks(item);
             handle.post(item);
@@ -603,7 +604,7 @@ public class DownloadImpl {
      * @param taskInfo task info
      */
     public void removeDownload(TaskInfo taskInfo) {
-        Log.i(TAG, "removeDownload: " + taskInfo.getTid());
+        ALog.i(TAG, "removeDownload: " + taskInfo.getTid());
         if (downloadManager != null) {
             downloadManager.remove(taskInfo.getDownloadId());
             DownloadManager.Query query = new DownloadManager.Query();
@@ -622,18 +623,18 @@ public class DownloadImpl {
             URL url = new URL(downloadUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             int responseCode = conn.getResponseCode();
-            Log.i(TAG, "get network response code: " + responseCode);
+            ALog.i(TAG, "get network response code: " + responseCode);
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 String acceptRanges = conn.getHeaderField("Accept-Ranges");
                 if (acceptRanges != null && "bytes".equals(acceptRanges)) {
-                    Log.i(TAG, "The url support breakpoint continuation");
+                    ALog.i(TAG, "The url support breakpoint continuation");
                 } else {
-                    Log.e(TAG, "The url unsupport breakpoint continuation, download from the start location");
+                    ALog.e(TAG, "The url unsupport breakpoint continuation, download from the start location");
                     return false;
                 }
             }
         } catch (IOException error) {
-            Log.e(TAG, "URL connection failed, error: " + error.getMessage());
+            ALog.e(TAG, "URL connection failed, error: " + error.getMessage());
             return false;
         }
         return true;
@@ -645,7 +646,7 @@ public class DownloadImpl {
      * @param taskInfo task info
      */
     public void pauseDownload(TaskInfo taskInfo) {
-        Log.i(TAG, "execute pauseDownload, taskId: " + taskInfo.getTid());
+        ALog.i(TAG, "execute pauseDownload, taskId: " + taskInfo.getTid());
         if (taskInfo.getProgress().getState() == State.RUNNING) {
             taskInfo.getProgress().setState(State.PAUSED);
             if (taskInfo.getProgress().getLastProcessed() < taskInfo.getProgress().getProcessed()) {
@@ -677,7 +678,7 @@ public class DownloadImpl {
      * @return true or false
      */
     public Response canMakeRequest(String urlString) {
-        Log.i(TAG, "Download: start download manager service, downloadUrl: " + urlString);
+        ALog.i(TAG, "Download: start download manager service, downloadUrl: " + urlString);
         supportsBreakpoint = false;
         try {
             URL url = new URL(urlString);
@@ -696,13 +697,13 @@ public class DownloadImpl {
                     String acceptRanges = (acceptRangesList != null && !acceptRangesList.isEmpty()) ?
                         acceptRangesList.get(0) : null;
                     supportsBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
-                    Log.i(TAG, "Breakpoint supported: " + supportsBreakpoint);
+                    ALog.i(TAG, "Breakpoint supported: " + supportsBreakpoint);
                 }
             }
             return response;
         } catch (Exception e) {
             e.printStackTrace();
-            Log.i(TAG, "canMakeRequest failed due to exception");
+            ALog.i(TAG, "canMakeRequest failed due to exception");
             return null;
         }
     }
