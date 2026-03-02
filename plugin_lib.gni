@@ -50,7 +50,6 @@ common_plugin_libs = [
   "file/streamrw",
   "common_event_manager",
   "data/datasharepredicates",
-  "data/distributedkvstore",
   "data/preferences",
   "pasteboard",
   "data/relationalstore",
