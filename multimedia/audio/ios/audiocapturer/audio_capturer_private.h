@@ -38,8 +38,11 @@ public:
     bool GetTimeStampInfo(Timestamp &timestampNs, Timestamp::Timestampbase base) const override;
     bool GetAudioTime(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
     bool Start() override;
+    int32_t StartWithError() override { return StartImpl(); }
     bool Stop() const override;
+    int32_t StopWithError() const override { return StopImpl(); }
     bool Release() override;
+    int32_t ReleaseWithError() override { return ReleaseImpl(); }
     int32_t GetBufferSize(size_t &bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t &sessionID) const override;
     int32_t GetBufferDesc(BufferDesc &bufDesc) override;
@@ -90,6 +93,9 @@ public:
     void UnsetCapturerPeriodPositionCallback() override;
 
 private:
+    int32_t StartImpl() override;
+    int32_t StopImpl() const override;
+    int32_t ReleaseImpl() override;
     bool IsFormatValid(uint8_t format);
     bool IsEncodingTypeValid(uint8_t encodingType);
     bool IsSamplingRateValid(uint32_t samplingRate);

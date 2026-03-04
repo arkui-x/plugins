@@ -34,10 +34,15 @@ public:
     int32_t GetRendererInfo(AudioRendererInfo &rendererInfo) const override;
     int32_t GetStreamInfo(AudioStreamInfo &streamInfo) const override;
     bool Start(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
+    int32_t StartWithError(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override { return StartImpl(cmdType); }
     bool Pause(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
+    int32_t PauseWithError(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override { return PauseImpl(cmdType); }
     bool Stop() override;
+    int32_t StopWithError() override { return StopImpl(); }
     bool Flush() const override;
+    int32_t FlushWithError() const override { return FlushImpl(); }
     bool Release() override;
+    int32_t ReleaseWithError() override { return ReleaseImpl(); }
     int32_t Write(uint8_t *buffer, size_t bufferSize) override;
     RendererState GetStatus() const override;
     int32_t SetVolume(float volume) const override;
@@ -75,6 +80,7 @@ public:
     int32_t GetParams(AudioRendererParams &params) const override { return ERR_NOT_SUPPORTED; }
     int32_t Write(uint8_t *pcmBuffer, size_t pcmSize, uint8_t *metaBuffer, size_t metaSize) override { return 0; }
     bool Drain() const override { return false; }
+    int32_t DrainWithError() const override { return DrainImpl(); }
     bool PauseTransitent(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override { return false; };
     int32_t SetAudioRendererDesc(AudioRendererDesc audioRendererDesc) override { return ERR_NOT_SUPPORTED; }
     int32_t SetStreamType(AudioStreamType audioStreamType) override { return ERR_NOT_SUPPORTED; }
@@ -127,6 +133,12 @@ public:
     void SetFastStatusChangeCallback(const std::shared_ptr<AudioRendererFastStatusChangeCallback> &callback) override;
 
 private:
+    int32_t StartImpl(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
+    int32_t StopImpl() override;
+    int32_t FlushImpl() const override;
+    int32_t ReleaseImpl() override;
+    int32_t PauseImpl(StateChangeCmdType cmdType = CMD_FROM_CLIENT) override;
+    int32_t DrainImpl() const override;
     bool IsFormatValid(uint8_t format);
     bool IsEncodingTypeValid(uint8_t encodingType);
     bool IsSamplingRateValid(uint32_t samplingRate);
