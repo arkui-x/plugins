@@ -41,30 +41,18 @@ std::mutex NG::PlatformViewModelNG::mutex_;
 namespace {
 std::string GetStringFromNapiValue(napi_env env, napi_value value, const std::string& defaultValue)
 {
-    if (value == nullptr) {
-        return defaultValue;
-    }
+    NAPI_ASSERT_BASE(env, value != nullptr, "value is null", defaultValue);
 
-    napi_valuetype actualType;
-    if (napi_typeof(env, value, &actualType) != napi_ok) {
-        return defaultValue;
-    }
-    if (actualType == napi_undefined || actualType == napi_null) {
-        return defaultValue;
-    }
+    napi_valuetype valueType = napi_undefined;
+    NAPI_CALL_BASE(env, napi_typeof(env, value, &valueType), defaultValue);
+    NAPI_ASSERT_BASE(env, valueType != napi_undefined && valueType != napi_null,
+        "value is undefined or null", defaultValue);
 
-    napi_valuetype valueType;
-    if (napi_typeof(env, value, &valueType) != napi_ok) {
-        return defaultValue;
-    }
-    if (valueType != napi_number && valueType != napi_string) {
-        return defaultValue;
-    }
+    NAPI_ASSERT_BASE(env, valueType == napi_number || valueType == napi_string,
+        "value must be a number or string", defaultValue);
 
-    napi_value coerced;
-    if (napi_coerce_to_string(env, value, &coerced) != napi_ok) {
-        return defaultValue;
-    }
+    napi_value coerced = nullptr;
+    NAPI_CALL_BASE(env, napi_coerce_to_string(env, value, &coerced), defaultValue);
     return OHOS::Plugin::PluginUtilsNApi::GetStringFromValueUtf8(env, coerced);
 }
 
@@ -117,6 +105,7 @@ NG::PlatformViewModelNG* NG::PlatformViewModelNG::GetInstance()
 namespace OHOS::Plugin::PlatformView {
 namespace {
 constexpr int32_t DEFAULT_PLATFORM_VIEW_TYPE = 0;
+constexpr const char DEFAULT_CENTER_PERCENT[] = "50%";
 }
 
 napi_value JsCreate(napi_env env, napi_callback_info info)
@@ -208,8 +197,8 @@ napi_value JsRotate(napi_env env, napi_callback_info info)
     float fz = static_cast<float>(PluginUtilsNApi::GetDouble(env, z));
 
     std::string fangleStr = GetStringFromNapiValue(env, angle, "");
-    std::string centerXStr = GetStringFromNapiValue(env, centerX, "50%");
-    std::string centerYStr = GetStringFromNapiValue(env, centerY, "50%");
+    std::string centerXStr = GetStringFromNapiValue(env, centerX, DEFAULT_CENTER_PERCENT);
+    std::string centerYStr = GetStringFromNapiValue(env, centerY, DEFAULT_CENTER_PERCENT);
     std::string centerZStr = GetStringFromNapiValue(env, centerZ, "0");
     std::string perspectiveStr = GetStringFromNapiValue(env, perspective, "");
     NG::PlatformViewModelNG::GetInstance()->SetRotation(fx, fy, fz, fangleStr, centerXStr,
