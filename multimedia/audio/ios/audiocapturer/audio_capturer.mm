@@ -408,5 +408,20 @@ int32_t AudioCapturerPrivate::GetAudioTimestampInfo(Timestamp &timestamp, Timest
 void AudioCapturerPrivate::SetFastStatusChangeCallback(
     const std::shared_ptr<AudioCapturerFastStatusChangeCallback>& callback)
 {}
+
+int32_t AudioCapturerPrivate::StartImpl()
+{
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioCapturerPrivate::StopImpl() const
+{
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioCapturerPrivate::ReleaseImpl()
+{
+    return ERR_NOT_SUPPORTED;
+}
 }  // namespace AudioStandard
 }  // namespace OHOS

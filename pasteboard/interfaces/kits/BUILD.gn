@@ -123,6 +123,7 @@ ohos_source_set("pasteboard_napi") {
   ]
 
   sources = [
+    "${pasteboard_framework_path}/common/pasteboard_common_utils.cpp",
     "${pasteboard_napi_path}/src/async_call.cpp",
     "${pasteboard_napi_path}/src/napi_data_utils.cpp",
     "${pasteboard_napi_path}/src/napi_init.cpp",

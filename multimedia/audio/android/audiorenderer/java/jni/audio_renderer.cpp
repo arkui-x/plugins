@@ -416,5 +416,35 @@ int32_t AudioRendererPrivate::GetLatencyWithFlag(uint64_t &latency, LatencyFlag 
 {
     return ERR_NOT_SUPPORTED;
 }
+
+int32_t AudioRendererPrivate::StartImpl(StateChangeCmdType cmdType)
+{
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioRendererPrivate::StopImpl()
+{
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioRendererPrivate::FlushImpl() const
+{
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioRendererPrivate::ReleaseImpl()
+{
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioRendererPrivate::PauseImpl(StateChangeCmdType cmdType)
+{
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioRendererPrivate::DrainImpl() const
+{
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS
