@@ -84,6 +84,11 @@ int32_t BluetoothHostImpl::GetLocalAddress(std::string& addr)
     return 0;
 }
 
+int32_t BluetoothHostImpl::GenerateLocalOobData(int32_t transport, const sptr<IBluetoothOobObserver> &observer)
+{
+    return 0;
+}
+
 int32_t BluetoothHostImpl::DisableBle()
 {
     return DisableBt(false, "");
@@ -562,6 +567,11 @@ int32_t BluetoothHostImpl::GetRemoteServices(const std::string &address)
 }
 
 int32_t BluetoothHostImpl::SetConnectionPriority(const std::string &address, int32_t priority)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::IsProfileExist(const std::string &profileName, bool &isProfileExist)
 {
     return 0;
 }
