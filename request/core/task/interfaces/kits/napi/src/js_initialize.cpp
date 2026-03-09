@@ -88,7 +88,6 @@ ExceptionError JsInitialize::InitParam(napi_env env, napi_value* argv, Config &c
     }
 
     REQUEST_HILOGI("config action: %{public}d", static_cast<int32_t>(config.action));
-    REQUEST_HILOGI("config url: %{public}s", config.url.c_str());
     REQUEST_HILOGI("config version: %{public}d", static_cast<int32_t>(config.version));
     REQUEST_HILOGI("config mode: %{public}d", static_cast<int32_t>(config.mode));
     REQUEST_HILOGI("config network: %{public}d", static_cast<int32_t>(config.network));
@@ -100,7 +99,6 @@ ExceptionError JsInitialize::InitParam(napi_env env, napi_value* argv, Config &c
     REQUEST_HILOGI("config saveas: %{public}s", config.saveas.c_str());
     REQUEST_HILOGI("config proxy: %{public}s", config.proxy.c_str());
     REQUEST_HILOGI("config method: %{public}s", config.method.c_str());
-    REQUEST_HILOGI("config token: %{public}s", config.token.c_str());
     REQUEST_HILOGI("config description: %{public}s", config.description.c_str());
     REQUEST_HILOGI("config data: %{public}s", config.data.c_str());
 
@@ -196,7 +194,6 @@ ExceptionError JsInitialize::CheckUploadBodyFiles(Config &config, const std::str
 
 ExceptionError JsInitialize::GetFD(const std::string &path, const Config &config, int32_t &fd)
 {
-    REQUEST_HILOGI("GetFD path: %{public}s", path.c_str());
     ExceptionError error = { .code = E_OK };
     fd = config.action == Action::UPLOAD ? open(path.c_str(), O_RDONLY) : open(path.c_str(), O_TRUNC | O_RDWR);
     if (fd >= 0) {
@@ -221,7 +218,7 @@ ExceptionError JsInitialize::GetFD(const std::string &path, const Config &config
         }
         fd = open(path.c_str(), O_CREAT | O_RDWR, FILE_PERMISSION);
         if (fd < 0) {
-            REQUEST_HILOGI("GetFD download failed path: %{public}s", path.c_str());
+            REQUEST_HILOGI("GetFD download failed");
             return { .code = E_FILE_IO, .errInfo = "Failed to open file errno " + std::to_string(errno) };
         }
         chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH | S_IWOTH);
