@@ -35,8 +35,8 @@ IosAdapter::~IosAdapter()
 
 void RequestCallback(int64_t taskId, const std::string &eventType, const std::string &infoParam)
 {
-    LOGI("RequestCallback taskId: %{public}lld, eventType:%{public}s, infoParam:%{public}s",
-        taskId, eventType.c_str(), infoParam.c_str());
+    LOGI("RequestCallback taskId: %{public}lld, eventType:%{public}s",
+        taskId, eventType.c_str());
     TaskNotifyManager::Get().SendNotify(RequestUtils::GetEventType(taskId, eventType), infoParam);
 }
 
