@@ -251,7 +251,7 @@ public class JavaTaskImpl {
      * @param taskInfoJson task info json
      */
     public void reportTaskInfo(String taskInfoJson) {
-        ALog.i(TAG, "reportTaskInfo: " + taskInfoJson);
+        ALog.i(TAG, "reportTaskInfo start");
         TaskInfo taskInfo = JsonUtil.jsonToTaskInfo(taskInfoJson);
         if (taskInfo == null) {
             ALog.i(TAG, "reportTaskInfo: task info is null");

@@ -20,6 +20,7 @@
 #import "IosTaskInfo.h"
 #import "json_utils.h"
 #include "log.h"
+#include "base/log/log.h"
 
 namespace OHOS::Plugin::Request {
 
@@ -29,18 +30,17 @@ IosTaskDao::~IosTaskDao()
 
 int64_t IosTaskDao::CreateTask(const Config &config)
 {
-    NSLog(@"CreateTask enter");
+    LOGI("CreateTask enter");
     if (![[DBManager shareManager] initDB]) {
-        NSLog(@"failed to init database");
+        LOGE("failed to init database");
         return INVALID_TASK_ID;
     }
 
     std::string strConfig = JsonUtils::ConfigToJsonString(config);
     NSString *jsonConfig = JsonUtils::CStringToNSString(strConfig);
-    NSLog(@"CreateTask, jsonConfig:%@", jsonConfig);
     IosTaskConfig *taskConfig = [IosTaskConfig initWithJsonString:jsonConfig];
     if (taskConfig == nil) {
-        NSLog(@"failed to create task, config is nil");
+        LOGE("failed to create task, config is nil");
         return INVALID_TASK_ID;
     }
 
@@ -49,18 +49,18 @@ int64_t IosTaskDao::CreateTask(const Config &config)
 
 int32_t IosTaskDao::RemoveTask(int64_t taskId)
 {
-    NSLog(@"RemoveTask taskid: %lld", taskId);
+    LOGI("RemoveTask taskid: %{public}lld", taskId);
     if (![[DBManager shareManager] remove:taskId]) {
-       NSLog(@"RemoveTask error");     
+        LOGE("RemoveTask error");
         return E_SERVICE_ERROR;
     }
-    NSLog(@"RemoveTask end");
+    LOGI("RemoveTask end");
     return E_OK;
 }
 
 int32_t IosTaskDao::QueryTaskInfo(int64_t taskId, const std::string &token, TaskInfo &info)
 {
-    NSLog(@"QueryTaskInfo, taskId:%lld, token:%s", taskId, token.c_str());
+    LOGI("QueryTaskInfo, taskId:%{public}lld", taskId);
     if (taskId < 1) {
         return E_TASK_NOT_FOUND;
     }
@@ -72,7 +72,7 @@ int32_t IosTaskDao::QueryTaskInfo(int64_t taskId, const std::string &token, Task
         taskInfo = [[DBManager shareManager] queryWithTaskId:taskId];
     }
     if (taskInfo == nil) {
-        NSLog(@"failed to query task info");
+        LOGE("failed to query task info");
         return E_TASK_NOT_FOUND;
     }
     info.tid = std::to_string(taskInfo.tid);
@@ -97,13 +97,13 @@ int32_t IosTaskDao::QueryTaskInfo(int64_t taskId, const std::string &token, Task
     info.withSystem = taskInfo.withSystem;
     JsonUtils::JsonStringToExtras(taskInfo.extras.UTF8String, info.extras);
     JsonUtils::JsonStringToTaskStates(taskInfo.taskStates.UTF8String, info.taskStates);
-    NSLog(@"QueryTaskInfo end");
+    LOGI("QueryTaskInfo end");
     return E_OK;
 }
 
 int32_t IosTaskDao::Search(const Filter &filter, std::vector<std::string> &taskIdList)
 {
-    NSLog(@"Search enter");
+    LOGI("Search enter");
     IosTaskFilter *taskFilter = [[IosTaskFilter alloc] init];
     taskFilter.before = filter.before;
     taskFilter.after = filter.after;
@@ -120,7 +120,7 @@ int32_t IosTaskDao::Search(const Filter &filter, std::vector<std::string> &taskI
 
 int32_t IosTaskDao::UpdateDB(const TaskInfo &info)
 {
-    NSLog(@"UpdateDB enter");
+    LOGI("UpdateDB enter");
     @autoreleasepool {
         IosTaskInfo *taskInfo = [[IosTaskInfo alloc] init];
         taskInfo.tid = std::stoll(info.tid);
@@ -143,11 +143,11 @@ int32_t IosTaskDao::UpdateDB(const TaskInfo &info)
         taskInfo.files = JsonUtils::CStringToNSString(JsonUtils::FilesToJsonStirng(info.files).c_str());
         taskInfo.code = info.code;
         if (![[DBManager shareManager] update:taskInfo]) {
-            NSLog(@"failed to UpdateDB");
+            LOGE("failed to UpdateDB");
             return E_SERVICE_ERROR;
         }
     }
-    NSLog(@"UpdateDB end");
+    LOGI("UpdateDB end");
     return E_OK;
 }
 
