@@ -23,8 +23,8 @@ import android.net.NetworkRequest;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import ohos.ace.adapter.ALog;
 
@@ -38,7 +38,7 @@ public class NetConnClientPlugin {
 
     private ConnectivityManager connectivity;
 
-    private Map<Long, NetworkCallbackImpl> observer = new HashMap<>();
+    private Map<Long, NetworkCallbackImpl> observer = new ConcurrentHashMap<>();
 
     /**
      * NetConnClientPlugin
