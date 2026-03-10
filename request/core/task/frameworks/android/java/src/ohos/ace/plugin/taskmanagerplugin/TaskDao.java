@@ -47,7 +47,6 @@ public class TaskDao {
      * @return long
      */
     public static long insert(Context context, Config config) {
-        ALog.i(TAG, "insert:" + JsonUtil.configToJson(config));
         initDb(context);
         ContentValues values = new ContentValues();
         values.put("saveas", config.getSaveas());
@@ -227,7 +226,7 @@ public class TaskDao {
      */
     @SuppressLint("Range")
     public static TaskInfo queryByToken(Context context, long taskId, String token) {
-        ALog.i(TAG, "queryByToken: " + taskId + ",token:" + token);
+        ALog.i(TAG, "queryByToken: " + taskId);
         initDb(context);
         String[] selectionArgs = {String.valueOf(taskId), token};
         List<TaskInfo> taskInfos = new ArrayList<>();

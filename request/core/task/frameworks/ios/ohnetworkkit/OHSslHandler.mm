@@ -15,6 +15,7 @@
 
 #import "OHSslHandler.h"
 #import <AssertMacros.h>
+#include "base/log/log.h"
 
 static BOOL OHSecKeyIsEqualToKey(SecKeyRef key1, SecKeyRef key2) {
     return [(__bridge id)key1 isEqual:(__bridge id)key2];
@@ -177,7 +178,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
                   forDomain:(NSString *)domain {
     if (domain && self.allowIvdCerts && self.allowIvdHostDomain &&
         (self.sslType == OHSslTypeNone || [self.certList count] == 0)) {
-        NSLog(@"In order to validate a domain name for self signed certificates, you MUST use pinning.");
+        LOGE("In order to validate a domain name for self signed certificates, you MUST use pinning.");
         return NO;
     }
 
@@ -191,7 +192,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
     if (self.sslType == OHSslTypeNone) {
         return self.allowIvdCerts || OHServerTrustIsValid(serverTrust);
     } else if (!self.allowIvdCerts && !OHServerTrustIsValid(serverTrust)) {
-        NSLog(@"evaluateServerTrust serverTrust is invalid or not proceed");
+        LOGE("evaluateServerTrust serverTrust is invalid or not proceed");
         return NO;
     }
 
@@ -204,7 +205,7 @@ static NSArray * OHPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust) {
             }
             SecTrustSetAnchorCertificates(serverTrust, (__bridge CFArrayRef)certList);
             if (!OHServerTrustIsValid(serverTrust)) {
-                NSLog(@"evaluateServerTrust serverTrust is invalid");
+                LOGE("evaluateServerTrust serverTrust is invalid");
                 return NO;
             }
             // obtain the chain after being validated, which *should* contain the pinned certificate
