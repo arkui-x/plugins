@@ -22,7 +22,6 @@ import android.net.NetworkCapabilities;
 import android.net.Network;
 import android.net.NetworkRequest;
 import java.util.Map;
-import java.util.HashMap;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -36,7 +35,7 @@ public class NetConnClientPlugin {
 
     private ConnectivityManager connectivity;
 
-    private Map<Long, NetworkCallbackImpl> observer = new HashMap<>();
+    private Map<Long, NetworkCallbackImpl> observer = new ConcurrentHashMap<>();
 
     /**
      * NetConnClientPlugin
