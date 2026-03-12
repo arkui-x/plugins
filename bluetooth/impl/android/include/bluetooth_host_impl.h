@@ -101,6 +101,7 @@ public:
     void DeregisterBlePeripheralCallback(const sptr<IBluetoothBlePeripheralObserver>& observer) override;
     int32_t SetFastScan(bool isEnable) override;
     int32_t GetRandomAddress(const std::string& realAddr, std::string& randomAddr, uint64_t tokenId = 0) override;
+    int32_t GetRealAddress(const std::string &randomAddr, std::string &realAddr) override;
     int32_t SyncRandomAddress(const std::string& realAddr, const std::string& randomAddr) override;
     int32_t ConnectAllowedProfiles(const std::string& remoteAddr) override;
     int32_t DisconnectAllowedProfiles(const std::string& remoteAddr) override;
