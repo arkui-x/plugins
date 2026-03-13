@@ -386,6 +386,11 @@ int32_t BluetoothHostImpl::GetRandomAddress(const std::string& realAddr, std::st
     return 0;
 }
 
+int32_t BluetoothHostImpl::GetRealAddress(const std::string &randomAddr, std::string &realAddr)
+{
+    return 0;
+}
+
 int32_t BluetoothHostImpl::SyncRandomAddress(const std::string& realAddr, const std::string& randomAddr)
 {
     return 0;

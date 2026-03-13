@@ -42,6 +42,8 @@ enum class Pattern : uint32_t {
     URL = 0,
     NUMBER,
     EMAIL_ADDRESS,
+    HTTP_URL = 3,
+ 	FLIGHT_NUMBER = 4,
     COUNT,
 };
 
