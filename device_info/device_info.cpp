@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
+#include "plugins/device_info/device_info.h"
+
 #include "log.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "plugin_utils.h"
 #include "securec.h"
-#include "plugins/device_info/device_info.h"
 
 #ifdef ANDROID_PLATFORM
 #include "plugins/device_info/android/java/jni/device_info_jni.h"
@@ -66,6 +67,7 @@ static napi_value GetDeviceType(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetDeviceType");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getDeviceType, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &deviceType));
+    LOGI("[device_info] %s return value: %s", "GetDeviceType", value.c_str());
     return deviceType;
 }
 
@@ -76,6 +78,7 @@ static napi_value GetManufacture(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetManufacture");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getManufacture, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetManufacture", value.c_str());
     return napiValue;
 }
 
@@ -86,6 +89,7 @@ static napi_value GetBrand(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBrand");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getBrand, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetBrand", value.c_str());
     return napiValue;
 }
 
@@ -96,6 +100,7 @@ static napi_value GetMarketName(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetMarketName");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getMarketName, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetMarketName", value.c_str());
     return napiValue;
 }
 
@@ -106,6 +111,7 @@ static napi_value GetProductSeries(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetProductSeries");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getProductSeries, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetProductSeries", value.c_str());
     return napiValue;
 }
 
@@ -116,6 +122,7 @@ static napi_value GetProductModel(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetProductModel");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getProductModel, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetProductModel", value.c_str());
     return napiValue;
 }
 
@@ -126,6 +133,7 @@ static napi_value GetProductModelAlias(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetProductModelAlias");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getProductModelAlias, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetProductModelAlias", value.c_str());
     return napiValue;
 }
 
@@ -136,6 +144,7 @@ static napi_value GetSoftwareModel(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetSoftwareModel");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getSoftwareModel, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetSoftwareModel", value.c_str());
     return napiValue;
 }
 
@@ -146,6 +155,7 @@ static napi_value GetHardwareModel(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetHardwareModel");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getHardwareModel, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetHardwareModel", value.c_str());
     return napiValue;
 }
 
@@ -156,6 +166,7 @@ static napi_value GetHardwareProfile(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetHardwareProfile");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getHardwareProfile, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetHardwareProfile", value.c_str());
     return napiValue;
 }
 
@@ -166,6 +177,7 @@ static napi_value GetBootLoaderVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBootLoaderVersion");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getBootLoaderVersion, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetBootLoaderVersion", value.c_str());
     return napiValue;
 }
 
@@ -176,6 +188,7 @@ static napi_value GetAbiList(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetAbiList");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getAbiList, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetAbiList", value.c_str());
     return napiValue;
 }
 
@@ -186,6 +199,7 @@ static napi_value GetSecurityPatchTag(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetSecurityPatchTag");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getSecurityPatchTag, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetSecurityPatchTag", value.c_str());
     return napiValue;
 }
 
@@ -196,6 +210,7 @@ static napi_value GetDisplayVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetDisplayVersion");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getDisplayVersion, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetDisplayVersion", value.c_str());
     return napiValue;
 }
 
@@ -206,6 +221,7 @@ static napi_value GetIncrementalVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetIncrementalVersion");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getIncrementalVersion, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetIncrementalVersion", value.c_str());
     return napiValue;
 }
 
@@ -216,6 +232,7 @@ static napi_value GetOsReleaseType(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetOsReleaseType");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getOsReleaseType, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetOsReleaseType", value.c_str());
     return napiValue;
 }
 
@@ -226,6 +243,7 @@ static napi_value GetOSFullName(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetOSFullName");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getOSFullName, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetOSFullName", value.c_str());
     return napiValue;
 }
 
@@ -236,6 +254,7 @@ static napi_value GetMajorVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetMajorVersion");
     int value = deviceinfo->GetDeviceInfo(METHOD_ID_getMajorVersion, 0);
     NAPI_CALL(env, napi_create_int32(env, value, &napiValue));
+    LOGI("[device_info] %s return value: %d", "GetMajorVersion", value);
     return napiValue;
 }
 
@@ -246,6 +265,7 @@ static napi_value GetSeniorVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetSeniorVersion");
     int value = deviceinfo->GetDeviceInfo(METHOD_ID_getSeniorVersion, 0);
     NAPI_CALL(env, napi_create_int32(env, value, &napiValue));
+    LOGI("[device_info] %s return value: %d", "GetSeniorVersion", value);
     return napiValue;
 }
 
@@ -256,6 +276,7 @@ static napi_value GetFeatureVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetFeatureVersion");
     int value = deviceinfo->GetDeviceInfo(METHOD_ID_getFeatureVersion, 0);
     NAPI_CALL(env, napi_create_int32(env, value, &napiValue));
+    LOGI("[device_info] %s return value: %d", "GetFeatureVersion", value);
     return napiValue;
 }
 
@@ -266,6 +287,7 @@ static napi_value GetBuildVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBuildVersion");
     int value = deviceinfo->GetDeviceInfo(METHOD_ID_getBuildVersion, 0);
     NAPI_CALL(env, napi_create_int32(env, value, &napiValue));
+    LOGI("[device_info] %s return value: %d", "GetBuildVersion", value);
     return napiValue;
 }
 
@@ -276,6 +298,7 @@ static napi_value GetSdkApiVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetSdkApiVersion");
     int value = deviceinfo->GetDeviceInfo(METHOD_ID_getSdkApiVersion, 0);
     NAPI_CALL(env, napi_create_int32(env, value, &napiValue));
+    LOGI("[device_info] %s return value: %d", "GetSdkApiVersion", value);
     return napiValue;
 }
 
@@ -291,6 +314,7 @@ static napi_value GetFirstApiVersion(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetFirstApiVersion");
     int value = deviceinfo->GetDeviceInfo(METHOD_ID_getFirstApiVersion, firstApiVersion);
     NAPI_CALL(env, napi_create_int32(env, value, &napiValue));
+    LOGI("[device_info] %s return value: %d", "GetFirstApiVersion", value);
     return napiValue;
 }
 
@@ -302,7 +326,7 @@ static napi_value GetVersionId(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetVersionId");
     auto deviceinfoSdk = SdkVersionInfo::Create();
     NAPI_ASSERT(env, deviceinfoSdk != nullptr, "deviceinfo is null for GetVersionId");
-    char buffer[MAX_LEN] = {0};
+    char buffer[MAX_LEN] = { 0 };
     int len = snprintf_s(buffer, sizeof(buffer), sizeof(buffer) - 1, "%s/%s/%s/%s/%s/%s/%s/%d/%s/%s",
         deviceinfo->GetDeviceInfo(METHOD_ID_getDeviceType, g_defaultValue).c_str(),
         deviceinfo->GetDeviceInfo(METHOD_ID_getManufacture, g_defaultValue).c_str(),
@@ -316,6 +340,8 @@ static napi_value GetVersionId(napi_env env, napi_callback_info info)
         deviceinfoSdk->GetDeviceInfo(METHOD_ID_getBuildType, g_defaultValue).c_str());
     NAPI_ASSERT(env, len > 0, "Failed to format version id");
     NAPI_CALL(env, napi_create_string_utf8(env, buffer, len, &napiValue));
+    std::string versionId(buffer, len);
+    LOGI("[device_info] %s return value: %s", "GetVersionId", versionId.c_str());
     return napiValue;
 }
 
@@ -326,6 +352,7 @@ static napi_value GetBuildType(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBuildType");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getBuildType, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetBuildType", value.c_str());
     return napiValue;
 }
 
@@ -336,6 +363,7 @@ static napi_value GetBuildUser(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBuildUser");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getBuildUser, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetBuildUser", value.c_str());
     return napiValue;
 }
 
@@ -346,6 +374,7 @@ static napi_value GetBuildHost(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBuildHost");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getBuildHost, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetBuildHost", value.c_str());
     return napiValue;
 }
 
@@ -356,6 +385,7 @@ static napi_value GetBuildTime(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBuildTime");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getBuildTime, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetBuildTime", value.c_str());
     return napiValue;
 }
 
@@ -366,6 +396,7 @@ static napi_value GetBuildRootHash(napi_env env, napi_callback_info info)
     NAPI_ASSERT(env, deviceinfo != nullptr, "deviceinfo is null for GetBuildRootHash");
     std::string value = deviceinfo->GetDeviceInfo(METHOD_ID_getBuildRootHash, g_defaultValue);
     NAPI_CALL(env, napi_create_string_utf8(env, value.c_str(), value.length(), &napiValue));
+    LOGI("[device_info] %s return value: %s", "GetBuildRootHash", value.c_str());
     return napiValue;
 }
 
@@ -379,35 +410,35 @@ static napi_value Init(napi_env env, napi_value exports)
      * Attribute definition
      */
     napi_property_descriptor desc[] = {
-        {"deviceType", nullptr, nullptr, GetDeviceType, nullptr, nullptr, napi_default, nullptr},
-        {"manufacture", nullptr, nullptr, GetManufacture, nullptr, nullptr, napi_default, nullptr},
-        {"brand", nullptr, nullptr, GetBrand, nullptr, nullptr, napi_default, nullptr},
-        {"marketName", nullptr, nullptr, GetMarketName, nullptr, nullptr, napi_default, nullptr},
-        {"productSeries", nullptr, nullptr, GetProductSeries, nullptr, nullptr, napi_default, nullptr},
-        {"productModel", nullptr, nullptr, GetProductModel, nullptr, nullptr, napi_default, nullptr},
-        {"productModelAlias", nullptr, nullptr, GetProductModelAlias, nullptr, nullptr, napi_default, nullptr},
-        {"softwareModel", nullptr, nullptr, GetSoftwareModel, nullptr, nullptr, napi_default, nullptr},
-        {"hardwareModel", nullptr, nullptr, GetHardwareModel, nullptr, nullptr, napi_default, nullptr},
-        {"hardwareProfile", nullptr, nullptr, GetHardwareProfile, nullptr, nullptr, napi_default, nullptr},
-        {"bootloaderVersion", nullptr, nullptr, GetBootLoaderVersion, nullptr, nullptr, napi_default, nullptr},
-        {"abiList", nullptr, nullptr, GetAbiList, nullptr, nullptr, napi_default, nullptr},
-        {"securityPatchTag", nullptr, nullptr, GetSecurityPatchTag, nullptr, nullptr, napi_default, nullptr},
-        {"displayVersion", nullptr, nullptr, GetDisplayVersion, nullptr, nullptr, napi_default, nullptr},
-        {"incrementalVersion", nullptr, nullptr, GetIncrementalVersion, nullptr, nullptr, napi_default, nullptr},
-        {"osReleaseType", nullptr, nullptr, GetOsReleaseType, nullptr, nullptr, napi_default, nullptr},
-        {"osFullName", nullptr, nullptr, GetOSFullName, nullptr, nullptr, napi_default, nullptr},
-        {"majorVersion", nullptr, nullptr, GetMajorVersion, nullptr, nullptr, napi_default, nullptr},
-        {"seniorVersion", nullptr, nullptr, GetSeniorVersion, nullptr, nullptr, napi_default, nullptr},
-        {"featureVersion", nullptr, nullptr, GetFeatureVersion, nullptr, nullptr, napi_default, nullptr},
-        {"buildVersion", nullptr, nullptr, GetBuildVersion, nullptr, nullptr, napi_default, nullptr},
-        {"sdkApiVersion", nullptr, nullptr, GetSdkApiVersion, nullptr, nullptr, napi_default, nullptr},
-        {"firstApiVersion", nullptr, nullptr, GetFirstApiVersion, nullptr, nullptr, napi_default, nullptr},
-        {"versionId", nullptr, nullptr, GetVersionId, nullptr, nullptr, napi_default, nullptr},
-        {"buildType", nullptr, nullptr, GetBuildType, nullptr, nullptr, napi_default, nullptr},
-        {"buildUser", nullptr, nullptr, GetBuildUser, nullptr, nullptr, napi_default, nullptr},
-        {"buildHost", nullptr, nullptr, GetBuildHost, nullptr, nullptr, napi_default, nullptr},
-        {"buildTime", nullptr, nullptr, GetBuildTime, nullptr, nullptr, napi_default, nullptr},
-        {"buildRootHash", nullptr, nullptr, GetBuildRootHash, nullptr, nullptr, napi_default, nullptr},
+        { "deviceType", nullptr, nullptr, GetDeviceType, nullptr, nullptr, napi_default, nullptr },
+        { "manufacture", nullptr, nullptr, GetManufacture, nullptr, nullptr, napi_default, nullptr },
+        { "brand", nullptr, nullptr, GetBrand, nullptr, nullptr, napi_default, nullptr },
+        { "marketName", nullptr, nullptr, GetMarketName, nullptr, nullptr, napi_default, nullptr },
+        { "productSeries", nullptr, nullptr, GetProductSeries, nullptr, nullptr, napi_default, nullptr },
+        { "productModel", nullptr, nullptr, GetProductModel, nullptr, nullptr, napi_default, nullptr },
+        { "productModelAlias", nullptr, nullptr, GetProductModelAlias, nullptr, nullptr, napi_default, nullptr },
+        { "softwareModel", nullptr, nullptr, GetSoftwareModel, nullptr, nullptr, napi_default, nullptr },
+        { "hardwareModel", nullptr, nullptr, GetHardwareModel, nullptr, nullptr, napi_default, nullptr },
+        { "hardwareProfile", nullptr, nullptr, GetHardwareProfile, nullptr, nullptr, napi_default, nullptr },
+        { "bootloaderVersion", nullptr, nullptr, GetBootLoaderVersion, nullptr, nullptr, napi_default, nullptr },
+        { "abiList", nullptr, nullptr, GetAbiList, nullptr, nullptr, napi_default, nullptr },
+        { "securityPatchTag", nullptr, nullptr, GetSecurityPatchTag, nullptr, nullptr, napi_default, nullptr },
+        { "displayVersion", nullptr, nullptr, GetDisplayVersion, nullptr, nullptr, napi_default, nullptr },
+        { "incrementalVersion", nullptr, nullptr, GetIncrementalVersion, nullptr, nullptr, napi_default, nullptr },
+        { "osReleaseType", nullptr, nullptr, GetOsReleaseType, nullptr, nullptr, napi_default, nullptr },
+        { "osFullName", nullptr, nullptr, GetOSFullName, nullptr, nullptr, napi_default, nullptr },
+        { "majorVersion", nullptr, nullptr, GetMajorVersion, nullptr, nullptr, napi_default, nullptr },
+        { "seniorVersion", nullptr, nullptr, GetSeniorVersion, nullptr, nullptr, napi_default, nullptr },
+        { "featureVersion", nullptr, nullptr, GetFeatureVersion, nullptr, nullptr, napi_default, nullptr },
+        { "buildVersion", nullptr, nullptr, GetBuildVersion, nullptr, nullptr, napi_default, nullptr },
+        { "sdkApiVersion", nullptr, nullptr, GetSdkApiVersion, nullptr, nullptr, napi_default, nullptr },
+        { "firstApiVersion", nullptr, nullptr, GetFirstApiVersion, nullptr, nullptr, napi_default, nullptr },
+        { "versionId", nullptr, nullptr, GetVersionId, nullptr, nullptr, napi_default, nullptr },
+        { "buildType", nullptr, nullptr, GetBuildType, nullptr, nullptr, napi_default, nullptr },
+        { "buildUser", nullptr, nullptr, GetBuildUser, nullptr, nullptr, napi_default, nullptr },
+        { "buildHost", nullptr, nullptr, GetBuildHost, nullptr, nullptr, napi_default, nullptr },
+        { "buildTime", nullptr, nullptr, GetBuildTime, nullptr, nullptr, napi_default, nullptr },
+        { "buildRootHash", nullptr, nullptr, GetBuildRootHash, nullptr, nullptr, napi_default, nullptr },
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(napi_property_descriptor), desc));
     CreateDeviceTypes(env, exports);
@@ -419,15 +450,13 @@ EXTERN_C_END
 /*
  * Module definition
  */
-static napi_module _module = {
-    .nm_version = 1,
+static napi_module _module = { .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = NULL,
     .nm_register_func = Init,
     .nm_modname = "deviceInfo",
-    .nm_priv = ((void *)0),
-    .reserved = { 0 }
-};
+    .nm_priv = ((void*)0),
+    .reserved = { 0 } };
 
 #ifdef ANDROID_PLATFORM
 static void DeviceInfoPluginJniRegister()
