@@ -204,7 +204,10 @@ int BluetoothGattServerImpl::AddService(int32_t appId, BluetoothGattService* ser
     return BT_NO_ERROR;
 }
 
-void BluetoothGattServerImpl::ClearServices(int appId) {}
+int BluetoothGattServerImpl::ClearServices(int appId)
+{
+    return BT_NO_ERROR;
+}
 
 int BluetoothGattServerImpl::RegisterApplication(const sptr<IBluetoothGattServerCallback>& callback)
 {

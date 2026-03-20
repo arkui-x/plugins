@@ -80,6 +80,36 @@ bool AudioStreamManager::IsStreamActiveByStreamUsage(StreamUsage streamUsage) co
     return false;
 }
 
+bool AudioStreamManager::IsFastPlaybackSupported(AudioStreamInfo &streamInfo, StreamUsage usage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
+bool AudioStreamManager::IsFastRecordingSupported(AudioStreamInfo &streamInfo, SourceType source)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
+bool AudioStreamManager::IsMultichannelPlaybackSupported(AudioStreamInfo &streamInfo, StreamUsage streamUsage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
+bool AudioStreamManager::IsDirectPlaybackSupported(AudioStreamInfo &streamInfo, StreamUsage streamUsage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
+bool AudioStreamManager::IsOffloadPlaybackSupported(AudioStreamInfo &streamInfo, StreamUsage streamUsage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
 int32_t AudioStreamManager::GetHardwareOutputSamplingRate(std::shared_ptr<AudioDeviceDescriptor>& desc)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);

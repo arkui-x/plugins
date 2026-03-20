@@ -43,6 +43,7 @@ template("plugin_system_date_time_static") {
 
   ohos_source_set(target_name) {
     defines += invoker.defines
+    defines += [ "CROSSPLATFORM" ]
     cflags_cc += invoker.cflags_cc
     configs = [ "//base/time/time_service/services:time_service_gen_config" ]
 
