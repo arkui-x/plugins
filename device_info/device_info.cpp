@@ -13,13 +13,12 @@
  * limitations under the License.
  */
 
-#include "plugins/device_info/device_info.h"
-
 #include "log.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "plugin_utils.h"
 #include "securec.h"
+#include "plugins/device_info/device_info.h"
 
 #ifdef ANDROID_PLATFORM
 #include "plugins/device_info/android/java/jni/device_info_jni.h"
@@ -410,35 +409,35 @@ static napi_value Init(napi_env env, napi_value exports)
      * Attribute definition
      */
     napi_property_descriptor desc[] = {
-        { "deviceType", nullptr, nullptr, GetDeviceType, nullptr, nullptr, napi_default, nullptr },
-        { "manufacture", nullptr, nullptr, GetManufacture, nullptr, nullptr, napi_default, nullptr },
-        { "brand", nullptr, nullptr, GetBrand, nullptr, nullptr, napi_default, nullptr },
-        { "marketName", nullptr, nullptr, GetMarketName, nullptr, nullptr, napi_default, nullptr },
-        { "productSeries", nullptr, nullptr, GetProductSeries, nullptr, nullptr, napi_default, nullptr },
-        { "productModel", nullptr, nullptr, GetProductModel, nullptr, nullptr, napi_default, nullptr },
-        { "productModelAlias", nullptr, nullptr, GetProductModelAlias, nullptr, nullptr, napi_default, nullptr },
-        { "softwareModel", nullptr, nullptr, GetSoftwareModel, nullptr, nullptr, napi_default, nullptr },
-        { "hardwareModel", nullptr, nullptr, GetHardwareModel, nullptr, nullptr, napi_default, nullptr },
-        { "hardwareProfile", nullptr, nullptr, GetHardwareProfile, nullptr, nullptr, napi_default, nullptr },
-        { "bootloaderVersion", nullptr, nullptr, GetBootLoaderVersion, nullptr, nullptr, napi_default, nullptr },
-        { "abiList", nullptr, nullptr, GetAbiList, nullptr, nullptr, napi_default, nullptr },
-        { "securityPatchTag", nullptr, nullptr, GetSecurityPatchTag, nullptr, nullptr, napi_default, nullptr },
-        { "displayVersion", nullptr, nullptr, GetDisplayVersion, nullptr, nullptr, napi_default, nullptr },
-        { "incrementalVersion", nullptr, nullptr, GetIncrementalVersion, nullptr, nullptr, napi_default, nullptr },
-        { "osReleaseType", nullptr, nullptr, GetOsReleaseType, nullptr, nullptr, napi_default, nullptr },
-        { "osFullName", nullptr, nullptr, GetOSFullName, nullptr, nullptr, napi_default, nullptr },
-        { "majorVersion", nullptr, nullptr, GetMajorVersion, nullptr, nullptr, napi_default, nullptr },
-        { "seniorVersion", nullptr, nullptr, GetSeniorVersion, nullptr, nullptr, napi_default, nullptr },
-        { "featureVersion", nullptr, nullptr, GetFeatureVersion, nullptr, nullptr, napi_default, nullptr },
-        { "buildVersion", nullptr, nullptr, GetBuildVersion, nullptr, nullptr, napi_default, nullptr },
-        { "sdkApiVersion", nullptr, nullptr, GetSdkApiVersion, nullptr, nullptr, napi_default, nullptr },
-        { "firstApiVersion", nullptr, nullptr, GetFirstApiVersion, nullptr, nullptr, napi_default, nullptr },
-        { "versionId", nullptr, nullptr, GetVersionId, nullptr, nullptr, napi_default, nullptr },
-        { "buildType", nullptr, nullptr, GetBuildType, nullptr, nullptr, napi_default, nullptr },
-        { "buildUser", nullptr, nullptr, GetBuildUser, nullptr, nullptr, napi_default, nullptr },
-        { "buildHost", nullptr, nullptr, GetBuildHost, nullptr, nullptr, napi_default, nullptr },
-        { "buildTime", nullptr, nullptr, GetBuildTime, nullptr, nullptr, napi_default, nullptr },
-        { "buildRootHash", nullptr, nullptr, GetBuildRootHash, nullptr, nullptr, napi_default, nullptr },
+        {"deviceType", nullptr, nullptr, GetDeviceType, nullptr, nullptr, napi_default, nullptr},
+        {"manufacture", nullptr, nullptr, GetManufacture, nullptr, nullptr, napi_default, nullptr},
+        {"brand", nullptr, nullptr, GetBrand, nullptr, nullptr, napi_default, nullptr},
+        {"marketName", nullptr, nullptr, GetMarketName, nullptr, nullptr, napi_default, nullptr},
+        {"productSeries", nullptr, nullptr, GetProductSeries, nullptr, nullptr, napi_default, nullptr},
+        {"productModel", nullptr, nullptr, GetProductModel, nullptr, nullptr, napi_default, nullptr},
+        {"productModelAlias", nullptr, nullptr, GetProductModelAlias, nullptr, nullptr, napi_default, nullptr},
+        {"softwareModel", nullptr, nullptr, GetSoftwareModel, nullptr, nullptr, napi_default, nullptr},
+        {"hardwareModel", nullptr, nullptr, GetHardwareModel, nullptr, nullptr, napi_default, nullptr},
+        {"hardwareProfile", nullptr, nullptr, GetHardwareProfile, nullptr, nullptr, napi_default, nullptr},
+        {"bootloaderVersion", nullptr, nullptr, GetBootLoaderVersion, nullptr, nullptr, napi_default, nullptr},
+        {"abiList", nullptr, nullptr, GetAbiList, nullptr, nullptr, napi_default, nullptr},
+        {"securityPatchTag", nullptr, nullptr, GetSecurityPatchTag, nullptr, nullptr, napi_default, nullptr},
+        {"displayVersion", nullptr, nullptr, GetDisplayVersion, nullptr, nullptr, napi_default, nullptr},
+        {"incrementalVersion", nullptr, nullptr, GetIncrementalVersion, nullptr, nullptr, napi_default, nullptr},
+        {"osReleaseType", nullptr, nullptr, GetOsReleaseType, nullptr, nullptr, napi_default, nullptr},
+        {"osFullName", nullptr, nullptr, GetOSFullName, nullptr, nullptr, napi_default, nullptr},
+        {"majorVersion", nullptr, nullptr, GetMajorVersion, nullptr, nullptr, napi_default, nullptr},
+        {"seniorVersion", nullptr, nullptr, GetSeniorVersion, nullptr, nullptr, napi_default, nullptr},
+        {"featureVersion", nullptr, nullptr, GetFeatureVersion, nullptr, nullptr, napi_default, nullptr},
+        {"buildVersion", nullptr, nullptr, GetBuildVersion, nullptr, nullptr, napi_default, nullptr},
+        {"sdkApiVersion", nullptr, nullptr, GetSdkApiVersion, nullptr, nullptr, napi_default, nullptr},
+        {"firstApiVersion", nullptr, nullptr, GetFirstApiVersion, nullptr, nullptr, napi_default, nullptr},
+        {"versionId", nullptr, nullptr, GetVersionId, nullptr, nullptr, napi_default, nullptr},
+        {"buildType", nullptr, nullptr, GetBuildType, nullptr, nullptr, napi_default, nullptr},
+        {"buildUser", nullptr, nullptr, GetBuildUser, nullptr, nullptr, napi_default, nullptr},
+        {"buildHost", nullptr, nullptr, GetBuildHost, nullptr, nullptr, napi_default, nullptr},
+        {"buildTime", nullptr, nullptr, GetBuildTime, nullptr, nullptr, napi_default, nullptr},
+        {"buildRootHash", nullptr, nullptr, GetBuildRootHash, nullptr, nullptr, napi_default, nullptr},
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(napi_property_descriptor), desc));
     CreateDeviceTypes(env, exports);
@@ -450,13 +449,15 @@ EXTERN_C_END
 /*
  * Module definition
  */
-static napi_module _module = { .nm_version = 1,
+static napi_module _module = {
+    .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = NULL,
     .nm_register_func = Init,
     .nm_modname = "deviceInfo",
-    .nm_priv = ((void*)0),
-    .reserved = { 0 } };
+    .nm_priv = ((void *)0),
+    .reserved = { 0 }
+};
 
 #ifdef ANDROID_PLATFORM
 static void DeviceInfoPluginJniRegister()
