@@ -343,7 +343,7 @@ int32_t RecorderImpl::GetAvailableEncoder(std::vector<EncoderCapabilityData> &en
     return MSERR_OK;
 }
 
-int32_t RecorderImpl::GetMaxAmplitude()
+int32_t RecorderImpl::GetMaxAmplitude(int32_t &amplitude)
 {
 
     return MSERR_OK;
@@ -360,6 +360,11 @@ int32_t RecorderImpl::SetWatermark(std::shared_ptr<AVBuffer> &waterMarkBuffer)
 }
 
 int32_t RecorderImpl::SetUserMeta(const std::shared_ptr<Meta> &userMeta)
+{
+    return MSERR_OK;
+}
+
+int32_t RecorderImpl::SetCustomInfo(const std::shared_ptr<Meta> &customInfo)
 {
     return MSERR_OK;
 }

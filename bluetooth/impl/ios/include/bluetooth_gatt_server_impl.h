@@ -32,7 +32,7 @@ public:
     BluetoothGattServerImpl();
     ~BluetoothGattServerImpl() = default;
     int AddService(int32_t appId, BluetoothGattService* services) override;
-    void ClearServices(int appId) override;
+    int ClearServices(int appId) override;
     int RegisterApplication(const sptr<IBluetoothGattServerCallback>& callback) override;
     int DeregisterApplication(int appId) override;
     int Connect(int appId, const BluetoothGattDevice& device, bool isDirect) override;

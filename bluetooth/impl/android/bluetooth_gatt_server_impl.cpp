@@ -179,9 +179,10 @@ void BluetoothGattServerImpl::OnConnectionStateChanged(
     }
 }
 
-void BluetoothGattServerImpl::ClearServices(int appId)
+int BluetoothGattServerImpl::ClearServices(int appId)
 {
     HILOGE("Unsupport GattServer ClearServices");
+    return BT_ERR_INTERNAL_ERROR;
 }
 
 int BluetoothGattServerImpl::Connect(int appId, const BluetoothGattDevice& device, bool isDirect)

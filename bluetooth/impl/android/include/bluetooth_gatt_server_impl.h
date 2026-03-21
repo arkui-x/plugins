@@ -57,7 +57,7 @@ public:
     void OnMtuChanged(int appId, const BluetoothGattDevice& device, int32_t mtu);
     void OnConnectionStateChanged(int appId, const BluetoothGattDevice& device, int32_t ret, int32_t state);
 
-    void ClearServices(int appId) override;
+    int ClearServices(int appId) override;
     int Connect(int appId, const BluetoothGattDevice& device, bool isDirect) override;
     int CancelConnection(int appId, const BluetoothGattDevice& device) override;
     int GetConnectedState(const std::string &deviceId, int &state) override;
