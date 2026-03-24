@@ -47,26 +47,22 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
     size_t argc = PluginUtilsNApi::MAX_ARG_NUM;
     napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
-
     if ((argc != PluginUtilsNApi::ARG_NUM_1 && argc != PluginUtilsNApi::ARG_NUM_2) 
         || PluginUtilsNApi::GetValueType(env, argv[PluginUtilsNApi::ARG_NUM_0]) != napi_string) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
-
     std::string bridgeName = PluginUtilsNApi::GetStringFromValueUtf8(env, argv[PluginUtilsNApi::ARG_NUM_0]);
     if (bridgeName.empty()) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
     napi_ref bridgeNameRef = PluginUtilsNApi::CreateReference(env, argv[PluginUtilsNApi::ARG_NUM_0]);
     napi_value bridgeNameValue = PluginUtilsNApi::GetReference(env, bridgeNameRef);
-
     napi_value thisVar =
         PluginUtilsNApi::NewInstance(env, info, INTERFACE_PLUGIN_BRIDGE_OBJECT, 1, &bridgeNameValue);
         PluginUtilsNApi::DeleteReference(env, bridgeNameRef);
     if (thisVar == nullptr) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
-
     CodecType codecType = CodecType::JSON_CODEC;
     if (argc == PluginUtilsNApi::ARG_NUM_2) {
         codecType = static_cast<CodecType>(PluginUtilsNApi::GetCInt32(argv[PluginUtilsNApi::ARG_NUM_1], env));
@@ -75,23 +71,26 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
         }
     }
     LOGI("bridge codec type : %d", static_cast<int32_t>(codecType));
-
     auto bridge = BridgeWrap::GetInstance().CreateBridge(bridgeName, codecType);
     if (bridge == nullptr) {
         return PluginUtilsNApi::CreateUndefined(env);
     }
-
-    napi_wrap(
-        env, thisVar, reinterpret_cast<void*>(bridge),
+    auto holder = new (std::nothrow) std::string(bridgeName);
+    if (holder == nullptr) {
+        return PluginUtilsNApi::CreateUndefined(env);
+    }
+    napi_status status = napi_wrap(env, thisVar, reinterpret_cast<void*>(holder),
         [](napi_env env, void* data, void* argv) {
-            auto bridge = reinterpret_cast<Bridge*>(data);
-            bool isTerminate = bridge->GetTerminate();
-            if (!isTerminate) {
-                LOGI("Delete bridge object");
-                BridgeWrap::GetInstance().DeleteBridge(bridge->GetBridgeName());
+            auto holder = reinterpret_cast<std::string*>(data);
+            if (holder != nullptr) {
+                LOGI("Delete bridge object : %{public}s", holder->c_str());
+                BridgeWrap::GetInstance().DeleteBridge(*holder);
+                delete holder;
             }
-        },
-        nullptr, nullptr);
+        }, nullptr, nullptr);
+    if (status != napi_ok) {
+        delete holder;
+    }
     return thisVar;
 }
 
@@ -129,17 +128,20 @@ napi_value BridgeModule::InitCodecType(napi_env env)
     return object;
 }
 
-Bridge* BridgeModule::GetBridge(napi_env env, napi_value thisVal)
+std::shared_ptr<Bridge> BridgeModule::GetBridge(napi_env env, napi_value thisVal)
 {
-    Bridge* bridge = nullptr;
-    napi_unwrap(env, thisVal, reinterpret_cast<void**>(&bridge));
-    return bridge;
+    std::string* holder = nullptr;
+    napi_unwrap(env, thisVal, reinterpret_cast<void**>(&holder));
+    if (holder) {
+        return BridgeWrap::GetInstance().GetBridge(*holder);
+    }
+    return nullptr;
 }
 
 void BridgeModule::CallMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> methodData)
 {
     ErrorCode code { ErrorCode::BRIDGE_ERROR_NO };
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
         methodData->SetBridgeName(bridge->GetBridgeName());
         code = bridge->CallMethod(methodData->GetMethodName(), methodData);
@@ -167,7 +169,7 @@ std::shared_ptr<MethodResult> BridgeModule::CallMethodSyncInner(napi_env env,
 {
     ErrorCode code { ErrorCode::BRIDGE_ERROR_NO };
     auto methodResult = std::make_shared<MethodResult>();
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
         methodData->SetBridgeName(bridge->GetBridgeName());
         code = bridge->CallMethodSync(env, methodData->GetMethodName(), methodData, methodResult);
@@ -193,7 +195,7 @@ void BridgeModule::RegisterMethodInner(
     napi_env env, napi_value thisVal, std::shared_ptr<MethodData> methodData, std::shared_ptr<MethodData> callback)
 {
     ErrorCode code { ErrorCode::BRIDGE_ERROR_NO };
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
         methodData->SetBridgeName(bridge->GetBridgeName());
         code = bridge->RegisterMethod(methodData->GetMethodName(), methodData);
@@ -208,7 +210,7 @@ void BridgeModule::RegisterMethodInner(
 void BridgeModule::UnRegisterMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> callback)
 {
     ErrorCode code { ErrorCode::BRIDGE_ERROR_NO };
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
         callback->SetBridgeName(bridge->GetBridgeName());
         code = bridge->UnRegisterMethod(callback->GetMethodName());
@@ -222,7 +224,7 @@ void BridgeModule::UnRegisterMethodInner(napi_env env, napi_value thisVal, std::
 void BridgeModule::SendMessageInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> callback)
 {
     ErrorCode code { ErrorCode::BRIDGE_ERROR_NO };
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
         callback->SetBridgeName(bridge->GetBridgeName());
         if (bridge->GetCodecType() == CodecType::JSON_CODEC) {
@@ -247,7 +249,7 @@ void BridgeModule::SendMessageInner(napi_env env, napi_value thisVal, std::share
 void BridgeModule::SetMessageListenerInner(
     napi_env env, napi_value thisVal, std::shared_ptr<MethodData> onMessageCallback)
 {
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge != nullptr) {
         onMessageCallback->SetBridgeName(bridge->GetBridgeName());
         bridge->SetMessageListener(onMessageCallback);
@@ -263,7 +265,7 @@ napi_value BridgeModule::BridgeObject::GetBridgeName(napi_env env, napi_callback
     napi_value argv[PluginUtilsNApi::MAX_ARG_NUM] = { nullptr };
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVal, nullptr));
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge) {
         return PluginUtilsNApi::CreateStringUtf8(env, bridge->GetBridgeName());
     } else {
@@ -284,7 +286,7 @@ napi_value BridgeModule::BridgeObject::CallMethod(napi_env env, napi_callback_in
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::CallMethod: Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -332,7 +334,7 @@ napi_value BridgeModule::BridgeObject::RegisterMethod(napi_env env, napi_callbac
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject:::RegisterMethod Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -374,7 +376,7 @@ napi_value BridgeModule::BridgeObject::UnRegisterMethod(napi_env env, napi_callb
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::UnRegisterMethod: Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -414,7 +416,7 @@ napi_value BridgeModule::BridgeObject::SendMessage(napi_env env, napi_callback_i
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::SendMessage: Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -454,7 +456,7 @@ napi_value BridgeModule::BridgeObject::SetMessageListener(napi_env env, napi_cal
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::SendMessage: Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -484,7 +486,7 @@ napi_value BridgeModule::CallMethodWithCallBackInner(napi_env env, napi_callback
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::CallMethodWithCallBackInner: Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -531,7 +533,7 @@ napi_value BridgeModule::BridgeObject::CallMethodWithCallBack(napi_env env, napi
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::CallMethodWithCallBack: Failed to obtain the Bridge object.");
         return PluginUtilsNApi::CreateUndefined(env);
@@ -570,7 +572,7 @@ napi_value BridgeModule::BridgeObject::CallMethodSync(napi_env env, napi_callbac
         return nullptr;
     }
 
-    Bridge* bridge = GetBridge(env, thisVal);
+    auto bridge = GetBridge(env, thisVal);
     if (bridge == nullptr) {
         LOGE("BridgeObject::CallMethodSync: Failed to obtain the Bridge object.");
         napi_throw(env, NAPIUtils::CreateErrorMessage(env, static_cast<int32_t>(ErrorCode::BRIDGE_INVALID)));
