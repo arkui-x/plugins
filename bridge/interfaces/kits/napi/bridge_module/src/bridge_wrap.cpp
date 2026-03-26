@@ -35,9 +35,9 @@ std::shared_ptr<BridgeWrap::Data> BridgeWrap::findData(const std::string& bridge
     return data->second;
 }
 
-Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& codecType)
+std::shared_ptr<Bridge> BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& codecType)
 {
-    auto bridge = new (std::nothrow) Bridge(bridgeName, codecType);
+    auto bridge = std::make_shared<Bridge>(bridgeName, codecType);
     if (bridge == nullptr) {
         return nullptr;
     }
@@ -49,7 +49,7 @@ Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& 
     return bridge;
 }
 
-Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data, const CodecType& codecType)
+std::shared_ptr<Bridge> BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data, const CodecType& codecType)
 {
     if (data) {
         data->ref_++;
@@ -61,16 +61,27 @@ Bridge* BridgeWrap::CopyBridge(std::shared_ptr<BridgeWrap::Data> data, const Cod
     return nullptr;
 }
 
-Bridge* BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
+std::shared_ptr<Bridge> BridgeWrap::CreateBridge(const std::string& bridgeName, const CodecType& codecType)
 {
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
     auto data = findData(bridgeName);
-    if (data == nullptr) {
+    if (data == nullptr || data->bridge_ == nullptr) {
         LOGI("BuildBridge bridgeName is %{public}s,", bridgeName.c_str());
         return BuildBridge(bridgeName, codecType);
     }
     LOGI("CopyBridge bridgeName is %{public}s,", bridgeName.c_str());
     return CopyBridge(data, codecType);
+}
+
+std::shared_ptr<Bridge> BridgeWrap::GetBridge(const std::string& bridgeName)
+{
+    std::lock_guard<std::mutex> lock(*bridgeListLock_);
+    auto data = findData(bridgeName);
+    if (data == nullptr) {
+        LOGE("GetBridge: The bridge with name %{public}s does not exist.", bridgeName.c_str());
+        return nullptr;
+    }
+    return data->bridge_;
 }
 
 void BridgeWrap::DeleteBridge(const std::string& bridgeName)
@@ -80,14 +91,12 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName)
     if (data == nullptr) {
         return;
     }
-
     LOGI("DeleteBridge bridgeName is %{public}s,", bridgeName.c_str());
     data->ref_--;
     if (data->ref_ == 0) {
         if (data->bridge_) {
             data->bridge_->UnRegisterBridge();
-            delete data->bridge_;
-            data->bridge_ = nullptr;
+            data->bridge_.reset();
         }
         auto it = bridgeList_->find(bridgeName);
         if (it != bridgeList_->end()) {

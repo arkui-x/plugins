@@ -55,7 +55,7 @@ private:
     static napi_value CreateBridge(napi_env env, napi_callback_info info);
     static void DefinePluginBridgeObjectClass(napi_env env, napi_value exports);
     static void InitBridgeProperties(napi_env env, napi_value exports);
-    static Bridge* GetBridge(napi_env env, napi_value thisVal);
+    static std::shared_ptr<Bridge> GetBridge(napi_env env, napi_value thisVal);
     static void CallMethodInner(napi_env env, napi_value thisVal, std::shared_ptr<MethodData> methodData);
     static std::shared_ptr<MethodResult> CallMethodSyncInner(napi_env env,
         napi_value thisVal,

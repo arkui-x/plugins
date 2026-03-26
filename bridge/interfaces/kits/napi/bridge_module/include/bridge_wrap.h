@@ -33,18 +33,19 @@ public:
         ~Data() = default;
 
         int32_t ref_ = 0;
-        Bridge* bridge_ = nullptr;
+        std::shared_ptr<Bridge> bridge_ = nullptr;
     };
     static BridgeWrap& GetInstance();
-    Bridge* CreateBridge(const std::string& bridgeName, const CodecType& codecType);
+    std::shared_ptr<Bridge> CreateBridge(const std::string& bridgeName, const CodecType& codecType);
+    std::shared_ptr<Bridge> GetBridge(const std::string& bridgeName);
     void DeleteBridge(const std::string& bridgeName);
 private:
     std::map<std::string, std::shared_ptr<Data>> *bridgeList_ = new std::map<std::string, std::shared_ptr<Data>>;
     std::mutex *bridgeListLock_ = new std::mutex;
 
     std::shared_ptr<Data> findData(const std::string& bridgeNameWithID);
-    Bridge* BuildBridge(const std::string& bridgeName, const CodecType& codecType);
-    Bridge* CopyBridge(std::shared_ptr<Data> data, const CodecType& codecType);
+    std::shared_ptr<Bridge> BuildBridge(const std::string& bridgeName, const CodecType& codecType);
+    std::shared_ptr<Bridge> CopyBridge(std::shared_ptr<Data> data, const CodecType& codecType);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif
