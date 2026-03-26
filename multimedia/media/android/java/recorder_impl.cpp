@@ -302,11 +302,6 @@ int32_t RecorderImpl::SetUserMeta(const std::shared_ptr<Meta> &userMeta)
     return MSERR_OK;
 }
 
-int32_t RecorderImpl::SetCustomInfo(const std::shared_ptr<Meta> &customInfo)
-{
-    return MSERR_OK;
-}
-
 int32_t RecorderImpl::SetWillMuteWhenInterrupted(bool muteWhenInterrupted)
 {
     return MSERR_OK;

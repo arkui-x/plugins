@@ -576,6 +576,12 @@ int32_t BluetoothHostImpl::SetConnectionPriority(const std::string &address, int
     return 0;
 }
 
+int32_t BluetoothHostImpl::GetVirtualAddressByHash(
+    int hashAlgorithmType, const std::string &hashValue, std::string &virtualAddress)
+{
+    return 0;
+}
+
 int32_t BluetoothHostImpl::IsProfileExist(const std::string &profileName, bool &isProfileExist)
 {
     return 0;

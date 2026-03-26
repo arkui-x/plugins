@@ -156,5 +156,11 @@ int BluetoothBleCentralManagerImpl::IsValidScannerId(int32_t scannerId, bool &is
     HILOGE("Not Supported");
     return BT_NO_ERROR;
 }
+
+int BluetoothBleCentralManagerImpl::FlushBatchScanResults(int32_t scannerId)
+{
+    HILOGE("Not Supported");
+    return BT_NO_ERROR;
+}
 } // namespace Bluetooth
 } // namespace OHOS
