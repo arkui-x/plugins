@@ -132,6 +132,13 @@ int BluetoothGattClientImpl::ReadCharacteristic(int32_t appId, const BluetoothGa
     return result;
 }
 
+int BluetoothGattClientImpl::ReadCharacteristicByUuid(int32_t appId, const std::string& uuid,
+    int32_t  startHandle, int32_t  endHandle)
+{
+    HILOGI("NOT SUPPORT NOW");
+    return BT_NO_ERROR;
+}
+
 int BluetoothGattClientImpl::WriteCharacteristic(
     int32_t appId, BluetoothGattCharacteristic* characteristic, bool withoutRespond, bool isWithContext)
 {

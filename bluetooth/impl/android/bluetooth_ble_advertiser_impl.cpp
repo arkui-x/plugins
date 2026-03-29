@@ -109,8 +109,8 @@ void BluetoothBleAdvertiserImpl::Close(int32_t advHandle)
     HILOGE("Not Supported");
 }
 
-void BluetoothBleAdvertiserImpl::SetAdvertisingData(
-    const BluetoothBleAdvertiserData& advData, const BluetoothBleAdvertiserData& scanResponse, int32_t advHandle)
+void BluetoothBleAdvertiserImpl::SetAdvertisingData(const BluetoothBleAdvertiserData &advData,
+    const BluetoothBleAdvertiserData &scanResponse, int32_t advHandle, bluetooth::SetAdvDataType type)
 {
     HILOGE("Not Supported");
 }

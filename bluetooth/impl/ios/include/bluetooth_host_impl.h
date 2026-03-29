@@ -136,6 +136,8 @@ public:
     int32_t StartRemoteSdpSearch(const std::string &address, const std::string &uuid) override;
     int32_t GetRemoteServices(const std::string &address) override;
     int32_t SetConnectionPriority(const std::string &address, int32_t priority) override;
+    int32_t GetVirtualAddressByHash(int hashAlgorithmType,
+        const std::string &hashValue, std::string &virtualAddress) override;
     int32_t IsProfileExist(const std::string &profileName, bool &isProfileExist) override;
 
 private:

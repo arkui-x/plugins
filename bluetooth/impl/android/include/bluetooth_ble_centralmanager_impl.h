@@ -62,6 +62,7 @@ public:
     int ChangeScanParams(int32_t scannerId, const BluetoothBleScanSettings &settings,
         const std::vector<BluetoothBleScanFilter> &filters, uint32_t filterAction) override;
     int IsValidScannerId(int32_t scannerId, bool &isValid) override;
+    int FlushBatchScanResults(int32_t scannerId) override;
 
     int32_t GetCallBackScannerId();
 

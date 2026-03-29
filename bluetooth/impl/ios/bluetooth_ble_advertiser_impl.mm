@@ -132,7 +132,7 @@ int32_t BluetoothBleAdvertiserImpl::GetAdvertiserHandle(int32_t& advHandle,
     return BT_NO_ERROR;
 }
 
-void BluetoothBleAdvertiserImpl::SetAdvertisingData(const BluetoothBleAdvertiserData& advData,
-    const BluetoothBleAdvertiserData& scanResponse, int32_t advHandle) {}
+void BluetoothBleAdvertiserImpl::SetAdvertisingData(const BluetoothBleAdvertiserData &advData,
+    const BluetoothBleAdvertiserData &scanResponse, int32_t advHandle, bluetooth::SetAdvDataType type) {}
 } // namespace Bluetooth
 } // namespace OHOS
