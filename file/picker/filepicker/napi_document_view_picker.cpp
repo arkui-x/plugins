@@ -15,6 +15,7 @@
 
 #include "napi_document_view_picker.h"
 #include "js_native_api_types.h"
+#include "napi_common.h"
 
 #ifdef ANDROID_PLATFORM
 #include "plugins/file/picker/filepicker/android/java/jni/document_view_picker_impl.h"
@@ -36,9 +37,7 @@ constexpr const char* KEY_FILE_SUFFIX_CHOICES = "key_file_suffix_choices";
 void ParseDefaultFilePathUri(const napi_env& env, const napi_value& argv, std::string& defaultFilePathUri) {
     napi_value defaultFilePathUriValue;
     napi_get_named_property(env, argv, KEY_PICK_DIR_PATH, &defaultFilePathUriValue);
-    size_t size;
-    napi_get_value_string_utf8(env, defaultFilePathUriValue, nullptr, 0, &size);
-    napi_get_value_string_utf8(env, defaultFilePathUriValue, (char*)defaultFilePathUri.c_str(), size + 1, &size);
+    ParseString(env, defaultFilePathUriValue, defaultFilePathUri);
 }
 
 void ParseFileSuffixFilters(const napi_env& env, const napi_value& argv, std::vector<std::string>& fileSuffixFilters, const char* key) {
