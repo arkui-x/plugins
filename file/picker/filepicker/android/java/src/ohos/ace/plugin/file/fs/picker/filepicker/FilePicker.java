@@ -230,7 +230,7 @@ public class FilePicker {
             onPickerResult(new ArrayList<>(), RESULT_OK);
         } catch (Exception e) {
             ALog.e(LOG_TAG, "startActivityForResult unknown error, err:" + e);
-            onPickerResult(null, RESULT_ERROR);
+            onPickerResult(new ArrayList<>(), RESULT_ERROR);
         }
     }
 

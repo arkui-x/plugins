@@ -76,6 +76,9 @@ void FilePickerJni::NativeInit(JNIEnv* env, jobject jobj)
 std::vector<std::string> jstringListToStdStringVector(JNIEnv* env, jobject list)
 {
     std::vector<std::string> result;
+    if (list == nullptr) {
+        return result;
+    }
     jclass listClass = env->FindClass("java/util/List");
     jmethodID sizeMethod = env->GetMethodID(listClass, "size", "()I");
     jmethodID getMethod = env->GetMethodID(listClass, "get", "(I)Ljava/lang/Object;");
