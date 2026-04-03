@@ -594,13 +594,13 @@ int32_t AudioSystemManager::SetSelfAppVolume(int32_t volume, int32_t flag)
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::SetAppVolume(int32_t appUid, int32_t volume, int32_t flag)
+int32_t AudioSystemManager::SetSystemAppVolumePercentageForUid(int32_t appUid, int32_t volumePercentage)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::GetAppVolume(int32_t appUid, int32_t &volumeLevel) const
+int32_t AudioSystemManager::GetSystemAppVolumePercentageForUid(int32_t appUid, int32_t &volumePercentage) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
@@ -783,6 +783,12 @@ int32_t AudioSystemManager::GetVolumeDegree(AudioVolumeType volumeType, int32_t 
 }
 
 int32_t AudioSystemManager::GetMinVolumeDegree(AudioVolumeType volumeType)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::GetActiveStreamsVolumeInfo(std::vector<ActiveStreamVolumeInfo> &activeStreamsVolumeInfo)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
