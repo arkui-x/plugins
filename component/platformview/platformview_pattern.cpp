@@ -213,6 +213,16 @@ void PlatformViewPattern::PlatformViewAddCallBack()
     };
     renderContextForPlatformView_->AddInitTypeCallBack(OnInitTypeCallback);
 #endif
+#if defined(ANDROID_PLATFORM)
+    auto OnInitTypeCallback = [weak = WeakClaim(this)](int32_t& type) {
+        auto platformViewPattern = weak.Upgrade();
+        CHECK_NULL_VOID(platformViewPattern);
+        if (auto renderSurface = platformViewPattern->renderSurfaceWeakPtr_.Upgrade(); renderSurface) {
+            renderSurface->AddInitTypeCallBack(type);
+        }
+    };
+    renderContextForPlatformView_->AddInitTypeCallBack(OnInitTypeCallback);
+#endif
 }
 
 void PlatformViewPattern::OnAreaChangedInner()
