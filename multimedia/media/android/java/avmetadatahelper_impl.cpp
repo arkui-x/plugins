@@ -124,8 +124,20 @@ std::shared_ptr<PixelMap> AVMetadataHelperImpl::FetchScaledFrameYuv(
     return nullptr;
 }
 
+FetchFrameResult AVMetadataHelperImpl::FetchScaledFrameYuvWithTimeout(int64_t timeUs, int32_t option,
+    const PixelMapParams &param, int64_t timeoutMs)
+{
+    return FetchFrameResult(nullptr, nullptr, false);
+}
+
 int32_t AVMetadataHelperImpl::FetchScaledFrameYuvs(const std::vector<int64_t>& timeUs,
     int32_t option, const PixelMapParams &param)
+{
+    return MSERR_OK;
+}
+
+int32_t AVMetadataHelperImpl::FetchScaledFrameYuvsWithTimeout(const std::vector<int64_t>& timeUs,
+    int32_t option, const PixelMapParams &param, int64_t timeoutMs)
 {
     return MSERR_OK;
 }
@@ -153,6 +165,11 @@ std::shared_ptr<Meta> AVMetadataHelperImpl::GetAVMetadata()
         meta->SetData(tag, iter->second);
     }
     return meta;
+}
+
+MetadataResult AVMetadataHelperImpl::GetAVMetadataWithTimeout(int64_t timeoutMs)
+{
+    return MetadataResult(nullptr, false);
 }
 
 int32_t AVMetadataHelperImpl::CancelAllFetchFrames()
