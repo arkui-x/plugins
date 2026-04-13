@@ -34,6 +34,7 @@ typedef NSURLRequest* _Nullable (^HTTPRequestWillRedirectionBlock)(NSURLSession*
 @property (nonatomic, copy) NSString* urlPath;
 @property (nonatomic, copy) NSString* method;
 @property (nonatomic, strong) id bodyParam;
+@property (nonatomic, assign) BOOL bodyOrQueryConfigured;
 @property (nonatomic, assign) NSInteger returnDataType;
 @property (nonatomic, strong) NSDictionary* headerJson;
 @property (nonatomic, assign) NSTimeInterval readTimeout;
