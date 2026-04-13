@@ -38,10 +38,15 @@ public:
     std::shared_ptr<PixelMap> FetchFrameYuv(int64_t timeUs, int32_t option, const PixelMapParams &param) override;
     int32_t FetchScaledFrameYuvs(const std::vector<int64_t>& timeUs,
         int32_t option, const PixelMapParams &param) override;
+    int32_t FetchScaledFrameYuvsWithTimeout(const std::vector<int64_t>& timeUs, int32_t option,
+        const PixelMapParams &param, int64_t timeoutMs) override;
     std::shared_ptr<PixelMap> FetchScaledFrameYuv(int64_t timeUs, int32_t option, const PixelMapParams &param) override;
     std::shared_ptr<PixelMap> ProcessPixelMap(const std::shared_ptr<AVBuffer> &frameBuffer,
         const PixelMapParams &param, int32_t scaleMode) override;
+    FetchFrameResult FetchScaledFrameYuvWithTimeout(int64_t timeUs, int32_t option,
+        const PixelMapParams &param, int64_t timeoutMs) override;
     std::shared_ptr<Meta> GetAVMetadata() override;
+    MetadataResult GetAVMetadataWithTimeout(int64_t timeoutMs) override;
     void Release() override;
     int32_t SetHelperCallback(const std::shared_ptr<HelperCallback> &callback) override;
     int32_t GetTimeByFrameIndex(uint32_t index, uint64_t &time) override;
