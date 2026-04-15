@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2026 Huawei Device Co., Ltd.
+ * Dynamic module selection for JNI integration testing.
+ *
+ * Usage: ./gradlew -Pmodule=<module> connectedAndroidTest
+ *
+ * To add a new module, add an entry to modules.json in the project root directory.
+ */
+import groovy.json.JsonSlurper
+
+rootProject.name = 'ArkUIXJniTest'
+
+def moduleAppDirs = new JsonSlurper().parse(file("${rootDir}/modules.json"))
+
+def moduleName = settings.gradle.startParameter.projectProperties.get('module')
+if (moduleName == null) {
+    throw new GradleException("Module must be specified. Usage: ./integration-test.sh <module> or ./gradlew -Pmodule=<name>. Available modules: ${moduleAppDirs.keySet()}")
+}
+
+if (!moduleAppDirs.containsKey(moduleName)) {
+    throw new GradleException("Unknown module '${moduleName}'. Available: ${moduleAppDirs.keySet()}")
+}
+
+include ':app'
+project(':app').projectDir = file(moduleAppDirs[moduleName])
+
+// Export common directory for use in module build.gradle
+gradle.ext.commonDir = "${rootDir}/common"
