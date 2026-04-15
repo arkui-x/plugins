@@ -239,6 +239,20 @@ run_module() {
 
     # Install and run tests
     echo "[2/2] Installing and running tests..."
+
+    # Uninstall previous incompatible APKs (signature mismatch fix)
+    local mod_app_dir
+    mod_app_dir=$(get_module_app_dir "${mod}")
+    local app_build_gradle="${SCRIPT_DIR}/${mod_app_dir}/build.gradle"
+    if [ -f "${app_build_gradle}" ]; then
+        local app_pkg test_pkg
+        app_pkg=$(grep 'applicationId' "${app_build_gradle}" | head -1 | sed 's/.*applicationId *"\([^"]*\)".*/\1/')
+        test_pkg="${app_pkg}.test"
+        echo "  Uninstalling old APKs (if present)..."
+        adb uninstall "${app_pkg}" 2>/dev/null || true
+        adb uninstall "${test_pkg}" 2>/dev/null || true
+    fi
+
     echo "-----------------------------------------"
     local exit_code=0
     ./gradlew -Pmodule="${mod}" :app:connectedDebugAndroidTest ${GRADLE_EXTRA_ARGS} 2>&1 | tee -a "${log_file}" || exit_code=$?
