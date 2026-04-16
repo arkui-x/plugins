@@ -44,17 +44,17 @@ public:
     int32_t GetCapturerInfo(AudioCapturerInfo& capturerInfo) const override;
     int32_t GetStreamInfo(AudioStreamInfo& streamInfo) const override;
     bool Start() override;
-    int32_t StartWithError() override { return StartImpl(); }
+    int32_t StartWithError() override;
     int32_t Read(uint8_t& buffer, size_t userSize, bool isBlockingRead) override;
     CapturerState GetStatus() const override;
     bool GetTimeStampInfo(Timestamp &timestampNs, Timestamp::Timestampbase base) const override;
     bool GetAudioTime(Timestamp& timestamp, Timestamp::Timestampbase base) const override;
     bool Pause() const override;
     bool Stop() const override;
-    int32_t StopWithError() const override { return StopImpl(); }
+    int32_t StopWithError() const override;
     bool Flush() const override;
     bool Release() override;
-    int32_t ReleaseWithError() override { return ReleaseImpl(); }
+    int32_t ReleaseWithError() override;
     int32_t GetBufferSize(size_t& bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t& sessionID) const override;
     int32_t SetCapturerPositionCallback(

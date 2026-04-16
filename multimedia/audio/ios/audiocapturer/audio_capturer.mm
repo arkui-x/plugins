@@ -409,6 +409,21 @@ void AudioCapturerPrivate::SetFastStatusChangeCallback(
     const std::shared_ptr<AudioCapturerFastStatusChangeCallback>& callback)
 {}
 
+int32_t AudioCapturerPrivate::StartWithError()
+{
+    return Start() ? SUCCESS : ERROR;
+}
+
+int32_t AudioCapturerPrivate::StopWithError() const
+{
+    return Stop() ? SUCCESS : ERROR;
+}
+
+int32_t AudioCapturerPrivate::ReleaseWithError()
+{
+    return Release() ? SUCCESS : ERROR;
+}
+
 int32_t AudioCapturerPrivate::StartImpl()
 {
     return ERR_NOT_SUPPORTED;
