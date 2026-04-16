@@ -222,6 +222,8 @@ int32_t PlayerImpl::SetLooping(bool loop)
     return Plugin::PlayerJni::SetLooping(long(this), loop);
 }
 
+void PlayerImpl::ResetListParameters() {}
+
 int32_t PlayerImpl::SetPlayerCallback(const std::shared_ptr<PlayerCallback> &callback)
 {
     return Plugin::PlayerJni::SetCallback(long(this), callback);

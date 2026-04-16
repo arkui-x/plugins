@@ -17,6 +17,7 @@ certificate_framwork_common_inc_path = [
 
 framework_common_util_files = [
   "//plugins/security/cert/common/src/blob.c",
+  "//base/security/certificate_framework/frameworks/common/v1.0/src/cf_err_msg.c",
 ]
 
 certificate_framwork_common_files = framework_common_util_files
