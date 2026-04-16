@@ -37,6 +37,8 @@ struct MockNapiValue {
 };
 
 // ===== Global State =====
+// WARNING: The mock state below is NOT thread-safe. This implementation assumes
+// single-threaded execution within a single test process.
 
 static std::vector<std::unique_ptr<MockNapiValue>> g_allValues;
 static std::map<napi_value, void*> g_wrapMap;
@@ -51,6 +53,8 @@ static int g_errorCode = -1;
 static bool g_deferredResolved = false;
 
 // Callback info state
+// Fixed-size argv[10] is sufficient for integration test scenarios.
+// MockSetCallbackArgs() guards against overflow with `i < 10` bound check.
 static struct {
     size_t argc = 0;
     napi_value argv[10] = {nullptr};
@@ -301,9 +305,9 @@ napi_status napi_get_value_string_utf8(napi_env env, napi_value value, char* buf
         if (buf == nullptr) {
             // First call: return string length
             if (result) *result = len;
-        } else {
+        } else if (bufsize > 0) {
             // Second call: copy string content
-            size_t copyLen = (bufsize > 0) ? ((bufsize - 1 < len) ? bufsize - 1 : len) : 0;
+            size_t copyLen = (bufsize - 1 < len) ? bufsize - 1 : len;
             memcpy(buf, v->strVal.c_str(), copyLen);
             buf[copyLen] = '\0';
             if (result) *result = copyLen;

@@ -8,6 +8,8 @@
 
 #define LOG_TAG "JniEnvHolder"
 
+// Note: g_javaVM is set once during test initialization (JNI_OnLoad) on the main thread.
+// This mock assumes single-threaded instrumentation test execution.
 static JavaVM* g_javaVM = nullptr;
 
 void Mock_SetJavaVM(JavaVM* vm) {
