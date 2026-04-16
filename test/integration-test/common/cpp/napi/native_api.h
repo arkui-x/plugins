@@ -1,8 +1,16 @@
 /*
  * Copyright (C) 2026 Huawei Device Co., Ltd.
- * Mock NAPI header for Android JNI integration testing.
- * Provides all types, macros, and function declarations required by
- * napi_document_view_picker.cpp and napi_common.cpp.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #ifndef MOCK_NAPI_NATIVE_API_H
 #define MOCK_NAPI_NATIVE_API_H
@@ -244,7 +252,6 @@ napi_status napi_throw_error(napi_env env, const char* code, const char* msg);
 
 // NAPI_CALL macro (2-arg form used by bluetooth NAPI code)
 #define NAPI_CALL(env, theCall) ((theCall))
-
 
 
 #include <functional>

@@ -1,7 +1,16 @@
 /*
  * Copyright (C) 2026 Huawei Device Co., Ltd.
- * Mock ARKUI_X_Plugin_GetJniEnv() - returns JNIEnv from stored JavaVM.
- * Mock ARKUI_X_Plugin_RegisterJavaPlugin() - immediately invokes the register callback.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #include "plugin_utils.h"
 #include <android/log.h>
@@ -12,11 +21,13 @@
 // This mock assumes single-threaded instrumentation test execution.
 static JavaVM* g_javaVM = nullptr;
 
-void Mock_SetJavaVM(JavaVM* vm) {
+void Mock_SetJavaVM(JavaVM* vm)
+{
     g_javaVM = vm;
 }
 
-JNIEnv* ARKUI_X_Plugin_GetJniEnv() {
+JNIEnv* ARKUI_X_Plugin_GetJniEnv()
+{
     if (!g_javaVM) {
         __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "JavaVM is null");
         return nullptr;
@@ -36,7 +47,8 @@ JNIEnv* ARKUI_X_Plugin_GetJniEnv() {
  * we immediately invoke the register callback since JNI_OnLoad has already
  * set up the JNI environment.
  */
-void ARKUI_X_Plugin_RegisterJavaPlugin(bool (*func)(void*), const char* name) {
+void ARKUI_X_Plugin_RegisterJavaPlugin(bool (*func)(void*), const char* name)
+{
     if (!func) {
         __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
             "ARKUI_X_Plugin_RegisterJavaPlugin: func is null");
@@ -53,7 +65,8 @@ void ARKUI_X_Plugin_RegisterJavaPlugin(bool (*func)(void*), const char* name) {
     func(env);
 }
 
-void ARKUI_X_Plugin_RunAsyncTask(ARKUI_X_Plugin_Task task, ARKUI_X_Plugin_Thread_Mode mode) {
+void ARKUI_X_Plugin_RunAsyncTask(ARKUI_X_Plugin_Task task, ARKUI_X_Plugin_Thread_Mode mode)
+{
     if (task) {
         task();
     }

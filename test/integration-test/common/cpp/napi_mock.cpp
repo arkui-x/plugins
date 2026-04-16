@@ -1,8 +1,16 @@
 /*
  * Copyright (C) 2026 Huawei Device Co., Ltd.
- * Mock NAPI function implementations with MockNapiValue system.
- * Supports JS object property read/write, value extraction, arrays,
- * callbacks, and wrap/unwrap for testing NAPI layer code.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -12,13 +20,19 @@
 #include <map>
 #include <android/log.h>
 
+// Maximum number of callback arguments supported by the mock.
+#define MAX_CALLBACK_ARGS 10
+
 #define LOG_TAG "NapiMock"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 // ===== MockNapiValue =====
 
-enum class MockNapiValueType { INT32, DOUBLE, INT64, UINT32, STRING, BOOL, ARRAY, OBJECT, EXTERNAL, UNDEFINED, NULL_VAL, ARRAYBUFFER };
+enum class MockNapiValueType {
+    INT32, DOUBLE, INT64, UINT32, STRING, BOOL,
+    ARRAY, OBJECT, EXTERNAL, UNDEFINED, NULL_VAL, ARRAYBUFFER
+};
 
 struct MockNapiValue {
     MockNapiValueType type = MockNapiValueType::UNDEFINED;
@@ -53,11 +67,11 @@ static int g_errorCode = -1;
 static bool g_deferredResolved = false;
 
 // Callback info state
-// Fixed-size argv[10] is sufficient for integration test scenarios.
-// MockSetCallbackArgs() guards against overflow with `i < 10` bound check.
+// Fixed-size argv[MAX_CALLBACK_ARGS] is sufficient for integration test scenarios.
+// MockSetCallbackArgs() guards against overflow with `i < MAX_CALLBACK_ARGS` bound check.
 static struct {
     size_t argc = 0;
-    napi_value argv[10] = {nullptr};
+    napi_value argv[MAX_CALLBACK_ARGS] = {nullptr};
     napi_value thisVar = nullptr;
 } g_cbInfo;
 
@@ -83,7 +97,7 @@ void MockNapiReset() {
     g_errorCode = -1;
     g_deferredResolved = false;
     g_cbInfo.argc = 0;
-    memset(g_cbInfo.argv, 0, sizeof(g_cbInfo.argv));
+    memset_s(g_cbInfo.argv, sizeof(g_cbInfo.argv), 0, sizeof(g_cbInfo.argv));
     g_cbInfo.thisVar = nullptr;
     g_customGlobal = nullptr;
     g_callFunctionResult = nullptr;
@@ -97,8 +111,8 @@ bool WasDeferredResolved() { return g_deferredResolved; }
 
 void MockSetCallbackArgs(size_t argc, napi_value* argv, napi_value thisVar) {
     g_cbInfo.argc = argc;
-    memset(g_cbInfo.argv, 0, sizeof(g_cbInfo.argv));
-    for (size_t i = 0; i < argc && i < 10; i++) {
+    memset_s(g_cbInfo.argv, sizeof(g_cbInfo.argv), 0, sizeof(g_cbInfo.argv));
+    for (size_t i = 0; i < argc && i < MAX_CALLBACK_ARGS; i++) {
         g_cbInfo.argv[i] = argv[i];
     }
     g_cbInfo.thisVar = thisVar;
@@ -161,7 +175,7 @@ bool MockIsWrapped(napi_value js_object) {
 napi_status napi_create_object(napi_env env, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::OBJECT;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -170,7 +184,7 @@ napi_status napi_create_int32(napi_env env, int32_t value, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::INT32;
     val->intVal = value;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -191,14 +205,14 @@ napi_status napi_create_string_utf8(napi_env env, const char* str, size_t length
             val->strVal = std::string(str, length);
         }
     }
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
 napi_status napi_create_array(napi_env env, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::ARRAY;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -209,7 +223,7 @@ napi_status napi_create_array_with_length(napi_env env, size_t length, napi_valu
     for (size_t i = 0; i < length; i++) {
         val->arrayElements[i] = nullptr;
     }
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -217,7 +231,7 @@ napi_status napi_create_double(napi_env env, double value, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::DOUBLE;
     val->doubleVal = value;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -226,7 +240,7 @@ napi_status napi_create_external(napi_env env, void* data, napi_finalize finaliz
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::EXTERNAL;
     val->externalData = data;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -235,8 +249,8 @@ napi_status napi_create_external(napi_env env, void* data, napi_finalize finaliz
 napi_status napi_create_promise(napi_env env, napi_deferred* deferred, napi_value* promise) {
     MockNapiValue* defVal = allocValue();
     MockNapiValue* promVal = allocValue();
-    if (deferred) *deferred = static_cast<napi_deferred>(defVal);
-    if (promise) *promise = static_cast<napi_value>(promVal);
+    if (deferred) { *deferred = static_cast<napi_deferred>(defVal); }
+    if (promise) { *promise = static_cast<napi_value>(promVal); }
     return napi_ok;
 }
 
@@ -304,22 +318,22 @@ napi_status napi_get_value_string_utf8(napi_env env, napi_value value, char* buf
         size_t len = v->strVal.length();
         if (buf == nullptr) {
             // First call: return string length
-            if (result) *result = len;
+            if (result) { *result = len; }
         } else if (bufsize > 0) {
             // Second call: copy string content
             size_t copyLen = (bufsize - 1 < len) ? bufsize - 1 : len;
-            memcpy(buf, v->strVal.c_str(), copyLen);
+            memcpy_s(buf, copyLen, v->strVal.c_str(), copyLen);
             buf[copyLen] = '\0';
-            if (result) *result = copyLen;
+            if (result) { *result = copyLen; }
         }
     } else {
-        if (result) *result = 0;
+    if (result) { *result = 0; }
     }
     return napi_ok;
 }
 
 napi_status napi_get_value_int32(napi_env env, napi_value value, int32_t* result) {
-    if (!result) return napi_ok;
+    if (!result) { return napi_ok; }
     MockNapiValue* v = toMock(value);
     if (v) {
         switch (v->type) {
@@ -336,9 +350,12 @@ napi_status napi_get_value_int32(napi_env env, napi_value value, int32_t* result
 }
 
 napi_status napi_get_value_bool(napi_env env, napi_value value, bool* result) {
-    if (!result) return napi_ok;
+    if (!result) { return napi_ok; }
     MockNapiValue* v = toMock(value);
-    if (!v) { *result = false; return napi_ok; }
+    if (!v) {
+        *result = false;
+        return napi_ok;
+    }
     switch (v->type) {
         case MockNapiValueType::BOOL:     *result = v->boolVal; break;
         case MockNapiValueType::INT32:    *result = (v->intVal != 0); break;
@@ -392,7 +409,7 @@ napi_status napi_unwrap(napi_env env, napi_value js_object, void** result) {
 napi_status napi_wrap(napi_env env, napi_value js_object, void* native_object,
     napi_finalize finalize_cb, void* finalize_hint, napi_ref* result) {
     g_wrapMap[js_object] = native_object;
-    if (result) *result = nullptr;
+    if (result) { *result = nullptr; }
     return napi_ok;
 }
 
@@ -407,7 +424,7 @@ napi_status napi_define_class(napi_env env, const char* utf8name, size_t length,
     for (size_t i = 0; i < property_count; i++) {
         val->propertyDescs.push_back(properties[i]);
     }
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -489,7 +506,7 @@ napi_status napi_typeof(napi_env env, napi_value value, napi_valuetype* result) 
 // --- Handle scope (stub) ---
 
 napi_status napi_open_handle_scope(napi_env env, napi_handle_scope* result) {
-    if (result) *result = nullptr;
+    if (result) { *result = nullptr; }
     return napi_ok;
 }
 
@@ -500,7 +517,7 @@ napi_status napi_close_handle_scope(napi_env env, napi_handle_scope scope) {
 // --- Reference management (stub) ---
 
 napi_status napi_create_reference(napi_env env, napi_value value, uint32_t initial_refcount, napi_ref* result) {
-    if (result) *result = reinterpret_cast<napi_ref>(value);
+    if (result) { *result = reinterpret_cast<napi_ref>(value); }
     return napi_ok;
 }
 
@@ -509,7 +526,7 @@ napi_status napi_delete_reference(napi_env env, napi_ref ref) {
 }
 
 napi_status napi_get_reference_value(napi_env env, napi_ref ref, napi_value* result) {
-    if (result) *result = reinterpret_cast<napi_value>(ref);
+    if (result) { *result = reinterpret_cast<napi_value>(ref); }
     return napi_ok;
 }
 
@@ -519,7 +536,7 @@ napi_status napi_create_uint32(napi_env env, uint32_t value, napi_value* result)
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::UINT32;
     val->uint32Val = value;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -527,8 +544,8 @@ napi_status napi_create_arraybuffer(napi_env env, size_t byte_length, void** dat
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::ARRAYBUFFER;
     val->bufferData.resize(byte_length, 0);
-    if (data) *data = val->bufferData.data();
-    if (result) *result = static_cast<napi_value>(val);
+    if (data) { *data = val->bufferData.data(); }
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -536,21 +553,21 @@ napi_status napi_get_boolean(napi_env env, bool value, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::BOOL;
     val->boolVal = value;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
 napi_status napi_get_undefined(napi_env env, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::UNDEFINED;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
 napi_status napi_get_null(napi_env env, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::NULL_VAL;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -570,7 +587,7 @@ napi_status napi_get_global(napi_env env, napi_value* result) {
 napi_status napi_create_error(napi_env env, napi_value code, napi_value msg, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::OBJECT;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -600,7 +617,7 @@ napi_status napi_create_async_work(napi_env env, napi_value async_resource,
     napi_value async_resource_name, void (*execute)(napi_env env, void* data),
     void (*complete)(napi_env env, napi_status status, void* data), void* data,
     napi_async_work* result) {
-    if (result) *result = nullptr;
+    if (result) { *result = nullptr; }
     return napi_ok;
 }
 
@@ -615,7 +632,7 @@ napi_status napi_queue_async_work(napi_env env, napi_async_work work) {
 // --- UV event loop (stub) ---
 
 napi_status napi_get_uv_event_loop(napi_env env, struct uv_loop_s** loop) {
-    if (loop) *loop = nullptr;
+    if (loop) { *loop = nullptr; }
     return napi_ok;
 }
 
@@ -625,7 +642,7 @@ napi_status napi_create_typedarray(napi_env env, napi_typedarray_type type, size
     napi_value arraybuffer, size_t byte_offset, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::OBJECT;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -648,12 +665,12 @@ void napi_module_register(napi_module* mod) {
 // --- Exception handling (stub) ---
 
 napi_status napi_get_and_clear_last_exception(napi_env env, napi_value* result) {
-    if (result) *result = nullptr;
+    if (result) { *result = nullptr; }
     return napi_ok;
 }
 
 napi_status napi_is_exception_pending(napi_env env, bool* result) {
-    if (result) *result = false;
+    if (result) { *result = false; }
     return napi_ok;
 }
 
@@ -663,7 +680,7 @@ napi_status napi_new_instance(napi_env env, napi_value constructor, size_t argc,
     const napi_value* argv, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::OBJECT;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
@@ -676,7 +693,7 @@ napi_status napi_reject_deferred(napi_env env, napi_deferred deferred, napi_valu
 // --- Strict equals (stub) ---
 
 napi_status napi_strict_equals(napi_env env, napi_value lhs, napi_value rhs, bool* result) {
-    if (result) *result = (lhs == rhs);
+    if (result) { *result = (lhs == rhs); }
     return napi_ok;
 }
 
@@ -688,17 +705,17 @@ napi_status napi_strict_equals(napi_env env, napi_value lhs, napi_value rhs, boo
 napi_status napi_get_property_names(napi_env env, napi_value object, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::ARRAY;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
 napi_status napi_get_typedarray_info(napi_env env, napi_value typedarray, napi_typedarray_type* type,
     size_t* length, void** data, napi_value* arraybuffer, size_t* byte_offset) {
-    if (type) *type = napi_uint8_array;
-    if (length) *length = 0;
-    if (data) *data = nullptr;
-    if (arraybuffer) *arraybuffer = nullptr;
-    if (byte_offset) *byte_offset = 0;
+    if (type) { *type = napi_uint8_array; }
+    if (length) { *length = 0; }
+    if (data) { *data = nullptr; }
+    if (arraybuffer) { *arraybuffer = nullptr; }
+    if (byte_offset) { *byte_offset = 0; }
     return napi_ok;
 }
 
@@ -715,14 +732,14 @@ napi_status napi_create_int64(napi_env env, int64_t value, napi_value* result) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::INT64;
     val->int64Val = value;
-    if (result) *result = static_cast<napi_value>(val);
+    if (result) { *result = static_cast<napi_value>(val); }
     return napi_ok;
 }
 
 // --- Extended value extraction ---
 
 napi_status napi_get_value_int64(napi_env env, napi_value value, int64_t* result) {
-    if (!result) return napi_ok;
+    if (!result) { return napi_ok; }
     MockNapiValue* v = toMock(value);
     if (v) {
         switch (v->type) {
@@ -738,7 +755,7 @@ napi_status napi_get_value_int64(napi_env env, napi_value value, int64_t* result
 }
 
 napi_status napi_get_value_uint32(napi_env env, napi_value value, uint32_t* result) {
-    if (!result) return napi_ok;
+    if (!result) { return napi_ok; }
     MockNapiValue* v = toMock(value);
     if (v) {
         switch (v->type) {
@@ -754,7 +771,7 @@ napi_status napi_get_value_uint32(napi_env env, napi_value value, uint32_t* resu
 }
 
 napi_status napi_get_value_double(napi_env env, napi_value value, double* result) {
-    if (!result) return napi_ok;
+    if (!result) { return napi_ok; }
     MockNapiValue* v = toMock(value);
     if (v) {
         switch (v->type) {
@@ -801,7 +818,7 @@ napi_status napi_get_arraybuffer_info(napi_env env, napi_value arraybuffer, void
 // --- Reference management (extended) ---
 
 napi_status napi_reference_unref(napi_env env, napi_ref ref, uint32_t* result) {
-    if (result) *result = 0;
+    if (result) { *result = 0; }
     return napi_ok;
 }
 
@@ -820,7 +837,7 @@ void MockSetGlobal(napi_value global) {
 void MockCreateCallable(napi_value* callable) {
     MockNapiValue* val = allocValue();
     val->type = MockNapiValueType::OBJECT;
-    if (callable) *callable = static_cast<napi_value>(val);
+    if (callable) { *callable = static_cast<napi_value>(val); }
 }
 
 void MockSetCallFunctionResult(napi_value result) {

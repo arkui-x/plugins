@@ -22,6 +22,8 @@ package ohos.ace.plugin.test;
  * Note: This class lives in the common main source set (shared with ALog etc.)
  * so it cannot use JUnit annotations. Subclasses must call {@code doResetMock()}
  * in their own {@code @Before} method.
+ *
+ * @since 1
  */
 public abstract class JniTestBase {
     /**
