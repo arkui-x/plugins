@@ -1,0 +1,19 @@
+/*
+ * Copyright (C) 2026 Huawei Device Co., Ltd.
+ */
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.1'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
