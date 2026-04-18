@@ -131,6 +131,7 @@ bool MethodData::GetName(napi_value arg)
 
 bool MethodData::GetMessageData(napi_value arg)
 {
+    ScopedHandleScope scope(env_);
     if (codecType_ == CodecType::JSON_CODEC) {
         NapiRawValue rawValue { .env = env_, .value = arg };
         auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
@@ -156,6 +157,7 @@ napi_value MethodData::GetMessageResponse(const std::string& data)
 
 bool MethodData::GetParamsByRecord(size_t argc, napi_value* arg)
 {
+    ScopedHandleScope scope(env_);
     if (codecType_ == CodecType::JSON_CODEC) {
         NapiRawValue rawValue { .env = env_, .argc = static_cast<int>(argc), .argValue = arg };
         auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
@@ -171,7 +173,6 @@ bool MethodData::GetParamsByRecord(size_t argc, napi_value* arg)
         SetMethodParamNameBinary(std::move(encoded));
         return true;
     }
-
     LOGE("GetParamsByRecord: codec type is error.");
     return false;
 }
@@ -373,6 +374,7 @@ void MethodData::ReleaseEvent(void)
 
 bool MethodData::GetJSRegisterMethodObject(napi_value object)
 {
+    ScopedHandleScope scope(env_);
     if (!PluginUtilsNApi::HasNamedProperty(env_, object, JS_REGISTER_METHOD_NAME) ||
         !PluginUtilsNApi::HasNamedProperty(env_, object, JS_REGISTER_METHOD_FUNCTION)) {
         LOGE("GetJSRegisterMethodObject: Parameter error.");
@@ -426,6 +428,7 @@ bool MethodData::GetJSRegisterMethodObjectCallBack(const std::string& arg, napi_
 
 bool MethodData::SendMethodResult(const std::string& data, bool removeMethod)
 {
+    ScopedHandleScope scope(env_);
     if (asyncEvent_ == nullptr) {
         LOGE("SendMethodResult: asyncEvent_ is null.");
         return false;
@@ -458,6 +461,7 @@ bool MethodData::SendMethodResult(const std::string& data, bool removeMethod)
 bool MethodData::SendMethodResultBinary(int errorCode, const std::string& errorMessage,
     std::unique_ptr<Ace::Platform::BufferMapping> data, bool removeMethod)
 {
+    ScopedHandleScope scope(env_);
     if (asyncEvent_ == nullptr) {
         LOGE("SendMethodResultBinary: asyncEvent_ is null.");
         return false;
@@ -489,6 +493,7 @@ bool MethodData::SendMethodResultBinary(int errorCode, const std::string& errorM
 
 bool MethodData::SendMessageResponse(const std::string& data, bool removeMethod)
 {
+    ScopedHandleScope scope(env_);
     if (asyncEvent_ == nullptr) {
         LOGE("SendMessageResponse: asyncEvent_ is null.");
         return false;
@@ -524,6 +529,7 @@ bool MethodData::SendMessageResponse(const std::string& data, bool removeMethod)
 
 void MethodData::PlatformCallMethod(const std::string& parameter)
 {
+    ScopedHandleScope scope(env_);
     if (asyncEvent_ == nullptr) {
         LOGE("PlatformCallMethod: asyncEvent_ is null.");
         MethodResult result;
@@ -605,6 +611,7 @@ void MethodData::PlatformCallMethodBinary(std::unique_ptr<Ace::Platform::BufferM
 
 void MethodData::PlatformSendMessage(const std::string& data)
 {
+    ScopedHandleScope scope(env_);
     if (asyncEvent_ == nullptr) {
         LOGE("PlatformSendMessage: asyncEvent_ is null.");
         return;
@@ -626,6 +633,7 @@ void MethodData::PlatformSendMessage(const std::string& data)
 
 void MethodData::PlatformSendMessageBinary(std::unique_ptr<Ace::Platform::BufferMapping> data)
 {
+    ScopedHandleScope scope(env_);
     if (asyncEvent_ == nullptr) {
         LOGE("PlatformSendMessageBinary: asyncEvent_ is null.");
         return;
@@ -641,6 +649,7 @@ void MethodData::PlatformSendMessageBinary(std::unique_ptr<Ace::Platform::Buffer
 
 void MethodData::SendAsyncCallback(int errorCode, napi_value okArg)
 {
+    ScopedHandleScope scope(env_);
     if (asyncEvent_ == nullptr) {
         LOGE("SendAsyncCallback: asyncEvent_ is null.");
         return;
@@ -678,6 +687,7 @@ void MethodData::UpdateMethodName(void)
 
 MethodResult MethodData::PlatformCallMethodSync(const std::string& parameter)
 {
+    ScopedHandleScope scope(env_);
     LOGD("MethodData::PlatformCallMethodSync called for method '%{public}s'", methodName_.c_str());
     MethodResult result;
     result.SetMethodName(methodName_);
@@ -704,6 +714,7 @@ MethodResult MethodData::PlatformCallMethodSync(const std::string& parameter)
 
 MethodResult MethodData::PlatformCallMethodSyncBinary(std::unique_ptr<Ace::Platform::BufferMapping> parameter)
 {
+    ScopedHandleScope scope(env_);
     LOGD("MethodData::PlatformCallMethodSyncBinary called for method '%{public}s'", methodName_.c_str());
     MethodResult result;
     result.SetMethodName(methodName_);

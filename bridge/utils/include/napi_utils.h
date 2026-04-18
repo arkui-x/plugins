@@ -25,6 +25,28 @@
 
 namespace OHOS::Plugin::Bridge {
 using Json = nlohmann::json;
+
+class ScopedHandleScope {
+public:
+    explicit ScopedHandleScope(napi_env env) : env_(env)
+    {
+        if (env_ != nullptr) {
+            napi_open_handle_scope(env_, &scope_);
+        }
+    }
+
+    ~ScopedHandleScope()
+    {
+        if (env_ != nullptr && scope_ != nullptr) {
+            napi_close_handle_scope(env_, scope_);
+        }
+    }
+
+private:
+    napi_env env_ = nullptr;
+    napi_handle_scope scope_ = nullptr;
+};
+
 class NAPIUtils {
 public:
     static bool JsonStringToNapiValues(napi_env env, const std::string& str, size_t& argc, napi_value* argv);
