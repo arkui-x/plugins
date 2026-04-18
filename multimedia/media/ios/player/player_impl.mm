@@ -239,6 +239,8 @@ int32_t PlayerImpl::SetLooping(bool loop)
     return MSERR_OK;
 }
 
+void PlayerImpl::ResetListParameters() {}
+
 int32_t PlayerImpl::SetPlayerCallback(const std::shared_ptr<PlayerCallback> &callback)
 {
     CHECK_AND_RETURN_RET_LOG(callback != nullptr, MSERR_INVALID_VAL, "callback is nullptr");

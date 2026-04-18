@@ -54,6 +54,7 @@ public:
     int32_t GetDuration(int32_t &duration) override;
     int32_t GetPlaybackSpeed(PlaybackRateMode &mode) override;
     int32_t SetLooping(bool loop) override;
+    void ResetListParameters() override;
 #ifdef SUPPORT_VIDEO
     int32_t SetVideoSurface(sptr<Surface> surface) override;
 #endif

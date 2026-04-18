@@ -58,6 +58,7 @@ public:
     int32_t GetDuration(int32_t &duration) override;
     int32_t GetPlaybackSpeed(PlaybackRateMode &mode) override;
     int32_t SetLooping(bool loop) override;
+    void ResetListParameters() override;
     int32_t SetVideoSurface(sptr<Surface> surface) override;
     bool IsPlaying() override;
     int32_t SetParameter(const Format &param) override;
