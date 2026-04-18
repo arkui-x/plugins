@@ -38,11 +38,11 @@ public:
     bool GetTimeStampInfo(Timestamp &timestampNs, Timestamp::Timestampbase base) const override;
     bool GetAudioTime(Timestamp &timestamp, Timestamp::Timestampbase base) const override;
     bool Start() override;
-    int32_t StartWithError() override { return StartImpl(); }
+    int32_t StartWithError() override;
     bool Stop() const override;
-    int32_t StopWithError() const override { return StopImpl(); }
+    int32_t StopWithError() const override;
     bool Release() override;
-    int32_t ReleaseWithError() override { return ReleaseImpl(); }
+    int32_t ReleaseWithError() override;
     int32_t GetBufferSize(size_t &bufferSize) const override;
     int32_t GetAudioStreamId(uint32_t &sessionID) const override;
     int32_t GetBufferDesc(BufferDesc &bufDesc) override;

@@ -560,6 +560,36 @@ int32_t AudioRendererPrivate::GetLatencyWithFlag(uint64_t &latency, LatencyFlag 
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioRendererPrivate::StartWithError(StateChangeCmdType cmdType)
+{
+    return Start(cmdType) ? SUCCESS : ERROR;
+}
+
+int32_t AudioRendererPrivate::StopWithError()
+{
+    return Stop() ? SUCCESS : ERROR;
+}
+
+int32_t AudioRendererPrivate::FlushWithError() const
+{
+    return Flush() ? SUCCESS : ERROR;
+}
+
+int32_t AudioRendererPrivate::ReleaseWithError()
+{
+    return Release() ? SUCCESS : ERROR;
+}
+
+int32_t AudioRendererPrivate::PauseWithError(StateChangeCmdType cmdType)
+{
+    return Pause(cmdType) ? SUCCESS : ERROR;
+}
+
+int32_t AudioRendererPrivate::DrainWithError() const
+{
+    return Drain() ? SUCCESS : ERROR;
+}
+
 int32_t AudioRendererPrivate::StartImpl(StateChangeCmdType cmdType)
 {
     return ERR_NOT_SUPPORTED;
