@@ -214,6 +214,7 @@ void NAPIAsyncEvent::TriggerEventError(ErrorCode code)
 
 void NAPIAsyncEvent::AsyncWorkCallback(void)
 {
+    ScopedHandleScope scope(env_);
     size_t argc = PluginUtilsNApi::ARG_NUM_2;
     napi_value argv[PluginUtilsNApi::ARG_NUM_2] = { GetRefErrorData(), GetRefData() };
     if (callback_) {
@@ -234,6 +235,7 @@ void NAPIAsyncEvent::AsyncWorkCallback(void)
 
 void NAPIAsyncEvent::AsyncWorkCallMethod(void)
 {
+    ScopedHandleScope scope(env_);
     SetErrorCode(0);
     if (callback_ == nullptr) {
         TriggerEventError(ErrorCode::BRIDGE_METHOD_UNIMPL);
@@ -269,6 +271,7 @@ void NAPIAsyncEvent::AsyncWorkCallMethod(void)
 
 void NAPIAsyncEvent::AsyncWorkCallMethod(size_t argc, const napi_value* argv)
 {
+    ScopedHandleScope scope(env_);
     SetErrorCode(0);
     if (callback_ == nullptr) {
         TriggerEventError(ErrorCode::BRIDGE_METHOD_UNIMPL);
@@ -296,6 +299,7 @@ void NAPIAsyncEvent::AsyncWorkCallMethod(size_t argc, const napi_value* argv)
 
 void NAPIAsyncEvent::AsyncWorkMessage(void)
 {
+    ScopedHandleScope scope(env_);
     if (callback_ == nullptr) {
         TriggerEventError(ErrorCode::BRIDGE_METHOD_UNIMPL);
         return;
