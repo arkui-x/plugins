@@ -15,7 +15,6 @@
 
 package ohos.ace.plugin.audiocapturer;
 
-import android.util.Log;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioRecord;
@@ -28,6 +27,8 @@ import android.media.AudioRouting.OnRoutingChangedListener;
 import android.media.AudioRecord.OnRecordPositionUpdateListener;
 import java.util.Map;
 import java.util.HashMap;
+
+import ohos.ace.adapter.ALog;
 
 /**
  * AudioCapturerPlugin
@@ -49,7 +50,7 @@ public class AudioCapturerPlugin {
      */
     public AudioCapturerPlugin(Context context) {
         if (context == null) {
-            Log.e(LOG_TAG, "context is null");
+            ALog.e(LOG_TAG, "context is null");
             return;
         }
         appContext = context;
@@ -68,6 +69,7 @@ public class AudioCapturerPlugin {
      */
     public int createAudioRecord(long capturerPtr, int sampleRate, int channel, int encoding,
                                   int sourceType) {
+        ALog.i(LOG_TAG, "create audioRecord");
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord != null) {
             return AudioRecord.SUCCESS;
@@ -77,7 +79,7 @@ public class AudioCapturerPlugin {
             boolean permission = (pm.checkPermission("android.permission.RECORD_AUDIO",
                     appContext.getPackageName()) == PackageManager.PERMISSION_GRANTED);
             if (!permission) {
-                Log.e(LOG_TAG, "No microphone permission.createAudioRecord failed.");
+                ALog.e(LOG_TAG, "No microphone permission.createAudioRecord failed.");
                 return AudioRecord.ERROR_INVALID_OPERATION;
             }
         }
@@ -113,10 +115,15 @@ public class AudioCapturerPlugin {
     public void startRecording(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         audioRecord.startRecording();
+        if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+            ALog.i(LOG_TAG, "audioRecord start success");
+        } else {
+            ALog.e(LOG_TAG, "audioRecord start failed");
+        }
     }
 
     /**
@@ -125,9 +132,10 @@ public class AudioCapturerPlugin {
      * @param capturerPtr capturerPtr
      */
     public void stop(long capturerPtr) {
+        ALog.i(LOG_TAG, "audioRecord stop");
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         audioRecord.stop();
@@ -139,9 +147,10 @@ public class AudioCapturerPlugin {
      * @param capturerPtr capturerPtr
      */
     public void release(long capturerPtr) {
+        ALog.i(LOG_TAG, "audioRecord release");
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         audioRecord.release();
@@ -160,7 +169,7 @@ public class AudioCapturerPlugin {
     public int getMinBufferSize(long capturerPtr, int sampleRateInHz, int channelConfig, int audioFormat) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return -1;
         }
         return AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
@@ -177,10 +186,13 @@ public class AudioCapturerPlugin {
     public int read(long capturerPtr, byte[] buffer, int size) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "read error, audioRecord is null");
             return -1;
         }
         int retSize = audioRecord.read(buffer, 0, size);
+        if (retSize < 0) {
+            ALog.e(LOG_TAG, "audioRecord read error:" + retSize);
+        }
         return retSize;
     }
 
@@ -193,7 +205,7 @@ public class AudioCapturerPlugin {
     public int getAudioSource(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return -1;
         }
         return audioRecord.getAudioSource();
@@ -209,7 +221,7 @@ public class AudioCapturerPlugin {
     public int setNotificationMarkerPosition(long capturerPtr, int markerInFrames) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return AudioRecord.ERROR_INVALID_OPERATION;
         }
         return audioRecord.setNotificationMarkerPosition(markerInFrames);
@@ -227,7 +239,7 @@ public class AudioCapturerPlugin {
         }
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         listener = new OnRecordPositionUpdateListenerImpl();
@@ -248,7 +260,7 @@ public class AudioCapturerPlugin {
         positionUpdateListeners.remove(capturerPtr);
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         audioRecord.setRecordPositionUpdateListener(null);
@@ -264,7 +276,7 @@ public class AudioCapturerPlugin {
     public int setPositionNotificationPeriod(long capturerPtr, int periodInFrames) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return AudioRecord.ERROR_INVALID_OPERATION;
         }
         return audioRecord.setPositionNotificationPeriod(periodInFrames);
@@ -282,7 +294,7 @@ public class AudioCapturerPlugin {
         }
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         listener = new OnRoutingChangedListenerImpl();
@@ -302,7 +314,7 @@ public class AudioCapturerPlugin {
         }
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         infoListener = new OnInfoChangedListenerImpl();
@@ -323,7 +335,7 @@ public class AudioCapturerPlugin {
         deviceChangeListeners.remove(capturerPtr);
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         audioRecord.removeOnRoutingChangedListener(listener);
@@ -342,7 +354,7 @@ public class AudioCapturerPlugin {
         infoChangeListeners.remove(capturerPtr);
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return;
         }
         audioRecord.removeOnRoutingChangedListener(infoListener);
@@ -357,7 +369,7 @@ public class AudioCapturerPlugin {
     public AudioFormat getFormat(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return null;
         }
         return audioRecord.getFormat();
@@ -372,7 +384,7 @@ public class AudioCapturerPlugin {
     public int getAudioSessionId(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return -1;
         }
         return audioRecord.getAudioSessionId();
@@ -388,7 +400,7 @@ public class AudioCapturerPlugin {
     public int getTimestamp(long capturerPtr, AudioTimestamp timestamp) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return AudioRecord.ERROR_INVALID_OPERATION;
         }
         return audioRecord.getTimestamp(timestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
@@ -403,7 +415,7 @@ public class AudioCapturerPlugin {
     public AudioDeviceInfo getRoutedDevice(long capturerPtr) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            Log.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "audioRecord is null");
             return null;
         }
         return audioRecord.getRoutedDevice();
