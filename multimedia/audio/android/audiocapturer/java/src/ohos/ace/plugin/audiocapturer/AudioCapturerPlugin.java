@@ -70,6 +70,7 @@ public class AudioCapturerPlugin {
      */
     public int createAudioRecord(long capturerPtr, int sampleRate, int channel, int encoding,
                                   int sourceType) {
+        ALog.i(LOG_TAG, "create audioRecord");
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord != null) {
             return AudioRecord.SUCCESS;
@@ -119,6 +120,11 @@ public class AudioCapturerPlugin {
             return;
         }
         audioRecord.startRecording();
+        if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+            ALog.i(LOG_TAG, "audioRecord start success");
+        } else {
+            ALog.e(LOG_TAG, "audioRecord start failed");
+        }
     }
 
     /**
@@ -127,6 +133,7 @@ public class AudioCapturerPlugin {
      * @param capturerPtr capturerPtr
      */
     public void stop(long capturerPtr) {
+        ALog.i(LOG_TAG, "audioRecord stop");
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
             ALog.e(LOG_TAG, "audioRecord is null");
@@ -141,6 +148,7 @@ public class AudioCapturerPlugin {
      * @param capturerPtr capturerPtr
      */
     public void release(long capturerPtr) {
+        ALog.i(LOG_TAG, "audioRecord release");
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
             ALog.e(LOG_TAG, "audioRecord is null");
@@ -179,10 +187,13 @@ public class AudioCapturerPlugin {
     public int read(long capturerPtr, byte[] buffer, int size) {
         AudioRecord audioRecord = mAudioRecords.get(capturerPtr);
         if (audioRecord == null) {
-            ALog.e(LOG_TAG, "audioRecord is null");
+            ALog.e(LOG_TAG, "read error, audioRecord is null");
             return -1;
         }
         int retSize = audioRecord.read(buffer, 0, size);
+        if (retSize < 0) {
+            ALog.e(LOG_TAG, "audioRecord read error:" + retSize);
+        }
         return retSize;
     }
 
