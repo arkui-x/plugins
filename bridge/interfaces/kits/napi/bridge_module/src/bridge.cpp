@@ -406,6 +406,7 @@ std::shared_ptr<MethodData> Bridge::FindJSMethodData(const std::string& methodNa
 
 void Bridge::EraseJSMethodData(const std::string& methodName)
 {
+    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
     auto iter = jsMethodDataList_.find(methodName);
     if (iter != jsMethodDataList_.end()) {
         jsMethodDataList_.erase(iter);
@@ -414,7 +415,7 @@ void Bridge::EraseJSMethodData(const std::string& methodName)
 
 void Bridge::EraseJSMessageData(void)
 {
-    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
+    std::lock_guard<std::mutex> lock(jsSendMessageDataListLock_);
     if (!jsSendMessageDataList_.empty()) {
         jsSendMessageDataList_.pop_front();
     }
