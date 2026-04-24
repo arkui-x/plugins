@@ -96,6 +96,7 @@ napi_value MethodResult::GetOkResult(void) const
 
 void MethodResult::CreateErrorObject(napi_env env)
 {
+    ScopedHandleScope scope(env);
     GetErrorInfoByErrorCode();
     errorResult_ = PluginUtilsNApi::CreateErrorMessage(env, errorCode_, errcodeMessage_);
 }
@@ -109,6 +110,7 @@ void MethodResult::CreateDefaultJsonString(void)
 
 void MethodResult::ParsePlatformMethodResult(napi_env env, const std::string& result)
 {
+    ScopedHandleScope scope(env);
     LOGI("ParsePlatformMethodResult: result=%{public}s", result.c_str());
     errorCode_ = static_cast<int>(ErrorCode::BRIDGE_ERROR_NO);
 
@@ -132,6 +134,7 @@ void MethodResult::ParsePlatformMethodResult(napi_env env, const std::string& re
 void MethodResult::ParsePlatformMethodResultBinary(napi_env env, int errorCode,
     const std::string& errorMessage, std::unique_ptr<Ace::Platform::BufferMapping> resultData)
 {
+    ScopedHandleScope scope(env);
     errorCode_ = errorCode;
     errcodeMessage_ = errorMessage;
     okResult_ = nullptr;
@@ -146,6 +149,7 @@ void MethodResult::ParsePlatformMethodResultBinary(napi_env env, int errorCode,
 
 void MethodResult::ParseJSMethodResultBinary(napi_env env, napi_value result)
 {
+    ScopedHandleScope scope(env);
     const auto& resultValue = MethodDataConverter::ConvertToCodecableValue(env, result);
     binaryResult_ = BridgeBinaryCodec::GetInstance().EncodeBuffer(resultValue);
 }
@@ -162,6 +166,7 @@ std::string MethodResult::GetErrorMessage() const
 
 void MethodResult::ParseJSMethodResult(napi_env env, napi_value result)
 {
+    ScopedHandleScope scope(env);
     NapiRawValue rawValue { .env = env, .value = result, 
         .errorCode = errorCode_, .errorMessage = errcodeMessage_ };
     auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
