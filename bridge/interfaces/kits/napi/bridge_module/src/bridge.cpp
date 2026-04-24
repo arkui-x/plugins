@@ -415,7 +415,7 @@ void Bridge::EraseJSMethodData(const std::string& methodName)
 
 void Bridge::EraseJSMessageData(void)
 {
-    std::lock_guard<std::mutex> lock(jsSendMessageDataListLock_);
+    std::lock_guard<std::mutex> lock(jsMethodDataListLock_);
     if (!jsSendMessageDataList_.empty()) {
         jsSendMessageDataList_.pop_front();
     }
