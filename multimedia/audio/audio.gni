@@ -31,6 +31,7 @@ plugins_audio_include = [
   "$INTERFACE_DIR/inner_api/native/audiomanager/include",
   "$INTERFACE_DIR/inner_api/native/audiorenderer/include",
   "$INTERFACE_DIR/inner_api/native/toneplayer/include",
+  "$INTERFACE_DIR/inner_api/native/audio_debug_manager/include",
   "$WORK_DIR/audiocapturer",
   "$WORK_DIR/audiocapturer/callback",
   "$WORK_DIR/audiorenderer",
