@@ -95,6 +95,9 @@ public class BluetoothPlugin {
     private static final String PERMISSION_BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT";
     private static final String PERMISSION_BLUETOOTH_SCAN = "android.permission.BLUETOOTH_SCAN";
 
+    // define in Context since api 33
+    private static final int RECEIVER_EXPORTED = 2;
+
     /**
      * BluetoothPlugin
      *
@@ -1037,7 +1040,11 @@ public class BluetoothPlugin {
         itFilter.addAction(BLE_SERVER_READ_DESCRIPTOR);
         itFilter.addAction(BLE_SERVER_WRITE_DESCRIPTOR);
         itFilter.addAction(BLE_ADVERTISER_RESULT);
-        context.registerReceiver(btBroadcastReceive_, itFilter);
+        if (Build.VERSION.SDK_INT > API_33) {
+            context.registerReceiver(btBroadcastReceive_, itFilter, RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(btBroadcastReceive_, itFilter);
+        }
     }
 
     public void unregisterBluetoothReceiver(Context context) {
