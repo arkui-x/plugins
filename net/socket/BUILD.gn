@@ -97,6 +97,7 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_extra_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_listen_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/tcp_server_send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/socket/async_context/src/multicast_set_reuse_address_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_extra_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_context/src/udp_send_context.cpp",
   "$NETSTACK_NAPI_ROOT/socket/async_work/src/socket_async_work.cpp",
