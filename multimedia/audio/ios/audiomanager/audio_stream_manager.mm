@@ -130,42 +130,6 @@ int32_t AudioStreamManager::GetHardwareOutputSamplingRate(std::shared_ptr<AudioD
     return 0;
 }
 
-int32_t AudioStreamManager::GetSupportedAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
-int32_t AudioStreamManager::GetSupportedAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
-int32_t AudioStreamManager::SetAudioEffectProperty(const AudioEffectPropertyArray &propertyArray)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
-int32_t AudioStreamManager::GetAudioEffectProperty(AudioEffectPropertyArray &propertyArray)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
-int32_t AudioStreamManager::SetAudioEnhanceProperty(const AudioEnhancePropertyArray &propertyArray)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
-int32_t AudioStreamManager::GetAudioEnhanceProperty(AudioEnhancePropertyArray &propertyArray)
-{
-    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
-    return ERR_NOT_SUPPORTED;
-}
-
 bool AudioStreamManager::IsAcousticEchoCancelerSupported(SourceType sourceType)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
