@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@ import ohos.ace.plugin.bluetoothplugin.BluetoothHelper;
 import ohos.ace.plugin.bluetoothplugin.CustomBluetoothManager;
 import ohos.ace.plugin.bluetoothplugin.CustomGattServer;
 
+import android.annotation.TargetApi;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
@@ -93,6 +94,9 @@ public class BluetoothPlugin {
     private static final String PERMISSION_BLUETOOTH_ADVERTISE = "android.permission.BLUETOOTH_ADVERTISE";
     private static final String PERMISSION_BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT";
     private static final String PERMISSION_BLUETOOTH_SCAN = "android.permission.BLUETOOTH_SCAN";
+
+    // define in Context since api 33
+    private static final int RECEIVER_EXPORTED = 2;
 
     /**
      * BluetoothPlugin
@@ -1001,6 +1005,7 @@ public class BluetoothPlugin {
         return errCode.getId();
     }
 
+    @TargetApi(API_33)
     public void registerBluetoothReceiver(Context context) {
         if (btBroadcastReceive_ == null) {
             btBroadcastReceive_ = new BluetoothBroadcastReceive();
@@ -1036,7 +1041,11 @@ public class BluetoothPlugin {
         itFilter.addAction(BLE_SERVER_READ_DESCRIPTOR);
         itFilter.addAction(BLE_SERVER_WRITE_DESCRIPTOR);
         itFilter.addAction(BLE_ADVERTISER_RESULT);
-        context.registerReceiver(btBroadcastReceive_, itFilter);
+        if (Build.VERSION.SDK_INT >= API_33) {
+            context.registerReceiver(btBroadcastReceive_, itFilter, RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(btBroadcastReceive_, itFilter);
+        }
     }
 
     public void unregisterBluetoothReceiver(Context context) {
