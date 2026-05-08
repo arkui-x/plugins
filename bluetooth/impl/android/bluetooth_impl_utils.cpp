@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -592,6 +592,9 @@ void BluetoothImplUtils::ParseDescriptorFromJson(const std::string& jsonString, 
     }
     int32_t length = static_cast<int32_t>(jsonData["length"]);
     descriptor.uuid_ = uuid;
+    if (jsonData.contains("handle")) {
+        descriptor.handle_ = static_cast<uint16_t>(jsonData["handle"].get<uint32_t>());
+    }
     descriptor.permissions_ = permissions;
     if (descriptor.value_ != nullptr) {
         descriptor.value_.reset(nullptr);

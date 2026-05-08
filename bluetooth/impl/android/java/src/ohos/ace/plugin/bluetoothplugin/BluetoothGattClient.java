@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -120,6 +120,16 @@ public class BluetoothGattClient {
             } else {
                 intent.putExtra("status", OH_BT_STATUS_FAIL);
             }
+            intent.putExtra("result", result);
+            BluetoothPlugin.sendBleBroadcast(intent);
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+            Intent intent = new Intent(BluetoothPlugin.BLE_CLIENT_CHARACTERISTIC_CHANGED);
+            intent.putExtra("appId", appId_);
+            String result = BluetoothHelper.convertCharacteristicToJSONString(characteristic);
             intent.putExtra("result", result);
             BluetoothPlugin.sendBleBroadcast(intent);
         }
@@ -285,6 +295,34 @@ public class BluetoothGattClient {
             ALog.e(LOG_TAG, "native readCharacteristic failed.");
             return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
         }
+    }
+
+    /**
+     * Requests to enable or disable notifications/indications for a specific
+     * characteristic.
+     *
+     * @param sUuidString The UUID string of the service containing the
+     *                    characteristic.
+     * @param cUuidString The UUID string of the characteristic to configure.
+     * @param enable      True to enable notifications/indications, false to
+     *                    disable.
+     * @return An error code indicating the result of the operation.
+     */
+    public int requestNotification(String sUuidString, String cUuidString, boolean enable) {
+        if (bluetoothGatt_ == null) {
+            ALog.e(LOG_TAG, "requestNotification failed, bluetoothGatt_ is null.");
+            return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
+        }
+        BluetoothGattCharacteristic characteristic = getCharacterForServices(sUuidString, cUuidString);
+        if (characteristic == null) {
+            ALog.e(LOG_TAG, "requestNotification failed, characteristic is null.");
+            return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
+        }
+        if (bluetoothGatt_.setCharacteristicNotification(characteristic, enable)) {
+            return BluetoothErrorCode.BT_NO_ERROR.getId();
+        }
+        ALog.e(LOG_TAG, "native setCharacteristicNotification failed.");
+        return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
     }
 
     public int writeCharacter(String sUuidString, String cUuidString, byte[] value, int writeType) {
