@@ -395,7 +395,7 @@ int32_t PlayerJni::GetVideoHeight(long key)
     return static_cast<int32_t>(ret);
 }
 
-int32_t PlayerJni::Seek(long key, int32_t mSeconds, Media::PlayerSeekMode mode)
+int32_t PlayerJni::Seek(long key, int64_t mSeconds, Media::PlayerSeekMode mode)
 {
     MEDIA_LOGD("PlayerJni Seek");
     auto env = ARKUI_X_Plugin_GetJniEnv();
