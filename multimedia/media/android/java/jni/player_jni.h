@@ -35,7 +35,7 @@ public:
     static int32_t GetDuration(long key, int32_t &value);
     static int32_t GetVideoWidth(long key);
     static int32_t GetVideoHeight(long key);
-    static int32_t Seek(long key, int32_t mSeconds, Media::PlayerSeekMode mode);
+    static int32_t Seek(long key, int64_t mSeconds, Media::PlayerSeekMode mode);
     static int32_t SetVolume(long key, float leftVolume, float rightVolume);
     static int32_t SetLooping(long key, bool loop);
     static bool IsLooping(long key);

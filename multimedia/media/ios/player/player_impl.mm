@@ -139,7 +139,7 @@ int32_t PlayerImpl::SetVolumeMode(int32_t mode)
     return MSERR_UNSUPPORT;
 }
 
-int32_t PlayerImpl::Seek(int32_t mSeconds, PlayerSeekMode mode)
+int32_t PlayerImpl::Seek(int64_t mSeconds, PlayerSeekMode mode)
 {
     [playerAdapter_ seekTime: mSeconds];
     return MSERR_OK;

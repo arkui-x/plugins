@@ -70,14 +70,16 @@ int32_t AudioRoutingManager::SetPreferredInputDeviceChangeCallback(AudioCapturer
 }
 
 int32_t AudioRoutingManager::UnsetPreferredOutputDeviceChangeCallback(
-    const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback>& callback)
+    const std::shared_ptr<AudioPreferredOutputDeviceChangeCallback> &callback,
+    const AudioRendererInfo &rendererInfo, const int32_t uid)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
 int32_t AudioRoutingManager::UnsetPreferredInputDeviceChangeCallback(
-    const std::shared_ptr<AudioPreferredInputDeviceChangeCallback>& callback)
+    const std::shared_ptr<AudioPreferredInputDeviceChangeCallback> &callback,
+    const AudioCapturerInfo &capturerInfo, const int32_t uid)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
