@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 
 #include "bluetooth_gatt_client_impl.h"
 
+#include <memory>
+
 #import "BluetoothCentralManager.h"
 #import "BluetoothUntils.h"
 #include "bluetooth_log.h"
@@ -27,6 +29,67 @@ const uint16_t MAX_CLIENT_HANDLE = 65535;
 
 namespace OHOS {
 namespace Bluetooth {
+static constexpr int64_t DESCRIPTOR_WRITE_CALLBACK_DELAY_MS = 10;
+static constexpr size_t CLIENT_CONFIG_VALUE_SIZE = 2;
+static const uint8_t DISABLE_NOTIFY_VALUE[] = {0, 0};
+static const uint8_t ENABLE_NOTIFY_VALUE[] = {1, 0};
+static const char CLIENT_CHARACTERISTIC_CONFIG_UUID[] = "00002902-0000-1000-8000-00805F9B34FB";
+
+static bool IsClientCharacteristicConfigurationDescriptor(const Uuid& uuid)
+{
+    NSString* strUuid = [NSString stringWithFormat:@"%s", uuid.ToString().c_str()];
+    NSString* systemUuid = [BluetoothUntils GetSystemStringUUIDKey:strUuid];
+    return [systemUuid isEqualToString:CBUUIDClientCharacteristicConfigurationString];
+}
+
+static bool HasClientCharacteristicConfigurationDescriptor(const Characteristic& characteristic)
+{
+    for (const auto& descriptor : characteristic.descriptors_) {
+        if (IsClientCharacteristicConfigurationDescriptor(descriptor.uuid_)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool HasNotifyOrIndicateProperty(CBCharacteristicProperties properties)
+{
+    return (properties & (CBCharacteristicPropertyNotify | CBCharacteristicPropertyIndicate |
+        CBCharacteristicPropertyNotifyEncryptionRequired | CBCharacteristicPropertyIndicateEncryptionRequired)) != 0;
+}
+
+static void AddClientCharacteristicConfigurationDescriptor(Characteristic& cvc, CBCharacteristic* characteristic)
+{
+    if (HasClientCharacteristicConfigurationDescriptor(cvc) ||
+        !HasNotifyOrIndicateProperty(characteristic.properties)) {
+        return;
+    }
+    Descriptor descriptor(Uuid::ConvertFromString(CLIENT_CHARACTERISTIC_CONFIG_UUID),
+        static_cast<int>(GattPermission::READABLE) | static_cast<int>(GattPermission::WRITEABLE));
+    const uint8_t* value = characteristic.isNotifying ? ENABLE_NOTIFY_VALUE : DISABLE_NOTIFY_VALUE;
+    descriptor.value_ = std::make_unique<uint8_t[]>(CLIENT_CONFIG_VALUE_SIZE);
+    descriptor.length_ = CLIENT_CONFIG_VALUE_SIZE;
+    if (memcpy_s(descriptor.value_.get(), descriptor.length_, value, descriptor.length_) != EOK) {
+        HILOGE("Descriptor SetValue Failure");
+    }
+    cvc.descriptors_.push_back(std::move(descriptor));
+}
+
+static void DispatchDescriptorWriteCallback(OHOS::sptr<IBluetoothGattClientCallback> callback, int32_t ret,
+    const std::shared_ptr<BluetoothGattDescriptor>& descriptor)
+{
+    if (callback == nullptr || descriptor == nullptr) {
+        return;
+    }
+    OHOS::sptr<IBluetoothGattClientCallback> callbackHolder = callback;
+    std::shared_ptr<BluetoothGattDescriptor> descriptorHolder = descriptor;
+    dispatch_after(
+        dispatch_time(DISPATCH_TIME_NOW, DESCRIPTOR_WRITE_CALLBACK_DELAY_MS * NSEC_PER_MSEC),
+        dispatch_get_main_queue(), ^{
+            callbackHolder->OnDescriptorWrite(ret, *descriptorHolder);
+        });
+}
+
 BluetoothGattService BluetoothGattClientImpl::GetServiceWithCharacterHandle(uint16_t characterHandle)
 {
     for (auto item = gattServiceMap_.rbegin(); item != gattServiceMap_.rend(); ++item) {
@@ -66,7 +129,7 @@ CBMutableCharacteristic* CreateClientCharacter(BluetoothGattCharacteristic& cvc)
                                                       permissions:permissions];
     }
     NSMutableArray* arrDescriptor = [NSMutableArray array];
-    for (OHOS::bluetooth::Descriptor descriptor : cvc.descriptors_) {
+    for (const auto& descriptor : cvc.descriptors_) {
         NSString* strDid = [NSString stringWithFormat:@"%s", descriptor.uuid_.ToString().c_str()];
         strDid = [BluetoothUntils GetSystemStringUUIDKey:strDid];
         CBUUID* descriptorUUID = [CBUUID UUIDWithString:strDid];
@@ -132,6 +195,9 @@ int BluetoothGattClientImpl::DeregisterApplication(int32_t appId)
     auto gattClientCallback = gattClientCallBackMap_.find(appId);
     if (gattClientCallback != gattClientCallBackMap_.end()) {
         gattClientCallBackMap_.erase(gattClientCallback);
+        pendingNotifyDescriptorHandleMap_.erase(appId);
+        pendingNotifyDescriptorMap_.erase(appId);
+        pendingNotifyResultMap_.erase(appId);
         return BT_NO_ERROR;
     } else {
         return BT_ERR_INTERNAL_ERROR;
@@ -342,7 +408,7 @@ int BluetoothGattClientImpl::ReadDescriptor(int32_t appId, const BluetoothGattDe
     }
     NSString* strServiceUuid = [NSString stringWithFormat:@"%s", service.uuid_.ToString().c_str()];
     NSString* strCharaUuid;
-    for (OHOS::bluetooth::Characteristic cvc : service.characteristics_) {
+    for (const auto& cvc : service.characteristics_) {
         BluetoothGattCharacteristic gattCharacter(cvc);
         if (cvc.handle_ < descriptor.handle_ && cvc.endHandle_ > descriptor.handle_) {
             strCharaUuid = [NSString stringWithFormat:@"%s", cvc.uuid_.ToString().c_str()];
@@ -381,7 +447,121 @@ int BluetoothGattClientImpl::ReadDescriptor(int32_t appId, const BluetoothGattDe
 
 int BluetoothGattClientImpl::WriteDescriptor(int32_t appId, BluetoothGattDescriptor* descriptor)
 {
+    if (descriptor == nullptr) {
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    auto item = gattDescriptorMap_.find(descriptor->handle_);
+    if (item == gattDescriptorMap_.end()) {
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    BluetoothGattDescriptor gattDes = BluetoothGattDescriptor(item->second);
+    bool isClientConfigDescriptor = IsClientCharacteristicConfigurationDescriptor(gattDes.uuid_);
+    if (isClientConfigDescriptor) {
+        return HandleClientConfigDescriptorWrite(appId, descriptor);
+    }
+    return WriteDescriptorToPeripheral(appId, descriptor, gattDes);
+}
+
+bool BluetoothGattClientImpl::TakePendingNotifyDescriptor(int32_t appId, uint16_t descriptorHandle)
+{
+    std::lock_guard<std::mutex> lock(gattClientMutex_);
+    auto pendingItem = pendingNotifyDescriptorHandleMap_.find(appId);
+    if (pendingItem == pendingNotifyDescriptorHandleMap_.end()) {
+        return false;
+    }
+    bool isPendingNotifyDescriptor = pendingItem->second.erase(descriptorHandle) > 0;
+    if (pendingItem->second.empty()) {
+        pendingNotifyDescriptorHandleMap_.erase(pendingItem);
+    }
+    return isPendingNotifyDescriptor;
+}
+
+bool BluetoothGattClientImpl::TakePendingNotifyResult(int32_t appId, uint16_t descriptorHandle, int32_t& notifyRet)
+{
+    auto resultItem = pendingNotifyResultMap_.find(appId);
+    if (resultItem == pendingNotifyResultMap_.end()) {
+        return false;
+    }
+    auto descriptorItem = resultItem->second.find(descriptorHandle);
+    if (descriptorItem == resultItem->second.end()) {
+        return false;
+    }
+    notifyRet = descriptorItem->second;
+    resultItem->second.erase(descriptorItem);
+    if (resultItem->second.empty()) {
+        pendingNotifyResultMap_.erase(resultItem);
+    }
+    return true;
+}
+
+int BluetoothGattClientImpl::HandleClientConfigDescriptorWrite(int32_t appId, BluetoothGattDescriptor* descriptor)
+{
+    if (!TakePendingNotifyDescriptor(appId, descriptor->handle_)) {
+        HILOGI("iOS does not support explicit CCCD write; use setNotifyValue subscription path.");
+        return BT_ERR_API_NOT_SUPPORT;
+    }
+    OHOS::sptr<IBluetoothGattClientCallback> callback = GetCallBack(appId);
+    if (callback == nullptr) {
+        std::lock_guard<std::mutex> lock(gattClientMutex_);
+        pendingNotifyDescriptorMap_.erase(appId);
+        pendingNotifyResultMap_.erase(appId);
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    auto descriptorCallback = std::make_shared<BluetoothGattDescriptor>(*descriptor);
+    int32_t notifyRet = BT_ERR_INTERNAL_ERROR;
+    bool hasNotifyRet = false;
+    {
+        std::lock_guard<std::mutex> lock(gattClientMutex_);
+        hasNotifyRet = TakePendingNotifyResult(appId, descriptor->handle_, notifyRet);
+        if (!hasNotifyRet) {
+            auto& descriptorMap = pendingNotifyDescriptorMap_[appId];
+            descriptorMap.erase(descriptor->handle_);
+            descriptorMap.emplace(descriptor->handle_, *descriptorCallback);
+        }
+    }
+    if (hasNotifyRet) {
+        DispatchDescriptorWriteCallback(callback, notifyRet, descriptorCallback);
+    }
     return BT_NO_ERROR;
+}
+
+int BluetoothGattClientImpl::WriteDescriptorToPeripheral(
+    int32_t appId, BluetoothGattDescriptor* descriptor, const BluetoothGattDescriptor& gattDes)
+{
+    BluetoothGattService service = GetServiceWithCharacterHandle(descriptor->handle_);
+    if (service.endHandle_ <= 0) {
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    NSString* strServiceUuid = [NSString stringWithFormat:@"%s", service.uuid_.ToString().c_str()];
+    NSString* strCharaUuid = nil;
+    for (const auto& cvc : service.characteristics_) {
+        if (cvc.handle_ < descriptor->handle_ && cvc.endHandle_ > descriptor->handle_) {
+            strCharaUuid = [NSString stringWithFormat:@"%s", cvc.uuid_.ToString().c_str()];
+            break;
+        }
+    }
+    NSString* strDesUuid = [NSString stringWithFormat:@"%s", gattDes.uuid_.ToString().c_str()];
+    CBUUID* serviceUuid = [CBUUID UUIDWithString:strServiceUuid];
+    CBUUID* charaUuid = [CBUUID UUIDWithString:strCharaUuid];
+    CBUUID* desUuid = [CBUUID UUIDWithString:strDesUuid];
+    if (!serviceUuid || !charaUuid || !desUuid || descriptor->value_ == nullptr || descriptor->length_ == 0) {
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    NSData* data = [NSData dataWithBytes:descriptor->value_.get() length:descriptor->length_];
+    auto descriptorCallback = std::make_shared<BluetoothGattDescriptor>(*descriptor);
+    return [[BluetoothCentralManager sharedInstance] writeDescriptor:appId
+                                                         serviceUuid:serviceUuid
+                                                       characterUuid:charaUuid
+                                                      descriptorUuid:desUuid
+                                                                data:data
+                                                               block:^(CBDescriptor* des, int32_t ret) {
+                                                                 OHOS::sptr<IBluetoothGattClientCallback> callback =
+                                                                     GetCallBack(appId);
+                                                                 if (callback == nullptr) {
+                                                                     return;
+                                                                 }
+                                                                 callback->OnDescriptorWrite(ret, *descriptorCallback);
+                                                               }];
 }
 
 int BluetoothGattClientImpl::RequestExchangeMtu(int32_t appId, int32_t mtu)
@@ -390,6 +570,46 @@ int BluetoothGattClientImpl::RequestExchangeMtu(int32_t appId, int32_t mtu)
 }
 
 void BluetoothGattClientImpl::GetAllDevice(std::vector<BluetoothGattDevice>& device) {}
+
+void BluetoothGattClientImpl::CompleteNotifyDescriptorWrite(int32_t appId, uint16_t descriptorHandle, int32_t ret)
+{
+    OHOS::sptr<IBluetoothGattClientCallback> callback = nullptr;
+    std::shared_ptr<BluetoothGattDescriptor> descriptorCallback = nullptr;
+    bool hasDescriptor = false;
+    {
+        std::lock_guard<std::mutex> lock(gattClientMutex_);
+        auto callbackItem = gattClientCallBackMap_.find(appId);
+        if (callbackItem == gattClientCallBackMap_.end()) {
+            pendingNotifyDescriptorMap_.erase(appId);
+            pendingNotifyResultMap_.erase(appId);
+            return;
+        }
+        callback = callbackItem->second;
+        if (callback == nullptr) {
+            pendingNotifyDescriptorMap_.erase(appId);
+            pendingNotifyResultMap_.erase(appId);
+            return;
+        }
+        auto descriptorMapItem = pendingNotifyDescriptorMap_.find(appId);
+        if (descriptorMapItem != pendingNotifyDescriptorMap_.end()) {
+            auto descriptorItem = descriptorMapItem->second.find(descriptorHandle);
+            if (descriptorItem != descriptorMapItem->second.end()) {
+                descriptorCallback = std::make_shared<BluetoothGattDescriptor>(descriptorItem->second);
+                hasDescriptor = true;
+                descriptorMapItem->second.erase(descriptorItem);
+                if (descriptorMapItem->second.empty()) {
+                    pendingNotifyDescriptorMap_.erase(descriptorMapItem);
+                }
+            }
+        }
+        if (!hasDescriptor) {
+            pendingNotifyResultMap_[appId][descriptorHandle] = ret;
+        }
+    }
+    if (callback != nullptr && descriptorCallback != nullptr) {
+        DispatchDescriptorWriteCallback(callback, ret, descriptorCallback);
+    }
+}
 
 int BluetoothGattClientImpl::RequestConnectionPriority(int32_t appId, int32_t connPriority)
 {
@@ -439,10 +659,9 @@ bool BluetoothGattClientImpl::CalculateAndAssignHandle(const int32_t application
 void createGattCharacter(Characteristic& cvc, CBCharacteristic* characteristic)
 {
     cvc.uuid_ = Uuid::ConvertFromString(characteristic.UUID.UUIDString.UTF8String);
-    if (characteristic.properties != CBCharacteristicPropertyNotifyEncryptionRequired &&
-        characteristic.properties != CBCharacteristicPropertyIndicateEncryptionRequired) {
-        cvc.properties_ = characteristic.properties;
-    }
+    CBCharacteristicProperties unsupportedProperties =
+        CBCharacteristicPropertyNotifyEncryptionRequired | CBCharacteristicPropertyIndicateEncryptionRequired;
+    cvc.properties_ = characteristic.properties & ~unsupportedProperties;
     if (characteristic.value) {
         NSUInteger length = [characteristic.value length];
         const uint8_t* bytesValue = (const uint8_t*)[characteristic.value bytes];
@@ -475,6 +694,7 @@ void createGattCharacter(Characteristic& cvc, CBCharacteristic* characteristic)
         }
         cvc.descriptors_.push_back(descriptor);
     }
+    AddClientCharacteristicConfigurationDescriptor(cvc, characteristic);
 }
 
 int BluetoothGattClientImpl::GetServices(int32_t appId, std::vector<BluetoothGattService>& service)
@@ -506,9 +726,98 @@ int BluetoothGattClientImpl::ReadRemoteRssiValue(int32_t appId)
     return BT_NO_ERROR;
 }
 
+uint16_t BluetoothGattClientImpl::GetNotifyDescriptorHandle(
+    const BluetoothGattService& service, uint16_t characterHandle)
+{
+    for (const auto& cvc : service.characteristics_) {
+        if (cvc.handle_ != characterHandle) {
+            continue;
+        }
+        for (const auto& desc : cvc.descriptors_) {
+            if (IsClientCharacteristicConfigurationDescriptor(desc.uuid_)) {
+                return desc.handle_;
+            }
+        }
+        break;
+    }
+    return 0;
+}
+
+void BluetoothGattClientImpl::InsertPendingNotifyDescriptor(int32_t appId, uint16_t descriptorHandle)
+{
+    std::lock_guard<std::mutex> lock(gattClientMutex_);
+    pendingNotifyDescriptorHandleMap_[appId].insert(descriptorHandle);
+}
+
+void BluetoothGattClientImpl::RemovePendingNotifyDescriptor(int32_t appId, uint16_t descriptorHandle)
+{
+    std::lock_guard<std::mutex> lock(gattClientMutex_);
+    auto pendingItem = pendingNotifyDescriptorHandleMap_.find(appId);
+    if (pendingItem == pendingNotifyDescriptorHandleMap_.end()) {
+        return;
+    }
+    pendingItem->second.erase(descriptorHandle);
+    if (pendingItem->second.empty()) {
+        pendingNotifyDescriptorHandleMap_.erase(pendingItem);
+    }
+}
+
+void BluetoothGattClientImpl::NotifyCharacteristicChanged(int32_t appId, const std::string& serviceUuid,
+    const std::string& characterUuid, int length, const uint8_t* bytesValue)
+{
+    BluetoothGattCharacteristic gattCharacteristic;
+    GetGattCharacteristic(serviceUuid, characterUuid, length, bytesValue, gattCharacteristic);
+    OHOS::sptr<IBluetoothGattClientCallback> callback = GetCallBack(appId);
+    if (callback == nullptr) {
+        return;
+    }
+    callback->OnCharacteristicChanged(gattCharacteristic);
+}
+
 int BluetoothGattClientImpl::RequestNotification(int32_t appId, uint16_t characterHandle, bool enable)
 {
-    return BT_NO_ERROR;
+    BluetoothGattService service = GetServiceWithCharacterHandle(characterHandle);
+    if (service.endHandle_ <= 0) {
+        HILOGE("service is null");
+        return BT_ERR_INTERNAL_ERROR;
+    }
+
+    NSString* strServiceUuid = [NSString stringWithFormat:@"%s", service.uuid_.ToString().c_str()];
+    CBUUID* serviceUuid = [CBUUID UUIDWithString:strServiceUuid];
+    CBMutableCharacteristic* chara = GetClientCurrentCharacteristic(characterHandle, service);
+    if (!serviceUuid || !chara) {
+        HILOGE("UUID or characteristic is null");
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    uint16_t notifyDescriptorHandle = GetNotifyDescriptorHandle(service, characterHandle);
+    if (notifyDescriptorHandle == 0) {
+        HILOGE("client characteristic configuration descriptor is null");
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    InsertPendingNotifyDescriptor(appId, notifyDescriptorHandle);
+
+    int ret = [[BluetoothCentralManager sharedInstance]
+        RequestNotification:appId
+                serviceUuid:serviceUuid
+              characterUuid:chara.UUID
+         enableNotification:enable
+                      block:^(CBCharacteristic* chara, int32_t ret) {
+                        if (ret != BT_NO_ERROR || chara == nil) {
+                            return;
+                        }
+                        NSUInteger length = [chara.value length];
+                        const uint8_t* bytesValue = (const uint8_t*)[chara.value bytes];
+                        std::string serviceUuid = chara.service.UUID.UUIDString.UTF8String;
+                        std::string characterUuid = chara.UUID.UUIDString.UTF8String;
+                        NotifyCharacteristicChanged(appId, serviceUuid, characterUuid, length, bytesValue);
+                      }
+                 completion:^(int32_t ret) {
+                   CompleteNotifyDescriptorWrite(appId, notifyDescriptorHandle, ret);
+                 }];
+    if (ret != BT_NO_ERROR) {
+        RemovePendingNotifyDescriptor(appId, notifyDescriptorHandle);
+    }
+    return ret;
 }
 
 int BluetoothGattClientImpl::GetConnectedState(const std::string &deviceId, int &state)

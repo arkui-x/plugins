@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,8 @@ typedef void (^UpdataConnectDeviceBlock)(int state, NSString* _Nonnull deviceId)
 typedef void (^CharacterReadBlock)(NSString* _Nonnull deviceId, CBMutableCharacteristic* _Nullable characteristic);
 typedef void (^CharacterWriteBlock)(NSString* _Nonnull deviceId, CBMutableCharacteristic* _Nullable characteristic);
 typedef void (^CharacterNotifyBlock)(NSString* _Nonnull deviceId, CBCharacteristic* _Nullable characteristic, int ret);
+typedef void (^DescriptorWriteBlock)(
+    NSString* _Nonnull deviceId, CBCharacteristic* _Nullable characteristic, NSData* _Nullable value);
 
 @interface BluetoothPeripheralManager : NSObject <CBPeripheralManagerDelegate> {
     bool bluetoothState;
@@ -46,6 +48,7 @@ typedef void (^CharacterNotifyBlock)(NSString* _Nonnull deviceId, CBCharacterist
 @property(nonatomic, copy) CharacterReadBlock characterReadBlock;
 @property(nonatomic, copy) CharacterWriteBlock characterWriteBlock;
 @property(nonatomic, copy) CharacterNotifyBlock characterNotifyBlock;
+@property(nonatomic, copy) DescriptorWriteBlock descriptorWriteBlock;
 
 + (BluetoothPeripheralManager*)sharedInstance;
 
@@ -63,15 +66,20 @@ typedef void (^CharacterNotifyBlock)(NSString* _Nonnull deviceId, CBCharacterist
 - (void)addService:(CBMutableService* _Nullable)service appId:(int)appId block:(AddServiceBlock)block;
 - (int)removeService:(NSString* _Nullable)strUUID appId:(int)appId;
 - (int)notifyCharacteristicChanged:(NSString* _Nullable)strDeviceId
+                              appId:(int)appId
                        serviceUUID:(NSString* _Nullable)serviceUUID
               notifyCharacteristic:(CBMutableCharacteristic* _Nullable)notifyCharacteristic;
 - (int)sendRespondReadWithDeviceId:(NSString* _Nullable)deviceId
+                              appId:(int)appId
                        serviceUUID:(NSString* _Nullable)serviceUUID
                      characterUUID:(NSString* _Nullable)characterUUID
-                              data:(NSData* _Nullable)data;
+                              data:(NSData* _Nullable)data
+                            status:(int32_t)status;
 - (int)sendRespondWriteWithDeviceId:(NSString* _Nullable)deviceId
+                               appId:(int)appId
                         serviceUUID:(NSString* _Nullable)serviceUUID
-                      characterUUID:(NSString* _Nullable)characterUUID;
+                      characterUUID:(NSString* _Nullable)characterUUID
+                             status:(int32_t)status;
 
 @end
 
