@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -425,6 +425,10 @@ public class BluetoothHelper {
             }
 
             jsonObject.put("uuid", uuid);
+            BluetoothGattService service = characteristic.getService();
+            if (service != null) {
+                jsonObject.put("serviceUuid", service.getUuid().toString());
+            }
             jsonObject.put("properties", properties);
             jsonObject.put("permissions", permissions);
             jsonObject.put("value", array);
@@ -459,6 +463,14 @@ public class BluetoothHelper {
             }
 
             jsonObject.put("uuid", uuid.toString());
+            BluetoothGattCharacteristic characteristic = descriptor.getCharacteristic();
+            if (characteristic != null) {
+                jsonObject.put("characteristicUuid", characteristic.getUuid().toString());
+                BluetoothGattService service = characteristic.getService();
+                if (service != null) {
+                    jsonObject.put("serviceUuid", service.getUuid().toString());
+                }
+            }
             jsonObject.put("permissions", permissions);
             jsonObject.put("value", array);
             jsonObject.put("length", length);
@@ -496,6 +508,20 @@ public class BluetoothHelper {
     }
 
     public static String convertDescriptorToJSONString(BluetoothGattDescriptor descriptor, int handle) {
+        return convertDescriptorToJSONString(descriptor, handle, null);
+    }
+
+    /**
+     * Converts a BluetoothGattDescriptor to a JSON string.
+     *
+     * @param descriptor The BluetoothGattDescriptor to convert.
+     * @param handle     The attribute handle for the descriptor.
+     * @param rawValue   The raw byte value of the descriptor, or null to use the
+     *                   descriptor's current value.
+     * @return A JSON string representation of the descriptor.
+     */
+    public static String convertDescriptorToJSONString(BluetoothGattDescriptor descriptor, int handle,
+            byte[] rawValue) {
         try {
             if (descriptor == null) {
                 ALog.e(LOG_TAG, "Descriptor Object to be converted is null");
@@ -506,7 +532,10 @@ public class BluetoothHelper {
             int permissions = descriptor.getPermissions();
             byte[] value = {};
             int length = INVALID_LENGTH;
-            if (descriptor.getValue() != null) {
+            if (rawValue != null) {
+                value = rawValue;
+                length = value.length;
+            } else if (descriptor.getValue() != null) {
                 value = descriptor.getValue();
                 length = value.length;
             }

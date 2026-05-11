@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,6 +39,58 @@ namespace OHOS::Bluetooth {
 namespace {
 const char BLUETOOTH_CLASS_NAME[] = "ohos/ace/plugin/bluetoothplugin/BluetoothPlugin";
 static OHOS::sptr<IBluetoothBleCentralManagerCallback> callback_;
+
+void RestoreCharacteristicHandleFromJson(int32_t appId, const std::string& jsonString,
+    bluetooth::Characteristic& characteristic)
+{
+    if (characteristic.handle_ != 0) {
+        return;
+    }
+
+    Json jsonData = Json::parse(jsonString, nullptr, false);
+    if (jsonData.is_discarded()) {
+        HILOGE("RestoreCharacteristicHandleFromJson parse failed");
+        return;
+    }
+    if (!jsonData.contains("serviceUuid")) {
+        return;
+    }
+
+    auto characteristicHandle = BluetoothGattClientImpl::GetCharacteristicHandleByUuid(appId,
+        jsonData["serviceUuid"].get<std::string>(), characteristic.uuid_.ToString());
+    if (characteristicHandle == 0) {
+        HILOGE("RestoreCharacteristicHandleFromJson failed, appId: %{public}d", appId);
+        return;
+    }
+    characteristic.handle_ = characteristicHandle;
+}
+
+void RestoreDescriptorHandleFromJson(int32_t appId, const std::string& jsonString, bluetooth::Descriptor& descriptor)
+{
+    if (descriptor.handle_ != 0) {
+        return;
+    }
+
+    Json jsonData = Json::parse(jsonString, nullptr, false);
+    if (jsonData.is_discarded()) {
+        HILOGE("RestoreDescriptorHandleFromJson parse failed");
+        return;
+    }
+    if (!jsonData.contains("serviceUuid") || !jsonData.contains("characteristicUuid")) {
+        return;
+    }
+
+    auto descriptorHandle = BluetoothGattClientImpl::GetDescriptorHandleByUuid(appId,
+        jsonData["serviceUuid"].get<std::string>(),
+        jsonData["characteristicUuid"].get<std::string>(),
+        descriptor.uuid_.ToString());
+    if (descriptorHandle == 0) {
+        HILOGE("RestoreDescriptorHandleFromJson failed, appId: %{public}d", appId);
+        return;
+    }
+    descriptor.handle_ = descriptorHandle;
+}
+
 static const JNINativeMethod METHODS[] = {
     {
         "nativeInit",
@@ -101,6 +153,11 @@ static const JNINativeMethod METHODS[] = {
         reinterpret_cast<void*>(&BluetoothJni::NativeServerOnDescriptorWriteRequestCallback)
     },
     {
+        "nativeServerOnNotificationSentCallback",
+        "(Ljava/lang/String;II)V",
+        reinterpret_cast<void*>(&BluetoothJni::NativeServerOnNotificationSentCallback)
+    },
+    {
         "onChangeStateCallBack",
         "(I)V",
         reinterpret_cast<void*>(&BluetoothJni::OnChangeStateCallBack)
@@ -114,6 +171,11 @@ static const JNINativeMethod METHODS[] = {
         "nativeOnCharacteristicWrite",
         "(ILjava/lang/String;I)V",
         reinterpret_cast<void*>(&BluetoothJni::NativeOnCharacteristicWrite)
+    },
+    {
+        "nativeOnCharacteristicChanged",
+        "(ILjava/lang/String;)V",
+        reinterpret_cast<void*>(&BluetoothJni::NativeOnCharacteristicChanged)
     },
     {
         "nativeOnConnectionStateChanged",
@@ -227,6 +289,8 @@ static const char REQUEST_EXCHANGE_MTU_METHOD[] = "gattClientRequestExchangeMtu"
 static const char REQUEST_EXCHANGE_MTU_METHOD_PARAM[] = "(II)I";
 static const char CLIENT_READ_CHARACTER_METHOD[] = "clientReadCharacter";
 static const char CLIENT_READ_CHARACTER_METHOD_PARAM[] = "(ILjava/lang/String;Ljava/lang/String;)I";
+static const char CLIENT_REQUEST_NOTIFICATION_METHOD[] = "clientRequestNotification";
+static const char CLIENT_REQUEST_NOTIFICATION_METHOD_PARAM[] = "(ILjava/lang/String;Ljava/lang/String;Z)I";
 static const char CLIENT_WRITE_CHARACTER_METHOD[] = "clientWriteCharacter";
 static const char CLIENT_WRITE_CHARACTER_METHOD_PARAM[] = "(ILjava/lang/String;Ljava/lang/String;[BI)I";
 static const char CLIENT_WRITE_DESCRIPTOR_METHOD[] = "clientWriteDescriptor";
@@ -286,6 +350,7 @@ struct {
     jmethodID gattClientRequestExchangeMtu;
     jmethodID gattClientClose;
     jmethodID clientReadCharacter;
+    jmethodID clientRequestNotification;
     jmethodID clientWriteCharacter;
     jmethodID clientReadDescriptor;
     jmethodID clientWriteDescriptor;
@@ -487,6 +552,9 @@ void BluetoothJni::NativeGattClientInit(JNIEnv* env, jobject jobj)
     g_bluetoothClass.clientReadCharacter =
         env->GetMethodID(cls, CLIENT_READ_CHARACTER_METHOD, CLIENT_READ_CHARACTER_METHOD_PARAM);
     CHECK_NULL_VOID(g_bluetoothClass.clientReadCharacter);
+    g_bluetoothClass.clientRequestNotification =
+        env->GetMethodID(cls, CLIENT_REQUEST_NOTIFICATION_METHOD, CLIENT_REQUEST_NOTIFICATION_METHOD_PARAM);
+    CHECK_NULL_VOID(g_bluetoothClass.clientRequestNotification);
     g_bluetoothClass.clientWriteCharacter =
         env->GetMethodID(cls, CLIENT_WRITE_CHARACTER_METHOD, CLIENT_WRITE_CHARACTER_METHOD_PARAM);
     CHECK_NULL_VOID(g_bluetoothClass.clientWriteCharacter);
@@ -683,6 +751,28 @@ void BluetoothJni::NativeServerOnDescriptorWriteRequestCallback(
     impl->OnDescriptorWriteRequest(appId, BluetoothGattDevice(device), BluetoothGattDescriptor(descriptor));
 }
 
+void BluetoothJni::NativeServerOnNotificationSentCallback(
+    JNIEnv* env, jobject jobj, jstring deviceData, jint status, jint appId)
+{
+    CHECK_NULL_VOID(env);
+    std::string deviceDataJsonString = ConvertJStringToCString(env, deviceData);
+    Json deviceJsonData = Json::parse(deviceDataJsonString, nullptr, false);
+    if (deviceJsonData.is_discarded()) {
+        HILOGE("NativeServerOnNotificationSentCallback: Failed to parse device JSON data.");
+        return;
+    }
+    auto device = BluetoothImplUtils::ConvertJsonToGattDevice(deviceJsonData);
+
+    sptr<IRemoteObject> proxy = BluetoothProfileManager::GetInstance().GetProfileRemote(PROFILE_GATT_SERVER);
+    sptr<BluetoothGattServerImpl> impl = iface_cast<BluetoothGattServerImpl>(proxy);
+    if (!impl) {
+        HILOGE("BluetoothJni BluetoothGattServerImpl is null.");
+        return;
+    }
+
+    impl->OnNotifyConfirm(static_cast<int32_t>(appId), BluetoothGattDevice(device), static_cast<int32_t>(status));
+}
+
 void BluetoothJni::NativeOnCharacteristicRead(JNIEnv* env, jobject jobj, jint appId, jstring jsonString, jint status)
 {
     CHECK_NULL_VOID(env);
@@ -694,6 +784,7 @@ void BluetoothJni::NativeOnCharacteristicRead(JNIEnv* env, jobject jobj, jint ap
     std::string jsonCString(env->GetStringUTFChars(jsonString, nullptr));
     bluetooth::Characteristic characteristic;
     BluetoothImplUtils::ParseCharacteristicFromJson(jsonCString, characteristic);
+    RestoreCharacteristicHandleFromJson(static_cast<int32_t>(appId), jsonCString, characteristic);
     std::lock_guard<std::mutex> lock(gattClientLock_);
     BluetoothGattCharacteristic gattCharacteristic = BluetoothGattCharacteristic(characteristic);
     gattClientData->callback_->OnCharacteristicRead(status, gattCharacteristic);
@@ -710,10 +801,28 @@ void BluetoothJni::NativeOnCharacteristicWrite(JNIEnv* env, jobject jobj, jint a
     std::string jsonCString(env->GetStringUTFChars(jsonString, nullptr));
     bluetooth::Characteristic characteristic;
     BluetoothImplUtils::ParseCharacteristicFromJson(jsonCString, characteristic);
+    RestoreCharacteristicHandleFromJson(static_cast<int32_t>(appId), jsonCString, characteristic);
     std::lock_guard<std::mutex> lock(gattClientLock_);
     BluetoothGattCharacteristic gattCharacteristic = BluetoothGattCharacteristic(characteristic);
     BluetoothGattRspContext rspContext;
     gattClientData->callback_->OnCharacteristicWrite(status, gattCharacteristic, rspContext);
+}
+
+void BluetoothJni::NativeOnCharacteristicChanged(JNIEnv* env, jobject jobj, jint appId, jstring jsonString)
+{
+    CHECK_NULL_VOID(env);
+    auto gattClientData = BluetoothGattClientImpl::GetGattClientData(static_cast<int32_t>(appId));
+    if (gattClientData == nullptr || gattClientData->callback_ == nullptr) {
+        HILOGE("gattClientData or gattClientDataCallback is nullptr");
+        return;
+    }
+    std::string jsonCString = ConvertJStringToCString(env, jsonString);
+    bluetooth::Characteristic characteristic;
+    BluetoothImplUtils::ParseCharacteristicFromJson(jsonCString, characteristic);
+    RestoreCharacteristicHandleFromJson(static_cast<int32_t>(appId), jsonCString, characteristic);
+    std::lock_guard<std::mutex> lock(gattClientLock_);
+    BluetoothGattCharacteristic gattCharacteristic = BluetoothGattCharacteristic(characteristic);
+    gattClientData->callback_->OnCharacteristicChanged(gattCharacteristic);
 }
 
 void BluetoothJni::NativeOnDescriptorWrite(JNIEnv* env, jobject jobj, jint appId, jstring jsonString, jint status)
@@ -727,6 +836,7 @@ void BluetoothJni::NativeOnDescriptorWrite(JNIEnv* env, jobject jobj, jint appId
     std::string jsonCString(env->GetStringUTFChars(jsonString, nullptr));
     bluetooth::Descriptor descriptor;
     BluetoothImplUtils::ParseDescriptorFromJson(jsonCString, descriptor);
+    RestoreDescriptorHandleFromJson(static_cast<int32_t>(appId), jsonCString, descriptor);
     std::lock_guard<std::mutex> lock(gattClientLock_);
     BluetoothGattDescriptor gattDescriptor = BluetoothGattDescriptor(descriptor);
     gattClientData->callback_->OnDescriptorWrite(status, gattDescriptor);
@@ -743,6 +853,7 @@ void BluetoothJni::NativeOnDescriptorRead(JNIEnv* env, jobject jobj, jint appId,
     std::string jsonCString(env->GetStringUTFChars(jsonString, nullptr));
     bluetooth::Descriptor descriptor;
     BluetoothImplUtils::ParseDescriptorFromJson(jsonCString, descriptor);
+    RestoreDescriptorHandleFromJson(static_cast<int32_t>(appId), jsonCString, descriptor);
     std::lock_guard<std::mutex> lock(gattClientLock_);
     BluetoothGattDescriptor gattDescriptor = BluetoothGattDescriptor(descriptor);
     gattClientData->callback_->OnDescriptorRead(status, gattDescriptor);
@@ -1707,6 +1818,26 @@ int32_t BluetoothJni::ClientWriteCharacter(
     env->DeleteLocalRef(jServiceUuid);
     env->DeleteLocalRef(jCharacterUuid);
     env->DeleteLocalRef(newByte);
+    return static_cast<int32_t>(ret);
+}
+
+int32_t BluetoothJni::ClientRequestNotification(
+    const int32_t appId, const std::string& serviceUuid, const std::string& characterUuid, bool enable)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, BtErrCode::BT_ERR_INTERNAL_ERROR);
+    CHECK_NULL_RETURN(g_bluetoothClass.globalRef, BtErrCode::BT_ERR_INTERNAL_ERROR);
+    CHECK_NULL_RETURN(g_bluetoothClass.clientRequestNotification, BtErrCode::BT_ERR_INTERNAL_ERROR);
+
+    jstring jServiceUuid = env->NewStringUTF(serviceUuid.c_str());
+    jstring jCharacterUuid = env->NewStringUTF(characterUuid.c_str());
+    jboolean jEnable = enable ? JNI_TRUE : JNI_FALSE;
+    jint ret = env->CallIntMethod(
+        g_bluetoothClass.globalRef, g_bluetoothClass.clientRequestNotification,
+        appId, jServiceUuid, jCharacterUuid, jEnable);
+
+    env->DeleteLocalRef(jServiceUuid);
+    env->DeleteLocalRef(jCharacterUuid);
     return static_cast<int32_t>(ret);
 }
 

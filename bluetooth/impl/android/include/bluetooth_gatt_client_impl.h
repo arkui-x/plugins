@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -93,7 +93,11 @@ public:
     static void EraseHandleByAppId(const int applicationId);
     static std::string GetServiceUuidByHandle(const int appId, const int handle);
     static std::string GetCharacterUuidByHandle(const int appId, const int handle);
+    static uint16_t GetCharacteristicHandleByUuid(const int appId, const std::string& serviceUuid,
+        const std::string& characteristicUuid);
     static std::string GetDescriptorUuidByHandle(const int appId, const int handle);
+    static uint16_t GetDescriptorHandleByUuid(const int appId, const std::string& serviceUuid,
+        const std::string& characteristicUuid, const std::string& descriptorUuid);
 
 private:
     static std::map<int32_t, std::shared_ptr<GattClientData>> gattClientDataMap_;
