@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -42,10 +42,16 @@ websocket_include = [
 websocket_sources = [
   "$NETSTACK_NAPI_ROOT/websocket/async_context/src/close_context.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/async_context/src/connect_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/list_all_connections_context.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/async_context/src/send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/server_close_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/server_send_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/server_start_context.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/async_context/src/server_stop_context.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/async_work/src/websocket_async_work.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/constant/src/constant.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/src/websocket_exec.cpp",
+  "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/src/websocket_server_exec.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_module/src/websocket_module.cpp",
 ]
 
@@ -58,6 +64,7 @@ template("plugin_net_websocket_static") {
       "OHOS_LIBWEBSOCKETS=1",
       "ENABLE_EVENT_HANDLER",
     ]
+    defines += [ "NETSTACK_WEBSOCKETSERVER" ]
     cflags_cc += invoker.cflags_cc
 
     include_dirs = websocket_include
