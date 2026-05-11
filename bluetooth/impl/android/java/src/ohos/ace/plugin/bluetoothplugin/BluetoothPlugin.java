@@ -47,6 +47,8 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.provider.Settings;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import android.util.Log;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +61,7 @@ import java.util.Vector;
  */
 public class BluetoothPlugin {
     private static final String LOG_TAG = "BluetoothPlugin";
+    private static final int BT_STATUS_SUCCESS = 0;
     private static final int DEFAULT_OFFSET = 0;
     private static final int API_31 = 31;
     private static final int API_33 = 33;
@@ -76,6 +79,10 @@ public class BluetoothPlugin {
     protected static final String BLE_CLIENT_CONNECTION_STATE_CHANGE = "nativeGattClientSetServices";
     protected static final String BLE_CLIENT_READ_CHARACTERISTIC = "nativeOnCharacteristicRead";
     protected static final String BLE_CLIENT_WRITE_CHARACTERISTIC = "nativeOnCharacteristicWrite";
+    /**
+     * Identifier of Bluetooth value change event
+     */
+    protected static final String BLE_CLIENT_CHARACTERISTIC_CHANGED = "nativeOnCharacteristicChanged";
     protected static final String BLE_CLIENT_READ_DESCRIPTOR = "nativeOnDescriptorRead";
     protected static final String BLE_CLIENT_WRITE_DESCRIPTOR = "nativeOnDescriptorWrite";
     protected static final String BLE_CLIENT_SET_MTU = "nativeOnMtuChanged";
@@ -85,6 +92,10 @@ public class BluetoothPlugin {
     protected static final String BLE_SERVER_WRITE_CHARACTERISTIC = "characteristicWrite";
     protected static final String BLE_SERVER_READ_DESCRIPTOR = "descriptorRead";
     protected static final String BLE_SERVER_WRITE_DESCRIPTOR = "descriptorWrite";
+    /**
+     * Notification sent event constant
+     */
+    protected static final String BLE_SERVER_NOTIFICATION_SENT = "notificationSent";
 
     // Bluetooth permissions
     private static final String PERMISSION_BLUETOOTH = "android.permission.BLUETOOTH";
@@ -1031,6 +1042,7 @@ public class BluetoothPlugin {
         itFilter.addAction(BLE_CLIENT_CONNECTION_STATE_CHANGE);
         itFilter.addAction(BLE_CLIENT_READ_CHARACTERISTIC);
         itFilter.addAction(BLE_CLIENT_WRITE_CHARACTERISTIC);
+        itFilter.addAction(BLE_CLIENT_CHARACTERISTIC_CHANGED);
         itFilter.addAction(BLE_CLIENT_READ_DESCRIPTOR);
         itFilter.addAction(BLE_CLIENT_WRITE_DESCRIPTOR);
         itFilter.addAction(BLE_CLIENT_SET_MTU);
@@ -1040,6 +1052,7 @@ public class BluetoothPlugin {
         itFilter.addAction(BLE_SERVER_WRITE_CHARACTERISTIC);
         itFilter.addAction(BLE_SERVER_READ_DESCRIPTOR);
         itFilter.addAction(BLE_SERVER_WRITE_DESCRIPTOR);
+        itFilter.addAction(BLE_SERVER_NOTIFICATION_SENT);
         itFilter.addAction(BLE_ADVERTISER_RESULT);
         if (Build.VERSION.SDK_INT >= API_33) {
             context.registerReceiver(btBroadcastReceive_, itFilter, RECEIVER_EXPORTED);
@@ -1501,24 +1514,21 @@ public class BluetoothPlugin {
                 Log.e(LOG_TAG, "notifyCharacteristicChanged failed, User not enabled Bluetooth switch");
                 errCode = BluetoothErrorCode.BT_ERR_INVALID_STATE;
             } else {
-                if (Build.VERSION.SDK_INT < API_33) {
-                    BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
-                    BluetoothGattServer bluetoothGattServer = btManager_.getGattServer(appId);
-                    BluetoothGattCharacteristic characteristic = btManager_.getBluetoothGattCharacteristic(appId,
-                        characterHandle);
-                    byte[] characteristicValue = BluetoothHelper.getCharacteristicValue(characteristicString);
-                    if (device == null || bluetoothGattServer == null) {
-                        errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
-                    } else if (characteristic == null || characteristicValue == null) {
-                        errCode = BluetoothErrorCode.BT_ERR_INVALID_PARAM;
-                    } else {
-                        errCode = bluetoothGattServer.notifyCharacteristicChanged(device, characteristic, isConfirm)
-                                ? BluetoothErrorCode.BT_NO_ERROR
-                                : BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
-                    }
+                BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
+                BluetoothGattServer bluetoothGattServer = btManager_.getGattServer(appId);
+                BluetoothGattCharacteristic characteristic = btManager_.getBluetoothGattCharacteristic(appId,
+                    characterHandle);
+                byte[] characteristicValue = BluetoothHelper.getCharacteristicValue(characteristicString);
+                if (device == null || bluetoothGattServer == null) {
+                    errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
+                } else if (characteristic == null || characteristicValue == null) {
+                    errCode = BluetoothErrorCode.BT_ERR_INVALID_PARAM;
+                } else if (Build.VERSION.SDK_INT >= API_33) {
+                    errCode = notifyCharacteristicChangedByApi33(bluetoothGattServer, device, characteristic,
+                        isConfirm, characteristicValue);
                 } else {
-                    Log.e(LOG_TAG, "Not supported above Android API 33");
-                    errCode = BluetoothErrorCode.BT_ERR_CAPABILITY_NOT_SUPPORT;
+                    errCode = notifyCharacteristicChangedBeforeApi33(bluetoothGattServer, device, characteristic,
+                        isConfirm, characteristicValue);
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -1526,6 +1536,40 @@ public class BluetoothPlugin {
             errCode = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
         }
         return errCode.getId();
+    }
+
+    private BluetoothErrorCode notifyCharacteristicChangedByApi33(BluetoothGattServer bluetoothGattServer,
+        BluetoothDevice device, BluetoothGattCharacteristic characteristic, boolean isConfirm,
+        byte[] characteristicValue) {
+        try {
+            Method notifyCharacteristicChangedMethod = BluetoothGattServer.class.getMethod(
+                "notifyCharacteristicChanged", BluetoothDevice.class, BluetoothGattCharacteristic.class,
+                boolean.class, byte[].class);
+            int status = (Integer) notifyCharacteristicChangedMethod.invoke(bluetoothGattServer, device,
+                characteristic, isConfirm, characteristicValue);
+            if (status == BT_STATUS_SUCCESS) {
+                return BluetoothErrorCode.BT_NO_ERROR;
+            }
+            Log.e(LOG_TAG, "notifyCharacteristicChanged failed, status: " + status);
+        } catch (NoSuchMethodException e) {
+            Log.e(LOG_TAG, "notifyCharacteristicChanged failed, NoSuchMethodException.");
+        } catch (IllegalAccessException e) {
+            Log.e(LOG_TAG, "notifyCharacteristicChanged failed, IllegalAccessException.");
+        } catch (InvocationTargetException e) {
+            Log.e(LOG_TAG, "notifyCharacteristicChanged failed, InvocationTargetException.");
+        }
+        return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
+    }
+
+    private BluetoothErrorCode notifyCharacteristicChangedBeforeApi33(BluetoothGattServer bluetoothGattServer,
+        BluetoothDevice device, BluetoothGattCharacteristic characteristic, boolean isConfirm,
+        byte[] characteristicValue) {
+        if (!characteristic.setValue(characteristicValue)) {
+            return BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
+        }
+        return bluetoothGattServer.notifyCharacteristicChanged(device, characteristic, isConfirm)
+                ? BluetoothErrorCode.BT_NO_ERROR
+                : BluetoothErrorCode.BT_ERR_INTERNAL_ERROR;
     }
 
     public int gattClientConnect(int appId, String address, boolean autoConnect) {
@@ -1681,6 +1725,41 @@ public class BluetoothPlugin {
         return result;
     }
 
+    /**
+     * Requests or disables notifications/indications for a specific BLE
+     * characteristic.
+     * This method enables the client to receive updates when the characteristic
+     * value changes on the remote device.
+     *
+     * @param appId       Application identifier for the GATT client.
+     * @param sUuidString UUID string of the service containing the characteristic.
+     * @param cUuidString UUID string of the characteristic to enable/disable
+     *                    notification.
+     * @param enable      True to enable notification, false to disable.
+     * @return Error code indicating the result of the operation.
+     */
+    public int clientRequestNotification(int appId, String sUuidString, String cUuidString, boolean enable) {
+        int result = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
+        if (btManager_ == null) {
+            return result;
+        }
+        BluetoothAdapter bluetoothAdapter = btManager_.getBluetoothAdapter();
+        if (bluetoothAdapter == null) {
+            Log.e(LOG_TAG, "clientRequestNotification failed, The device does not support Bluetooth.");
+        } else if (!bluetoothAdapter.isEnabled()) {
+            Log.e(LOG_TAG, "clientRequestNotification failed, User not enabled Bluetooth switch.");
+            result = BluetoothErrorCode.BT_ERR_INVALID_STATE.getId();
+        } else {
+            BluetoothGattClient bluetoothGattClient = btManager_.findBluetoothGattClient(appId);
+            if (bluetoothGattClient != null) {
+                result = bluetoothGattClient.requestNotification(sUuidString, cUuidString, enable);
+            } else {
+                Log.e(LOG_TAG, "clientRequestNotification failed, BluetoothGattClient not found.");
+            }
+        }
+        return result;
+    }
+
     public int clientWriteCharacter(
         int appId, String sUuidString, String cUuidString, byte[] valueString, int writeType) {
         int result = BluetoothErrorCode.BT_ERR_INTERNAL_ERROR.getId();
@@ -1816,6 +1895,26 @@ public class BluetoothPlugin {
         nativeServerOnDescriptorWriteRequestCallback(device, descriptor, applicationId);
     }
 
+    /**
+     * Handles the 'onNotificationSent' callback from the GATT server.
+     * This method is triggered when a notification or indication sent by the GATT
+     * server
+     * has been successfully delivered (or failed) to the remote client.
+     *
+     * @param intent The broadcast intent containing the device, status, and
+     *               application ID.
+     */
+    public void serverNotificationSent(Intent intent) {
+        if (intent == null) {
+            Log.e(LOG_TAG, "argument is null");
+            return;
+        }
+        int applicationId = intent.getIntExtra("applicationId", 0);
+        String device = intent.getStringExtra("device");
+        int status = intent.getIntExtra("status", 0);
+        nativeServerOnNotificationSentCallback(device, status, applicationId);
+    }
+
     public void actionBluetoothStateChange(Intent intent) {
         int bluetoothState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
         onChangeStateCallBack(bluetoothState);
@@ -1877,6 +1976,20 @@ public class BluetoothPlugin {
         BluetoothPlugin.nativeOnCharacteristicWrite(appId, result, status);
     }
 
+    /**
+     * Handles the BLE client characteristic value changed event.
+     * Extracts appId and characteristic data from the Intent and notifies the
+     * native layer via JNI callback.
+     *
+     * @param intent The broadcast intent containing the application ID and
+     *               characteristic data in JSON format.
+     */
+    public void actionBleClientCharacteristicChanged(Intent intent) {
+        int appId = intent.getIntExtra("appId", 0);
+        String result = intent.getStringExtra("result");
+        BluetoothPlugin.nativeOnCharacteristicChanged(appId, result);
+    }
+
     public void actionBleClientReadDescriptor(Intent intent) {
         int appId = intent.getIntExtra("appId", 0);
         String result = intent.getStringExtra("result");
@@ -1925,6 +2038,8 @@ public class BluetoothPlugin {
                 actionBleClientReadCharacteristic(intent);
             } else if (BLE_CLIENT_WRITE_CHARACTERISTIC.equals(strAction)) {
                 actionBleClientWriteCharacteristic(intent);
+            } else if (BLE_CLIENT_CHARACTERISTIC_CHANGED.equals(strAction)) {
+                actionBleClientCharacteristicChanged(intent);
             } else if (BLE_CLIENT_READ_DESCRIPTOR.equals(strAction)) {
                 actionBleClientReadDescriptor(intent);
             } else if (BLE_CLIENT_WRITE_DESCRIPTOR.equals(strAction)) {
@@ -1943,6 +2058,8 @@ public class BluetoothPlugin {
                 serverDescriptorRead(intent);
             } else if (BLE_SERVER_WRITE_DESCRIPTOR.equals(strAction)) {
                 serverDescriptorWrite(intent);
+            } else if (BLE_SERVER_NOTIFICATION_SENT.equals(strAction)) {
+                serverNotificationSent(intent);
             } else if (BLE_ADVERTISER_RESULT.equals(strAction)) {
                 actionBleAdvertiserResult(intent);
             }
@@ -1973,6 +2090,13 @@ public class BluetoothPlugin {
 
     protected static native void nativeOnCharacteristicWrite(int appId, String jsonString, int status);
 
+    /**
+     * Notifies the native layer that a client characteristic change event was received.
+     *
+     * @param appId GATT client application identifier.
+     * @param jsonString JSON payload describing the changed characteristic.
+     */
+    protected static native void nativeOnCharacteristicChanged(int appId, String jsonString);
     protected static native void nativeOnConnectionStateChanged(int appId, int state, int newState);
 
     protected static native void nativeGattClientSetServices(
@@ -1994,6 +2118,16 @@ public class BluetoothPlugin {
 
     protected static native void nativeServerOnDescriptorWriteRequestCallback(
         String deviceData, String descriptorData, int appId);
+
+    /**
+     * JNI callback for GATT server 'onNotificationSent' event.
+     *
+     * @param deviceData JSON string of the Bluetooth device.
+     * @param status     Status code of the notification send operation.
+     * @param appId      Application ID of the GATT server instance.
+     */
+    protected static native void nativeServerOnNotificationSentCallback(
+        String deviceData, int status, int appId);
 
     protected static native void nativeOnDescriptorRead(int appId, String jsonString, int status);
 

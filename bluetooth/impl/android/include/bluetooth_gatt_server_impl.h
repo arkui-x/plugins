@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,10 @@
 #ifndef PLUGINS_BLUETOOTH_IMPL_ANDROID_INCLUDE_BLUETOOTH_GATT_SERVER_IMPL_H
 #define PLUGINS_BLUETOOTH_IMPL_ANDROID_INCLUDE_BLUETOOTH_GATT_SERVER_IMPL_H
 
+#include <list>
 #include <map>
+#include <set>
+#include <string>
 
 #include "bluetooth_gatt_server_stub.h"
 #include "i_bluetooth_gatt_server.h"
@@ -54,6 +57,7 @@ public:
         int appId, const BluetoothGattDevice& device, const BluetoothGattDescriptor& descriptor);
     void OnDescriptorWriteRequest(
         int appId, const BluetoothGattDevice& device, const BluetoothGattDescriptor& descriptor);
+    void OnNotifyConfirm(int appId, const BluetoothGattDevice& device, int result);
     void OnMtuChanged(int appId, const BluetoothGattDevice& device, int32_t mtu);
     void OnConnectionStateChanged(int appId, const BluetoothGattDevice& device, int32_t ret, int32_t state);
 
@@ -66,9 +70,20 @@ public:
     int ReadPhy(int32_t appId, const std::string &deviceId) override;
 
 private:
+    void TrackServiceHandles(int32_t appId, const BluetoothGattService& service);
+    void UntrackServiceHandles(int32_t appId, const BluetoothGattService& service);
+    void TrackRequestAppId(int32_t appId, const BluetoothGattDevice& device, uint16_t handle);
+    void UpdateConnectedAppIds(int32_t appId, const BluetoothGattDevice& device, int32_t state);
+    void RemoveAppTracking(int32_t appId);
+    int32_t ResolveAppId(const BluetoothGattDevice& device, uint16_t handle, bool isDescriptor) const;
+
     int32_t applicationIdInc_ = 0;
     std::map<int32_t, std::list<std::pair<uint16_t, uint16_t>>> gattServiceHandleMap_;
     std::map<int32_t, OHOS::sptr<IBluetoothGattServerCallback>> gattServerCallbackMap_;
+    std::map<int32_t, std::set<uint16_t>> characteristicHandleMap_;
+    std::map<int32_t, std::set<uint16_t>> descriptorHandleMap_;
+    std::map<std::string, std::set<int32_t>> deviceAppIdMap_;
+    std::map<std::pair<std::string, uint16_t>, int32_t> requestAppIdMap_;
     std::mutex gattServerMutex_;
 };
 } // namespace Bluetooth

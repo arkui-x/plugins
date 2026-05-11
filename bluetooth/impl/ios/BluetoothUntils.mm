@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,12 @@
 #import "BluetoothUntils.h"
 
 @implementation BluetoothUntils
+
+static NSString* const BLUETOOTH_BASE_UUID_SUFFIX = @"00001000800000805F9B34FB";
+static const NSUInteger BLUETOOTH_BASE_UUID_LENGTH = 32;
+static const NSUInteger BLUETOOTH_UUID_PREFIX_LENGTH = 8;
+static const NSUInteger BLUETOOTH_UUID_SHORT_LENGTH = 4;
+static NSString* const BLUETOOTH_UUID_ZERO_GROUP = @"0000";
 
 + (id)GetValueWithData:(NSData*)data uuid:(NSString*)strUUID
 {
@@ -60,6 +66,27 @@
         }
     }
     return sysUUIDKey;
+}
+
++ (NSString*)NormalizeBluetoothUuid:(NSString*)uuid
+{
+    NSString* upperUuid = [[uuid stringByReplacingOccurrencesOfString:@"-" withString:@""] uppercaseString];
+    if ([upperUuid hasSuffix:BLUETOOTH_BASE_UUID_SUFFIX] && upperUuid.length == BLUETOOTH_BASE_UUID_LENGTH) {
+        NSString* shortUuid = [upperUuid substringToIndex:BLUETOOTH_UUID_PREFIX_LENGTH];
+        while (shortUuid.length > BLUETOOTH_UUID_SHORT_LENGTH && [shortUuid hasSuffix:BLUETOOTH_UUID_ZERO_GROUP]) {
+            shortUuid = [shortUuid substringToIndex:shortUuid.length - BLUETOOTH_UUID_SHORT_LENGTH];
+        }
+        while (shortUuid.length > BLUETOOTH_UUID_SHORT_LENGTH && [shortUuid hasPrefix:BLUETOOTH_UUID_ZERO_GROUP]) {
+            shortUuid = [shortUuid substringFromIndex:BLUETOOTH_UUID_SHORT_LENGTH];
+        }
+        return shortUuid;
+    }
+    return upperUuid;
+}
+
++ (BOOL)IsSameBluetoothUuid:(NSString*)left right:(NSString*)right
+{
+    return [[self NormalizeBluetoothUuid:left] isEqualToString:[self NormalizeBluetoothUuid:right]];
 }
 
 @end

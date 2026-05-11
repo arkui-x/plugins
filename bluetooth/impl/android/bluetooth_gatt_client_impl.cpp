@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 
 #include "bluetooth_gatt_client_impl.h"
 
+#include <algorithm>
+#include <cctype>
 #include <functional>
 #include <thread>
 
@@ -33,6 +35,12 @@ constexpr uint32_t SIGNED = 0x04;
 constexpr int32_t ONE_HUNDRED_MS = 100;
 constexpr size_t BLE_ATT_HEADER_SIZE = 3;
 constexpr size_t DELAY_COUNT = 5;
+
+std::string NormalizeUuid(std::string uuid)
+{
+    std::transform(uuid.begin(), uuid.end(), uuid.begin(), [](unsigned char c) { return std::toupper(c); });
+    return uuid;
+}
 }
 std::map<int32_t, std::shared_ptr<GattClientData>> BluetoothGattClientImpl::gattClientDataMap_;
 std::map<int32_t, std::list<std::pair<uint16_t, uint16_t>>> BluetoothGattClientImpl::gattClientHandleMap_;
@@ -263,8 +271,13 @@ int BluetoothGattClientImpl::ReadRemoteRssiValue(int32_t appId)
 
 int BluetoothGattClientImpl::RequestNotification(int32_t appId, uint16_t characterHandle, bool enable)
 {
-    HILOGI("NOT SUPPORT NOW");
-    return BT_NO_ERROR;
+    auto sUuidString = GetServiceUuidByHandle(appId, characterHandle);
+    auto cUuidString = GetCharacterUuidByHandle(appId, characterHandle);
+    if (sUuidString.empty() || cUuidString.empty()) {
+        HILOGE("RequestNotification failed, appId: %{public}d, handle: %{public}u", appId, characterHandle);
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    return BluetoothJni::ClientRequestNotification(appId, sUuidString, cUuidString, enable);
 }
 
 int BluetoothGattClientImpl::GetConnectedState(const std::string &deviceId, int &state)
@@ -397,6 +410,29 @@ std::string BluetoothGattClientImpl::GetCharacterUuidByHandle(const int appId, c
     }
 }
 
+uint16_t BluetoothGattClientImpl::GetCharacteristicHandleByUuid(const int appId, const std::string& serviceUuid,
+    const std::string& characteristicUuid)
+{
+    auto normalizedServiceUuid = NormalizeUuid(serviceUuid);
+    auto normalizedCharacteristicUuid = NormalizeUuid(characteristicUuid);
+    auto iter = characterHandleMap_.find(appId);
+    if (iter == characterHandleMap_.end()) {
+        HILOGE("Get characteristic handle by uuid failed, the appId is %{public}d", appId);
+        return 0;
+    }
+
+    for (const auto& entry : iter->second) {
+        if (entry.second != normalizedCharacteristicUuid) {
+            continue;
+        }
+        const uint16_t handle = entry.first.first;
+        if (GetServiceUuidByHandle(appId, handle) == normalizedServiceUuid) {
+            return handle;
+        }
+    }
+    return 0;
+}
+
 std::string BluetoothGattClientImpl::GetDescriptorUuidByHandle(const int appId, const int handle)
 {
     auto iter = descriptorHandleMap_.find(appId);
@@ -412,6 +448,31 @@ std::string BluetoothGattClientImpl::GetDescriptorUuidByHandle(const int appId, 
         HILOGE("Get descriptor uuid by handle failed, the appId is %{public}d", appId);
         return std::string("");
     }
+}
+
+uint16_t BluetoothGattClientImpl::GetDescriptorHandleByUuid(const int appId, const std::string& serviceUuid,
+    const std::string& characteristicUuid, const std::string& descriptorUuid)
+{
+    auto normalizedServiceUuid = NormalizeUuid(serviceUuid);
+    auto normalizedCharacteristicUuid = NormalizeUuid(characteristicUuid);
+    auto normalizedDescriptorUuid = NormalizeUuid(descriptorUuid);
+    auto iter = descriptorHandleMap_.find(appId);
+    if (iter == descriptorHandleMap_.end()) {
+        HILOGE("Get descriptor handle by uuid failed, the appId is %{public}d", appId);
+        return 0;
+    }
+
+    for (const auto& entry : iter->second) {
+        if (entry.second != normalizedDescriptorUuid) {
+            continue;
+        }
+        const uint16_t handle = entry.first;
+        if (GetServiceUuidByHandle(appId, handle) == normalizedServiceUuid &&
+            GetCharacterUuidByHandle(appId, handle) == normalizedCharacteristicUuid) {
+            return handle;
+        }
+    }
+    return 0;
 }
 } // namespace Bluetooth
 } // namespace OHOS

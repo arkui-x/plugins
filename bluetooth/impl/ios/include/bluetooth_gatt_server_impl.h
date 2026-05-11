@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -59,16 +59,21 @@ private:
     std::mutex gattServerMutex_;
     std::map<int32_t, std::list<std::pair<uint16_t, uint16_t>>> gattServiceHandleMap_;
     std::map<uint16_t, BluetoothGattService> gattServiceMap_;
+    std::map<uint16_t, int32_t> gattServiceAppIdMap_;
     int32_t GetGattServerAppId();
     void GetGattCharacteristic(std::string serviceUUID, std::string charaUUID, int length, const uint8_t* bytesValue,
         BluetoothGattCharacteristic& character);
+    bool GetGattDescriptor(std::string serviceUUID, std::string charaUUID, int length, const uint8_t* bytesValue,
+        BluetoothGattDescriptor& descriptor);
     void GattCharacteristicNotifyBlock();
     void GattCharacteristicWriteBlock();
     void GattCharacteristicReadBlock();
+    void GattDescriptorWriteBlock();
     bool CalculateAndAssignHandle(const int applicationId, BluetoothGattService& service);
     void ReleaseHandle(const int applicationId, const BluetoothGattService& service);
     int RespondCharacteristic(
-        const uint16_t type, const BluetoothGattDevice& device, const BluetoothGattCharacteristic& gattCharacter);
+        const uint16_t type, const BluetoothGattDevice& device, const BluetoothGattCharacteristic& gattCharacter,
+        int32_t ret);
 };
 } // namespace Bluetooth
 } // namespace OHOS
