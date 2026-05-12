@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -72,8 +72,11 @@ public:
         JNIEnv* env, jobject jobj, jstring deviceData, jstring descriptorData, int appId);
     static void NativeServerOnDescriptorWriteRequestCallback(
         JNIEnv* env, jobject jobj, jstring deviceData, jstring descriptorData, int appId);
+    static void NativeServerOnNotificationSentCallback(
+        JNIEnv* env, jobject jobj, jstring deviceData, jint status, jint appId);
     static void NativeOnCharacteristicRead(JNIEnv* env, jobject jobj, jint appId, jstring jsonString, jint status);
     static void NativeOnCharacteristicWrite(JNIEnv* env, jobject jobj, jint appId, jstring jsonString, jint status);
+    static void NativeOnCharacteristicChanged(JNIEnv* env, jobject jobj, jint appId, jstring jsonString);
     static void NativeOnConnectionStateChanged(JNIEnv* env, jobject jobj, jint appId, jint state, jint newState);
     static void NativeGattClientSetServices(JNIEnv* env, jobject jobj, jint appId, jstring sJObject,
         jobjectArray cJObjects, jobject clientCharacteristicMap);
@@ -131,6 +134,8 @@ public:
     static int32_t GattClientClose(const int32_t appId);
     static int32_t RequestExchangeMtu(const int32_t appId, const int32_t mtu);
     static int32_t ClientReadCharacter(const int32_t appId, BluetoothGattCharacteristic& characteristic);
+    static int32_t ClientRequestNotification(
+        const int32_t appId, const std::string& serviceUuid, const std::string& characterUuid, bool enable);
     static int32_t ClientWriteCharacter(
         const int32_t appId, BluetoothGattCharacteristic& characteristic, const int32_t writeType);
     static int32_t ClientWriteDescriptor(const int32_t appId, BluetoothGattDescriptor& descriptor);

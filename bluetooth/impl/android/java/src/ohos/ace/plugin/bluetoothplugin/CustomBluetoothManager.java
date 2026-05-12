@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -468,11 +468,28 @@ public class CustomBluetoothManager {
                 String descriptorUuid = descriptor.getUuid().toString();
                 int descriptorHandle = bluetoothGattServerMap_.get(applicationId_).getDescriptorHandleByUuid(
                     serviceUuid, descriptorUuid);
-                String descriptorData = BluetoothHelper.convertDescriptorToJSONString(descriptor, descriptorHandle);
+                if (value != null) {
+                    descriptor.setValue(value);
+                }
+                String descriptorData = BluetoothHelper.convertDescriptorToJSONString(descriptor, descriptorHandle,
+                    value);
                 Intent intent = new Intent(BluetoothPlugin.BLE_SERVER_WRITE_DESCRIPTOR);
                 intent.putExtra("applicationId", applicationId_);
                 intent.putExtra("device", deviceData);
                 intent.putExtra("descriptor", descriptorData);
+                BluetoothPlugin.sendBleBroadcast(intent);
+            }
+        }
+
+        @Override
+        public void onNotificationSent(BluetoothDevice device, int status) {
+            super.onNotificationSent(device, status);
+            if (bluetoothGattServerMap_ != null) {
+                String deviceData = BluetoothHelper.convertBluetoothDeviceToJString(device);
+                Intent intent = new Intent(BluetoothPlugin.BLE_SERVER_NOTIFICATION_SENT);
+                intent.putExtra("applicationId", applicationId_);
+                intent.putExtra("device", deviceData);
+                intent.putExtra("status", status);
                 BluetoothPlugin.sendBleBroadcast(intent);
             }
         }

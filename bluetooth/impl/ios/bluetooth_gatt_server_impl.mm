@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,6 +31,35 @@ const uint16_t CHARACTERISTIC_WRITE = 1;
 
 namespace OHOS {
 namespace Bluetooth {
+const std::string CLIENT_CHARACTERISTIC_CONFIGURATION_UUID = "00002902-0000-1000-8000-00805F9B34FB";
+
+static const OHOS::bluetooth::Descriptor* GetClientCharacteristicConfigurationDescriptor(
+    const OHOS::bluetooth::Characteristic& characteristic)
+{
+    for (const auto& descriptor : characteristic.descriptors_) {
+        if (descriptor.uuid_.ToString() == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID) {
+            return &descriptor;
+        }
+    }
+    return nullptr;
+}
+
+static bool AssignGattDescriptor(const OHOS::bluetooth::Descriptor& sourceDescriptor, int length,
+    const uint8_t* bytesValue, BluetoothGattDescriptor& descriptor)
+{
+    descriptor.handle_ = sourceDescriptor.handle_;
+    descriptor.permissions_ = sourceDescriptor.permissions_;
+    descriptor.uuid_ = sourceDescriptor.uuid_;
+    descriptor.length_ = static_cast<size_t>(length);
+    descriptor.value_ = std::make_unique<uint8_t[]>(descriptor.length_);
+    if (memcpy_s(descriptor.value_.get(), descriptor.length_, bytesValue, descriptor.length_) != EOK) {
+        descriptor.value_.reset(nullptr);
+        descriptor.length_ = 0;
+        return false;
+    }
+    return true;
+}
+
 BluetoothGattServerImpl::BluetoothGattServerImpl()
 {
     appId_ = 0;
@@ -76,6 +105,7 @@ bool BluetoothGattServerImpl::CalculateAndAssignHandle(const int applicationId, 
         charactor.endHandle_ = currentHandle - 1;
     }
     gattServiceMap_.insert({ service.handle_, service });
+    gattServiceAppIdMap_.insert({ service.handle_, applicationId });
     return true;
 }
 
@@ -159,6 +189,9 @@ CBMutableCharacteristic* createCharacter(BluetoothGattCharacteristic& cvc)
     for (OHOS::bluetooth::Descriptor descriptor : cvc.descriptors_) {
         NSString* strDid = [NSString stringWithFormat:@"%s", descriptor.uuid_.ToString().c_str()];
         strDid = [BluetoothUntils GetSystemStringUUIDKey:strDid];
+        if ([strDid isEqualToString:CBUUIDClientCharacteristicConfigurationString]) {
+            continue;
+        }
         CBUUID* descriptorUUID = [CBUUID UUIDWithString:strDid];
         uint8_t* descriptorValue = descriptor.value_.get();
         size_t descriptorLength = descriptor.length_;
@@ -233,6 +266,7 @@ int BluetoothGattServerImpl::RegisterApplication(const sptr<IBluetoothGattServer
     GattCharacteristicReadBlock();
     GattCharacteristicWriteBlock();
     GattCharacteristicNotifyBlock();
+    GattDescriptorWriteBlock();
     int appId = [[BluetoothPeripheralManager sharedInstance] getAppId];
     gattServiceHandleMap_[appId].emplace_front(std::make_pair(MIN_SERVICE_HANDLE, MAX_SERVICE_HANDLE));
     return appId;
@@ -246,6 +280,14 @@ int BluetoothGattServerImpl::DeregisterApplication(int appId)
     auto item = gattServiceHandleMap_.find(appId);
     if (item != gattServiceHandleMap_.end()) {
         gattServiceHandleMap_.erase(item);
+    }
+    for (auto serviceItem = gattServiceAppIdMap_.begin(); serviceItem != gattServiceAppIdMap_.end();) {
+        if (serviceItem->second == appId) {
+            gattServiceMap_.erase(serviceItem->first);
+            serviceItem = gattServiceAppIdMap_.erase(serviceItem);
+        } else {
+            ++serviceItem;
+        }
     }
     return BT_NO_ERROR;
 }
@@ -282,22 +324,48 @@ int BluetoothGattServerImpl::NotifyClient(
     }
     CBMutableService* service = nil;
     CBMutableCharacteristic* character = nil;
+    int32_t notifyAppId = 0;
     for (auto item = gattServiceMap_.rbegin(); item != gattServiceMap_.rend(); ++item) {
         uint16_t serviceHandle = item->first;
         if (serviceHandle < characteristic->handle_) {
             service = CreateServices(item->second);
             character = GetCurrentCharacteristic(characteristic->handle_, item->second);
+            auto appIdItem = gattServiceAppIdMap_.find(serviceHandle);
+            if (appIdItem != gattServiceAppIdMap_.end()) {
+                notifyAppId = appIdItem->second;
+            }
             break;
         }
     }
-    if (!service || !character) {
+    if (!service || !character || notifyAppId == 0) {
         return BT_ERR_INTERNAL_ERROR;
     }
+    BOOL supportNotify = ((character.properties & CBCharacteristicPropertyNotify) != 0) ||
+        ((character.properties & CBCharacteristicPropertyNotifyEncryptionRequired) != 0);
+    BOOL supportIndicate = ((character.properties & CBCharacteristicPropertyIndicate) != 0) ||
+        ((character.properties & CBCharacteristicPropertyIndicateEncryptionRequired) != 0);
+    if (needConfirm && !supportIndicate) {
+        return BT_ERR_API_NOT_SUPPORT;
+    }
+    if (!needConfirm && !supportNotify) {
+        return BT_ERR_API_NOT_SUPPORT;
+    }
+    uint8_t* rawData = characteristic->value_.get();
+    size_t dataSize = characteristic->length_;
+    if (rawData == nullptr && dataSize > 0) {
+        return BT_ERR_INTERNAL_ERROR;
+    }
+    character.value = dataSize == 0 ? [NSData data] : [NSData dataWithBytes:rawData length:dataSize];
     NSString* strDeviceId = [NSString stringWithFormat:@"%s", device.addr_.GetAddress().c_str()];
     BluetoothPeripheralManager* bpm = [BluetoothPeripheralManager sharedInstance];
     int ret = [bpm notifyCharacteristicChanged:strDeviceId
+                                         appId:notifyAppId
                                    serviceUUID:service.UUID.UUIDString
                           notifyCharacteristic:character];
+    if (ret == BT_NO_ERROR && serviceCallBack_ != nullptr) {
+        BluetoothGattDevice gattDevice = device;
+        serviceCallBack_->OnNotifyConfirm(gattDevice, *characteristic, BT_NO_ERROR);
+    }
     return ret;
 }
 
@@ -310,6 +378,7 @@ int BluetoothGattServerImpl::RemoveService(int32_t appId, const BluetoothGattSer
         if (serviceHandle == services.handle_) {
             service = CreateServices(item->second);
             gattServiceMap_.erase(serviceHandle);
+            gattServiceAppIdMap_.erase(serviceHandle);
             break;
         }
     }
@@ -318,20 +387,26 @@ int BluetoothGattServerImpl::RemoveService(int32_t appId, const BluetoothGattSer
 }
 
 int BluetoothGattServerImpl::RespondCharacteristic(
-    const uint16_t type, const BluetoothGattDevice& device, const BluetoothGattCharacteristic& gattCharacter)
+    const uint16_t type, const BluetoothGattDevice& device, const BluetoothGattCharacteristic& gattCharacter,
+    int32_t ret)
 {
     uint16_t characterHandle = gattCharacter.handle_;
     CBMutableService* service = nil;
     CBMutableCharacteristic* character = nil;
+    int32_t respondAppId = 0;
     for (auto item = gattServiceMap_.rbegin(); item != gattServiceMap_.rend(); ++item) {
         uint16_t serviceHandle = item->first;
         if (serviceHandle < characterHandle) {
             service = CreateServices(item->second);
             character = GetCurrentCharacteristic(characterHandle, item->second);
+            auto appIdItem = gattServiceAppIdMap_.find(serviceHandle);
+            if (appIdItem != gattServiceAppIdMap_.end()) {
+                respondAppId = appIdItem->second;
+            }
             break;
         }
     }
-    if (!service || !character) {
+    if (!service || !character || respondAppId == 0) {
         HILOGE("service character is null");
         return BT_ERR_INTERNAL_ERROR;
     }
@@ -343,13 +418,17 @@ int BluetoothGattServerImpl::RespondCharacteristic(
         size_t dataSize = gattCharacter.length_;
         NSData* characterData = [NSData dataWithBytes:rawData length:dataSize];
         result = [bpm sendRespondReadWithDeviceId:strDeviceId
+                                             appId:respondAppId
                                       serviceUUID:service.UUID.UUIDString
                                     characterUUID:character.UUID.UUIDString
-                                             data:characterData];
+                                             data:characterData
+                                           status:ret];
     } else {
         result = [bpm sendRespondWriteWithDeviceId:strDeviceId
+                                              appId:respondAppId
                                        serviceUUID:service.UUID.UUIDString
-                                     characterUUID:character.UUID.UUIDString];
+                                     characterUUID:character.UUID.UUIDString
+                                            status:ret];
     }
     return result;
 }
@@ -358,13 +437,14 @@ int BluetoothGattServerImpl::RespondCharacteristicRead(
     const BluetoothGattDevice& device, BluetoothGattCharacteristic* characteristic, int32_t ret)
 {
     BluetoothGattCharacteristic gattCharacteristic = BluetoothGattCharacteristic(*characteristic);
-    return RespondCharacteristic(CHARACTERISTIC_READ, device, gattCharacteristic);
+    return RespondCharacteristic(CHARACTERISTIC_READ, device, gattCharacteristic, ret);
 }
 
 int BluetoothGattServerImpl::RespondCharacteristicWrite(
     const BluetoothGattDevice& device, const BluetoothGattCharacteristic& characteristic, int32_t ret)
 {
-    return RespondCharacteristic(CHARACTERISTIC_WRITE, device, characteristic);
+    BluetoothGattCharacteristic gattCharacteristic = BluetoothGattCharacteristic(characteristic);
+    return RespondCharacteristic(CHARACTERISTIC_WRITE, device, gattCharacteristic, ret);
 }
 
 int BluetoothGattServerImpl::RespondDescriptorRead(
@@ -427,6 +507,28 @@ void BluetoothGattServerImpl::GetGattCharacteristic(std::string serviceUUID, std
     }
 }
 
+bool BluetoothGattServerImpl::GetGattDescriptor(std::string serviceUUID, std::string charaUUID, int length,
+    const uint8_t* bytesValue, BluetoothGattDescriptor& descriptor)
+{
+    for (auto item = gattServiceMap_.begin(); item != gattServiceMap_.end(); ++item) {
+        const BluetoothGattService& gattService = item->second;
+        if (serviceUUID != gattService.uuid_.ToString()) {
+            continue;
+        }
+        for (const auto& cvc : gattService.characteristics_) {
+            if (charaUUID != cvc.uuid_.ToString()) {
+                continue;
+            }
+            const auto* cccdDescriptor = GetClientCharacteristicConfigurationDescriptor(cvc);
+            if (cccdDescriptor == nullptr) {
+                continue;
+            }
+            return AssignGattDescriptor(*cccdDescriptor, length, bytesValue, descriptor);
+        }
+    }
+    return false;
+}
+
 void BluetoothGattServerImpl::GattCharacteristicWriteBlock()
 {
     BluetoothPeripheralManager* peripheralManager = [BluetoothPeripheralManager sharedInstance];
@@ -468,6 +570,29 @@ void BluetoothGattServerImpl::GattCharacteristicReadBlock()
           gattDevice.addr_ = OHOS::bluetooth::RawAddress(deviceId.UTF8String);
           gattDevice.transport_ = GATT_TRANSPORT_TYPE_LE;
           serviceCallBack_->OnCharacteristicReadRequest(gattDevice, gattCharacteristic);
+        };
+}
+
+void BluetoothGattServerImpl::GattDescriptorWriteBlock()
+{
+    BluetoothPeripheralManager* peripheralManager = [BluetoothPeripheralManager sharedInstance];
+    peripheralManager.descriptorWriteBlock =
+        ^(NSString* _Nonnull deviceId, CBCharacteristic* _Nonnull characteristic, NSData* _Nonnull value) {
+          if (serviceCallBack_ == nullptr) {
+              return;
+          }
+          NSUInteger length = [value length];
+          const uint8_t* bytesValue = (const uint8_t*)[value bytes];
+          std::string serviceUuid = characteristic.service.UUID.UUIDString.UTF8String;
+          std::string characterUuid = characteristic.UUID.UUIDString.UTF8String;
+          BluetoothGattDescriptor gattDescriptor;
+          if (!GetGattDescriptor(serviceUuid, characterUuid, static_cast<int>(length), bytesValue, gattDescriptor)) {
+              return;
+          }
+          BluetoothGattDevice gattDevice;
+          gattDevice.addr_ = OHOS::bluetooth::RawAddress(deviceId.UTF8String);
+          gattDevice.transport_ = GATT_TRANSPORT_TYPE_LE;
+          serviceCallBack_->OnDescriptorWriteRequest(gattDevice, gattDescriptor);
         };
 }
 

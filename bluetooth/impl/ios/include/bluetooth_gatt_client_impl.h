@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 #define OHOS_BLUETOOTH_STANDARD_GATT_CLIENT_IMPL_H
 
 #include <map>
+#include <set>
 
 #include "bluetooth_gatt_client_stub.h"
 #include "i_bluetooth_gatt_client.h"
@@ -62,6 +63,9 @@ private:
     std::map<int32_t, std::pair<uint16_t, uint16_t>> gattClientHandleMap_;
     std::map<uint16_t, BluetoothGattService> gattServiceMap_;
     std::map<uint16_t, BluetoothGattDescriptor> gattDescriptorMap_;
+    std::map<int32_t, std::set<uint16_t>> pendingNotifyDescriptorHandleMap_;
+    std::map<int32_t, std::map<uint16_t, BluetoothGattDescriptor>> pendingNotifyDescriptorMap_;
+    std::map<int32_t, std::map<uint16_t, int32_t>> pendingNotifyResultMap_;
     std::mutex gattClientMutex_;
     int GetGattClientAppId();
     void ChangeConnectState(int32_t appId, int ret, int state);
@@ -70,6 +74,17 @@ private:
     bool CalculateAndAssignHandle(const int32_t applicationId, BluetoothGattService& service);
     void GetGattCharacteristic(std::string serviceUUID, std::string charaUUID, int length, const uint8_t* bytesValue,
         BluetoothGattCharacteristic& character);
+    bool TakePendingNotifyDescriptor(int32_t appId, uint16_t descriptorHandle);
+    bool TakePendingNotifyResult(int32_t appId, uint16_t descriptorHandle, int32_t& notifyRet);
+    int HandleClientConfigDescriptorWrite(int32_t appId, BluetoothGattDescriptor* descriptor);
+    int WriteDescriptorToPeripheral(
+        int32_t appId, BluetoothGattDescriptor* descriptor, const BluetoothGattDescriptor& gattDes);
+    void CompleteNotifyDescriptorWrite(int32_t appId, uint16_t descriptorHandle, int32_t ret);
+    uint16_t GetNotifyDescriptorHandle(const BluetoothGattService& service, uint16_t characterHandle);
+    void InsertPendingNotifyDescriptor(int32_t appId, uint16_t descriptorHandle);
+    void RemovePendingNotifyDescriptor(int32_t appId, uint16_t descriptorHandle);
+    void NotifyCharacteristicChanged(int32_t appId, const std::string& serviceUuid, const std::string& characterUuid,
+        int length, const uint8_t* bytesValue);
 };
 } // namespace Bluetooth
 } // namespace OHOS

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,7 +28,11 @@ typedef void (^ScanDataBlock)(CBPeripheral* peripheral, NSDictionary<NSString*, 
 typedef void (^ConnectStateBlock)(int32_t ret, int32_t state);
 typedef void (^ReadCharacterBlock)(CBCharacteristic* chara, int32_t ret);
 typedef void (^ReadDescriptorBlock)(CBDescriptor* des, int32_t ret);
+typedef void (^WriteDescriptorBlock)(CBDescriptor* des, int32_t ret);
 typedef void (^WriteCharacterBlock)(CBCharacteristic* chara, int32_t ret);
+typedef void (^NotifyCharacterBlock)(CBCharacteristic* chara, int32_t ret);
+typedef void (^NotifyStateBlock)(CBCharacteristic* chara, int32_t ret);
+typedef void (^NotifyStateCompletionBlock)(int32_t ret);
 typedef void (^ServicesDiscoveredBlock)(int32_t ret);
 typedef void (^UpdataBleStateBlock)(int ret);
 
@@ -42,7 +46,9 @@ typedef void (^UpdataBleStateBlock)(int ret);
 @property(nonatomic, strong) NSMutableArray* arrAutoConnectDivice;
 @property(nonatomic, strong) NSMutableDictionary* servicesDic;
 @property(nonatomic, strong) NSMutableDictionary* characteristicBlockDic;
+@property(nonatomic, strong) NSMutableDictionary* notifyStateBlockDic;
 @property(nonatomic, strong) NSMutableDictionary* getServicesStateDic;
+@property(nonatomic, strong) NSMutableSet* notifyCharacteristicSet;
 
 @property(nonatomic, copy) ScanDataBlock scanDataBlock;
 @property(nonatomic, copy) ConnectStateBlock connectStateBlock;
@@ -75,12 +81,20 @@ typedef void (^UpdataBleStateBlock)(int ret);
 - (int)RequestNotification:(int)appId
                serviceUuid:(CBUUID*)serviceUuid
              characterUuid:(CBUUID*)characterUuid
-        enableNotification:(bool)enableNotification;
+        enableNotification:(bool)enableNotification
+                     block:(NotifyCharacterBlock)block
+                completion:(NotifyStateCompletionBlock)completion;
 - (int)getReadDescriptor:(int)appId
              serviceUuid:(CBUUID*)serviceUuid
            characterUuid:(CBUUID*)characterUuid
           descriptorUuid:(CBUUID*)descriptorUuid
                     data:(ReadDescriptorBlock)dataBlock;
+- (int)writeDescriptor:(int)appId
+           serviceUuid:(CBUUID*)serviceUuid
+         characterUuid:(CBUUID*)characterUuid
+        descriptorUuid:(CBUUID*)descriptorUuid
+                  data:(NSData*)data
+                 block:(WriteDescriptorBlock)block;
 - (bool)isBleEnabled;
 - (int)getBleState;
 
