@@ -35,6 +35,7 @@ template("plugin_cryptoframework_static") {
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_ecc_key_util.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_init.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_kdf.cpp",
+      "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_kem.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_key.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_key_agreement.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_key_pair.cpp",
