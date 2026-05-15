@@ -219,5 +219,44 @@ int32_t AudioSpatializationManager::GetCurrentSpatialAudioSourceType()
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
+
+bool AudioSpatializationManager::IsPersonalizedSpatializationEnabled(
+    const std::shared_ptr<AudioDeviceDescriptor> &selectedAudioDevice)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
+int32_t AudioSpatializationManager::SetPersonalizedSpatializationEnabled(
+    const std::shared_ptr<AudioDeviceDescriptor> &selectedAudioDevice, const bool enable)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSpatializationManager::RegisterPersonalizedSpatializationEnabledEventListener(
+    const std::shared_ptr<AudioPersonalizedSpatializationEnabledChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSpatializationManager::UnregisterPersonalizedSpatializationEnabledEventListener()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+bool AudioSpatializationManager::IsPersonalizedSpatializationSupported()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return false;
+}
+
+int32_t AudioSpatializationManager::DownloadPersonalizedHRTF(const int32_t fd, const int64_t length)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
 } // namespace AudioStandard
 } // namespace OHOS

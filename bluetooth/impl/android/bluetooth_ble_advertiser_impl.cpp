@@ -133,5 +133,17 @@ int BluetoothBleAdvertiserImpl::ChangeAdvertisingParams(
     HILOGE("Not Supported");
     return BT_NO_ERROR;
 }
+
+int BluetoothBleAdvertiserImpl::BleStartRangeAdv(bluetooth::BleAppType appType)
+{
+    HILOGE("Not Supported");
+    return BT_NO_ERROR;
+}
+
+int BluetoothBleAdvertiserImpl::BleStopRangeAdv(bluetooth::BleAppType appType)
+{
+    HILOGE("Not Supported");
+    return BT_NO_ERROR;
+}
 } // namespace Bluetooth
 } // namespace OHOS
