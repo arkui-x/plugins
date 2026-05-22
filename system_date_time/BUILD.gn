@@ -48,6 +48,7 @@ template("plugin_system_date_time_static") {
     configs = [ "//base/time/time_service/services:time_service_gen_config" ]
 
     include_dirs = [
+      "//base/time/time_service/framework/js/common/include",
       "//base/time/time_service/utils/native/include",
       "//base/time/time_service/services/time/include",
       "${time_jsnapi_path}/common/include",
@@ -70,6 +71,7 @@ template("plugin_system_date_time_static") {
       "${time_jsnapi_path}/common/src/napi_utils.cpp",
       "${time_jsnapi_path}/common/src/napi_work.cpp",
       "${time_jsnapi_path}/system_date_time/src/napi_system_date_time.cpp",
+      "${time_root_path}/framework/js/common/src/time_gettime_utils.cpp",
       "date_time_init.cpp",
       "parameters.cpp",
       "time_service_client.cpp",
