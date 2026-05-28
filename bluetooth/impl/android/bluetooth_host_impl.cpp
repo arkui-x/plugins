@@ -469,7 +469,7 @@ int32_t BluetoothHostImpl::OnPairStatusChangedCallBack(
             return BT_ERR_INTERNAL_ERROR;
         }
         cause = UnbondCause::PAIR_COMMON_BOND_CAUSE;
-        remoteDeviceObserver_->OnPairStatusChanged(transport, device, status, cause);
+        remoteDeviceObserver_->OnPairStatusChanged(transport, device, status, cause, "");
         return BT_NO_ERROR;
     }
     return BT_ERR_INTERNAL_ERROR;

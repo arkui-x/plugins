@@ -18,6 +18,8 @@
 #include <json/json.h>
 
 #include "pasteboard_hilog.h"
+#include "want.h"
+#include "pixel_map.h"
 
 namespace OHOS::MiscServices {
 
