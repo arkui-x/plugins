@@ -249,7 +249,7 @@ void BluetoothGattServerImpl::OnConnectionStateChanged(
     UpdateConnectedAppIds(appId, device, state);
     if (gattServerCallbackMap_[appId] != nullptr) {
         gattServerCallbackMap_[appId]->OnConnectionStateChanged(
-            device, ret, state, static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
+            device, ret, state, static_cast<int>(GattDisconnectReason::CONN_UNKNOWN), "");
     }
 }
 

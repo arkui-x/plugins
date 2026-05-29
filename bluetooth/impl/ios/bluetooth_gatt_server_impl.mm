@@ -256,12 +256,12 @@ int BluetoothGattServerImpl::RegisterApplication(const sptr<IBluetoothGattServer
               case CBPeripheralStateConnected:
                   serviceCallBack_->OnConnectionStateChanged(
                       gattDevice, BT_NO_ERROR, static_cast<int>(BTConnectState::CONNECTED),
-                      static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
+                      static_cast<int>(GattDisconnectReason::CONN_UNKNOWN), "");
                   break;
               default:
                   serviceCallBack_->OnConnectionStateChanged(
                       gattDevice, BT_NO_ERROR, static_cast<int>(BTConnectState::DISCONNECTED),
-                      static_cast<int>(GattDisconnectReason::CONN_UNKNOWN));
+                      static_cast<int>(GattDisconnectReason::CONN_UNKNOWN), "");
                   break;
           }
       }

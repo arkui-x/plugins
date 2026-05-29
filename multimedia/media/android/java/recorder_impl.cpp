@@ -297,6 +297,12 @@ int32_t RecorderImpl::SetWatermark(std::shared_ptr<AVBuffer> &waterMarkBuffer)
     return MSERR_OK;
 }
 
+int32_t RecorderImpl::AddWatermark(std::shared_ptr<AVBuffer> &watermarkBuffer, int32_t width, int32_t height,
+    int32_t &watermarkCount)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::SetUserMeta(const std::shared_ptr<Meta> &userMeta)
 {
     return MSERR_OK;
