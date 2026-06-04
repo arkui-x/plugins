@@ -586,5 +586,11 @@ int32_t BluetoothHostImpl::IsProfileExist(const std::string &profileName, bool &
 {
     return 0;
 }
+
+int32_t BluetoothHostImpl::VerifyMultiPermissions(bool systemHapNeeded,
+    const std::set<std::string> &permissions)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

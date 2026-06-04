@@ -641,8 +641,22 @@ int32_t AudioSystemManager::RegisterSystemVolumeChangeCallback(const int32_t cli
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSystemManager::RegisterSystemVolumeChangeByFilterCallback(const int32_t clientPid,
+    const SystemVolumeFilter &filter, const std::shared_ptr<SystemVolumeChangeByFilterCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioSystemManager::UnregisterSystemVolumeChangeCallback(const int32_t clientPid,
     const std::shared_ptr<SystemVolumeChangeCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnregisterSystemVolumeChangeByFilterCallback(const int32_t clientPid,
+    const std::shared_ptr<SystemVolumeChangeByFilterCallback> &callback)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;

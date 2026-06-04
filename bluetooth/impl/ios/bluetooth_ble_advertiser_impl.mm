@@ -135,13 +135,13 @@ int32_t BluetoothBleAdvertiserImpl::GetAdvertiserHandle(int32_t& advHandle,
 void BluetoothBleAdvertiserImpl::SetAdvertisingData(const BluetoothBleAdvertiserData &advData,
     const BluetoothBleAdvertiserData &scanResponse, int32_t advHandle, bluetooth::SetAdvDataType type) {}
 
-int BluetoothBleAdvertiserImpl::BleStartRangeAdv(bluetooth::BleAppType appType)
+int BluetoothBleAdvertiserImpl::GetAdvPowerForRangingBusiness(bluetooth::BleAppType appType, int8_t &advpower)
 {
     HILOGE("Not Supported");
     return BT_NO_ERROR;
 }
 
-int BluetoothBleAdvertiserImpl::BleStopRangeAdv(bluetooth::BleAppType appType)
+int BluetoothBleAdvertiserImpl::BleRestoreRangingAntSwitch(bluetooth::BleAppType appType)
 {
     HILOGE("Not Supported");
     return BT_NO_ERROR;
