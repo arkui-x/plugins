@@ -46,8 +46,8 @@ public:
     int EnableAdvertising(uint8_t advHandle, uint16_t duration) override;
     int DisableAdvertising(uint8_t advHandle) override;
     int ChangeAdvertisingParams(uint8_t advHandle, const BluetoothBleAdvertiserSettings &settings) override;
-    int BleStartRangeAdv(bluetooth::BleAppType appType) override;
-    int BleStopRangeAdv(bluetooth::BleAppType appType) override;
+    int GetAdvPowerForRangingBusiness(bluetooth::BleAppType appType, int8_t &advpower) override;
+    int BleRestoreRangingAntSwitch(bluetooth::BleAppType appType) override;
 
 private:
     sptr<IBluetoothBleAdvertiseCallback> callbackImpl_ = nullptr;
