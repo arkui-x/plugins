@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,9 +15,13 @@
 
 #include "napi_common_event.h"
 
+#include <mutex>
+#include <unordered_map>
 #include <uv.h>
+#include <vector>
 
 #include "errors.h"
+#include "napi/native_common.h"
 #include "nlohmann/json.hpp"
 namespace OHOS {
 namespace Plugin {
@@ -35,15 +39,246 @@ static const int32_t PUBLISH_MAX_PARA = 1;
 static const int32_t ERROR_USERID = -1;
 static const int32_t PUBLISH_MAX_PARA_BY_PUBLISHDATA = 2;
 static const int32_t ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID = 401;
-static const char* const DATA_PRORERTY = "data";
-static const std::string COMMON_EVENT_PUBLISH_DATA = "data";
+static const char* const BUNDLE_NAME_PROPERTY = "bundleName";
+static const char* const CODE_PROPERTY = "code";
+static const char* const DATA_PROPERTY = "data";
+static const char* const PARAMETERS_PROPERTY = "parameters";
 static thread_local napi_ref g_CommonEventSubscriber = nullptr;
 static std::vector<std::shared_ptr<SubscriberInstance>> subscriberInstances;
 static std::mutex subscriberInsMutex;
 
+struct PublishPayload {
+    std::string bundleName;
+    std::string data;
+    std::string parameters;
+    int32_t code = 0;
+    bool hasBundleName = false;
+    bool hasData = false;
+    bool hasParameters = false;
+    bool hasCode = false;
+};
+
 static const std::unordered_map<int32_t, std::string> ErrorCodeToMsg {
     { ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID, "Parameter error." },
 };
+
+bool GetStringValue(napi_env env, napi_value value, std::string& result, size_t limit)
+{
+    size_t length = 0;
+    if (napi_get_value_string_utf8(env, value, nullptr, 0, &length) != napi_ok) {
+        return false;
+    }
+
+    if (length > limit) {
+        LOGE("String value truncated: original length %{public}zu exceeds limit %{public}zu.", length, limit);
+        length = limit;
+    }
+
+    std::vector<char> buffer(length + 1, 0);
+    if (napi_get_value_string_utf8(env, value, buffer.data(), buffer.size(), &length) != napi_ok) {
+        return false;
+    }
+    result.assign(buffer.data(), length);
+    return true;
+}
+
+void ClearPendingException(napi_env env)
+{
+    bool isPending = false;
+    if (napi_is_exception_pending(env, &isPending) != napi_ok || !isPending) {
+        return;
+    }
+    napi_value exception = nullptr;
+    napi_get_and_clear_last_exception(env, &exception);
+    napi_value message = nullptr;
+    if (exception != nullptr && napi_get_named_property(env, exception, "message", &message) == napi_ok) {
+        std::string msg;
+        GetStringValue(env, message, msg, STR_MAX_SIZE - 1);
+        LOGW("N-API exception cleared: %{public}s", msg.c_str());
+    }
+}
+
+bool ParseJsonString(napi_env env, const std::string& value, napi_value& result)
+{
+    napi_value global = nullptr;
+    napi_value json = nullptr;
+    napi_value parse = nullptr;
+    napi_value input = nullptr;
+    bool isJsonParseReady = napi_get_global(env, &global) == napi_ok &&
+        napi_get_named_property(env, global, "JSON", &json) == napi_ok &&
+        napi_get_named_property(env, json, "parse", &parse) == napi_ok &&
+        napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &input) == napi_ok;
+    if (!isJsonParseReady) {
+        return false;
+    }
+    if (napi_call_function(env, json, parse, 1, &input, &result) != napi_ok) {
+        ClearPendingException(env);
+        return false;
+    }
+    return true;
+}
+
+bool StringifyJsonValue(napi_env env, napi_value value, std::string& result)
+{
+    napi_value global = nullptr;
+    napi_value json = nullptr;
+    napi_value stringify = nullptr;
+    napi_value output = nullptr;
+    bool isJsonStringifyReady = napi_get_global(env, &global) == napi_ok &&
+        napi_get_named_property(env, global, "JSON", &json) == napi_ok &&
+        napi_get_named_property(env, json, "stringify", &stringify) == napi_ok;
+    if (!isJsonStringifyReady) {
+        return false;
+    }
+    if (napi_call_function(env, json, stringify, 1, &value, &output) != napi_ok) {
+        ClearPendingException(env);
+        return false;
+    }
+    return GetStringValue(env, output, result, STR_DATA_MAX_SIZE - 1);
+}
+
+bool ReadBundleName(napi_env env, napi_value object, PublishPayload& payload)
+{
+    bool hasProperty = false;
+    napi_value value = nullptr;
+    napi_valuetype valueType = napi_undefined;
+    if (napi_has_named_property(env, object, BUNDLE_NAME_PROPERTY, &hasProperty) != napi_ok) {
+        return false;
+    }
+    if (!hasProperty) {
+        return true;
+    }
+    if (napi_get_named_property(env, object, BUNDLE_NAME_PROPERTY, &value) != napi_ok ||
+        napi_typeof(env, value, &valueType) != napi_ok) {
+        return false;
+    }
+    if (valueType != napi_string || !GetStringValue(env, value, payload.bundleName, STR_MAX_SIZE - 1)) {
+        LOGE("Parameter type error. String expected.");
+        return false;
+    }
+    payload.hasBundleName = true;
+    return true;
+}
+
+bool ReadCode(napi_env env, napi_value object, PublishPayload& payload)
+{
+    bool hasProperty = false;
+    napi_value value = nullptr;
+    napi_valuetype valueType = napi_undefined;
+    if (napi_has_named_property(env, object, CODE_PROPERTY, &hasProperty) != napi_ok) {
+        return false;
+    }
+    if (!hasProperty) {
+        return true;
+    }
+    if (napi_get_named_property(env, object, CODE_PROPERTY, &value) != napi_ok ||
+        napi_typeof(env, value, &valueType) != napi_ok) {
+        return false;
+    }
+    if (valueType != napi_number || napi_get_value_int32(env, value, &payload.code) != napi_ok) {
+        LOGE("Parameter type error. Number expected.");
+        return false;
+    }
+    payload.hasCode = true;
+    return true;
+}
+
+bool ReadData(napi_env env, napi_value object, PublishPayload& payload)
+{
+    bool hasProperty = false;
+    napi_value value = nullptr;
+    napi_valuetype valueType = napi_undefined;
+    if (napi_has_named_property(env, object, DATA_PROPERTY, &hasProperty) != napi_ok) {
+        return false;
+    }
+    if (!hasProperty) {
+        return true;
+    }
+    if (napi_get_named_property(env, object, DATA_PROPERTY, &value) != napi_ok ||
+        napi_typeof(env, value, &valueType) != napi_ok) {
+        return false;
+    }
+    if (valueType != napi_string || !GetStringValue(env, value, payload.data, STR_DATA_MAX_SIZE - 1)) {
+        LOGE("Parameter type error. String expected.");
+        return false;
+    }
+    payload.hasData = true;
+    return true;
+}
+
+bool ReadParameters(napi_env env, napi_value object, PublishPayload& payload)
+{
+    bool hasProperty = false;
+    bool isArray = false;
+    napi_value value = nullptr;
+    napi_valuetype valueType = napi_undefined;
+    if (napi_has_named_property(env, object, PARAMETERS_PROPERTY, &hasProperty) != napi_ok) {
+        return false;
+    }
+    if (!hasProperty) {
+        return true;
+    }
+    if (napi_get_named_property(env, object, PARAMETERS_PROPERTY, &value) != napi_ok ||
+        napi_typeof(env, value, &valueType) != napi_ok) {
+        return false;
+    }
+    if (valueType != napi_object || napi_is_array(env, value, &isArray) != napi_ok || isArray ||
+        !StringifyJsonValue(env, value, payload.parameters)) {
+        LOGE("Parameter type error. Object expected.");
+        return false;
+    }
+    payload.hasParameters = true;
+    return true;
+}
+
+bool BuildPublishJson(const PublishPayload& payload, std::string& data)
+{
+    nlohmann::json jsonValue = nlohmann::json::object();
+    if (payload.hasBundleName) {
+        jsonValue[BUNDLE_NAME_PROPERTY] = payload.bundleName;
+    }
+    if (payload.hasCode) {
+        jsonValue[CODE_PROPERTY] = payload.code;
+    }
+    if (payload.hasData) {
+        jsonValue[DATA_PROPERTY] = payload.data;
+    }
+    if (payload.hasParameters) {
+        auto parameters = nlohmann::json::parse(payload.parameters, nullptr, false);
+        if (parameters.is_discarded() || !parameters.is_object()) {
+            return false;
+        }
+        jsonValue[PARAMETERS_PROPERTY] = parameters;
+    }
+    data = jsonValue.empty() ? "{}" : jsonValue.dump();
+    return true;
+}
+
+bool SetStringProperty(napi_env env, napi_value result, const char* name, const std::string& value)
+{
+    napi_value property = nullptr;
+    return napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &property) == napi_ok &&
+        napi_set_named_property(env, result, name, property) == napi_ok;
+}
+
+bool SetInt32Property(napi_env env, napi_value result, const char* name, int32_t value)
+{
+    napi_value property = nullptr;
+    return napi_create_int32(env, value, &property) == napi_ok &&
+        napi_set_named_property(env, result, name, property) == napi_ok;
+}
+
+bool SetParametersProperty(const CommonEventDataWorker& worker, napi_value result)
+{
+    if (worker.parameters.empty()) {
+        return true;
+    }
+    napi_value parameters = nullptr;
+    if (!ParseJsonString(worker.env, worker.parameters, parameters)) {
+        return false;
+    }
+    return napi_set_named_property(worker.env, result, PARAMETERS_PROPERTY, parameters) == napi_ok;
+}
 
 napi_value NapiGetNull(napi_env env)
 {
@@ -236,26 +471,16 @@ napi_value SetCommonEventData(const CommonEventDataWorker* commonEventDataWorker
         return nullptr;
     }
 
-    napi_value value = nullptr;
-
-    // event
-    napi_create_string_utf8(
-        commonEventDataWorkerData->env, commonEventDataWorkerData->event.c_str(), NAPI_AUTO_LENGTH, &value);
-    napi_set_named_property(commonEventDataWorkerData->env, result, "event", value);
-
-    // bundleName
-    napi_create_string_utf8(
-        commonEventDataWorkerData->env, commonEventDataWorkerData->bundleName.c_str(), NAPI_AUTO_LENGTH, &value);
-    napi_set_named_property(commonEventDataWorkerData->env, result, "bundleName", value);
-
-    // code
-    napi_create_int32(commonEventDataWorkerData->env, commonEventDataWorkerData->code, &value);
-    napi_set_named_property(commonEventDataWorkerData->env, result, "code", value);
-
-    // data
-    napi_create_string_utf8(
-        commonEventDataWorkerData->env, commonEventDataWorkerData->data.c_str(), NAPI_AUTO_LENGTH, &value);
-    napi_set_named_property(commonEventDataWorkerData->env, result, "data", value);
+    if (!SetStringProperty(commonEventDataWorkerData->env, result, "event", commonEventDataWorkerData->event) ||
+        !SetStringProperty(
+            commonEventDataWorkerData->env, result, BUNDLE_NAME_PROPERTY, commonEventDataWorkerData->bundleName) ||
+        !SetInt32Property(commonEventDataWorkerData->env, result, CODE_PROPERTY, commonEventDataWorkerData->code) ||
+        !SetStringProperty(commonEventDataWorkerData->env, result, DATA_PROPERTY, commonEventDataWorkerData->data)) {
+        return nullptr;
+    }
+    if (!SetParametersProperty(*commonEventDataWorkerData, result)) {
+        LOGW("Failed to parse optional common event parameters, core event data will still be delivered.");
+    }
     return NapiGetNull(commonEventDataWorkerData->env);
 }
 
@@ -301,6 +526,7 @@ void UvQueueWorkOnReceiveEvent(uv_work_t* work, int status)
     napi_value result = nullptr;
     napi_create_object(commonEventDataWorker->env, &result);
     if (SetCommonEventData(commonEventDataWorker, result) == nullptr) {
+        napi_close_handle_scope(commonEventDataWorker->env, scope);
         delete work;
         work = nullptr;
         delete commonEventDataWorker;
@@ -489,9 +715,10 @@ void SubscriberInstance::OnReceiveEvent(const CommonEventData& data)
     commonEventDataWorker->event = data.GetEvent();
     commonEventDataWorker->code = data.GetCode();
     commonEventDataWorker->data = data.GetData();
+    commonEventDataWorker->parameters = data.GetParameters();
     commonEventDataWorker->env = env_;
     commonEventDataWorker->ref = ref_;
-    commonEventDataWorker->bundleName = data.GetBunduleName();
+    commonEventDataWorker->bundleName = data.GetBundleName();
 
     work->data = (void*)commonEventDataWorker;
     uv_queue_work(
@@ -610,6 +837,25 @@ void NapiThrow(napi_env env, int32_t errCode)
     napi_throw(env, error);
 }
 
+void NapiThrow(napi_env env, int32_t errCode, const std::string& detail)
+{
+    napi_value code = nullptr;
+    napi_create_int32(env, errCode, &code);
+
+    auto iter = ErrorCodeToMsg.find(errCode);
+    std::string errMsg = (iter != ErrorCodeToMsg.end() ? iter->second : "");
+    if (!detail.empty()) {
+        errMsg.append(" ").append(detail);
+    }
+    napi_value message = nullptr;
+    napi_create_string_utf8(env, errMsg.c_str(), NAPI_AUTO_LENGTH, &message);
+
+    napi_value error = nullptr;
+    napi_create_error(env, nullptr, message, &error);
+    napi_set_named_property(env, error, "code", code);
+    napi_throw(env, error);
+}
+
 napi_value CreateSubscriber(napi_env env, napi_callback_info info)
 {
     size_t argc = CREATE_MAX_PARA;
@@ -620,7 +866,8 @@ napi_value CreateSubscriber(napi_env env, napi_callback_info info)
     }
     napi_ref callback = nullptr;
     if (ParseParametersByCreateSubscriber(env, argv, argc, callback) == nullptr) {
-        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID);
+        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID,
+            std::string("Incorrect parameter types.The type of param must be object."));
         return NapiGetNull(env);
     }
     AsyncCallbackInfoCreate* asyncCallbackInfo =
@@ -670,31 +917,33 @@ napi_value CreateSubscriber(napi_env env, napi_callback_info info)
 
 napi_value GetDataByPublish(const napi_env& env, const napi_value& value, std::string& data)
 {
-    napi_valuetype valuetype;
-    napi_value result = nullptr;
-    char str[STR_DATA_MAX_SIZE] = {0};
-    bool hasProperty = false;
-    size_t strLen = 0;
-
-    NAPI_CALL(env, napi_has_named_property(env, value, DATA_PRORERTY, &hasProperty));
-    if (hasProperty) {
-        napi_get_named_property(env, value, DATA_PRORERTY, &result);
-        NAPI_CALL(env, napi_typeof(env, result, &valuetype));
-        if (valuetype != napi_string) {
-            LOGE("Parameter type error. String expected.");
-            return nullptr;
-        }
-        NAPI_CALL(env, napi_get_value_string_utf8(env, result, str, STR_DATA_MAX_SIZE, &strLen));
-
-        if (strLen > STR_DATA_MAX_SIZE - 1) {
-            LOGE("Data exceed limit.");
-            return nullptr;
-        }
-        nlohmann::json jsonValue;
-        jsonValue[COMMON_EVENT_PUBLISH_DATA] = str;
-        data = jsonValue.dump();
+    PublishPayload payload;
+    static const std::string stringParamErr =
+        "Incorrect parameter types.The type of param must be string.";
+    static const std::string numberParamErr =
+        "Incorrect parameter types.The type of param must be number.";
+    static const std::string objectParamErr =
+        "Incorrect parameter types.The type of param must be object.";
+    if (!ReadBundleName(env, value, payload)) {
+        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID, stringParamErr);
+        return nullptr;
     }
-
+    if (!ReadCode(env, value, payload)) {
+        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID, numberParamErr);
+        return nullptr;
+    }
+    if (!ReadData(env, value, payload)) {
+        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID, stringParamErr);
+        return nullptr;
+    }
+    if (!ReadParameters(env, value, payload)) {
+        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID, objectParamErr);
+        return nullptr;
+    }
+    if (!BuildPublishJson(payload, data)) {
+        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID, "Failed to build publish data.");
+        return nullptr;
+    }
     return NapiGetNull(env);
 }
 
@@ -785,7 +1034,10 @@ napi_value PublishCommonEvent(napi_env env, napi_callback_info info)
     std::string commonEventPublishData = "";
     napi_ref callback;
     if (ParseParametersByPublish(env, argv, argc, event, commonEventPublishData, callback) == nullptr) {
-        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID);
+        bool isPending = false;
+        if (napi_is_exception_pending(env, &isPending) != napi_ok || !isPending) {
+            NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID);
+        }
         return NapiGetNull(env);
     }
 
@@ -807,7 +1059,8 @@ napi_value SubscribeCommonEvent(napi_env env, napi_callback_info info)
     std::shared_ptr<SubscriberInstance> subscriber = nullptr;
 
     if (ParseParametersBySubscribe(env, argv, subscriber, callback) == nullptr) {
-        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID);
+        NapiThrow(env, ERR_NOTIFICATION_CES_COMMON_PARAM_INVALID,
+            std::string("Incorrect parameter types.The type of param must be object."));
         return NapiGetNull(env);
     }
 
