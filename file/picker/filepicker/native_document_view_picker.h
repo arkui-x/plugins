@@ -14,12 +14,18 @@
  */
 #ifndef NATIVE_DOCUMENT_VIEW_PICKER_H
 #define NATIVE_DOCUMENT_VIEW_PICKER_H
+#include <unordered_map>
 #include <string>
 #include <vector>
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 namespace OHOS::Plugin {
+struct PendingRequest {
+    napi_env env = nullptr;
+    napi_deferred deferred = nullptr;
+};
+
 struct DocumentSelectOptions {
     int32_t maxSelectNumber;
     std::string defaultFilePathUri;
@@ -38,7 +44,7 @@ struct DocumentSaveOptions {
 class DocumentFilePicker {
 public:
     explicit DocumentFilePicker();
-    virtual ~DocumentFilePicker() {};
+    virtual ~DocumentFilePicker();
 
     static napi_deferred deferred;
     static napi_env napienv;
@@ -47,6 +53,21 @@ public:
     virtual napi_value save(napi_env env, DocumentSaveOptions&) = 0;
 
     static void onPickerResult(const std::vector<std::string>& result, int errCode);
+
+    // Instance-level Promise management
+    int32_t CreatePendingRequest(napi_env env, napi_value* outPromise);
+    void ResolvePendingRequest(int32_t requestId, const std::vector<std::string>& result, int errCode);
+
+    // Prevent GC from collecting the JS wrapper during async operations
+    void RetainJsThis(napi_env env, napi_value thisVar);
+    void ReleaseJsThis();
+
+private:
+    int32_t nextRequestId_ = 0;
+    std::unordered_map<int32_t, PendingRequest> pendingRequests_;
+    napi_ref jsThisRef_ = nullptr;
+    napi_env refEnv_ = nullptr;
+    uint32_t refCount_ = 0;
 };
 } // namespace OHOS::Plugin
 #endif // NATIVE_DOCUMENT_VIEW_PICKER_H

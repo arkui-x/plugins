@@ -22,22 +22,18 @@ namespace OHOS::Plugin {
 napi_value DocumentFilePickerImpl::select(napi_env env, DocumentSelectOptions& options)
 {
     HILOG_INFO("DocumentFilePickerImpl::select enter");
-    DocumentFilePicker::napienv = env;
     napi_value promise = nullptr;
-    DocumentFilePicker::deferred = nullptr;
-    napi_create_promise(env, &DocumentFilePicker::deferred, &promise);
-    FilePickerJni::Select(options);
+    int32_t requestId = CreatePendingRequest(env, &promise);
+    FilePickerJni::Select(options, requestId, this);
     return promise;
 }
 
 napi_value DocumentFilePickerImpl::save(napi_env env, DocumentSaveOptions& options)
 {
     HILOG_INFO("DocumentFilePickerImpl::save enter");
-    DocumentFilePicker::napienv = env;
     napi_value promise = nullptr;
-    DocumentFilePicker::deferred = nullptr;
-    napi_create_promise(env, &DocumentFilePicker::deferred, &promise);
-    FilePickerJni::Save(options);
+    int32_t requestId = CreatePendingRequest(env, &promise);
+    FilePickerJni::Save(options, requestId, this);
     return promise;
 }
 } // namespace OHOS::Plugin
