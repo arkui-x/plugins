@@ -42,6 +42,7 @@ ohos_source_set("ability_access_ctrl_android_jni") {
   sources = [
     "jni/ability_access_ctrl_impl.cpp",
     "jni/ability_access_ctrl_jni.cpp",
+    "jni/permission_mapper.cpp",
   ]
 
   defines = [ "ANDROID_PLATFORM" ]
