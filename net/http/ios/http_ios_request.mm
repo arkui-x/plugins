@@ -147,7 +147,11 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 
     self.urlSession = [NSURLSession sessionWithConfiguration:sessionConfig delegate:self delegateQueue:nil];
 
-    [self serializingQueryParams];
+    if (requestParam.bodyOrQueryConfigured) {
+        [self serializingBodyAndQueryParams];
+    } else {
+        [self serializingQueryParams];
+    }
 
     NSURLSessionDataTask* task = [self.urlSession dataTaskWithRequest:self.request];
     task.priority = requestParam.priority;
@@ -324,9 +328,44 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 
 #pragma mark - private
 
+- (void)serializingBodyAndQueryParams
+{
+    if (!self.requestParam.bodyParam) {
+        NSLog(@"[HTTP_DEBUG] bodyOrQueryConfigured=1, bodyParam=nil, method=%@", self.requestParam.method);
+        return;
+    }
+
+    if ([self.requestParam.bodyParam isKindOfClass:[NSString class]]) {
+        NSData* bodyData = [self.requestParam.bodyParam dataUsingEncoding:NSUTF8StringEncoding];
+        NSLog(@"[HTTP_DEBUG] bodyOrQueryConfigured=1, type=NSString, method=%@, bodyLen=%lu",
+              self.requestParam.method, (unsigned long)bodyData.length);
+        if (bodyData) {
+            [self.request setHTTPBody:bodyData];
+        }
+    } else if ([self.requestParam.bodyParam isKindOfClass:[NSDictionary class]]) {
+        NSString* contentType = [self.request valueForHTTPHeaderField:@"Content-Type"];
+        if (contentType.length == 0) {
+            contentType = @"application/json";
+            [self.request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+        }
+        NSMutableArray* mutablePairs = [NSMutableArray array];
+        for (QueryStringPair* pair in queryStringPairsFromDictionary(self.requestParam.bodyParam)) {
+            [mutablePairs addObject:[pair URLEncodedStringValue]];
+        }
+        NSString* query = [mutablePairs componentsJoinedByString:@"&"];
+        NSData* bodyData = queryDataFromParameters(contentType, query, self.requestParam.bodyParam);
+        NSLog(@"[HTTP_DEBUG] bodyOrQueryConfigured=1, type=NSDictionary, method=%@, ct=%@, bodyLen=%lu",
+              self.requestParam.method, contentType, (unsigned long)bodyData.length);
+        if (bodyData) {
+            [self.request setHTTPBody:bodyData];
+        }
+    }
+}
+
 - (void)serializingQueryParams
 {
     if (!self.requestParam.bodyParam) {
+        NSLog(@"[HTTP_DEBUG] bodyOrQueryConfigured=0, bodyParam=nil, method=%@", self.requestParam.method);
         return;
     }
 
@@ -352,6 +391,7 @@ NSString* PercentEscapedStringFromString(NSString* string) {
             NSString* absoluteString = [self.request.URL absoluteString];
             NSString* string = [absoluteString stringByAppendingFormat:self.request.URL.query ?@"&%@":@"?%@",query];
             self.request.URL = [NSURL URLWithString:string];
+            NSLog(@"[HTTP_DEBUG] bodyOrQueryConfigured=0, type=GET, method=%@", self.requestParam.method);
         }
     } else {
         NSString * contentType = [self.request valueForHTTPHeaderField:@"Content-Type"];
@@ -367,6 +407,8 @@ NSString* PercentEscapedStringFromString(NSString* string) {
         if (bodyData) {
             [self.request setHTTPBody:bodyData];
         }
+        NSLog(@"[HTTP_DEBUG] bodyOrQueryConfigured=0, type=POST, method=%@, bodyLen=%lu",
+              self.requestParam.method, (unsigned long)bodyData.length);
     }
 }
 
