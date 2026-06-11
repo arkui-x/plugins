@@ -30,10 +30,13 @@ public:
     static bool Register(void* env);
 
     static void NativeInit(JNIEnv* env, jobject jobj);
-    static void onPickerResult(JNIEnv* env, jobject thiz, jobject rst, jint errCode);
+    static void onPickerResult(JNIEnv* env, jobject thiz, jobject rst, jint errCode, jint requestId);
 
-    static void Select(DocumentSelectOptions& options);
-    static void Save(DocumentSaveOptions& options);
+    static void Select(DocumentSelectOptions& options, int32_t requestId, DocumentFilePicker* picker);
+    static void Save(DocumentSaveOptions& options, int32_t requestId, DocumentFilePicker* picker);
+
+    static void RegisterPicker(int32_t requestId, DocumentFilePicker* picker);
+    static DocumentFilePicker* UnregisterPicker(int32_t requestId);
 };
 } // namespace OHOS::Plugin
 

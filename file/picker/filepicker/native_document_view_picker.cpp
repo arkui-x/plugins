@@ -25,6 +25,39 @@ napi_deferred DocumentFilePicker::deferred = nullptr;
 
 DocumentFilePicker::DocumentFilePicker() = default;
 
+DocumentFilePicker::~DocumentFilePicker()
+{
+    if (jsThisRef_ != nullptr && refEnv_ != nullptr) {
+        napi_delete_reference(refEnv_, jsThisRef_);
+        jsThisRef_ = nullptr;
+    }
+}
+
+void DocumentFilePicker::RetainJsThis(napi_env env, napi_value thisVar)
+{
+    if (jsThisRef_ == nullptr) {
+        napi_create_reference(env, thisVar, 1, &jsThisRef_);
+        refEnv_ = env;
+        refCount_ = 1;
+    } else {
+        napi_reference_ref(env, jsThisRef_, &refCount_);
+    }
+}
+
+void DocumentFilePicker::ReleaseJsThis()
+{
+    if (jsThisRef_ == nullptr || refEnv_ == nullptr) {
+        return;
+    }
+    uint32_t count = 0;
+    napi_reference_unref(refEnv_, jsThisRef_, &count);
+    if (count == 0) {
+        napi_delete_reference(refEnv_, jsThisRef_);
+        jsThisRef_ = nullptr;
+        refEnv_ = nullptr;
+    }
+}
+
 void DocumentFilePicker::onPickerResult(const std::vector<std::string>& result, int errCode)
 {
     HILOG_INFO("DocumentFilePicker::onPickerResult enter");
@@ -52,5 +85,49 @@ void DocumentFilePicker::onPickerResult(const std::vector<std::string>& result, 
     }
     napi_set_named_property(DocumentFilePicker::napienv, resultValue, "data", dataArray);
     napi_resolve_deferred(DocumentFilePicker::napienv, DocumentFilePicker::deferred, resultValue);
+}
+int32_t DocumentFilePicker::CreatePendingRequest(napi_env env, napi_value* outPromise)
+{
+    int32_t id = nextRequestId_++;
+    PendingRequest req;
+    req.env = env;
+    napi_create_promise(env, &req.deferred, outPromise);
+    pendingRequests_[id] = req;
+    return id;
+}
+
+void DocumentFilePicker::ResolvePendingRequest(int32_t requestId,
+    const std::vector<std::string>& result, int errCode)
+{
+    auto it = pendingRequests_.find(requestId);
+    if (it == pendingRequests_.end()) {
+        HILOG_ERROR("ResolvePendingRequest: requestId %d not found", requestId);
+        return;
+    }
+
+    napi_env env = it->second.env;
+    napi_deferred deferred = it->second.deferred;
+
+    napi_value resultValue;
+    napi_create_object(env, &resultValue);
+
+    if (errCode != 0) {
+        napi_value errorCode;
+        napi_create_int32(env, errCode, &errorCode);
+        napi_set_named_property(env, resultValue, "error", errorCode);
+    } else {
+        napi_value dataArray;
+        napi_create_array(env, &dataArray);
+        for (size_t i = 0; i < result.size(); ++i) {
+            napi_value str;
+            napi_create_string_utf8(env, result[i].c_str(), result[i].length(), &str);
+            napi_set_element(env, dataArray, i, str);
+        }
+        napi_set_named_property(env, resultValue, "data", dataArray);
+    }
+
+    napi_resolve_deferred(env, deferred, resultValue);
+    pendingRequests_.erase(it);
+    ReleaseJsThis();
 }
 } // namespace OHOS::Plugin

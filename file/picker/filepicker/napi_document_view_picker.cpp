@@ -103,6 +103,7 @@ napi_value DocumentViewPickerSelect(napi_env env, napi_callback_info info)
 
     DocumentFilePicker* mfp = nullptr;
     NAPI_CALL_CHECK(napi_unwrap(env, thisVar, reinterpret_cast<void**>(&mfp)));
+    mfp->RetainJsThis(env, thisVar);
     napi_value rst = mfp->select(env, options);
     LOGI("DocumentViewPickerSelect end");
     return rst;
@@ -149,6 +150,7 @@ napi_value DocumentViewPickerSave(napi_env env, napi_callback_info info)
 
     DocumentFilePicker* mfp = nullptr;
     NAPI_CALL_CHECK(napi_unwrap(env, thisVar, reinterpret_cast<void**>(&mfp)));
+    mfp->RetainJsThis(env, thisVar);
     napi_value rst = mfp->save(env, options);
     return rst;
 }

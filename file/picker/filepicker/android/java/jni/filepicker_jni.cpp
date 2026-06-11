@@ -17,26 +17,34 @@
 
 #include "log.h"
 
+#include <unordered_map>
+
 namespace OHOS::Plugin {
 namespace {
 const char CLASS_NAME[] = "ohos/ace/plugin/file/fs/picker/filepicker/FilePicker";
 
 const JNINativeMethod METHODS[] = {
     { "nativeInit", "()V", reinterpret_cast<void*>(FilePickerJni::NativeInit) },
-    { "onPickerResult", "(Ljava/util/List;I)V", reinterpret_cast<void*>(FilePickerJni::onPickerResult) },
+    { "onPickerResult", "(Ljava/util/List;II)V", reinterpret_cast<void*>(FilePickerJni::onPickerResult) },
 };
 
 const char METHOD_SELECT[] = "select";
 const char METHOD_SAVE[] = "save";
 
-const char SIGNATURE_SELECT[] = "(ILjava/lang/String;[Ljava/lang/String;I)V";
-const char SIGNATURE_SAVE[] = "([Ljava/lang/String;Ljava/lang/String;)V";
+const char SIGNATURE_SELECT[] = "(ILjava/lang/String;[Ljava/lang/String;II)V";
+const char SIGNATURE_SAVE[] = "([Ljava/lang/String;Ljava/lang/String;I)V";
 
 struct {
     jmethodID select;
     jmethodID save;
     jobject globalRef;
 } g_pluginClass;
+
+std::unordered_map<int32_t, DocumentFilePicker*>& PickerRegistry()
+{
+    static std::unordered_map<int32_t, DocumentFilePicker*> registry;
+    return registry;
+}
 } // namespace
 
 bool FilePickerJni::Register(void* env)
@@ -54,6 +62,23 @@ bool FilePickerJni::Register(void* env)
         return false;
     }
     return true;
+}
+
+void FilePickerJni::RegisterPicker(int32_t requestId, DocumentFilePicker* picker)
+{
+    PickerRegistry()[requestId] = picker;
+}
+
+DocumentFilePicker* FilePickerJni::UnregisterPicker(int32_t requestId)
+{
+    auto& registry = PickerRegistry();
+    auto it = registry.find(requestId);
+    if (it == registry.end()) {
+        return nullptr;
+    }
+    DocumentFilePicker* picker = it->second;
+    registry.erase(it);
+    return picker;
 }
 
 void FilePickerJni::NativeInit(JNIEnv* env, jobject jobj)
@@ -95,17 +120,23 @@ std::vector<std::string> jstringListToStdStringVector(JNIEnv* env, jobject list)
     return result;
 }
 
-void FilePickerJni::onPickerResult(JNIEnv* env, jobject thiz, jobject rst, jint errCode)
+void FilePickerJni::onPickerResult(JNIEnv* env, jobject thiz, jobject rst, jint errCode, jint requestId)
 {
-    LOGI("FilePicker JNI: onPickerResult enter");
+    LOGI("FilePicker JNI: onPickerResult enter, requestId: %d", static_cast<int>(requestId));
     CHECK_NULL_VOID(env);
+    DocumentFilePicker* picker = UnregisterPicker(static_cast<int32_t>(requestId));
+    if (picker == nullptr) {
+        LOGE("FilePicker JNI: onPickerResult unknown requestId %d", static_cast<int>(requestId));
+        return;
+    }
     std::vector<std::string> cppStringList = jstringListToStdStringVector(env, rst);
-    DocumentFilePicker::onPickerResult(cppStringList, errCode);
+    picker->ResolvePendingRequest(static_cast<int32_t>(requestId), cppStringList, errCode);
 }
 
-void FilePickerJni::Select(DocumentSelectOptions& options)
+void FilePickerJni::Select(DocumentSelectOptions& options, int32_t requestId, DocumentFilePicker* picker)
 {
-    LOGI("FilePicker JNI: Select enter");
+    LOGI("FilePicker JNI: Select enter, requestId: %d", requestId);
+    RegisterPicker(requestId, picker);
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     jstring defaultFilePathUri = env->NewStringUTF(options.defaultFilePathUri.c_str());
@@ -117,14 +148,15 @@ void FilePickerJni::Select(DocumentSelectOptions& options)
     }
 
     env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.select, options.maxSelectNumber, defaultFilePathUri,
-        fileSuffixFilters, options.key_select_mode);
+        fileSuffixFilters, options.key_select_mode, static_cast<jint>(requestId));
     env->DeleteLocalRef(defaultFilePathUri);
     env->DeleteLocalRef(fileSuffixFilters);
 }
 
-void FilePickerJni::Save(DocumentSaveOptions& options)
+void FilePickerJni::Save(DocumentSaveOptions& options, int32_t requestId, DocumentFilePicker* picker)
 {
-    LOGI("FilePicker JNI: Save enter");
+    LOGI("FilePicker JNI: Save enter, requestId: %d", requestId);
+    RegisterPicker(requestId, picker);
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_VOID(env);
     jstring defaultFilePathUri = env->NewStringUTF(options.defaultFilePathUri.c_str());
@@ -134,7 +166,8 @@ void FilePickerJni::Save(DocumentSaveOptions& options)
         env->SetObjectArrayElement(newFileNames, i, env->NewStringUTF(options.newFileNames[i].c_str()));
     }
 
-    env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.save, newFileNames, defaultFilePathUri);
+    env->CallVoidMethod(g_pluginClass.globalRef, g_pluginClass.save, newFileNames, defaultFilePathUri,
+        static_cast<jint>(requestId));
     env->DeleteLocalRef(defaultFilePathUri);
 }
 } // namespace OHOS::Plugin

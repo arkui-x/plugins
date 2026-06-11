@@ -46,6 +46,7 @@ public class FilePicker {
     private static final int RESULT_OK = 0;
 
     private Object mProxyInstance;
+    private int currentRequestId = 0;
 
     public FilePicker(Context context) {
         nativeInit();
@@ -97,8 +98,11 @@ public class FilePicker {
      * @param defaultFilePathUri default file path uri
      * @param fileSuffixFilters file suffix filters
      * @param selectMode select mode
+     * @param requestId request id
      */
-    public void select(int maxSelectNumber, String defaultFilePathUri, String[] fileSuffixFilters, int selectMode) {
+    public void select(int maxSelectNumber, String defaultFilePathUri,
+        String[] fileSuffixFilters, int selectMode, int requestId) {
+        this.currentRequestId = requestId;
         ALog.i(LOG_TAG, "select enter. selectMode:" + selectMode);
         if (selectMode == DocumentSelectMode.FOLDER.code) {
             this.selectFolder();
@@ -150,9 +154,11 @@ public class FilePicker {
      *
      * @param newFileNames new file names
      * @param defaultFilePath default file path
+     * @param requestId request id
      */
-    public void save(String[] newFileNames, String defaultFilePath) {
+    public void save(String[] newFileNames, String defaultFilePath, int requestId) {
         ALog.i(LOG_TAG, "save enter");
+        this.currentRequestId = requestId;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
@@ -187,7 +193,7 @@ public class FilePicker {
         Uri uri = data.getData();
         if (uri != null) {
             rst.add(uri.toString());
-            onPickerResult(rst, RESULT_OK);
+            onPickerResult(rst, RESULT_OK, currentRequestId);
             return;
         }
         if (data.getClipData() != null) {
@@ -195,7 +201,7 @@ public class FilePicker {
             for (int i = 0; i < count; i++) {
                 rst.add(data.getClipData().getItemAt(i).getUri().toString());
             }
-            onPickerResult(rst, RESULT_OK);
+            onPickerResult(rst, RESULT_OK, currentRequestId);
         }
     }
 
@@ -209,14 +215,14 @@ public class FilePicker {
 
         if (resultCode != Activity.RESULT_OK) {
             ALog.i(LOG_TAG, errorMsg);
-            onPickerResult(new ArrayList<>(), RESULT_OK);
+            onPickerResult(new ArrayList<>(), RESULT_OK, currentRequestId);
             return false;
         }
 
         if (data == null) {
             errorMsg += ".  data is null";
             ALog.i(LOG_TAG, errorMsg);
-            onPickerResult(new ArrayList<>(), RESULT_OK);
+            onPickerResult(new ArrayList<>(), RESULT_ERROR, currentRequestId);
             return false;
         }
         return true;
@@ -227,10 +233,10 @@ public class FilePicker {
             Objects.requireNonNull(getActivity()).startActivityForResult(intent, FILE_PICKER_CODE);
         } catch (ActivityNotFoundException e) {
             ALog.e(LOG_TAG, "ActivityNotFoundException, err:" + e);
-            onPickerResult(new ArrayList<>(), RESULT_OK);
+            onPickerResult(new ArrayList<>(), RESULT_ERROR, currentRequestId);
         } catch (Exception e) {
             ALog.e(LOG_TAG, "startActivityForResult unknown error, err:" + e);
-            onPickerResult(new ArrayList<>(), RESULT_ERROR);
+            onPickerResult(new ArrayList<>(), RESULT_ERROR, currentRequestId);
         }
     }
 
@@ -276,6 +282,7 @@ public class FilePicker {
      *
      * @param rst result
      * @param errCode error code
+     * @param requestId request id
      */
-    protected native void onPickerResult(List<String> rst, int errCode);
+    protected native void onPickerResult(List<String> rst, int errCode, int requestId);
 }
