@@ -17,6 +17,7 @@
 
 #include "platform_view_resource.h"
 #include "base/log/log.h"
+#include "core/common/platform_res_register.h"
 
 namespace OHOS::Ace {
 
