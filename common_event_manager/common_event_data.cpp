@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,8 +20,8 @@
 namespace OHOS {
 namespace Plugin {
 CommonEventData::CommonEventData(
-    const std::string& event, const std::string& bunduleName, int code, const std::string& data)
-    : event_(event), bunduleName_(bunduleName), code_(code), data_(data)
+    const std::string& event, const std::string& bundleName, int code, const std::string& data)
+    : event_(event), bundleName_(bundleName), code_(code), data_(data)
 {}
 
 std::string CommonEventData::GetEvent() const
@@ -34,14 +34,14 @@ void CommonEventData::SetEvent(const std::string& event)
     event_ = event;
 }
 
-std::string CommonEventData::GetBunduleName() const
+std::string CommonEventData::GetBundleName() const
 {
-    return bunduleName_;
+    return bundleName_;
 }
 
-void CommonEventData::SetBunduleName(const std::string& bundleName)
+void CommonEventData::SetBundleName(const std::string& bundleName)
 {
-    bunduleName_ = bundleName;
+    bundleName_ = bundleName;
 }
 
 int CommonEventData::GetCode() const
@@ -62,6 +62,16 @@ std::string CommonEventData::GetData() const
 void CommonEventData::SetData(const std::string& data)
 {
     data_ = data;
+}
+
+std::string CommonEventData::GetParameters() const
+{
+    return parameters_;
+}
+
+void CommonEventData::SetParameters(const std::string& parameters)
+{
+    parameters_ = parameters;
 }
 } // namespace Plugin
 } // namespace OHOS

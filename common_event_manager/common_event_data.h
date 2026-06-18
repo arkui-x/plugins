@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,22 +23,25 @@ namespace Plugin {
 class CommonEventData {
 public:
     CommonEventData() = default;
-    CommonEventData(const std::string& event, const std::string& bunduleName, int code, const std::string& data);
+    CommonEventData(const std::string& event, const std::string& bundleName, int code, const std::string& data);
     virtual ~CommonEventData() = default;
     std::string GetEvent() const;
     void SetEvent(const std::string& event);
-    std::string GetBunduleName() const;
-    void SetBunduleName(const std::string& bundleName);
+    std::string GetBundleName() const;
+    void SetBundleName(const std::string& bundleName);
     int GetCode() const;
     void SetCode(int code);
     std::string GetData() const;
     void SetData(const std::string& data);
+    std::string GetParameters() const;
+    void SetParameters(const std::string& parameters);
 
 private:
     std::string event_;
-    std::string bunduleName_;
-    int code_;
+    std::string bundleName_;
+    int code_ = 0;
     std::string data_;
+    std::string parameters_;
 };
 } // namespace Plugin
 } // namespace OHOS
