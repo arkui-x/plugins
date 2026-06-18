@@ -250,7 +250,9 @@ void MethodData::InitEventSuccessForMethod(void)
         return;
     }
 
-    auto event = [this, codecType = codecType_](napi_env env, const std::string& bridgeName,
+    auto executor = taskExecutor_;
+    auto codecType = codecType_;
+    auto event = [executor, codecType](napi_env env, const std::string& bridgeName,
                      const std::string& methodName, napi_value resultValue) {
         MethodResult result;
         result.SetErrorCode(0);
@@ -260,10 +262,10 @@ void MethodData::InitEventSuccessForMethod(void)
             auto task = [platformResult = result.GetResult(), bridgeName, methodName]() {
                 Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platformResult);
             };
-            if (!taskExecutor_) {
+            if (!executor) {
                 LOGE("InitEventSuccessForMethod(JSON): taskExecutor_ is null.");
             } else {
-                taskExecutor_->RunTaskOnBridgeThread(task);
+                executor->RunTaskOnBridgeThread(task);
             }
         } else if (codecType == CodecType::BINARY_CODEC) {
             result.ParseJSMethodResultBinary(env, resultValue);
@@ -272,10 +274,10 @@ void MethodData::InitEventSuccessForMethod(void)
                 Ace::Platform::BridgeManager::JSSendMethodResultBinary(
                     bridgeName, methodName, 0, "", std::move(resultData));
             };
-            if (!taskExecutor_) {
+            if (!executor) {
                 LOGE("InitEventSuccessForMethod(Binary): taskExecutor_ is null.");
             } else {
-                taskExecutor_->RunTaskOnBridgeThread(task);
+                executor->RunTaskOnBridgeThread(task);
             }
         }
     };
@@ -289,7 +291,9 @@ void MethodData::InitEventErrorForMethod(void)
         return;
     }
 
-    auto event = [this, codecType = codecType_](
+    auto executor = taskExecutor_;
+    auto codecType = codecType_;
+    auto event = [executor, codecType](
                      napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
         MethodResult result;
         result.SetErrorCode(errorCode);
@@ -299,10 +303,10 @@ void MethodData::InitEventErrorForMethod(void)
             auto task = [platformResult = result.GetResult(), bridgeName, methodName]() {
                 Ace::Platform::BridgeManager::JSSendMethodResult(bridgeName, methodName, platformResult);
             };
-            if (!taskExecutor_) {
+            if (!executor) {
                 LOGE("InitEventErrorForMethod(JSON): taskExecutor_ is null.");
             } else {
-                taskExecutor_->RunTaskOnBridgeThread(task);
+                executor->RunTaskOnBridgeThread(task);
             }
         } else if (codecType == CodecType::BINARY_CODEC) {
             auto task = [errorCode = result.GetErrorCode(), errorMessage = result.GetErrorMessage(),
@@ -310,10 +314,10 @@ void MethodData::InitEventErrorForMethod(void)
                 Ace::Platform::BridgeManager::JSSendMethodResultBinary(
                     bridgeName, methodName, errorCode, errorMessage, nullptr);
             };
-            if (!taskExecutor_) {
+            if (!executor) {
                 LOGE("InitEventErrorForMethod(Binary): taskExecutor_ is null.");
             } else {
-                taskExecutor_->RunTaskOnBridgeThread(task);
+                executor->RunTaskOnBridgeThread(task);
             }
         }
     };
@@ -327,17 +331,18 @@ void MethodData::InitEventSuccessForMessage(void)
         return;
     }
 
-    auto event = [this](napi_env env, const std::string& bridgeName, const std::string& methodName,
+    auto executor = taskExecutor_;
+    auto event = [executor](napi_env env, const std::string& bridgeName, const std::string& methodName,
                      napi_value resultValue) {
         NapiRawValue rawValue { .env = env, .value = resultValue };
         auto encoded = BridgeJsonCodec::GetInstance().Encode(rawValue);
         auto task = [data = encoded->value, bridgeName]() {
             Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
         };
-        if (!taskExecutor_) {
+        if (!executor) {
             LOGE("InitEventSuccessForMessage: taskExecutor_ is null.");
         } else {
-            taskExecutor_->RunTaskOnBridgeThread(task);
+            executor->RunTaskOnBridgeThread(task);
         }
     };
     asyncEvent_->SetAsyncEventSuccess(event);
@@ -350,15 +355,16 @@ void MethodData::InitEventErrorForMessage(void)
         return;
     }
 
-    auto event = [this](napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
+    auto executor = taskExecutor_;
+    auto event = [executor](napi_env env, const std::string& bridgeName, const std::string& methodName, int errorCode) {
         auto data = BridgeJsonCodec::ParseNullParams("{}");
         auto task = [data, bridgeName]() {
             Ace::Platform::BridgeManager::JSSendMessageResponse(bridgeName, data);
         };
-        if (!taskExecutor_) {
+        if (!executor) {
             LOGE("InitEventErrorForMessage: taskExecutor_ is null.");
         } else {
-            taskExecutor_->RunTaskOnBridgeThread(task);
+            executor->RunTaskOnBridgeThread(task);
         }
     };
     asyncEvent_->SetAsyncEventError(event);
