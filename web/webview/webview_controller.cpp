@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 #include "webview_controller.h"
 #ifdef ANDROID_PLATFORM
 #include "android/java/jni/webview_controller_android.h"
+#include "android/java/jni/webview_controller_jni.h"
 #endif
 #ifdef IOS_PLATFORM
 #include "ios/webview_controller_ios.h"
@@ -656,6 +657,16 @@ void WebviewController::SetWebDebuggingAccess(bool webDebuggingAccess)
 #endif
 #ifdef IOS_PLATFORM
     WebviewControllerIOS::SetWebDebuggingAccess(webDebuggingAccess);
+#endif
+}
+
+std::string WebviewController::GetDefaultUserAgent()
+{
+#ifdef IOS_PLATFORM
+    return WebviewControllerIOS::GetDefaultUserAgent();
+#endif
+#ifdef ANDROID_PLATFORM
+    return WebviewControllerJni::GetDefaultUserAgent();
 #endif
 }
 

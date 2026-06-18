@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -129,6 +129,11 @@ public:
     virtual bool SetWebSchemeHandler(const char* scheme, WebSchemeHandler* handler) = 0;
     virtual bool ClearWebSchemeHandler() = 0;
     virtual std::string GetUserAgent() = 0;
+    virtual ErrCode SetNetworkAvailable(bool enable)
+    {
+        (void)enable;
+        return NWebError::NO_ERROR;
+    }
     virtual ErrCode ClearHistory() {
         return NWebError::NO_ERROR;
     }
@@ -146,6 +151,7 @@ public:
     static void InsertAsyncCallbackInfo(const std::shared_ptr<AsyncEvaluteJSResultCallbackInfo>& asyncCallbackInfo);
     static bool EraseAsyncCallbackInfo(const AsyncEvaluteJSResultCallbackInfo* asyncCallbackInfo);
     static void SetWebDebuggingAccess(bool webDebuggingAccess);
+    static std::string GetDefaultUserAgent();
     static void OnReceiveRunJavaScriptExtValue(const std::string& type, const std::string& result, int32_t asyncCallbackInfoId);
     static void InsertAsyncCallbackJavaScriptExtInfo(
         const AsyncJavaScriptExtEvaluteJSResultCallbackInfo* asyncCallbackInfo);

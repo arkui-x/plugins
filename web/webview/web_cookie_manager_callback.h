@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,8 @@
 #ifndef PLUGIN_WEB_WEBVIEW_WEBVIEW_COOKIE_MANAGER_CALLBACK_H
 #define PLUGIN_WEB_WEBVIEW_WEBVIEW_COOKIE_MANAGER_CALLBACK_H
 
+#include <string>
+#include "napi/native_api.h"
 #include "plugins/web/webview/napi_parse_utils.h"
 #include "web_errors.h"
 
@@ -25,7 +27,8 @@ enum class TaskType {
     CONFIG_COOKIE,
     FETCH_COOKIE,
     CLEAR_ALL_COOKIES,
-    CLEAR_SESSION_COOKIE
+    CLEAR_SESSION_COOKIE,
+    SAVE_COOKIE
 };
 
 struct AsyncWorkCookieData {
@@ -41,6 +44,7 @@ struct AsyncCookieManagerResultCallbackInfo : public AsyncWorkCookieData {
 public:
     AsyncCookieManagerResultCallbackInfo(napi_env env, int32_t id) : AsyncWorkCookieData(env), uniqueId_(id) {}
     std::string result;
+    ErrCode errorCode = NWebError::NO_ERROR;
     TaskType taskType = TaskType::NONE;
     int32_t GetUniqueId() const
     {
@@ -50,6 +54,6 @@ public:
 private:
     int32_t uniqueId_;
 };
-}
+} // namespace OHOS::Plugin
 
 #endif // PLUGIN_WEB_WEBVIEW_WEBVIEW_COOKIE_MANAGER_CALLBACK_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,9 +30,21 @@ public:
     static void OnReceiveFetchCookieValue(JNIEnv* env, jobject jobj, jstring jResult, jint jId);
     static void OnReceiveConfigCookieValue(JNIEnv* env, jobject jobj, jboolean jResult, jint jId);
     static void OnReceiveClearSessionCookieValue(JNIEnv* env, jobject jobj, jint jId);
+    static void OnReceiveConfigCookieError(JNIEnv* env, jobject jobj, jint jErrorCode, jlong jId);
     static void OnReceiveClearAllCookiesValue(JNIEnv* env, jobject jobj, jint jId);
+    static void OnReceiveSaveCookieValue(JNIEnv* env, jobject jobj, jlong jId);
     static void ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId);
+    static void ConfigCookie(const std::string& url, const std::string& value, bool incognito,
+        bool includeHttpOnly, int32_t asyncCallbackInfoId);
+    static ErrCode ConfigCookieSync(
+        const std::string& url, const std::string& value, bool incognito, bool includeHttpOnly);
     static void FetchCookie(const std::string& url, int32_t asyncCallbackInfoId);
+    static std::string FetchCookieSync(const std::string& url, bool incognito, ErrCode& errorCode);
+    static ErrCode PutAcceptCookieEnabled(bool accept);
+    static ErrCode PutAcceptThirdPartyCookieEnabled(bool accept);
+    static ErrCode ClearAllCookiesSync(bool incognito);
+    static ErrCode ClearSessionCookieSync();
+    static void SaveCookie(int32_t asyncCallbackInfoId);
     static void ClearAllCookies(int32_t asyncCallbackInfoId);
     static bool ExistCookie(bool incognito);
     static void ClearSessionCookie(int32_t asyncCallbackInfoId);

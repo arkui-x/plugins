@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -149,6 +149,10 @@ private:
     static napi_value ClearWebSchemeHandler(napi_env env, napi_callback_info info);
 
     static napi_value GetUserAgent(napi_env env, napi_callback_info info);
+
+    static napi_value SetNetworkAvailable(napi_env env, napi_callback_info info);
+
+    static napi_value GetDefaultUserAgent(napi_env env, napi_callback_info info);
 };
 
 class NapiWebDataBase {
@@ -195,15 +199,51 @@ public:
 private:
     static napi_value JsConstructor(napi_env env, napi_callback_info info);
 
+    static bool GetStringPara(napi_env env, napi_value argv, std::string& outValue);
+
+    static bool GetBooleanPara(napi_env env, napi_value argv, bool& outValue);
+
+    static bool GetStringParaAndEmitError(napi_env env, napi_value argv,
+        const std::string& parav, std::string& value);
+
+    static bool GetBooleanParaAndEmitError(napi_env env, napi_value argv,
+        const std::string& parav, bool& value);
+
+    static bool ParseConfigCookieStringParams(napi_env env, size_t argc, napi_value* argv, napi_value result,
+        std::string& url, std::string& value, napi_value& returnValue);
+
+    static bool ParseConfigCookieOptions(napi_env env, size_t argc, napi_value* argv,
+        bool& incognitoMode, bool& includeHttpOnly);
+
+    static napi_value CreateConfigCookieCallbackAsyncWork(napi_env env, napi_value callback,
+        const std::string& url, const std::string& value);
+
+    static napi_value CreateConfigCookiePromiseAsyncWork(napi_env env, size_t argc,
+        const std::string& url, const std::string& value, bool incognitoMode, bool includeHttpOnly);
+
     static napi_value JsFetchCookieAsync(napi_env env, napi_callback_info info);
 
+    static napi_value JsFetchCookieSync(napi_env env, napi_callback_info info);
+
     static napi_value JsConfigCookieAsync(napi_env env, napi_callback_info info);
+
+    static napi_value JsSetCookie(napi_env env, napi_callback_info info);
 
     static napi_value JsExistCookie(napi_env env, napi_callback_info info);
 
     static napi_value JsClearSessionCookie(napi_env env, napi_callback_info info);
 
+    static napi_value JsDeleteSessionCookie(napi_env env, napi_callback_info info);
+
     static napi_value JsClearAllCookiesAsync(napi_env env, napi_callback_info info);
+
+    static napi_value JsDeleteEntireCookie(napi_env env, napi_callback_info info);
+
+    static napi_value JsSaveCookieAsync(napi_env env, napi_callback_info info);
+
+    static napi_value JsPutAcceptCookieEnabled(napi_env env, napi_callback_info info);
+
+    static napi_value JsPutAcceptThirdPartyCookieEnabled(napi_env env, napi_callback_info info);
 
     static void CreateCookieAsyncWork(napi_env env, const std::string& taskName,
         const std::shared_ptr<AsyncCookieManagerResultCallbackInfo>& callbackInfo);
