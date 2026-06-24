@@ -17,6 +17,7 @@ import("//plugins/component/components.gni")
 build_arkui_x_component("platformview_source") {
   js_source = "platformview"
   sources = [
+    "//foundation/arkui/ace_engine/frameworks/core/common/platform_res_register.cpp",
     "platform_view_impl.cpp",
     "platformview_layout_algorithm.cpp",
     "platformview_model_ng.cpp",

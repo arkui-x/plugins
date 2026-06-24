@@ -24,10 +24,12 @@ template("plugin_cryptoframework_static") {
       "//third_party/bounds_checking_function/include",
       "//commonlibrary/c_utils/base/include",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/inc",
+      "//base/security/crypto_framework/frameworks/api_metrics/js/include",
       "//base/security/crypto_framework/common/inc",
       "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     ]
     sources = [
+      "//base/security/crypto_framework/frameworks/api_metrics/js/src/js_api_metrics.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_asy_key_generator.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_asy_key_spec_generator.cpp",
       "//base/security/crypto_framework/frameworks/js/napi/crypto/src/napi_cipher.cpp",
