@@ -55,6 +55,7 @@ template("plugin_fs_static") {
       "//third_party/libuv/include",
       "//foundation/graphic/graphic_2d/rosen/modules/platform/ipc_core",
       "//commonlibrary/c_utils/base/include",
+      "//plugins/file/fileuri",
       "$fs_dirs/src/common",
     ]
 
@@ -115,6 +116,8 @@ template("plugin_fs_static") {
 
     deps = [
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+      "//commonlibrary/c_utils/base:utilsbase",
+      "//plugins/file/fileuri:fileuri_native_${target_os}",
       "//plugins/interfaces/native:plugin_log",
       "//plugins/libs/napi:napi_${target_os}",
       "//plugins/libs/uv:uv_${target_os}",
