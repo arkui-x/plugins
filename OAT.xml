@@ -64,6 +64,9 @@ Note:If the text contains special characters, please escape them according to th
             </policy>
 		</policylist>
         <filefilterlist>
+            <filefilter name="binaryFileTypePolicyFilter" desc="eTSHelloWorld二进制文件校验策略的过滤条件" >
+                <filteritem type="filepath" name="web/webview/domains/.*.dat" desc="Second-level domain filtering rule PSL file"/>
+            </filefilter>
             <filefilter name="copyrightPolicyFilter" desc="Copyright文件头校验策略的过滤条件" >
                 <filteritem type="filepath" name="request/core/upload/frameworks/ios/ohnetworkkit/.*.h|.*.m|.*.mm" desc="import third-party AFNetworking files"/>
                 <filteritem type="filepath" name="net/connection/ios/.*.h|.*.mm|.*.txt" desc="import third-party Apple sample files"/>

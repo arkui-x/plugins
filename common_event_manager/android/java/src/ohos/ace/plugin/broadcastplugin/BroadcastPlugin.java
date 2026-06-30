@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,6 +39,14 @@ import org.json.JSONObject;
  */
 public class BroadcastPlugin {
     private static final String LOG_TAG = "BroadcastPlugin";
+    private static final String JSON_BUNDLE_NAME = "bundleName";
+    private static final String JSON_CODE = "code";
+    private static final String JSON_DATA = "data";
+    private static final String JSON_PARAMETERS = "parameters";
+    private static final String EXTRA_BUNDLE_NAME = "common_event_bundle_name";
+    private static final String EXTRA_CODE = "common_event_code";
+    private static final String EXTRA_DATA = "common_event_data";
+    private static final String EXTRA_PARAMETERS = "common_event_parameters";
 
     private static final int BATTERY_LOW_VALUE = 20;
 
@@ -89,7 +97,11 @@ public class BroadcastPlugin {
      * sendBroadcast send broadcast
      *
      * @param action action of the broadcast
-     * @param json json of the broadcast
+     * @param json json of the broadcast, supports only four reserved fields:
+     *             "bundleName" (String), "code" (Number),
+     *             "data" (String), "parameters" (JSONObject).
+     *             Any other top-level keys are ignored.
+     *             Use "parameters" to pass custom key-value pairs.
      * @return true if send broadcast success, false if send broadcast failed
      */
     public boolean sendBroadcast(String action, String json) {
@@ -100,21 +112,82 @@ public class BroadcastPlugin {
             return false;
         }
         Intent intent = new Intent(action);
-        if (!TextUtils.isEmpty(json)) {
-            try {
-                JSONObject jsonObject = new JSONObject(json);
-                for (Iterator<String> iter = jsonObject.keys(); iter.hasNext(); ) {
-                    String key = iter.next();
-                    String value = (String) jsonObject.get(key);
-                    intent.putExtra(key, value);
-                }
-            } catch (JSONException e) {
-                ALog.e(LOG_TAG, "Send broadcast failed, JSONException.");
-                e.printStackTrace();
-                return false;
-            }
+        if (!TextUtils.isEmpty(json) && !appendPublishPayload(intent, json)) {
+            return false;
         }
         context.sendBroadcast(intent);
+        return true;
+    }
+
+    // Only handles the four reserved fields: bundleName, code, data, parameters.
+    // Other top-level keys in the JSON are intentionally ignored.
+    private boolean appendPublishPayload(Intent intent, String json) {
+        try {
+            JSONObject payload = new JSONObject(json);
+            String bundleName = payload.optString(JSON_BUNDLE_NAME, "");
+            setTargetBundle(intent, bundleName);
+            putBundleNameExtra(intent, bundleName);
+            return putCodeExtra(intent, payload)
+                && putDataExtra(intent, payload)
+                && putParametersExtra(intent, payload);
+        } catch (JSONException e) {
+            ALog.e(LOG_TAG, "Send broadcast failed, JSONException.");
+            return false;
+        }
+    }
+
+    private void setTargetBundle(Intent intent, String bundleName) {
+        if (!TextUtils.isEmpty(bundleName)) {
+            Intent result = intent.setPackage(bundleName);
+            if (result == null) {
+                ALog.w(LOG_TAG, "Failed to set target bundle, check if bundleName is valid: " + bundleName);
+            }
+            ALog.d(LOG_TAG, "Broadcast targeted to bundle: " + bundleName);
+        }
+    }
+
+    private void putBundleNameExtra(Intent intent, String bundleName) {
+        if (!TextUtils.isEmpty(bundleName)) {
+            intent.putExtra(EXTRA_BUNDLE_NAME, bundleName);
+        }
+    }
+
+    private boolean putCodeExtra(Intent intent, JSONObject payload) throws JSONException {
+        if (!payload.has(JSON_CODE)) {
+            return true;
+        }
+        Object value = payload.get(JSON_CODE);
+        if (!(value instanceof Number)) {
+            ALog.e(LOG_TAG, "code is not a number");
+            return false;
+        }
+        intent.putExtra(EXTRA_CODE, ((Number) value).intValue());
+        return true;
+    }
+
+    private boolean putDataExtra(Intent intent, JSONObject payload) throws JSONException {
+        if (!payload.has(JSON_DATA)) {
+            return true;
+        }
+        Object value = payload.get(JSON_DATA);
+        if (!(value instanceof String)) {
+            ALog.e(LOG_TAG, "data is not a string");
+            return false;
+        }
+        intent.putExtra(EXTRA_DATA, (String) value);
+        return true;
+    }
+
+    private boolean putParametersExtra(Intent intent, JSONObject payload) throws JSONException {
+        if (!payload.has(JSON_PARAMETERS)) {
+            return true;
+        }
+        Object value = payload.get(JSON_PARAMETERS);
+        if (!(value instanceof JSONObject)) {
+            ALog.e(LOG_TAG, "parameters is not a JSONObject");
+            return false;
+        }
+        intent.putExtra(EXTRA_PARAMETERS, value.toString());
         return true;
     }
 
@@ -149,22 +222,7 @@ public class BroadcastPlugin {
             @Override
             public void onReceive(Context context, Intent intent) {
                 try {
-                    JSONObject jsonObject = new JSONObject();
-                    Bundle bundle = intent.getExtras();
-                    if (bundle != null && bundle.size() > 0) {
-                        for (String key : bundle.keySet()) {
-                            Object value = bundle.get(key);
-                            jsonObject.put(key, value + "");
-                        }
-                    }
-                    String key = "";
-                    for (Map.Entry<String, BroadcastReceiver> entry : broadcastReceiverMap.entrySet()) {
-                        if (entry.getValue() == this) {
-                            key = entry.getKey();
-                            break;
-                        }
-                    }
-                    receiveBroadcast(key, intent, jsonObject.toString());
+                    receiveBroadcast(findReceiverKey(this), intent, buildReceivePayload(intent));
                 } catch (JSONException e) {
                     ALog.e(LOG_TAG, "Receive broadcast failed, JSONException.");
                     e.printStackTrace();
@@ -199,6 +257,117 @@ public class BroadcastPlugin {
         } else {
             nativeReceiveBroadcast(key, intent.getAction(), json);
         }
+    }
+
+    private String findReceiverKey(BroadcastReceiver receiver) {
+        for (Map.Entry<String, BroadcastReceiver> entry : broadcastReceiverMap.entrySet()) {
+            if (entry.getValue() == receiver) {
+                return entry.getKey();
+            }
+        }
+        return "";
+    }
+
+    private String buildReceivePayload(Intent intent) throws JSONException {
+        JSONObject payload = new JSONObject();
+        Bundle bundle = intent.getExtras();
+        JSONObject parameters = readParameters(bundle);
+        appendBundleValues(bundle, payload, parameters);
+        setBundleNameIfNeeded(payload, bundle, intent);
+        return finalizePayload(payload, parameters);
+    }
+
+    private void setBundleNameIfNeeded(JSONObject payload, Bundle bundle, Intent intent) throws JSONException {
+        if (payload.has(JSON_BUNDLE_NAME)) {
+            return;
+        }
+        String bundleName = resolveBundleName(bundle, intent);
+        if (!TextUtils.isEmpty(bundleName)) {
+            payload.put(JSON_BUNDLE_NAME, bundleName);
+        }
+    }
+
+    private String resolveBundleName(Bundle bundle, Intent intent) {
+        if (bundle != null) {
+            Object value = bundle.get(EXTRA_BUNDLE_NAME);
+            if (value != null) {
+                return String.valueOf(value);
+            }
+        }
+        return intent.getPackage();
+    }
+
+    private JSONObject readParameters(Bundle bundle) throws JSONException {
+        JSONObject parameters = new JSONObject();
+        if (bundle == null) {
+            return parameters;
+        }
+        Object value = bundle.get(EXTRA_PARAMETERS);
+        if (value == null) {
+            return parameters;
+        }
+        if (!(value instanceof String)) {
+            return parameters;
+        }
+        JSONObject jsonObject = new JSONObject(String.valueOf(value));
+        Iterator<String> keys = jsonObject.keys();
+        while (keys.hasNext()) {
+            String name = keys.next();
+            parameters.put(name, jsonObject.get(name));
+        }
+        return parameters;
+    }
+
+    private void appendBundleValues(Bundle bundle, JSONObject payload, JSONObject parameters) throws JSONException {
+        if (bundle == null || bundle.size() == 0) {
+            return;
+        }
+        for (String extraKey : bundle.keySet()) {
+            Object value = bundle.get(extraKey);
+            if (appendReservedExtra(extraKey, value, payload)) {
+                continue;
+            }
+            if (EXTRA_PARAMETERS.equals(extraKey) || parameters.has(extraKey)) {
+                continue;
+            }
+            putJsonValue(parameters, extraKey, value);
+        }
+    }
+
+    private boolean appendReservedExtra(String extraKey, Object value, JSONObject payload) throws JSONException {
+        if (EXTRA_BUNDLE_NAME.equals(extraKey)) {
+            payload.put(JSON_BUNDLE_NAME, value == null ? "" : String.valueOf(value));
+            return true;
+        }
+        if (EXTRA_CODE.equals(extraKey)) {
+            payload.put(JSON_CODE, value instanceof Number ? ((Number) value).intValue() : 0);
+            return true;
+        }
+        if (EXTRA_DATA.equals(extraKey)) {
+            payload.put(JSON_DATA, value == null ? "" : String.valueOf(value));
+            return true;
+        }
+        return false;
+    }
+
+    private String finalizePayload(JSONObject payload, JSONObject parameters) throws JSONException {
+        if (!payload.has(JSON_CODE)) {
+            payload.put(JSON_CODE, 0);
+        }
+        if (!payload.has(JSON_DATA)) {
+            payload.put(JSON_DATA, "");
+        }
+        payload.put(JSON_PARAMETERS, parameters);
+        return payload.toString();
+    }
+
+    private void putJsonValue(JSONObject jsonObject, String key, Object value) throws JSONException {
+        if (value == null) {
+            jsonObject.put(key, JSONObject.NULL);
+            return;
+        }
+        Object wrappedValue = JSONObject.wrap(value);
+        jsonObject.put(key, wrappedValue == null ? String.valueOf(value) : wrappedValue);
     }
 
     /**

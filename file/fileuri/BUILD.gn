@@ -1,0 +1,102 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+filemanagement_path = "//foundation/filemanagement"
+app_file_service_path = "${filemanagement_path}/app_file_service"
+libn_dirs = "${filemanagement_path}/file_api/utils/filemgmt_libn"
+
+libn_src = [
+  "${libn_dirs}/src/n_async/n_async_work_callback.cpp",
+  "${libn_dirs}/src/n_async/n_async_work_promise.cpp",
+  "${libn_dirs}/src/n_async/n_ref.cpp",
+  "${libn_dirs}/src/n_class.cpp",
+  "${libn_dirs}/src/n_error.cpp",
+  "${libn_dirs}/src/n_func_arg.cpp",
+  "${libn_dirs}/src/n_val.cpp",
+]
+
+template("plugin_fileuri_static") {
+  forward_variables_from(invoker, "*")
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    include_dirs = [
+      "${app_file_service_path}/interfaces/kits/js/file_uri",
+      "${libn_dirs}/include",
+      "${libn_dirs}/include/n_async",
+      "${filemanagement_path}/file_api/utils/filemgmt_libhilog",
+      "${filemanagement_path}/file_api/utils/common/include",
+      "//plugins/file/fileuri",
+      "//foundation/arkui/ace_engine/frameworks",
+      "//foundation/arkui/ace_engine",
+      "//third_party/bounds_checking_function/include",
+    ]
+
+    configs = [ "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/kits/native/appkit:appkit_native_config" ]
+
+    sources = libn_src
+    sources += [
+      "${app_file_service_path}/interfaces/kits/js/file_uri/file_uri_n_exporter.cpp",
+      "${app_file_service_path}/interfaces/kits/js/file_uri/get_uri_from_path.cpp",
+      "${app_file_service_path}/interfaces/kits/js/file_uri/module.cpp",
+      "${app_file_service_path}/interfaces/kits/js/file_uri/prop_n_exporter.cpp",
+      "//plugins/file/fileuri/common_func.cpp",
+      "//plugins/file/fileuri/file_uri.cpp",
+      "//plugins/file/fileuri/sandbox_helper.cpp",
+      "//plugins/file/fileuri/uri.cpp",
+    ]
+
+    deps = [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+      "//commonlibrary/c_utils/base:utilsbase",
+      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/libs/uv:uv_${target_os}",
+    ]
+
+    if (target_os == "ios") {
+      defines += [ "IOS_PLATFORM" ]
+    } else if (target_os == "android") {
+      defines += [ "ANDROID_PLATFORM" ]
+    }
+
+    use_exceptions = true
+
+    subsystem_name = "plugins"
+    part_name = "file_fileuri"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_fileuri_static("file_fileuri_static_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}

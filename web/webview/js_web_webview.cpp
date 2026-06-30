@@ -1931,6 +1931,64 @@ napi_value NapiWebviewController::GetUserAgent(napi_env env, napi_callback_info 
     return result;
 }
 
+napi_value NapiWebviewController::InnerGetWebId(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+
+    WebviewController *webviewController = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, (void **)&webviewController);
+    int32_t webId = -1;
+    if ((!webviewController) || (status != napi_ok)) {
+        napi_create_int32(env, webId, &result);
+        return result;
+    }
+    webId = webviewController->GetWebId();
+    napi_create_int32(env, webId, &result);
+    return result;
+}
+
+napi_value NapiWebviewController::InnerGetThisVar(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+
+    WebviewController *webviewController = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, (void **)&webviewController);
+    if ((!webviewController) || (status != napi_ok)) {
+        napi_create_int64(env, 0, &result);
+        return result;
+    }
+
+    napi_create_int64(env, reinterpret_cast<int64_t>(webviewController), &result);
+    return result;
+}
+
+napi_value NapiWebviewController::InnerCompleteWindowNew(napi_env env, napi_callback_info info)
+{
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    size_t argc = INTEGER_ONE;
+    napi_value argv[INTEGER_ONE];
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+
+    int32_t parentNwebId = -1;
+    if (argc >= INTEGER_ONE) {
+        NapiParseUtils::ParseInt32(env, argv[0], parentNwebId);
+    }
+
+    WebviewController *webviewController = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, (void **)&webviewController);
+    if ((!webviewController) || (status != napi_ok) || !webviewController->IsInit()) {
+        LOGE("InnerCompleteWindowNew: controller not initialized");
+        return result;
+    }
+    return result;
+}
+
 napi_value NapiWebviewController::SetNetworkAvailable(napi_env env, napi_callback_info info)
 {
     napi_value thisVar = nullptr;
@@ -2018,6 +2076,9 @@ napi_value NapiWebviewController::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setWebSchemeHandler", NapiWebviewController::SetWebSchemeHandler),
         DECLARE_NAPI_FUNCTION("clearWebSchemeHandler", NapiWebviewController::ClearWebSchemeHandler),
         DECLARE_NAPI_FUNCTION("getUserAgent", NapiWebviewController::GetUserAgent),
+        DECLARE_NAPI_FUNCTION("innerGetWebId", NapiWebviewController::InnerGetWebId),
+        DECLARE_NAPI_FUNCTION("innerGetThisVar", NapiWebviewController::InnerGetThisVar),
+        DECLARE_NAPI_FUNCTION("innerCompleteWindowNew", NapiWebviewController::InnerCompleteWindowNew),
         DECLARE_NAPI_FUNCTION("setNetworkAvailable", NapiWebviewController::SetNetworkAvailable),
         DECLARE_NAPI_STATIC_FUNCTION("getDefaultUserAgent", NapiWebviewController::GetDefaultUserAgent),
     };

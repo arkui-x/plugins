@@ -150,6 +150,12 @@ private:
 
     static napi_value GetUserAgent(napi_env env, napi_callback_info info);
 
+    static napi_value InnerGetWebId(napi_env env, napi_callback_info info);
+
+    static napi_value InnerGetThisVar(napi_env env, napi_callback_info info);
+
+    static napi_value InnerCompleteWindowNew(napi_env env, napi_callback_info info);
+
     static napi_value SetNetworkAvailable(napi_env env, napi_callback_info info);
 
     static napi_value GetDefaultUserAgent(napi_env env, napi_callback_info info);

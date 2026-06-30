@@ -410,7 +410,7 @@ ErrCode WebCookieManagerIOS::FetchCookieSync(const std::string& url, bool incogn
     return NO_ERROR;
 }
 
-void WebCookieManagerIOS::ClearAllCookie(int32_t asyncCallbackInfoId)
+void WebCookieManagerIOS::ClearAllCookies(int32_t asyncCallbackInfoId)
 {
     NSHTTPCookieStorage* sharedHTTPCookieStorage = NSHTTPCookieStorage.sharedHTTPCookieStorage;
     NSArray* cookies = sharedHTTPCookieStorage.cookies;
@@ -495,7 +495,7 @@ static ErrCode DeleteCookiesFromStore(bool sessionOnly, bool incognito)
     return incognito ? CAPABILITY_NOT_SUPPORTED_ERROR : NO_ERROR;
 }
 
-ErrCode WebCookieManagerIOS::ClearAllCookieSync(bool incognito)
+ErrCode WebCookieManagerIOS::ClearAllCookiesSync(bool incognito)
 {
     return DeleteCookiesFromStore(false, incognito);
 }
