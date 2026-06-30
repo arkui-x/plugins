@@ -24,6 +24,7 @@
 #include <tuple>
 
 #include "file_utils.h"
+#include "file_uri.h"
 #include "filemgmt_libhilog.h"
 #include "filemgmt_libn.h"
 #include "../common_func.h"
@@ -33,6 +34,7 @@ namespace FileManagement {
 namespace ModuleFileIO {
 using namespace std;
 using namespace OHOS::FileManagement::LibN;
+using namespace OHOS::AppFileService::ModuleFileUri;
 
 static FileEntity *GetFileEntity(napi_env env, napi_value raf_entity)
 {
@@ -76,6 +78,16 @@ napi_value FileNExporter::GetPath(napi_env env, napi_callback_info info)
         NError(EINVAL).ThrowErr(env);
         return nullptr;
     }
+    if (fileEntity->uri_.length() != 0) {
+        FileUri fileUri(fileEntity->uri_);
+        std::string path = fileUri.GetPath();
+        if (path.empty()) {
+            HILOGE("Failed to get path from URI");
+            NError(EINVAL).ThrowErr(env);
+            return nullptr;
+        }
+        return NVal::CreateUTF8String(env, path).val_;
+    }
     auto [realPathRes, realPath] = RealPathCore(fileEntity->path_);
     if (realPathRes != ERRNO_NOERR) {
         HILOGE("Failed to get real path");
@@ -98,6 +110,16 @@ napi_value FileNExporter::GetName(napi_env env, napi_callback_info info)
         HILOGE("Failed to get file entity");
         NError(EINVAL).ThrowErr(env);
         return nullptr;
+    }
+    if (fileEntity->uri_.length() != 0) {
+        FileUri fileUri(fileEntity->uri_);
+        std::string name = fileUri.GetName();
+        if (name.empty()) {
+            HILOGE("Failed to get name from URI");
+            NError(EINVAL).ThrowErr(env);
+            return nullptr;
+        }
+        return NVal::CreateUTF8String(env, name).val_;
     }
     auto [realPathRes, realPath] = RealPathCore(fileEntity->path_);
     if (realPathRes != ERRNO_NOERR) {
@@ -160,6 +182,7 @@ bool FileNExporter::Export()
         NVal::DeclareNapiGetter("fd", GetFD),
         NVal::DeclareNapiFunction("lock", Lock),
         NVal::DeclareNapiGetter("path", GetPath),
+        NVal::DeclareNapiGetter("name", GetName),
         NVal::DeclareNapiFunction("tryLock", TryLock),
         NVal::DeclareNapiFunction("unlock", UnLock),
         NVal::DeclareNapiFunction("getParent", GetParent),

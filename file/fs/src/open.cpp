@@ -23,6 +23,7 @@
 #include "class_file/file_entity.h"
 #include "class_file/file_n_exporter.h"
 #include "common_func.h"
+#include "file_uri.h"
 #include "filemgmt_libhilog.h"
 
 namespace OHOS {
@@ -30,7 +31,7 @@ namespace FileManagement {
 namespace ModuleFileIO {
 using namespace std;
 using namespace OHOS::FileManagement::LibN;
-const std::string FILE_START = "file:///";
+using namespace OHOS::AppFileService::ModuleFileUri;
 
 static tuple<bool, unsigned int> GetJsFlags(napi_env env, const NFuncArg &funcArg)
 {
@@ -84,14 +85,36 @@ static NVal InstantiateFile(napi_env env, int fd, const string& pathOrUri, bool 
     return { env, objFile };
 }
 
-static string GetSubstr(string path)
+static int OpenFileByPath(const string &path, unsigned int mode)
 {
-    string pathStr = string(path);
-    std::size_t index = pathStr.find(FILE_START);
-    if (index == 0) {
-        pathStr = pathStr.substr(FILE_START.length());
+    unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> open_req = {
+        new (std::nothrow) uv_fs_t, CommonFunc::fs_req_cleanup };
+    if (!open_req) {
+        HILOGE("Failed to request heap memory.");
+        return -ENOMEM;
     }
-    return pathStr;
+    int ret = uv_fs_open(nullptr, open_req.get(), path.c_str(), mode,
+                         S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, nullptr);
+    return ret;
+}
+
+static tuple<int, string> OpenFileByUri(const string &path, unsigned int mode)
+{
+    if (path.find("file://") != 0) {
+        HILOGE("Unsupported URI scheme, only 'file' is supported");
+        return { -EINVAL, path };
+    }
+    AppFileService::ModuleFileUri::FileUri fileUri(path);
+    string realPath = fileUri.GetRealPath();
+    if (realPath.empty()) {
+        HILOGE("Failed to get real path from URI");
+        return { -EINVAL, path };
+    }
+    int ret = OpenFileByPath(realPath, mode);
+    if (ret < 0) {
+        HILOGE("Failed to open file for libuv error %{public}d", ret);
+    }
+    return { ret, path };
 }
 
 napi_value Open::Sync(napi_env env, napi_callback_info info)
@@ -113,23 +136,24 @@ napi_value Open::Sync(napi_env env, napi_callback_info info)
         HILOGE("Invalid mode");
         return nullptr;
     }
-    string pathStr = GetSubstr(string(path.get()));
-    std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> open_req = {
-        new uv_fs_t, CommonFunc::fs_req_cleanup };
-    if (!open_req) {
-        HILOGE("Failed to request heap memory.");
-        NError(ENOMEM).ThrowErr(env);
-        return nullptr;
+    std::string pathStr(path.get());
+
+    if (pathStr.find("://") != string::npos) {
+        auto [res, uriStr] = OpenFileByUri(pathStr, mode);
+        if (res < 0) {
+            NError(res).ThrowErr(env);
+            return nullptr;
+        }
+        return InstantiateFile(env, res, uriStr, true).val_;
     }
-    int ret = uv_fs_open(nullptr, open_req.get(), pathStr.c_str(), mode, S_IRUSR |
-        S_IWUSR | S_IRGRP | S_IWGRP, nullptr);
+
+    int ret = OpenFileByPath(pathStr, mode);
     if (ret < 0) {
         HILOGE("Failed to open file for libuv error %{public}d", ret);
         NError(ret).ThrowErr(env);
         return nullptr;
     }
-    auto file = InstantiateFile(env, ret, pathStr, false).val_;
-    return file;
+    return InstantiateFile(env, ret, pathStr, false).val_;
 }
 
 struct AsyncOpenFileArg {
@@ -137,6 +161,30 @@ struct AsyncOpenFileArg {
     string path;
     string uri;
 };
+
+static NError AsyncCbExec(shared_ptr<AsyncOpenFileArg> arg, const string &path, unsigned int mode)
+{
+    string pathStr(path);
+    if (pathStr.find("://") != string::npos) {
+        auto [res, uriStr] = OpenFileByUri(pathStr, mode);
+        if (res < 0) {
+            return NError(res);
+        }
+        arg->fd = res;
+        arg->path = "";
+        arg->uri = uriStr;
+        return NError(ERRNO_NOERR);
+    }
+    int ret = OpenFileByPath(pathStr, mode);
+    if (ret < 0) {
+        HILOGE("Failed to open file for libuv error %{public}d", ret);
+        return NError(ret);
+    }
+    arg->fd = ret;
+    arg->path = pathStr;
+    arg->uri = "";
+    return NError(ERRNO_NOERR);
+}
 
 napi_value Open::Async(napi_env env, napi_callback_info info)
 {
@@ -159,25 +207,14 @@ napi_value Open::Async(napi_env env, napi_callback_info info)
     }
     auto arg = make_shared<AsyncOpenFileArg>();
     auto cbExec = [arg, path = string(path.get()), mode = mode]() -> NError {
-        std::unique_ptr<uv_fs_t, decltype(CommonFunc::fs_req_cleanup)*> open_req = {
-            new (nothrow) uv_fs_t, CommonFunc::fs_req_cleanup };
-        if (open_req == nullptr) {
-            HILOGE("Failed to request heap memory.");
-            return NError(ENOMEM);
-        }
-        int ret = uv_fs_open(nullptr, open_req.get(), GetSubstr(path).c_str(), mode, S_IRUSR |
-            S_IWUSR | S_IRGRP | S_IWGRP, nullptr);
-        if (ret < 0) {
-            HILOGE("Failed to open file for libuv error %{public}d", ret);
-            return NError(ret);
-        }
-        arg->fd = ret;
-        arg->path = GetSubstr(path);
-        return NError(ERRNO_NOERR);
+        return AsyncCbExec(arg, path, mode);
     };
     auto cbCompl = [arg](napi_env env, NError err) -> NVal {
         if (err) {
             return { env, err.GetNapiErr(env) };
+        }
+        if (arg->path.empty() && arg->uri.size()) {
+            return InstantiateFile(env, arg->fd, arg->uri, true);
         }
         return InstantiateFile(env, arg->fd, arg->path, false);
     };

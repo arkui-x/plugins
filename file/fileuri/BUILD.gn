@@ -100,3 +100,69 @@ foreach(item, ace_platforms) {
     }
   }
 }
+
+template("plugin_fileuri_native") {
+  forward_variables_from(invoker, "*")
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    include_dirs = [
+      "${app_file_service_path}/interfaces/kits/js/file_uri",
+      "${libn_dirs}/include",
+      "${filemanagement_path}/file_api/utils/filemgmt_libhilog",
+      "${filemanagement_path}/file_api/utils/common/include",
+      "//plugins/file/fileuri",
+      "//foundation/arkui/ace_engine/frameworks",
+      "//foundation/arkui/ace_engine",
+      "//third_party/bounds_checking_function/include",
+    ]
+
+    configs = [ "//foundation/appframework/ability/ability_runtime/cross_platform/interfaces/kits/native/appkit:appkit_native_config" ]
+
+    sources = [
+      "//plugins/file/fileuri/common_func.cpp",
+      "//plugins/file/fileuri/file_uri.cpp",
+      "//plugins/file/fileuri/sandbox_helper.cpp",
+      "//plugins/file/fileuri/uri.cpp",
+    ]
+
+    deps = [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+      "//commonlibrary/c_utils/base:utilsbase",
+      "//plugins/libs/uv:uv_${target_os}",
+    ]
+
+    if (target_os == "ios") {
+      defines += [ "IOS_PLATFORM" ]
+    } else if (target_os == "android") {
+      defines += [ "ANDROID_PLATFORM" ]
+    }
+
+    use_exceptions = true
+
+    subsystem_name = "plugins"
+    part_name = "file_fileuri"
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_fileuri_native("fileuri_native_" + item.name) {
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+}
