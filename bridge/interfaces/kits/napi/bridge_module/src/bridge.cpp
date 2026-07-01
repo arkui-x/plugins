@@ -369,7 +369,10 @@ ErrorCode Bridge::UnRegisterMethod(const std::string& methodName)
 void Bridge::SetMessageListener(std::shared_ptr<MethodData>& callback)
 {
     if (messageCallback_) {
-        messageCallback_->ReleaseEvent();
+        auto* asyncEvent = messageCallback_->GetAsyncEvent();
+        if (asyncEvent != nullptr && asyncEvent->GetEnv() != nullptr) {
+            messageCallback_->ReleaseEvent();
+        }
         messageCallback_.reset();
     }
     messageCallback_ = callback;
