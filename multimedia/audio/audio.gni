@@ -38,6 +38,8 @@ plugins_audio_include = [
   "$WORK_DIR/audiorenderer/callback",
   "$WORK_DIR/audiomanager",
   "$WORK_DIR/audiomanager/callback",
+  "$WORK_DIR/recordcontroller",
+  "$WORK_DIR/recordcontroller/callback",
   "$WORK_DIR/common",
   "//plugins/interfaces",
   "//plugins/interfaces/native",
