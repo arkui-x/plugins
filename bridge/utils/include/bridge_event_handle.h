@@ -32,6 +32,7 @@ public:
     ~BridgeEventHandle();
     static std::shared_ptr<BridgeEventHandle> GetInstance();
     static std::shared_ptr<BridgeEventHandle> GetInstance(napi_env env);
+    static void CreateInstance(napi_env env);
     void RunTaskOnBridgeThread(const Task& task);
     void RunTaskOnMainThread(const Task& task);
     void RunTaskOnJsThread(const Task& task);
