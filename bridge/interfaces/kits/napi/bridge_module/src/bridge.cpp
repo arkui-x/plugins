@@ -489,6 +489,16 @@ std::string Bridge::OnPlatformCallMethodSync(const std::string& methodName, cons
         result.CreateMethodResultForError();
         return result.GetResult();
     }
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (!handle) {
+        LOGE("OnPlatformCallMethodSync: env not available, method=%{public}s", methodName.c_str());
+        MethodResult result;
+        result.SetErrorCodeInfo(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+        result.SetMethodName(methodName);
+        result.CreateMethodResultForError();
+        return result.GetResult();
+    }
     MethodResult methodResult = jsMethodData->PlatformCallMethodSync(parameter);
     return methodResult.GetResult();
 }
@@ -541,7 +551,13 @@ std::unique_ptr<BufferMapping> Bridge::OnPlatformCallMethodSyncBinary(
         errorCode = static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_UNIMPL);
         return nullptr;
     }
-
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (!handle) {
+        LOGE("OnPlatformCallMethodSyncBinary: env not available, method=%{public}s", methodName.c_str());
+        errorCode = static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_UNIMPL);
+        return nullptr;
+    }
     MethodResult methodResult = jsMethodData->PlatformCallMethodSyncBinary(std::move(data));
     if (methodResult.GetErrorCode() != 0) {
         LOGE("OnPlatformCallMethodSyncBinary: method execute failed, err=%{public}d", methodResult.GetErrorCode());
