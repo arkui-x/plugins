@@ -79,9 +79,21 @@ std::shared_ptr<BridgeEventHandle> BridgeEventHandle::GetInstance(napi_env env)
     if (it != envInstances_.end()) {
         return it->second;
     }
+    return nullptr;
+}
+
+void BridgeEventHandle::CreateInstance(napi_env env)
+{
+    if (env == nullptr) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(envMutex_);
+    auto it = envInstances_.find(env);
+    if (it != envInstances_.end()) {
+        return;
+    }
     auto sp = std::shared_ptr<BridgeEventHandle>(new BridgeEventHandle(env));
     envInstances_[env] = sp;
-    return sp;
 }
 
 void BridgeEventHandle::RunTaskOnBridgeThread(const Task& task)
