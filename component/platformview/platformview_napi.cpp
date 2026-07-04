@@ -141,12 +141,16 @@ napi_value JsCreate(napi_env env, napi_callback_info info)
     } else {
         NAPI_ASSERT(env, firstType == napi_string, "First argument must be a string or object with string 'id'");
         id = PluginUtilsNApi::GetStringFromValueUtf8(env, firstArg);
-        if (argc >= PluginUtilsNApi::ARG_NUM_2) {
-            auto napiData = argv[PluginUtilsNApi::ARG_NUM_1];
-            napi_valuetype paramType;
-            napi_typeof(env, napiData, &paramType);
-            if (paramType == napi_string) {
-                data = PluginUtilsNApi::GetStringFromValueUtf8(env, napiData);
+        napi_valuetype secondType;
+        NAPI_CALL(env, napi_typeof(env, argv[PluginUtilsNApi::ARG_NUM_1], &secondType));
+        NAPI_ASSERT(env, secondType == napi_number,
+            "Parameter 'type' must be a number, got undefined or null");
+        NAPI_CALL(env, napi_get_value_int32(env, argv[PluginUtilsNApi::ARG_NUM_1], &type));
+        if (argc >= PluginUtilsNApi::ARG_NUM_3) {
+            napi_valuetype thirdType;
+            NAPI_CALL(env, napi_typeof(env, argv[PluginUtilsNApi::ARG_NUM_2], &thirdType));
+            if (thirdType == napi_string) {
+                data = PluginUtilsNApi::GetStringFromValueUtf8(env, argv[PluginUtilsNApi::ARG_NUM_2]);
             }
         }
     }
