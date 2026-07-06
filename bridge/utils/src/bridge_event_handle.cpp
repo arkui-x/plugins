@@ -125,12 +125,17 @@ void BridgeEventHandle::RunTaskOnJsThread(const Task& task)
     if (task == nullptr) {
         return;
     }
-    if (tsfn_ == nullptr) {
+    napi_threadsafe_function tsfn = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(envMutex_);
+        tsfn = tsfn_;
+    }
+    if (tsfn == nullptr) {
         LOGE("RunTaskOnJsThread: tsfn is null, callback dropped");
         return;
     }
     Task* p = new Task(task);
-    napi_status status = napi_call_threadsafe_function(tsfn_, p, napi_tsfn_nonblocking);
+    napi_status status = napi_call_threadsafe_function(tsfn, p, napi_tsfn_nonblocking);
     if (status != napi_ok) {
         delete p;
         LOGE("RunTaskOnJsThread: call tsfn failed");
@@ -140,14 +145,10 @@ void BridgeEventHandle::RunTaskOnJsThread(const Task& task)
 void BridgeEventHandle::CallJs(napi_env env, napi_value jsCallback, void* context, void* data)
 {
     (void)jsCallback;
-    Task* p = static_cast<Task*>(data);
-    if (p == nullptr) {
-        return;
-    }
-    if (*p) {
+    std::unique_ptr<Task> p(static_cast<Task*>(data));
+    if (p && *p) {
         (*p)();
     }
-    delete p;
 }
 
 void BridgeEventHandle::Finalize(napi_env env, void* data, void* hint)
@@ -163,11 +164,13 @@ void BridgeEventHandle::EnvCleanup(void* data)
     if (self == nullptr) {
         return;
     }
-    if (self->tsfn_ != nullptr) {
-        napi_release_threadsafe_function(self->tsfn_, napi_tsfn_release);
-        self->tsfn_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(envMutex_);
+        if (self->tsfn_ != nullptr) {
+            napi_release_threadsafe_function(self->tsfn_, napi_tsfn_release);
+            self->tsfn_ = nullptr;
+        }
+        envInstances_.erase(self->env_);
     }
-    std::lock_guard<std::mutex> lock(envMutex_);
-    envInstances_.erase(self->env_);
 }
 } // namespace OHOS::Plugin::Bridge
