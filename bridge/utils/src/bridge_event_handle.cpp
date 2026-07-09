@@ -92,7 +92,7 @@ void BridgeEventHandle::CreateInstance(napi_env env)
     if (it != envInstances_.end()) {
         return;
     }
-    auto sp = std::shared_ptr<BridgeEventHandle>(new BridgeEventHandle(env));
+    auto sp = std::make_shared<BridgeEventHandle>(env);
     envInstances_[env] = sp;
 }
 
