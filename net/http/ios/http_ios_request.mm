@@ -91,6 +91,7 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 @property (nonatomic, strong) http_ios_param* requestParam;
 @property (nonatomic, strong) NSURLSession* urlSession;
 @property (nonatomic, strong) NSMutableURLRequest* request;
+- (BOOL)buildMultipartBody;
 @end
 @implementation http_ios_request
 
@@ -147,10 +148,12 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 
     self.urlSession = [NSURLSession sessionWithConfiguration:sessionConfig delegate:self delegateQueue:nil];
 
-    if (requestParam.bodyOrQueryConfigured) {
-        [self serializingBodyAndQueryParams];
-    } else {
-        [self serializingQueryParams];
+    if (![self buildMultipartBody]) {
+        if (requestParam.bodyOrQueryConfigured) {
+            [self serializingBodyAndQueryParams];
+        } else {
+            [self serializingQueryParams];
+        }
     }
 
     NSURLSessionDataTask* task = [self.urlSession dataTaskWithRequest:self.request];
@@ -327,6 +330,107 @@ NSString* PercentEscapedStringFromString(NSString* string) {
 }
 
 #pragma mark - private
+
+static NSString* HTTPTrimmedString(NSString* string)
+{
+    return [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
+static BOOL HTTPIsMultipartContentType(NSString* contentType)
+{
+    if (!contentType || contentType.length == 0) {
+        return NO;
+    }
+
+    return [[HTTPTrimmedString(contentType) lowercaseString] isEqualToString:@"multipart/form-data"];
+}
+
+static NSString* HTTPEscapedMultipartHeaderValue(NSString* value)
+{
+    NSMutableString* escapedValue = [NSMutableString stringWithString:value ?: @""];
+    [escapedValue replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:0 range:NSMakeRange(0, escapedValue.length)];
+    [escapedValue replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:0 range:NSMakeRange(0, escapedValue.length)];
+    [escapedValue replaceOccurrencesOfString:@"\r" withString:@"" options:0 range:NSMakeRange(0, escapedValue.length)];
+    [escapedValue replaceOccurrencesOfString:@"\n" withString:@"" options:0 range:NSMakeRange(0, escapedValue.length)];
+    return escapedValue;
+}
+
+static NSString* HTTPMultipartHeaderLineValue(NSString* value)
+{
+    NSMutableString* lineValue = [NSMutableString stringWithString:value ?: @""];
+    [lineValue replaceOccurrencesOfString:@"\r" withString:@"" options:0 range:NSMakeRange(0, lineValue.length)];
+    [lineValue replaceOccurrencesOfString:@"\n" withString:@"" options:0 range:NSMakeRange(0, lineValue.length)];
+    return lineValue;
+}
+
+- (BOOL)buildMultipartBody
+{
+    NSString* contentType = [self.request valueForHTTPHeaderField:@"Content-Type"];
+    if (!HTTPIsMultipartContentType(contentType) || self.requestParam.multiFormDataList.count == 0) {
+        return NO;
+    }
+
+    NSString* boundary = [NSString stringWithFormat:@"----ArkUIXBoundary%@", [NSUUID UUID].UUIDString];
+    NSMutableData* bodyData = [NSMutableData data];
+    BOOL hasData = NO;
+
+    for (NSDictionary* formData in self.requestParam.multiFormDataList) {
+        NSString* name = formData[@"name"];
+        if (name.length == 0) {
+            continue;
+        }
+
+        NSData* data = formData[@"data"];
+        NSString* filePath = formData[@"filePath"];
+        if (data.length == 0 && filePath.length == 0) {
+            continue;
+        }
+
+        NSData* partData = data;
+        if (partData.length == 0) {
+            partData = [NSData dataWithContentsOfFile:filePath];
+            if (!partData) {
+                continue;
+            }
+        }
+
+        NSString* contentType = HTTPMultipartHeaderLineValue(formData[@"contentType"]);
+        NSString* remoteFileName = formData[@"remoteFileName"];
+        if (remoteFileName.length == 0 && data.length == 0 && filePath.length > 0) {
+            remoteFileName = filePath.lastPathComponent;
+        }
+        [bodyData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+
+        NSMutableString* contentDisposition =
+            [NSMutableString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"",
+                                           HTTPEscapedMultipartHeaderValue(name)];
+        if (remoteFileName.length > 0) {
+            [contentDisposition appendFormat:@"; filename=\"%@\"", HTTPEscapedMultipartHeaderValue(remoteFileName)];
+        }
+        [contentDisposition appendString:@"\r\n"];
+        [bodyData appendData:[contentDisposition dataUsingEncoding:NSUTF8StringEncoding]];
+
+        if (contentType.length > 0) {
+            NSString* partContentType = [NSString stringWithFormat:@"Content-Type: %@\r\n", contentType];
+            [bodyData appendData:[partContentType dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+
+        [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        [bodyData appendData:partData];
+        [bodyData appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        hasData = YES;
+    }
+
+    if (!hasData) {
+        return NO;
+    }
+
+    [bodyData appendData:[[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+    [self.request setHTTPBody:bodyData];
+    [self.request setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary]
+        forHTTPHeaderField:@"Content-Type"];
+    return YES;
+}
 
 - (void)serializingBodyAndQueryParams
 {

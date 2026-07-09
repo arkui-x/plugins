@@ -88,14 +88,29 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
     requestParam.caType = [NSString stringWithCString:certType.c_str() encoding:NSUTF8StringEncoding];;
     requestParam.key = [NSString stringWithCString:key.c_str() encoding:NSUTF8StringEncoding];;
     requestParam.password = [NSString stringWithCString:keyPasswd.Data() encoding:NSUTF8StringEncoding];;
-    requestParam.usingHttpProxyType = static_cast<NSInteger>(requestOptions.GetUsingHttpProxyType());    
+    requestParam.usingHttpProxyType = static_cast<NSInteger>(requestOptions.GetUsingHttpProxyType());
+
+    auto multiPartDataList = requestOptions.GetMultiPartDataList();
+    if (!multiPartDataList.empty()) {
+        NSMutableArray* formDataArray = [NSMutableArray arrayWithCapacity:multiPartDataList.size()];
+        for (const auto& formData : multiPartDataList) {
+            NSMutableDictionary* formDataDic = [NSMutableDictionary dictionary];
+            formDataDic[@"name"] = [NSString stringWithUTF8String:formData.name.c_str()] ?: @"";
+            formDataDic[@"contentType"] = [NSString stringWithUTF8String:formData.contentType.c_str()] ?: @"";
+            formDataDic[@"remoteFileName"] = [NSString stringWithUTF8String:formData.remoteFileName.c_str()] ?: @"";
+            formDataDic[@"data"] = [NSData dataWithBytes:formData.data.data() length:formData.data.size()];
+            formDataDic[@"filePath"] = [NSString stringWithUTF8String:formData.filePath.c_str()] ?: @"";
+            [formDataArray addObject:formDataDic];
+        }
+        requestParam.multiFormDataList = formDataArray;
+    }
 
     http_ios_request* request = [[http_ios_request alloc] init];
     request_ = (__bridge void*)request;
     RequestCallBack();
 
     [request sendRequestWith:requestParam];
-    
+
     return true;
 }
 
@@ -141,7 +156,7 @@ void HttpExecIosIml::RequestCallBack()
             header += [[NSString stringWithFormat:@"%@: %@", key, value] UTF8String];
             header += "\r\n";
         }
-        
+
         NSHTTPCookieStorage* cookieJar = [NSHTTPCookieStorage sharedHTTPCookieStorage];
         std::string cookiesStr;
         for (NSHTTPCookie* cookie in [cookieJar cookies]) {
