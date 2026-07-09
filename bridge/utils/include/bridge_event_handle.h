@@ -29,6 +29,7 @@ using Task = std::function<void()>;
 class BridgeEventHandle {
 public:
     BridgeEventHandle();
+    explicit BridgeEventHandle(napi_env env);
     ~BridgeEventHandle();
     static std::shared_ptr<BridgeEventHandle> GetInstance();
     static std::shared_ptr<BridgeEventHandle> GetInstance(napi_env env);
@@ -38,7 +39,6 @@ public:
     void RunTaskOnJsThread(const Task& task);
 
 private:
-    explicit BridgeEventHandle(napi_env env);
     static void CallJs(napi_env env, napi_value jsCallback, void* context, void* data);
     static void Finalize(napi_env env, void* data, void* hint);
     static void EnvCleanup(void* data);
