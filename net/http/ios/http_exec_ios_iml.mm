@@ -58,8 +58,8 @@ bool HttpExecIosIml::SendRequest(HttpRequestOptions& requestOptions,void* userDa
     requestParam.proxyport = (NSInteger)proxprot;
     requestParam.exclusionList = [NSString stringWithCString:exclusionList.c_str() encoding:NSUTF8StringEncoding];
     requestParam.returnDataType = (NSInteger)requestOptions.GetHttpDataType();
-    const char* body = requestOptions.GetBody().c_str();
-    requestParam.bodyParam = [NSString stringWithCString:body encoding:NSUTF8StringEncoding];
+    const std::string& body = requestOptions.GetBody();
+    requestParam.bodyParam = [NSData dataWithBytes:body.data() length:body.size()];
     requestParam.bodyOrQueryConfigured = requestOptions.GetBodyOrQueryConfigured();
     requestParam.context = userData;
 
