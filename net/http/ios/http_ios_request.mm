@@ -446,6 +446,15 @@ static NSString* HTTPMultipartHeaderLineValue(NSString* value)
         if (bodyData) {
             [self.request setHTTPBody:bodyData];
         }
+    } else if ([self.requestParam.bodyParam isKindOfClass:[NSData class]]) {
+        NSData* bodyData = (NSData*)self.requestParam.bodyParam;
+        if (bodyData) {
+            [self.request setHTTPBody:bodyData];
+        }
+        NSLog(@"[HTTP_DEBUG] bodyOrQueryConfigured=1, type=NSData, method=%@, url=%@, bodyLen=%lu",
+              self.requestParam.method,
+              self.request.URL.absoluteString,
+              (unsigned long)bodyData.length);
     } else if ([self.requestParam.bodyParam isKindOfClass:[NSDictionary class]]) {
         NSString* contentType = [self.request valueForHTTPHeaderField:@"Content-Type"];
         if (contentType.length == 0) {
@@ -474,10 +483,13 @@ static NSString* HTTPMultipartHeaderLineValue(NSString* value)
     }
 
     NSDictionary* parameters = nil;
+    NSData* bodyData = nil;
     if ([self.requestParam.bodyParam isKindOfClass:[NSDictionary class]]) {
         parameters = self.requestParam.bodyParam;
-    } else {
+    } else if ([self.requestParam.bodyParam isKindOfClass:[NSString class]]) {
         parameters = [self convertDictionaryWithJSONString:self.requestParam.bodyParam];
+    } else if ([self.requestParam.bodyParam isKindOfClass:[NSData class]]) {
+        bodyData = (NSData*)self.requestParam.bodyParam;
     }
 
     NSString* query = nil;
@@ -504,7 +516,9 @@ static NSString* HTTPMultipartHeaderLineValue(NSString* value)
             contentType = @"application/json";
             [self.request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
         }
-        NSData * bodyData = queryDataFromParameters(contentType, query, parameters);
+        if (!bodyData) {
+            bodyData = queryDataFromParameters(contentType, query, parameters);
+        }
         if (!bodyData && [self.requestParam.bodyParam isKindOfClass:[NSString class]]) {
             bodyData = [self.requestParam.bodyParam dataUsingEncoding:NSUTF8StringEncoding];
         }
