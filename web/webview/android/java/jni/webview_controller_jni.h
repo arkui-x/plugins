@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -58,6 +58,7 @@ public:
     static void OnReceiveRunJavaScriptExtValue(JNIEnv* env, jclass jcls, jstring jResult, jint jId);
     static std::shared_ptr<WebHistoryList> GetBackForwardEntries(int id);
     static void RemoveCache(int id, bool value);
+    static void SetNetworkAvailable(int id, bool enable);
     static void BackOrForward(int id, int32_t step);
     static std::string GetTitle(int id);
     static int32_t GetPageHeight(int id);
@@ -71,6 +72,7 @@ public:
     static ErrCode OnWebMessagePortEventExt(int id, const std::string& portHandle);
     static void OnMessage(JNIEnv* env, jclass jcls, jint jWebId, jstring jPortHandle, jstring jResult);
     static void SetWebDebuggingAccess(bool webDebuggingAccess);
+    static std::string GetDefaultUserAgent();
     static ErrCode PageDown(int id, bool bottom);
     static ErrCode PostUrl(int id, const std::string& url, const std::vector<uint8_t>& postData);
     static void OnMessageEventExt(JNIEnv* env, jclass jcls, jint jWebId, jstring jPortHandle, jstring jResult);

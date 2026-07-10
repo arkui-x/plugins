@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,11 +16,10 @@
 #ifndef PLUGINS_WEB_WEBVIEW_IOS_WEB_COOKIE_MANAGER_IOS_H
 #define PLUGINS_WEB_WEBVIEW_IOS_WEB_COOKIE_MANAGER_IOS_H
 
-#include <map>
-#include <memory>
+#include <string>
 
-#include "web_errors.h"
 #include "plugins/web/webview/web_cookie_manager.h"
+#include "web_errors.h"
 
 namespace OHOS::Plugin {
 class WebCookieManagerIOS final {
@@ -28,10 +27,20 @@ public:
     WebCookieManagerIOS() = delete;
     ~WebCookieManagerIOS() = delete;
     static ErrCode ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId);
+    static ErrCode ConfigCookie(const std::string& url, const std::string& value, bool incognito,
+        bool includeHttpOnly, int32_t asyncCallbackInfoId);
+    static ErrCode ConfigCookieSync(
+        const std::string& url, const std::string& value, bool incognito, bool includeHttpOnly);
     static void FetchCookie(const std::string& url, int32_t asyncCallbackInfoId);
+    static ErrCode FetchCookieSync(const std::string& url, bool incognito, std::string& result);
     static void ClearAllCookies(int32_t asyncCallbackInfoId);
+    static ErrCode ClearAllCookiesSync(bool incognito);
     static bool ExistCookie(bool incognito);
     static void ClearSessionCookie(int32_t asyncCallbackInfoId);
+    static void ClearSessionCookieSync();
+    static ErrCode SaveCookie(int32_t asyncCallbackInfoId);
+    static ErrCode PutAcceptCookieEnabled(bool accept);
+    static ErrCode PutAcceptThirdPartyCookieEnabled(bool accept);
 };
 } // namespace OHOS::Plugin
-#endif
+#endif // PLUGINS_WEB_WEBVIEW_IOS_WEB_COOKIE_MANAGER_IOS_H

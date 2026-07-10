@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -32,23 +32,49 @@ static const JNINativeMethod METHODS[] = {
     { "onReceiveCookieValue", "(Ljava/lang/String;J)V",
         reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveFetchCookieValue) },
     { "onReceiveCookieValue", "(ZJ)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveConfigCookieValue) },
+    { "onReceiveCookieError", "(IJ)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveConfigCookieError) },
     { "onReceiveCookieValue", "(J)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveClearAllCookiesValue) },
     { "onReceiveCookieValue", "(J)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveClearSessionCookieValue) },
+    { "onReceiveSaveCookieValue", "(J)V", reinterpret_cast<void*>(WebCookieManagerJni::OnReceiveSaveCookieValue) },
 };
 static const char METHOD_CONFIG_COOKIE[] = "configCookie";
+static const char METHOD_CONFIG_COOKIE_WITH_OPTIONS[] = "configCookie";
+static const char METHOD_CONFIG_COOKIE_SYNC[] = "configCookieSync";
 static const char METHOD_FETCH_COOKIE[] = "fetchCookie";
+static const char METHOD_FETCH_COOKIE_SYNC[] = "fetchCookieSync";
+static const char METHOD_PUT_ACCEPT_COOKIE_ENABLED[] = "putAcceptCookieEnabled";
+static const char METHOD_PUT_ACCEPT_THIRD_PARTY_COOKIE_ENABLED[] = "putAcceptThirdPartyCookieEnabled";
+static const char METHOD_CLEAR_ALL_COOKIE_SYNC[] = "clearAllCookiesSync";
+static const char METHOD_CLEAR_SESSION_COOKIE_SYNC[] = "clearSessionCookieSync";
+static const char METHOD_SAVE_COOKIE[] = "saveCookie";
 static const char METHOD_CLEAR_ALL_COOKIE[] = "clearAllCookies";
 static const char METHOD_EXIST_COOKIE[] = "existCookie";
 static const char METHOD_CLEAR_SESSION_COOKIE[] = "clearSessionCookie";
 
 static const char SIGNATURE_CONFIG_COOKIE[] = "(Ljava/lang/String;Ljava/lang/String;J)V";
+static const char SIGNATURE_CONFIG_COOKIE_WITH_OPTIONS[] = "(Ljava/lang/String;Ljava/lang/String;ZZJ)V";
+static const char SIGNATURE_CONFIG_COOKIE_SYNC[] = "(Ljava/lang/String;Ljava/lang/String;ZZ)I";
 static const char SIGNATURE_FETCH_COOKIE[] = "(Ljava/lang/String;J)V";
+static const char SIGNATURE_FETCH_COOKIE_SYNC[] = "(Ljava/lang/String;Z)Ljava/lang/String;";
+static const char SIGNATURE_PUT_ACCEPT_COOKIE_ENABLED[] = "(Z)V";
+static const char SIGNATURE_PUT_ACCEPT_THIRD_PARTY_COOKIE_ENABLED[] = "(Z)V";
+static const char SIGNATURE_CLEAR_ALL_COOKIE_SYNC[] = "(Z)V";
+static const char SIGNATURE_CLEAR_SESSION_COOKIE_SYNC[] = "()V";
+static const char SIGNATURE_SAVE_COOKIE[] = "(J)V";
 static const char SIGNATURE_CLEAR_ALL_COOKIE[] = "(J)V";
 static const char SIGNATURE_EXIST_COOKIE[] = "(Z)Z";
 static const char SIGNATURE_CLEAR_SESSION_COOKIE[] = "(J)V";
 struct {
     jmethodID configCookie;
+    jmethodID configCookieWithOptions;
+    jmethodID configCookieSync;
     jmethodID fetchCookie;
+    jmethodID fetchCookieSync;
+    jmethodID putAcceptCookieEnabled;
+    jmethodID putAcceptThirdPartyCookieEnabled;
+    jmethodID clearAllCookiesSync;
+    jmethodID clearSessionCookieSync;
+    jmethodID saveCookie;
     jmethodID clearAllCookies;
     jmethodID existCookie;
     jmethodID clearSessionCookie;
@@ -80,7 +106,20 @@ void WebCookieManagerJni::NativeInit(JNIEnv* env, jobject jobj)
     jclass cls = env->GetObjectClass(jobj);
     CHECK_NULL_VOID(cls);
     g_webWebviewClass.configCookie = env->GetMethodID(cls, METHOD_CONFIG_COOKIE, SIGNATURE_CONFIG_COOKIE);
+    g_webWebviewClass.configCookieWithOptions =
+        env->GetMethodID(cls, METHOD_CONFIG_COOKIE_WITH_OPTIONS, SIGNATURE_CONFIG_COOKIE_WITH_OPTIONS);
+    g_webWebviewClass.configCookieSync = env->GetMethodID(cls, METHOD_CONFIG_COOKIE_SYNC, SIGNATURE_CONFIG_COOKIE_SYNC);
     g_webWebviewClass.fetchCookie = env->GetMethodID(cls, METHOD_FETCH_COOKIE, SIGNATURE_FETCH_COOKIE);
+    g_webWebviewClass.fetchCookieSync = env->GetMethodID(cls, METHOD_FETCH_COOKIE_SYNC, SIGNATURE_FETCH_COOKIE_SYNC);
+    g_webWebviewClass.putAcceptCookieEnabled = env->GetMethodID(
+        cls, METHOD_PUT_ACCEPT_COOKIE_ENABLED, SIGNATURE_PUT_ACCEPT_COOKIE_ENABLED);
+    g_webWebviewClass.putAcceptThirdPartyCookieEnabled = env->GetMethodID(
+        cls, METHOD_PUT_ACCEPT_THIRD_PARTY_COOKIE_ENABLED, SIGNATURE_PUT_ACCEPT_THIRD_PARTY_COOKIE_ENABLED);
+    g_webWebviewClass.clearAllCookiesSync = env->GetMethodID(
+        cls, METHOD_CLEAR_ALL_COOKIE_SYNC, SIGNATURE_CLEAR_ALL_COOKIE_SYNC);
+    g_webWebviewClass.clearSessionCookieSync = env->GetMethodID(
+        cls, METHOD_CLEAR_SESSION_COOKIE_SYNC, SIGNATURE_CLEAR_SESSION_COOKIE_SYNC);
+    g_webWebviewClass.saveCookie = env->GetMethodID(cls, METHOD_SAVE_COOKIE, SIGNATURE_SAVE_COOKIE);
     g_webWebviewClass.clearAllCookies = env->GetMethodID(cls, METHOD_CLEAR_ALL_COOKIE, SIGNATURE_CLEAR_ALL_COOKIE);
     g_webWebviewClass.existCookie = env->GetMethodID(cls, METHOD_EXIST_COOKIE, SIGNATURE_EXIST_COOKIE);
     g_webWebviewClass.clearSessionCookie = env->GetMethodID(cls, METHOD_CLEAR_SESSION_COOKIE, SIGNATURE_CLEAR_SESSION_COOKIE);
@@ -110,6 +149,12 @@ void WebCookieManagerJni::OnReceiveConfigCookieValue(JNIEnv* env, jobject jobj, 
     WebCookieManager::OnConfigReceiveValue(true, nativeId);
 }
 
+void WebCookieManagerJni::OnReceiveConfigCookieError(JNIEnv* env, jobject jobj, jint jErrorCode, jlong jId)
+{
+    auto nativeId = static_cast<int32_t>(jId);
+    WebCookieManager::OnConfigReceiveError(static_cast<ErrCode>(jErrorCode), nativeId);
+}
+
 void WebCookieManagerJni::OnReceiveClearAllCookiesValue(JNIEnv* env, jobject jobj, jint jId)
 {
     auto nativeId = static_cast<int32_t>(jId);
@@ -120,6 +165,12 @@ void WebCookieManagerJni::OnReceiveClearSessionCookieValue(JNIEnv* env, jobject 
 {
     auto nativeId = static_cast<int32_t>(jId);
     WebCookieManager::OnClearReceiveValue(nativeId);
+}
+
+void WebCookieManagerJni::OnReceiveSaveCookieValue(JNIEnv* env, jobject jobj, jlong jId)
+{
+    auto nativeId = static_cast<int32_t>(jId);
+    WebCookieManager::OnSaveReceiveValue(nativeId);
 }
 
 void WebCookieManagerJni::ConfigCookie(const std::string& url, const std::string& value, int32_t asyncCallbackInfoId)
@@ -137,6 +188,38 @@ void WebCookieManagerJni::ConfigCookie(const std::string& url, const std::string
         env->ExceptionClear();
         env->DeleteLocalRef(jUrl);
         env->DeleteLocalRef(jValue);
+    }
+}
+
+void WebCookieManagerJni::ConfigCookie(
+    const std::string& url, const std::string& value, bool incognito, bool includeHttpOnly, int32_t asyncCallbackInfoId)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.configCookieWithOptions)) {
+        WebCookieManager::OnConfigReceiveError(NWebError::INIT_ERROR, asyncCallbackInfoId);
+        return;
+    }
+    jstring jUrl = env->NewStringUTF(url.c_str());
+    if (jUrl == nullptr) {
+        WebCookieManager::OnConfigReceiveError(NWebError::NWEB_ERROR, asyncCallbackInfoId);
+        return;
+    }
+    jstring jValue = env->NewStringUTF(value.c_str());
+    if (jValue == nullptr) {
+        env->DeleteLocalRef(jUrl);
+        WebCookieManager::OnConfigReceiveError(NWebError::NWEB_ERROR, asyncCallbackInfoId);
+        return;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.configCookieWithOptions,
+        jUrl, jValue, static_cast<jboolean>(incognito), static_cast<jboolean>(includeHttpOnly),
+        static_cast<jlong>(asyncCallbackInfoId));
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call ConfigCookie with options has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        env->DeleteLocalRef(jUrl);
+        env->DeleteLocalRef(jValue);
+        WebCookieManager::OnConfigReceiveError(NWebError::NWEB_ERROR, asyncCallbackInfoId);
         return;
     }
     env->DeleteLocalRef(jUrl);
@@ -160,6 +243,23 @@ void WebCookieManagerJni::FetchCookie(const std::string& url, int32_t asyncCallb
         return;
     }
     env->DeleteLocalRef(jUrl);
+}
+
+void WebCookieManagerJni::SaveCookie(int32_t asyncCallbackInfoId)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.saveCookie)) {
+        WebCookieManager::OnSaveReceiveValue(asyncCallbackInfoId);
+        return;
+    }
+    env->CallVoidMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.saveCookie, static_cast<jlong>(asyncCallbackInfoId));
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call SaveCookie has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        WebCookieManager::OnSaveReceiveValue(asyncCallbackInfoId);
+    }
 }
 
 void WebCookieManagerJni::ClearAllCookies(int32_t asyncCallbackInfoId)
@@ -206,5 +306,142 @@ bool WebCookieManagerJni::ExistCookie(bool incognito)
         return false;
     }
     return isCookie;
+}
+
+ErrCode WebCookieManagerJni::ConfigCookieSync(
+    const std::string& url, const std::string& value, bool incognito, bool includeHttpOnly)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.configCookieSync)) {
+        return NWebError::INIT_ERROR;
+    }
+    jstring jUrl = env->NewStringUTF(url.c_str());
+    if (!jUrl) {
+        return NWebError::NWEB_ERROR;
+    }
+    jstring jValue = env->NewStringUTF(value.c_str());
+    if (!jValue) {
+        env->DeleteLocalRef(jUrl);
+        return NWebError::NWEB_ERROR;
+    }
+    jint ret = env->CallIntMethod(g_webWebviewClass.globalRef, g_webWebviewClass.configCookieSync,
+        jUrl, jValue, static_cast<jboolean>(incognito), static_cast<jboolean>(includeHttpOnly));
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call ConfigCookieSync has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        env->DeleteLocalRef(jUrl);
+        env->DeleteLocalRef(jValue);
+        return NWebError::NWEB_ERROR;
+    }
+    env->DeleteLocalRef(jUrl);
+    env->DeleteLocalRef(jValue);
+    return static_cast<ErrCode>(ret);
+}
+
+std::string WebCookieManagerJni::FetchCookieSync(const std::string& url, bool incognito, ErrCode& errorCode)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.fetchCookieSync)) {
+        errorCode = NWebError::INIT_ERROR;
+        return "";
+    }
+    jstring jUrl = env->NewStringUTF(url.c_str());
+    if (!jUrl) {
+        errorCode = NWebError::NWEB_ERROR;
+        return "";
+    }
+    auto jResult = static_cast<jstring>(env->CallObjectMethod(
+        g_webWebviewClass.globalRef, g_webWebviewClass.fetchCookieSync, jUrl, static_cast<jboolean>(incognito)));
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call FetchCookieSync has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        env->DeleteLocalRef(jUrl);
+        errorCode = NWebError::NWEB_ERROR;
+        return "";
+    }
+    env->DeleteLocalRef(jUrl);
+    if (jResult == nullptr) {
+        // Java returns null to indicate an invalid URL (isValidCookieUrl failed).
+        errorCode = NWebError::INVALID_URL;
+        return "";
+    }
+    std::string result;
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    env->DeleteLocalRef(jResult);
+    errorCode = NWebError::NO_ERROR;
+    return result;
+}
+
+ErrCode WebCookieManagerJni::PutAcceptCookieEnabled(bool accept)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.putAcceptCookieEnabled)) {
+        return NWebError::INIT_ERROR;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.putAcceptCookieEnabled,
+        static_cast<jboolean>(accept));
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call PutAcceptCookieEnabled has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return NWebError::NWEB_ERROR;
+    }
+    return NWebError::NO_ERROR;
+}
+
+ErrCode WebCookieManagerJni::PutAcceptThirdPartyCookieEnabled(bool accept)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.putAcceptThirdPartyCookieEnabled)) {
+        return NWebError::INIT_ERROR;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.putAcceptThirdPartyCookieEnabled,
+        static_cast<jboolean>(accept));
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call PutAcceptThirdPartyCookieEnabled has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return NWebError::NWEB_ERROR;
+    }
+    return NWebError::NO_ERROR;
+}
+
+ErrCode WebCookieManagerJni::ClearAllCookiesSync(bool incognito)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.clearAllCookiesSync)) {
+        return NWebError::INIT_ERROR;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.clearAllCookiesSync,
+        static_cast<jboolean>(incognito));
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call ClearAllCookiesSync has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return NWebError::NWEB_ERROR;
+    }
+    return NWebError::NO_ERROR;
+}
+
+ErrCode WebCookieManagerJni::ClearSessionCookieSync()
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.clearSessionCookieSync)) {
+        return NWebError::INIT_ERROR;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.clearSessionCookieSync);
+    if (env->ExceptionCheck()) {
+        LOGE("WebCookieManagerJni JNI: call ClearSessionCookieSync has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return NWebError::NWEB_ERROR;
+    }
+    return NWebError::NO_ERROR;
 }
 } // namespace OHOS::Plugin

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -94,6 +94,8 @@ static const char METHOD_GETBACKFORWARDENTRIES[] = "getBackForwardEntries";
 
 static const char METHOD_REMOVECACHE[] = "removeCache";
 
+static const char METHOD_SET_NETWORK_AVAILABLE[] = "setNetworkAvailable";
+
 static const char METHOD_BACKORFORWARD[] = "backOrForward";
 
 static const char METHOD_GETTITLE[] = "getTitle";
@@ -113,6 +115,8 @@ static const char METHOD_POSTMESSAGEEVENTEXT[] = "postMessageEventExt";
 static const char METHOD_ONWEBMESSAGEPORTEVENT[] = "onWebMessagePortEvent";
 
 static const char METHOD_SET_WEB_DEBUGGING_ACCESS[] = "setWebDebuggingAccess";
+
+static const char METHOD_GET_DEFAULT_USER_AGENT[] = "getDefaultUserAgent";
 
 static const char METHOD_PAGEDOWN[] = "pageDown";
 
@@ -156,6 +160,8 @@ static const char SIGNATURE_GETBACKFORWARDENTRIES[] = "(J)Landroid/webkit/WebBac
 
 static const char SIGNATURE_REMOVECACHE[] = "(JZ)V";
 
+static const char SIGNATURE_SET_NETWORK_AVAILABLE[] = "(JZ)V";
+
 static const char SIGNATURE_BACKORFORWARD[] = "(JI)V";
 
 static const char SIGNATURE_GETTITLE[] = "(J)Ljava/lang/String;";
@@ -175,6 +181,8 @@ static const char SIGNATURE_POSTMESSAGEEVENTEXT[] = "(JLjava/lang/String;Ljava/l
 static const char SIGNATURE_ONWEBMESSAGEPORTEVENT[] = "(JLjava/lang/String;)I";
 
 static const char SIGNATURE_START_DOWNLOAD[] = "(JLjava/lang/String;)V";
+
+static const char SIGNATURE_GET_DEFAULT_USER_AGENT[] = "()Ljava/lang/String;";
 
 static const char SIGNATURE_ONWEBMESSAGEPORTEVENTEXT[] = "(JLjava/lang/String;)I";
 
@@ -249,6 +257,7 @@ struct {
     jmethodID getCustomUserAgent;
     jmethodID getBackForwardEntries;
     jmethodID removeCache;
+    jmethodID setNetworkAvailable;
     jmethodID backOrForward;
     jmethodID getTitle;
     jmethodID getPageHeight;
@@ -259,6 +268,7 @@ struct {
     jmethodID postMessageEventExt;
     jmethodID onWebMessagePortEvent;
     jmethodID setWebDebuggingAccess;
+    jmethodID getDefaultUserAgent;
     jmethodID pageDown;
     jmethodID postUrl;
     jmethodID startDownload;
@@ -319,6 +329,8 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.getCustomUserAgent = env->GetMethodID(cls, METHOD_GET_CUSTOM_USER_AGENT, SIGNATURE_GET_CUSTOM_USER_AGENT);
     g_webWebviewClass.getBackForwardEntries = env->GetMethodID(cls, METHOD_GETBACKFORWARDENTRIES, SIGNATURE_GETBACKFORWARDENTRIES);
     g_webWebviewClass.removeCache = env->GetMethodID(cls, METHOD_REMOVECACHE, SIGNATURE_REMOVECACHE);
+    g_webWebviewClass.setNetworkAvailable = env->GetMethodID(
+        cls, METHOD_SET_NETWORK_AVAILABLE, SIGNATURE_SET_NETWORK_AVAILABLE);
     g_webWebviewClass.backOrForward = env->GetMethodID(cls, METHOD_BACKORFORWARD, SIGNATURE_BACKORFORWARD);
     g_webWebviewClass.getTitle = env->GetMethodID(cls, METHOD_GETTITLE, SIGNATURE_GETTITLE);
     g_webWebviewClass.getPageHeight = env->GetMethodID(cls, METHOD_GETPAGEHEIGHT, SIGNATURE_GETPAGEHEIGHT);
@@ -329,6 +341,8 @@ void WebviewControllerJni::NativeInit(JNIEnv* env, jobject jobj)
     g_webWebviewClass.postMessageEventExt = env->GetMethodID(cls, METHOD_POSTMESSAGEEVENTEXT, SIGNATURE_POSTMESSAGEEVENTEXT);
     g_webWebviewClass.onWebMessagePortEvent = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENT, SIGNATURE_ONWEBMESSAGEPORTEVENT);
     g_webWebviewClass.setWebDebuggingAccess = env->GetMethodID(cls, METHOD_SET_WEB_DEBUGGING_ACCESS, SIGNATURE_SET_WEB_DEBUGGING_ACCESS);
+    g_webWebviewClass.getDefaultUserAgent = env->GetMethodID(
+        cls, METHOD_GET_DEFAULT_USER_AGENT, SIGNATURE_GET_DEFAULT_USER_AGENT);
     g_webWebviewClass.pageDown = env->GetMethodID(cls, METHOD_PAGEDOWN, SIGNATURE_PAGEDOWN);
     g_webWebviewClass.postUrl = env->GetMethodID(cls, METHOD_POSTURL, SIGNATURE_POSTURL);
     g_webWebviewClass.registerJavaScriptProxy =
@@ -351,6 +365,8 @@ void WebviewControllerJni::NativeInitStatic(JNIEnv* env, jobject jobj)
     jclass cls = env->GetObjectClass(jobj);
     CHECK_NULL_VOID(cls);
     g_webWebviewClass.setWebDebuggingAccess = env->GetMethodID(cls, METHOD_SET_WEB_DEBUGGING_ACCESS, SIGNATURE_SET_WEB_DEBUGGING_ACCESS);
+    g_webWebviewClass.getDefaultUserAgent = env->GetMethodID(
+        cls, METHOD_GET_DEFAULT_USER_AGENT, SIGNATURE_GET_DEFAULT_USER_AGENT);
     g_webWebviewClass.startDownload = env->GetMethodID(cls, METHOD_START_DOWNLOAD, SIGNATURE_START_DOWNLOAD);
     g_webWebviewClass.onWebMessagePortEventExt = env->GetMethodID(cls, METHOD_ONWEBMESSAGEPORTEVENTEXT, SIGNATURE_ONWEBMESSAGEPORTEVENTEXT);
     env->DeleteLocalRef(cls);
@@ -360,6 +376,32 @@ void WebviewControllerJni::NativeInitStatic(JNIEnv* env, jobject jobj)
 void WebviewControllerJni::CallStaticMethod(JNIEnv* env)
 {
     env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.setWebDebuggingAccess, _webDebuggingAccessInit);
+}
+
+std::string WebviewControllerJni::GetDefaultUserAgent()
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_NULL_RETURN(env, "");
+    CHECK_NULL_RETURN(g_webWebviewClass.globalRef, "");
+    CHECK_NULL_RETURN(g_webWebviewClass.getDefaultUserAgent, "");
+    jstring jResult = static_cast<jstring>(
+        env->CallObjectMethod(g_webWebviewClass.globalRef, g_webWebviewClass.getDefaultUserAgent));
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return "";
+    }
+    if (jResult == nullptr) {
+        return "";
+    }
+    std::string result;
+    const char* content = env->GetStringUTFChars(jResult, nullptr);
+    if (content != nullptr) {
+        result.assign(content);
+        env->ReleaseStringUTFChars(jResult, content);
+    }
+    env->DeleteLocalRef(jResult);
+    return result;
 }
 
 void WebviewControllerJni::OnReceiveValue(JNIEnv* env, jclass jcls, jstring jResult, jint jId)
@@ -982,6 +1024,21 @@ void WebviewControllerJni::RemoveCache(int id, bool value)
         return;
     }
     env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.removeCache, id, value);
+}
+
+void WebviewControllerJni::SetNetworkAvailable(int id, bool enable)
+{
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!(env) || !(g_webWebviewClass.globalRef) || !(g_webWebviewClass.setNetworkAvailable)) {
+        return;
+    }
+    env->CallVoidMethod(g_webWebviewClass.globalRef, g_webWebviewClass.setNetworkAvailable,
+        static_cast<jlong>(id), static_cast<jboolean>(enable));
+    if (env->ExceptionCheck()) {
+        LOGE("WebviewControllerJni JNI: call SetNetworkAvailable has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
 }
 
 void WebviewControllerJni::BackOrForward(int id, int32_t step)
