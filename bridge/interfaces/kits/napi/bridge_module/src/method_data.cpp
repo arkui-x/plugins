@@ -35,6 +35,7 @@ static constexpr const char* JS_REGISTER_METHOD_FUNCTION = "method";
 
 MethodData::MethodData(napi_env env, const CodecType& type) : env_(env), codecType_(type)
 {
+    BridgeEventHandle::CreateInstance(env);
 }
 
 std::shared_ptr<MethodData> MethodData::CreateMethodData(napi_env env, const CodecType& type)
