@@ -215,7 +215,7 @@ public class DownloadImpl {
         }
         Config finalConfig = config;
 
-        Response response = canMakeRequest(finalConfig.getUrl());
+        Response response = canMakeRequest(finalConfig.getUrl(), finalConfig.getHeaders());
         if (response != null) {
             taskInfo.setResponse(response);
             mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
@@ -672,16 +672,18 @@ public class DownloadImpl {
      * check whether the url can be downloaded
      *
      * @param urlString download url
+     * @param headers request headers from config
      * @return true or false
      */
-    public Response canMakeRequest(String urlString) {
-        ALog.i(TAG, "Download: start download manager service, downloadUrl: " + urlString);
+    public Response canMakeRequest(String urlString, Map<String, String> requestHeaders) {
+        ALog.i(TAG, "canMakeRequest: start download manager service with requestHeaders");
         supportsBreakpoint = false;
         try {
             URL url = new URL(urlString);
             URLConnection connection = url.openConnection();
             HttpURLConnection httpConnection = (HttpURLConnection) connection;
             httpConnection.setConnectTimeout(5000);
+            setRequestHeaders(httpConnection, requestHeaders);
             httpConnection.connect();
             Response response = parseHttpResponse(httpConnection);
             httpConnection.disconnect();
@@ -702,6 +704,21 @@ public class DownloadImpl {
             e.printStackTrace();
             ALog.i(TAG, "canMakeRequest failed due to exception");
             return null;
+        }
+    }
+
+    private void setRequestHeaders(HttpURLConnection conn, Map<String, String> headers) {
+        if (headers == null) {
+            return;
+        }
+        ALog.i(TAG, "canMakeRequest: set first request headers");
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (key == null || value == null) {
+                continue;
+            }
+            conn.setRequestProperty(key, value);
         }
     }
 
