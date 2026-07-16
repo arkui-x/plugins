@@ -26,6 +26,7 @@ public:
         TF_STATUS_CODE = 0x08,
         TF_ACCEPT_FDS = 0x10,
         TF_WAIT_TIME = 0x4,
+        TF_IMAGE = 0x200000,
     };
     MessageOption(int flags = TF_SYNC, int waitTime = TF_WAIT_TIME);
     ~MessageOption() = default;
