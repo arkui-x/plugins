@@ -139,10 +139,12 @@ void MethodResult::ParsePlatformMethodResultBinary(napi_env env, int errorCode,
     errcodeMessage_ = errorMessage;
     okResult_ = nullptr;
     CreateErrorObject(env);
-    if (errorCode_ == 0) {
+    if (errorCode_ == 0 && resultData != nullptr) {
         auto decoded = BridgeBinaryCodec::GetInstance().DecodeBuffer(resultData->GetMapping(), resultData->GetSize());
         okResult_ = MethodDataConverter::ConvertToNapiValue(env, *decoded);
     } else {
+        LOGI("ParsePlatformMethodResultBinary: errorCode=%{public}d, errMsg=%{public}s",
+            errorCode_, errorMessage.c_str());
         napi_get_null(env, &okResult_);
     }
 }

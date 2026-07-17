@@ -39,6 +39,7 @@ Bridge* BridgeWrap::BuildBridge(const std::string& bridgeName, const CodecType& 
 {
     auto bridge = new (std::nothrow) Bridge(bridgeName, codecType);
     if (bridge == nullptr) {
+        LOGE("BuildBridge failed. bridgeName is %{public}s", bridgeName.c_str());
         return nullptr;
     }
 
@@ -78,6 +79,7 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName)
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
     auto data = findData(bridgeName);
     if (data == nullptr) {
+        LOGI("findData failed. bridgeName is %{public}s", bridgeName.c_str());
         return;
     }
 

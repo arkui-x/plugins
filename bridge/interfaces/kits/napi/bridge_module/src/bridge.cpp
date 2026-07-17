@@ -94,6 +94,7 @@ ErrorCode Bridge::RegisterBridge(const std::string& bridgeName)
         std::bind(&Bridge::OnPlatformSendWillTerminate, this, std::placeholders::_1);
 
     if (BridgeManager::JSRegisterBridge(receiver)) {
+        LOGI("RegisterBridge: The bridge registration success. bridgeName is %{public}s", bridgeName.c_str());
         return ErrorCode::BRIDGE_ERROR_NO;
     }
     LOGE("RegisterBridge: The bridge registration failure.");
@@ -156,16 +157,16 @@ ErrorCode Bridge::CallMethodSync(napi_env env, const std::string& methodName,
     std::shared_ptr<MethodResult>& methodResult)
 {
     if (!GetAvailable()) {
-        LOGE("CallMethod: The bridge is unavailable.");
+        LOGE("CallMethodSync: The bridge is unavailable.");
         return ErrorCode::BRIDGE_INVALID;
     }
     if (methodName.empty()) {
-        LOGE("SendMethodResult: The methodName is empty.");
+        LOGE("CallMethodSync: The methodName is empty.");
         return ErrorCode::BRIDGE_METHOD_NAME_ERROR;
     }
 
     if (methodData == nullptr) {
-        LOGE("SendMethodResult: The methodData is null.");
+        LOGE("CallMethodSync: The methodData is null.");
         return ErrorCode::BRIDGE_METHOD_PARAM_ERROR;
     }
 
