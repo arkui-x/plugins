@@ -112,7 +112,6 @@ common_plugin_libs = [
   "notification_manager",
   "effectkit",
   "arkui/node",
-  "arkui/shape",
   "multimodalinput/keycode",
   "arkts/collections",
   "arkts/utils",
