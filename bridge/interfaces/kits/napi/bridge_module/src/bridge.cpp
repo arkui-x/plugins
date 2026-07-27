@@ -470,10 +470,12 @@ void Bridge::OnPlatformCallMethod(const std::string& methodName, const std::stri
     auto task = [jsMethodData, parameter]() {
         jsMethodData->PlatformCallMethod(parameter);
     };
-    if (!taskExecutor_) {
-        LOGE("OnPlatformCallMethod: taskExecutor_ is null.");
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (handle) {
+        handle->RunTaskOnJsThread(task);
     } else {
-        taskExecutor_->RunTaskOnMainThread(task);
+        LOGE("OnPlatformCallMethod: js thread handle null, callback dropped");
     }
 }
 
@@ -483,6 +485,16 @@ std::string Bridge::OnPlatformCallMethodSync(const std::string& methodName, cons
     std::shared_ptr<MethodData> jsMethodData = FindPlatformMethodData(methodName);
     if (jsMethodData == nullptr) {
         LOGE("OnPlatformCallMethodSync: The jsMethodData is null.");
+        MethodResult result;
+        result.SetErrorCodeInfo(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
+        result.SetMethodName(methodName);
+        result.CreateMethodResultForError();
+        return result.GetResult();
+    }
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (!handle) {
+        LOGE("OnPlatformCallMethodSync: env not available, method=%{public}s", methodName.c_str());
         MethodResult result;
         result.SetErrorCodeInfo(static_cast<int>(ErrorCode::BRIDGE_METHOD_UNIMPL));
         result.SetMethodName(methodName);
@@ -521,13 +533,15 @@ void Bridge::OnPlatformCallMethodBinary(const std::string& methodName, std::uniq
         return;
     }
     holder->ptr = std::move(data);
-    if (!taskExecutor_) {
-        LOGE("OnPlatformCallMethodBinary: taskExecutor_ is null.");
-        return;
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (handle) {
+        handle->RunTaskOnJsThread([jsMethodData, holder]() mutable {
+            jsMethodData->PlatformCallMethodBinary(std::move(holder->ptr));
+        });
+    } else {
+        LOGE("OnPlatformCallMethodBinary: js thread handle null, callback dropped");
     }
-    taskExecutor_->RunTaskOnMainThread([jsMethodData, holder]() mutable {
-        jsMethodData->PlatformCallMethodBinary(std::move(holder->ptr));
-    });
 }
 
 std::unique_ptr<BufferMapping> Bridge::OnPlatformCallMethodSyncBinary(
@@ -541,7 +555,13 @@ std::unique_ptr<BufferMapping> Bridge::OnPlatformCallMethodSyncBinary(
         errorCode = static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_UNIMPL);
         return nullptr;
     }
-
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (!handle) {
+        LOGE("OnPlatformCallMethodSyncBinary: env not available, method=%{public}s", methodName.c_str());
+        errorCode = static_cast<int32_t>(ErrorCode::BRIDGE_METHOD_UNIMPL);
+        return nullptr;
+    }
     MethodResult methodResult = jsMethodData->PlatformCallMethodSyncBinary(std::move(data));
     if (methodResult.GetErrorCode() != 0) {
         LOGE("OnPlatformCallMethodSyncBinary: method execute failed, err=%{public}d", methodResult.GetErrorCode());
@@ -576,14 +596,16 @@ void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::st
         }
         return;
     }
-    if (!taskExecutor_) {
-        LOGE("OnPlatformMethodResult: taskExecutor_ is null.");
-        return;
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (handle) {
+        handle->RunTaskOnJsThread([jsMethodData, result, methodName, this]() {
+            jsMethodData->SendMethodResult(result, true);
+            EraseJSMethodData(methodName);
+        });
+    } else {
+        LOGE("OnPlatformMethodResult: js thread handle null, callback dropped");
     }
-    taskExecutor_->RunTaskOnMainThread([jsMethodData, result, methodName, this]() {
-        jsMethodData->SendMethodResult(result, true);
-        EraseJSMethodData(methodName);
-    });
 }
 
 void Bridge::OnPlatformMethodResultBinary(const std::string& methodName, int errorCode,
@@ -614,15 +636,17 @@ void Bridge::OnPlatformMethodResultBinary(const std::string& methodName, int err
         return;
     }
     holder->ptr = std::move(result);
-    if (!taskExecutor_) {
-        LOGE("OnPlatformMethodResultBinary: taskExecutor_ is null.");
-        return;
+    auto* ev = jsMethodData->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (handle) {
+        handle->RunTaskOnJsThread([
+            jsMethodData, holder, errorCode, errorMessage, methodName, this]() mutable {
+            jsMethodData->SendMethodResultBinary(errorCode, errorMessage, std::move(holder->ptr), true);
+            EraseJSMethodData(methodName);
+        });
+    } else {
+        LOGE("OnPlatformMethodResultBinary: js thread handle null, callback dropped");
     }
-    taskExecutor_->RunTaskOnMainThread([
-        jsMethodData, holder, errorCode, errorMessage, methodName, this]() mutable {
-        jsMethodData->SendMethodResultBinary(errorCode, errorMessage, std::move(holder->ptr), true);
-        EraseJSMethodData(methodName);
-    });
 }
 
 void Bridge::OnPlatformSendMessage(const std::string& data)
@@ -630,13 +654,15 @@ void Bridge::OnPlatformSendMessage(const std::string& data)
     if (messageCallback_) {
         auto cb = messageCallback_;
         std::string copy = data;
-        if (!taskExecutor_) {
-            LOGE("OnPlatformSendMessage: taskExecutor_ is null.");
-            return;
+        auto* ev = cb->GetAsyncEvent();
+        auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+        if (handle) {
+            handle->RunTaskOnJsThread([cb, copy = std::move(copy)]() {
+                cb->PlatformSendMessage(copy);
+            });
+        } else {
+            LOGE("OnPlatformSendMessage: js thread handle null, callback dropped");
         }
-        taskExecutor_->RunTaskOnMainThread([cb, copy = std::move(copy)]() {
-            cb->PlatformSendMessage(copy);
-        });
     }
 }
 
@@ -653,13 +679,15 @@ void Bridge::OnPlatformSendMessageBinary(std::unique_ptr<BufferMapping> data)
         return;
     }
     holder->ptr = std::move(data);
-    if (!taskExecutor_) {
-        LOGE("OnPlatformSendMessageBinary: taskExecutor_ is null.");
-        return;
+    auto* ev = cb->GetAsyncEvent();
+    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+    if (handle) {
+        handle->RunTaskOnJsThread([cb, holder]() mutable {
+            cb->PlatformSendMessageBinary(std::move(holder->ptr));
+        });
+    } else {
+        LOGE("OnPlatformSendMessageBinary: js thread handle null, callback dropped");
     }
-    taskExecutor_->RunTaskOnMainThread([cb, holder]() mutable {
-        cb->PlatformSendMessageBinary(std::move(holder->ptr));
-    });
 }
 
 void Bridge::OnPlatformSendMessageResponse(const std::string& data)
@@ -678,13 +706,15 @@ void Bridge::OnPlatformSendMessageResponse(const std::string& data)
 
     if (methodData) {
         auto copy = data;
-        if (!taskExecutor_) {
-            LOGE("OnPlatformSendMessageResponse: taskExecutor_ is null.");
-            return;
+        auto* ev = methodData->GetAsyncEvent();
+        auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+        if (handle) {
+            handle->RunTaskOnJsThread([methodData, copy = std::move(copy)]() {
+                methodData->SendMessageResponse(copy, true);
+            });
+        } else {
+            LOGE("OnPlatformSendMessageResponse: js thread handle null, callback dropped");
         }
-        taskExecutor_->RunTaskOnMainThread([methodData, copy = std::move(copy)]() {
-            methodData->SendMessageResponse(copy, true);
-        });
     }
 }
 
