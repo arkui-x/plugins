@@ -19,6 +19,7 @@ ohos_source_set("cert") {
   part_name = "security_cert"
   configs = [ "../../../../config/build:coverage_flag_cc" ]
   include_dirs = [
+    "//base/security/certificate_framework/frameworks/api_metrics/js/include",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/inc",
     "//base/security/certificate_framework/frameworks/common/v1.0/inc",
     "//commonlibrary/c_utils/base/include",
@@ -47,6 +48,7 @@ ohos_source_set("cert") {
   ]
 
   sources = [
+    "//base/security/certificate_framework/frameworks/api_metrics/js/src/js_api_metrics.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_chain_validator.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_cms_generator.cpp",
     "//base/security/certificate_framework/frameworks/js/napi/certificate/src/napi_cert_crl_collection.cpp",
