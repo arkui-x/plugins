@@ -502,6 +502,18 @@ int32_t AudioSystemManager::SetAppVolumeMuted(int32_t appUid, bool muted, int32_
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSystemManager::SetVoipRendererMuteForUid(const int32_t appUid, const int64_t streamId, const bool muted)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::SetVoipCapturerMuteForUid(const int32_t appUid, const int64_t streamId, const bool muted)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioSystemManager::UnsetSelfAppVolumeCallback(
     const std::shared_ptr<AudioManagerAppVolumeChangeCallback>& callback)
 {
