@@ -48,29 +48,39 @@ static NError ReadWriteFileCore(FileInfo& srcFdg, FileInfo& destFdg, int64_t siz
         return NError(ENOMEM);
     }
     auto copyBuf = CreateUniquePtr<char[]>(COPY_BLOCK_SIZE);
-    uv_buf_t buffer = uv_buf_init(copyBuf.get(), COPY_BLOCK_SIZE);
+    if (!copyBuf) {
+        HILOGE("Failed to request heap memory.");
+        return NError(ENOMEM);
+    }
     int ret = 0;
     int64_t offset = 0;
     while (offset < size) {
-        ret = uv_fs_read(nullptr, read_req.get(), srcFdg.fdg->GetFD(), &buffer, 1, offset, nullptr);
+        // Read
+        uv_buf_t readBuf = uv_buf_init(copyBuf.get(), COPY_BLOCK_SIZE);
+        ret = uv_fs_read(nullptr, read_req.get(), srcFdg.fdg->GetFD(),
+                         &readBuf, 1, offset, nullptr);
         if (ret < 0) {
+            HILOGE("Failed to read file by ret : %{public}d", ret);
             return NError(ret);
         }
-        if (read_req->result != COPY_BLOCK_SIZE) {
-            break;
+        if (read_req->result <= 0) {
+            break; // EOF
         }
-        ret = uv_fs_write(nullptr, write_req.get(), destFdg.fdg->GetFD(), &buffer, 1, -1, nullptr);
-        if (ret < 0) {
-            return NError(ret);
+        // Write
+        int64_t toWrite = read_req->result;
+        int64_t written = 0;
+        while (written < toWrite) {
+            uv_buf_t writeBuf = uv_buf_init(copyBuf.get() + written,
+                static_cast<unsigned int>(toWrite - written));
+            ret = uv_fs_write(nullptr, write_req.get(), destFdg.fdg->GetFD(),
+                              &writeBuf, 1, offset + written, nullptr);
+            if (ret <= 0) {
+                HILOGE("Failed to write file by ret : %{public}d", ret);
+                return NError(ret < 0 ? ret : EIO);
+            }
+            written += ret;
         }
-        size -= COPY_BLOCK_SIZE;
-    }
-    if (read_req->result != 0) {
-        uv_buf_t remainBuf = uv_buf_init(copyBuf.get(), read_req->result);
-        ret = uv_fs_write(nullptr, write_req.get(), destFdg.fdg->GetFD(), &remainBuf, 1, -1, nullptr);
-        if (ret < 0) {
-            return NError(ret);
-        }
+        offset += toWrite;
     }
     return NError(ERRNO_NOERR);
 }
