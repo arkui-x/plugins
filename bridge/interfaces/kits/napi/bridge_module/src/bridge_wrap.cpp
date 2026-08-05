@@ -78,11 +78,12 @@ void BridgeWrap::DeleteBridge(const std::string& bridgeName)
     std::lock_guard<std::mutex> lock(*bridgeListLock_);
     auto data = findData(bridgeName);
     if (data == nullptr) {
+        LOGI("findData failed. bridgeName is %{public}s", bridgeName.c_str());
         return;
     }
-
-    LOGI("DeleteBridge bridgeName is %{public}s,", bridgeName.c_str());
+    
     data->ref_--;
+    LOGI("DeleteBridge bridgeName is %{public}s, ref_ is %{public}d", bridgeName.c_str(), data->ref_);
     if (data->ref_ == 0) {
         if (data->bridge_) {
             data->bridge_->UnRegisterBridge();
