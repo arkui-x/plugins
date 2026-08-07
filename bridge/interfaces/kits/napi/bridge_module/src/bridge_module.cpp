@@ -50,11 +50,13 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
 
     if ((argc != PluginUtilsNApi::ARG_NUM_1 && argc != PluginUtilsNApi::ARG_NUM_2) 
         || PluginUtilsNApi::GetValueType(env, argv[PluginUtilsNApi::ARG_NUM_0]) != napi_string) {
+        LOGE("CreateBridge: Invalid parameters, argc=%{public}d", static_cast<int>(argc));
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
     std::string bridgeName = PluginUtilsNApi::GetStringFromValueUtf8(env, argv[PluginUtilsNApi::ARG_NUM_0]);
     if (bridgeName.empty()) {
+        LOGE("CreateBridge: Bridge name is empty");
         return PluginUtilsNApi::CreateUndefined(env);
     }
     napi_ref bridgeNameRef = PluginUtilsNApi::CreateReference(env, argv[PluginUtilsNApi::ARG_NUM_0]);
@@ -64,6 +66,7 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
         PluginUtilsNApi::NewInstance(env, info, INTERFACE_PLUGIN_BRIDGE_OBJECT, 1, &bridgeNameValue);
         PluginUtilsNApi::DeleteReference(env, bridgeNameRef);
     if (thisVar == nullptr) {
+        LOGE("CreateBridge: NewInstance failed");
         return PluginUtilsNApi::CreateUndefined(env);
     }
 
@@ -71,6 +74,7 @@ napi_value BridgeModule::CreateBridge(napi_env env, napi_callback_info info)
     if (argc == PluginUtilsNApi::ARG_NUM_2) {
         codecType = static_cast<CodecType>(PluginUtilsNApi::GetCInt32(argv[PluginUtilsNApi::ARG_NUM_1], env));
         if (codecType != CodecType::JSON_CODEC && codecType != CodecType::BINARY_CODEC) {
+            LOGE("CreateBridge: Invalid codec type=%{public}d", static_cast<int32_t>(codecType));
             return PluginUtilsNApi::CreateUndefined(env);
         }
     }
@@ -602,7 +606,8 @@ napi_value BridgeModule::BridgeObject::CallMethodSync(napi_env env, napi_callbac
     methodData->UpdateMethodName();
     auto methodResult = CallMethodSyncInner(env, thisVal, methodData);
     if (methodResult && methodResult->GetErrorCode() != 0) {
-        LOGE("BridgeObject::CallMethodSync: Call platform method failed.");
+        LOGE("BridgeObject::CallMethodSync: Call platform method failed. errorCode is %{public}d",
+            methodResult->GetErrorCode());
         napi_throw(env, NAPIUtils::CreateErrorMessage(env, methodResult->GetErrorCode()));
         return nullptr;
     }

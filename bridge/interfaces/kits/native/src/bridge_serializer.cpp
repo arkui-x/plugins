@@ -99,7 +99,7 @@ CodecableValue BridgeSerializer::ReadValue(BridgeStreamReader* stream) const
             return CodecableValue(list);
         }
         default:
-            LOGW("invaild type, can not read value from stream.");
+            LOGE("ReadValue: unknown type=%{public}d, cannot read value from stream.", static_cast<int>(type));
             break;
     }
     return CodecableValue();
@@ -162,7 +162,8 @@ void BridgeSerializer::WriteValue(const CodecableValue& value, BridgeStreamWrite
             break;
         }
         default:
-            LOGW("invaild type, can not write value to stream.");
+            LOGE("WriteValue: unknown type=%{public}d, cannot write value to stream.",
+                static_cast<int>(static_cast<CodecableType>(value.index())));
             break;
     }
 }
