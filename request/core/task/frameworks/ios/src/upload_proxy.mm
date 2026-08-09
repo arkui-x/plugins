@@ -155,10 +155,8 @@ void UploadProxy::PartPutUpload(NSURL *baseUrl, NSMutableDictionary *headers)
 void UploadProxy::PartPutUploadFile(const FileSpec &file, int32_t index, NSString *partFilePath, NSURL *baseUrl, NSMutableDictionary *headers)
 {
     LOGI("UploadProxy::PartPutUploadFile enter, index:%{public}d", index);
-    NSString *fileName = JsonUtils::CStringToNSString(file.filename);
     NSURL *localPath = [NSURL fileURLWithPath:partFilePath];
-    NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:dstUrl];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:baseUrl];
     request.HTTPMethod = @"PUT";
     [request setAllHTTPHeaderFields:headers];
 
@@ -178,11 +176,9 @@ void UploadProxy::PartPutUploadFile(const FileSpec &file, int32_t index, NSStrin
 void UploadProxy::PutUploadFile(const FileSpec &file, int32_t index, NSURL *baseUrl, NSMutableDictionary *headers)
 {
     NSString *filePath = JsonUtils::CStringToNSString(file.uri);
-    NSString *fileName = JsonUtils::CStringToNSString(file.filename);
     NSURL *localPath = [NSURL fileURLWithPath:filePath];
     LOGI("PutUploadFile upload localPath");
-    NSURL *dstUrl = [baseUrl URLByAppendingPathComponent:fileName];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:dstUrl];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:baseUrl];
     request.HTTPMethod = @"PUT";
     [request setAllHTTPHeaderFields:headers];
 
