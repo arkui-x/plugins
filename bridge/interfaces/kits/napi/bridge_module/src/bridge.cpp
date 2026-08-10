@@ -37,6 +37,7 @@ Bridge::Bridge(const std::string& bridgeName, const CodecType& type)
 Bridge::~Bridge()
 {
     if (available_) {
+        LOGI("Bridge release. bridgeName is %{public}s", bridgeName_.c_str());
         available_ = false;
         UnRegisterBridge(bridgeName_);
     }
