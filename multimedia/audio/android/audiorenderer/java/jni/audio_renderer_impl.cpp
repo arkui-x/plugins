@@ -24,7 +24,7 @@ static const int32_t WRITE_BUFFER_TIMEOUT_IN_MS = 200; // ms
 static constexpr char WRITE_THREAD_NAME[] = "OS_AudioWriteCB";
 }
 
-AudioRendererImpl::AudioRendererImpl() : playState_(RENDERER_NEW), minWriteBufferSize_(0) {}
+AudioRendererImpl::AudioRendererImpl() : minWriteBufferSize_(0), playState_(RENDERER_NEW) {}
 
 AudioRendererImpl::~AudioRendererImpl()
 {
@@ -57,6 +57,7 @@ bool AudioRendererImpl::Start()
         return false;
     }
     TransferState(RENDERER_RUNNING);
+    writeThreadCv_.notify_all();
     return true;
 }
 
@@ -159,6 +160,10 @@ int32_t AudioRendererImpl::SetRenderMode(AudioRenderMode renderMode)
 
     callbackLoop_ = std::thread(&AudioRendererImpl::WriteCallbackFunc, this);
     pthread_setname_np(callbackLoop_.native_handle(), WRITE_THREAD_NAME);
+
+    std::unique_lock<std::mutex> threadStartlock(writeThreadLock_);
+    writeThreadCv_.wait_for(threadStartlock, std::chrono::milliseconds(WRITE_BUFFER_TIMEOUT_IN_MS),
+        [this] { return writeThreadReleased_ == false; });
     return SUCCESS;
 }
 
@@ -174,23 +179,32 @@ int32_t AudioRendererImpl::SetRendererWriteCallback(const std::shared_ptr<AudioR
 void AudioRendererImpl::WriteCallbackFunc()
 {
     writeThreadReleased_ = false;
+    writeThreadCv_.notify_all();
 
     while (!writeThreadReleased_) {
         AUDIO_DEBUG_LOG("AudioRendererJni::WriteCallbackFunc playState_:%d", playState_);
-        std::unique_lock<std::mutex> statusLock(writeCbMutex_);
         if (playState_ != RENDERER_RUNNING) {
+            std::unique_lock<std::mutex> stateLock(writeThreadLock_);
+            writeThreadCv_.wait_for(stateLock, std::chrono::milliseconds(WRITE_BUFFER_TIMEOUT_IN_MS),
+                [this] { return playState_ == RENDERER_RUNNING || writeThreadReleased_; });
             continue;
         }
+
+        std::unique_lock<std::mutex> lockBuffer(writeBufferLock_);
         if (writeBuffer_.dataLength > 0) {
             Write(writeBuffer_.buffer, writeBuffer_.dataLength);
             memset(writeBuffer_.buffer, 0, minWriteBufferSize_ * sizeof(uint8_t));
             writeBuffer_.dataLength = 0;
         }
+        lockBuffer.unlock();
+
+        std::unique_lock<std::mutex> lockCb(writeCbMutex_);
         isWrited_ = false;
         if (writeCallback_) {
             writeCallback_->OnWriteData(minWriteBufferSize_);
         }
-        statusLock.unlock();
+        lockCb.unlock();
+
         std::unique_lock<std::mutex> lk(writeBufferLock_);
         writeThreadCv_.wait_for(
             lk, std::chrono::milliseconds(WRITE_BUFFER_TIMEOUT_IN_MS), [this] { return isWrited_; });

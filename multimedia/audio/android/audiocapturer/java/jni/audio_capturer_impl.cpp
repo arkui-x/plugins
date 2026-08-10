@@ -63,6 +63,7 @@ bool AudioCapturerImpl::Start()
     bool ret = Plugin::AudioCapturerJni::Start(reinterpret_cast<long>(this));
     if (ret) {
         TransferState(CAPTURER_RUNNING);
+        readThreadCv_.notify_all();
     }
     return ret;
 }
@@ -167,6 +168,9 @@ void AudioCapturerImpl::ReadCallbackFunc()
 
     while (!readThreadReleased_) {
         if (recordState_ != CAPTURER_RUNNING) {
+            std::unique_lock<std::mutex> stateLock(readThreadLock_);
+            readThreadCv_.wait_for(stateLock, std::chrono::milliseconds(SHORT_TIMEOUT_IN_MS),
+                [this] { return recordState_ == CAPTURER_RUNNING || readThreadReleased_; });
             continue;
         }
 
