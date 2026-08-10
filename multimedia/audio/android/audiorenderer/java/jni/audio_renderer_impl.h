@@ -81,6 +81,7 @@ private:
     std::unique_ptr<uint8_t[]> cbBuffer_ { nullptr };
     BufferDesc writeBuffer_;
     std::mutex writeBufferLock_;
+    std::mutex writeThreadLock_;
     std::condition_variable writeThreadCv_;
     bool isWrited_ = false;
     std::mutex statusLock_;
