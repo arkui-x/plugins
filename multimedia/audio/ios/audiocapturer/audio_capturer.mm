@@ -80,7 +80,10 @@ std::unique_ptr<AudioCapturer> AudioCapturer::Create(const AudioCapturerOptions 
 void AudioCapturerPrivate::CreateAudioRecord(const AudioCapturerOptions &capturerOptions)
 {
     capturerImpl_ = [[AudioCapturerImpl alloc] init];
-    [capturerImpl_ initWithSampleRate: capturerOptions];
+    if (![capturerImpl_ initWithSampleRate: capturerOptions]) {
+        AUDIO_ERR_LOG("initWithSampleRate failed");
+        return;
+    }
 
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     if (managerImpl) {
