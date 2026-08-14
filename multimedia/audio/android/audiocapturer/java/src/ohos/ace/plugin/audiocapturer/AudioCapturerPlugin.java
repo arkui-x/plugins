@@ -38,6 +38,15 @@ import ohos.ace.adapter.ALog;
  */
 public class AudioCapturerPlugin {
     private static final String LOG_TAG = "AudioCapturerPlugin";
+    private static final int FRAME_DURATION_IN_MS = 20;
+    private static final int MS_PER_SECOND = 1000;
+    private static final int INTERNAL_BUFFER_FRAME_COUNT = 4;
+
+    // AudioFormat.ENCODING_PCM_24BIT_PACKED / ENCODING_PCM_32BIT (API 31+), use literals to
+    // stay compatible with older compile SDK versions.
+    private static final int ENCODING_PCM_24BIT_PACKED_VALUE = 21;
+    private static final int ENCODING_PCM_32BIT_VALUE = 22;
+
     private Context appContext;
     private Map<Long, AudioRecord> mAudioRecords = new HashMap<>();
     private Map<Long, OnRecordPositionUpdateListenerImpl> positionUpdateListeners = new HashMap<>();
@@ -84,6 +93,16 @@ public class AudioCapturerPlugin {
                 return AudioRecord.ERROR_INVALID_OPERATION;
             }
         }
+        int channelCount = Integer.bitCount(channel);
+        int channelConfig = channelCount == 1 ? AudioFormat.CHANNEL_IN_MONO : AudioFormat.CHANNEL_IN_STEREO;
+        // The read callback consumes a fixed frame duration on every read(); the internal buffer
+        // size does not affect the callback length, it only needs to be at least the system
+        // minimum and hold enough frames to absorb scheduling jitter of the read thread.
+        // Frame-first (aligned with the native GetBufferSize): round down to whole samples.
+        int framesPerSpan = sampleRate * FRAME_DURATION_IN_MS / MS_PER_SECOND;
+        int frameBufferSize = framesPerSpan * channelCount * getBytesPerSample(encoding);
+        int minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, encoding);
+        int bufferSizeInBytes = Math.max(minBufferSize, frameBufferSize * INTERNAL_BUFFER_FRAME_COUNT);
         audioRecord = new AudioRecord.Builder()
         .setAudioSource(sourceType)
         .setAudioFormat(new AudioFormat.Builder()
@@ -91,9 +110,31 @@ public class AudioCapturerPlugin {
             .setSampleRate(sampleRate)
             .setChannelIndexMask(channel)
             .build())
+        .setBufferSizeInBytes(bufferSizeInBytes)
         .build();
         mAudioRecords.put(capturerPtr, audioRecord);
         return AudioRecord.SUCCESS;
+    }
+
+    /**
+     * get bytes per sample for the given encoding
+     *
+     * @param encoding encoding of the audio record
+     * @return bytes per sample
+     */
+    private static int getBytesPerSample(int encoding) {
+        switch (encoding) {
+            case AudioFormat.ENCODING_PCM_8BIT:
+                return 1;
+            case ENCODING_PCM_24BIT_PACKED_VALUE:
+                return 3;
+            case ENCODING_PCM_32BIT_VALUE:
+            case AudioFormat.ENCODING_PCM_FLOAT:
+                return 4;
+            case AudioFormat.ENCODING_PCM_16BIT:
+            default:
+                return 2;
+        }
     }
 
     /**
