@@ -20,6 +20,7 @@
 #include "cache_download_callback.h"
 #include "cache_download_interface.h"
 #include "cache_types.h"
+#include "cache_log.h"
 
 #ifdef CACHE_DOWNLOAD_ENABLE_JNI
 #include "cache_download_jni.h"
@@ -410,6 +411,7 @@ void FireSuccessCallbacks(napi_env env, const std::string& url)
     if (it == reg.success.end()) {
         return;
     }
+    CDLOG_DEBUG("FireSuccessCallbacks taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(url).c_str());
     UrlCallbacks& cbs = it->second;
     cbs.dispatching++;
 
@@ -452,6 +454,7 @@ void FireErrorCallbacks(napi_env env, const std::string& url, const CacheDownloa
     if (it == reg.error.end()) {
         return;
     }
+    CDLOG_DEBUG("FireErrorCallbacks taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(url).c_str());
     UrlCallbacks& cbs = it->second;
     cbs.dispatching++;
 
@@ -592,6 +595,7 @@ napi_value Download(napi_env env, napi_callback_info info)
     EnsureErrorDispatcher(env, url);
 
     service.Download(url, options);
+    CDLOG_INFO("NAPI::Download taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(url).c_str());
     return CreateUndefined(env);
 }
 

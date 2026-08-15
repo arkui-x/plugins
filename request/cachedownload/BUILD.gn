@@ -77,6 +77,7 @@ template("plugin_cache_download_static") {
         "//plugins/interfaces/native:ace_plugin_util_${platform}",
         "android/java:cache_download_android_jni",
       ]
+      libs = [ "log" ]
     } else if (platform == "ios") {
       # SO2 (NAPI entry only): the iOS loop produces librequest_cachedownload
       # from this source_set. Core logic + the innerkits C++ client live in
@@ -203,6 +204,7 @@ foreach(item, ace_platforms) {
         "//plugins/libs/napi:napi_${target_os}",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
       ]
+      libs = [ "log" ]
       version_script = "//plugins/request/cachedownload/cache_download_core.map"
       output_name = "libcache_download_core"
       relative_install_dir = "module"

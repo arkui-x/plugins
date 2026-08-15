@@ -15,6 +15,7 @@
 
 #include "cache_file.h"
 #include "cache_ram.h"
+#include "cache_log.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -142,7 +143,8 @@ static void Sha256Transform(Sha256Ctx& ctx, const uint8_t* data)
     uint32_t m[SHA256_BLOCK_SIZE];
     for (int i = 0, j = 0; i < SHA256_INITIAL_MSG_COUNT; ++i, j += SHA256_BYTES_PER_WORD) {
         m[i] = (static_cast<uint32_t>(data[j]) << SHA256_HIGH_BYTE_SHIFT) |
-               (static_cast<uint32_t>(data[j + SHA256_INTRA_WORD_OFFSET_1]) << (SHA256_HIGH_BYTE_SHIFT - SHA256_BITS_PER_BYTE)) |
+               (static_cast<uint32_t>(data[j + SHA256_INTRA_WORD_OFFSET_1]) <<
+                   (SHA256_HIGH_BYTE_SHIFT - SHA256_BITS_PER_BYTE)) |
                (static_cast<uint32_t>(data[j + SHA256_INTRA_WORD_OFFSET_2]) << SHA256_BITS_PER_BYTE) |
                static_cast<uint32_t>(data[j + SHA256_INTRA_WORD_OFFSET_3]);
     }
@@ -284,6 +286,17 @@ bool MakeDirsRecursive(const std::string& path)
 
 } // namespace
 
+// Brief task id length in hex chars: 1/4 of the 64-char SHA-256 hex digest.
+static constexpr size_t BRIEF_TASK_ID_LEN = 16;
+
+// Returns first 16 hex chars of SHA-256(url), matching native task_id.brief().
+// Used by all CDLOG call sites to avoid printing the full URL.
+std::string GetBriefTaskId(const std::string& url)
+{
+    return Sha256Hex(url).substr(0, BRIEF_TASK_ID_LEN);
+}
+
+
 bool FileCache::InitCacheDir(const std::string& cacheDir)
 {
     std::lock_guard<std::mutex> lock(s_mutex_);
@@ -299,6 +312,7 @@ bool FileCache::InitCacheDir(const std::string& cacheDir)
         // Verify it's accessible
         struct stat st;
         if (stat(s_cacheDir_.c_str(), &st) == 0 && (st.st_mode & S_IFDIR)) {
+            CDLOG_DEBUG("InitCacheDir dir=" CDLOG_FMT_PUBLIC_S, GetLastPathDir(s_cacheDir_).c_str());
             return true;
         }
     }
@@ -336,6 +350,7 @@ bool FileCache::WriteToFile(const std::string& taskId,
 
     std::ofstream file(tmpPath, std::ios::binary | std::ios::trunc);
     if (!file.is_open()) {
+        CDLOG_ERROR("WriteToFile open tmp failed taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
         return false;
     }
 
@@ -344,15 +359,18 @@ bool FileCache::WriteToFile(const std::string& taskId,
 
     if (file.fail()) {
         std::remove(tmpPath.c_str());
+        CDLOG_ERROR("WriteToFile write failed taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
         return false;
     }
 
     // Rename temp file to final file (atomic on most filesystems)
     if (std::rename(tmpPath.c_str(), path.c_str()) != 0) {
         std::remove(tmpPath.c_str());
+        CDLOG_ERROR("WriteToFile rename failed taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
         return false;
     }
 
+    CDLOG_INFO("WriteToFile taskId=" CDLOG_FMT_PUBLIC_S " size=" CDLOG_FMT_ZU, GetBriefTaskId(taskId).c_str(), size);
     return true;
 }
 
@@ -367,6 +385,7 @@ std::unique_ptr<RamCache> FileCache::ReadFromFile(const std::string& taskId,
 
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
+        CDLOG_ERROR("ReadFromFile open failed taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
         return nullptr;
     }
 
@@ -389,6 +408,8 @@ std::unique_ptr<RamCache> FileCache::ReadFromFile(const std::string& taskId,
     }
 
     cache->FinishWrite();
+    CDLOG_INFO("ReadFromFile taskId=" CDLOG_FMT_PUBLIC_S " fileSize=" CDLOG_FMT_ZU,
+        GetBriefTaskId(taskId).c_str(), fileSize);
     return cache;
 }
 
@@ -397,6 +418,7 @@ void FileCache::RemoveFile(const std::string& taskId)
     std::string path = FilePath(taskId);
     if (!path.empty()) {
         std::remove(path.c_str());
+        CDLOG_DEBUG("RemoveFile taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
         // Also remove any temp file that might be left
         std::string tmpPath = path + ".tmp";
         std::remove(tmpPath.c_str());
@@ -526,6 +548,7 @@ std::vector<std::pair<std::string, uint64_t>> FileCache::ListCachedFiles()
         closedir(dp);
     }
 #endif
+    CDLOG_INFO("ListCachedFiles count=" CDLOG_FMT_ZU, result.size());
     return result;
 }
 

@@ -132,6 +132,7 @@ public:
 
     /** Checks if a cache entry exists (any tier). */
     bool Contains(const std::string& taskId) const;
+    bool HasInRam(const std::string& taskId) const;
 
     /**
      * Removes a cache entry from all storage tiers.
@@ -226,8 +227,8 @@ private:
                                       std::vector<std::string>& evictedOnPopulate,
                                       std::shared_ptr<RamCache>& backupRam);
 
-    /** Enqueues a serialized file read for the task, waiting for prior ops. */
-    void EnqueueAndWaitForFileRead(const std::string& taskId);
+    /** Enqueues a serialized file operation for the task, waiting for prior ops. */
+    void EnqueueAndWaitForFileOp(const std::string& taskId);
 
     /** Signals the next queued file operation for the task. */
     void SignalNextFileOp(const std::string& taskId);
@@ -242,6 +243,9 @@ private:
     // ============================================================
     // Members
     // ============================================================
+    // Lock ordering: ramMutex_ and fileMutex_ must never be held
+    // simultaneously — operations touching both acquire them in independent
+    // scopes, sequentially (see Fetch/Contains/HasInRam).
 
     // RAM cache
     mutable std::mutex ramMutex_;

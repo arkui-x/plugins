@@ -17,6 +17,7 @@
 #include "cache_download_interface.h"
 #include "cache_types.h"
 #include "cache_http_client_impl.h"
+#include "cache_log.h"
 
 #include "plugin_utils.h"
 
@@ -234,6 +235,7 @@ bool CacheDownloadJni::Register(void* env)
 {
     auto* jniEnv = static_cast<JNIEnv*>(env);
     if (jniEnv == nullptr) {
+        CDLOG_ERROR("CacheDownloadJni::Register null env");
         return false;
     }
 
@@ -246,10 +248,12 @@ bool CacheDownloadJni::Register(void* env)
 
     jclass cls = SafeFindClass(jniEnv, "ohos/ace/plugin/cachedownloadplugin/CacheDownloadPlugin");
     if (cls == nullptr) {
+        CDLOG_ERROR("CacheDownloadJni::Register FindClass failed");
         return false;
     }
     if (jniEnv->RegisterNatives(cls, g_nativeMethods,
         sizeof(g_nativeMethods) / sizeof(g_nativeMethods[0])) != 0) {
+        CDLOG_ERROR("CacheDownloadJni::Register RegisterNatives failed");
         jniEnv->DeleteLocalRef(cls);
         return false;
     }
@@ -278,6 +282,7 @@ bool CacheDownloadJni::Register(void* env)
     jniEnv->DeleteLocalRef(pluginObj);
 
     jniEnv->DeleteLocalRef(cls);
+    CDLOG_INFO("CacheDownloadJni::Register success");
     return true;
 }
 
@@ -303,6 +308,7 @@ void CacheDownloadJni::NativeInit(JNIEnv* env, jobject thiz)
             std::string cacheDir = JstringToString(env, jcacheDir);
             if (!cacheDir.empty()) {
                 CacheDownloadService::GetInstance().Initialize(cacheDir);
+                CDLOG_DEBUG("CacheDownloadJni::NativeInit dir=" CDLOG_FMT_PUBLIC_S, GetLastPathDir(cacheDir).c_str());
             }
             env->DeleteLocalRef(jcacheDir);
         } else if (env->ExceptionCheck()) {
@@ -398,6 +404,7 @@ void CacheDownloadJni::NativeDownload(JNIEnv* env, jobject /* thiz */,
 
     auto& service = CacheDownloadService::GetInstance();
     service.Download(urlStr, cdOptions);
+    CDLOG_INFO("CacheDownloadJni::NativeDownload taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(urlStr).c_str());
 }
 
 void CacheDownloadJni::NativeCancel(JNIEnv* env, jobject /* thiz */, jstring url)

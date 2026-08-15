@@ -18,6 +18,7 @@
 #include "cache_download_jni.h"
 
 #include "plugin_utils.h"
+#include "cache_log.h"
 
 #include <jni.h>
 #include <atomic>
@@ -266,9 +267,36 @@ CacheHttpClientAndroid::~CacheHttpClientAndroid()
     }
 }
 
+// Caches the RequestConfig inner class and its constructor (same ClassLoader
+// consideration as the HTTP client class). Returns false on failure, in which
+// case InitializeJni must abort (sJniCacheReady stays false).
+bool CacheHttpClientAndroid::CacheRequestConfigJni(JNIEnv* env)
+{
+    jclass configCls = SafeFindClass(env,
+        "ohos/ace/plugin/cachedownloadplugin/CacheDownloadHttpClient$RequestConfig");
+    if (configCls == nullptr) {
+        CDLOG_ERROR("InitializeJni SafeFindClass(RequestConfig) FAILED -> return");
+        return false;
+    }
+    sConfigClass = static_cast<jclass>(env->NewGlobalRef(configCls));
+    env->DeleteLocalRef(configCls);
+    if (sConfigClass == nullptr) {
+        return false;
+    }
+    sConfigCtorId = env->GetMethodID(sConfigClass, "<init>",
+        "(Ljava/lang/String;Ljava/util/Map;IILjava/lang/String;)V");
+    if (sConfigCtorId == nullptr && env->ExceptionCheck()) {
+        env->ExceptionClear();
+    }
+    return true;
+}
+
 void CacheHttpClientAndroid::InitializeJni(JNIEnv* env)
 {
+    CDLOG_INFO("InitializeJni ENTER envNonNull=" CDLOG_FMT_D " sJniCacheReady=" CDLOG_FMT_D,
+        env != nullptr ? 1 : 0, (int)sJniCacheReady);
     if (sJniCacheReady || env == nullptr) {
+        CDLOG_INFO("InitializeJni early-return sJniCacheReady=" CDLOG_FMT_D, (int)sJniCacheReady);
         return;
     }
 
@@ -278,13 +306,16 @@ void CacheHttpClientAndroid::InitializeJni(JNIEnv* env)
     // return a JNIEnv whose FindClass uses the system ClassLoader, which
     // cannot find plugin classes — so we must cache the class here.
     jclass cls = SafeFindClass(env, HTTP_CLIENT_CLASS_NAME);
+    CDLOG_INFO("InitializeJni SafeFindClass found=" CDLOG_FMT_D, cls != nullptr ? 1 : 0);
     if (cls == nullptr) {
+        CDLOG_ERROR("InitializeJni SafeFindClass FAILED (wrong ClassLoader?) -> return");
         return;
     }
     sHttpClientClass = static_cast<jclass>(env->NewGlobalRef(cls));
     env->DeleteLocalRef(cls);
 
     if (sHttpClientClass == nullptr) {
+        CDLOG_ERROR("InitializeJni NewGlobalRef FAILED -> return");
         return;
     }
 
@@ -299,29 +330,21 @@ void CacheHttpClientAndroid::InitializeJni(JNIEnv* env)
         env->ExceptionClear();
     }
 
-    // Cache the RequestConfig inner class and its constructor (same ClassLoader
-    // consideration as the HTTP client class above).
-    jclass configCls = SafeFindClass(env,
-        "ohos/ace/plugin/cachedownloadplugin/CacheDownloadHttpClient$RequestConfig");
-    if (configCls == nullptr) {
+    if (!CacheRequestConfigJni(env)) {
         return;
-    }
-    sConfigClass = static_cast<jclass>(env->NewGlobalRef(configCls));
-    env->DeleteLocalRef(configCls);
-    if (sConfigClass == nullptr) {
-        return;
-    }
-    sConfigCtorId = env->GetMethodID(sConfigClass, "<init>",
-        "(Ljava/lang/String;Ljava/util/Map;IILjava/lang/String;)V");
-    if (sConfigCtorId == nullptr && env->ExceptionCheck()) {
-        env->ExceptionClear();
     }
 
     sJniCacheReady = (sCtorMethodId != nullptr && sExecuteMethodId != nullptr
                       && sConfigClass != nullptr && sConfigCtorId != nullptr);
+    CDLOG_INFO("InitializeJni result sJniCacheReady=" CDLOG_FMT_D
+        " (ctorNonNull=" CDLOG_FMT_D " execNonNull=" CDLOG_FMT_D
+        " configClsNonNull=" CDLOG_FMT_D " configCtorNonNull=" CDLOG_FMT_D ")",
+        (int)sJniCacheReady, sCtorMethodId != nullptr ? 1 : 0, sExecuteMethodId != nullptr ? 1 : 0,
+        sConfigClass != nullptr ? 1 : 0, sConfigCtorId != nullptr ? 1 : 0);
     if (sJniCacheReady) {
         // Notify any EnsureJniReady waiter that triggered registration
         // lazily from the innerkits (SO1) path.
+        CDLOG_INFO("InitializeJni notify condvar (sJniCacheReady=true)");
         std::lock_guard<std::mutex> lock(g_jniReadyMutex);
         g_jniReadyCv.notify_all();
     }
@@ -388,17 +411,26 @@ bool CacheHttpClientAndroid::EnsureJniReady(JNIEnv* env)
     // Image can use the innerkits without SO2 being loaded by a JS import,
     // matching the native HarmonyOS design where libpreload_native.so is
     // self-contained.
+    CDLOG_INFO("EnsureJniReady ENTER envNonNull=" CDLOG_FMT_D " sJniCacheReady=" CDLOG_FMT_D
+        " g_jniRegisterTriggered=" CDLOG_FMT_D,
+        env != nullptr ? 1 : 0, (int)sJniCacheReady, (int)g_jniRegisterTriggered.load());
     if (!sJniCacheReady) {
         if (!g_jniRegisterTriggered.exchange(true)) {
+            CDLOG_INFO("EnsureJniReady lazy-trigger ARKUI_X_Plugin_RegisterJavaPlugin (first time)");
             ARKUI_X_Plugin_RegisterJavaPlugin(
                 &CacheDownloadJni::Register,
                 "ohos.ace.plugin.cachedownloadplugin.CacheDownloadPlugin");
+        } else {
+            CDLOG_INFO("EnsureJniReady lazy-trigger already fired by prior call, waiting on condvar");
         }
+        CDLOG_INFO("EnsureJniReady condvar wait_for 5s start");
         std::unique_lock<std::mutex> lock(g_jniReadyMutex);
         if (!g_jniReadyCv.wait_for(lock, std::chrono::seconds(5),
             [] { return sJniCacheReady; })) {
+            CDLOG_ERROR("EnsureJniReady TIMEOUT 5s sJniCacheReady still false -> return false");
             return false; // timed out, JNI cache still not ready
         }
+        CDLOG_INFO("EnsureJniReady condvar notified sJniCacheReady=true");
     }
 
     if (!g_nativesRegistered.load()) {
@@ -438,17 +470,26 @@ std::shared_ptr<CacheHttpRequest> CacheHttpClientAndroid::NewRequest(
     const std::shared_ptr<CacheHttpRequestCallback>& callback)
 {
     JNIEnv* env = ARKUI_X_Plugin_GetJniEnv();
+    CDLOG_INFO("NewRequest taskId=" CDLOG_FMT_PUBLIC_S " envNonNull=" CDLOG_FMT_D
+        " sJniCacheReady=" CDLOG_FMT_D,
+        GetBriefTaskId(options.url).c_str(), env != nullptr ? 1 : 0, (int)sJniCacheReady);
     if (env == nullptr || !EnsureJniReady(env)) {
+        CDLOG_ERROR("NewRequest FAIL taskId=" CDLOG_FMT_PUBLIC_S
+            " EnsureJniReady=false (Failed to create HTTP request)",
+            GetBriefTaskId(options.url).c_str());
         return nullptr;
     }
 
     auto request = std::make_shared<CacheHttpRequestAndroid>(
         clientRef_, executeRequestId_, options, callback);
+    CDLOG_INFO("NewRequest OK taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(options.url).c_str());
     return request;
 }
 
 bool CacheHttpRequestAndroid::Start()
 {
+    CDLOG_INFO("CacheHttpRequestAndroid::Start taskId=" CDLOG_FMT_PUBLIC_S,
+               GetBriefTaskId(options_.url).c_str());
     // TLCP (GM/T 0024) is not supported by the target platform's TLS stack.
     // Fail explicitly with an SSL-class error instead of silently downgrading
     // to plain TLS — matches iOS behavior and OHOS semantics where a TLCP
@@ -496,6 +537,8 @@ bool CacheHttpRequestAndroid::Start()
 
 void CacheHttpRequestAndroid::Cancel()
 {
+    CDLOG_INFO("CacheHttpRequestAndroid::Cancel taskId=" CDLOG_FMT_PUBLIC_S,
+               GetBriefTaskId(options_.url).c_str());
     Finish();
 }
 

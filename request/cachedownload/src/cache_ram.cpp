@@ -14,6 +14,7 @@
  */
 
 #include "cache_ram.h"
+#include "cache_log.h"
 
 #include <algorithm>
 #include <cstring>
@@ -36,6 +37,8 @@ RamCache::RamCache(const std::string& taskId,
         }
         // If allocation fails, applied_ stays 0 — data won't be RAM-cached
     }
+    CDLOG_DEBUG("RamCache ctor taskId=" CDLOG_FMT_PUBLIC_S " sizeHint=" CDLOG_FMT_ZU " applied=" CDLOG_FMT_LLU,
+        GetBriefTaskId(taskId_).c_str(), sizeHint, (uint64_t)applied_);
     data_.reserve(sizeHint > 0 ? sizeHint : DEFAULT_TRUNK_CAPACITY);
 }
 
@@ -103,6 +106,8 @@ bool RamCache::IsCached() const
 bool RamCache::FinishWrite()
 {
     isCached_ = CheckSize();
+    CDLOG_INFO("RamCache FinishWrite taskId=" CDLOG_FMT_PUBLIC_S " isCached=" CDLOG_FMT_D " size=" CDLOG_FMT_ZU,
+        GetBriefTaskId(taskId_).c_str(), isCached_ ? 1 : 0, data_.size());
     return isCached_;
 }
 
@@ -123,6 +128,8 @@ bool RamCache::CheckSize()
                 spaceMgr_->Release(applied_);
                 applied_ = 0;
             }
+            CDLOG_ERROR("RamCache exceeds max size taskId=" CDLOG_FMT_PUBLIC_S " dataLen=" CDLOG_FMT_LLU,
+                GetBriefTaskId(taskId_).c_str(), (uint64_t)dataLen);
             return false;
         }
 
@@ -132,6 +139,8 @@ bool RamCache::CheckSize()
                 spaceMgr_->Release(applied_);
                 applied_ = 0;
             }
+            CDLOG_ERROR("RamCache alloc failed taskId=" CDLOG_FMT_PUBLIC_S " diff=" CDLOG_FMT_LLU,
+                GetBriefTaskId(taskId_).c_str(), (uint64_t)diff);
             return false;
         }
 

@@ -56,6 +56,9 @@ public:
 private:
     bool EnsureJniReady(JNIEnv* env);
 
+    // Caches the RequestConfig inner class JNI refs; called by InitializeJni.
+    static bool CacheRequestConfigJni(JNIEnv* env);
+
     jobject clientRef_ = nullptr;
     jmethodID executeRequestId_ = nullptr;
 

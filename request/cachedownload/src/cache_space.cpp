@@ -14,6 +14,7 @@
  */
 
 #include "cache_space.h"
+#include "cache_log.h"
 
 namespace OHOS::Plugin::CacheDownload {
 
@@ -34,10 +35,14 @@ bool SpaceManager::ApplyCacheSize(uint64_t applySize)
     // the limit without evicting anything, leaving stale entries visible to
     // LAZY cache hits (testCacheStrategy002).
     if (totalCapacity_ == 0) {
+        CDLOG_WARN("SpaceManager apply rejected (capacity=0) apply=" CDLOG_FMT_LLU, (uint64_t)applySize);
         return applySize == 0 && usedCapacity_ == 0;
     }
 
     if (applySize + usedCapacity_ > totalCapacity_) {
+        CDLOG_WARN("SpaceManager apply rejected (over capacity) apply=" CDLOG_FMT_LLU " used=" CDLOG_FMT_LLU
+            " total=" CDLOG_FMT_LLU,
+            (uint64_t)applySize, (uint64_t)usedCapacity_, (uint64_t)totalCapacity_);
         return false;
     }
     usedCapacity_ += applySize;
@@ -58,6 +63,7 @@ void SpaceManager::ChangeTotalSize(uint64_t size)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     totalCapacity_ = size;
+    CDLOG_INFO("SpaceManager ChangeTotalSize size=" CDLOG_FMT_LLU, (uint64_t)size);
 }
 
 uint64_t SpaceManager::TotalCapacity() const

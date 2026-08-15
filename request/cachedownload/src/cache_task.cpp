@@ -15,6 +15,7 @@
 
 #include "cache_task.h"
 #include "cache_manager.h"
+#include "cache_log.h"
 
 namespace OHOS::Plugin::CacheDownload {
 
@@ -34,6 +35,7 @@ void TaskHandle::Cancel()
     // Only cancel if currently running or init
     if (state_.compare_exchange_strong(expected, TASK_STATE_CANCEL) ||
         state_.compare_exchange_strong(expectedInit, TASK_STATE_CANCEL)) {
+        CDLOG_INFO("TaskHandle::Cancel taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId_).c_str());
         if (cancelCallback_) {
             cancelCallback_();
         }
@@ -47,6 +49,7 @@ void TaskHandle::SetCancelCallback(std::function<void()> callback)
 
 void TaskHandle::Reset()
 {
+    CDLOG_DEBUG("TaskHandle::Reset taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId_).c_str());
     uint8_t expected = TASK_STATE_CANCEL;
     // Allow reset from cancel back to init (for retry)
     state_.compare_exchange_strong(expected, TASK_STATE_INIT);
