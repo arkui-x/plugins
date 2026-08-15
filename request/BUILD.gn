@@ -45,9 +45,13 @@ template("plugin_request_static") {
     if (platform == "android") {
       defines += [ "ANDROID_PLATFORM" ]
       libs = [ "log" ]
+      deps += [ "//plugins/request/cachedownload:request_cachedownload_static_${platform}" ]
     } else if (platform == "ios") {
       defines += [ "IOS_PLATFORM" ]
       libs = [ "sqlite3" ]
+      # cacheDownload NAPI now ships as its own framework (librequest_cachedownload,
+      # SO2) depending on libcache_download_core (SO1). request_static no longer
+      # bundles it — see plugins/request/cachedownload/BUILD.gn.
     }
 
     defines += [
