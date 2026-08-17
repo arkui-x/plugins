@@ -23,6 +23,8 @@ namespace AudioStandard {
 namespace {
 static const int32_t SHORT_TIMEOUT_IN_MS = 200;      // ms
 static const int32_t READ_BUFFER_TIMEOUT_IN_MS = 20; // ms
+static const int32_t CAPTURER_FRAME_DURATION_IN_MS = 20; // ms, unified audio frame duration across platforms
+static const int32_t MS_PER_SECOND = 1000;
 static constexpr char READ_THREAD_NAME[] = "OS_AudioReadCB";
 } // namespace
 AudioCapturerImpl::AudioCapturerImpl() : minReadBufferSize_(0) {}
@@ -125,8 +127,19 @@ void AudioCapturerImpl::TransferState(CapturerState recordState)
 
 int32_t AudioCapturerImpl::GetBufferSize(size_t& bufferSize) const
 {
-    int32_t result = Plugin::AudioCapturerJni::GetBufferSize(reinterpret_cast<long>(this), streamInfo_, bufferSize);
-    return result;
+    // Use a fixed frame duration instead of the device-dependent
+    // AudioRecord.getMinBufferSize(), so JS reads the same buffer length on all platforms.
+    CHECK_AND_RETURN_RET_LOG(streamInfo_.samplingRate > 0 && streamInfo_.channels > 0, ERR_ILLEGAL_STATE,
+        "GetBufferSize failed. Invalid streamInfo, samplingRate:%{public}d, channels:%{public}d",
+        streamInfo_.samplingRate, streamInfo_.channels);
+    uint32_t bytesPerSample = Util::GetSamplePerFrame(streamInfo_.format);
+    // Frame-first, same as HPAE spanSizeInFrame_: round the frame count down to whole samples
+    // before converting to bytes, so odd rates (e.g. 11025Hz -> 220 frames) stay sample-aligned.
+    size_t framesPerSpan = static_cast<size_t>(streamInfo_.samplingRate) * CAPTURER_FRAME_DURATION_IN_MS /
+        MS_PER_SECOND;
+    bufferSize = framesPerSpan * static_cast<size_t>(streamInfo_.channels) * bytesPerSample;
+    AUDIO_DEBUG_LOG("AudioCapturerImpl::GetBufferSize bufferSize:%zu", bufferSize);
+    return SUCCESS;
 }
 
 int32_t AudioCapturerImpl::GetBufferDesc(BufferDesc& bufDesc)
