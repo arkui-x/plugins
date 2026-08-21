@@ -17,6 +17,7 @@ import("//foundation/arkui/ace_engine/ace_config.gni")
 SUBSYSTEM_DIR = "//foundation/communication"
 NETSTACK_NAPI_ROOT = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/"
 TLS_NAPI = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/tls"
+NETSTACK_UTILS = "$SUBSYSTEM_DIR/netstack/utils/"
 
 utils_include = [
   "$SUBSYSTEM_DIR/netstack/utils/log/include",
@@ -55,6 +56,8 @@ websocket_sources = [
   "$NETSTACK_NAPI_ROOT/websocket/websocket_module/src/websocket_module.cpp",
 ]
 
+utils_sources = [ "$NETSTACK_UTILS//common_utils/src/socket_statistics.cpp" ]
+
 template("plugin_net_websocket_static") {
   forward_variables_from(invoker, "*")
 
@@ -69,6 +72,7 @@ template("plugin_net_websocket_static") {
 
     include_dirs = websocket_include
     sources = websocket_sources
+    sources += utils_sources
 
     deps = [
       "//plugins/interfaces/native:ace_plugin_util_${platform}",
