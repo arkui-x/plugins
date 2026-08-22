@@ -71,6 +71,7 @@ common_plugin_libs = [
   "net/websocket",
   "worker",
   "request",
+  "request/cachedownload",
   "buffer",
   "fastbuffer",
   "geo_location_manager",

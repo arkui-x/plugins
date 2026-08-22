@@ -1,0 +1,8 @@
+{
+  global:
+    extern "C++" {
+      OHOS::Plugin::CacheDownload::*;
+    };
+  local:
+    *;
+};

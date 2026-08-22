@@ -1,0 +1,29 @@
+{
+    "name": "@ohos/request_cache_download",
+    "description": "cacheDownload plugin for ArkUI-X cross-platform",
+    "version": "1.0.0",
+    "license": "Apache-2.0",
+    "publishAs": "code-segment",
+    "segment": {
+        "destPath": "plugins/request/cachedownload"
+    },
+    "dirs": {},
+    "scripts": {},
+    "component": {
+        "name": "request_cache_download",
+        "subsystem": "plugins",
+        "features": [],
+        "rom": "100KB",
+        "ram": "100KB",
+        "deps": {
+            "components": [],
+            "third_party": []
+        },
+        "build": {
+            "sub_component": [
+                "//plugins/request/cachedownload:cache_download_java",
+                "//plugins/request/cachedownload:request_cachedownload"
+            ]
+        }
+    }
+}
