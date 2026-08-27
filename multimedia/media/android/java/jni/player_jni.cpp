@@ -138,17 +138,7 @@ struct {
     jmethodID selectBitrate;
     jobject globalRef;
 } g_playerpluginClass;
-static const std::map<std::string, jmethodID> voidFuncMap = {
-    {"createPlayer", g_playerpluginClass.createPlayer},
-    {"releasePlayer", g_playerpluginClass.releasePlayer},
-    {"prepare", g_playerpluginClass.prepare},
-    {"prepareAsync", g_playerpluginClass.prepareAsync},
-    {"play", g_playerpluginClass.play},
-    {"pause", g_playerpluginClass.pause},
-    {"stop", g_playerpluginClass.stop},
-    {"reset", g_playerpluginClass.reset},
-    {"release", g_playerpluginClass.release},
-};
+static std::map<std::string, jmethodID> voidFuncMap;
 }
 std::map<long, std::shared_ptr<Media::PlayerCallback>> PlayerJni::callbacks_;
 std::map<long, std::shared_ptr<Media::IMediaDataSource>> PlayerJni::mediaDataSources_;
@@ -264,6 +254,18 @@ void PlayerJni::NativeInit(JNIEnv *env, jobject jobj)
 
     g_playerpluginClass.selectBitrate = env->GetMethodID(cls, METHOD_SELECT_BITRATE, SIGNATURE_SET_MODE);
     CHECK_AND_RETURN(g_playerpluginClass.selectBitrate != nullptr);
+
+    voidFuncMap = {
+        {"createPlayer", g_playerpluginClass.createPlayer},
+        {"releasePlayer", g_playerpluginClass.releasePlayer},
+        {"prepare", g_playerpluginClass.prepare},
+        {"prepareAsync", g_playerpluginClass.prepareAsync},
+        {"play", g_playerpluginClass.play},
+        {"pause", g_playerpluginClass.pause},
+        {"stop", g_playerpluginClass.stop},
+        {"reset", g_playerpluginClass.reset},
+        {"release", g_playerpluginClass.release},
+    };
 
     return;
 }
