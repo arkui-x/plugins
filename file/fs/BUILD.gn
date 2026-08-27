@@ -135,6 +135,7 @@ template("plugin_fs_static") {
 
     if (target_os == "ios") {
       defines += [ "IOS_PLATFORM" ]
+      sources += [ "$plugin_fs_dirs/src/uri_opener_stub.cpp" ]
     }
 
     use_exceptions = true

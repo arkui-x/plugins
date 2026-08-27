@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import ohos.ace.adapter.ALog;
 
@@ -50,6 +52,17 @@ public class FilePicker {
     private static final int FILE_PICKER_CODE = 82;
     private static final int RESULT_ERROR = 13900042;
     private static final int RESULT_OK = 0;
+
+    private static final int COPY_BUF_SIZE = 64 * 1024;
+    private static final String PICKER_CACHE_DIR = "picker_cache";
+    private static final long CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000L;
+
+    private final ExecutorService copyExecutor = Executors.newSingleThreadExecutor(
+        r -> {
+            Thread t = new Thread(r, "FilePicker-Copy");
+            t.setPriority(Thread.NORM_PRIORITY - 1);
+            return t;
+        });
 
     private Object mProxyInstance;
     private int currentRequestId = 0;
@@ -198,8 +211,6 @@ public class FilePicker {
             return;
         }
 
-        List<String> rst = new ArrayList<>();
-
         List<Uri> uris = new ArrayList<>();
         Uri uri = data.getData();
         if (uri != null) {
@@ -214,19 +225,45 @@ public class FilePicker {
             }
         }
 
-        for (Uri resultUri : uris) {
-            if (!isSaveMode && "content".equals(resultUri.getScheme())) {
+        if (!isSaveMode) {
+            copyUrisToSandboxAsync(uris);
+        } else {
+            List<String> rst = new ArrayList<>();
+            for (Uri resultUri : uris) {
+                rst.add(resultUri.toString());
+            }
+            onPickerResult(rst, RESULT_OK, currentRequestId);
+        }
+    }
+
+    private void copyUrisToSandboxAsync(List<Uri> uris) {
+        int savedRequestId = currentRequestId;
+        copyExecutor.execute(() -> {
+            cleanExpiredCache();
+            List<String> rst = new ArrayList<>();
+            for (Uri resultUri : uris) {
+                if (!"content".equals(resultUri.getScheme())) {
+                    rst.add(resultUri.toString());
+                    continue;
+                }
+                if (isTreeUri(resultUri)) {
+                    rst.add(resultUri.toString());
+                    continue;
+                }
                 String sandboxPath = copyToSandbox(resultUri);
                 if (sandboxPath != null) {
                     rst.add("file://" + sandboxPath);
                 } else {
                     rst.add(resultUri.toString());
                 }
-            } else {
-                rst.add(resultUri.toString());
             }
-        }
-        onPickerResult(rst, RESULT_OK, currentRequestId);
+            onPickerResult(rst, RESULT_OK, savedRequestId);
+        });
+    }
+
+    private boolean isTreeUri(Uri uri) {
+        String path = uri.getPath();
+        return path != null && path.contains("/tree/");
     }
 
     private String copyToSandbox(Uri contentUri) {
@@ -238,7 +275,7 @@ public class FilePicker {
             ALog.e(LOG_TAG, "copyToSandbox: activity is null");
             return null;
         }
-        File sandboxDir = new File(activity.getFilesDir(), "picker_cache");
+        File sandboxDir = new File(activity.getFilesDir(), PICKER_CACHE_DIR);
         if (!sandboxDir.exists() && !sandboxDir.mkdirs()) {
             ALog.e(LOG_TAG, "copyToSandbox: mkdirs failed");
             return null;
@@ -250,10 +287,10 @@ public class FilePicker {
         }
         fileName = fileName.replaceAll("[:/\\\\|?*<>\"]", "_");
 
-        File destFile = new File(sandboxDir, fileName);
+        File destFile = resolveUniqueFile(sandboxDir, fileName);
         try (InputStream is = activity.getContentResolver().openInputStream(contentUri);
              FileOutputStream fos = new FileOutputStream(destFile)) {
-            byte[] buf = new byte[65536];
+            byte[] buf = new byte[COPY_BUF_SIZE];
             int len;
             while ((len = is.read(buf)) > 0) {
                 fos.write(buf, 0, len);
@@ -266,6 +303,55 @@ public class FilePicker {
         } catch (Exception e) {
             ALog.e(LOG_TAG, "copyToSandbox failed: " + e.getMessage());
             return null;
+        }
+    }
+
+    private File resolveUniqueFile(File dir, String fileName) {
+        File candidate = new File(dir, fileName);
+        if (!candidate.exists()) {
+            return candidate;
+        }
+        String baseName;
+        String ext;
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            baseName = fileName.substring(0, dotIndex);
+            ext = fileName.substring(dotIndex);
+        } else {
+            baseName = fileName;
+            ext = "";
+        }
+        int seq = 1;
+        while (candidate.exists()) {
+            candidate = new File(dir, baseName + "_" + seq + ext);
+            seq++;
+        }
+        return candidate;
+    }
+
+    private void cleanExpiredCache() {
+        Activity activity = cachedActivity;
+        if (activity == null) {
+            activity = getActivity();
+        }
+        if (activity == null) {
+            return;
+        }
+        File sandboxDir = new File(activity.getFilesDir(), PICKER_CACHE_DIR);
+        if (!sandboxDir.exists()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        File[] files = sandboxDir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File f : files) {
+            if (f.isFile() && (now - f.lastModified()) > CACHE_MAX_AGE_MS) {
+                if (f.delete()) {
+                    ALog.i(LOG_TAG, "cleanExpiredCache: deleted " + f.getName());
+                }
+            }
         }
     }
 

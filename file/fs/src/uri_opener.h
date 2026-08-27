@@ -18,18 +18,7 @@ struct PlatformFdResult {
     bool opened = false;
 };
 
-#ifdef ANDROID_PLATFORM
-#include <jni.h>
-
 PlatformFdResult OpenByPlatformNative(const std::string &uri, unsigned int mode);
-void NativeInit(JNIEnv* env, jobject jobj);
-bool RegisterFsUriOpenerJavaPlugin(void *env);
-#else
-inline PlatformFdResult OpenByPlatformNative(const std::string &uri, unsigned int mode)
-{
-    return PlatformFdResult{};
-}
-#endif
 
 } // namespace ModuleFileIO
 } // namespace FileManagement

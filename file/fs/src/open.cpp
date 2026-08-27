@@ -107,7 +107,7 @@ static tuple<int, string, bool> OpenFileByUri(const string &path, unsigned int m
             return { pf.fd, path, true };
         }
         HILOGE("Platform native open failed for non-file uri");
-        return { pf.fd, path, false };
+        return { -EINVAL, path, false };
     }
 
     AppFileService::ModuleFileUri::FileUri fileUri(path);
@@ -126,7 +126,7 @@ static tuple<int, string, bool> OpenFileByUri(const string &path, unsigned int m
         return { pf.fd, path, true };
     }
     HILOGE("Platform native fallback also failed");
-    return { ret, path, true };
+    return { ret, path, false };
 }
 
 napi_value Open::Sync(napi_env env, napi_callback_info info)
@@ -172,6 +172,7 @@ struct AsyncOpenFileArg {
     int fd = 0;
     string path;
     string uri;
+    bool isUri = false;
 };
 
 static NError AsyncCbExec(shared_ptr<AsyncOpenFileArg> arg, const string &path, unsigned int mode)
@@ -185,6 +186,7 @@ static NError AsyncCbExec(shared_ptr<AsyncOpenFileArg> arg, const string &path, 
         arg->fd = res;
         arg->path = "";
         arg->uri = uriStr;
+        arg->isUri = isUri;
         return NError(ERRNO_NOERR);
     }
     int ret = OpenFileByPath(pathStr, mode);
@@ -225,10 +227,7 @@ napi_value Open::Async(napi_env env, napi_callback_info info)
         if (err) {
             return { env, err.GetNapiErr(env) };
         }
-        if (arg->path.empty() && arg->uri.size()) {
-            return InstantiateFile(env, arg->fd, arg->uri, true);
-        }
-        return InstantiateFile(env, arg->fd, arg->path, false);
+        return InstantiateFile(env, arg->fd, arg->isUri ? arg->uri : arg->path, arg->isUri);
     };
     NVal thisVar(env, funcArg.GetThisVar());
     if (funcArg.GetArgc() == NARG_CNT::ONE || (funcArg.GetArgc() == NARG_CNT::TWO &&
