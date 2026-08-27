@@ -322,11 +322,10 @@ public class PhotoPlugin {
         int count = clipData.getItemCount();
         for (int i = 0; i < count; i++) {
             Uri uri = clipData.getItemAt(i).getUri();
-            String imagePath = getImagePath(uri);
-            if (imagePath.equals(EMPTY_STR)) {
+            if (uri == null) {
                 continue;
             }
-            rst.add(imagePath);
+            rst.add(uri.toString());
         }
         onPickerResult(rst, RESULT_OK);
     }
@@ -335,10 +334,7 @@ public class PhotoPlugin {
         List<String> rst = new ArrayList<>();
         Uri uri = data.getData();
         if (uri != null) {
-            String imagePath = getImagePath(uri);
-            if (!imagePath.equals(EMPTY_STR)) {
-                rst.add(imagePath);
-            }
+            rst.add(uri.toString());
         }
         return rst;
     }

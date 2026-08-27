@@ -29,6 +29,10 @@
 #ifndef IOS_PLATFORM
 #include "class_watcher/watcher_n_exporter.h"
 #endif
+#ifdef ANDROID_PLATFORM
+#include "plugin_utils.h"
+#include "uri_opener.h"
+#endif
 using namespace std;
 
 namespace OHOS {
@@ -76,6 +80,14 @@ static napi_module _module = {
 extern "C" __attribute__((constructor)) void RegisterFSModule(void)
 {
     napi_module_register(&_module);
+#ifdef ANDROID_PLATFORM
+    ARKUI_X_Plugin_RunAsyncTask(
+        []() {
+            ARKUI_X_Plugin_RegisterJavaPlugin(&RegisterFsUriOpenerJavaPlugin,
+                "ohos.ace.plugin.fsuriopener.FsUriOpenerPlugin");
+        },
+        ARKUI_X_PLUGIN_PLATFORM_THREAD);
+#endif
 }
 } // namespace ModuleFileIO
 } // namespace FileManagement

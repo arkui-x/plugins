@@ -123,6 +123,16 @@ template("plugin_fs_static") {
       "//plugins/libs/uv:uv_${target_os}",
     ]
 
+    if (target_os == "android") {
+      defines += [ "ANDROID_PLATFORM" ]
+      defines += [ "CROSS_PLATFORM" ]
+      include_dirs += [ "$plugin_fs_dirs/android" ]
+      deps += [
+        "//plugins/file/fs/android:fs_uri_opener_android_jni",
+        "//plugins/interfaces/native:ace_plugin_util_android",
+      ]
+    }
+
     if (target_os == "ios") {
       defines += [ "IOS_PLATFORM" ]
     }

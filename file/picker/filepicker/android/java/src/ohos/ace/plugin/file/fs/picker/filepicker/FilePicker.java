@@ -17,11 +17,17 @@ package ohos.ace.plugin.file.fs.picker.filepicker;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.provider.DocumentsContract;
+import android.provider.OpenableColumns;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -47,6 +53,8 @@ public class FilePicker {
 
     private Object mProxyInstance;
     private int currentRequestId = 0;
+    private boolean isSaveMode = false;
+    private Activity cachedActivity = null;
 
     public FilePicker(Context context) {
         nativeInit();
@@ -103,6 +111,7 @@ public class FilePicker {
     public void select(int maxSelectNumber, String defaultFilePathUri,
         String[] fileSuffixFilters, int selectMode, int requestId) {
         this.currentRequestId = requestId;
+        this.isSaveMode = false;
         ALog.i(LOG_TAG, "select enter. selectMode:" + selectMode);
         if (selectMode == DocumentSelectMode.FOLDER.code) {
             this.selectFolder();
@@ -159,6 +168,7 @@ public class FilePicker {
     public void save(String[] newFileNames, String defaultFilePath, int requestId) {
         ALog.i(LOG_TAG, "save enter");
         this.currentRequestId = requestId;
+        this.isSaveMode = true;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
@@ -190,19 +200,100 @@ public class FilePicker {
 
         List<String> rst = new ArrayList<>();
 
+        List<Uri> uris = new ArrayList<>();
         Uri uri = data.getData();
         if (uri != null) {
-            rst.add(uri.toString());
-            onPickerResult(rst, RESULT_OK, currentRequestId);
-            return;
-        }
-        if (data.getClipData() != null) {
+            uris.add(uri);
+        } else if (data.getClipData() != null) {
             int count = data.getClipData().getItemCount();
             for (int i = 0; i < count; i++) {
-                rst.add(data.getClipData().getItemAt(i).getUri().toString());
+                Uri clipUri = data.getClipData().getItemAt(i).getUri();
+                if (clipUri != null) {
+                    uris.add(clipUri);
+                }
             }
-            onPickerResult(rst, RESULT_OK, currentRequestId);
         }
+
+        for (Uri resultUri : uris) {
+            if (!isSaveMode && "content".equals(resultUri.getScheme())) {
+                String sandboxPath = copyToSandbox(resultUri);
+                if (sandboxPath != null) {
+                    rst.add("file://" + sandboxPath);
+                } else {
+                    rst.add(resultUri.toString());
+                }
+            } else {
+                rst.add(resultUri.toString());
+            }
+        }
+        onPickerResult(rst, RESULT_OK, currentRequestId);
+    }
+
+    private String copyToSandbox(Uri contentUri) {
+        Activity activity = cachedActivity;
+        if (activity == null) {
+            activity = getActivity();
+        }
+        if (activity == null) {
+            ALog.e(LOG_TAG, "copyToSandbox: activity is null");
+            return null;
+        }
+        File sandboxDir = new File(activity.getFilesDir(), "picker_cache");
+        if (!sandboxDir.exists() && !sandboxDir.mkdirs()) {
+            ALog.e(LOG_TAG, "copyToSandbox: mkdirs failed");
+            return null;
+        }
+
+        String fileName = queryFileName(activity, contentUri);
+        if (fileName == null || fileName.isEmpty()) {
+            fileName = "picked_" + System.currentTimeMillis();
+        }
+        fileName = fileName.replaceAll("[:/\\\\|?*<>\"]", "_");
+
+        File destFile = new File(sandboxDir, fileName);
+        try (InputStream is = activity.getContentResolver().openInputStream(contentUri);
+             FileOutputStream fos = new FileOutputStream(destFile)) {
+            byte[] buf = new byte[65536];
+            int len;
+            while ((len = is.read(buf)) > 0) {
+                fos.write(buf, 0, len);
+            }
+            ALog.i(LOG_TAG, "copyToSandbox: copied to " + destFile.getAbsolutePath());
+            return destFile.getAbsolutePath();
+        } catch (SecurityException e) {
+            ALog.e(LOG_TAG, "copyToSandbox security: " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            ALog.e(LOG_TAG, "copyToSandbox failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String queryFileName(Context context, Uri uri) {
+        String name = null;
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (nameIndex >= 0) {
+                    name = cursor.getString(nameIndex);
+                }
+            }
+        } catch (Exception e) {
+            ALog.w(LOG_TAG, "queryFileName failed: " + e.getMessage());
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        if (name == null) {
+            String lastSegment = uri.getLastPathSegment();
+            if (lastSegment != null) {
+                name = lastSegment.replaceAll("[:/]", "_");
+            }
+        }
+        return name;
     }
 
     private boolean checkResult(int requestCode, int resultCode, Intent data) {
@@ -230,7 +321,9 @@ public class FilePicker {
 
     private void startPicker(Intent intent) {
         try {
-            Objects.requireNonNull(getActivity()).startActivityForResult(intent, FILE_PICKER_CODE);
+            Activity activity = Objects.requireNonNull(getActivity());
+            this.cachedActivity = activity;
+            activity.startActivityForResult(intent, FILE_PICKER_CODE);
         } catch (ActivityNotFoundException e) {
             ALog.e(LOG_TAG, "ActivityNotFoundException, err:" + e);
             onPickerResult(new ArrayList<>(), RESULT_ERROR, currentRequestId);

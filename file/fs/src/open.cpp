@@ -25,6 +25,7 @@
 #include "common_func.h"
 #include "file_uri.h"
 #include "filemgmt_libhilog.h"
+#include "uri_opener.h"
 
 namespace OHOS {
 namespace FileManagement {
@@ -98,23 +99,34 @@ static int OpenFileByPath(const string &path, unsigned int mode)
     return ret;
 }
 
-static tuple<int, string> OpenFileByUri(const string &path, unsigned int mode)
+static tuple<int, string, bool> OpenFileByUri(const string &path, unsigned int mode)
 {
     if (path.find("file://") != 0) {
-        HILOGE("Unsupported URI scheme, only 'file' is supported");
-        return { -EINVAL, path };
+        auto pf = OpenByPlatformNative(path, mode);
+        if (pf.opened) {
+            return { pf.fd, path, true };
+        }
+        HILOGE("Platform native open failed for non-file uri");
+        return { pf.fd, path, false };
     }
+
     AppFileService::ModuleFileUri::FileUri fileUri(path);
     string realPath = fileUri.GetRealPath();
-    if (realPath.empty()) {
-        HILOGE("Failed to get real path from URI");
-        return { -EINVAL, path };
+    int ret = -1;
+    if (!realPath.empty()) {
+        ret = OpenFileByPath(realPath, mode);
     }
-    int ret = OpenFileByPath(realPath, mode);
-    if (ret < 0) {
-        HILOGE("Failed to open file for libuv error %{public}d", ret);
+    if (ret >= 0) {
+        return { ret, path, true };
     }
-    return { ret, path };
+
+    HILOGI("libuv open failed for file uri, fallback to platform native, ret=%{public}d", ret);
+    auto pf = OpenByPlatformNative(path, mode);
+    if (pf.opened) {
+        return { pf.fd, path, true };
+    }
+    HILOGE("Platform native fallback also failed");
+    return { ret, path, true };
 }
 
 napi_value Open::Sync(napi_env env, napi_callback_info info)
@@ -139,12 +151,12 @@ napi_value Open::Sync(napi_env env, napi_callback_info info)
     std::string pathStr(path.get());
 
     if (pathStr.find("://") != string::npos) {
-        auto [res, uriStr] = OpenFileByUri(pathStr, mode);
+        auto [res, uriStr, isUri] = OpenFileByUri(pathStr, mode);
         if (res < 0) {
             NError(res).ThrowErr(env);
             return nullptr;
         }
-        return InstantiateFile(env, res, uriStr, true).val_;
+        return InstantiateFile(env, res, uriStr, isUri).val_;
     }
 
     int ret = OpenFileByPath(pathStr, mode);
@@ -166,7 +178,7 @@ static NError AsyncCbExec(shared_ptr<AsyncOpenFileArg> arg, const string &path, 
 {
     string pathStr(path);
     if (pathStr.find("://") != string::npos) {
-        auto [res, uriStr] = OpenFileByUri(pathStr, mode);
+        auto [res, uriStr, isUri] = OpenFileByUri(pathStr, mode);
         if (res < 0) {
             return NError(res);
         }
