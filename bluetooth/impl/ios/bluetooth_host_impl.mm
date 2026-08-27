@@ -567,5 +567,10 @@ int32_t BluetoothHostImpl::VerifyMultiPermissions(bool systemHapNeeded,
 {
     return 0;
 }
+
+int32_t BluetoothHostImpl::UpdateSecondaryPhonePairMode(int32_t mode)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

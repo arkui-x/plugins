@@ -19,7 +19,7 @@ NETSTACK_NAPI_ROOT = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/"
 NETSTACK_INNERKITS_DIR = "$SUBSYSTEM_DIR/netstack/interfaces/innerkits"
 TLS = "$SUBSYSTEM_DIR/netstack/frameworks/native/tls_socket"
 TLS_NAPI = "$SUBSYSTEM_DIR/netstack/frameworks/js/napi/tls"
-NETSTACK_UTILS = "$SUBSYSTEM_DIR/netstack/utils/"
+NETSTACK_UTILS = "$SUBSYSTEM_DIR/netstack/utils"
 
 tls_include = [
   "$TLS/include",
@@ -120,7 +120,7 @@ socket_sources = [
   "$NETSTACK_NAPI_ROOT/tls/src/context/tls_init_context.cpp",
 ]
 
-utils_sources = [ "$NETSTACK_UTILS//common_utils/src/socket_statistics.cpp" ]
+utils_sources = [ "$NETSTACK_UTILS/common_utils/src/socket_statistics.cpp" ]
 
 utils_include = [
   "$SUBSYSTEM_DIR/netstack/utils/log/include",
