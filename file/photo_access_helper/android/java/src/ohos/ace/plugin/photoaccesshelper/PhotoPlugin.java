@@ -34,6 +34,8 @@ import android.provider.MediaStore.MediaColumns;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -46,6 +48,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import ohos.ace.adapter.ALog;
 import ohos.ace.plugin.photoaccesshelper.AlbumValues;
@@ -76,11 +80,22 @@ public class PhotoPlugin {
 
     private static String SELECTION_KEY = "android:query-arg-sql-selection";
 
+    private static final int COPY_BUF_SIZE = 64 * 1024;
+    private static final String PICKER_CACHE_DIR = "picker_cache";
+    private static final long CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000L;
+
     private Context mContext;
 
     private Object mProxyInstance = null;
 
     private ContentResolver mResolver;
+
+    private final ExecutorService copyExecutor = Executors.newSingleThreadExecutor(
+        r -> {
+            Thread t = new Thread(r, "PhotoPlugin-Copy");
+            t.setPriority(Thread.NORM_PRIORITY - 1);
+            return t;
+        });
 
     public PhotoPlugin(Context context) {
         mContext = context;
@@ -306,56 +321,145 @@ public class PhotoPlugin {
             return;
         }
 
-        List<String> rst = new ArrayList<>();
         int RESULT_OK = 0;
         mResolver = activity.getContentResolver();
         if (mResolver == null) {
-            onPickerResult(rst, RESULT_OK);
+            onPickerResult(new ArrayList<>(), RESULT_OK);
             return;
         }
+        List<Uri> uris = new ArrayList<>();
         ClipData clipData = data.getClipData();
         if (clipData == null || clipData.getItemCount() <= 0) {
-            rst = getIntentData(data);
-            onPickerResult(rst, RESULT_OK);
+            Uri uri = data.getData();
+            if (uri != null) {
+                uris.add(uri);
+            }
+        } else {
+            int count = clipData.getItemCount();
+            for (int i = 0; i < count; i++) {
+                Uri uri = clipData.getItemAt(i).getUri();
+                if (uri != null) {
+                    uris.add(uri);
+                }
+            }
+        }
+        copyUrisToSandboxAsync(uris, activity);
+    }
+
+    private void copyUrisToSandboxAsync(List<Uri> uris, Activity activity) {
+        copyExecutor.execute(() -> {
+            cleanExpiredCache(activity);
+            List<String> rst = new ArrayList<>();
+            for (Uri uri : uris) {
+                String sandboxPath = copyToSandbox(uri, activity);
+                if (sandboxPath != null) {
+                    rst.add(IMAGE_PREFIX + sandboxPath);
+                } else {
+                    rst.add(uri.toString());
+                }
+            }
+            onPickerResult(rst, 0);
+        });
+    }
+
+    private String copyToSandbox(Uri contentUri, Activity activity) {
+        if (activity == null) {
+            ALog.e(TAG, "copyToSandbox: activity is null");
+            return null;
+        }
+        File sandboxDir = new File(activity.getFilesDir(), PICKER_CACHE_DIR);
+        if (!sandboxDir.exists() && !sandboxDir.mkdirs()) {
+            ALog.e(TAG, "copyToSandbox: mkdirs failed");
+            return null;
+        }
+        String fileName = queryFileName(activity, contentUri);
+        if (fileName == null || fileName.isEmpty()) {
+            fileName = "photo_" + System.currentTimeMillis();
+        }
+        fileName = fileName.replaceAll("[:/\\\\|?*<>\"]", "_");
+        File destFile = resolveUniqueFile(sandboxDir, fileName);
+        try (InputStream is = activity.getContentResolver().openInputStream(contentUri);
+             FileOutputStream fos = new FileOutputStream(destFile)) {
+            byte[] buf = new byte[COPY_BUF_SIZE];
+            int len;
+            while ((len = is.read(buf)) > 0) {
+                fos.write(buf, 0, len);
+            }
+            ALog.i(TAG, "copyToSandbox: copied to " + destFile.getAbsolutePath());
+            return destFile.getAbsolutePath();
+        } catch (SecurityException e) {
+            ALog.e(TAG, "copyToSandbox security: " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            ALog.e(TAG, "copyToSandbox failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private File resolveUniqueFile(File dir, String fileName) {
+        File candidate = new File(dir, fileName);
+        if (!candidate.exists()) {
+            return candidate;
+        }
+        String baseName;
+        String ext;
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            baseName = fileName.substring(0, dotIndex);
+            ext = fileName.substring(dotIndex);
+        } else {
+            baseName = fileName;
+            ext = "";
+        }
+        int seq = 1;
+        while (candidate.exists()) {
+            candidate = new File(dir, baseName + "_" + seq + ext);
+            seq++;
+        }
+        return candidate;
+    }
+
+    private void cleanExpiredCache(Activity activity) {
+        if (activity == null) {
             return;
         }
-        int count = clipData.getItemCount();
-        for (int i = 0; i < count; i++) {
-            Uri uri = clipData.getItemAt(i).getUri();
-            if (uri == null) {
-                continue;
+        File sandboxDir = new File(activity.getFilesDir(), PICKER_CACHE_DIR);
+        if (!sandboxDir.exists()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        File[] files = sandboxDir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File f : files) {
+            if (f.isFile() && (now - f.lastModified()) > CACHE_MAX_AGE_MS) {
+                if (f.delete()) {
+                    ALog.i(TAG, "cleanExpiredCache: deleted " + f.getName());
+                }
             }
-            rst.add(uri.toString());
         }
-        onPickerResult(rst, RESULT_OK);
     }
 
-    private List<String> getIntentData(Intent data) {
-        List<String> rst = new ArrayList<>();
-        Uri uri = data.getData();
-        if (uri != null) {
-            rst.add(uri.toString());
+    private String queryFileName(Context context, Uri uri) {
+        String name = null;
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (nameIndex >= 0) {
+                    name = cursor.getString(nameIndex);
+                }
+            }
+        } catch (Exception e) {
+            ALog.w(TAG, "queryFileName failed: " + e.getMessage());
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
-        return rst;
-    }
-
-    private String getImagePath(Uri uri) {
-        if (mResolver == null) {
-            return EMPTY_STR;
-        }
-        String[] columns = {MediaStore.MediaColumns.DATA};
-        Cursor cursor = mResolver.query(uri, columns, null, null, null);
-        if (cursor == null) {
-            return EMPTY_STR;
-        }
-        cursor.moveToFirst();
-        int index = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
-        String relativePath = cursor.getString(index);
-        if (relativePath == null || relativePath.isEmpty()) {
-            return EMPTY_STR;
-        }
-        String imagePath = IMAGE_PREFIX + relativePath;
-        return imagePath;
+        return name;
     }
 
     private boolean checkResult(int requestCode, int resultCode, Intent data) {
