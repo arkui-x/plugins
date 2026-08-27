@@ -32,7 +32,7 @@ void PluginUtilsInner::RegisterPlugin(RegisterCallback callback, const std::stri
     auto task = [callback, className]() {
         OHOS::Ace::Platform::PluginManagerJni::RegisterPlugin(callback, className);
     };
-    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutor();
+    auto taskExecutor = OHOS::Ace::Container::CurrentTaskExecutorSafely();
     if (!taskExecutor) {
         RegisterPluginOnEvent(task);
     } else {
