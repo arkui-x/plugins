@@ -28,6 +28,7 @@ const char PLATFORM_VIEW_TOUCH_DOWN[] = "touchDown";
 const char PLATFORM_VIEW_TOUCH_UP[] = "touchUp";
 const char PLATFORM_VIEW_TOUCH_MOVE[] = "touchMove";
 const char PLATFORM_VIEW_TOUCH_CANCEL[] = "touchCancel";
+const char PLATFORM_VIEW_GESTURE_JUDGE[] = "gestureJudge";
 const char DISPOSE_PLATFORM_VIEW[] = "dispose";
 const char PLATFORM_VIEW_HEIGHT[] = "platformViewHeight";
 const char PLATFORM_VIEW_WIDTH[] = "platformViewWidth";
@@ -210,6 +211,23 @@ void PlatformViewDelegate::HandleTouchCancel(const NG::OffsetF& offset)
                 << offset.GetY();
     std::string param = paramStream.str();
     CallResRegisterMethod(MakeMethodHash(PLATFORM_VIEW_TOUCH_CANCEL), param);
+}
+
+bool PlatformViewDelegate::OnGestureJudgeNativeBegin(const NG::OffsetF& offset)
+{
+    std::stringstream paramStream;
+    paramStream << PLATFORM_VIEW_TOUCH_POINT_OFFSET_X << PLATFORM_VIEW_PARAM_EQUALS
+                << offset.GetX() << PLATFORM_VIEW_PARAM_AND
+                << PLATFORM_VIEW_TOUCH_POINT_OFFSET_Y << PLATFORM_VIEW_PARAM_EQUALS
+                << offset.GetY();
+    std::string param = paramStream.str();
+    bool consume = true;
+    CallSyncResRegisterMethod(MakeMethodHash(PLATFORM_VIEW_GESTURE_JUDGE), param,
+        [&consume](std::string& result) mutable {
+            // Java side returns "true" when the native view consumes the gesture.
+            consume = (result.find("true") == 0);
+        });
+    return consume;
 }
 
 void PlatformViewDelegate::Dispose()

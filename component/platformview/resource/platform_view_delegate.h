@@ -42,6 +42,7 @@ public:
     void HandleTouchUp(const NG::OffsetF& offset);
     void HandleTouchMove(const NG::OffsetF& offset);
     void HandleTouchCancel(const NG::OffsetF& offset);
+    bool OnGestureJudgeNativeBegin(const NG::OffsetF& offset);
     void Dispose();
     void SetScale(float x, float y, float z, const std::string& centerX, const std::string& centerY);
     void SetRotation(float x, float y, float z, const std::string& angle, const std::string& centerX,

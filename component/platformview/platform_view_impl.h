@@ -43,6 +43,7 @@ public:
     void HandleTouchUp(const NG::OffsetF& offset) override;
     void HandleTouchMove(const NG::OffsetF& offset) override;
     void HandleTouchCancel(const NG::OffsetF& offset) override;
+    bool OnGestureJudgeNativeBegin(const NG::OffsetF& offset) override;
 
     void ProcessSurfaceCreate() override;
     void ProcessSurfaceChange(int32_t width, int32_t height) override {}
