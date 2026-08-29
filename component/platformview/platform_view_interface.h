@@ -54,6 +54,11 @@ public:
     virtual void HandleTouchMove(const NG::OffsetF& offset) {}
     virtual void HandleTouchCancel(const NG::OffsetF& offset) {}
 
+    // Ask the native view whether it wants to consume the in-progress pan
+    // gesture. Return true to let ArkUI keep the gesture (parent List will not
+    // scroll); return false to yield the gesture to the parent List scroll.
+    virtual bool OnGestureJudgeNativeBegin(const NG::OffsetF& offset) { return true; }
+
     virtual void SetRenderSurface(const RefPtr<RenderSurface>& renderSurface) {}
     virtual void RegisterTextureEvent(TextureRefreshEvent&& textureRefreshEvent) {}
     virtual void RegisterPlatformViewReadyEvent(PlatformViewReadyEvent&& platformViewReadyEvent) {}

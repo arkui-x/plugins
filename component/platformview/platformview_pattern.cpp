@@ -375,7 +375,31 @@ void PlatformViewPattern::InitEvent()
     InitTouchEvent(gestureHub);
 #if defined(ANDROID_PLATFORM)
     InitPanGesture(gestureHub);
+    gestureHub->SetOnGestureJudgeNativeBegin(
+        [weak = WeakClaim(this)](const RefPtr<GestureInfo>& gestureInfo,
+            const std::shared_ptr<BaseGestureEvent>& info) -> GestureJudgeResult {
+            auto pattern = weak.Upgrade();
+            CHECK_NULL_RETURN(pattern, GestureJudgeResult::CONTINUE);
+            auto panEvent = TypeInfoHelper::DynamicCast<PanGestureEvent>(info.get());
+            CHECK_NULL_RETURN(panEvent, GestureJudgeResult::CONTINUE);
+            NG::OffsetF panDelta(static_cast<float>(panEvent->GetOffsetX()),
+                static_cast<float>(panEvent->GetOffsetY()));
+
+            bool consume = pattern->platformView_->OnGestureJudgeNativeBegin(panDelta);
+            if (consume) {
+                return GestureJudgeResult::CONTINUE;
+            }
+            
+            auto hostNode = pattern->GetHost();
+            CHECK_NULL_RETURN(hostNode, GestureJudgeResult::CONTINUE);
+            auto transformRelativeOffset = hostNode->GetTransformRelativeOffset();
+            NG::OffsetF pointOffset = pattern->localPosition_ + transformRelativeOffset;
+            pattern->platformView_->HandleTouchCancel(pointOffset);
+            pattern->isGestureLost_ = true;
+            return GestureJudgeResult::REJECT;
+        });
 #endif
+
     auto focusHub = host->GetOrCreateFocusHub();
     CHECK_NULL_VOID(focusHub);
     InitFocusEvent(focusHub);
@@ -396,7 +420,7 @@ void PlatformViewPattern::InitPanGesture(const RefPtr<GestureEventHub>& gestureH
     PanDirection panDirection;
     panDirection.type = PanDirection::ALL;
     option->SetDirection(panDirection);
-    option->SetDistance(0.0);
+    option->SetDistance(DEFAULT_PAN_DISTANCE.ConvertToPx());
     option->SetFingers(1);
     panGesture_ = MakeRefPtr<PanGesture>(option);
     CHECK_NULL_VOID(panGesture_);
@@ -434,6 +458,10 @@ void PlatformViewPattern::HandleTouchEvent(const TouchEventInfo& info)
     auto touchType = touchInfoList.front().GetTouchType();
     if (touchType == TouchType::DOWN) {
         RequestFocus();
+        isGestureLost_ = false;
+    }
+    if (isGestureLost_ && (touchType == TouchType::MOVE || touchType == TouchType::UP)) {
+        return;
     }
     const auto& changedPoint = touchInfoList.front();
     PlatformViewDispatchTouchEvent(changedPoint);
