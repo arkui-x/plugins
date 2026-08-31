@@ -17,8 +17,10 @@
 #include "cache_file.h"
 #include "cache_task.h"
 #include "cache_http_client.h"
+#include "cache_log.h"
 
 #include <algorithm>
+#include <atomic>
 #include <climits>
 #include <chrono>
 #include <thread>
@@ -66,6 +68,9 @@ struct DownloadContext : public CacheHttpRequestCallback {
     std::chrono::steady_clock::time_point startTime;
     int32_t responseCode = 0;
     CacheHttpMetrics metrics;
+    // Cached brief task id — computed once per download to avoid repeated
+    // full SHA-256 hashing in high-frequency OnData callbacks.
+    std::string briefTaskId;
 
     bool IsFinished() const
     {
@@ -79,6 +84,7 @@ struct DownloadContext : public CacheHttpRequestCallback {
             return 0;
         }
         ramCache->Write(data, size);
+        CDLOG_DEBUG("OnData taskId=" CDLOG_FMT_PUBLIC_S " chunk=" CDLOG_FMT_ZU, briefTaskId.c_str(), size);
         return size;
     }
 
@@ -140,6 +146,7 @@ void CacheDownloadService::Initialize(const std::string& cacheDir)
     cacheManager_.InitCacheDir(cacheDir);
     cacheManager_.BuildCachedFilesIndex();
     initialized_.store(true);
+    CDLOG_DEBUG("CacheDownloadService::Initialize dir=" CDLOG_FMT_PUBLIC_S, GetLastPathDir(cacheDir).c_str());
 }
 
 bool CacheDownloadService::IsInitialized() const
@@ -153,8 +160,20 @@ bool CacheDownloadService::IsInitialized() const
 
 void CacheDownloadService::Download(const std::string& url, const CacheDownloadOptions& options)
 {
+    CDLOG_INFO("Download taskId=" CDLOG_FMT_PUBLIC_S " strategy=" CDLOG_FMT_D,
+        GetBriefTaskId(url).c_str(), (int)options.cacheStrategy);
     // Check if already cached with LAZY strategy
     if (options.cacheStrategy == CacheStrategy::LAZY && Contains(url)) {
+        // Distinguish RAM-resident vs FILE-only cache hits — matches native
+        // services.rs:614 "fetch success" (RAM) vs services.rs:623 "read local
+        // success" (file loaded back to RAM).
+        if (cacheManager_.HasInRam(url)) {
+            CDLOG_INFO("Download cache hit (RAM) taskId=" CDLOG_FMT_PUBLIC_S,
+                       GetBriefTaskId(url).c_str());
+        } else {
+            CDLOG_INFO("Download cache hit (FILE) taskId=" CDLOG_FMT_PUBLIC_S,
+                       GetBriefTaskId(url).c_str());
+        }
         NotifySuccess(url);
         return;
     }
@@ -178,6 +197,8 @@ void CacheDownloadService::Cancel(const std::string& url)
             activeTasks_.erase(it);
         }
     }
+
+    CDLOG_INFO("Cancel taskId=" CDLOG_FMT_PUBLIC_S " found=" CDLOG_FMT_D, GetBriefTaskId(url).c_str(), handle ? 1 : 0);
 
     if (handle) {
         // Cancel() runs the cancel callback (aborts the HTTP request and resets
@@ -408,12 +429,24 @@ void CacheDownloadService::ExecuteDownload(const std::string& url,
     // Build a cache key (URL is the primary key)
     std::string taskId = url;
 
+    // Assign a monotonic sequence number — matches native task.rs:90
+    //   info!("new task {} seq {}", task_id.brief(), seq)
+    // NOTE: native task.rs uses `updater.seq + 1` as a per-task rebuild
+    // generation for ABA protection; the port uses a global monotonic counter
+    // as a unique task ordinal. Purpose diverges — kept for log correlation.
+    static std::atomic<size_t> s_seq{0};
+    size_t seq = s_seq.fetch_add(1, std::memory_order_relaxed);
+    CDLOG_INFO("new task taskId=" CDLOG_FMT_PUBLIC_S " seq=" CDLOG_FMT_ZU,
+               GetBriefTaskId(url).c_str(), seq);
+
     // Create task handle
     auto handle = std::make_shared<TaskHandle>(taskId, url, cacheManager_);
     handle->state_ = TASK_STATE_RUNNING;
+    CDLOG_INFO("ExecuteDownload taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(url).c_str());
 
     auto ctx = std::make_shared<DownloadContext>();
     ctx->url = url;
+    ctx->briefTaskId = GetBriefTaskId(url);
     ctx->handle = handle;
     ctx->service = this;
     ctx->self = ctx;
@@ -450,8 +483,12 @@ void CacheDownloadService::StartDownload(const std::shared_ptr<DownloadContext>&
     ctx->ramCache = cacheManager_.CreateRamCache(ctx->url);
 
     auto client = CreateCacheHttpClient();
+    CDLOG_DEBUG("StartDownload taskId=" CDLOG_FMT_PUBLIC_S " attempt=" CDLOG_FMT_ZU,
+        GetBriefTaskId(ctx->url).c_str(), ctx->attemptCount);
     if (!client) {
         ctx->handle->state_.store(TASK_STATE_FAIL);
+        CDLOG_ERROR("StartDownload failed: HTTP client null taskId=" CDLOG_FMT_PUBLIC_S,
+            GetBriefTaskId(ctx->url).c_str());
         NotifyError(ctx->url, CacheDownloadError(ErrorCode::OTHERS, -1, "Failed to create HTTP client"));
         ctx->handle->ClearCancelCallback();
         ctx->self.reset();
@@ -473,6 +510,8 @@ void CacheDownloadService::StartDownload(const std::shared_ptr<DownloadContext>&
     ctx->request = client->NewRequest(requestOptions, ctx);
     if (!ctx->request) {
         ctx->handle->state_.store(TASK_STATE_FAIL);
+        CDLOG_ERROR("StartDownload failed: HTTP request null taskId=" CDLOG_FMT_PUBLIC_S,
+            GetBriefTaskId(ctx->url).c_str());
         NotifyError(ctx->url, CacheDownloadError(ErrorCode::OTHERS, -1, "Failed to create HTTP request"));
         ctx->handle->ClearCancelCallback();
         ctx->self.reset();
@@ -481,6 +520,8 @@ void CacheDownloadService::StartDownload(const std::shared_ptr<DownloadContext>&
 
     if (!ctx->request->Start()) {
         ctx->handle->state_.store(TASK_STATE_FAIL);
+        CDLOG_ERROR("StartDownload failed: HTTP request start failed taskId=" CDLOG_FMT_PUBLIC_S,
+            GetBriefTaskId(ctx->url).c_str());
         NotifyError(ctx->url, CacheDownloadError(ErrorCode::OTHERS, -1, "Failed to start HTTP request"));
         ctx->handle->ClearCancelCallback();
         ctx->self.reset();
@@ -497,6 +538,8 @@ void CacheDownloadService::RetryDownload(const std::shared_ptr<DownloadContext>&
     // Reset task state to allow retry
     ctx->handle->Reset();
     ctx->handle->state_.store(TASK_STATE_RUNNING);
+    CDLOG_INFO("RetryDownload taskId=" CDLOG_FMT_PUBLIC_S " attempt=" CDLOG_FMT_ZU " maxRetry=" CDLOG_FMT_ZU,
+        GetBriefTaskId(ctx->url).c_str(), ctx->attemptCount, ctx->retryOptions.maxRetryCount);
 
     // Retry after a short delay. In production this should be scheduled
     // asynchronously; for the first version we spawn a detached thread.
@@ -563,6 +606,8 @@ void DownloadContext::OnSuccess(const CacheHttpResponseInfo& info)
     }
 
     responseCode = info.statusCode;
+    CDLOG_INFO("OnSuccess taskId=" CDLOG_FMT_PUBLIC_S " statusCode=" CDLOG_FMT_D " size=" CDLOG_FMT_ZU,
+        GetBriefTaskId(url).c_str(), responseCode, ramCache->Size());
     ramCache->FinishWrite();
 
     DownloadInfo downloadInfo = BuildDownloadInfo(
@@ -573,6 +618,9 @@ void DownloadContext::OnSuccess(const CacheHttpResponseInfo& info)
         // OH semantics: a list size of 0 means "do not store".
         if (service->infoListSize_ > 0) {
             service->downloadInfos_.Put(url, std::move(downloadInfo));
+            // Matches native info.rs:557: info!("Insert {} info", task_id.brief())
+            CDLOG_INFO("InsertDownloadInfo taskId=" CDLOG_FMT_PUBLIC_S,
+                       GetBriefTaskId(url).c_str());
         }
     }
 
@@ -589,6 +637,13 @@ void DownloadContext::OnFailed(int errorCode, const std::string& message)
         return;
     }
 
+    // The raw message is deliberately NOT logged: transport error texts (e.g.
+    // iOS localizedDescription) often embed URL fragments — an indirect URL
+    // leak channel. The callback contract still carries the full message; only
+    // the log line drops it (matches native, which logs brief id + code only).
+    CDLOG_ERROR("OnFailed taskId=" CDLOG_FMT_PUBLIC_S " errorCode=" CDLOG_FMT_D " attempt=" CDLOG_FMT_ZU,
+        GetBriefTaskId(url).c_str(), errorCode, attemptCount);
+
     // Error classification contract with the platform HTTP client:
     //   - HTTP status errors: errorCode = HTTP status (100..599), message = status string.
     //   - Transport errors:   errorCode = ErrorCode enum value (DNS/TCP/SSL/OTHERS).
@@ -599,6 +654,8 @@ void DownloadContext::OnFailed(int errorCode, const std::string& message)
     auto cls = ClassifyDownloadError(errorCode, message);
     if (!cls.isNonRetryable && attemptCount < retryOptions.maxRetryCount) {
         attemptCount++;
+        CDLOG_INFO("OnFailed retrying taskId=" CDLOG_FMT_PUBLIC_S " attempt=" CDLOG_FMT_ZU,
+            GetBriefTaskId(url).c_str(), attemptCount);
         service->RetryDownload(self);
         return;
     }
@@ -613,6 +670,10 @@ void DownloadContext::OnFailed(int errorCode, const std::string& message)
         std::lock_guard<std::mutex> lock(service->infoMutex_);
         if (service->infoListSize_ > 0) {
             service->downloadInfos_.Put(url, std::move(downloadInfo));
+            // Matches native info.rs:557: info!("Insert {} info", task_id.brief())
+            // Symmetric with OnSuccess — failed downloads also store info.
+            CDLOG_INFO("InsertDownloadInfo taskId=" CDLOG_FMT_PUBLIC_S,
+                       GetBriefTaskId(url).c_str());
         }
     }
 
@@ -642,6 +703,8 @@ void CacheDownloadService::NotifySuccess(const std::string& url)
             }
         }
     }
+    CDLOG_INFO("NotifySuccess taskId=" CDLOG_FMT_PUBLIC_S " callbacks=" CDLOG_FMT_ZU,
+        GetBriefTaskId(url).c_str(), callbacks.size());
 
     for (auto& cb : callbacks) {
         if (cb) {
@@ -668,6 +731,8 @@ void CacheDownloadService::NotifyError(const std::string& url, const CacheDownlo
             }
         }
     }
+    CDLOG_INFO("NotifyError taskId=" CDLOG_FMT_PUBLIC_S " errorCode=" CDLOG_FMT_D " callbacks=" CDLOG_FMT_ZU,
+        GetBriefTaskId(url).c_str(), (int)error.errorCode, callbacks.size());
 
     for (auto& cb : callbacks) {
         if (cb) {

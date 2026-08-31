@@ -21,6 +21,7 @@
 #define LOG_DOMAIN 0xD002B01
 #define LOG_TAG "CacheDownload"
 #include "hilog/log.h"
+#include "cache_log.h"
 
 #import <Foundation/Foundation.h>
 
@@ -179,6 +180,8 @@ void CacheHttpRequestIOS::HandleResponse(NSData* data, NSURLResponse* response, 
 {
     NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
     NSInteger statusCode = (httpResponse != nil) ? httpResponse.statusCode : 0;
+    CDLOG_INFO("CacheHttpRequestIOS::HandleResponse statusCode=" CDLOG_FMT_D " taskId=" CDLOG_FMT_PUBLIC_S,
+               (int)statusCode, GetBriefTaskId(strongSelf->options_.url).c_str());
 
     CacheHttpMetrics metrics;
     metrics.serverIp = strongSelf->resolvedIp_;
@@ -191,6 +194,8 @@ void CacheHttpRequestIOS::HandleResponse(NSData* data, NSURLResponse* response, 
     if (error != nil) {
         int ec = MapNSErrorToErrorCode(error);
         callback->OnFailed(ec, NSStringToStdString(error.localizedDescription));
+        CDLOG_ERROR("CacheHttpRequestIOS error code=" CDLOG_FMT_D " taskId=" CDLOG_FMT_PUBLIC_S,
+                    ec, GetBriefTaskId(strongSelf->options_.url).c_str());
         strongSelf->session_ = nil;
         return;
     }
@@ -234,13 +239,14 @@ bool CacheHttpRequestIOS::Start()
     // peer fails (SUB_Request_cacheDownload_stateSecret_0400).
     if (options_.sslType == SslType::TLCP) {
         HILOG_ERROR(LOG_CORE,
-            "cacheDownload: TLCP sslType is not supported on iOS, fail explicitly. url=%{public}s",
-            options_.url.c_str());
+            "cacheDownload: TLCP sslType is not supported on iOS, fail explicitly. taskId=%{public}s",
+            GetBriefTaskId(options_.url).c_str());
         callback_->OnFailed(static_cast<int>(ErrorCode::SSL), "TLCP is not supported on iOS");
         return false;
     }
 
     startTime_ = std::chrono::steady_clock::now();
+    CDLOG_INFO("CacheHttpRequestIOS::Start taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(options_.url).c_str());
     resolvedIp_ = ResolveHostToIp(options_.url);
 
     NSMutableURLRequest* request = BuildRequest();
@@ -265,6 +271,7 @@ bool CacheHttpRequestIOS::Start()
 
 void CacheHttpRequestIOS::Cancel()
 {
+    CDLOG_INFO("CacheHttpRequestIOS::Cancel taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(options_.url).c_str());
     cancelled_ = true;
     if (task_ != nil) {
         [task_ cancel];

@@ -15,6 +15,7 @@
 
 #include "cache_manager.h"
 #include "cache_file.h"
+#include "cache_log.h"
 
 #include <algorithm>
 
@@ -124,6 +125,7 @@ std::shared_ptr<RamCache> CacheManager::Fetch(const std::string& taskId)
         std::lock_guard<std::mutex> lock(ramMutex_);
         auto cached = ramCache_.Get(taskId);
         if (cached.has_value()) {
+            CDLOG_DEBUG("Fetch RAM hit taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
             return *cached;
         }
     }
@@ -133,11 +135,13 @@ std::shared_ptr<RamCache> CacheManager::Fetch(const std::string& taskId)
         std::lock_guard<std::mutex> lock(fileMutex_);
         auto it = backupRams_.find(taskId);
         if (it != backupRams_.end()) {
+            CDLOG_DEBUG("Fetch backup RAM hit taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
             return it->second;
         }
     }
 
     // 3. Try to load from file cache
+    CDLOG_DEBUG("Fetch file load taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
     return LoadRamFromFile(taskId);
 }
 
@@ -160,6 +164,25 @@ bool CacheManager::Contains(const std::string& taskId) const
     }
 
     return FileCache::Exists(taskId);
+}
+
+bool CacheManager::HasInRam(const std::string& taskId) const
+{
+    {
+        std::lock_guard<std::mutex> lock(ramMutex_);
+        if (ramCache_.Contains(taskId)) {
+            return true;
+        }
+    }
+    // Also check backupRams_ — during the background write-to-file window the
+    // entry is moved out of ramCache_ into backupRams_, but the data is still
+    // RAM-resident. Matches the Contains() semantics at cache_manager.cpp:160.
+    // Independent scopes acquired sequentially (never both held), consistent
+    // with Fetch()/Contains() and the native get_cache (manage.rs).
+    {
+        std::lock_guard<std::mutex> flock(fileMutex_);
+        return backupRams_.count(taskId) > 0;
+    }
 }
 
 void CacheManager::Remove(const std::string& taskId)
@@ -198,6 +221,8 @@ void CacheManager::OnDownloadComplete(std::unique_ptr<RamCache> cache)
     bool isCached = cache->FinishWrite();
 
     auto sharedCache = std::shared_ptr<RamCache>(std::move(cache));
+    CDLOG_INFO("OnDownloadComplete taskId=" CDLOG_FMT_PUBLIC_S " isCached=" CDLOG_FMT_D " size=" CDLOG_FMT_ZU,
+        GetBriefTaskId(sharedCache->TaskId()).c_str(), isCached ? 1 : 0, sharedCache->Size());
 
     if (isCached) {
         UpdateRamCache(sharedCache);
@@ -243,6 +268,7 @@ void CacheManager::ClearMemoryCache(const std::unordered_set<std::string>& runni
             }
         });
     }
+    CDLOG_INFO("ClearMemoryCache entries=" CDLOG_FMT_ZU, toRemove.size());
 
     // Remove outside the ForEach lock to avoid deadlock
     for (const auto& key : toRemove) {
@@ -263,6 +289,7 @@ void CacheManager::ClearFileCache(const std::unordered_set<std::string>& running
             }
         });
     }
+    CDLOG_INFO("ClearFileCache entries=" CDLOG_FMT_ZU, toRemove.size());
 
     for (const auto& taskId : toRemove) {
         {
@@ -312,6 +339,7 @@ void CacheManager::BuildCachedFilesIndex()
             FileCache::RemoveFileByName(hash);
         }
     }
+    CDLOG_INFO("BuildCachedFilesIndex files=" CDLOG_FMT_ZU, files.size());
 }
 
 // ============================================================
@@ -360,6 +388,7 @@ bool CacheManager::ApplyRamSpace(uint64_t size)
         }
         lastCount = count;
         ramCache_.Remove(oldestKey);
+        CDLOG_WARN("ApplyRamSpace evict key=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(oldestKey).c_str());
         ++guard;
     }
     return false;
@@ -401,6 +430,7 @@ bool CacheManager::ApplyFileSpace(uint64_t size, std::vector<std::string>& evict
         writeEpochs_[oldestKey]++;
         startupFileHashes_.erase(FileCache::HashKey(oldestKey));
         evictedTasks.push_back(oldestKey);
+        CDLOG_WARN("ApplyFileSpace evict key=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(oldestKey).c_str());
         ++guard;
     }
     return false;
@@ -429,6 +459,8 @@ void CacheManager::WriteToFileInBackground(const std::string& taskId,
         auto epochIt = writeEpochs_.find(taskId);
         uint64_t curTaskEpoch = (epochIt != writeEpochs_.end()) ? epochIt->second : 0;
         if (globalEpoch != writeEpochGlobal_ || taskEpoch != curTaskEpoch) {
+            CDLOG_WARN("WriteToFileInBackground aborted (epoch changed) taskId=" CDLOG_FMT_PUBLIC_S,
+                GetBriefTaskId(taskId).c_str());
             return;
         }
 
@@ -458,32 +490,15 @@ void CacheManager::WriteToFileInBackground(const std::string& taskId,
     }
 
     // 2. Serialized file write (wait for prior operations on this task)
-    auto enq = [&]() -> std::pair<bool, std::shared_ptr<TaskOperationQueue::OpSlot>> {
-        std::lock_guard<std::mutex> lock(opMutex_);
-        auto& q = taskOps_[taskId];
-        if (!q) {
-            q = std::make_shared<TaskOperationQueue>();
-        }
-        return q->Enqueue();
-    }();
-    if (!enq.first) {
-        // Wait for prior operations to complete (durable-flag wait, no lost wakeup).
-        std::shared_ptr<TaskOperationQueue::OpSlot> slot = enq.second;
-        std::unique_lock<std::mutex> waitLock(slot->mutex);
-        slot->cv.wait(waitLock, [&slot] { return slot->ready; });
-    }
+    EnqueueAndWaitForFileOp(taskId);
 
     // 3. Perform the actual file write
     FileCache::WriteToFile(taskId, cache->Data(), cache->Size());
+    CDLOG_INFO("WriteToFileInBackground write taskId=" CDLOG_FMT_PUBLIC_S " size=" CDLOG_FMT_ZU,
+        GetBriefTaskId(taskId).c_str(), cache->Size());
 
     // 4. Signal next operation
-    {
-        std::lock_guard<std::mutex> lock(opMutex_);
-        auto it = taskOps_.find(taskId);
-        if (it != taskOps_.end()) {
-            it->second->NotifyNext();
-        }
-    }
+    SignalNextFileOp(taskId);
 
     // 5. Clean up backup RAM reference
     {
@@ -505,6 +520,7 @@ std::shared_ptr<RamCache> CacheManager::FinalizeLoadedRam(const std::string& tas
         // remains recoverable on the next Fetch (OH OnceLock retry semantics).
         std::lock_guard<std::mutex> flock(fileMutex_);
         fileLoadOnce_[taskId] = true;
+        CDLOG_INFO("LoadRamFromFile success taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
         return shared;
     }
 
@@ -515,6 +531,7 @@ std::shared_ptr<RamCache> CacheManager::FinalizeLoadedRam(const std::string& tas
         fileLoadOnce_.erase(taskId);
         fileCache_.Remove(taskId);
     }
+    CDLOG_ERROR("LoadRamFromFile failed taskId=" CDLOG_FMT_PUBLIC_S, GetBriefTaskId(taskId).c_str());
     return nullptr;
 }
 
@@ -564,7 +581,7 @@ CacheManager::FileLoadAction CacheManager::PrepareFileForLoad(
     return FileLoadAction::kContinue;
 }
 
-void CacheManager::EnqueueAndWaitForFileRead(const std::string& taskId)
+void CacheManager::EnqueueAndWaitForFileOp(const std::string& taskId)
 {
     // Serialized file read: enqueue and wait for prior operations.
     auto enq = [&]() -> std::pair<bool, std::shared_ptr<TaskOperationQueue::OpSlot>> {
@@ -609,7 +626,7 @@ std::shared_ptr<RamCache> CacheManager::LoadRamFromFile(const std::string& taskI
         RemoveFileWithQueue(evictedId);
     }
 
-    EnqueueAndWaitForFileRead(taskId);
+    EnqueueAndWaitForFileOp(taskId);
     auto ramCache = FileCache::ReadFromFile(taskId, ramSpace_);
     SignalNextFileOp(taskId);
 
@@ -618,29 +635,11 @@ std::shared_ptr<RamCache> CacheManager::LoadRamFromFile(const std::string& taskI
 
 void CacheManager::RemoveFileWithQueue(const std::string& taskId)
 {
-    auto enq = [&]() -> std::pair<bool, std::shared_ptr<TaskOperationQueue::OpSlot>> {
-        std::lock_guard<std::mutex> lock(opMutex_);
-        auto& q = taskOps_[taskId];
-        if (!q) {
-            q = std::make_shared<TaskOperationQueue>();
-        }
-        return q->Enqueue();
-    }();
-    if (!enq.first) {
-        std::shared_ptr<TaskOperationQueue::OpSlot> slot = enq.second;
-        std::unique_lock<std::mutex> waitLock(slot->mutex);
-        slot->cv.wait(waitLock, [&slot] { return slot->ready; });
-    }
+    EnqueueAndWaitForFileOp(taskId);
 
     FileCache::RemoveFile(taskId);
 
-    {
-        std::lock_guard<std::mutex> lock(opMutex_);
-        auto it = taskOps_.find(taskId);
-        if (it != taskOps_.end()) {
-            it->second->NotifyNext();
-        }
-    }
+    SignalNextFileOp(taskId);
 }
 
 } // namespace OHOS::Plugin::CacheDownload
