@@ -117,6 +117,7 @@ private:
     SizeF lastDrawSize_;
     OffsetF lastOffset_;
     bool hasPlatformViewInit_ = false;
+    bool isGestureLost_ = false;
 #ifdef IOS_PLATFORM
     bool isTextureReady = false;
 #endif
