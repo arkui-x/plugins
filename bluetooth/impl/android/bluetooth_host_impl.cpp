@@ -597,5 +597,15 @@ int32_t BluetoothHostImpl::UpdateSecondaryPhonePairMode(int32_t mode)
 {
     return 0;
 }
+
+int32_t BluetoothHostImpl::SetBtChannelScan(bool isEnable, uint32_t interval)
+{
+    return 0;
+}
+
+int32_t BluetoothHostImpl::GetBrAddressByBleAddress(const std::string &bleAddr, std::string &brAddr)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS

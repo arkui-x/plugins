@@ -34,7 +34,10 @@ ohos_source_set("audio_manager_ios") {
     "audio_system_manager.mm",
   ]
 
-  defines = [ "IOS_PLATFORM" ]
+  defines = [
+    "IOS_PLATFORM",
+    "CROSS_PLATFORM",
+  ]
 
   if (target_cpu == "arm64") {
     defines += [ "_ARM64_" ]
