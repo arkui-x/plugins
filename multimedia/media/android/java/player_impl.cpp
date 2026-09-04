@@ -39,7 +39,7 @@ std::shared_ptr<Player> PlayerFactory::CreatePlayer(const PlayerProducer produce
 int32_t PlayerImpl::Init()
 {
     MEDIA_LOGD("PlayerImpl:0x%{public}06" PRIXPTR " Init in", FAKE_POINTER(this));
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "createPlayer");
+    return Plugin::PlayerJni::CreatePlayer(long(this));
 }
 
 PlayerImpl::PlayerImpl()
@@ -50,7 +50,7 @@ PlayerImpl::PlayerImpl()
 PlayerImpl::~PlayerImpl()
 {
     MEDIA_LOGD("PlayerImpl:0x%{public}06" PRIXPTR " Instances destroy", FAKE_POINTER(this));
-    Plugin::PlayerJni::CallVoidFunc(long(this), "releasePlayer");
+    Plugin::PlayerJni::ReleasePlayer(long(this));
 }
 
 int32_t PlayerImpl::SetSource(const std::shared_ptr<IMediaDataSource> &dataSrc)
@@ -85,42 +85,42 @@ int32_t PlayerImpl::AddSubSource(int32_t fd, int64_t offset, int64_t size)
 
 int32_t PlayerImpl::Play()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "play");
+    return Plugin::PlayerJni::Play(long(this));
 }
 
 int32_t PlayerImpl::Prepare()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "prepare");
+    return Plugin::PlayerJni::Prepare(long(this));
 }
 
 int32_t PlayerImpl::PrepareAsync()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "prepareAsync");
+    return Plugin::PlayerJni::PrepareAsync(long(this));
 }
 
 int32_t PlayerImpl::Pause()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "pause");
+    return Plugin::PlayerJni::Pause(long(this));
 }
 
 int32_t PlayerImpl::Stop()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "stop");
+    return Plugin::PlayerJni::Stop(long(this));
 }
 
 int32_t PlayerImpl::Reset()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "reset");
+    return Plugin::PlayerJni::Reset(long(this));
 }
 
 int32_t PlayerImpl::Release()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "release");
+    return Plugin::PlayerJni::Release(long(this));
 }
 
 int32_t PlayerImpl::ReleaseSync()
 {
-    return Plugin::PlayerJni::CallVoidFunc(long(this), "release");
+    return Plugin::PlayerJni::Release(long(this));
 }
 
 int32_t PlayerImpl::SetVolume(float leftVolume, float rightVolume)

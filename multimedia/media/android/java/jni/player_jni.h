@@ -30,7 +30,15 @@ public:
     // Called by Java
     static void NativeInit(JNIEnv *env, jobject jobj);
 
-    static int32_t CallVoidFunc(long key, std::string funcName);
+    static int32_t CreatePlayer(long key);
+    static int32_t ReleasePlayer(long key);
+    static int32_t Prepare(long key);
+    static int32_t PrepareAsync(long key);
+    static int32_t Play(long key);
+    static int32_t Pause(long key);
+    static int32_t Stop(long key);
+    static int32_t Reset(long key);
+    static int32_t Release(long key);
     static int32_t GetCurrentPosition(long key, int32_t &value);
     static int32_t GetDuration(long key, int32_t &value);
     static int32_t GetVideoWidth(long key);
