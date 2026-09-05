@@ -138,7 +138,6 @@ struct {
     jmethodID selectBitrate;
     jobject globalRef;
 } g_playerpluginClass;
-static std::map<std::string, jmethodID> voidFuncMap;
 }
 std::map<long, std::shared_ptr<Media::PlayerCallback>> PlayerJni::callbacks_;
 std::map<long, std::shared_ptr<Media::IMediaDataSource>> PlayerJni::mediaDataSources_;
@@ -255,37 +254,173 @@ void PlayerJni::NativeInit(JNIEnv *env, jobject jobj)
     g_playerpluginClass.selectBitrate = env->GetMethodID(cls, METHOD_SELECT_BITRATE, SIGNATURE_SET_MODE);
     CHECK_AND_RETURN(g_playerpluginClass.selectBitrate != nullptr);
 
-    voidFuncMap = {
-        {"createPlayer", g_playerpluginClass.createPlayer},
-        {"releasePlayer", g_playerpluginClass.releasePlayer},
-        {"prepare", g_playerpluginClass.prepare},
-        {"prepareAsync", g_playerpluginClass.prepareAsync},
-        {"play", g_playerpluginClass.play},
-        {"pause", g_playerpluginClass.pause},
-        {"stop", g_playerpluginClass.stop},
-        {"reset", g_playerpluginClass.reset},
-        {"release", g_playerpluginClass.release},
-    };
-
     return;
 }
 
-int32_t PlayerJni::CallVoidFunc(long key, std::string funcName)
+int32_t PlayerJni::CreatePlayer(long key)
 {
-    MEDIA_LOGD("PlayerJni CallVoidFunc");
+    MEDIA_LOGD("PlayerJni CreatePlayer");
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
     CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
-    jmethodID methodId = nullptr;
-    auto iter = voidFuncMap.find(funcName);
-    if (iter != voidFuncMap.end()) {
-        methodId = iter->second;
-    }
-    CHECK_AND_RETURN_RET(methodId != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.createPlayer != nullptr, Media::MSERR_SERVICE_DIED);
+
     jlong playerId = (jlong)key;
-    env->CallVoidMethod(g_playerpluginClass.globalRef, methodId, playerId);
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.createPlayer, playerId);
     if (env->ExceptionCheck()) {
-        MEDIA_LOGE("PlayerJni JNI: call %{public}s has exception", funcName.c_str());
+        MEDIA_LOGE("PlayerJni JNI: call CreatePlayer has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::ReleasePlayer(long key)
+{
+    MEDIA_LOGD("PlayerJni ReleasePlayer");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.releasePlayer != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.releasePlayer, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call ReleasePlayer has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::Prepare(long key)
+{
+    MEDIA_LOGD("PlayerJni Prepare");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.prepare != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.prepare, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call Prepare has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::PrepareAsync(long key)
+{
+    MEDIA_LOGD("PlayerJni PrepareAsync");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.prepareAsync != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.prepareAsync, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call PrepareAsync has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::Play(long key)
+{
+    MEDIA_LOGD("PlayerJni Play");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.play != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.play, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call Play has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::Pause(long key)
+{
+    MEDIA_LOGD("PlayerJni Pause");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.pause != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.pause, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call Pause has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::Stop(long key)
+{
+    MEDIA_LOGD("PlayerJni Stop");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.stop != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.stop, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call Stop has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::Reset(long key)
+{
+    MEDIA_LOGD("PlayerJni Reset");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.reset != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.reset, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call Reset has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Media::MSERR_SERVICE_DIED;
+    }
+    return Media::MSERR_OK;
+}
+
+int32_t PlayerJni::Release(long key)
+{
+    MEDIA_LOGD("PlayerJni Release");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    CHECK_AND_RETURN_RET(env != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.globalRef != nullptr, Media::MSERR_SERVICE_DIED);
+    CHECK_AND_RETURN_RET(g_playerpluginClass.release != nullptr, Media::MSERR_SERVICE_DIED);
+
+    jlong playerId = (jlong)key;
+    env->CallVoidMethod(g_playerpluginClass.globalRef, g_playerpluginClass.release, playerId);
+    if (env->ExceptionCheck()) {
+        MEDIA_LOGE("PlayerJni JNI: call Release has exception");
         env->ExceptionDescribe();
         env->ExceptionClear();
         return Media::MSERR_SERVICE_DIED;
