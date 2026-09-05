@@ -143,6 +143,8 @@ public:
     int32_t IsProfileExist(const std::string &profileName, bool &isProfileExist) override;
     int32_t VerifyMultiPermissions(bool systemHapNeeded, const std::set<std::string> &permissions) override;
     int32_t UpdateSecondaryPhonePairMode(int32_t mode) override;
+    int32_t SetBtChannelScan(bool isEnable, uint32_t interval) override;
+    int32_t GetBrAddressByBleAddress(const std::string &bleAddr, std::string &brAddr) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;

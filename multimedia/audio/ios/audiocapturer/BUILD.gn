@@ -30,7 +30,10 @@ ohos_source_set("audio_capturer_ios") {
     "audio_capturer_impl.mm",
   ]
 
-  defines = [ "IOS_PLATFORM" ]
+  defines = [
+    "IOS_PLATFORM",
+    "CROSS_PLATFORM",
+  ]
 
   if (target_cpu == "arm64") {
     defines += [ "_ARM64_" ]
