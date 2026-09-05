@@ -87,6 +87,12 @@ void PlatformViewImpl::HandleTouchCancel(const NG::OffsetF& offset)
     platformViewDelegate_->HandleTouchCancel(offset);
 }
 
+bool PlatformViewImpl::OnGestureJudgeNativeBegin(const NG::OffsetF& offset)
+{
+    CHECK_NULL_RETURN(platformViewDelegate_, false);
+    return platformViewDelegate_->OnGestureJudgeNativeBegin(offset);
+}
+
 void PlatformViewImpl::ProcessSurfaceCreate()
 {
     SetSurface();
