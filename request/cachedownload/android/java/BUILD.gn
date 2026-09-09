@@ -40,7 +40,7 @@ ohos_source_set("cache_download_android_jni") {
 
   deps = [
     "//plugins/request/cachedownload:cache_download_java",
-    "//plugins/interfaces/native:ace_plugin_util_android",
+    "//plugins/interfaces/native:ace_plugin_util_inner_android",
   ]
 
   subsystem_name = "plugins"

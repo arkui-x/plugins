@@ -51,8 +51,7 @@ ohos_source_set("cache_download_client") {
     defines = [ "CACHE_DOWNLOAD_ENABLE_JNI", "ANDROID_PLATFORM" ]
     deps = [
       "${_CD_ROOT}/android/java:cache_download_android_jni",
-      "//plugins/interfaces/native:ace_plugin_util_${current_os}",
-      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/interfaces/native:ace_plugin_util_inner_${current_os}",
     ]
   } else if (current_os == "ios") {
     sources += [
@@ -63,8 +62,14 @@ ohos_source_set("cache_download_client") {
     cflags_objc = [ "-fobjc-arc" ]
     cflags_objcc = [ "-fobjc-arc" ]
     deps = [
-      "//plugins/interfaces/native:ace_plugin_util_${current_os}",
-      "//plugins/libs/napi:napi_${target_os}",
+      "//plugins/interfaces/native:ace_plugin_util_inner_${current_os}",
+      # cache_log.h includes "hilog/log.h" under IOS_PLATFORM. libhilog_ios is
+      # a static library whose public_configs propagates the hilog include
+      # dir; without this dep the iOS engine gate fails with
+      # "'hilog/log.h' file not found" when ace_osal_ios pulls this
+      # source_set in (Android does not hit this: it includes <android/log.h>
+      # from the NDK sysroot instead).
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
     ]
     libs = [ "sqlite3" ]
     frameworks = [ "Foundation.framework" ]
