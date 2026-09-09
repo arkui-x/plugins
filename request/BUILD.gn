@@ -45,7 +45,13 @@ template("plugin_request_static") {
     if (platform == "android") {
       defines += [ "ANDROID_PLATFORM" ]
       libs = [ "log" ]
-      deps += [ "//plugins/request/cachedownload:request_cachedownload_static_${platform}" ]
+      # NOTE: do NOT link request_cachedownload_static here. librequest.so must
+      # register exactly ONE napi module ("request"). Bundling the cachedownload
+      # NAPI entry into the same .so adds a second constructor registering
+      # "request.cacheDownload", and the engine module manager then returns the
+      # wrong tail entry for require("request") — JS gets an empty exports
+      # object (all request.* undefined). cacheDownload ships as its own SO2
+      # (librequest_cachedownload.so) per apiConfig. (root-caused 2026-09-03)
     } else if (platform == "ios") {
       defines += [ "IOS_PLATFORM" ]
       libs = [ "sqlite3" ]
