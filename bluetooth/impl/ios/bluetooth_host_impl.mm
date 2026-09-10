@@ -567,5 +567,10 @@ int32_t BluetoothHostImpl::VerifyMultiPermissions(bool systemHapNeeded,
 {
     return 0;
 }
+
+int32_t BluetoothHostImpl::GetBrAddressByBleAddress(const std::string &bleAddr, std::string &brAddr)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS
