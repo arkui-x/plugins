@@ -295,6 +295,8 @@ void BroadcastJni::UnRegisterBroadcast(std::string key, AsyncCallbackInfo* ptr)
         env->ExceptionClear();
         return;
     }
-    ptr->status = jResult;
+    if (ptr != nullptr) {
+        ptr->status = jResult;
+    }
 }
 } // namespace OHOS::Plugin
