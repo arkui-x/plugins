@@ -300,10 +300,6 @@ Location::LocationErrCode LocationServiceJni::GetSwitchState(int32_t &state)
         LBSLOGE(LOCATION_SERVICE_JNI, "GetSwitchState: failed to get jni env");
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
     }
-    auto errCode = CheckLocationPermission(env);
-    if (errCode != Location::LocationErrCode::ERRCODE_SUCCESS) {
-        return errCode;
-    }
     if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.getSwitchState) {
         return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
     }
