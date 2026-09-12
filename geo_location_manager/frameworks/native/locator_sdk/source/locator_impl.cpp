@@ -58,6 +58,28 @@ std::unique_ptr<Location> LocatorImpl::GetCachedLocation()
     return CachedLocationManager::GetInstance().GetLastLocation();
 }
 
+LocationErrCode LocatorImpl::GetCachedLocationV9(std::unique_ptr<Location> &loc)
+{
+    LBSLOGI(LOCATOR_STANDARD, "LocatorImpl::GetCachedLocationV9()");
+    std::shared_ptr<Plugin::LocationCrossplatformService> service = Plugin::LocationCrossplatformService::Get();
+    if (!service) {
+        return ERRCODE_SERVICE_UNAVAILABLE;
+    }
+    int32_t state = DEFAULT_SWITCH_STATE;
+    LocationErrCode code = service->GetSwitchState(state);
+    if (code != ERRCODE_SUCCESS) {
+        return code;
+    }
+    if (state != STATE_OPEN) {
+        return ERRCODE_SWITCH_OFF;
+    }
+    loc = CachedLocationManager::GetInstance().GetLastLocation();
+    if (loc == nullptr) {
+        return ERRCODE_LOCATING_CACHE_FAIL;
+    }
+    return ERRCODE_SUCCESS;
+}
+
 bool LocatorImpl::IsLocationEnabled()
 {
     LBSLOGI(LOCATOR_STANDARD, "LocatorImpl_IsLocationEnabled");
