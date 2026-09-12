@@ -418,6 +418,7 @@ static Location::LocationErrCode HandleSingleFix(JNIEnv* env,
     }
 
     locatorCallbackHost->SetSingleLocation(loc);
+    locatorCallbackHost->CountDown();
     locatorCallbackHost->OnLocationReport(loc);
 
     env->DeleteLocalRef(res);
