@@ -81,6 +81,14 @@ public:
     std::unique_ptr<Location> GetCachedLocation();
 
     /**
+     * @brief Obtain last known location.
+     *
+     * @param loc Indicates the last known location information.
+     * @return Returns ERRCODE_SUCCESS if obtain last known location succeed.
+     */
+    LocationErrCode GetCachedLocationV9(std::unique_ptr<Location> &loc);
+
+    /**
      * @brief Subscribe location switch changed.
      *
      * @param callback Indicates the callback for reporting the location switch status.

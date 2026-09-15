@@ -45,6 +45,9 @@ napi_value GetLastLocation(napi_env env, napi_callback_info info)
     NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data));
     NAPI_ASSERT(env, g_locatorClient != nullptr, "get locator SA failed");
 
+#ifdef ENABLE_NAPI_MANAGER
+    return HandleGetCachedLocation(env);
+#else
     auto asyncContext = new (std::nothrow) LocationAsyncContext(env);
     NAPI_ASSERT(env, asyncContext != nullptr, "asyncContext is null.");
     if (napi_create_string_latin1(env, "getLastLocation",
@@ -79,7 +82,29 @@ napi_value GetLastLocation(napi_env env, napi_callback_info info)
 
     size_t objectArgsNum = 0;
     return DoAsyncWork(env, asyncContext, argc, argv, objectArgsNum);
+#endif
 }
+
+#ifdef ENABLE_NAPI_MANAGER
+napi_value HandleGetCachedLocation(napi_env env)
+{
+    napi_value res;
+    NAPI_CALL(env, napi_create_object(env, &res));
+    std::unique_ptr<Location> loc;
+    int64_t beginTime = CommonUtils::GetCurrentTimeMilSec();
+    LocationErrCode errorCode = g_locatorClient->GetCachedLocationV9(loc);
+    g_hiAppEventClient->WriteEndEvent(
+        beginTime, errorCode == ERRCODE_SUCCESS ? 0 : 1, errorCode, "getLastLocation");
+    if (loc != nullptr && errorCode == ERRCODE_SUCCESS) {
+        LocationToJs(env, loc, res);
+        return res;
+    }
+    if (errorCode != ERRCODE_SUCCESS) {
+        HandleSyncErrCode(env, errorCode);
+    }
+    return UndefinedNapiValue(env);
+}
+#endif
 
 napi_value IsLocationEnabled(napi_env env, napi_callback_info info)
 {

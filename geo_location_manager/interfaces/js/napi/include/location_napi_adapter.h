@@ -41,6 +41,7 @@ void SetExecuteFuncForGetCachedGnssLocationsSizeContext(CachedAsyncContext* asyn
 void SetCompleteFuncForGetCachedGnssLocationsSizeContext(CachedAsyncContext* asyncContext);
 #ifdef ENABLE_NAPI_MANAGER
 napi_value GetIsoCountryCode(napi_env env, napi_callback_info info);
+napi_value HandleGetCachedLocation(napi_env env);
 LocationErrCode CheckLocationSwitchState();
 napi_value IsWlanBssidMatched(napi_env env, napi_callback_info info);
 napi_value AddGnssGeofence(napi_env env, napi_callback_info info);
