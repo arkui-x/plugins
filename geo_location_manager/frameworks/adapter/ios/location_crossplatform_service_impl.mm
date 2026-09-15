@@ -393,16 +393,7 @@ bool CheckLocationPermission()
 LocationErrCode LocatorCrossplatformServiceIosImpl::GetSwitchState(int32_t &state)
 {
     NSLog(@"Get switch state");
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-    if (status == kCLAuthorizationStatusNotDetermined) {
-        state = Location::DEFAULT_SWITCH_STATE;
-        return LocationErrCode::ERRCODE_SUCCESS;
-    }
-    if (status == kCLAuthorizationStatusDenied || status == kCLAuthorizationStatusRestricted) {
-        state = Location::DISABLED;
-        return LocationErrCode::ERRCODE_PERMISSION_DENIED;
-    }
-    state = Location::ENABLED;
+    state = [CLLocationManager locationServicesEnabled] ? Location::ENABLED : Location::DISABLED;
     return LocationErrCode::ERRCODE_SUCCESS;
 }
 
