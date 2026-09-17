@@ -182,13 +182,13 @@ int32_t AudioSystemManager::SetExtraParameters(const std::string &key,
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::SetVolume(AudioVolumeType volumeType, int32_t volumeLevel, int32_t uid)
+int32_t AudioSystemManager::SetVolume(AudioVolumeType volumeType, int32_t volumeLevel, int32_t uid, int32_t zoneId)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::GetVolume(AudioVolumeType volumeType, int32_t uid) const
+int32_t AudioSystemManager::GetVolume(AudioVolumeType volumeType, int32_t uid, int32_t zoneId) const
 {
     AUDIO_WARNING_LOG("%{public}s is not supported", __func__);
     return 0;
@@ -680,13 +680,13 @@ int32_t AudioSystemManager::ForceVolumeKeyControlType(AudioVolumeType volumeType
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::SetVolumeDegree(AudioVolumeType volumeType, int32_t degree, int32_t uid)
+int32_t AudioSystemManager::SetVolumeDegree(AudioVolumeType volumeType, int32_t degree, int32_t uid, int32_t zoneId)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
 }
 
-int32_t AudioSystemManager::GetVolumeDegree(AudioVolumeType volumeType, int32_t uid)
+int32_t AudioSystemManager::GetVolumeDegree(AudioVolumeType volumeType, int32_t uid, int32_t zoneId)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
