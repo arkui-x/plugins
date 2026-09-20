@@ -131,29 +131,66 @@ void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, j
     if (env == nullptr || jthiz == nullptr || jNetworkCapabilities == nullptr) {
         return;
     }
-    int32_t netId = (int32_t)jNetId;
+    int32_t netId = static_cast<int32_t>(jNetId);
 
-    jclass cls_networkcapabilities = env->GetObjectClass(jNetworkCapabilities);
+    jclass clsNetworkCapabilities = env->GetObjectClass(jNetworkCapabilities);
+    if (clsNetworkCapabilities == nullptr) {
+        return;
+    }
     sptr<NetManagerStandard::NetAllCapabilities> netAllCap =
         std::make_unique<NetManagerStandard::NetAllCapabilities>().release();
 
-    jmethodID jGetTransportTypes = env->GetMethodID(cls_networkcapabilities, "getTransportTypes", "()[I");
-    jobject jtype_obj = env->CallObjectMethod(jNetworkCapabilities, jGetTransportTypes);
-    jintArray jtype_int = (jintArray)jtype_obj;
-    int *type = env->GetIntArrayElements(jtype_int, NULL);
-    int nSize = env->GetArrayLength(jtype_int);
-    int int_type[nSize];
-    if (memcpy_s(int_type, nSize * sizeof(int), type, nSize * sizeof(int)) != EOK) {
-        LOGE("[NativeOnCapabilitiesChanged] memory copy failed");
+    // NetworkCapabilities transport and capability values are different concepts.
+    // The old implementation only converted getTransportTypes(), so netCaps_ stayed
+    // empty and the JS networkCap property was not emitted.
+    jmethodID getTransportTypes = env->GetMethodID(clsNetworkCapabilities, "getTransportTypes", "()[I");
+    jmethodID hasCapability = env->GetMethodID(clsNetworkCapabilities, "hasCapability", "(I)Z");
+    if (getTransportTypes == nullptr || hasCapability == nullptr) {
+        env->DeleteLocalRef(clsNetworkCapabilities);
         return;
     }
-    for (int i = 0; i < nSize; i++) {
-        netAllCap->bearerTypes_.insert(static_cast<NetManagerStandard::NetBearType>(int_type[i]));
+
+    jintArray transportTypes = reinterpret_cast<jintArray>(
+        env->CallObjectMethod(jNetworkCapabilities, getTransportTypes));
+    if (transportTypes != nullptr) {
+        jsize transportCount = env->GetArrayLength(transportTypes);
+        jboolean isCopy = JNI_FALSE;
+        jint *transportValues = env->GetIntArrayElements(transportTypes, &isCopy);
+        if (transportValues != nullptr) {
+            for (jsize index = 0; index < transportCount; ++index) {
+                netAllCap->bearerTypes_.insert(
+                    static_cast<NetManagerStandard::NetBearType>(transportValues[index]));
+            }
+            env->ReleaseIntArrayElements(transportTypes, transportValues, JNI_ABORT);
+        }
+        env->DeleteLocalRef(transportTypes);
     }
-    env->DeleteLocalRef(jtype_int);
+
+    // Android's capability ids do not match OHOS NetCap ids (for example,
+    // Android NOT_METERED is 11). Map the supported capabilities by name rather
+    // than casting the Android integer directly.
+    struct CapabilityMapping {
+        jint androidCapability;
+        NetManagerStandard::NetCap ohosCapability;
+    };
+    const CapabilityMapping capabilityMappings[] = {
+        {0, NetManagerStandard::NetCap::NET_CAPABILITY_MMS},
+        {11, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_METERED},
+        {12, NetManagerStandard::NetCap::NET_CAPABILITY_INTERNET},
+        {15, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_VPN},
+        {16, NetManagerStandard::NetCap::NET_CAPABILITY_VALIDATED},
+        {17, NetManagerStandard::NetCap::NET_CAPABILITY_PORTAL},
+    };
+    for (const auto &mapping : capabilityMappings) {
+        if (env->CallBooleanMethod(jNetworkCapabilities, hasCapability, mapping.androidCapability) == JNI_TRUE) {
+            netAllCap->netCaps_.insert(mapping.ohosCapability);
+        }
+    }
+    env->DeleteLocalRef(clsNetworkCapabilities);
+
     sptr<NetManagerStandard::NetHandle> netHandle =
         std::make_unique<NetManagerStandard::NetHandle>(netId).release();
-    long key = (long)jcallbackKey;
+    long key = static_cast<long>(jcallbackKey);
     auto iter = observer_.find(key);
     if (iter != observer_.end()) {
         (iter->second)->NetCapabilitiesChange(netHandle, netAllCap);
@@ -241,7 +278,7 @@ int32_t NetConnClientJni::RegisterNetConnCallback(const sptr<NetManagerStandard:
     int index = 0;
     for (auto it = netSpecifier->netCapabilities_.bearerTypes_.begin();
         it != netSpecifier->netCapabilities_.bearerTypes_.end(); ++it) {
-        types[index] = *it;
+        types[index++] = *it;
     }
     jintArray jtypeArray = env->NewIntArray(size);
     env->SetIntArrayRegion(jtypeArray, 0, size, types);
