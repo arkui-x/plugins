@@ -461,6 +461,11 @@ void CacheDownloadService::ExecuteDownload(const std::string& url,
     handle->SetCancelCallback([ctx]() {
         if (ctx->request) {
             ctx->request->Cancel();
+            // Drop the ctx->request reference after Cancel() returns. Any
+            // pending NSURLSession blocks still hold the request via
+            // shared_ptr, so it is destroyed only after the delegate queue
+            // drains — this breaks the ctx<->request cycle without a UAF.
+            ctx->request.reset();
         }
         ctx->self.reset();
     });
@@ -491,6 +496,7 @@ void CacheDownloadService::StartDownload(const std::shared_ptr<DownloadContext>&
             GetBriefTaskId(ctx->url).c_str());
         NotifyError(ctx->url, CacheDownloadError(ErrorCode::OTHERS, -1, "Failed to create HTTP client"));
         ctx->handle->ClearCancelCallback();
+        ctx->request.reset();
         ctx->self.reset();
         return;
     }
@@ -514,6 +520,7 @@ void CacheDownloadService::StartDownload(const std::shared_ptr<DownloadContext>&
             GetBriefTaskId(ctx->url).c_str());
         NotifyError(ctx->url, CacheDownloadError(ErrorCode::OTHERS, -1, "Failed to create HTTP request"));
         ctx->handle->ClearCancelCallback();
+        ctx->request.reset();
         ctx->self.reset();
         return;
     }
@@ -524,6 +531,7 @@ void CacheDownloadService::StartDownload(const std::shared_ptr<DownloadContext>&
             GetBriefTaskId(ctx->url).c_str());
         NotifyError(ctx->url, CacheDownloadError(ErrorCode::OTHERS, -1, "Failed to start HTTP request"));
         ctx->handle->ClearCancelCallback();
+        ctx->request.reset();
         ctx->self.reset();
         return;
     }
@@ -628,6 +636,10 @@ void DownloadContext::OnSuccess(const CacheHttpResponseInfo& info)
     service->cacheManager_.OnDownloadComplete(std::move(ramCache));
     service->NotifySuccess(url);
     handle->ClearCancelCallback();
+    // Terminal state: drop the request reference to break the ctx<->request
+    // cycle. The request itself is destroyed once any pending session blocks
+    // release their shared_ptr captures.
+    request.reset();
     self.reset();
 }
 
@@ -679,6 +691,10 @@ void DownloadContext::OnFailed(int errorCode, const std::string& message)
 
     service->NotifyError(url, error);
     handle->ClearCancelCallback();
+    // Terminal state: drop the request reference to break the ctx<->request
+    // cycle (symmetric with OnSuccess). Pending session blocks keep the
+    // request alive via shared_ptr until the delegate queue drains.
+    request.reset();
     self.reset();
 }
 
