@@ -143,8 +143,7 @@ ErrorCode Bridge::CallMethod(const std::string& methodName, const std::shared_pt
         };
         taskExecutor_->RunTaskOnBridgeThread(task);
     } else if (codecType_ == CodecType::BINARY_CODEC) {
-        const auto& data = methodData->GetMethodParamNameBinary();
-        auto task = [bridgeName = this->bridgeName_, methodName, &data]() {
+        auto task = [bridgeName = this->bridgeName_, methodName, data = methodData->GetMethodParamNameBinary()]() {
             BridgeManager::JSCallMethodBinary(bridgeName, methodName, data);
         };
         taskExecutor_->RunTaskOnBridgeThread(task);
@@ -284,7 +283,7 @@ ErrorCode Bridge::SendMessageBinary(const std::vector<uint8_t>& data, std::share
 
     std::lock_guard<std::mutex> lock(jsSendMessageDataListLock_);
     jsSendMessageDataList_.push_back(methodData);
-    auto task = [bridgeName = this->bridgeName_, &data]() {
+    auto task = [bridgeName = this->bridgeName_, data]() {
         BridgeManager::JSSendMessageBinary(bridgeName, data);
     };
     taskExecutor_->RunTaskOnBridgeThread(task);
@@ -601,9 +600,9 @@ void Bridge::OnPlatformMethodResult(const std::string& methodName, const std::st
     auto* ev = jsMethodData->GetAsyncEvent();
     auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
     if (handle) {
-        handle->RunTaskOnJsThread([jsMethodData, result, methodName, this]() {
+        EraseJSMethodData(methodName);
+        handle->RunTaskOnJsThread([jsMethodData, result]() {
             jsMethodData->SendMethodResult(result, true);
-            EraseJSMethodData(methodName);
         });
     } else {
         LOGE("OnPlatformMethodResult: js thread handle null, callback dropped");
@@ -641,10 +640,10 @@ void Bridge::OnPlatformMethodResultBinary(const std::string& methodName, int err
     auto* ev = jsMethodData->GetAsyncEvent();
     auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
     if (handle) {
+        EraseJSMethodData(methodName);
         handle->RunTaskOnJsThread([
-            jsMethodData, holder, errorCode, errorMessage, methodName, this]() mutable {
+            jsMethodData, holder, errorCode, errorMessage]() mutable {
             jsMethodData->SendMethodResultBinary(errorCode, errorMessage, std::move(holder->ptr), true);
-            EraseJSMethodData(methodName);
         });
     } else {
         LOGE("OnPlatformMethodResultBinary: js thread handle null, callback dropped");
