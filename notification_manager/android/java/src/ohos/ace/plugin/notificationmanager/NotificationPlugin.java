@@ -56,16 +56,19 @@ public class NotificationPlugin {
         this.context = context;
         mManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
 
-        mNotificationChannel = mManager.getNotificationChannel(CHANNER_ID);
-        if (mNotificationChannel == null) {
-            mNotificationChannel = new NotificationChannel(CHANNER_ID, context.getPackageName(),
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            mNotificationChannel.setShowBadge(true);
-            mManager.createNotificationChannel(mNotificationChannel);
-        }
-
+        mNotificationChannel = new NotificationChannel(CHANNER_ID, getAppLabel(),
+                NotificationManager.IMPORTANCE_DEFAULT);
+        mNotificationChannel.setShowBadge(true);
         mManager.createNotificationChannel(mNotificationChannel);
         nativeInit();
+    }
+
+    private String getAppLabel() {
+        CharSequence label = context.getPackageManager().getApplicationLabel(context.getApplicationInfo());
+        if (!TextUtils.isEmpty(label)) {
+            return label.toString();
+        }
+        return context.getPackageName();
     }
 
     /**
