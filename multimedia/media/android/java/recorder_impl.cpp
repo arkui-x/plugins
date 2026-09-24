@@ -107,6 +107,11 @@ int32_t RecorderImpl::RecorderImpl::SetVideoEnableBFrame(int32_t sourceId, bool 
     return MSERR_OK;
 }
 
+int32_t RecorderImpl::SetVideoSqrFactor(int32_t sourceId, int32_t sqrFactor)
+{
+    return MSERR_OK;
+}
+
 int32_t RecorderImpl::SetCaptureRate(int32_t sourceId, double fps)
 {
     return MSERR_OK;

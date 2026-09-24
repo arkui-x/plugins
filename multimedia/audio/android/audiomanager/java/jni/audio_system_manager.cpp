@@ -371,6 +371,20 @@ int32_t AudioSystemManager::UnregisterVolumeDegreeCallback(const int32_t clientP
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSystemManager::RegisterVolumeLimitExceededCallback(const int32_t clientPid,
+    const std::shared_ptr<VolumeLimitExceededCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::UnregisterVolumeLimitExceededCallback(const int32_t clientPid,
+    const std::shared_ptr<VolumeLimitExceededCallback> &callback)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 void AudioSystemManager::SetAudioMonoState(bool monoState)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
@@ -595,6 +609,12 @@ int32_t AudioSystemManager::SetSelfAppVolume(int32_t volume, int32_t flag)
 }
 
 int32_t AudioSystemManager::SetSystemAppVolumePercentageForUid(int32_t appUid, int32_t volumePercentage)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
+int32_t AudioSystemManager::ConfirmVolumeLimitExceeded(AudioVolumeType volumeType, bool confirmResult)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
     return ERR_NOT_SUPPORTED;
