@@ -69,7 +69,7 @@ napi_value ConnectionExec::CreateNetCapabilities(napi_env env, NetAllCapabilitie
                                  capabilities->linkUpBandwidthKbps_);
     NapiUtils::SetUint32Property(env, netCapabilities, KEY_LINK_DOWN_BAND_WIDTH_KPS,
                                  capabilities->linkDownBandwidthKbps_);
-    if (!capabilities->netCaps_.empty() && capabilities->netCaps_.size() <= MAX_ARRAY_LENGTH) {
+    if (capabilities->netCaps_.size() <= MAX_ARRAY_LENGTH) {
         napi_value networkCap =
             NapiUtils::CreateArray(env, std::min(capabilities->netCaps_.size(), MAX_ARRAY_LENGTH));
         auto it = capabilities->netCaps_.begin();
@@ -78,7 +78,7 @@ napi_value ConnectionExec::CreateNetCapabilities(napi_env env, NetAllCapabilitie
         }
         NapiUtils::SetNamedProperty(env, netCapabilities, KEY_NETWORK_CAP, networkCap);
     }
-    if (!capabilities->bearerTypes_.empty() && capabilities->bearerTypes_.size() <= MAX_ARRAY_LENGTH) {
+    if (capabilities->bearerTypes_.size() <= MAX_ARRAY_LENGTH) {
         napi_value bearerTypes =
             NapiUtils::CreateArray(env, std::min(capabilities->bearerTypes_.size(), MAX_ARRAY_LENGTH));
         auto it = capabilities->bearerTypes_.begin();

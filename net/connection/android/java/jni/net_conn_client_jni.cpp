@@ -30,6 +30,13 @@
 namespace OHOS::Plugin {
 namespace {
 const char NetConnClient_CLASS_NAME[] = "ohos/ace/plugin/netconnclientplugin/NetConnClientPlugin";
+// Capability IDs defined by the platform network capabilities API.
+constexpr jint NET_CAPABILITY_MMS_ID = 0;
+constexpr jint NET_CAPABILITY_NOT_METERED_ID = 11;
+constexpr jint NET_CAPABILITY_INTERNET_ID = 12;
+constexpr jint NET_CAPABILITY_NOT_VPN_ID = 15;
+constexpr jint NET_CAPABILITY_VALIDATED_ID = 16;
+constexpr jint NET_CAPABILITY_CAPTIVE_PORTAL_ID = 17;
 static const JNINativeMethod METHODS[] = {
     {"nativeInit", "()V", reinterpret_cast<void *>(NetConnClientJni::NativeInit)},
     {"nativeOnAvailable", "(JI)V", reinterpret_cast<void *>(NetConnClientJni::NativeOnAvailable)},
@@ -125,39 +132,108 @@ void NetConnClientJni::NativeOnAvailable(JNIEnv *env, jobject jthiz, jlong jcall
     }
 }
 
+struct CapabilityMapping {
+    jint platformId;
+    NetManagerStandard::NetCap netCap;
+};
+
+static bool ReadTransportTypes(JNIEnv *env, jobject capabilities, jclass capabilitiesClass,
+    NetManagerStandard::NetAllCapabilities &allCapabilities)
+{
+    jmethodID method = env->GetMethodID(capabilitiesClass, "getTransportTypes", "()[I");
+    if (method == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
+        return false;
+    }
+    jintArray transportTypes = reinterpret_cast<jintArray>(env->CallObjectMethod(capabilities, method));
+    if (env->ExceptionCheck() || transportTypes == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        return false;
+    }
+    jsize count = env->GetArrayLength(transportTypes);
+    jint *values = env->GetIntArrayElements(transportTypes, nullptr);
+    if (env->ExceptionCheck() || values == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        env->DeleteLocalRef(transportTypes);
+        return false;
+    }
+    // Transport IDs and NetBearType IDs are aligned by contract.
+    for (jsize index = 0; index < count; ++index) {
+        allCapabilities.bearerTypes_.insert(
+            static_cast<NetManagerStandard::NetBearType>(values[index]));
+    }
+    env->ReleaseIntArrayElements(transportTypes, values, JNI_ABORT);
+    env->DeleteLocalRef(transportTypes);
+    return true;
+}
+
+static bool ReadNetworkCapabilities(JNIEnv *env, jobject capabilities, jclass capabilitiesClass,
+    NetManagerStandard::NetAllCapabilities &allCapabilities)
+{
+    jmethodID method = env->GetMethodID(capabilitiesClass, "hasCapability", "(I)Z");
+    if (method == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
+        return false;
+    }
+    const CapabilityMapping mappings[] = {
+        {NET_CAPABILITY_MMS_ID, NetManagerStandard::NetCap::NET_CAPABILITY_MMS},
+        {NET_CAPABILITY_NOT_METERED_ID, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_METERED},
+        {NET_CAPABILITY_INTERNET_ID, NetManagerStandard::NetCap::NET_CAPABILITY_INTERNET},
+        {NET_CAPABILITY_NOT_VPN_ID, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_VPN},
+        {NET_CAPABILITY_VALIDATED_ID, NetManagerStandard::NetCap::NET_CAPABILITY_VALIDATED},
+        {NET_CAPABILITY_CAPTIVE_PORTAL_ID, NetManagerStandard::NetCap::NET_CAPABILITY_PORTAL},
+    };
+    for (const auto &mapping : mappings) {
+        jboolean present = env->CallBooleanMethod(capabilities, method, mapping.platformId);
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            return false;
+        }
+        if (present == JNI_TRUE) {
+            allCapabilities.netCaps_.insert(mapping.netCap);
+        }
+    }
+    return true;
+}
+
 void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, jobject jNetworkCapabilities,
     jlong jcallbackKey, jint jNetId)
 {
     if (env == nullptr || jthiz == nullptr || jNetworkCapabilities == nullptr) {
         return;
     }
-    int32_t netId = (int32_t)jNetId;
-
-    jclass cls_networkcapabilities = env->GetObjectClass(jNetworkCapabilities);
-    sptr<NetManagerStandard::NetAllCapabilities> netAllCap =
-        std::make_unique<NetManagerStandard::NetAllCapabilities>().release();
-
-    jmethodID jGetTransportTypes = env->GetMethodID(cls_networkcapabilities, "getTransportTypes", "()[I");
-    jobject jtype_obj = env->CallObjectMethod(jNetworkCapabilities, jGetTransportTypes);
-    jintArray jtype_int = (jintArray)jtype_obj;
-    int *type = env->GetIntArrayElements(jtype_int, NULL);
-    int nSize = env->GetArrayLength(jtype_int);
-    int int_type[nSize];
-    if (memcpy_s(int_type, nSize * sizeof(int), type, nSize * sizeof(int)) != EOK) {
-        LOGE("[NativeOnCapabilitiesChanged] memory copy failed");
+    long key = static_cast<long>(jcallbackKey);
+    auto iter = observer_.find(key);
+    if (iter == observer_.end()) {
         return;
     }
-    for (int i = 0; i < nSize; i++) {
-        netAllCap->bearerTypes_.insert(static_cast<NetManagerStandard::NetBearType>(int_type[i]));
+    jclass capabilitiesClass = env->GetObjectClass(jNetworkCapabilities);
+    if (capabilitiesClass == nullptr) {
+        return;
     }
-    env->DeleteLocalRef(jtype_int);
+    NetManagerStandard::NetAllCapabilities allCapabilities;
+    if (!ReadTransportTypes(env, jNetworkCapabilities, capabilitiesClass, allCapabilities) ||
+        !ReadNetworkCapabilities(env, jNetworkCapabilities, capabilitiesClass, allCapabilities)) {
+        env->DeleteLocalRef(capabilitiesClass);
+        return;
+    }
+    env->DeleteLocalRef(capabilitiesClass);
     sptr<NetManagerStandard::NetHandle> netHandle =
-        std::make_unique<NetManagerStandard::NetHandle>(netId).release();
-    long key = (long)jcallbackKey;
-    auto iter = observer_.find(key);
-    if (iter != observer_.end()) {
-        (iter->second)->NetCapabilitiesChange(netHandle, netAllCap);
-    }
+        std::make_unique<NetManagerStandard::NetHandle>(static_cast<int32_t>(jNetId)).release();
+    sptr<NetManagerStandard::NetAllCapabilities> capabilities =
+        std::make_unique<NetManagerStandard::NetAllCapabilities>(allCapabilities).release();
+    iter->second->NetCapabilitiesChange(netHandle, capabilities);
 }
 
 void NetConnClientJni::NativeOnLost(JNIEnv *env, jobject jthiz, jlong jcallbackKey, jint jNetId)
@@ -241,7 +317,7 @@ int32_t NetConnClientJni::RegisterNetConnCallback(const sptr<NetManagerStandard:
     int index = 0;
     for (auto it = netSpecifier->netCapabilities_.bearerTypes_.begin();
         it != netSpecifier->netCapabilities_.bearerTypes_.end(); ++it) {
-        types[index] = *it;
+        types[index++] = *it;
     }
     jintArray jtypeArray = env->NewIntArray(size);
     env->SetIntArrayRegion(jtypeArray, 0, size, types);
