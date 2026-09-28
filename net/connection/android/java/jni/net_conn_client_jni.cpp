@@ -30,13 +30,13 @@
 namespace OHOS::Plugin {
 namespace {
 const char NetConnClient_CLASS_NAME[] = "ohos/ace/plugin/netconnclientplugin/NetConnClientPlugin";
-// Android NetworkCapabilities capability IDs are part of the public Android API.
-constexpr jint ANDROID_NET_CAPABILITY_MMS = 0;
-constexpr jint ANDROID_NET_CAPABILITY_NOT_METERED = 11;
-constexpr jint ANDROID_NET_CAPABILITY_INTERNET = 12;
-constexpr jint ANDROID_NET_CAPABILITY_NOT_VPN = 15;
-constexpr jint ANDROID_NET_CAPABILITY_VALIDATED = 16;
-constexpr jint ANDROID_NET_CAPABILITY_CAPTIVE_PORTAL = 17;
+// Capability IDs defined by the platform network capabilities API.
+constexpr jint NET_CAPABILITY_MMS_ID = 0;
+constexpr jint NET_CAPABILITY_NOT_METERED_ID = 11;
+constexpr jint NET_CAPABILITY_INTERNET_ID = 12;
+constexpr jint NET_CAPABILITY_NOT_VPN_ID = 15;
+constexpr jint NET_CAPABILITY_VALIDATED_ID = 16;
+constexpr jint NET_CAPABILITY_CAPTIVE_PORTAL_ID = 17;
 static const JNINativeMethod METHODS[] = {
     {"nativeInit", "()V", reinterpret_cast<void *>(NetConnClientJni::NativeInit)},
     {"nativeOnAvailable", "(JI)V", reinterpret_cast<void *>(NetConnClientJni::NativeOnAvailable)},
@@ -132,6 +132,81 @@ void NetConnClientJni::NativeOnAvailable(JNIEnv *env, jobject jthiz, jlong jcall
     }
 }
 
+struct CapabilityMapping {
+    jint platformId;
+    NetManagerStandard::NetCap netCap;
+};
+
+static bool ReadTransportTypes(JNIEnv *env, jobject capabilities, jclass capabilitiesClass,
+    NetManagerStandard::NetAllCapabilities &allCapabilities)
+{
+    jmethodID method = env->GetMethodID(capabilitiesClass, "getTransportTypes", "()[I");
+    if (method == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
+        return false;
+    }
+    jintArray transportTypes = reinterpret_cast<jintArray>(env->CallObjectMethod(capabilities, method));
+    if (env->ExceptionCheck() || transportTypes == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        return false;
+    }
+    jsize count = env->GetArrayLength(transportTypes);
+    jint *values = env->GetIntArrayElements(transportTypes, nullptr);
+    if (env->ExceptionCheck() || values == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
+        env->DeleteLocalRef(transportTypes);
+        return false;
+    }
+    // Transport IDs and NetBearType IDs are aligned by contract.
+    for (jsize index = 0; index < count; ++index) {
+        allCapabilities.bearerTypes_.insert(
+            static_cast<NetManagerStandard::NetBearType>(values[index]));
+    }
+    env->ReleaseIntArrayElements(transportTypes, values, JNI_ABORT);
+    env->DeleteLocalRef(transportTypes);
+    return true;
+}
+
+static bool ReadNetworkCapabilities(JNIEnv *env, jobject capabilities, jclass capabilitiesClass,
+    NetManagerStandard::NetAllCapabilities &allCapabilities)
+{
+    jmethodID method = env->GetMethodID(capabilitiesClass, "hasCapability", "(I)Z");
+    if (method == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
+        return false;
+    }
+    const CapabilityMapping mappings[] = {
+        {NET_CAPABILITY_MMS_ID, NetManagerStandard::NetCap::NET_CAPABILITY_MMS},
+        {NET_CAPABILITY_NOT_METERED_ID, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_METERED},
+        {NET_CAPABILITY_INTERNET_ID, NetManagerStandard::NetCap::NET_CAPABILITY_INTERNET},
+        {NET_CAPABILITY_NOT_VPN_ID, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_VPN},
+        {NET_CAPABILITY_VALIDATED_ID, NetManagerStandard::NetCap::NET_CAPABILITY_VALIDATED},
+        {NET_CAPABILITY_CAPTIVE_PORTAL_ID, NetManagerStandard::NetCap::NET_CAPABILITY_PORTAL},
+    };
+    for (const auto &mapping : mappings) {
+        jboolean present = env->CallBooleanMethod(capabilities, method, mapping.platformId);
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            return false;
+        }
+        if (present == JNI_TRUE) {
+            allCapabilities.netCaps_.insert(mapping.netCap);
+        }
+    }
+    return true;
+}
+
 void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, jobject jNetworkCapabilities,
     jlong jcallbackKey, jint jNetId)
 {
@@ -143,91 +218,22 @@ void NetConnClientJni::NativeOnCapabilitiesChanged(JNIEnv *env, jobject jthiz, j
     if (iter == observer_.end()) {
         return;
     }
-    sptr<NetManagerStandard::INetConnCallback> callback = iter->second;
-    int32_t netId = static_cast<int32_t>(jNetId);
-
-    jclass clsNetworkCapabilities = env->GetObjectClass(jNetworkCapabilities);
-    if (clsNetworkCapabilities == nullptr) {
+    jclass capabilitiesClass = env->GetObjectClass(jNetworkCapabilities);
+    if (capabilitiesClass == nullptr) {
         return;
     }
-    sptr<NetManagerStandard::NetAllCapabilities> netAllCap =
-        std::make_unique<NetManagerStandard::NetAllCapabilities>().release();
-
-    jmethodID getTransportTypes = env->GetMethodID(clsNetworkCapabilities, "getTransportTypes", "()[I");
-    jmethodID hasCapability = env->GetMethodID(clsNetworkCapabilities, "hasCapability", "(I)Z");
-    if (getTransportTypes == nullptr || hasCapability == nullptr) {
-        if (env->ExceptionCheck()) {
-            LOGE("NetConnClientJni: failed to resolve NetworkCapabilities methods");
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-        }
-        env->DeleteLocalRef(clsNetworkCapabilities);
+    NetManagerStandard::NetAllCapabilities allCapabilities;
+    if (!ReadTransportTypes(env, jNetworkCapabilities, capabilitiesClass, allCapabilities) ||
+        !ReadNetworkCapabilities(env, jNetworkCapabilities, capabilitiesClass, allCapabilities)) {
+        env->DeleteLocalRef(capabilitiesClass);
         return;
     }
-
-    // Android and OHOS transport enum values are aligned; capability enum values are not.
-    jintArray transportTypes = reinterpret_cast<jintArray>(
-        env->CallObjectMethod(jNetworkCapabilities, getTransportTypes));
-    if (env->ExceptionCheck()) {
-        LOGE("NetConnClientJni: getTransportTypes threw a Java exception");
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-        env->DeleteLocalRef(clsNetworkCapabilities);
-        return;
-    }
-    if (transportTypes != nullptr) {
-        jsize transportCount = env->GetArrayLength(transportTypes);
-        jint *transportValues = env->GetIntArrayElements(transportTypes, nullptr);
-        if (env->ExceptionCheck()) {
-            LOGE("NetConnClientJni: GetIntArrayElements threw a Java exception");
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            env->DeleteLocalRef(transportTypes);
-            env->DeleteLocalRef(clsNetworkCapabilities);
-            return;
-        }
-        if (transportValues != nullptr) {
-            for (jsize index = 0; index < transportCount; ++index) {
-                netAllCap->bearerTypes_.insert(
-                    static_cast<NetManagerStandard::NetBearType>(transportValues[index]));
-            }
-            env->ReleaseIntArrayElements(transportTypes, transportValues, JNI_ABORT);
-        }
-        env->DeleteLocalRef(transportTypes);
-    }
-
-    // Android capability IDs do not match OHOS NetCap IDs; map the named IDs explicitly.
-    struct CapabilityMapping {
-        jint androidCapability;
-        NetManagerStandard::NetCap ohosCapability;
-    };
-    const CapabilityMapping capabilityMappings[] = {
-        {ANDROID_NET_CAPABILITY_MMS, NetManagerStandard::NetCap::NET_CAPABILITY_MMS},
-        {ANDROID_NET_CAPABILITY_NOT_METERED, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_METERED},
-        {ANDROID_NET_CAPABILITY_INTERNET, NetManagerStandard::NetCap::NET_CAPABILITY_INTERNET},
-        {ANDROID_NET_CAPABILITY_NOT_VPN, NetManagerStandard::NetCap::NET_CAPABILITY_NOT_VPN},
-        {ANDROID_NET_CAPABILITY_VALIDATED, NetManagerStandard::NetCap::NET_CAPABILITY_VALIDATED},
-        {ANDROID_NET_CAPABILITY_CAPTIVE_PORTAL, NetManagerStandard::NetCap::NET_CAPABILITY_PORTAL},
-    };
-    for (const auto &mapping : capabilityMappings) {
-        jboolean hasAndroidCapability = env->CallBooleanMethod(
-            jNetworkCapabilities, hasCapability, mapping.androidCapability);
-        if (env->ExceptionCheck()) {
-            LOGE("NetConnClientJni: hasCapability threw a Java exception");
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            env->DeleteLocalRef(clsNetworkCapabilities);
-            return;
-        }
-        if (hasAndroidCapability == JNI_TRUE) {
-            netAllCap->netCaps_.insert(mapping.ohosCapability);
-        }
-    }
-    env->DeleteLocalRef(clsNetworkCapabilities);
-
+    env->DeleteLocalRef(capabilitiesClass);
     sptr<NetManagerStandard::NetHandle> netHandle =
-        std::make_unique<NetManagerStandard::NetHandle>(netId).release();
-    callback->NetCapabilitiesChange(netHandle, netAllCap);
+        std::make_unique<NetManagerStandard::NetHandle>(static_cast<int32_t>(jNetId)).release();
+    sptr<NetManagerStandard::NetAllCapabilities> capabilities =
+        std::make_unique<NetManagerStandard::NetAllCapabilities>(allCapabilities).release();
+    iter->second->NetCapabilitiesChange(netHandle, capabilities);
 }
 
 void NetConnClientJni::NativeOnLost(JNIEnv *env, jobject jthiz, jlong jcallbackKey, jint jNetId)
