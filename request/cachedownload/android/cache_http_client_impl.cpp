@@ -239,19 +239,47 @@ Java_ohos_ace_plugin_cachedownloadplugin_CacheDownloadHttpClient_onFailed(
 
 extern "C" JNIEXPORT void JNICALL
 Java_ohos_ace_plugin_cachedownloadplugin_CacheDownloadHttpClient_onMetrics(
-    JNIEnv* env, jobject /* thiz */, jlong callbackPtr, jstring serverIp,
-    jlong firstRecvTimeMs, jlong totalTimeMs)
+    JNIEnv* env, jobject /* thiz */, jlong callbackPtr, jobject metricsObj)
 {
     auto* req = FindRequest(env, callbackPtr);
-    if (req == nullptr) {
+    if (req == nullptr || metricsObj == nullptr) {
+        return;
+    }
+    // Read the RequestMetrics fields reflectively from the runtime class —
+    // GetObjectClass avoids the ClassLoader considerations of FindClass.
+    jclass metricsCls = env->GetObjectClass(metricsObj);
+    if (metricsCls == nullptr) {
+        return;
+    }
+    jfieldID serverIpId = env->GetFieldID(metricsCls, "serverIp", "Ljava/lang/String;");
+    jfieldID dnsTimeId = env->GetFieldID(metricsCls, "dnsTimeMs", "J");
+    jfieldID connectTimeId = env->GetFieldID(metricsCls, "connectTimeMs", "J");
+    jfieldID tlsTimeId = env->GetFieldID(metricsCls, "tlsTimeMs", "J");
+    jfieldID firstSendTimeId = env->GetFieldID(metricsCls, "firstSendTimeMs", "J");
+    jfieldID firstRecvTimeId = env->GetFieldID(metricsCls, "firstRecvTimeMs", "J");
+    jfieldID totalTimeId = env->GetFieldID(metricsCls, "totalTimeMs", "J");
+    jfieldID redirectTimeId = env->GetFieldID(metricsCls, "redirectTimeMs", "J");
+    if (env->ExceptionCheck()) {
+        // A field lookup failed (signature drift): clear and drop the metrics.
+        env->ExceptionClear();
+        env->DeleteLocalRef(metricsCls);
         return;
     }
     CacheHttpMetrics metrics;
+    jstring serverIp = static_cast<jstring>(env->GetObjectField(metricsObj, serverIpId));
     if (serverIp != nullptr) {
         metrics.serverIp = JstringToString(env, serverIp);
+        env->DeleteLocalRef(serverIp);
     }
-    metrics.firstReceiveTime = static_cast<double>(firstRecvTimeMs);
-    metrics.totalTime = static_cast<double>(totalTimeMs);
+    // All timings are cumulative ms since request start (OHOS curl semantics).
+    metrics.dnsTime = static_cast<double>(env->GetLongField(metricsObj, dnsTimeId));
+    metrics.connectTime = static_cast<double>(env->GetLongField(metricsObj, connectTimeId));
+    metrics.tlsTime = static_cast<double>(env->GetLongField(metricsObj, tlsTimeId));
+    metrics.firstSendTime = static_cast<double>(env->GetLongField(metricsObj, firstSendTimeId));
+    metrics.firstReceiveTime = static_cast<double>(env->GetLongField(metricsObj, firstRecvTimeId));
+    metrics.totalTime = static_cast<double>(env->GetLongField(metricsObj, totalTimeId));
+    metrics.redirectTime = static_cast<double>(env->GetLongField(metricsObj, redirectTimeId));
+    env->DeleteLocalRef(metricsCls);
     req->Callback()->OnMetrics(metrics);
 }
 
@@ -388,7 +416,8 @@ bool RegisterNativeMethods(JNIEnv* env, jclass cls)
           reinterpret_cast<void*>(&Java_ohos_ace_plugin_cachedownloadplugin_CacheDownloadHttpClient_onSuccess) },
         { "onFailed", "(JILjava/lang/String;)V",
           reinterpret_cast<void*>(&Java_ohos_ace_plugin_cachedownloadplugin_CacheDownloadHttpClient_onFailed) },
-        { "onMetrics", "(JLjava/lang/String;JJ)V",
+        { "onMetrics",
+          "(JLohos/ace/plugin/cachedownloadplugin/CacheDownloadHttpClient$RequestMetrics;)V",
           reinterpret_cast<void*>(&Java_ohos_ace_plugin_cachedownloadplugin_CacheDownloadHttpClient_onMetrics) },
     };
     if (env->RegisterNatives(cls, methods, sizeof(methods) / sizeof(methods[0])) != 0) {
