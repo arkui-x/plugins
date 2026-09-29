@@ -31,7 +31,6 @@ public:
     bool CheckPermission(const std::string& permission) override;
     void RequestPermissions(
         const std::vector<std::string>& permissions, RequestPermissionCallback callback, void* data) override;
-    void RequestPermission(const std::string& permission, CallbackInfo *cbInfo, bool isLast);
 };
 } // namespace OHOS::Plugin
 #endif  // PLUGINS_IOS_ABILITYACCESSCTRL_ABILITY_ACCESS_CTRL_IMPL_H

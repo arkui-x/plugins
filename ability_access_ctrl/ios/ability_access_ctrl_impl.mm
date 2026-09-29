@@ -51,42 +51,41 @@ bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
     }
     if (permission == LOCATION_PERMISSION ||
         permission == APPROXIMATELY_LOCATION_PERMISSION) {
-        bool res =  [[abilityAccessCtrlIOS shareinstance] CheckLocationPermission];
+        bool res = [[abilityAccessCtrlIOS shareinstance] CheckLocationPermission:permission == LOCATION_PERMISSION];
         LOGI(" %{public}s check result %{public}d.", permission.c_str(), res);
         return res;
     }
     return false;
 }
 
+static void RequestPermission(CallbackInfo* info);
+
 static void IosCallback(CallbackInfo* info, bool isLast, int result)
 {
-    LOGI("IosCallback: permissions, grantResults %{public}d. %{public}d", info->index, result);
     if (info == nullptr) {
         LOGE("info is null.");
         return;
     }
+    LOGI("IosCallback: permissions, grantResults %{public}zu. %{public}d", info->index, result);
 
     info->grantResults.emplace_back(result);
-    if (isLast) {
-        std::vector<std::string> permissions;
-        std::vector<int> grantResults;
-        for (size_t i = 0; i <= info->index; i++) {
-            LOGI("permission, grantResult %{public}s %{public}d.",
-                info->permissionList[i].c_str(), info->grantResults[i]);
-            permissions.emplace_back(info->permissionList[i]);
-            grantResults.emplace_back(info->grantResults[i]);
-        }
-        RequestPermissionCallback callback = info->napiCb;
-        auto data = info->data;
-        callback(data, permissions, grantResults);
-        delete info;
+    if (!isLast) {
+        ++info->index;
+        RequestPermission(info);
+        return;
     }
+
+    RequestPermissionCallback callback = info->napiCb;
+    auto data = info->data;
+    callback(data, info->permissionList, info->grantResults);
+    delete info;
 }
 
-void AbilityAccessCtrlImpl::RequestPermission(
-    const std::string& permission, CallbackInfo* cbInfo, bool isLast)
+static void RequestPermission(CallbackInfo* cbInfo)
 {
-    LOGI("AbilityAccessCtrlImpl %{public}s %{public}d", permission.c_str(), cbInfo->index);
+    const std::string& permission = cbInfo->permissionList[cbInfo->index];
+    bool isLast = cbInfo->index + 1 == cbInfo->permissionList.size();
+    LOGI("AbilityAccessCtrlImpl %{public}s %{public}zu", permission.c_str(), cbInfo->index);
 
     FuncType func = IosCallback;
     if (permission == CAMERA_PERMISSION) {
@@ -103,7 +102,8 @@ void AbilityAccessCtrlImpl::RequestPermission(
     }
     if (permission == LOCATION_PERMISSION ||
         permission == APPROXIMATELY_LOCATION_PERMISSION) {
-        [[abilityAccessCtrlIOS shareinstance] RequestLocationPermission:func :cbInfo :isLast];
+        [[abilityAccessCtrlIOS shareinstance] RequestLocationPermission:permission == LOCATION_PERMISSION
+            callback:func data:cbInfo isLast:isLast];
         return;
     }
     IosCallback(cbInfo, isLast, GrantResultType::INVALID_OPER);
@@ -124,10 +124,6 @@ void AbilityAccessCtrlImpl::RequestPermissions(
     info->napiCb = callback;
     info->permissionList.assign(permissions.begin(), permissions.end());
 
-    for (info->index = 0; info->index < permissions.size() - 1; info->index++) {
-        RequestPermission(permissions[info->index], info, false);
-    }
-    LOGI("index Request %{public}d", info->index);
-    RequestPermission(permissions[info->index], info, true);
+    RequestPermission(info);
 }
 } // namespace OHOS::Plugin
