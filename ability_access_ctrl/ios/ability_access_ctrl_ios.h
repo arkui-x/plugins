@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include <functional>
-#import <CoreLocation/CoreLocation.h>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
