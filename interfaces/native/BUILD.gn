@@ -62,10 +62,17 @@ template("ace_plugin_util_static") {
       "plugin_utils.cpp",
     ]
 
-    deps = [
-      ":plugin_log",
-      "//foundation/arkui/napi:ace_napi",
-    ]
+    public_configs += [ "//foundation/arkui/napi:ace_napi_config" ]
+
+    # Do NOT statically depend on //foundation/arkui/napi:ace_napi here.
+    # Consuming it statically expands ~530 ets_runtime/napi objects into every
+    # plugin .so built via source sets; their module constructors then run on
+    # dlopen and corrupt the engine module manager (tailNativeModule gets
+    # overwritten by unrelated modules, e.g. request.cacheDownload resolved to
+    # arkui_arktheme's registration). The napi symbols (napi_*, module
+    # registration) resolve at runtime against libarkui_android.so, which every
+    # plugin .so already NEEDEDs.
+    deps = [ ":plugin_log" ]
 
     subsystem_name = "plugins"
     part_name = "plugin_utils"

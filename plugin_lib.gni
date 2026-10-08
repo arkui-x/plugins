@@ -71,6 +71,7 @@ common_plugin_libs = [
   "net/websocket",
   "worker",
   "request",
+  "request/cachedownload",
   "buffer",
   "fastbuffer",
   "geo_location_manager",
@@ -146,6 +147,28 @@ template("plugin_lib") {
   } else {
     ohos_shared_library(target_name_ext) {
       deps = [ "//plugins/$plugin_name:${plugin_name_ext}_static_${platform}" ]
+
+      # Statically link libc++abi into every plugin .so. Without this, lld may
+      # resolve C++ runtime symbols (e.g. std::runtime_error::what()) against
+      # the libarkui_android.so that is present at link time, which exports
+      # them in some builds but not in the one shipped in the SDK/APK —
+      # leaving the symbols UNDEF at runtime and failing dlopen.
+      # (root-caused 2026-09-03: request module load failure on Android)
+      #
+      # Guard by target_os: plugin_lib templates declared in plugins/*/BUILD.gn
+      # with platform="android" are also evaluated when the iOS toolchain loads
+      # those files (e.g. plugins/request/cachedownload via
+      # request_cachedownload_static_ios deps). aosp_libcpp_lib_dir is only
+      # defined when target_os=="android" (imported in build/config/config.gni),
+      # so an unguarded reference breaks GN gen on the iOS gate with
+      # "Undefined identifier in string expansion".
+      if (target_os == "android") {
+        ldflags = [
+          "-Wl,--whole-archive",
+          rebase_path("$aosp_libcpp_lib_dir/libc++abi.a", root_build_dir),
+          "-Wl,--no-whole-archive",
+        ]
+      }
 
       relative_install_dir = "module"
       part_names = string_split(plugin_name, "/")

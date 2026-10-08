@@ -29,7 +29,9 @@ import android.os.Looper;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -220,7 +222,8 @@ public class DownloadImpl {
             taskInfo.setResponse(response);
             mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(),
                 EventType.RESPONSE, JsonUtil.convertTaskInfoToJson(taskInfo));
-            if (response.getStatusCode() != HttpURLConnection.HTTP_OK) {
+            if (response.getStatusCode() != HttpURLConnection.HTTP_OK
+                && response.getStatusCode() != HttpURLConnection.HTTP_PARTIAL) {
                 ALog.d(TAG, "can not make request, status code: " + response.getStatusCode());
                 sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
                 return;
@@ -228,6 +231,14 @@ public class DownloadImpl {
         } else {
             ALog.d(TAG, "can not make request, no response");
             sendFailCallback(taskInfo, Reason.CONNECT_ERROR);
+            return;
+        }
+        // Range downloads: the system DownloadManager does not accept a custom
+        // "Range" request header (silently fails with ERROR_* on some devices),
+        // so download via HttpURLConnection directly, mirroring the OHOS/iOS
+        // native behavior that supports ranged agent downloads.
+        if (finalConfig.getHeaders() != null && finalConfig.getHeaders().containsKey("Range")) {
+            downloadByRangeDirectly(taskInfo, finalConfig);
             return;
         }
         if (downloadManager == null) {
@@ -703,6 +714,90 @@ public class DownloadImpl {
             ALog.i(TAG, "canMakeRequest failed due to exception");
             return null;
         }
+    }
+
+    private void downloadByRangeDirectly(TaskInfo taskInfo, Config config) {
+        Progress progressTmp = taskInfo.getProgress();
+        if (progressTmp == null) {
+            progressTmp = new Progress();
+        }
+        final Progress progress = progressTmp;
+        progress.setState(State.RUNNING);
+        taskInfo.setProgress(progress);
+        Executors.newCachedThreadPool().submit(() -> {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL(config.getUrl());
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(30000);
+                for (Map.Entry<String, String> entry : config.getHeaders().entrySet()) {
+                    conn.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+                int code = conn.getResponseCode();
+                if (code != HttpURLConnection.HTTP_OK && code != HttpURLConnection.HTTP_PARTIAL) {
+                    ALog.e(TAG, "range download failed, status: " + code);
+                    sendFailCallback(taskInfo, Reason.REQUEST_ERROR);
+                    return;
+                }
+                String saveas = config.getSaveas();
+                File saveFile = new File(saveas);
+                File parent = saveFile.getParentFile();
+                if (parent != null && !parent.exists()) {
+                    parent.mkdirs();
+                }
+                final long total;
+                final long[] processedHolder = {0L};
+                long contentLength = conn.getContentLength();
+                long totalTmp;
+                if (contentLength > 0) {
+                    totalTmp = contentLength;
+                } else {
+                    String contentRange = conn.getHeaderField("Content-Range");
+                    if (contentRange != null && contentRange.contains("/")) {
+                        try {
+                            totalTmp = Long.parseLong(contentRange.substring(contentRange.lastIndexOf('/') + 1).trim());
+                        } catch (NumberFormatException e) {
+                            totalTmp = -1L;
+                        }
+                    } else {
+                        totalTmp = -1L;
+                    }
+                }
+                total = totalTmp;
+
+                try (InputStream in = conn.getInputStream();
+                     FileOutputStream out = new FileOutputStream(saveFile)) {
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, len);
+                        processedHolder[0] += len;
+                        List<Long> sizes = new ArrayList<>();
+                        sizes.add(total);
+                        progress.setProcessed(processedHolder[0]);
+                        progress.setSizes(sizes);
+                    }
+                }
+                progress.setState(State.COMPLETED);
+                List<Long> sizes = new ArrayList<>();
+                sizes.add(total);
+                progress.setSizes(sizes);
+                ALog.i(TAG, "range download completed, bytes: " + processedHolder[0]);
+                mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.PROGRESS,
+                    JsonUtil.convertTaskInfoToJson(taskInfo));
+                mJavaTaskImpl.jniOnRequestCallback(taskInfo.getTid(), EventType.COMPLETED,
+                    JsonUtil.convertTaskInfoToJson(taskInfo));
+                TaskDao.update(context, taskInfo, true);
+            } catch (IOException e) {
+                ALog.e(TAG, "range download error: " + e.getMessage());
+                sendFailCallback(taskInfo, Reason.REQUEST_ERROR);
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
+            }
+        });
     }
 
     private void sendFailCallback(TaskInfo taskInfo, String reason) {
