@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -57,8 +58,8 @@ typedef void (*IosCb)(CallbackInfo* info, bool isLast, int result);
 
 -(bool)CheckPhotoPermission;
 -(void)RequestPhotoPermission:(IosCb)callback :(CallbackInfo*)data :(bool)isLast;
--(bool)CheckLocationPermission;
--(void)RequestLocationPermission:(IosCb)callback :(CallbackInfo*)data :(bool)isLast;
+-(bool)CheckLocationPermission:(bool)accurate;
+-(void)RequestLocationPermission:(bool)accurate callback:(IosCb)callback data:(CallbackInfo*)data isLast:(bool)isLast;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -19,6 +19,23 @@
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <CoreLocation/CoreLocation.h>
+#include <utility>
+
+struct PendingLocationRequest {
+    IosCb callback;
+    CallbackInfo* data;
+    bool isLast;
+    bool accurate;
+};
+
+@interface abilityAccessCtrlIOS () <CLLocationManagerDelegate> {
+    CLLocationManager* locationManager_;
+    std::vector<PendingLocationRequest> pendingLocationRequests_;
+}
+
+- (int)locationResultForAccuracy:(bool)accurate;
+- (void)completeLocationRequests;
+@end
 
 @implementation abilityAccessCtrlIOS
 
@@ -83,22 +100,51 @@
     return NO;
 }
 
--(bool)CheckLocationPermission{
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+- (int)locationResultForAccuracy:(bool)accurate {
+    if (locationManager_ == nil) {
+        locationManager_ = [[CLLocationManager alloc] init];
+        locationManager_.delegate = self;
+    }
+    CLAuthorizationStatus status;
+    if (@available(iOS 14.0, *)) {
+        status = locationManager_.authorizationStatus;
+    } else {
+        status = [CLLocationManager authorizationStatus];
+    }
     switch (status) {
         case kCLAuthorizationStatusNotDetermined:
+            return GrantResultType::NOT_DETERMINED;
         case kCLAuthorizationStatusRestricted:
+            return GrantResultType::INVALID_OPER;
         case kCLAuthorizationStatusDenied: {
-            return NO;
+            return GrantResultType::DENIED_BY_USER;
         }
         case kCLAuthorizationStatusAuthorizedAlways:
         case kCLAuthorizationStatusAuthorizedWhenInUse: {
-            return YES;
+            if (accurate) {
+                if (@available(iOS 14.0, *)) {
+                    return locationManager_.accuracyAuthorization == CLAccuracyAuthorizationFullAccuracy ?
+                        GrantResultType::GRANTED : GrantResultType::DENIED_BY_USER;
+                }
+            }
+            return GrantResultType::GRANTED;
         }
         default:
             break;
     }
-    return NO;
+    return GrantResultType::INVALID_OPER;
+}
+
+-(bool)CheckLocationPermission:(bool)accurate {
+    __block bool granted = false;
+    if ([NSThread isMainThread]) {
+        granted = [self locationResultForAccuracy:accurate] == GrantResultType::GRANTED;
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            granted = [self locationResultForAccuracy:accurate] == GrantResultType::GRANTED;
+        });
+    }
+    return granted;
 }
 
 -(void)RequestMicrophonePermission: (IosCb)callback :(CallbackInfo*)data :(bool)isLast{
@@ -199,30 +245,61 @@
     return;
 }
 
--(void)RequestLocationPermission: (IosCb)callback :(CallbackInfo*)data :(bool)isLast{
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-    switch (status) {
-        case kCLAuthorizationStatusNotDetermined: {
-            CLLocationManager* locationManager = [[CLLocationManager alloc] init];
-            [locationManager requestWhenInUseAuthorization];
-            callback(data, isLast, GrantResultType::GRANTED);
-            return;
-        }
-        case kCLAuthorizationStatusAuthorizedAlways:
-        case kCLAuthorizationStatusAuthorizedWhenInUse: {
-            callback(data, isLast, GrantResultType::GRANTED);
-            return;
-        }
-        case kCLAuthorizationStatusDenied: {
-            callback(data, isLast, GrantResultType::DENIED_BY_USER);
-            return;
-        }
-        case kCLAuthorizationStatusRestricted:
-        default:
-            break;
+- (void)completeLocationRequests {
+    if (pendingLocationRequests_.empty() ||
+        [self locationResultForAccuracy:false] == GrantResultType::NOT_DETERMINED) {
+        return;
     }
-    callback(data, isLast, GrantResultType::INVALID_OPER);
-    return;
+
+    auto requests = std::move(pendingLocationRequests_);
+    pendingLocationRequests_.clear();
+    for (const auto& request : requests) {
+        request.callback(request.data, request.isLast, [self locationResultForAccuracy:request.accurate]);
+    }
+}
+
+- (void)locationManagerDidChangeAuthorization:(CLLocationManager*)manager API_AVAILABLE(ios(14.0)) {
+    [self completeLocationRequests];
+}
+
+- (void)locationManager:(CLLocationManager*)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status {
+    if (@available(iOS 14.0, *)) {
+        return;
+    }
+    [self completeLocationRequests];
+}
+
+-(void)RequestLocationPermission:(bool)accurate callback:(IosCb)callback data:(CallbackInfo*)data isLast:(bool)isLast {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self RequestLocationPermission:accurate callback:callback data:data isLast:isLast];
+        });
+        return;
+    }
+
+    int result = [self locationResultForAccuracy:accurate];
+    if (result != GrantResultType::NOT_DETERMINED) {
+        callback(data, isLast, result);
+        return;
+    }
+    if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationWhenInUseUsageDescription"] == nil) {
+        LOGE("NSLocationWhenInUseUsageDescription is missing from Info.plist.");
+        callback(data, isLast, GrantResultType::INVALID_OPER);
+        return;
+    }
+    if (![CLLocationManager locationServicesEnabled]) {
+        callback(data, isLast, GrantResultType::INVALID_OPER);
+        return;
+    }
+
+    bool shouldRequest = pendingLocationRequests_.empty();
+    pendingLocationRequests_.push_back({callback, data, isLast, accurate});
+    if (shouldRequest) {
+        if (locationManager_ == nil) {
+            locationManager_ = [[CLLocationManager alloc] init];
+            locationManager_.delegate = self;
+        }
+        [locationManager_ requestWhenInUseAuthorization];
+    }
 }
 @end
-
