@@ -145,6 +145,7 @@ public:
     int32_t UpdateSecondaryPhonePairMode(int32_t mode) override;
     int32_t SetBtChannelScan(bool isEnable, uint32_t interval) override;
     int32_t GetBrAddressByBleAddress(const std::string &bleAddr, std::string &brAddr) override;
+    int32_t GetBleMacByBrMac(const std::string &brMac, std::string &bleMac) override;
 
 private:
     sptr<IBluetoothHostObserver> observer_ = nullptr;
