@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -63,7 +63,7 @@ public:
 private:
     void ReadCallbackFunc();
 
-    CapturerState recordState_ = CAPTURER_INVALID;
+    std::atomic<CapturerState> recordState_ = CAPTURER_INVALID;
     AudioStreamInfo streamInfo_;
     size_t minReadBufferSize_;
     std::shared_ptr<AudioCapturerReadCallback> readCallback_ = nullptr;
@@ -79,6 +79,9 @@ private:
     std::thread callbackLoop_;
     std::atomic<bool> isReaded_ = false;
     std::atomic<bool> readThreadReleased_ = true;
+    std::atomic<bool> readActive_ = false;
+    // Discard partial and in-flight frames across stop, restart and release.
+    std::atomic<uint32_t> readGeneration_ = 0;
 };
 } // namespace AudioStandard
 } // namespace OHOS
