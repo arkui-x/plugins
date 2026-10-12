@@ -582,5 +582,10 @@ int32_t BluetoothHostImpl::GetBrAddressByBleAddress(const std::string &bleAddr, 
 {
     return 0;
 }
+
+int32_t BluetoothHostImpl::GetBleMacByBrMac(const std::string &brMac, std::string &bleMac)
+{
+    return 0;
+}
 } // namespace Bluetooth
 } // namespace OHOS
