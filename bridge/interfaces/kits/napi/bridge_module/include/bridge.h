@@ -16,6 +16,7 @@
 #ifndef PLUGINS_BRIDGE_BRIDGE_H
 #define PLUGINS_BRIDGE_BRIDGE_H
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -64,8 +65,8 @@ public:
 private:
     std::string bridgeName_;
     CodecType codecType_ = CodecType::JSON_CODEC;
-    bool available_ = false;
-    bool terminate_ = false;
+    std::atomic<bool> available_ = false;
+    std::atomic<bool> terminate_ = false;
     napi_env env_ = nullptr;
     std::map<std::string, std::shared_ptr<MethodData>> platformMethodDataList_;
     std::map<std::string, std::shared_ptr<MethodData>> jsMethodDataList_;
@@ -74,6 +75,7 @@ private:
     std::mutex platformMethodDataListLock_;
     std::mutex jsMethodDataListLock_;
     std::mutex jsSendMessageDataListLock_;
+    std::mutex messageCallbackLock_;
     std::shared_ptr<BridgeEventHandle> taskExecutor_ = BridgeEventHandle::GetInstance();
 
     std::shared_ptr<MethodData> FindPlatformMethodData(const std::string& methodName);
