@@ -55,6 +55,8 @@ public:
     static Json PlatformParams(napi_env env, napi_value value);
     static int NAPI_GetErrorCodeFromJson(Json json);
     static napi_value CreateErrorMessage(napi_env env, int32_t errorCode);
+private:
+    static Json GetNumberParam(napi_env env, napi_value value);
 };
 } // namespace OHOS::Plugin::Bridge
 #endif // PLUGINS_BRIDGE_NAPI_UTILS_H
