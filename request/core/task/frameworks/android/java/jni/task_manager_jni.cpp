@@ -16,8 +16,12 @@
 #include "task_manager_jni.h"
 
 #include <codecvt>
+#include <cerrno>
+#include <fstream>
 #include <jni.h>
 #include <locale>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "config_json.h"
 #include "constant.h"
@@ -543,10 +547,84 @@ std::string TaskManagerJni::GetRealPath(const Config &config)
             return filePath;
         }
 
-        std::string fileName = filePath.substr(filePath.rfind('/') + 1);
-        filePath = "/storage/emulated/" + userId + "/Android/data/" + packageName + "/files/" + fileName;
+        filePath = BuildExternalPath(userId, packageName, filePath);
+        if (filePath.empty()) {
+            // Sanitization or directory creation failed. Returning the raw sandbox path
+            // would only defer the failure to the DownloadManager enqueue stage (the
+            // system service cannot write the app sandbox), so surface the error here.
+            REQUEST_HILOGE("fail to build external path from sandbox path");
+            return "";
+        }
     }
     return filePath;
+}
+
+bool TaskManagerJni::IsValidPathComponent(const std::string &component)
+{
+    if (component.empty() || component == "." || component == "..") {
+        return false;
+    }
+    return component.find('/') == std::string::npos;
+}
+
+std::string TaskManagerJni::BuildExternalPath(const std::string &userId, const std::string &packageName,
+    const std::string &sandboxPath)
+{
+    // Map "<sandbox-root>/<relative...>" to "<external-root>/<relative...>" keeping the
+    // directory structure, so nested target directories (e.g. "dir (nested)/file.html")
+    // survive the round trip through the system DownloadManager.
+    if (!IsValidPathComponent(userId) || !IsValidPathComponent(packageName)) {
+        REQUEST_HILOGE("invalid userId or packageName in sandbox path");
+        return "";
+    }
+    size_t pos = sandboxPath.find('/', strlen("/data/user/") + userId.length() + packageName.length() + 1);
+    std::string relative;
+    if (pos != std::string::npos) {
+        relative = sandboxPath.substr(pos + 1);
+    } else {
+        relative = sandboxPath.substr(sandboxPath.rfind('/') + 1);
+    }
+    // Reject traversal segments: a saveas containing ".." would otherwise escape the
+    // app's files/ base directory after the external path is resolved.
+    size_t start = 0;
+    while (start <= relative.length()) {
+        size_t end = relative.find('/', start);
+        std::string component = relative.substr(start, (end == std::string::npos ? relative.length() : end) - start);
+        if (!IsValidPathComponent(component)) {
+            REQUEST_HILOGE("invalid relative path component: %{public}s", relative.c_str());
+            return "";
+        }
+        if (end == std::string::npos) {
+            break;
+        }
+        start = end + 1;
+    }
+    std::string external = "/storage/emulated/" + userId + "/Android/data/" + packageName + "/files/" + relative;
+    if (!CreateDirectories(external.substr(0, external.rfind('/')))) {
+        REQUEST_HILOGE("fail to create directories for %{public}s", external.c_str());
+        return "";
+    }
+    return external;
+}
+
+bool TaskManagerJni::CreateDirectories(const std::string &dirPath)
+{
+    if (dirPath.empty() || dirPath == "/") {
+        return true;
+    }
+    struct stat st = {};
+    if (stat(dirPath.c_str(), &st) == 0) {
+        return S_ISDIR(st.st_mode);
+    }
+    std::string parent = dirPath.substr(0, dirPath.rfind('/'));
+    if (!CreateDirectories(parent)) {
+        return false;
+    }
+    if (mkdir(dirPath.c_str(), S_IRWXU | S_IRWXG | S_IXOTH) != 0 && errno != EEXIST) {
+        REQUEST_HILOGE("mkdir %{public}s failed, errno %{public}d", dirPath.c_str(), errno);
+        return false;
+    }
+    return true;
 }
 
 std::string TaskManagerJni::GetUserId(const std::string &sandBoxPath, const std::string &prefix)
@@ -598,16 +676,90 @@ bool TaskManagerJni::HandleComplete(const std::string &params)
     }
     auto info = infoJson.get<TaskInfo>();
     if (!info.files.empty() && saveas != info.files[0].uri) {
-        std::string copyFile = "cp " + saveas + " " + info.files[0].uri;
-        std::string removeFile = "rm -rf " + saveas;
-        REQUEST_HILOGI("copyFile = %{public}s", copyFile.c_str());
-        if (system(copyFile.c_str()) != 0) {
-            REQUEST_HILOGE("%s failed", copyFile.c_str());
-            system(removeFile.c_str());
+        REQUEST_HILOGI("copyFile: %{public}s -> %{public}s", saveas.c_str(), info.files[0].uri.c_str());
+        if (!CopyFile(saveas, info.files[0].uri)) {
+            REQUEST_HILOGE("copyFile failed: %{public}s -> %{public}s", saveas.c_str(),
+                info.files[0].uri.c_str());
+            RemoveFile(saveas);
             return false;
         }
-        system(removeFile.c_str());
+        RemoveFile(saveas);
     }
     return true;
+}
+
+static bool CopyStreamData(std::ifstream &src, std::ofstream &dst, const std::string &dstPath, uint64_t &copied)
+{
+    char buffer[8192];
+    while (src.read(buffer, sizeof(buffer)) || src.gcount() > 0) {
+        dst.write(buffer, src.gcount());
+        copied += src.gcount();
+        if (!dst.good()) {
+            REQUEST_HILOGE("write dst %{public}s failed", dstPath.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+bool TaskManagerJni::CopyFile(const std::string &srcPath, const std::string &dstPath)
+{
+    // Copy via std::fstream so the full path (including spaces, parentheses or any
+    // other legal file-name character) is treated as one opaque string. Never build
+    // shell commands from user-controlled paths.
+    std::ifstream src(srcPath, std::ios::binary);
+    if (!src.is_open()) {
+        REQUEST_HILOGE("open src %{public}s failed", srcPath.c_str());
+        return false;
+    }
+    struct stat srcStat = {};
+    if (stat(srcPath.c_str(), &srcStat) != 0) {
+        REQUEST_HILOGE("stat src %{public}s failed", srcPath.c_str());
+        return false;
+    }
+    std::string dstDir = dstPath.substr(0, dstPath.rfind('/'));
+    if (!CreateDirectories(dstDir)) {
+        REQUEST_HILOGE("create dst dir %{public}s failed", dstDir.c_str());
+        return false;
+    }
+    std::ofstream dst(dstPath, std::ios::binary | std::ios::trunc);
+    if (!dst.is_open()) {
+        REQUEST_HILOGE("open dst %{public}s failed", dstPath.c_str());
+        return false;
+    }
+    uint64_t copied = 0;
+    if (!CopyStreamData(src, dst, dstPath, copied)) {
+        RemoveFile(dstPath);
+        return false;
+    }
+    // A read error can surface as a premature EOF without badbit, so compare the
+    // total copied bytes with the source size instead of relying on src.bad().
+    if (copied != static_cast<uint64_t>(srcStat.st_size)) {
+        REQUEST_HILOGE("copy truncated: %{public}s copied %{public}llu of %{public}lld bytes", srcPath.c_str(),
+            static_cast<unsigned long long>(copied), static_cast<long long>(srcStat.st_size));
+        RemoveFile(dstPath);
+        return false;
+    }
+    // write() only fills the ofstream internal buffer; the final flush/close failures
+    // (e.g. disk full) are silently swallowed by the destructor, so close explicitly.
+    dst.close();
+    if (!dst.good()) {
+        REQUEST_HILOGE("close dst %{public}s failed", dstPath.c_str());
+        RemoveFile(dstPath);
+        return false;
+    }
+    if (src.bad()) {
+        REQUEST_HILOGE("read src %{public}s failed", srcPath.c_str());
+        RemoveFile(dstPath);
+        return false;
+    }
+    return true;
+}
+
+void TaskManagerJni::RemoveFile(const std::string &filePath)
+{
+    if (unlink(filePath.c_str()) != 0 && errno != ENOENT) {
+        REQUEST_HILOGE("unlink %{public}s failed, errno %{public}d", filePath.c_str(), errno);
+    }
 }
 } // namespace OHOS::Plugin::Request
