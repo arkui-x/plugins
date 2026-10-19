@@ -91,14 +91,7 @@ Json NAPIUtils::PlatformParams(napi_env env, napi_value value)
             break;
         }
         case napi_number: {
-            int intValue = PluginUtilsNApi::GetCInt32(value, env);
-            double numberValue = PluginUtilsNApi::GetDouble(env, value);
-            double diff = std::fabs(numberValue - static_cast<double>(intValue));
-            if (diff > DOUBLE_MIN_VALUE) {
-                result = numberValue;
-            } else {
-                result = intValue;
-            }
+            result = GetNumberParam(env, value);
             break;
         }
         case napi_string: {
@@ -129,6 +122,23 @@ Json NAPIUtils::PlatformParams(napi_env env, napi_value value)
         }
         default:
             break;
+    }
+    return result;
+}
+
+Json NAPIUtils::GetNumberParam(napi_env env, napi_value value)
+{
+    Json result;
+    int64_t int64Value = PluginUtilsNApi::GetCInt64(value, env);
+    double numberValue = PluginUtilsNApi::GetDouble(env, value);
+    double diff = std::fabs(numberValue - static_cast<double>(int64Value));
+    if (diff > DOUBLE_MIN_VALUE) {
+        result = numberValue;
+    } else if (int64Value > std::numeric_limits<int32_t>::max() ||
+        int64Value < std::numeric_limits<int32_t>::min()) {
+        result = int64Value;
+    } else {
+        result = static_cast<int>(int64Value);
     }
     return result;
 }
