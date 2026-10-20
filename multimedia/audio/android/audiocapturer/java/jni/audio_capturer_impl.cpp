@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -61,10 +61,12 @@ bool AudioCapturerImpl::Start()
 {
     std::unique_lock<std::mutex> statusLock(statusLock_);
     CHECK_AND_RETURN_RET_LOG((recordState_ == CAPTURER_PREPARED) || (recordState_ == CAPTURER_STOPPED), false,
-        "Start failed. Illegal state:%{public}u", recordState_);
+        "Start failed. Illegal state:%{public}u", recordState_.load());
     bool ret = Plugin::AudioCapturerJni::Start(reinterpret_cast<long>(this));
     if (ret) {
         TransferState(CAPTURER_RUNNING);
+        readGeneration_++;
+        readActive_ = true;
         readThreadCv_.notify_all();
     }
     return ret;
@@ -74,10 +76,18 @@ bool AudioCapturerImpl::Stop()
 {
     std::unique_lock<std::mutex> statusLock(statusLock_);
     CHECK_AND_RETURN_RET_LOG((recordState_ == CAPTURER_RUNNING), false,
-        "State of stream is not running. Illegal state:%{public}u", recordState_);
+        "State of stream is not running. Illegal state:%{public}u", recordState_.load());
+    // Gate reads before the platform stops; publish STOPPED only on success.
+    readActive_ = false;
+    readGeneration_++;
+    readThreadCv_.notify_all();
+    cbBufferCv_.notify_all();
     bool ret = Plugin::AudioCapturerJni::Stop(reinterpret_cast<long>(this));
     if (ret) {
         TransferState(CAPTURER_STOPPED);
+    } else {
+        readActive_ = true;
+        readThreadCv_.notify_all();
     }
     return ret;
 }
@@ -86,10 +96,15 @@ bool AudioCapturerImpl::Release()
 {
     std::unique_lock<std::mutex> statusLock(statusLock_);
     CHECK_AND_RETURN_RET_LOG(recordState_ != CAPTURER_RELEASED, false, "Already released, do nothing.");
+    readActive_ = false;
+    readGeneration_++;
+    readThreadCv_.notify_all();
+    cbBufferCv_.notify_all();
     bool ret = Plugin::AudioCapturerJni::Release(reinterpret_cast<long>(this));
     if (ret) {
         readThreadReleased_ = true;
         readThreadCv_.notify_all();
+        cbBufferCv_.notify_all();
         if (callbackLoop_.joinable()) {
             callbackLoop_.join();
         }
@@ -97,6 +112,9 @@ bool AudioCapturerImpl::Release()
         cbBuffer_ = nullptr;
         isReaded_ = false;
         TransferState(CAPTURER_RELEASED);
+    } else {
+        readActive_ = recordState_ == CAPTURER_RUNNING;
+        readThreadCv_.notify_all();
     }
     return ret;
 }
@@ -110,8 +128,8 @@ int32_t AudioCapturerImpl::SetCapturerCallback(const std::shared_ptr<AudioCaptur
 void AudioCapturerImpl::TransferState(CapturerState recordState)
 {
     if (recordState_ != recordState) {
-        AUDIO_DEBUG_LOG(
-            "AudioCapturerImpl::TransferState state changed. old_state(%d), new_state(%d)", recordState_, recordState);
+        AUDIO_DEBUG_LOG("AudioCapturerImpl::TransferState state changed. old_state(%d), new_state(%d)",
+            recordState_.load(), recordState);
         recordState_ = recordState;
         if (stateCallback_) {
             stateCallback_->OnStateChange(recordState);
@@ -165,6 +183,7 @@ int32_t AudioCapturerImpl::SetCapturerReadCallback(const std::shared_ptr<AudioCa
     cbBuffer_ = std::make_unique<uint8_t[]>(minReadBufferSize_);
     readBuffer_ = { cbBuffer_.get(), minReadBufferSize_, minReadBufferSize_ };
 
+    readThreadReleased_ = false;
     callbackLoop_ = std::thread(&AudioCapturerImpl::ReadCallbackFunc, this);
     pthread_setname_np(callbackLoop_.native_handle(), READ_THREAD_NAME);
 
@@ -176,37 +195,70 @@ int32_t AudioCapturerImpl::SetCapturerReadCallback(const std::shared_ptr<AudioCa
 
 void AudioCapturerImpl::ReadCallbackFunc()
 {
-    readThreadReleased_ = false;
     readThreadCv_.notify_all();
+    size_t bytesRead = 0;
+    uint32_t generation = readGeneration_;
 
     while (!readThreadReleased_) {
-        if (recordState_ != CAPTURER_RUNNING) {
+        if (!readActive_) {
+            bytesRead = 0;
             std::unique_lock<std::mutex> stateLock(readThreadLock_);
             readThreadCv_.wait_for(stateLock, std::chrono::milliseconds(SHORT_TIMEOUT_IN_MS),
-                [this] { return recordState_ == CAPTURER_RUNNING || readThreadReleased_; });
+                [this] { return readActive_ || readThreadReleased_; });
             continue;
+        }
+        uint32_t currentGeneration = readGeneration_;
+        if (generation != currentGeneration) {
+            bytesRead = 0;
+            generation = currentGeneration;
         }
 
         std::unique_lock<std::mutex> lockBuffer(readBufferLock_);
-        memset(readBuffer_.buffer, 0, minReadBufferSize_ * sizeof(uint8_t));
-        Plugin::AudioCapturerJni::Read(reinterpret_cast<long>(this), readBuffer_.buffer, readBuffer_.dataLength);
+        if (bytesRead == 0) {
+            memset(readBuffer_.buffer, 0, minReadBufferSize_ * sizeof(uint8_t));
+        }
+        size_t remaining = minReadBufferSize_ - bytesRead;
+        int32_t readSize =
+            Plugin::AudioCapturerJni::Read(reinterpret_cast<long>(this), readBuffer_.buffer + bytesRead, remaining);
         lockBuffer.unlock();
+        if (!readActive_ || readThreadReleased_ || generation != readGeneration_) {
+            bytesRead = 0;
+            continue;
+        }
+        if (readSize <= 0 || static_cast<size_t>(readSize) > remaining) {
+            bytesRead = 0;
+            std::unique_lock<std::mutex> stateLock(readThreadLock_);
+            readThreadCv_.wait_for(stateLock, std::chrono::milliseconds(READ_BUFFER_TIMEOUT_IN_MS),
+                [this, generation] { return !readActive_ || readThreadReleased_ || generation != readGeneration_; });
+            continue;
+        }
+        bytesRead += static_cast<size_t>(readSize);
+        // Preserve complete callback frames when AudioRecord returns a short read.
+        if (bytesRead < minReadBufferSize_) {
+            continue;
+        }
 
         std::unique_lock<std::mutex> lockCb(readCbMutex_);
+        if (!readActive_ || readThreadReleased_ || generation != readGeneration_) {
+            bytesRead = 0;
+            continue;
+        }
         isReaded_ = false;
         if (readCallback_) {
             readCallback_->OnReadData(minReadBufferSize_);
         }
         lockCb.unlock();
+        bytesRead = 0;
 
         std::unique_lock<std::mutex> bufferLock(readBufferLock_);
-        cbBufferCv_.wait_for(
-            bufferLock, std::chrono::milliseconds(READ_BUFFER_TIMEOUT_IN_MS), [this] { return isReaded_ == true; });
+        cbBufferCv_.wait_for(bufferLock, std::chrono::milliseconds(READ_BUFFER_TIMEOUT_IN_MS),
+            [this] { return isReaded_ || !readActive_ || readThreadReleased_; });
     }
 }
 
 int32_t AudioCapturerImpl::Enqueue(const BufferDesc& bufDesc)
 {
+    std::unique_lock<std::mutex> lock(readBufferLock_);
     if (bufDesc.bufLength != minReadBufferSize_ || bufDesc.dataLength != minReadBufferSize_) {
         AUDIO_ERR_LOG("Enqueue invalid bufLength:%zu or dataLength:%zu, should be %zu", bufDesc.bufLength,
             bufDesc.dataLength, minReadBufferSize_);
@@ -219,7 +271,6 @@ int32_t AudioCapturerImpl::Enqueue(const BufferDesc& bufDesc)
     readBuffer_.bufLength = minReadBufferSize_;
     readBuffer_.dataLength = minReadBufferSize_;
 
-    std::unique_lock<std::mutex> lock(readBufferLock_);
     isReaded_ = true;
     cbBufferCv_.notify_all();
     return SUCCESS;
