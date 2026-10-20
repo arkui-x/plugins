@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 
 #include <codecvt>
 #include <jni.h>
+#include <limits>
 #include <locale>
 #include <securec.h>
 
@@ -360,15 +361,25 @@ int32_t AudioCapturerJni::GetBufferSize(long capturerPtr, const AudioStreamInfo&
 
 int32_t AudioCapturerJni::Read(long capturerPtr, uint8_t* buffer, size_t bufferSize)
 {
+    if (buffer == nullptr || bufferSize == 0 || bufferSize > static_cast<size_t>(std::numeric_limits<jsize>::max())) {
+        LOGE("AudioCapturerJni::Read invalid buffer or size");
+        return 0;
+    }
     auto env = ARKUI_X_Plugin_GetJniEnv();
     CHECK_NULL_RETURN(env, 0);
     CHECK_NULL_RETURN(g_audioCapturerPluginClass.globalRef, 0);
     CHECK_NULL_RETURN(g_audioCapturerPluginClass.read, 0);
 
-    jbyteArray jBufferArray = env->NewByteArray(bufferSize);
+    jbyteArray jBufferArray = env->NewByteArray(static_cast<jsize>(bufferSize));
+    if (jBufferArray == nullptr) {
+        LOGE("AudioCapturerJni::Read failed to allocate buffer");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return 0;
+    }
 
-    jint size = env->CallIntMethod(
-        g_audioCapturerPluginClass.globalRef, g_audioCapturerPluginClass.read, capturerPtr, jBufferArray, bufferSize);
+    jint size = env->CallIntMethod(g_audioCapturerPluginClass.globalRef, g_audioCapturerPluginClass.read, capturerPtr,
+        jBufferArray, static_cast<jint>(bufferSize));
     if (env->ExceptionCheck() || (size < 0)) {
         LOGE("AudioCapturerJni JNI: call read has exception");
         env->DeleteLocalRef(jBufferArray);
@@ -376,8 +387,19 @@ int32_t AudioCapturerJni::Read(long capturerPtr, uint8_t* buffer, size_t bufferS
         env->ExceptionClear();
         return 0;
     }
-    jbyte* jBuffer = env->GetByteArrayElements(jBufferArray, NULL);
-    if (memcpy_s(buffer, bufferSize * sizeof(uint8_t), jBuffer, bufferSize * sizeof(jbyte)) != EOK) {
+    if (size == 0 || static_cast<size_t>(size) > bufferSize) {
+        env->DeleteLocalRef(jBufferArray);
+        return 0;
+    }
+    jbyte* jBuffer = env->GetByteArrayElements(jBufferArray, nullptr);
+    if (jBuffer == nullptr) {
+        LOGE("AudioCapturerJni::Read failed to access buffer");
+        env->DeleteLocalRef(jBufferArray);
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return 0;
+    }
+    if (memcpy_s(buffer, bufferSize, jBuffer, static_cast<size_t>(size)) != EOK) {
         LOGE("[AudioCapturerJni::Read] memory copy failed");
         env->ReleaseByteArrayElements(jBufferArray, jBuffer, 0);
         env->DeleteLocalRef(jBufferArray);
