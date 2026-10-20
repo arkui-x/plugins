@@ -276,17 +276,23 @@ public class DownloadImpl {
             sendFailCallback(taskInfo, Reason.USER_OPERATION);
             return;
         }
-        String fileName = downloadFilePath.substring(downloadFilePath.lastIndexOf("/") + 1);
-        File saveFile = new File(downloadFilePath, fileName);
+        File saveFile = new File(downloadFilePath);
         File parentFile = saveFile.getParentFile();
-        if (parentFile != null) {
-            request.setDestinationUri(Uri.fromFile(parentFile));
-            taskInfo.setMimeType(mimeType);
-        } else {
-            ALog.e(TAG, "createDownload: file is null");
+        if (parentFile == null) {
+            ALog.e(TAG, "createDownload: parent file is null");
             sendFailCallback(taskInfo, Reason.IO_ERROR);
             return;
         }
+        if (!parentFile.exists() && !parentFile.mkdirs()) {
+            ALog.e(TAG, "createDownload: mkdirs failed for " + parentFile.getPath());
+            sendFailCallback(taskInfo, Reason.IO_ERROR);
+            return;
+        }
+        // Uri.fromFile percent-encodes spaces and leaves parentheses untouched; the
+        // system DownloadManager decodes the URI before writing, so file names with
+        // such characters are downloaded as-is.
+        request.setDestinationUri(Uri.fromFile(saveFile));
+        taskInfo.setMimeType(mimeType);
         long downloadId = 0L;
         try {
             downloadId = downloadManager.enqueue(request);

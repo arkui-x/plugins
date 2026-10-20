@@ -55,6 +55,12 @@ private:
     ~TaskManagerJni();
     static void UploadCb(int64_t taskId, const std::string &type, const std::string &params);
     std::string GetRealPath(const Config &config);
+    static std::string BuildExternalPath(const std::string &userId, const std::string &packageName,
+        const std::string &sandboxPath);
+    static bool IsValidPathComponent(const std::string &component);
+    static bool CreateDirectories(const std::string &dirPath);
+    static bool CopyFile(const std::string &srcPath, const std::string &dstPath);
+    static void RemoveFile(const std::string &filePath);
     std::string GetPackageName(const std::string &sandBoxPath, const std::string &prefix);
     std::string GetUserId(const std::string &sandBoxPath, const std::string &prefix);
     static bool HandleComplete(const std::string &params);
