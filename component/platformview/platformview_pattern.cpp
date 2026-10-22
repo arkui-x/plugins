@@ -30,6 +30,7 @@
 #include "core/common/ace_engine.h"
 #include "core/common/ace_view.h"
 #include "core/components_ng/event/gesture_event_hub.h"
+#include "core/components_ng/render/adapter/rosen_render_context.h"
 #include "core/event/touch_event.h"
 #include "core/pipeline_ng/pipeline_context.h"
 #ifdef NG_BUILD
@@ -167,6 +168,19 @@ void PlatformViewPattern::PlatformViewInitialize()
     renderContextForPlatformViewWeakPtr_ = renderContextForPlatformView_;
     if (IsTexture()) {
         PlatformViewAddCallBack();
+#if defined(RENDER_EXTRACT_SUPPORTED) && defined(ENABLE_ROSEN_BACKEND)
+        auto rosenContext = AceType::DynamicCast<RosenRenderContext>(renderContextForPlatformView_);
+        if (rosenContext) {
+            rosenContext->SetSurfaceCaptureCallback(
+                [weak = WeakClaim(this)]() -> std::shared_ptr<Media::PixelMap> {
+                    auto pattern = weak.Upgrade();
+                    CHECK_NULL_RETURN(pattern, nullptr);
+                    auto renderSurface = pattern->renderSurface_;
+                    CHECK_NULL_RETURN(renderSurface, nullptr);
+                    return renderSurface->SurfaceCapture();
+                });
+        }
+#endif
     }
 
     auto host = GetHost();
