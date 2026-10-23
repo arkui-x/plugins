@@ -1,0 +1,262 @@
+# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/config.gni")
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//plugins/plugin_lib.gni")
+
+# Path to this module
+_CD_ROOT = "//plugins/request/cachedownload"
+
+# Include directories for the cacheDownload core
+_cd_include = [
+  "$_CD_ROOT/include",
+  "//plugins/interfaces",
+]
+
+# Source files for the cacheDownload core (shared between Android and iOS)
+_cd_sources = [
+  "$_CD_ROOT/src/cache_ram.cpp",
+  "$_CD_ROOT/src/cache_file.cpp",
+  "$_CD_ROOT/src/cache_space.cpp",
+  "$_CD_ROOT/src/cache_manager.cpp",
+  "$_CD_ROOT/src/cache_task.cpp",
+  "$_CD_ROOT/src/cache_download_service.cpp",
+  "$_CD_ROOT/cache_download_module.cpp",
+]
+
+# Public config exposing the innerkits C++ client (cache_download_client.h) and
+# the core headers to consumers that link libcache_download_core (SO1). Replicates
+# the include set proven by framework/innerkits/BUILD.gn:cache_download_client_config.
+config("cache_download_core_public_config") {
+  include_dirs = [
+    "$_CD_ROOT/framework/innerkits/include",
+    "$_CD_ROOT/include",
+    "$_CD_ROOT/ios",
+    "//plugins/interfaces",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  ]
+}
+
+template("plugin_cache_download_static") {
+  forward_variables_from(invoker, "*")
+
+  ohos_source_set(target_name) {
+    defines += invoker.defines
+    cflags_cc += invoker.cflags_cc
+
+    include_dirs = _cd_include
+
+    deps = []
+
+    if (platform == "android") {
+      # SO2 (NAPI entry only): Android produces librequest_cachedownload.so via
+      # plugin_lib. Core logic + innerkits C++ client live in
+      # :cache_download_core_android (SO1, defined in the foreach loop below),
+      # so only the NAPI module cpp is compiled here to avoid symbol duplication.
+      defines += [ "CACHE_DOWNLOAD_ENABLE_JNI", "ANDROID_PLATFORM" ]
+      include_dirs += [
+        "$_CD_ROOT/android",
+        "$_CD_ROOT/android/java/jni",
+      ]
+      sources = [ "$_CD_ROOT/cache_download_module.cpp" ]
+      # Static-lib integration: the engine library (libarkui_android.so) already
+      # contains the full cacheDownload core + HTTP client + JNI layers as LOCAL
+      # symbols (via osal -> cache_download_client source_set). This thin NAPI
+      # entry resolves all of them against libarkui_android.so at runtime.
+      # Do NOT link cache_download_core_android (SO1) or the jni source_set here:
+      # duplicating the JNI layer would register two distinct g_nativeMethods
+      # tables via RegisterNatives and the later registration would silently
+      # repoint Java callbacks at the wrong engine instance (order-dependent
+      # breakage when an import page is opened after an Image-only page).
+      deps += [
+        "//plugins/interfaces/native:ace_plugin_util_inner_${platform}",
+        "//foundation/arkui/ace_engine/adapter/android/build:libarkui_android",
+      ]
+      # napi symbols (napi_module_register, etc.) resolve at runtime against
+      # libarkui_android.so, which already carries them. Depending on
+      # //plugins/libs/napi statically pulls libace_napi.a (527 ets_runtime
+      # objects) into this thin plugin .so; their 460+ module constructors
+      # then self-register on dlopen and corrupt the module manager's
+      # tailNativeModule (Name mismatch: request_cacheDownload != arkui_arktheme).
+      public_configs = [ "$ace_napi:ace_napi_config" ]
+      libs = [ "log" ]
+    } else if (platform == "ios") {
+      # SO2 (NAPI entry only): the iOS loop produces librequest_cachedownload
+      # from this source_set. Core logic + the innerkits C++ client live in
+      # :cache_download_core_ios (SO1, defined below in the foreach loop), so
+      # only the NAPI module cpp is compiled here to avoid symbol duplication.
+      defines += [ "IOS_PLATFORM" ]
+      include_dirs += [
+        "$_CD_ROOT/ios",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+      ]
+      sources = [ "$_CD_ROOT/cache_download_module.cpp" ]
+      cflags_objc = [ "-fobjc-arc" ]
+      cflags_objcc = [ "-fobjc-arc" ]
+      deps += [
+        ":cache_download_core_ios",
+        "//plugins/libs/napi:napi_${target_os}",
+        "//plugins/interfaces/native:ace_plugin_util_inner_${platform}",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+      ]
+      libs = [ "sqlite3" ]
+      frameworks = [ "Foundation.framework" ]
+    }
+
+    subsystem_name = "plugins"
+    part_name = "request_cache_download"
+
+    use_exceptions = true
+  }
+}
+
+foreach(item, ace_platforms) {
+  plugin_cache_download_static("request_cachedownload_static_" + item.name) {
+    platform = item.name
+
+    defines = []
+    cflags_cc = []
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+
+    if (defined(config.defines)) {
+      defines = config.defines
+    }
+
+    if (defined(config.cflags_cc)) {
+      cflags_cc = config.cflags_cc
+    }
+  }
+
+  # SO1: core logic + innerkits C++ client, emitted as its own shared library
+  # (inside the foreach, like plugins/bluetooth/common). Exposes
+  # cache_download_client.h via cache_download_core_public_config so other native
+  # components can link and call CacheDownloadClient::GetInstance(). No NAPI code
+  # here (that is SO2).
+  # NOTE: the Android SO1 target is RETIRED under the static-lib integration —
+  # the engine library (libarkui_android.so) owns the single cacheDownload
+  # engine instance and exports it via the version script; the thin NAPI .so
+  # resolves everything against it. Shipping a second libcache_download_core.so
+  # would create a second engine instance and cause order-dependent
+  # RegisterNatives breakage. Only iOS keeps its framework target below.
+  if (item.name == "ios") {
+    ohos_shared_library("cache_download_core_ios") {
+      public_configs = [ ":cache_download_core_public_config" ]
+      defines = [ "IOS_PLATFORM" ]
+      cflags_objc = [ "-fobjc-arc" ]
+      cflags_objcc = [ "-fobjc-arc" ]
+      use_exceptions = true
+      sources = [
+        "$_CD_ROOT/src/cache_ram.cpp",
+        "$_CD_ROOT/src/cache_file.cpp",
+        "$_CD_ROOT/src/cache_space.cpp",
+        "$_CD_ROOT/src/cache_manager.cpp",
+        "$_CD_ROOT/src/cache_task.cpp",
+        "$_CD_ROOT/src/cache_download_service.cpp",
+        "$_CD_ROOT/ios/cache_http_client_ios.mm",
+        "$_CD_ROOT/ios/cache_download_ios_utils.mm",
+        "$_CD_ROOT/framework/innerkits/src/cache_download_client.cpp",
+      ]
+      deps = [
+        "//plugins/interfaces/native:ace_plugin_util_ios",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+      ]
+      libs = [ "sqlite3" ]
+      frameworks = [ "Foundation.framework" ]
+      output_name = "cache_download_core"
+      ldflags = [
+        "-Wl",
+        "-install_name",
+        "@rpath/libcache_download_core.framework/libcache_download_core",
+      ]
+      subsystem_name = "plugins"
+      part_name = "request_cache_download"
+    }
+
+    ohos_combine_darwin_framework("libcache_download_core") {
+      deps = [ ":cache_download_core_ios" ]
+      subsystem_name = "plugins"
+      part_name = "request_cache_download"
+    }
+  } else if (item.name == "android") {
+    # SO1 (Android) is RETIRED under the static-lib integration: the engine
+    # library (libarkui_android.so) owns the single cacheDownload engine and
+    # exports it via the version script; the thin NAPI .so resolves against it.
+    # A second libcache_download_core.so would create a second engine instance
+    # and cause order-dependent RegisterNatives breakage.
+    # The historical target definition is kept below under `if (false)` for
+    # reference only.
+    if (false) {
+      ohos_shared_library("cache_download_core_android") {
+        public_configs = [ ":cache_download_core_public_config" ]
+        defines = [ "CACHE_DOWNLOAD_ENABLE_JNI", "ANDROID_PLATFORM" ]
+        use_exceptions = true
+        include_dirs = [
+          "$_CD_ROOT/android",
+          "$_CD_ROOT/android/java/jni",
+          "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+        ]
+        sources = [
+          "$_CD_ROOT/src/cache_ram.cpp",
+          "$_CD_ROOT/src/cache_file.cpp",
+          "$_CD_ROOT/src/cache_space.cpp",
+          "$_CD_ROOT/src/cache_manager.cpp",
+          "$_CD_ROOT/src/cache_task.cpp",
+          "$_CD_ROOT/src/cache_download_service.cpp",
+          "$_CD_ROOT/android/cache_http_client_impl.cpp",
+          "$_CD_ROOT/framework/innerkits/src/cache_download_client.cpp",
+        ]
+        deps = [
+          "//plugins/interfaces/native:ace_plugin_util_android",
+          "//plugins/request/cachedownload/android/java:cache_download_android_jni",
+          "//plugins/libs/napi:napi_${target_os}",
+          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_${target_os}",
+        ]
+        libs = [ "log" ]
+        version_script = "//plugins/request/cachedownload/cache_download_core.map"
+        # Statically link libc++abi: lld otherwise resolves C++ runtime symbols
+        # against the link-time libarkui_android.so which does not export them
+        # in the SDK/APK copy, leaving them UNDEF and failing dlopen on device.
+        # (root-caused 2026-09-03)
+        ldflags = [
+          "-Wl,--whole-archive",
+          rebase_path("$aosp_libcpp_lib_dir/libc++abi.a", root_build_dir),
+          "-Wl,--no-whole-archive",
+        ]
+        output_name = "libcache_download_core"
+        relative_install_dir = "module"
+        subsystem_name = "plugins"
+        part_name = "request_cache_download"
+      }
+    }  # end if (false): SO1 (Android) retired
+  }
+}
+
+ohos_combine_jars("cache_download_java") {
+  deps = [ "android/java:cache_download_android_java" ]
+
+  subsystem_name = "plugins"
+  part_name = "request_cache_download"
+  jar_path = "${root_out_dir}/plugins/request.cachedownload/ace_cache_download_android.jar"
+}
+
+plugin_lib("request/cachedownload") {
+  platform = "android"
+  version_script = "//foundation/arkui/ace_engine/adapter/android/build/empty_android_symbol.map"
+}
