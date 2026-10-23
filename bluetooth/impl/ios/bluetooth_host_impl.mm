@@ -476,7 +476,7 @@ int32_t BluetoothHostImpl::OnPairStatusChangedCallBack(
     return BT_NO_ERROR;
 }
 
-int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(const std::string &callingName)
+int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(const std::string &callingName, bool isBleOwnerMode)
 {
     return BT_NO_ERROR;
 }

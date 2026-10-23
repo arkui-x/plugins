@@ -53,7 +53,8 @@ public:
     {}
     ~BluetoothSwitchModule() = default;
 
-    int ProcessBluetoothSwitchEvent(BluetoothSwitchEvent event, std::string callingName = "", bool isAsync = false);
+    int ProcessBluetoothSwitchEvent(
+        BluetoothSwitchEvent event, std::string callingName = "", bool isAsync = false, bool isBleOwnerMode = false);
     void SetNoAutoConnect(bool);
 
 private:
