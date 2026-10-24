@@ -74,6 +74,7 @@ private:
     std::mutex platformMethodDataListLock_;
     std::mutex jsMethodDataListLock_;
     std::mutex jsSendMessageDataListLock_;
+    std::mutex messageCallbackLock_;
     std::shared_ptr<BridgeEventHandle> taskExecutor_ = BridgeEventHandle::GetInstance();
 
     std::shared_ptr<MethodData> FindPlatformMethodData(const std::string& methodName);
