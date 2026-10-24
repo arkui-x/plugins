@@ -53,5 +53,14 @@ static constexpr const char* CodeMessage[static_cast<int>(ErrorCode::BRIDGE_END)
     "Bridge codec is invalid",
     "Bridge callMethodSync timeout!"
 };
+
+// Bounds-safe accessor for CodeMessage: codeId may come from the platform side as an arbitrary
+// int (e.g. business error codes like 10001), so out-of-range values get the generic message
+// instead of indexing past the end of the array. Prefer this over indexing CodeMessage directly.
+constexpr const char* GetCodeMessage(int codeId)
+{
+    return (codeId >= 0 && codeId < static_cast<int>(ErrorCode::BRIDGE_END)) ? CodeMessage[codeId]
+                                                                             : "unknown error!";
+}
 } // namespace OHOS::Plugin::Bridge
 #endif

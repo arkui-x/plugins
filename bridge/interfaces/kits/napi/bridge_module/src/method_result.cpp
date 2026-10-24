@@ -45,12 +45,7 @@ void MethodResult::GetErrorInfoByErrorCode(void)
     if (errorCode_ < 0) {
         errorCode_ = static_cast<int>(ErrorCode::BRIDGE_DATA_ERROR);
     }
-    if (errorCode_ >= 0 && errorCode_ < static_cast<int>(ErrorCode::BRIDGE_END)) {
-        errcodeMessage_ = CodeMessage[errorCode_];
-    }
-    if (errcodeMessage_.empty()) {
-        errcodeMessage_ = "unknown error!";
-    }
+    errcodeMessage_ = GetCodeMessage(errorCode_);
 }
 
 void MethodResult::SetErrorCodeInfo(int errorCode)

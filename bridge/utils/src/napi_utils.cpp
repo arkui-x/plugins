@@ -157,7 +157,8 @@ napi_value NAPIUtils::CreateErrorMessage(napi_env env, int32_t codeId)
     napi_value result = nullptr;
     napi_value eCode = PluginUtilsNApi::GetNapiInt32(codeId, env);
     napi_value eMsg = nullptr;
-    napi_create_string_utf8(env, CodeMessage[codeId], strlen(CodeMessage[codeId]), &eMsg);
+    const char* codeMessage = GetCodeMessage(codeId);
+    napi_create_string_utf8(env, codeMessage, strlen(codeMessage), &eMsg);
     napi_create_error(env, nullptr, eMsg, &result);
     napi_set_named_property(env, result, "code", eCode);
     napi_set_named_property(env, result, "message", eMsg);
