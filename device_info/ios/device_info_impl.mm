@@ -49,11 +49,11 @@ const std::string DeviceInfoImpl::GetDeviceType(void)
 
     NSString *value = @"Unknown";
     if (device.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
-        value = @"Handset";
+        value = @"phone";
     } else if (device.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
-        value = @"Tablet";
+        value = @"tablet";
     } else if (device.userInterfaceIdiom == UIUserInterfaceIdiomTV) {
-        value = @"Tv";
+        value = @"tv";
     }
     NSLog(@"GetDeviceType: %@", value);
     LOGE("GetDeviceTyped.", value);
