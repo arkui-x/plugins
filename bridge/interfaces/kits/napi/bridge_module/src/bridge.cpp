@@ -370,14 +370,18 @@ ErrorCode Bridge::UnRegisterMethod(const std::string& methodName)
 
 void Bridge::SetMessageListener(std::shared_ptr<MethodData>& callback)
 {
-    if (messageCallback_) {
-        auto* asyncEvent = messageCallback_->GetAsyncEvent();
-        if (asyncEvent != nullptr && asyncEvent->GetEnv() != nullptr) {
-            messageCallback_->ReleaseEvent();
-        }
-        messageCallback_.reset();
+    std::shared_ptr<MethodData> oldCallback;
+    {
+        std::lock_guard<std::mutex> lock(messageCallbackLock_);
+        oldCallback = std::move(messageCallback_);
+        messageCallback_ = callback;
     }
-    messageCallback_ = callback;
+    if (oldCallback) {
+        auto* asyncEvent = oldCallback->GetAsyncEvent();
+        if (asyncEvent != nullptr && asyncEvent->GetEnv() != nullptr) {
+            oldCallback->ReleaseEvent();
+        }
+    }
 }
 
 void Bridge::SetAvailable(bool available)
@@ -629,25 +633,34 @@ void Bridge::OnPlatformMethodResultBinary(const std::string& methodName, int err
 
 void Bridge::OnPlatformSendMessage(const std::string& data)
 {
-    if (messageCallback_) {
-        auto cb = messageCallback_;
-        std::string copy = data;
-        if (!taskExecutor_) {
-            LOGE("OnPlatformSendMessage: taskExecutor_ is null.");
+    std::shared_ptr<MethodData> cb;
+    {
+        std::lock_guard<std::mutex> lock(messageCallbackLock_);
+        if (!messageCallback_) {
             return;
         }
-        taskExecutor_->RunTaskOnMainThread([cb, copy = std::move(copy)]() {
-            cb->PlatformSendMessage(copy);
-        });
+        cb = messageCallback_;
     }
+    std::string copy = data;
+    if (!taskExecutor_) {
+        LOGE("OnPlatformSendMessage: taskExecutor_ is null.");
+        return;
+    }
+    taskExecutor_->RunTaskOnMainThread([cb, copy = std::move(copy)]() {
+        cb->PlatformSendMessage(copy);
+    });
 }
 
 void Bridge::OnPlatformSendMessageBinary(std::unique_ptr<BufferMapping> data)
 {
-    if (!messageCallback_) {
-        return;
+    std::shared_ptr<MethodData> cb;
+    {
+        std::lock_guard<std::mutex> lock(messageCallbackLock_);
+        if (!messageCallback_) {
+            return;
+        }
+        cb = messageCallback_;
     }
-    auto cb = messageCallback_;
     struct BufferHolder { std::unique_ptr<BufferMapping> ptr; };
     auto holder = std::make_shared<BufferHolder>();
     if (!holder) {
