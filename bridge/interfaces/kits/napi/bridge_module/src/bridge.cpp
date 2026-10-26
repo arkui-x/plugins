@@ -369,12 +369,9 @@ ErrorCode Bridge::UnRegisterMethod(const std::string& methodName)
 
 void Bridge::SetMessageListener(std::shared_ptr<MethodData>& callback)
 {
-    std::shared_ptr<MethodData> oldCallback;
-    {
-        std::lock_guard<std::mutex> lock(messageCallbackLock_);
-        oldCallback = std::move(messageCallback_);
-        messageCallback_ = callback;
-    }
+    std::lock_guard<std::mutex> lock(messageCallbackLock_);
+    std::shared_ptr<MethodData> oldCallback = std::move(messageCallback_);
+    messageCallback_ = callback;
     if (oldCallback) {
         auto* asyncEvent = oldCallback->GetAsyncEvent();
         if (asyncEvent != nullptr && asyncEvent->GetEnv() != nullptr) {
@@ -657,34 +654,41 @@ void Bridge::OnPlatformMethodResultBinary(const std::string& methodName, int err
 void Bridge::OnPlatformSendMessage(const std::string& data)
 {
     std::shared_ptr<MethodData> cb;
+    std::shared_ptr<BridgeEventHandle> handle;
     {
         std::lock_guard<std::mutex> lock(messageCallbackLock_);
-        if (!messageCallback_) {
-            return;
-        }
         cb = messageCallback_;
+        if (cb) {
+            auto* ev = cb->GetAsyncEvent();
+            handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+        }
     }
-    std::string copy = data;
-    auto* ev = cb->GetAsyncEvent();
-    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
-    if (handle) {
-        handle->RunTaskOnJsThread([cb, copy = std::move(copy)]() {
-        cb->PlatformSendMessage(copy);
-        });
-    } else {
-        LOGE("OnPlatformSendMessage: js thread handle null, callback dropped");
+    if (cb) {
+        std::string copy = data;
+        if (handle) {
+            handle->RunTaskOnJsThread([cb, copy = std::move(copy)]() {
+                cb->PlatformSendMessage(copy);
+            });
+        } else {
+            LOGE("OnPlatformSendMessage: js thread handle null, callback dropped");
+        }
     }
 }
 
 void Bridge::OnPlatformSendMessageBinary(std::unique_ptr<BufferMapping> data)
 {
     std::shared_ptr<MethodData> cb;
+    std::shared_ptr<BridgeEventHandle> handle;
     {
         std::lock_guard<std::mutex> lock(messageCallbackLock_);
-        if (!messageCallback_) {
-            return;
-        }
         cb = messageCallback_;
+        if (cb) {
+            auto* ev = cb->GetAsyncEvent();
+            handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
+        }
+    }
+    if (!cb) {
+        return;
     }
     struct BufferHolder { std::unique_ptr<BufferMapping> ptr; };
     auto holder = std::make_shared<BufferHolder>();
@@ -693,8 +697,6 @@ void Bridge::OnPlatformSendMessageBinary(std::unique_ptr<BufferMapping> data)
         return;
     }
     holder->ptr = std::move(data);
-    auto* ev = cb->GetAsyncEvent();
-    auto handle = ev ? BridgeEventHandle::GetInstance(ev->GetEnv()) : nullptr;
     if (handle) {
         handle->RunTaskOnJsThread([cb, holder]() mutable {
             cb->PlatformSendMessageBinary(std::move(holder->ptr));
