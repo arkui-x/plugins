@@ -91,12 +91,12 @@ public class DeviceInfoPlugin {
 
     public String getDeviceType(String defValue) {
         if (context.getPackageManager().hasSystemFeature("amazon.hardware.fire_tv")) {
-            return "Tv";
+            return "tv";
         }
 
         UiModeManager uiManager = (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
         if (uiManager != null && uiManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            return "Tv";
+            return "tv";
         }
 
         String deviceType = getDeviceTypeByResourceConfiguration();
