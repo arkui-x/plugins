@@ -370,14 +370,14 @@ ErrorCode Bridge::UnRegisterMethod(const std::string& methodName)
 void Bridge::SetMessageListener(std::shared_ptr<MethodData>& callback)
 {
     std::lock_guard<std::mutex> lock(messageCallbackLock_);
-    if (messageCallback_) {
-        auto* asyncEvent = messageCallback_->GetAsyncEvent();
-        if (asyncEvent != nullptr && asyncEvent->GetEnv() != nullptr) {
-            messageCallback_->ReleaseEvent();
-        }
-        messageCallback_.reset();
-    }
+    std::shared_ptr<MethodData> oldCallback = std::move(messageCallback_);
     messageCallback_ = callback;
+    if (oldCallback) {
+        auto* asyncEvent = oldCallback->GetAsyncEvent();
+        if (asyncEvent != nullptr && asyncEvent->GetEnv() != nullptr) {
+            oldCallback->ReleaseEvent();
+        }
+    }
 }
 
 void Bridge::SetAvailable(bool available)

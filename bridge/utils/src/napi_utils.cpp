@@ -91,14 +91,7 @@ Json NAPIUtils::PlatformParams(napi_env env, napi_value value)
             break;
         }
         case napi_number: {
-            int intValue = PluginUtilsNApi::GetCInt32(value, env);
-            double numberValue = PluginUtilsNApi::GetDouble(env, value);
-            double diff = std::fabs(numberValue - static_cast<double>(intValue));
-            if (diff > DOUBLE_MIN_VALUE) {
-                result = numberValue;
-            } else {
-                result = intValue;
-            }
+            result = GetNumberParam(env, value);
             break;
         }
         case napi_string: {
@@ -133,6 +126,23 @@ Json NAPIUtils::PlatformParams(napi_env env, napi_value value)
     return result;
 }
 
+Json NAPIUtils::GetNumberParam(napi_env env, napi_value value)
+{
+    Json result;
+    int64_t int64Value = PluginUtilsNApi::GetCInt64(value, env);
+    double numberValue = PluginUtilsNApi::GetDouble(env, value);
+    double diff = std::fabs(numberValue - static_cast<double>(int64Value));
+    if (diff > DOUBLE_MIN_VALUE) {
+        result = numberValue;
+    } else if (int64Value > std::numeric_limits<int32_t>::max() ||
+        int64Value < std::numeric_limits<int32_t>::min()) {
+        result = int64Value;
+    } else {
+        result = static_cast<int>(int64Value);
+    }
+    return result;
+}
+
 int NAPIUtils::NAPI_GetErrorCodeFromJson(Json json)
 {
     int ret = -1;
@@ -147,7 +157,8 @@ napi_value NAPIUtils::CreateErrorMessage(napi_env env, int32_t codeId)
     napi_value result = nullptr;
     napi_value eCode = PluginUtilsNApi::GetNapiInt32(codeId, env);
     napi_value eMsg = nullptr;
-    napi_create_string_utf8(env, CodeMessage[codeId], strlen(CodeMessage[codeId]), &eMsg);
+    const char* codeMessage = GetCodeMessage(codeId);
+    napi_create_string_utf8(env, codeMessage, strlen(codeMessage), &eMsg);
     napi_create_error(env, nullptr, eMsg, &result);
     napi_set_named_property(env, result, "code", eCode);
     napi_set_named_property(env, result, "message", eMsg);

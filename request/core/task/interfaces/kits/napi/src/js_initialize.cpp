@@ -459,7 +459,10 @@ std::map<std::string, std::string> JsInitialize::ParseMap(napi_env env, napi_val
 {
     std::map<std::string, std::string> result;
     napi_value jsValue = NapiUtils::GetNamedProperty(env, jsConfig, propertyName);
-    if (jsValue == nullptr) {
+    napi_valuetype jsType = NapiUtils::GetValueType(env, jsValue);
+    if (jsType != napi_object) {
+        // Reject null, strings, numbers and any other non-object types up front;
+        // GetPropertyNames is only valid on objects.
         return result;
     }
     auto names = NapiUtils::GetPropertyNames(env, jsValue);

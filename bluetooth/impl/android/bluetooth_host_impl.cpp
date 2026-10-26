@@ -446,7 +446,7 @@ int32_t BluetoothHostImpl::OnDiscoveryResultCallBack(
 
     if (!address.empty() && !deviceName.empty()) {
         BluetoothRawAddress device(address);
-        observer_->OnDiscoveryResult(device, rssi, deviceName, deviceClass);
+        observer_->OnDiscoveryResult(device, rssi, deviceName, deviceClass, -1);
         return BT_NO_ERROR;
     }
     return BT_ERR_INTERNAL_ERROR;
@@ -501,7 +501,7 @@ int32_t BluetoothHostImpl::SetFastScanLevel(int level)
     return 0;
 }
 
-int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(const std::string &callingName)
+int32_t BluetoothHostImpl::EnableBluetoothToRestrictMode(const std::string &callingName, bool isBleOwnerMode)
 {
     return 0;
 }
