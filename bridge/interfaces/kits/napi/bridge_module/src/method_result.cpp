@@ -148,12 +148,17 @@ void MethodResult::ParseJSMethodResultBinary(napi_env env, napi_value result)
 {
     ScopedHandleScope scope(env);
     const auto& resultValue = MethodDataConverter::ConvertToCodecableValue(env, result);
-    binaryResult_ = BridgeBinaryCodec::GetInstance().EncodeBuffer(resultValue);
+    binaryResult_ = std::unique_ptr<std::vector<uint8_t>>(BridgeBinaryCodec::GetInstance().EncodeBuffer(resultValue));
 }
 
 std::vector<uint8_t>* MethodResult::GetResultBinary(void)
 {
-    return binaryResult_;
+    return binaryResult_.get();
+}
+
+std::vector<uint8_t>* MethodResult::ReleaseResultBinary(void)
+{
+    return binaryResult_.release();
 }
 
 std::string MethodResult::GetErrorMessage() const

@@ -85,6 +85,11 @@ void MethodData::SetMethodParamNameBinary(std::unique_ptr<std::vector<uint8_t>> 
 
 const std::vector<uint8_t>& MethodData::GetMethodParamNameBinary(void) const
 {
+    static const std::vector<uint8_t> empty;
+    if (!binaryParameter_) {
+        LOGE("GetMethodParamNameBinary: binaryParameter_ is null");
+        return empty;
+    }
     return *binaryParameter_;
 }
 
@@ -270,7 +275,7 @@ void MethodData::InitEventSuccessForMethod(void)
             }
         } else if (codecType == CodecType::BINARY_CODEC) {
             result.ParseJSMethodResultBinary(env, resultValue);
-            auto task = [resultHold = result.GetResultBinary(), bridgeName, methodName]() {
+            auto task = [resultHold = result.ReleaseResultBinary(), bridgeName, methodName]() {
                 std::unique_ptr<std::vector<uint8_t>> resultData { resultHold };
                 Ace::Platform::BridgeManager::JSSendMethodResultBinary(
                     bridgeName, methodName, 0, "", std::move(resultData));
@@ -554,11 +559,7 @@ void MethodData::PlatformCallMethod(const std::string& parameter)
         }
         return;
     }
-
-    if (asyncEvent_ == nullptr) {
-        LOGE("PlatformCallMethod(Posted Task): asyncEvent_ became null.");
-        return;
-    }
+    
     asyncEvent_->SetMethodParameter(parameter);
     asyncEvent_->SetBridgeName(bridgeName_);
     AsyncWorkComplete jsCallback = [](napi_env env, napi_status status, void* data) {
