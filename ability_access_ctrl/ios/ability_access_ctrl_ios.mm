@@ -82,7 +82,7 @@ struct PendingLocationRequest {
     return NO;
 }
 
-- (bool)checkPhotoPermission {
+- (bool)CheckPhotoPermission {
     PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
     switch (status) {
         case PHAuthorizationStatusNotDetermined:
