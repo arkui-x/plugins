@@ -128,6 +128,7 @@ void NAPIAsyncEvent::SetMethodParameter(const std::string& jsonStr)
 
 void NAPIAsyncEvent::SetMethodParameter(uint8_t* data, size_t size)
 {
+    std::lock_guard<std::mutex> lock(queueLock_);
     std::tuple<uint8_t*, size_t> methodBuffer;
     std::get<uint8_t*>(methodBuffer) = data;
     std::get<size_t>(methodBuffer) = size; 
@@ -136,6 +137,11 @@ void NAPIAsyncEvent::SetMethodParameter(uint8_t* data, size_t size)
 
 std::tuple<uint8_t*, size_t> NAPIAsyncEvent::GetMethodParameter(void)
 {
+    std::lock_guard<std::mutex> lock(queueLock_);
+    if (taskQueue_.empty()) {
+        LOGE("GetMethodParameter: taskQueue_ is empty");
+        return {nullptr, 0};
+    }
     std::tuple<uint8_t*, size_t> nextTask = taskQueue_.front();
     taskQueue_.pop_front();
 
@@ -248,6 +254,11 @@ void NAPIAsyncEvent::AsyncWorkCallMethod(void)
     std::string methodParameter = "";
     {
         std::lock_guard<std::mutex> lock(queueLock_);
+        if (methodParameters_.empty()) {
+            LOGE("AsyncWorkCallMethod: methodParameters_ is empty");
+            TriggerEventError(ErrorCode::BRIDGE_METHOD_UNIMPL);
+            return;
+        }
         methodParameter = methodParameters_.front();
         methodParameters_.pop();
     }

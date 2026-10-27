@@ -17,17 +17,11 @@
 
 namespace OHOS::Plugin::Bridge {
 std::atomic<uint32_t> MethodID::id_(0);
-static constexpr const uint32_t MDETHOD_ID_MAX = 0xffffffff - 1;
 static constexpr const char* METHOD_ID_SEP = "$";
 
 uint32_t MethodID::GetNextID(void)
 {
-    uint32_t id = id_;
-    id_++;
-    if (id_ > MDETHOD_ID_MAX) {
-        id_ = 0;
-    }
-    return id;
+    return id_.fetch_add(1, std::memory_order_relaxed);
 }
 
 std::string MethodID::MakeMethodNameID(const std::string& methodName)

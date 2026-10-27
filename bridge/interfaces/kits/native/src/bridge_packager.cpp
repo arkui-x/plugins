@@ -307,8 +307,18 @@ CodecableValue BridgePackager::UnMarshallingVector(BridgeBinaryUnmarshaller* pen
 {
     size_t size = UnMarshallingSize(pendingBuffer);
     uint8_t tSize = static_cast<uint8_t>(sizeof(T));
+    size_t remaining = pendingBuffer->Remaining();
+    if (size > remaining / tSize) {
+        LOGE("UnMarshallingVector size error");
+        return CodecableValue();
+    }
     if (tSize > BridgeBinaryUnmarshaller::UNMARSHALL_SIZE_1) {
         pendingBuffer->UnmarshallingAlign(tSize);
+        remaining = pendingBuffer->Remaining();
+        if (size > remaining / tSize) {
+            LOGE("UnMarshallingVector size error");
+            return CodecableValue();
+        }
     }
     std::vector<T> temp;
     temp.resize(size);
