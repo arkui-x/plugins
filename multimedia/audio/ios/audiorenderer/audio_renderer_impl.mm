@@ -81,7 +81,7 @@ static const char WRITE_QUEUE_CONTEXT = 0;
     renderMode_ = OHOS::AudioStandard::RENDER_MODE_NORMAL;
     rendererOptions_ = rendererOptions;
     playQueue_ = dispatch_queue_create("audio queue play queue", DISPATCH_QUEUE_SERIAL);
-    dispatch_queue_set_specific(playQueue_, &WRITE_QUEUE_CONTEXT, (__bridge void*)self, nullptr);
+    dispatch_queue_set_specific(playQueue_, &WRITE_QUEUE_CONTEXT, &writeBufferLock_, nullptr);
     playState_ = OHOS::AudioStandard::RENDERER_NEW;
     ConvertStreamInfoFromOh(rendererOptions.streamInfo, audioDescription_);
     NSLog(@"AudioStreamBasicDescription mSampleRate = %f, mFormatID = %u, mFormatFlags = %u, \
@@ -604,7 +604,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     }
     // Keep the callback's owner alive until an already running producer has returned.
     // A native write callback may release from playQueue_ itself; never wait on the current queue.
-    if (dispatch_get_specific(&WRITE_QUEUE_CONTEXT) != (__bridge void*)self) {
+    if (dispatch_get_specific(&WRITE_QUEUE_CONTEXT) != &writeBufferLock_) {
         dispatch_sync(playQueue_, ^{});
     }
     if (audioQueue_ != nil) {
