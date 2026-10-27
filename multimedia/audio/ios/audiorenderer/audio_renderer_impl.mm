@@ -28,6 +28,8 @@
 #define MIN_BUFFER_SIZE 20000
 #define ALLOC_BUFFER_SIZE 200000
 
+static const char WRITE_QUEUE_CONTEXT = 0;
+
 #pragma mark - AudioRendererImpl implementation
 @implementation AudioRendererImpl
 {
@@ -79,6 +81,7 @@
     renderMode_ = OHOS::AudioStandard::RENDER_MODE_NORMAL;
     rendererOptions_ = rendererOptions;
     playQueue_ = dispatch_queue_create("audio queue play queue", DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_set_specific(playQueue_, &WRITE_QUEUE_CONTEXT, (__bridge void*)self, nullptr);
     playState_ = OHOS::AudioStandard::RENDERER_NEW;
     ConvertStreamInfoFromOh(rendererOptions.streamInfo, audioDescription_);
     NSLog(@"AudioStreamBasicDescription mSampleRate = %f, mFormatID = %u, mFormatFlags = %u, \
@@ -309,7 +312,8 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 {
     // Called with writeBufferLock_ held.
     if (queueOperationInProgress_ || playState_ != OHOS::AudioStandard::RENDERER_RUNNING ||
-        renderMode_ != OHOS::AudioStandard::RENDER_MODE_CALLBACK || !writeCallback_) {
+        renderMode_ != OHOS::AudioStandard::RENDER_MODE_CALLBACK || !writeCallback_ ||
+        [self getWriteBufferSize] == 0) {
         return false;
     }
     for (int32_t i = 0; i < QUEUE_BUFFER_SIZE; i++) {
@@ -351,7 +355,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     lock.unlock();
 
     // Never wait for JavaScript on the AudioQueue callback thread: stop/reset can wait for that thread.
-    callback->OnWriteData(MIN_BUFFER_SIZE);
+    callback->OnWriteData([self getWriteBufferSize]);
 
     lock.lock();
     writeThreadCv_.wait_for(lock, std::chrono::milliseconds(WRITE_BUFFER_TIMEOUT_IN_MS), [self, generation] {
@@ -393,6 +397,11 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     if (bufDesc.dataLength == 0) {
         return OHOS::AudioStandard::SUCCESS;
     }
+    if (audioDescription_.mBytesPerFrame == 0 || bufDesc.dataLength % audioDescription_.mBytesPerFrame != 0) {
+        NSLog(@"Invalid PCM buffer length: %zu, bytes per frame: %u", bufDesc.dataLength,
+            audioDescription_.mBytesPerFrame);
+        return OHOS::AudioStandard::ERR_INVALID_PARAM;
+    }
 
     AudioQueueBufferRef audioQueueBuffer = nil;
     audioQueueBuffer = [self getNotUsedBuffer];
@@ -423,11 +432,17 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     }
 }
 
+- (size_t)getWriteBufferSize
+{
+    size_t bytesPerFrame = audioDescription_.mBytesPerFrame;
+    return bytesPerFrame == 0 ? 0 : MIN_BUFFER_SIZE - MIN_BUFFER_SIZE % bytesPerFrame;
+}
+
 - (const int32_t)getBufferDesc:(OHOS::AudioStandard::BufferDesc &)bufDesc
 {
     bufDesc.buffer = tempBuffer_;
-    bufDesc.bufLength = MIN_BUFFER_SIZE;
-    bufDesc.dataLength = MIN_BUFFER_SIZE;
+    bufDesc.bufLength = [self getWriteBufferSize];
+    bufDesc.dataLength = bufDesc.bufLength;
     return OHOS::AudioStandard::SUCCESS;
 }
 
@@ -587,6 +602,11 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
     if (![self beginQueueOperation:previousState]) {
         return false;
     }
+    // Keep the callback's owner alive until an already running producer has returned.
+    // A native write callback may release from playQueue_ itself; never wait on the current queue.
+    if (dispatch_get_specific(&WRITE_QUEUE_CONTEXT) != (__bridge void*)self) {
+        dispatch_sync(playQueue_, ^{});
+    }
     if (audioQueue_ != nil) {
         OSStatus status = AudioQueueStop(audioQueue_, true);
         if (status != noErr) {
@@ -605,6 +625,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
         {
             std::lock_guard<std::mutex> lock(writeBufferLock_);
             audioQueue_ = nil;
+            timeLine_ = nil;
             for (int32_t i = 0; i < QUEUE_BUFFER_SIZE; i++) {
                 audioQueueBuffers_[i] = nil;
             }
@@ -624,6 +645,11 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
 - (bool)getAudioTime:(OHOS::AudioStandard::Timestamp &)time
 {
+    std::lock_guard<std::mutex> lock(writeBufferLock_);
+    if (queueOperationInProgress_ || playState_ == OHOS::AudioStandard::RENDERER_RELEASED ||
+        audioQueue_ == nil || timeLine_ == nil) {
+        return false;
+    }
     AudioTimeStamp timeStamp;
     OSStatus status = AudioQueueGetCurrentTime(audioQueue_, timeLine_, &timeStamp, nil);
     if (status != noErr) {
@@ -649,7 +675,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 - (int32_t)getBufferSize:(size_t &)bufferSize
 {
     if(audioQueue_ != nil) {
-        bufferSize = MIN_BUFFER_SIZE;
+        bufferSize = [self getWriteBufferSize];
         return OHOS::AudioStandard::SUCCESS;
     } else {
         return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
