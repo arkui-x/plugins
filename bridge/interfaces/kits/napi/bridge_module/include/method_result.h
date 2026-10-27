@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,8 @@ class MethodResult final {
 public:
     MethodResult() = default;
     ~MethodResult() = default;
+    MethodResult(MethodResult&&) = default;
+    MethodResult& operator=(MethodResult&&) = default;
 
     void SetMethodName(const std::string& methodName);
     const std::string& GetMethodName(void) const;
@@ -52,6 +54,7 @@ public:
         const std::string& errorMessage, std::unique_ptr<Ace::Platform::BufferMapping> result);
     void ParseJSMethodResultBinary(napi_env env, napi_value result);
     std::vector<uint8_t>* GetResultBinary(void);
+    std::vector<uint8_t>* ReleaseResultBinary(void);
     std::string GetErrorMessage() const;
 
 private:
@@ -62,7 +65,7 @@ private:
     napi_value errorResult_ = nullptr;
     napi_value okResult_ = nullptr;
     // for binary codec
-    std::vector<uint8_t>* binaryResult_;
+    std::unique_ptr<std::vector<uint8_t>> binaryResult_ = nullptr;
 
     void GetErrorInfoByErrorCode(void);
 };

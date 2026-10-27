@@ -88,6 +88,11 @@ public:
         }
     }
 
+    size_t Remaining()
+    {
+        return size_ >= currentPos_ ? size_ - currentPos_ : 0;
+    }
+
 private:
     const uint8_t* byteBuffer_ = nullptr;
     size_t size_ = 0;
