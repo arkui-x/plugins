@@ -24,8 +24,11 @@
 #define MIN_STREAM_VOLUME 0.0
 #define MAX_STREAM_VOLUME 1.0
 #define WRITE_BUFFER_TIMEOUT_IN_MS 200
+#define WRITE_RETRY_DELAY_IN_MS 10
 #define MIN_BUFFER_SIZE 20000
 #define ALLOC_BUFFER_SIZE 200000
+
+static const char WRITE_QUEUE_CONTEXT = 0;
 
 #pragma mark - AudioRendererImpl implementation
 @implementation AudioRendererImpl
@@ -42,13 +45,17 @@
     std::mutex writeBufferLock_;
     std::condition_variable writeThreadCv_;
     bool isWrited_;
+    bool bufferEnqueued_;
+    bool writeRequestScheduled_;
+    bool queueOperationInProgress_;
+    uint64_t writeGeneration_;
+    uint64_t activeWriteGeneration_;
     OHOS::AudioStandard::InterruptMode interruptMode_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererCallback> stateCallback_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererWriteCallback> writeCallback_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererDeviceChangeCallback> deviceCallback_;
     std::shared_ptr<OHOS::AudioStandard::AudioRendererOutputDeviceChangeCallback> deviceWithInfoCallback_;
     OHOS::AudioStandard::AudioRenderMode renderMode_;
-    std::mutex writeCbMutex_;
 }
 
 - (void)initChannelLayout:(const OHOS::AudioStandard::AudioChannelLayout)channelLayout
@@ -74,6 +81,7 @@
     renderMode_ = OHOS::AudioStandard::RENDER_MODE_NORMAL;
     rendererOptions_ = rendererOptions;
     playQueue_ = dispatch_queue_create("audio queue play queue", DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_set_specific(playQueue_, &WRITE_QUEUE_CONTEXT, &writeBufferLock_, nullptr);
     playState_ = OHOS::AudioStandard::RENDERER_NEW;
     ConvertStreamInfoFromOh(rendererOptions.streamInfo, audioDescription_);
     NSLog(@"AudioStreamBasicDescription mSampleRate = %f, mFormatID = %u, mFormatFlags = %u, \
@@ -99,6 +107,11 @@
 
     playState_ = OHOS::AudioStandard::RENDERER_PREPARED;
     isWrited_ = false;
+    bufferEnqueued_ = false;
+    writeRequestScheduled_ = false;
+    queueOperationInProgress_ = false;
+    writeGeneration_ = 0;
+    activeWriteGeneration_ = 0;
     interruptMode_ = OHOS::AudioStandard::SHARE_MODE;
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
@@ -147,6 +160,7 @@
 
 - (int32_t)setRenderMode:(OHOS::AudioStandard::AudioRenderMode)renderMode
 {
+    std::lock_guard<std::mutex> lock(writeBufferLock_);
     NSLog(@"SetRenderMode to %s", renderMode == OHOS::AudioStandard::AudioRenderMode::RENDER_MODE_NORMAL ?
         "RENDER_MODE_NORMAL" : "RENDER_MODE_CALLBACK");
     if (renderMode_ == renderMode) {
@@ -166,32 +180,20 @@
         return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
     }
     renderMode_ = renderMode;
-    dispatch_async(playQueue_, ^{
-        int32_t tryCount = QUEUE_BUFFER_SIZE;
-        while (tryCount > 0) {
-            isWrited_ = false;
-            writeCallback_->OnWriteData(MIN_BUFFER_SIZE);
-            std::unique_lock<std::mutex> lk(writeBufferLock_);
-            writeThreadCv_.wait_for(lk, std::chrono::milliseconds(WRITE_BUFFER_TIMEOUT_IN_MS),
-                [self]{ return isWrited_; });
-            NSLog(@"queue isWrited_:%d", isWrited_);
-
-            if (isWrited_) {
-                tryCount--;
-            }
-        }
-    });
     return OHOS::AudioStandard::SUCCESS;
 }
 
 - (int32_t)setRendererWriteCallback:(const std::shared_ptr<OHOS::AudioStandard::AudioRendererWriteCallback> &)callback
 {
-    if (renderMode_ != OHOS::AudioStandard::RENDER_MODE_CALLBACK) {
-        return OHOS::AudioStandard::ERR_INCORRECT_MODE;
-        NSLog(@"incorrect render mode");
+    {
+        std::lock_guard<std::mutex> lock(writeBufferLock_);
+        if (renderMode_ != OHOS::AudioStandard::RENDER_MODE_CALLBACK) {
+            NSLog(@"incorrect render mode");
+            return OHOS::AudioStandard::ERR_INCORRECT_MODE;
+        }
+        writeCallback_ = callback;
     }
-    std::lock_guard<std::mutex> lock(writeCbMutex_);
-    writeCallback_ = callback;
+    [self scheduleWriteData:0];
     return OHOS::AudioStandard::SUCCESS;
 }
 
@@ -294,22 +296,82 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
 - (void)playerCallback:(AudioQueueBufferRef)outQB
 {
-    for (int i = 0; i < QUEUE_BUFFER_SIZE; i++) {
-        if (outQB == audioQueueBuffers_[i]) {
-            audioQueueUsed_[i] = NO;
-            NSLog(@"playerCallback buffer i = %d", i);
+    {
+        std::lock_guard<std::mutex> lock(writeBufferLock_);
+        for (int32_t i = 0; i < QUEUE_BUFFER_SIZE; i++) {
+            if (outQB == audioQueueBuffers_[i]) {
+                audioQueueUsed_[i] = NO;
+            }
+        }
+        writeThreadCv_.notify_all();
+    }
+    [self scheduleWriteData:0];
+}
+
+- (bool)canRequestWriteData
+{
+    // Called with writeBufferLock_ held.
+    if (queueOperationInProgress_ || playState_ != OHOS::AudioStandard::RENDERER_RUNNING ||
+        renderMode_ != OHOS::AudioStandard::RENDER_MODE_CALLBACK || !writeCallback_ ||
+        [self getWriteBufferSize] == 0) {
+        return false;
+    }
+    for (int32_t i = 0; i < QUEUE_BUFFER_SIZE; i++) {
+        if (audioQueueBuffers_[i] != nil && !audioQueueUsed_[i]) {
+            return true;
         }
     }
+    return false;
+}
 
-    if (writeCallback_) {
-        writeCallback_->OnWriteData(MIN_BUFFER_SIZE);
+- (void)scheduleWriteData:(uint32_t)delayMs
+{
+    std::lock_guard<std::mutex> lock(writeBufferLock_);
+    if (writeRequestScheduled_ || ![self canRequestWriteData]) {
+        return;
     }
+    writeRequestScheduled_ = true;
+    uint64_t generation = writeGeneration_;
+    __weak AudioRendererImpl *weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, static_cast<int64_t>(delayMs) * NSEC_PER_MSEC), playQueue_, ^{
+        AudioRendererImpl *renderer = weakSelf;
+        [renderer requestWriteData:generation];
+    });
+}
+
+- (void)requestWriteData:(uint64_t)generation
+{
+    std::unique_lock<std::mutex> lock(writeBufferLock_);
+    if (generation != writeGeneration_ || ![self canRequestWriteData]) {
+        writeRequestScheduled_ = false;
+        lock.unlock();
+        [self scheduleWriteData:0];
+        return;
+    }
+    auto callback = writeCallback_;
+    activeWriteGeneration_ = generation;
+    isWrited_ = false;
+    bufferEnqueued_ = false;
+    lock.unlock();
+
+    // Never wait for JavaScript on the AudioQueue callback thread: stop/reset can wait for that thread.
+    callback->OnWriteData([self getWriteBufferSize]);
+
+    lock.lock();
+    writeThreadCv_.wait_for(lock, std::chrono::milliseconds(WRITE_BUFFER_TIMEOUT_IN_MS), [self, generation] {
+        return isWrited_ || generation != writeGeneration_;
+    });
+    uint32_t delayMs = bufferEnqueued_ ? 0 : WRITE_RETRY_DELAY_IN_MS;
+    writeRequestScheduled_ = false;
+    lock.unlock();
+    // INVALID data does not enter AudioQueue; keep requesting data even when its queue is empty.
+    [self scheduleWriteData:delayMs];
 }
 
 - (AudioQueueBufferRef)getNotUsedBuffer
 {
     for (int i = 0; i < QUEUE_BUFFER_SIZE; i++) {
-        if (NO == audioQueueUsed_[i]) {
+        if (audioQueueBuffers_[i] != nil && NO == audioQueueUsed_[i]) {
             audioQueueUsed_[i] = YES;
             NSLog(@"getNotUsedBuffer i = %d", i);
             return audioQueueBuffers_[i];
@@ -319,10 +381,27 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 }
 
 - (const int32_t)enqueue:(const OHOS::AudioStandard::BufferDesc &)bufDesc
-{   
+{
     std::unique_lock<std::mutex> lk(writeBufferLock_);
+    if (queueOperationInProgress_ || playState_ != OHOS::AudioStandard::RENDERER_RUNNING ||
+        activeWriteGeneration_ != writeGeneration_) {
+        return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
+    }
     isWrited_ = true;
+    bufferEnqueued_ = false;
     writeThreadCv_.notify_all();
+    if (bufDesc.buffer == nullptr || bufDesc.bufLength == 0 || bufDesc.dataLength > bufDesc.bufLength ||
+        bufDesc.dataLength > ALLOC_BUFFER_SIZE) {
+        return OHOS::AudioStandard::ERR_INVALID_PARAM;
+    }
+    if (bufDesc.dataLength == 0) {
+        return OHOS::AudioStandard::SUCCESS;
+    }
+    if (audioDescription_.mBytesPerFrame == 0 || bufDesc.dataLength % audioDescription_.mBytesPerFrame != 0) {
+        NSLog(@"Invalid PCM buffer length: %zu, bytes per frame: %u", bufDesc.dataLength,
+            audioDescription_.mBytesPerFrame);
+        return OHOS::AudioStandard::ERR_INVALID_PARAM;
+    }
 
     AudioQueueBufferRef audioQueueBuffer = nil;
     audioQueueBuffer = [self getNotUsedBuffer];
@@ -339,27 +418,59 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
     OSStatus status = AudioQueueEnqueueBuffer(audioQueue_, audioQueueBuffer, 0, nil);
     if (status != 0) {
+        for (int32_t i = 0; i < QUEUE_BUFFER_SIZE; i++) {
+            if (audioQueueBuffers_[i] == audioQueueBuffer) {
+                audioQueueUsed_[i] = NO;
+                break;
+            }
+        }
         NSLog(@"Failed to AudioQueueEnqueueBuffer: status = %d", status);
         return ConvertErrorToOh(status);
     } else {
+        bufferEnqueued_ = true;
         return OHOS::AudioStandard::SUCCESS;
     }
+}
+
+- (size_t)getWriteBufferSize
+{
+    size_t bytesPerFrame = audioDescription_.mBytesPerFrame;
+    return bytesPerFrame == 0 ? 0 : MIN_BUFFER_SIZE - MIN_BUFFER_SIZE % bytesPerFrame;
 }
 
 - (const int32_t)getBufferDesc:(OHOS::AudioStandard::BufferDesc &)bufDesc
 {
     bufDesc.buffer = tempBuffer_;
-    bufDesc.bufLength = MIN_BUFFER_SIZE;
-    bufDesc.dataLength = MIN_BUFFER_SIZE;
+    bufDesc.bufLength = [self getWriteBufferSize];
+    bufDesc.dataLength = bufDesc.bufLength;
     return OHOS::AudioStandard::SUCCESS;
 }
 
-- (void)transferState:(OHOS::AudioStandard::RendererState) playState
+- (bool)beginQueueOperation:(OHOS::AudioStandard::RendererState &)previousState
 {
-    NSLog(@"transferState oldState = %d, newState = %d", playState_, playState);
-    OHOS::AudioStandard::RendererState oldState = playState_;
-    playState_ = playState;
-    if (oldState != playState_) {
+    std::lock_guard<std::mutex> lock(writeBufferLock_);
+    if (queueOperationInProgress_ || playState_ == OHOS::AudioStandard::RENDERER_RELEASED) {
+        return false;
+    }
+    previousState = playState_;
+    queueOperationInProgress_ = true;
+    ++writeGeneration_;
+    writeThreadCv_.notify_all();
+    return true;
+}
+
+- (void)transferState:(OHOS::AudioStandard::RendererState)playState
+{
+    OHOS::AudioStandard::RendererState oldState = OHOS::AudioStandard::RENDERER_NEW;
+    {
+        std::lock_guard<std::mutex> lock(writeBufferLock_);
+        oldState = playState_;
+        playState_ = playState;
+        queueOperationInProgress_ = false;
+        writeThreadCv_.notify_all();
+    }
+    NSLog(@"transferState oldState = %d, newState = %d", oldState, playState);
+    if (oldState != playState) {
         if (stateCallback_) {
             stateCallback_->OnStateChange(playState);
         }
@@ -368,141 +479,157 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
             [managerImpl updateRendererChangeInfos];
         }
     }
+    [self scheduleWriteData:0];
 }
 
-- (const OHOS::AudioStandard::RendererState) getStatus
+- (const OHOS::AudioStandard::RendererState)getStatus
 {
-    NSLog(@"getStatus playState_:%d", playState_);
+    std::lock_guard<std::mutex> lock(writeBufferLock_);
     return playState_;
+}
+
+- (void)clearUsedBuffers
+{
+    std::lock_guard<std::mutex> lock(writeBufferLock_);
+    for (int32_t i = 0; i < QUEUE_BUFFER_SIZE; i++) {
+        audioQueueUsed_[i] = NO;
+    }
 }
 
 - (bool)start
 {
-    if (audioQueue_ != nil) {
-        if (!((playState_ == OHOS::AudioStandard::RENDERER_PREPARED) ||
-            (playState_ == OHOS::AudioStandard::RENDERER_STOPPED) ||
-            (playState_ == OHOS::AudioStandard::RENDERER_PAUSED))) {
-            NSLog(@"Start failed. Illegal state:%d", playState_);
-            return false;
-        }
-        OSStatus status = AudioQueueStart(audioQueue_, nil);
-        if (status != noErr) {
-            NSLog(@"Failed to AudioQueueStart: status = %d", status);
-            return false;
-        }
-        [self transferState:OHOS::AudioStandard::RENDERER_RUNNING];
-        return true;
-    } else {
+    OHOS::AudioStandard::RendererState previousState = OHOS::AudioStandard::RENDERER_NEW;
+    if (![self beginQueueOperation:previousState]) {
         return false;
     }
+    if (audioQueue_ == nil || (previousState != OHOS::AudioStandard::RENDERER_PREPARED &&
+        previousState != OHOS::AudioStandard::RENDERER_STOPPED &&
+        previousState != OHOS::AudioStandard::RENDERER_PAUSED)) {
+        [self transferState:previousState];
+        return false;
+    }
+    OSStatus status = AudioQueueStart(audioQueue_, nil);
+    if (status != noErr) {
+        NSLog(@"Failed to AudioQueueStart: status = %d", status);
+    }
+    [self transferState:status == noErr ? OHOS::AudioStandard::RENDERER_RUNNING : previousState];
+    return status == noErr;
 }
 
 - (bool)stop
 {
-    if (audioQueue_ != nil) {
-        if (!((playState_ == OHOS::AudioStandard::RENDERER_RUNNING) ||
-            (playState_ == OHOS::AudioStandard::RENDERER_PAUSED))) {
-            NSLog(@"State of stream is not running. Illegal state:%d", playState_);
-            return false;
-        }
-
-        OSStatus status = AudioQueueStop(audioQueue_, true);
-        if (status != noErr) {
-            NSLog(@"Failed to AudioQueueStop: status = %d", status);
-            return false;
-        }
-        [self transferState:OHOS::AudioStandard::RENDERER_STOPPED];
-        return true;
-    } else {
+    OHOS::AudioStandard::RendererState previousState = OHOS::AudioStandard::RENDERER_NEW;
+    if (![self beginQueueOperation:previousState]) {
         return false;
     }
+    if (audioQueue_ == nil || (previousState != OHOS::AudioStandard::RENDERER_RUNNING &&
+        previousState != OHOS::AudioStandard::RENDERER_PAUSED)) {
+        [self transferState:previousState];
+        return false;
+    }
+    // Stop/reset/dispose may invoke playerCallback. Do not hold writeBufferLock_ across these calls.
+    OSStatus status = AudioQueueStop(audioQueue_, true);
+    if (status != noErr) {
+        NSLog(@"Failed to AudioQueueStop: status = %d", status);
+    } else {
+        [self clearUsedBuffers];
+    }
+    [self transferState:status == noErr ? OHOS::AudioStandard::RENDERER_STOPPED : previousState];
+    return status == noErr;
 }
 
 - (bool)drain
 {
-    if (playState_ != OHOS::AudioStandard::RENDERER_RUNNING) {
-        NSLog(@"State is not RUNNING. Illegal state:%d", playState_);
+    OHOS::AudioStandard::RendererState previousState = OHOS::AudioStandard::RENDERER_NEW;
+    if (![self beginQueueOperation:previousState]) {
         return false;
     }
-    if (audioQueue_ != nil) {
-        OSStatus status = AudioQueueReset(audioQueue_);
-        if (status != noErr) {
-            NSLog(@"Failed to AudioQueueReset: status = %d", status);
-            return false;
-        }
-        return true;
+    if (audioQueue_ == nil || previousState != OHOS::AudioStandard::RENDERER_RUNNING) {
+        [self transferState:previousState];
+        return false;
+    }
+    OSStatus status = AudioQueueReset(audioQueue_);
+    if (status != noErr) {
+        NSLog(@"Failed to AudioQueueReset: status = %d", status);
     } else {
-        return false;
+        [self clearUsedBuffers];
     }
+    [self transferState:previousState];
+    return status == noErr;
 }
 
 - (bool)flush
 {
-    if (!((playState_ == OHOS::AudioStandard::RENDERER_RUNNING) ||
-        (playState_ == OHOS::AudioStandard::RENDERER_PAUSED) ||
-        (playState_ == OHOS::AudioStandard::RENDERER_STOPPED))) {
-        NSLog(@"State is not RUNNING. Illegal state:%d", playState_);
+    OHOS::AudioStandard::RendererState previousState = OHOS::AudioStandard::RENDERER_NEW;
+    if (![self beginQueueOperation:previousState]) {
         return false;
     }
-    if (audioQueue_ != nil) {
-        OSStatus status = AudioQueueFlush(audioQueue_);
-        if (status != noErr) {
-            NSLog(@"Failed to AudioQueueFlush: %d", status);
-            return false;
-        }
-        return true;
-    } else {
+    if (audioQueue_ == nil || (previousState != OHOS::AudioStandard::RENDERER_RUNNING &&
+        previousState != OHOS::AudioStandard::RENDERER_PAUSED &&
+        previousState != OHOS::AudioStandard::RENDERER_STOPPED)) {
+        [self transferState:previousState];
         return false;
     }
+    OSStatus status = AudioQueueFlush(audioQueue_);
+    if (status != noErr) {
+        NSLog(@"Failed to AudioQueueFlush: %d", status);
+    }
+    [self transferState:previousState];
+    return status == noErr;
 }
 
 - (bool)pause
 {
-    if (audioQueue_ != nil) {
-        if (playState_ != OHOS::AudioStandard::RENDERER_RUNNING) {
-            NSLog(@"State of stream is not running. Illegal state:%d", playState_);
-            return false;
-        }
-        OSStatus status = AudioQueuePause(audioQueue_);
-        if (status != noErr) {
-            NSLog(@"Failed to AudioQueuePause: %d", status);
-            return false;
-        }
-        [self transferState:OHOS::AudioStandard::RENDERER_PAUSED];
-        return true;
-    } else {
+    OHOS::AudioStandard::RendererState previousState = OHOS::AudioStandard::RENDERER_NEW;
+    if (![self beginQueueOperation:previousState]) {
         return false;
     }
+    if (audioQueue_ == nil || previousState != OHOS::AudioStandard::RENDERER_RUNNING) {
+        [self transferState:previousState];
+        return false;
+    }
+    OSStatus status = AudioQueuePause(audioQueue_);
+    if (status != noErr) {
+        NSLog(@"Failed to AudioQueuePause: %d", status);
+    }
+    [self transferState:status == noErr ? OHOS::AudioStandard::RENDERER_PAUSED : previousState];
+    return status == noErr;
 }
 
 - (bool)releaseRenderer
 {
-    std::unique_lock<std::mutex> lk(writeBufferLock_);
-
-    if (playState_ == OHOS::AudioStandard::RENDERER_RELEASED) {
-        NSLog(@"Already released, do nothing.");
+    OHOS::AudioStandard::RendererState previousState = OHOS::AudioStandard::RENDERER_NEW;
+    if (![self beginQueueOperation:previousState]) {
         return false;
+    }
+    // Keep the callback's owner alive until an already running producer has returned.
+    // A native write callback may release from playQueue_ itself; never wait on the current queue.
+    if (dispatch_get_specific(&WRITE_QUEUE_CONTEXT) != &writeBufferLock_) {
+        dispatch_sync(playQueue_, ^{});
     }
     if (audioQueue_ != nil) {
         OSStatus status = AudioQueueStop(audioQueue_, true);
         if (status != noErr) {
             NSLog(@"Failed to AudioQueueStop: %d", status);
+            [self transferState:previousState];
             return false;
         }
-        for (int i = 0; i < QUEUE_BUFFER_SIZE; i++) {
-            status = AudioQueueFreeBuffer(audioQueue_, audioQueueBuffers_[i]);
-            if (status != noErr) {
-                NSLog(@"Failed to AudioQueueFreeBuffer: i = %d, status = %d", i, status);
-                return false;
-            }
-            audioQueueBuffers_[i] = nil;
-        }
+        [self clearUsedBuffers];
+        // AudioQueueDispose also frees its buffers; keep their pointers until callbacks have finished.
         status = AudioQueueDispose(audioQueue_, true);
         if (status != noErr) {
             NSLog(@"Failed to AudioQueueDispose: status = %d", status);
+            [self transferState:OHOS::AudioStandard::RENDERER_STOPPED];
             return false;
         }
-        audioQueue_ = nil;
+        {
+            std::lock_guard<std::mutex> lock(writeBufferLock_);
+            audioQueue_ = nil;
+            timeLine_ = nil;
+            for (int32_t i = 0; i < QUEUE_BUFFER_SIZE; i++) {
+                audioQueueBuffers_[i] = nil;
+            }
+        }
     }
 
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
@@ -518,6 +645,11 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 
 - (bool)getAudioTime:(OHOS::AudioStandard::Timestamp &)time
 {
+    std::lock_guard<std::mutex> lock(writeBufferLock_);
+    if (queueOperationInProgress_ || playState_ == OHOS::AudioStandard::RENDERER_RELEASED ||
+        audioQueue_ == nil || timeLine_ == nil) {
+        return false;
+    }
     AudioTimeStamp timeStamp;
     OSStatus status = AudioQueueGetCurrentTime(audioQueue_, timeLine_, &timeStamp, nil);
     if (status != noErr) {
@@ -543,7 +675,7 @@ static void AudioPlayerAQInputCallback(void* inUserData,AudioQueueRef outQ, Audi
 - (int32_t)getBufferSize:(size_t &)bufferSize
 {
     if(audioQueue_ != nil) {
-        bufferSize = MIN_BUFFER_SIZE;
+        bufferSize = [self getWriteBufferSize];
         return OHOS::AudioStandard::SUCCESS;
     } else {
         return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
