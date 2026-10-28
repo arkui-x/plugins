@@ -390,6 +390,16 @@ bool CheckLocationPermission()
             status == kCLAuthorizationStatusAuthorizedAlways);
 }
 
+LocationErrCode LocatorCrossplatformServiceIosImpl::CheckPermission()
+{
+    NSLog(@"Check location permission");
+    if (!CheckLocationPermission()) {
+        NSLog(@"no permissions");
+        return LocationErrCode::ERRCODE_PERMISSION_DENIED;
+    }
+    return LocationErrCode::ERRCODE_SUCCESS;
+}
+
 LocationErrCode LocatorCrossplatformServiceIosImpl::GetSwitchState(int32_t &state)
 {
     NSLog(@"Get switch state");
