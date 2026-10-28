@@ -48,6 +48,7 @@ public:
     virtual ~LocationCrossplatformService() = default;
     static std::shared_ptr<LocationCrossplatformService> Get();
 
+    virtual LocationErrCode CheckPermission() = 0;
     virtual LocationErrCode GetSwitchState(int32_t& state) = 0;
     virtual LocationErrCode StartLocating(std::unique_ptr<RequestConfig>& requestConfig,
         sptr<Location::LocatorCallbackNapi>& locatorCallbackHost) = 0;

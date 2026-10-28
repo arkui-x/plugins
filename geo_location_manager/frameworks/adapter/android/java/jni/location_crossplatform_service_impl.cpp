@@ -32,6 +32,12 @@ std::shared_ptr<LocationCrossplatformService> LocationCrossplatformService::Get(
     return std::make_shared<LocatorCrossplatformServiceImpl>();
 }
 
+Location::LocationErrCode LocatorCrossplatformServiceImpl::CheckPermission()
+{
+    LBSLOGI(LOCATION_CROSSPLATFORM_SERVICE_IMPL, "LocatorCrossplatformServiceImpl::CheckPermission");
+    return LocationServiceJni::CheckPermission();
+}
+
 Location::LocationErrCode LocatorCrossplatformServiceImpl::GetSwitchState(int32_t& state)
 {
     LBSLOGI(LOCATION_CROSSPLATFORM_SERVICE_IMPL, "LocatorCrossplatformServiceImpl::GetSwitchState");
