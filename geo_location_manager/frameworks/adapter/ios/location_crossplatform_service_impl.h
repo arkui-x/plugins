@@ -27,6 +27,7 @@ public:
     LocatorCrossplatformServiceIosImpl() = default;
     ~LocatorCrossplatformServiceIosImpl() override = default;
 
+    LocationErrCode CheckPermission() override;
     LocationErrCode GetSwitchState(int32_t& state) override;
     LocationErrCode StartLocating(std::unique_ptr<RequestConfig>& requestConfig,
         sptr<Location::LocatorCallbackNapi>& locatorCallbackHost) override;
