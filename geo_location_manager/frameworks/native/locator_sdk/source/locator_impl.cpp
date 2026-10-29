@@ -65,6 +65,10 @@ LocationErrCode LocatorImpl::GetCachedLocationV9(std::unique_ptr<Location> &loc)
     if (!service) {
         return ERRCODE_SERVICE_UNAVAILABLE;
     }
+    LocationErrCode permCode = service->CheckPermission();
+    if (permCode != ERRCODE_SUCCESS) {
+        return permCode;
+    }
     int32_t state = DEFAULT_SWITCH_STATE;
     LocationErrCode code = service->GetSwitchState(state);
     if (code != ERRCODE_SUCCESS) {

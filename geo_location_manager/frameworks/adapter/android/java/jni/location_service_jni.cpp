@@ -292,6 +292,27 @@ inline static Location::LocationErrCode CheckLocationPermission(JNIEnv* env)
     return Location::LocationErrCode::ERRCODE_SUCCESS;
 }
 
+Location::LocationErrCode LocationServiceJni::CheckPermission()
+{
+    LBSLOGI(LOCATION_SERVICE_JNI, "LocationServiceJni::CheckPermission");
+    auto env = ARKUI_X_Plugin_GetJniEnv();
+    if (!env) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "CheckPermission: failed to get jni env");
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
+    if (!g_locationservicepluginClass.globalRef || !g_locationservicepluginClass.requestAndCheckLocationPermission) {
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
+    Location::LocationErrCode errCode = CheckLocationPermission(env);
+    if (env->ExceptionCheck()) {
+        LBSLOGE(LOCATION_SERVICE_JNI, "CheckPermission: call java has exception");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return Location::LocationErrCode::ERRCODE_SERVICE_UNAVAILABLE;
+    }
+    return errCode;
+}
+
 Location::LocationErrCode LocationServiceJni::GetSwitchState(int32_t &state)
 {
     LBSLOGI(LOCATION_SERVICE_JNI, "LocationServiceJni::GetSwitchState");
