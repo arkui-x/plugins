@@ -13,19 +13,29 @@
  * limitations under the License.
  */
 
+#include <list>
+#include <memory>
 #include <mutex>
+#include <securec.h>
+#include "audio_utils.h"
 #include "format_convert_util.h"
 #import "audio_capturer_impl.h"
 #import "audio_manager_impl.h"
 
-#define BUFFER_SIZE 20000
+// Fixed callback frame duration, unified across platforms so that the
+// buffer length observed by JS is identical for the same stream params.
+#define CAPTURE_FRAME_DURATION_MS 20
+#define MS_PER_SECOND 1000
+// Number of rotating AudioQueue buffers. With only one buffer the queue starves while JS is
+// consuming the previous frame, causing periodic capture gaps at a 20ms cadence.
+#define CAPTURE_QUEUE_BUFFER_COUNT 3
 
 #pragma mark - AudioCapturerImpl implementation
 @implementation AudioCapturerImpl
 {
     AudioStreamBasicDescription audioDescription_;
     AudioQueueRef audioQueue_;
-    AudioQueueBufferRef audioQueueBuffer_;
+    AudioQueueBufferRef audioQueueBuffers_[CAPTURE_QUEUE_BUFFER_COUNT];
     AudioQueueTimelineRef timeLine_;
     AudioChannelLayout acl_;
     AVAudioSession *audioSession_;
@@ -37,7 +47,14 @@
     std::shared_ptr<OHOS::AudioStandard::AudioCapturerInfoChangeCallback> deviceWithInfoCallback_;
     std::mutex readBufferLock_;
     bool isLastRead_;
-    uint8_t tempBuffer_[BUFFER_SIZE];
+    size_t bufferSize_;
+    // Staging slots, one per AudioQueue buffer. A slot stays pending from readerCallback until
+    // JS returns it via enqueue, which also re-enqueues the paired AudioQueue buffer.
+    // pendingSlots_ is a FIFO pairing every OnReadData with exactly one getBufferDesc/enqueue.
+    std::unique_ptr<uint8_t[]> stagingBuffers_[CAPTURE_QUEUE_BUFFER_COUNT];
+    size_t stagingDataLengths_[CAPTURE_QUEUE_BUFFER_COUNT];
+    bool stagingPending_[CAPTURE_QUEUE_BUFFER_COUNT];
+    std::list<size_t> pendingSlots_;
 }
 
 #pragma mark - record audio
@@ -61,13 +78,37 @@
     }
 }
 
-- (void)initWithSampleRate:(const OHOS::AudioStandard::AudioCapturerOptions)capturerOptions
+- (bool)initWithSampleRate:(const OHOS::AudioStandard::AudioCapturerOptions)capturerOptions
 {
     capturerOptions_ = capturerOptions;
     recordState_ = OHOS::AudioStandard::CAPTURER_NEW;
-    ConvertStreamInfoFromOh(capturerOptions.streamInfo, audioDescription_);
+    const OHOS::AudioStandard::AudioStreamInfo &streamInfo = capturerOptions.streamInfo;
+    // Defensive validation: reject invalid stream params before any allocation.
+    // The public entry (AudioCapturer::Create) already gates them via CheckParams;
+    // this guards the impl against direct misuse.
+    if (streamInfo.samplingRate <= 0 || streamInfo.channels <= 0) {
+        NSLog(@"initWithSampleRate: invalid streamInfo, samplingRate=%d, channels=%d",
+            streamInfo.samplingRate, streamInfo.channels);
+        recordState_ = OHOS::AudioStandard::CAPTURER_INVALID;
+        return false;
+    }
+    ConvertStreamInfoFromOh(streamInfo, audioDescription_);
     recordState_ = OHOS::AudioStandard::CAPTURER_PREPARED;
     isLastRead_ = false;
+    // Use the same frame-length formula on all platforms so that identical stream
+    // params produce identical buffer sizes. Frame-first, same as HPAE
+    // spanSizeInFrame_: round the frame count down to whole samples before converting to
+    // bytes, so odd rates (e.g. 11025Hz -> 220 frames) stay sample-aligned.
+    uint32_t bytesPerSample = OHOS::AudioStandard::Util::GetSamplePerFrame(streamInfo.format);
+    size_t framesPerSpan =
+        static_cast<size_t>(streamInfo.samplingRate) * CAPTURE_FRAME_DURATION_MS / MS_PER_SECOND;
+    bufferSize_ = framesPerSpan * static_cast<size_t>(streamInfo.channels) * bytesPerSample;
+    for (size_t i = 0; i < CAPTURE_QUEUE_BUFFER_COUNT; i++) {
+        stagingBuffers_[i] = std::make_unique<uint8_t[]>(bufferSize_);
+        stagingDataLengths_[i] = 0;
+        stagingPending_[i] = false;
+    }
+    pendingSlots_.clear();
     [self initChannelLayout:capturerOptions.streamInfo.channelLayout];
     NSLog(@"AudioStreamBasicDescription mSampleRate = %f, mFormatID = %u, mFormatFlags = %u, \
         mChannelsPerFrame = %u, mFramesPerPacket = %u, mBitsPerChannel = %u, mBytesPerFrame = %u, \
@@ -75,12 +116,19 @@
         audioDescription_.mSampleRate, audioDescription_.mFormatID, audioDescription_.mFormatFlags,
         audioDescription_.mChannelsPerFrame, audioDescription_.mFramesPerPacket, audioDescription_.mBitsPerChannel,
         audioDescription_.mBytesPerFrame, audioDescription_.mBytesPerPacket);
-    [self SetupAudioQueue];
+    if (![self SetupAudioQueue]) {
+        NSLog(@"SetupAudioQueue failed, abort init.");
+        recordState_ = OHOS::AudioStandard::CAPTURER_INVALID;
+        return false;
+    }
     audioSession_ = [AVAudioSession sharedInstance];
     [audioSession_ setCategory:AVAudioSessionCategoryPlayAndRecord
                 withOptions:AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionDefaultToSpeaker
                 error:nil];
     [audioSession_ setActive:YES error:nil];
+    // Align the hardware I/O period with the callback frame duration to reduce callback jitter.
+    [audioSession_ setPreferredIOBufferDuration:(CAPTURE_FRAME_DURATION_MS / (double)MS_PER_SECOND) error:nil];
+    NSLog(@"AVAudioSession IOBufferDuration = %f s", audioSession_.IOBufferDuration);
     AudioManagerImpl *managerImpl = [AudioManagerImpl sharedInstance];
     if (managerImpl) {
         [managerImpl updateCategory:audioSession_.category options:audioSession_.categoryOptions];
@@ -90,6 +138,7 @@
                                             selector:@selector(handleRouteChange:)
                                             name:AVAudioSessionRouteChangeNotification
                                             object:audioSession_];
+    return true;
 }
 
 - (int32_t)getCapturerInfo:(OHOS::AudioStandard::AudioCapturerInfo &)capturerInfo
@@ -127,34 +176,87 @@ static void AudioRecordAQInputCallback(
     }
 }
 
+- (size_t)indexOfQueueBuffer:(AudioQueueBufferRef)inBuffer
+{
+    for (size_t i = 0; i < CAPTURE_QUEUE_BUFFER_COUNT; i++) {
+        if (audioQueueBuffers_[i] == inBuffer) {
+            return i;
+        }
+    }
+    return CAPTURE_QUEUE_BUFFER_COUNT;
+}
+
 - (bool)readerCallback:(AudioQueueBufferRef)inBuffer
 {
     if(recordState_ != OHOS::AudioStandard::CAPTURER_RUNNING)
     {
         return false;
     }
-    Byte* audiodata = (Byte*)inBuffer->mAudioData;
-    memcpy(tempBuffer_, audiodata, inBuffer->mAudioDataByteSize);
-    if (readCallback_ && !isLastRead_) {
+    size_t index = [self indexOfQueueBuffer:inBuffer];
+    if (index == CAPTURE_QUEUE_BUFFER_COUNT) {
+        NSLog(@"readerCallback: unknown buffer, re-enqueue it.");
+        AudioQueueEnqueueBuffer(audioQueue_, inBuffer, 0, NULL);
+        return false;
+    }
+    {
         std::unique_lock<std::mutex> lk(readBufferLock_);
+        if (stagingPending_[index]) {
+            // JS has not consumed the previous frame in this slot. Drop this frame instead of
+            // corrupting the data being read, and recycle the queue buffer immediately.
+            NSLog(@"readerCallback: slot %zu still pending, frame dropped.", index);
+            AudioQueueEnqueueBuffer(audioQueue_, inBuffer, 0, NULL);
+            return true;
+        }
+        // Note: mAudioDataByteSize can be smaller than bufferSize_ for the final buffer on
+        // stop/interrupt (short packet). It is passed through as-is; the napi layer clamps with
+        // min(length, bufLength), so JS may observe a tail buffer shorter than bufferSize_.
+        Byte* audiodata = (Byte*)inBuffer->mAudioData;
+        errno_t cpyRet = memcpy_s(stagingBuffers_[index].get(), bufferSize_, audiodata,
+                                  inBuffer->mAudioDataByteSize);
+        if (cpyRet != EOK) {
+            NSLog(@"readerCallback: memcpy_s failed %d, frame dropped.", (int)cpyRet);
+            AudioQueueEnqueueBuffer(audioQueue_, inBuffer, 0, NULL);
+            return true;
+        }
+        stagingDataLengths_[index] = inBuffer->mAudioDataByteSize;
+        if (readCallback_ && !isLastRead_) {
+            stagingPending_[index] = true;
+            pendingSlots_.push_back(index);
+        }
+    }
+    // OnReadData is invoked outside the lock: the napi layer answers it asynchronously on the
+    // JS thread with getBufferDesc/enqueue, which take the same lock.
+    if (readCallback_ && !isLastRead_) {
         readCallback_->OnReadData(inBuffer->mAudioDataByteSize);
         return true;
     } else {
+        AudioQueueEnqueueBuffer(audioQueue_, inBuffer, 0, NULL);
         return false;
     }
 }
 
-- (void)SetupAudioQueue
+- (bool)SetupAudioQueue
 {
     OSStatus status = AudioQueueNewInput(&(audioDescription_), AudioRecordAQInputCallback,
                                         (__bridge void * _Nullable)(self), nil, nil, 0, &audioQueue_);
     if (status != 0) {
         NSLog(@"AudioQueueNewInput failed!==%d",(int)status);
-        return;
+        return false;
     }
-    AudioQueueAllocateBuffer(audioQueue_, BUFFER_SIZE, &audioQueueBuffer_);
+    for (size_t i = 0; i < CAPTURE_QUEUE_BUFFER_COUNT; i++) {
+        status = AudioQueueAllocateBuffer(audioQueue_, bufferSize_, &audioQueueBuffers_[i]);
+        if (status != noErr) {
+            NSLog(@"AudioQueueAllocateBuffer failed for buffer %zu: %d", i, (int)status);
+            return false;
+        }
+        status = AudioQueueEnqueueBuffer(audioQueue_, audioQueueBuffers_[i], 0, NULL);
+        if (status != noErr) {
+            NSLog(@"AudioQueueEnqueueBuffer failed for buffer %zu: %d", i, (int)status);
+            return false;
+        }
+    }
     AudioQueueCreateTimeline(audioQueue_, &timeLine_);
-    AudioQueueEnqueueBuffer(audioQueue_, audioQueueBuffer_,0,NULL);
+    return true;
 }
 
 - (const OHOS::AudioStandard::CapturerState)getStatus
@@ -244,6 +346,13 @@ static void AudioRecordAQInputCallback(
             return false;
         }
         audioQueue_ = nullptr;
+        for (size_t i = 0; i < CAPTURE_QUEUE_BUFFER_COUNT; i++) {
+            audioQueueBuffers_[i] = nullptr;
+            stagingBuffers_[i].reset();
+            stagingDataLengths_[i] = 0;
+            stagingPending_[i] = false;
+        }
+        pendingSlots_.clear();
         [[NSNotificationCenter defaultCenter] removeObserver:self
                                             name:AVAudioSessionRouteChangeNotification
                                             object:audioSession_];
@@ -265,7 +374,7 @@ static void AudioRecordAQInputCallback(
 - (int32_t)getBufferSize:(size_t &)bufferSize
 {
     if(audioQueue_ != nil) {
-        bufferSize = BUFFER_SIZE;
+        bufferSize = bufferSize_;
         return OHOS::AudioStandard::SUCCESS;
     } else {
         return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
@@ -284,20 +393,41 @@ static void AudioRecordAQInputCallback(
 
 - (const int32_t)getBufferDesc:(OHOS::AudioStandard::BufferDesc &)bufDesc
 {
-    NSLog(@"getBufferDesc bufLength = %zu, tempBuffer_ =  %s", BUFFER_SIZE, tempBuffer_);
-    bufDesc.buffer = tempBuffer_;
-    bufDesc.bufLength = BUFFER_SIZE;
-    bufDesc.dataLength = BUFFER_SIZE;
+    std::unique_lock<std::mutex> lk(readBufferLock_);
+    if (pendingSlots_.empty()) {
+        // No pending frame means abnormal call ordering (e.g. after release). Return an
+        // error instead of SUCCESS so callers do not mistake a null buffer for valid data.
+        NSLog(@"getBufferDesc: no pending buffer.");
+        bufDesc.buffer = nullptr;
+        bufDesc.bufLength = 0;
+        bufDesc.dataLength = 0;
+        return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
+    }
+    size_t index = pendingSlots_.front();
+    bufDesc.buffer = stagingBuffers_[index].get();
+    bufDesc.bufLength = bufferSize_;
+    // dataLength reflects the actual captured bytes, which may be smaller than bufLength
+    // for the final short packet on stop/interrupt.
+    bufDesc.dataLength = stagingDataLengths_[index];
     return OHOS::AudioStandard::SUCCESS;
 }
 
 - (int32_t)enqueue:(const OHOS::AudioStandard::BufferDesc &)bufDesc
 {
-    if (tempBuffer_ != bufDesc.buffer) {
-        NSLog(@"buffer is not from us");
-        return 0;
+    size_t index = CAPTURE_QUEUE_BUFFER_COUNT;
+    {
+        std::unique_lock<std::mutex> lk(readBufferLock_);
+        if (!pendingSlots_.empty() && stagingBuffers_[pendingSlots_.front()].get() == bufDesc.buffer) {
+            index = pendingSlots_.front();
+            pendingSlots_.pop_front();
+            stagingPending_[index] = false;
+        }
     }
-    AudioQueueEnqueueBuffer(audioQueue_, audioQueueBuffer_,0,NULL);
+    if (index == CAPTURE_QUEUE_BUFFER_COUNT) {
+        NSLog(@"enqueue: buffer is not from us.");
+        return OHOS::AudioStandard::ERR_ILLEGAL_STATE;
+    }
+    AudioQueueEnqueueBuffer(audioQueue_, audioQueueBuffers_[index], 0, NULL);
     return OHOS::AudioStandard::SUCCESS;
 }
 
