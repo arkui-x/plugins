@@ -1,0 +1,18 @@
+
+[Default]
+* @seaside_wu1 @lixingchi1 @sunbees @ZhangYu-Home
+
+[Config Files]
+.clang-format @longruoluo @lanshouren @sunfei2021
+LICENSE @longruoluo @lanshouren @sunfei2021
+.gitcode/  @longruoluo @lanshouren @sunfei2021 @seaside_wu1 @lixingchi1 @sunbees @ZhangYu-Home
+plugin_lib.gni @longruoluo @lanshouren @sunfei2021 @ZhangYu-Home
+
+[Document]
+README-EN.md @longruoluo @lanshouren @sunfei2021 @ZhangYu-Home
+README.md @longruoluo @lanshouren @sunfei2021 @ZhangYu-Home
+
+[Plugins]
+ability_access_ctrl/ @chennian
+arkui/ @sunfei2021 @seaside_wu1 @lixingchi1 @sunbees @keerecles
+
