@@ -33,6 +33,7 @@ websocket_include = [
   "$NETSTACK_NAPI_ROOT/websocket/constant/include",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/include",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_module/include",
+  "$SUBSYSTEM_DIR/netstack/interfaces/innerkits/net_ssl/include",
   "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   "//plugins/interfaces",
   "//plugins/net/websocket",
@@ -54,6 +55,7 @@ websocket_sources = [
   "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/src/websocket_exec.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_exec/src/websocket_server_exec.cpp",
   "$NETSTACK_NAPI_ROOT/websocket/websocket_module/src/websocket_module.cpp",
+  "$SUBSYSTEM_DIR/netstack/frameworks/native/net_ssl/cert_chain_verify_helper.cpp"
 ]
 
 utils_sources = [ "$NETSTACK_UTILS/common_utils/src/socket_statistics.cpp" ]
