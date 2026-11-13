@@ -372,7 +372,7 @@ void UploadProxy::SetCurlOpt(CURL *curl, const Config &config)
     std::string proxy = config.proxy;
     if (!proxy.empty()) {
         if (curl_easy_setopt(curl, CURLOPT_PROXY, proxy.c_str()) != CURLE_OK) {
-            REQUEST_HILOGE("Failed to set proxy: %s", proxy.c_str());
+            REQUEST_HILOGE("Failed to set proxy");
         }
     }
     SetNetworkOpt(curl, config.url);
@@ -388,8 +388,7 @@ void UploadProxy::SetMimePost(CURL *curl, curl_mime *mime, const FileSpec &file,
         curl_mimepart *formPart = curl_mime_addpart(mime);
         curl_mime_name(formPart, form.name.c_str());
         curl_mime_data(formPart, form.value.c_str(), form.value.size());
-        REQUEST_HILOGI("Added form field: %{public}s=%{public}s",
-            form.name.c_str(), form.value.c_str());
+        REQUEST_HILOGI("Added form field");
     }
 
     curl_mimepart *filePart = curl_mime_addpart(mime);
@@ -582,7 +581,7 @@ void UploadProxy::SplitHttpMessage(const std::string &header)
     while (temp != "") {
         auto pos = temp.find(lineEndFlag);
         auto line = temp.substr(0, pos);
-        REQUEST_HILOGI("line = %{public}s", line.c_str());
+        REQUEST_HILOGI("header line received");
         auto keyPos = line.find(HTTP_HEADER_SEPARATOR);
         if (keyPos != std::string::npos) {
             info_.progress.extras.emplace(line.substr(0, keyPos), line.substr(keyPos + 2));
