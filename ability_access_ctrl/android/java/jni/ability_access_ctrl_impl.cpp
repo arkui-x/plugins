@@ -29,46 +29,44 @@ std::unique_ptr<AbilityAccessCtrl> AbilityAccessCtrl::Create()
 bool AbilityAccessCtrlImpl::CheckPermission(const std::string& permission)
 {
     LOGI("AbilityAccessCtrlImpl CheckPermission %{public}s", permission.c_str());
-    auto mapping = PermissionMapper::Instance().ToAndroidSingle(permission);
-    if (!mapping.found) {
+    auto mapping = PermissionMapper::Instance().ToAndroidPermissions(permission);
+    if (!mapping.has_value()) {
         return false;
     }
-    return AbilityAccessCtrlJni::CheckPermission(mapping.androidPermission);
+    for (const auto& androidPermission : mapping.value()) {
+        if (!AbilityAccessCtrlJni::CheckPermission(androidPermission)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void AbilityAccessCtrlImpl::RequestPermissions(
     const std::vector<std::string>& permissions, RequestPermissionCallback callback, void* data)
 {
     LOGI("AbilityAccessCtrlImpl Request called");
-    std::vector<std::string> javaStrings;
-    for (const auto& perm : permissions) {
-        auto singleMapping = PermissionMapper::Instance().ToAndroidSingle(perm);
-        if (singleMapping.found) {
-            LOGE("AbilityAccessCtrlImpl transfer permission %{public}s -> %{public}s",
-                perm.c_str(), singleMapping.androidPermission.c_str());
-            javaStrings.emplace_back(singleMapping.androidPermission);
-            continue;
-        }
-        auto multiMapping = PermissionMapper::Instance().ToAndroidMulti(perm);
-        if (multiMapping.found) {
-            for (const auto& javaPerm : multiMapping.androidPermissions) {
-                javaStrings.emplace_back(javaPerm);
-            }
-            continue;
-        }
-        LOGE("AbilityAccessCtrlImpl not found permission(%{public}s) in map", perm.c_str());
-        javaStrings.emplace_back(perm);
-    }
-    PluginUtilsInner::RunTaskOnPlatform([callback, data]() {
-        auto task = [callback, data](const std::vector<std::string> perms, const std::vector<int> result) {
-            auto aggregated = PermissionMapper::Instance().AggregateToOh(perms, result);
+    auto requestContext = PermissionMapper::Instance().BuildRequestContext(permissions);
+    PluginUtilsInner::RunTaskOnPlatform([callback, data, requestContext]() {
+        auto task = [callback, data, requestContext](const std::vector<std::string>& androidPermissions,
+                       const std::vector<int>& androidGrantResults) {
+            auto aggregated = PermissionMapper::Instance().AggregateGrantResults(
+                requestContext, androidPermissions, androidGrantResults);
             callback(data, aggregated.ohPermissions, aggregated.grantResults);
         };
         PluginUtilsInner::JSRegisterGrantResult(task);
         LOGI("AbilityAccessCtrlImpl JSRegisterGrantResult end");
     });
-    PluginUtilsInner::RunTaskOnPlatform([javaStrings]() {
-        AbilityAccessCtrlJni::RequestPermissions(javaStrings);
+    PluginUtilsInner::RunTaskOnPlatform([requestContext]() {
+        std::vector<std::string> androidPermissions = requestContext.AndroidPermissionsToRequest();
+        std::string requestedList;
+        for (const auto& androidPermission : androidPermissions) {
+            if (!requestedList.empty()) {
+                requestedList += ",";
+            }
+            requestedList += androidPermission;
+        }
+        LOGI("AbilityAccessCtrlImpl request android permissions: %{public}s", requestedList.c_str());
+        AbilityAccessCtrlJni::RequestPermissions(androidPermissions);
     });
 }
 } // namespace OHOS::Plugin
