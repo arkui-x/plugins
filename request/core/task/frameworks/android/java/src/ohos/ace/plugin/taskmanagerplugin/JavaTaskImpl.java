@@ -58,7 +58,6 @@ public class JavaTaskImpl {
      * @return task id
      */
     public long create(String configJson) {
-        ALog.i(TAG, "create: configJson:" + configJson);
         Config config = JsonUtil.jsonToConfig(configJson);
         if (config == null) {
             ALog.e(TAG, "create: config is null");
@@ -290,7 +289,7 @@ public class JavaTaskImpl {
             ALog.i(TAG, "Action.UPLOAD taskId: " + taskId);
         }
         String result = JsonUtil.convertTaskInfoToJson(taskInfo);
-        ALog.d(TAG, "show: result:" + result);
+        ALog.d(TAG, "show");
         return result;
     }
 
@@ -318,7 +317,7 @@ public class JavaTaskImpl {
             return "";
         }
         String result = JsonUtil.convertTaskInfoToJson(taskInfo);
-        ALog.d(TAG, "touch: result:" + result);
+        ALog.d(TAG, "touch");
         return result;
     }
 
@@ -380,8 +379,7 @@ public class JavaTaskImpl {
      * @param taskInfoJson task information
      */
     public void jniOnRequestCallback(long taskId, String eventType, String taskInfoJson) {
-        ALog.i(TAG,
-                "jniOnRequestCallback: taskId:" + taskId + ",eventType:" + eventType + ",taskInfoJson:" + taskInfoJson);
+        ALog.i(TAG, "jniOnRequestCallback: taskId:" + taskId + ",eventType:" + eventType);
         if (!IConstant.IS_ANDROID_DEBUG) {
             onRequestCallback(taskId, eventType, taskInfoJson);
         }

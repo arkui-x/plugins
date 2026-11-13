@@ -215,9 +215,9 @@ void UploadProxy::PutUpload()
                 @"HTTPSProxy": proxyUrl.host,
                 @"HTTPSPort": proxyUrl.port
             };
-            LOGI("Proxy set: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
+            LOGI("Proxy set");
         } else {
-            LOGE("Invalid proxy address: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
+            LOGE("Invalid proxy address");
         }
     } else {
         LOGI("Proxy empty");
@@ -280,9 +280,7 @@ NSString *UploadProxy::GetUploadPartFile(const FileSpec &file)
         if (readPosition + readLength <= fileLength) {
             [fileHandle seekToFileOffset:readPosition];
             NSData *data = [fileHandle readDataOfLength:readLength];
-            LOGI("data:%{public}s, data string:%{public}s",
-                data ? [[data description] UTF8String] : "null",
-                [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] UTF8String]);
+            LOGI("read part file data, length:%{public}lu", static_cast<unsigned long>([data length]));
             [data writeToFile:partFilePath atomically:YES];
         } else {
             LOGE("invalid read position of file");
@@ -374,9 +372,9 @@ void UploadProxy::PostUpload()
                 @"HTTPSProxy": proxyUrl.host,
                 @"HTTPSPort": proxyUrl.port
             };
-            LOGI("Proxy set: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
+            LOGI("Proxy set");
         } else {
-            LOGE("Invalid proxy address: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
+            LOGE("Invalid proxy address");
         }
     } else {
         LOGI("Proxy empty");
@@ -394,7 +392,7 @@ void UploadProxy::PostUpload()
     } else {
         LOGI("is http upload");
     }
-    LOGI("PostUpload headers:%{public}s", headers ? [[headers description] UTF8String] : "null");
+    LOGI("PostUpload headers set");
 
     if (config_.ends > 0) {
         PartPostUpload(baseUrl, headers);
@@ -461,7 +459,7 @@ void UploadProxy::PostUploadFile(const FileSpec &file, int32_t index, NSURL *bas
 
 void UploadProxy::CompletionHandler(NSURLResponse *response, id responseObject, NSError *error)
 {
-    LOGI("UploadProxy::CompletionHandler, response:%{public}s", response ? [[response description] UTF8String] : "null");
+    LOGI("UploadProxy::CompletionHandler");
     respCount_++;
 
     vector<TaskState> taskStateList;
@@ -489,7 +487,7 @@ void UploadProxy::CompletionHandler(NSURLResponse *response, id responseObject, 
         }
     }
     if (error != nil && info_.progress.state != State::PAUSED) {
-        LOGE("upload failed, error: %{public}s", error ? [[error description] UTF8String] : "null");
+        LOGE("upload failed, error_code:%{public}ld", (long)error.code);
         ChangeState(State::FAILED);
         for (auto &task : uploadTaskList_) {
             if (task != nil) {
@@ -500,10 +498,10 @@ void UploadProxy::CompletionHandler(NSURLResponse *response, id responseObject, 
          // all responsed
         if (respCount_ == fileCount_) {
             if (error != nil && info_.progress.state != State::PAUSED) {
-                LOGE("upload failed, error: %{public}s", error ? [[error description] UTF8String] : "null");
+                LOGE("upload failed, error_code:%{public}ld", (long)error.code);
                 ChangeState(State::FAILED);
             } else {
-                LOGI("upload completed. response:%{public}s", response ? [[response description] UTF8String] : "null");
+                LOGI("upload completed");
                 ChangeState(State::COMPLETED);
             }
         }
@@ -709,7 +707,7 @@ void UploadProxy::OnHeaderReceiveCallback(NSURLResponse *response,id responseObj
                                                  options:0
                                                    error:&jsonError];
         if (jsonError) {
-            LOGE("JSON serialization error: %{public}s", jsonError ? [[jsonError description] UTF8String] : "null");
+            LOGE("JSON serialization error");
         }
     }
 

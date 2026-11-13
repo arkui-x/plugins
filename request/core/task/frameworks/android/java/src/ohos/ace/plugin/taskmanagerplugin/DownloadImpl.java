@@ -173,17 +173,6 @@ public class DownloadImpl {
             + ", Status=" + response.getStatusCode()
             + ", Reason=" + response.getReason());
 
-        ALog.i(TAG, "  Headers:");
-        if (headers.isEmpty()) {
-            ALog.i(TAG, "    (empty)");
-        } else {
-            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-                String key = entry.getKey();
-                for (String value : entry.getValue()) {
-                    ALog.i(TAG, " " + key + ":" + value);
-                }
-            }
-        }
         return response;
     }
 
@@ -507,7 +496,7 @@ public class DownloadImpl {
                 break;
         }
 
-        ALog.i(TAG, "queryDownloadStatus taskInfo:" + JsonUtil.convertTaskInfoToJson(queryRunnable.taskInfo));
+        ALog.i(TAG, "queryDownloadStatus");
     }
 
     /**
@@ -637,7 +626,7 @@ public class DownloadImpl {
                 }
             }
         } catch (IOException error) {
-            ALog.e(TAG, "URL connection failed, error: " + error.getMessage());
+            ALog.e(TAG, "URL connection failed");
             return false;
         }
         return true;
