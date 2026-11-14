@@ -25,6 +25,7 @@ tls_include = [
   "$TLS/include",
   "$TLS_NAPI/include",
   "$TLS_NAPI/include/context",
+  "$NETSTACK_INNERKITS_DIR/net_ssl/include",
   "$SUBSYSTEM_DIR/netstack/interfaces/innerkits/tls_socket/include",
 ]
 
@@ -37,8 +38,12 @@ tls_sources = [
   "$TLS/src/tls_context_server.cpp",
   "$TLS/src/tls_key.cpp",
   "$TLS/src/tls_utils.cpp",
+  "$TLS/src/tls_cert_alias.cpp",
+  "$TLS/src/tls_cert_manager_adapter.cpp",
+  "$TLS/src/tls_cert_manager_provider.cpp",
   "$TLS_NAPI/src/tls_socket.cpp",
   "$TLS_NAPI/src/tls_socket_server.cpp",
+  "$SUBSYSTEM_DIR/netstack/frameworks/native/net_ssl/cert_chain_verify_helper.cpp"
 ]
 
 tls_napi_sources = [
