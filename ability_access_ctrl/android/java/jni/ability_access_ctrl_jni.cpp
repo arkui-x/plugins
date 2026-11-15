@@ -21,6 +21,7 @@
 
 #include "inner_api/plugin_utils_inner.h"
 #include "log.h"
+#include "permission_mapper.h"
 #include "plugin_utils.h"
 
 namespace OHOS::Plugin {
@@ -33,13 +34,16 @@ static const JNINativeMethod METHODS[] = {
 
 const char METHOD_CHECK_PERMISSION[] = "checkPermission";
 const char METHOD_REQUEST_PERMISSIONS[] = "requestPermissions";
+const char METHOD_GET_EFFECTIVE_SDK[] = "getEffectiveSdkVersion";
 
 const char SIGNATURE_CHECK_PERMISSION[] = "(Ljava/lang/String;)Z";
 const char SIGNATURE_REQUEST_PERMISSIONS[] = "([Ljava/lang/String;)V";
+const char SIGNATURE_GET_EFFECTIVE_SDK[] = "()I";
 
 struct {
     jmethodID checkPermission;
     jmethodID requestPermissions;
+    jmethodID getEffectiveSdkVersion;
     jobject globalRef;
 } g_pluginClass;
 } // namespace
@@ -76,9 +80,19 @@ void AbilityAccessCtrlJni::NativeInit(JNIEnv* env, jobject jobj)
     CHECK_NULL_VOID(cls);
     g_pluginClass.checkPermission = env->GetMethodID(cls, METHOD_CHECK_PERMISSION, SIGNATURE_CHECK_PERMISSION);
     g_pluginClass.requestPermissions = env->GetMethodID(cls, METHOD_REQUEST_PERMISSIONS, SIGNATURE_REQUEST_PERMISSIONS);
+    g_pluginClass.getEffectiveSdkVersion = env->GetMethodID(cls, METHOD_GET_EFFECTIVE_SDK, SIGNATURE_GET_EFFECTIVE_SDK);
     CHECK_NULL_VOID(g_pluginClass.checkPermission);
     CHECK_NULL_VOID(g_pluginClass.requestPermissions);
+    CHECK_NULL_VOID(g_pluginClass.getEffectiveSdkVersion);
     env->DeleteLocalRef(cls);
+    jint effectiveSdkVersion = env->CallIntMethod(g_pluginClass.globalRef, g_pluginClass.getEffectiveSdkVersion);
+    if (env->ExceptionCheck()) {
+        LOGE("AbilityAccessCtrl JNI: call getEffectiveSdkVersion failed");
+        env->ExceptionClear();
+        effectiveSdkVersion = 0;
+    }
+    LOGI("AbilityAccessCtrl JNI: effective sdk version %{public}d", effectiveSdkVersion);
+    PermissionMapper::Instance().SetSdkVersion(effectiveSdkVersion);
 }
 
 bool AbilityAccessCtrlJni::CheckPermission(const std::string& permission)

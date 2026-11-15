@@ -23,6 +23,7 @@ import java.util.Map;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -149,6 +150,20 @@ public class AbilityAccessCtrl {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns the lower of the device SDK version and the app targetSdkVersion:
+     * permission deprecations take effect by targetSdkVersion while new
+     * permissions exist by device version, so both must be satisfied.
+     *
+     * @return the effective SDK version for permission mapping
+     */
+    public int getEffectiveSdkVersion() {
+        int targetSdkVersion = mContext.getApplicationInfo().targetSdkVersion;
+        ALog.i(LOG_TAG, "AbilityAccessCtrl: getEffectiveSdkVersion device " + Build.VERSION.SDK_INT
+            + " target " + targetSdkVersion);
+        return Math.min(Build.VERSION.SDK_INT, targetSdkVersion);
     }
 
     /**
