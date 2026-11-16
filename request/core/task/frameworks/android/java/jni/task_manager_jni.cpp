@@ -531,7 +531,7 @@ int32_t TaskManagerJni::GetDefaultStoragePath(std::string& path)
 
 void TaskManagerJni::UploadCb(int64_t taskId, const std::string &type, const std::string &params)
 {
-    REQUEST_HILOGI("TaskManagerJni JNI: UploadCb params: %{public}s", params.c_str());
+    REQUEST_HILOGI("TaskManagerJni JNI: UploadCb");
     TaskNotifyManager::Get().SendNotify(RequestUtils::GetEventType(taskId, type), params);
 }
 
