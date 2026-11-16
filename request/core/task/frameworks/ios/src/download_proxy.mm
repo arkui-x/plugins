@@ -129,9 +129,9 @@ void DownloadProxy::SetProxy(const Config &config, NSURLSessionConfiguration **s
             @"HTTPSPort": proxyUrl.port
         };
         *sessionConfig = newSessionConfig;
-        LOGI("Proxy set: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
+        LOGI("Proxy set");
     } else {
-        LOGE("Invalid proxy address: %{public}s", proxyStr ? proxyStr.UTF8String : "null");
+        LOGE("Invalid proxy address");
     }
 }
 
@@ -187,7 +187,7 @@ int32_t DownloadProxy::Pause(int64_t taskId)
     LOGI("Pause download, taskId:%{public}lld", taskId);
     if (downloadTask_.state == NSURLSessionTaskStateRunning) {
         [downloadTask_ cancelByProducingResumeData:^(NSData *resumeData) {
-            LOGI("DownloadProxy::Pause resumeData=%{public}s", resumeData ? [[resumeData description] UTF8String] : "null");
+            LOGI("DownloadProxy::Pause has resumeData");
             if (resumeData != nil) {
                 resumeData_ = resumeData;
             } else {
@@ -264,8 +264,7 @@ void DownloadProxy::CompletionHandler(NSURLResponse *response, NSURL *filePath, 
         LOGI("success download file");
         OnCompletedCallback();
     } else {
-        LOGE("failed download file, error:%{public}s, error_code:%{public}ld",
-            error ? [[error description] UTF8String] : "null", (long)error.code);
+        LOGE("failed download file, error_code:%{public}ld", (long)error.code);
         OnFailedCallback();
 
         // check can be resume?
@@ -335,9 +334,7 @@ void DownloadProxy::ReportMimeType(NSURLResponse *response)
     if (mimeType.length == 0) {
         mimeType = [(NSHTTPURLResponse *)response valueForHTTPHeaderField:@"Content-Type"];
     }
-    LOGI("download, response:%{public}s, mimeType:%{public}s",
-        response ? [[response description] UTF8String] : "null",
-        mimeType ? [mimeType UTF8String] : "null");
+    LOGI("download, mimeType:%{public}s", mimeType ? [mimeType UTF8String] : "null");
     if (mimeType.length > 0) {
         info_.mimeType = mimeType.UTF8String;
         IosTaskDao::UpdateDB(info_);

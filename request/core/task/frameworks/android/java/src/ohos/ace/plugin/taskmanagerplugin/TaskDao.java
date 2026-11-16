@@ -405,7 +405,7 @@ public class TaskDao {
      * @param isSaveToken is save token
      */
     public static void update(Context context, TaskInfo taskInfo, boolean isSaveToken) {
-        ALog.i(TAG, "update: " + JsonUtil.convertTaskInfoToJson(taskInfo));
+        ALog.i(TAG, "update");
         initDb(context);
         ContentValues values = new ContentValues();
         values.put("saveas", taskInfo.getSaveas());

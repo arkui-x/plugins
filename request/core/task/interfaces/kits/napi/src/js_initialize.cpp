@@ -97,10 +97,10 @@ ExceptionError JsInitialize::InitParam(napi_env env, napi_value* argv, Config &c
     REQUEST_HILOGI("config overwrite: %{public}d", static_cast<bool>(config.overwrite));
     REQUEST_HILOGI("config title: %{public}s", config.title.c_str());
     REQUEST_HILOGI("config saveas: %{public}s", config.saveas.c_str());
-    REQUEST_HILOGI("config proxy: %{public}s", config.proxy.c_str());
+    REQUEST_HILOGI("config proxy set");
     REQUEST_HILOGI("config method: %{public}s", config.method.c_str());
-    REQUEST_HILOGI("config description: %{public}s", config.description.c_str());
-    REQUEST_HILOGI("config data: %{public}s", config.data.c_str());
+    REQUEST_HILOGI("config description set");
+    REQUEST_HILOGI("config data length: %{public}zu", config.data.size());
 
     CheckPartialDownload(config);
 
