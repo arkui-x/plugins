@@ -13,38 +13,63 @@
  * limitations under the License.
  */
 
-#ifndef PLUGINS_ABILITY_ACCESS_CTRL_ANDROID_JAVA_JNI_PERMISSION_MAPPER_H
-#define PLUGINS_ABILITY_ACCESS_CTRL_ANDROID_JAVA_JNI_PERMISSION_MAPPER_H
+#ifndef PLUGINS_ABILITY_ACCESS_CTRL_ANDROID_JNI_PERMISSION_MAPPER_H
+#define PLUGINS_ABILITY_ACCESS_CTRL_ANDROID_JNI_PERMISSION_MAPPER_H
 
-#include <map>
+#include <atomic>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace OHOS::Plugin {
+// Version-aware permission mapping between OH and Android.
+// One OH permission can map to different Android permissions on different Android
+// versions (e.g. READ_EXTERNAL_STORAGE is deprecated since API 33); the active rule
+// is selected by the effective SDK version. See PERMISSION_RULES in
+// permission_mapper.cpp for how to extend the table.
 class PermissionMapper {
 public:
     static PermissionMapper& Instance();
 
-    struct SingleResult {
-        std::string androidPermission;
-        bool found = false;
+    // Injected by the JNI layer at plugin construction: the lower of the device
+    // SDK version and the app targetSdkVersion, since permission deprecations take
+    // effect by targetSdkVersion while new permissions exist by device version.
+    // 0 (unset) makes every permission fall back to its lowest version segment.
+    void SetSdkVersion(int sdkVersion);
+
+    // Carried from request to grant-result aggregation: every requested OH permission
+    // keeps its mapped Android permissions, so results can be aggregated back by the
+    // context itself instead of a reverse lookup, which is ambiguous when several OH
+    // permissions share the same Android permission.
+    struct RequestContext {
+        struct RequestedPermission {
+            std::string ohPermission;
+            std::vector<std::string> androidPermissions; // all required, AND semantics
+            bool isMapped = false; // false when no rule matches: requested as-is, result reported invalid (2)
+        };
+        std::vector<RequestedPermission> requestedPermissions; // deduplicated, keeps request order
+
+        // Flattened and deduplicated, so Android permissions shared by several
+        // OH permissions are requested only once.
+        std::vector<std::string> AndroidPermissionsToRequest() const;
     };
 
-    struct MultiResult {
-        std::vector<std::string> androidPermissions;
-        bool found = false;
-    };
-
-    struct AggregateResult {
+    // 0 = granted, -1 = denied, 2 = invalid (no mapping rule for the permission).
+    struct OhGrantResults {
         std::vector<std::string> ohPermissions;
         std::vector<int> grantResults;
     };
 
-    SingleResult ToAndroidSingle(const std::string& ohPerm) const;
-    MultiResult ToAndroidMulti(const std::string& ohPerm) const;
-    std::string ToOhPermission(const std::string& androidPerm) const;
-    AggregateResult AggregateToOh(
-        const std::vector<std::string>& androidPerms, const std::vector<int>& androidResults) const;
+    std::optional<std::vector<std::string>> ToAndroidPermissions(const std::string& ohPermission) const;
+
+    RequestContext BuildRequestContext(const std::vector<std::string>& ohPermissions) const;
+
+    // An OH permission is granted (0) only when all its mapped Android permissions are
+    // granted, otherwise denied (-1); unmapped permissions are reported invalid (2).
+    // Returns empty on input size mismatch.
+    OhGrantResults AggregateGrantResults(const RequestContext& requestContext,
+        const std::vector<std::string>& androidPermissions,
+        const std::vector<int>& androidGrantResults) const;
 
 private:
     PermissionMapper();
@@ -53,14 +78,7 @@ private:
     PermissionMapper(PermissionMapper&&) = delete;
     PermissionMapper& operator=(PermissionMapper&&) = delete;
 
-    struct ReverseResult {
-        std::string ohPermission;
-        bool found = false;
-    };
-    ReverseResult ReverseLookup(const std::string& androidPerm) const;
-
-    std::map<std::string, std::string> singleMap_;
-    std::map<std::string, std::vector<std::string>> multipleMap_;
+    std::atomic<int> sdkVersion_ {0};
 };
 } // namespace OHOS::Plugin
-#endif // PLUGINS_ABILITY_ACCESS_CTRL_ANDROID_JAVA_JNI_PERMISSION_MAPPER_H
+#endif // PLUGINS_ABILITY_ACCESS_CTRL_ANDROID_JNI_PERMISSION_MAPPER_H
