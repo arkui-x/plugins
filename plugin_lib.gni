@@ -40,6 +40,7 @@ common_plugin_libs = [
   "bluetooth/ble",
   "bluetooth/connection",
   "bluetooth/a2dp",
+  "bluetooth/constant",
   "bridge",
   "file/fs",
   "file/hash",
