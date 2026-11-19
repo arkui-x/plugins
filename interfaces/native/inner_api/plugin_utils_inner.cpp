@@ -17,6 +17,7 @@
 
 #include <future>
 
+#include "base/external_instance_id_mapper.h"
 #include "frameworks/core/common/container.h"
 #ifdef ANDROID_PLATFORM
 #include "adapter/android/capability/java/jni/grantresult/grant_result_manager.h"
@@ -124,6 +125,17 @@ void PluginUtilsInner::JSRegisterGrantResult(GrantResult grantResult)
 
 int32_t PluginUtilsInner::GetInstanceId()
 {
-    return OHOS::Ace::Container::CurrentIdSafelyWithCheck();
+    const auto instanceId = OHOS::Ace::Container::CurrentIdSafelyWithCheck();
+    auto& mapper = OHOS::Ace::ExternalInstanceIdMapper::GetInstance();
+    const auto externalResourceId = mapper.GetExternalResourceId(instanceId);
+    if (externalResourceId >= 0) {
+        return externalResourceId;
+    }
+    const auto windowId = mapper.GetWindowId(instanceId);
+    if (windowId >= 0) {
+        return windowId;
+    }
+    LOGW("Failed to map internal instance ID %{public}d to an external ID", instanceId);
+    return instanceId;
 }
 } // namespace OHOS::Plugin
