@@ -116,6 +116,13 @@ int32_t AudioStreamManager::GetHardwareOutputSamplingRate(std::shared_ptr<AudioD
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioStreamManager::GetRealStreamInfoByDevice(const std::shared_ptr<AudioDeviceDescriptor> &device,
+    int32_t uid, AudioStreamInfo &streamInfo, bool &hasStream)
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 bool AudioStreamManager::IsAcousticEchoCancelerSupported(SourceType sourceType)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
