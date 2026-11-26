@@ -305,6 +305,12 @@ int BluetoothGattClientImpl::ReadPhy(int32_t appId)
     return BT_NO_ERROR;
 }
 
+int BluetoothGattClientImpl::RefreshServices(int32_t appId)
+{
+    HILOGI("NOT SUPPORT NOW");
+    return BT_NO_ERROR;
+}
+
 std::shared_ptr<GattClientData> BluetoothGattClientImpl::GetGattClientData(int32_t appId)
 {
     std::lock_guard<std::mutex> lock(gattClientMutex_);

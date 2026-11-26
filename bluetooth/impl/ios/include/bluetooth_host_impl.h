@@ -83,6 +83,7 @@ public:
         const BluetoothOobData &oobData) override;
     int32_t StartCrediblePair(int32_t transport, const std::string& address) override;
     bool CancelPairing(int32_t transport, const std::string& address) override;
+    int32_t CancelPairingByInitiator(int32_t transport, const std::string &address) override;
     bool IsBondedFromLocal(int32_t transport, const std::string& address) override;
     bool IsAclConnected(int32_t transport, const std::string& address) override;
     bool IsAclEncrypted(int32_t transport, const std::string& address) override;
