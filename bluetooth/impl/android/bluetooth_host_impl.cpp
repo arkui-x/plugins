@@ -311,6 +311,11 @@ bool BluetoothHostImpl::CancelPairing(int32_t transport, const std::string& addr
     return false;
 }
 
+int32_t BluetoothHostImpl::CancelPairingByInitiator(int32_t transport, const std::string &address)
+{
+    return 0;
+}
+
 bool BluetoothHostImpl::IsBondedFromLocal(int32_t transport, const std::string& address)
 {
     return false;

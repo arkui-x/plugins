@@ -835,6 +835,11 @@ int BluetoothGattClientImpl::ReadPhy(int32_t appId)
     return BT_NO_ERROR;
 }
 
+int BluetoothGattClientImpl::RefreshServices(int32_t appId)
+{
+    return BT_NO_ERROR;
+}
+
 int BluetoothGattClientImpl::GetGattClientAppId()
 {
     appId_ += 1;

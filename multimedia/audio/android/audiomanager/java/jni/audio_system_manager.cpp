@@ -816,6 +816,12 @@ int32_t AudioSystemManager::ForceVolumeKeyControlType(AudioVolumeType volumeType
     return ERR_NOT_SUPPORTED;
 }
 
+int32_t AudioSystemManager::FactoryResetVolumeParameters()
+{
+    AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
+    return ERR_NOT_SUPPORTED;
+}
+
 int32_t AudioSystemManager::SetVolumeDegree(AudioVolumeType volumeType, int32_t degree, int32_t uid, int32_t zoneId)
 {
     AUDIO_WARNING_LOG("%{public}s is not supported.", __func__);
